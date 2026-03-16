@@ -39,7 +39,7 @@ export default function LoginPage() {
       return { error: "未找到账号资料，请联系管理员。" };
     }
 
-    redirect(profile.role === "admin" ? "/admin" : "/dashboard");
+    redirect(profile.role === "admin" || profile.role === "owner" ? "/admin" : "/dashboard");
   }
 
   return <LoginForm action={loginAction} />;
