@@ -24,7 +24,9 @@ export default async function AnalyticsPage() {
   if (profile?.role !== "admin" && profile?.role !== "owner") redirect("/dashboard");
 
   // 近 90 天全部 daily_reports
-  const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString().split("T")[0];
+  const ninetyDaysAgoDate = new Date();
+  ninetyDaysAgoDate.setDate(ninetyDaysAgoDate.getDate() - 90);
+  const ninetyDaysAgo = ninetyDaysAgoDate.toISOString().split("T")[0];
   const { data: reports } = await supabase
     .from("daily_reports")
     .select("id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, content, published_at")

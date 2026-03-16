@@ -21,7 +21,6 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-const NAMES = ["张三", "李四", "王五", "赵六", "钱七", "孙八", "周九", "吴十", "郑十一", "冯十二"];
 const TITLES = [
   "今日复盘：大盘震荡下的机会",
   "龙头股分析：谁在领涨",

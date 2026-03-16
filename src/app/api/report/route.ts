@@ -5,14 +5,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get("secret");
   const type = searchParams.get("type") ?? "week"; // "week" or "month"
+  const expectedSecret = process.env.CRON_SECRET ?? process.env.REMIND_SECRET;
 
-  if (secret !== process.env.REMIND_SECRET) {
+  if (!expectedSecret || secret !== expectedSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    serviceRoleKey!,
   );
 
   const now = new Date();

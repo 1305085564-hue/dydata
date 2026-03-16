@@ -82,8 +82,12 @@ export function PersonnelAnalysis({ reports }: PersonnelAnalysisProps) {
     }
 
     const today = new Date().toISOString().split("T")[0];
-    const sevenAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
-    const fourteenAgo = new Date(Date.now() - 14 * 86400000).toISOString().split("T")[0];
+    const sevenAgoDate = new Date();
+    sevenAgoDate.setDate(sevenAgoDate.getDate() - 7);
+    const sevenAgo = sevenAgoDate.toISOString().split("T")[0];
+    const fourteenAgoDate = new Date();
+    fourteenAgoDate.setDate(fourteenAgoDate.getDate() - 14);
+    const fourteenAgo = fourteenAgoDate.toISOString().split("T")[0];
 
     const result: PersonStats[] = [];
 

@@ -47,8 +47,12 @@ export default async function DashboardPage() {
   const hasSubmittedToday = !!todayReport;
 
   // 排行榜数据：当天、近7天和近30天
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
-  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+  const weekAgoDate = new Date();
+  weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+  const weekAgo = weekAgoDate.toISOString().split("T")[0];
+  const monthAgoDate = new Date();
+  monthAgoDate.setDate(monthAgoDate.getDate() - 30);
+  const monthAgo = monthAgoDate.toISOString().split("T")[0];
 
   const [{ data: todayReports }, { data: weekReports }, { data: monthReports }, { data: teamHistory }] = await Promise.all([
     supabase

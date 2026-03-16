@@ -8,7 +8,8 @@
     "build:cf": "npx @opennextjs/cloudflare build",
     "deploy": "npm run build:cf && wrangler pages deploy",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "import:reports": "npx tsx scripts/import-daily-reports.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -40,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

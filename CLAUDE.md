@@ -1,5 +1,30 @@
 # DYData 项目记忆
 
+## 自我进化机制
+
+### 每次任务结束前，执行三步反思
+1. **发生了什么？** 这次任务遇到了什么问题？走了哪些弯路？
+2. **根因是什么？** 不是"代码写错了"这种表面原因，而是"为什么会写错"——是缺少信息？假设错误？排查顺序不对？
+3. **下次怎么避免？** 提炼成一条可执行的规则，写入下方「踩坑记录」或「排查方法论」
+
+### 触发条件
+- 修了 bug → 必须反思（尤其是改了多次才修好的）
+- 部署失败 → 必须反思
+- 阿禅说"不对"或"还是有问题" → 必须反思
+- 排查超过 3 轮还没定位 → 暂停，先反思排查思路再继续
+
+### 写入规则
+- 踩坑（具体事实）→ 加到「关键踩坑」表
+- 方法论（通用思维）→ 加到「排查方法论」
+- × 记流水账，只记结论
+- × 重复已有条目，先检查是否已存在类似经验
+
+### 反面教材（× 不要这样做）
+- × 反复改代码碰运气，不先定位根因
+- × 本地能跑就认为没问题，不确认线上版本
+- × 只看代码不看数据库（RLS/migration/函数版本）
+- × 遇到报错就改代码，不先看报错信息说了什么
+
 ## 基本信息
 - 名称：抖音数据日报平台
 - 代码：~/Projects/dydata/
@@ -26,7 +51,7 @@
 ## 数据库
 - 表：profiles / daily_reports / invite_codes / audit_logs
 - 函数：validate_invite_code() / get_today_submission_status()
-- Migration 执行状态：001-006 已执行，007 待执行（owner角色+permissions字段）
+- Migration 执行状态：001-007 全部已执行
 
 ## 角色权限体系（P5，2026-03-16 完成）
 - owner：创始人，唯一，所有权限
@@ -44,8 +69,10 @@
 
 ## 环境变量
 - NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
 - FEISHU_WEBHOOK_URL
 - CRON_SECRET
+- REMIND_SECRET
 - AI_BASE_URL=https://www.aiapikey.net
 - AI_API_KEY=sk-luu389f...（api7）
 - AI_MODEL=claude-sonnet-4-6
@@ -56,16 +83,16 @@
 - 首个管理员：1305085574@qq.com
 
 ## 当前状态（2026-03-16）
-- P1-P4 全部完成，build 零错误
-- P5 权限体系完成（owner/admin/member + 细粒度权限 + checkbox UI）
-- 待执行：migration 007 SQL + 配置 AI 环境变量 + git push 部署
+- P1-P5 全部完成，已部署上线
+- migration 007 已执行，阿禅 role=owner
+- git config user.email 已设为 1305085564@qq.com（Vercel Hobby 要求）
+- 飞书催交验证通过：临时制造 1 条未提交后，`/api/remind` 正确返回 `十八`，随后已恢复数据
+- 飞书日报提交通知验证通过：真实新增提交触发绿色卡片 `✅ 日报提交通知`
+- `/api/report` 周报、月报接口本地验证通过
+- 已清理 8 条旧测试邀请码
 
 ## 待做
-- [ ] Supabase 执行 migration 007（owner角色+permissions字段）
-- [ ] UPDATE profiles SET role='owner' WHERE name='阿禅';
-- [ ] 配置 AI_BASE_URL / AI_API_KEY / AI_MODEL 环境变量
-- [ ] git push 触发 Vercel 部署
-- [ ] 管理员首批 4-5 人开通 + cron job + 飞书测试
+- [ ] 管理员首批 4-5 人开通 + cron job
 - [ ] 后续迭代：内容标签体系、发布时间自动解析、analytics 结论优先
 
 ## 关键踩坑
@@ -76,3 +103,25 @@
 | submitter 为空 | 表单未传字段 | 从 profiles 自动查姓名 |
 | 国内打不开 | Vercel 被墙 | Cloudflare DNS 代理 |
 | 异常检测误报 | 数据不足 | ≥3 天数据才标记 |
+| Vercel 部署失败 | git author email 是 mac@192.168.1.147，Hobby 计划要求匹配 GitHub 账号 | `git config user.email "1305085564@qq.com"` 后重新提交 |
+| owner 看不到管理后台 | 部署失败 → 线上跑旧代码（login 只认 admin 不认 owner） | 修复部署后自动解决 |
+| cron 接口返回 Unauthorized | 项目记忆写的是 `CRON_SECRET`，代码早期只认 `REMIND_SECRET` | `/api/remind`、`/api/report` 改为兼容 `CRON_SECRET ?? REMIND_SECRET` |
+| cron 报表接口查不到数据 | 定时接口用 anon key 读 `daily_reports`，受 RLS/权限影响 | 服务端接口优先改用 `SUPABASE_SERVICE_ROLE_KEY` |
+
+## 排查方法论（遇到线上问题时按顺序检查）
+
+1. **先确认线上跑的是哪个版本**
+   - 部署平台（Vercel）最近一次部署是否成功？
+   - 线上代码 ≠ 本地代码是最常见的"代码没问题但不生效"的原因
+2. **区分代码问题 vs 数据库问题**
+   - 代码：本地 build 能过吗？逻辑链路完整吗？
+   - 数据库：migration 真的执行了吗？函数是新版还是旧版？RLS 策略是否阻拦？
+3. **RLS 排查三板斧**
+   - 查 is_admin() 等 helper 函数是否包含新角色
+   - 查 RLS policy 的 USING 条件
+   - 用 service_role key 绕过 RLS 验证是否是权限问题
+4. **Vercel 部署失败常见原因**
+   - git author email 不匹配 GitHub 账号（Hobby 计划限制）
+   - 环境变量缺失导致 build 报错
+   - Node 版本不兼容
+5. **× 反复改代码碰运气** → 先定位根因再动手

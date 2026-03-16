@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, hasPermission, isAdminLevel } from "@/lib/permissions";
-import type { Permissions, UserRole } from "@/types";
+import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import type { Permissions } from "@/types";
 
 async function writeAuditLog(
   supabase: Awaited<ReturnType<typeof createClient>>,

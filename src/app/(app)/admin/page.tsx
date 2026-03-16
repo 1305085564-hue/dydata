@@ -62,7 +62,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     .order("submitter", { ascending: true });
 
   // Anomaly detection: avg play count per submitter (last 7 days)
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+  const sevenDaysAgoDate = new Date();
+  sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 7);
+  const sevenDaysAgo = sevenDaysAgoDate.toISOString().split("T")[0];
   const { data: recentForAvg } = await supabase
     .from("daily_reports")
     .select("submitter, play_count")
@@ -112,7 +114,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     .limit(50);
 
   // Team dashboard: aggregate last 60 days (for period-over-period comparison)
-  const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().split("T")[0];
+  const sixtyDaysAgoDate = new Date();
+  sixtyDaysAgoDate.setDate(sixtyDaysAgoDate.getDate() - 60);
+  const sixtyDaysAgo = sixtyDaysAgoDate.toISOString().split("T")[0];
   const { data: teamReports } = await supabase
     .from("daily_reports")
     .select("report_date, play_count, likes, comments, shares, favorites")
