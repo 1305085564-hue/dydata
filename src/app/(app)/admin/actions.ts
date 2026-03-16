@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import {
+  buildExemptionFields,
+  formatExemptionDetail,
+  type ExemptionFormValues,
+} from "@/lib/豁免";
 import type { Permissions } from "@/types";
 
 async function writeAuditLog(
@@ -50,24 +55,72 @@ export async function generateInviteCode(
   return { codes };
 }
 
-export async function toggleExempt(userId: string, currentStatus: string): Promise<{ error?: string }> {
+export async function updateExemption(values: ExemptionFormValues): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
   if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
 
   const supabase = await createClient();
-  const newStatus = currentStatus === "exempt" ? "active" : "exempt";
+  let fields;
+
+  try {
+    fields = buildExemptionFields(values);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "豁免设置失败",
+    };
+  }
 
   const { error } = await supabase
     .from("profiles")
-    .update({ status: newStatus })
+    .update({
+      status: fields.status,
+      exempt_type: fields.exempt_type,
+      exempt_start_date: fields.exempt_start_date,
+      exempt_end_date: fields.exempt_end_date,
+      exempt_reason: fields.exempt_reason,
+    })
+    .eq("id", values.userId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await writeAuditLog(
+    supabase,
+    perm.userId,
+    "set_exempt",
+    values.userId,
+    formatExemptionDetail(values)
+  );
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function clearExemption(userId: string): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      status: "active",
+      exempt_type: null,
+      exempt_start_date: null,
+      exempt_end_date: null,
+      exempt_reason: null,
+    })
     .eq("id", userId);
 
   if (error) {
     return { error: error.message };
   }
 
-  await writeAuditLog(supabase, perm.userId, "toggle_exempt", userId, `${currentStatus} → ${newStatus}`);
+  await writeAuditLog(supabase, perm.userId, "clear_exempt", userId, "清除豁免");
 
   revalidatePath("/admin");
   return {};
@@ -86,6 +139,8 @@ export async function adminUpdateReport(
     comments: number;
     shares: number;
     favorites: number;
+    follower_gain: number;
+    follower_convert: number | null;
   }
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();

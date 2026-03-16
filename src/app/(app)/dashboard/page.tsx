@@ -28,21 +28,36 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single();
 
+  const { data: accounts } = await supabase
+    .from("accounts")
+    .select("id, name")
+    .eq("profile_id", user.id)
+    .order("created_at", { ascending: true });
+
   const today = new Date().toISOString().split("T")[0];
 
-  const { data: todayReport } = await supabase
-    .from("daily_reports")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("report_date", today)
-    .maybeSingle();
+  const accountIds = (accounts ?? []).map((account) => account.id);
 
-  const { data: history } = await supabase
-    .from("daily_reports")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("report_date", { ascending: false })
-    .limit(30);
+  const { data: userTodayReports } = accountIds.length
+    ? await supabase
+        .from("daily_reports")
+        .select("*")
+        .in("account_id", accountIds)
+        .eq("report_date", today)
+        .order("uploaded_at", { ascending: false })
+    : { data: [] };
+
+  const todayReport = userTodayReports?.[0] ?? null;
+
+  const { data: history } = accountIds.length
+    ? await supabase
+        .from("daily_reports")
+        .select("*")
+        .in("account_id", accountIds)
+        .order("report_date", { ascending: false })
+        .order("uploaded_at", { ascending: false })
+        .limit(30)
+    : { data: [] };
 
   const hasSubmittedToday = !!todayReport;
 
@@ -128,7 +143,9 @@ export default async function DashboardPage() {
               你好，{profile?.name ?? user.email}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {hasSubmittedToday ? (
+              {!accounts?.length ? (
+                <span className="text-orange-500">⚠️ 暂无可用账号，请联系管理员</span>
+              ) : hasSubmittedToday ? (
                 <span className="text-green-600">✅ 今日已提交</span>
               ) : (
                 <span className="text-orange-500">⚠️ 今日尚未提交</span>
@@ -139,18 +156,22 @@ export default async function DashboardPage() {
           {/* 表单区域 */}
           <section>
             <h2 className="text-lg font-semibold mb-4">提交日报</h2>
-            {hasSubmittedToday ? (
+            {!accounts?.length ? (
+              <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700">
+                当前账号尚未初始化，暂时无法提交日报。
+              </div>
+            ) : hasSubmittedToday ? (
               <div>
                 <div className="rounded-xl border bg-green-50 border-green-200 px-4 py-3 mb-4">
-                  <p className="text-sm text-green-700">今日数据已提交。如需补交其他日期，可修改日期后提交。</p>
+                  <p className="text-sm text-green-700">今日已有账号提交日报。如需补交其他日期，可修改日期后提交。</p>
                 </div>
                 <details>
-                  <summary className="cursor-pointer text-sm text-primary hover:underline mb-4 inline-block">修改今日数据</summary>
-                  <DashboardForm userId={user.id} today={today} existingData={todayReport} />
+                  <summary className="cursor-pointer text-sm text-primary hover:underline mb-4 inline-block">修改最新一条今日数据</summary>
+                  <DashboardForm accounts={accounts} defaultAccountId={todayReport?.account_id} today={today} existingData={todayReport} />
                 </details>
               </div>
             ) : (
-              <DashboardForm userId={user.id} today={today} existingData={null} />
+              <DashboardForm accounts={accounts} defaultAccountId={accounts[0]?.id} today={today} existingData={null} />
             )}
           </section>
 

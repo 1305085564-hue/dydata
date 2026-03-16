@@ -1,0 +1,88 @@
+export interface QueryErrorLike {
+  message: string;
+}
+
+import type { UserStatus, ExemptType } from "@/types";
+
+export interface ProfileWithExemptionFields {
+  id: string;
+  name: string;
+  role: string;
+  status: UserStatus;
+  exempt_type: ExemptType | null;
+  exempt_start_date: string | null;
+  exempt_end_date: string | null;
+  exempt_reason: string | null;
+  permissions?: unknown;
+  created_at?: string;
+}
+
+export interface ProfileWithoutExemptionFields {
+  id: string;
+  name: string;
+  role: string;
+  status: UserStatus;
+  permissions?: unknown;
+  created_at?: string;
+}
+
+interface QueryResult<T> {
+  data: T[] | null;
+  error: QueryErrorLike | null;
+}
+
+interface LoadProfilesWithExemptionFallbackArgs {
+  loadWithExemption: () => Promise<QueryResult<ProfileWithExemptionFields>>;
+  loadWithoutExemption: () => Promise<QueryResult<ProfileWithoutExemptionFields>>;
+}
+
+interface LoadProfilesWithExemptionFallbackResult {
+  data: ProfileWithExemptionFields[] | null;
+  error: QueryErrorLike | null;
+  usedFallback: boolean;
+}
+
+function isMissingExemptionColumnError(error: QueryErrorLike | null) {
+  if (!error) return false;
+
+  return [
+    "profiles.exempt_type",
+    "profiles.exempt_start_date",
+    "profiles.exempt_end_date",
+    "profiles.exempt_reason",
+  ].some((column) => error.message.includes(column));
+}
+
+function normalizeProfile(profile: ProfileWithoutExemptionFields): ProfileWithExemptionFields {
+  return {
+    ...profile,
+    status: profile.status ?? ("active" as UserStatus),
+    exempt_type: null,
+    exempt_start_date: null,
+    exempt_end_date: null,
+    exempt_reason: null,
+  };
+}
+
+export async function loadProfilesWithExemptionFallback({
+  loadWithExemption,
+  loadWithoutExemption,
+}: LoadProfilesWithExemptionFallbackArgs): Promise<LoadProfilesWithExemptionFallbackResult> {
+  const primaryResult = await loadWithExemption();
+
+  if (!isMissingExemptionColumnError(primaryResult.error)) {
+    return {
+      data: primaryResult.data,
+      error: primaryResult.error,
+      usedFallback: false,
+    };
+  }
+
+  const fallbackResult = await loadWithoutExemption();
+
+  return {
+    data: fallbackResult.data?.map(normalizeProfile) ?? null,
+    error: fallbackResult.error,
+    usedFallback: true,
+  };
+}

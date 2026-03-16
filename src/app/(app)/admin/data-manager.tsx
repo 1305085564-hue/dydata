@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatShanghaiDateTime } from "@/lib/日报";
 import {
   Table,
   TableBody,
@@ -36,7 +37,11 @@ interface Report {
   comments: number;
   shares: number;
   favorites: number;
+  follower_gain: number;
+  follower_convert: number | null;
   content?: string | null;
+  published_at: string | null;
+  uploaded_at: string;
 }
 
 interface DataManagerProps {
@@ -87,6 +92,8 @@ export function DataManager({ reports, defaultDate, avgPlayBySubmitter = {}, day
       comments: r.comments,
       shares: r.shares,
       favorites: r.favorites,
+      follower_gain: r.follower_gain,
+      follower_convert: r.follower_convert,
     });
   }
 
@@ -108,6 +115,8 @@ export function DataManager({ reports, defaultDate, avgPlayBySubmitter = {}, day
         comments: editData.comments ?? 0,
         shares: editData.shares ?? 0,
         favorites: editData.favorites ?? 0,
+        follower_gain: editData.follower_gain ?? 0,
+        follower_convert: editData.follower_convert ?? null,
       });
       if (result.error) {
         toast.error(result.error);
@@ -155,10 +164,14 @@ export function DataManager({ reports, defaultDate, avgPlayBySubmitter = {}, day
                   <TableHead>标题</TableHead>
                   <TableHead className="text-right">播放量(万)</TableHead>
                   <TableHead className="text-right">完播率</TableHead>
+                  <TableHead className="text-right">涨粉</TableHead>
+                  <TableHead className="text-right">导粉</TableHead>
                   <TableHead className="text-right">点赞</TableHead>
                   <TableHead className="text-right">评论</TableHead>
                   <TableHead className="text-right">分享</TableHead>
                   <TableHead className="text-right">收藏</TableHead>
+                  <TableHead>发布时间</TableHead>
+                  <TableHead>上传时间</TableHead>
                   <TableHead>文案</TableHead>
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
@@ -179,6 +192,12 @@ export function DataManager({ reports, defaultDate, avgPlayBySubmitter = {}, day
                           <Input value={stripSuffix(editData.completion_rate ?? null, "%")} onChange={(e) => setEditData({ ...editData, completion_rate: e.target.value ? `${e.target.value}%` : null })} className="h-8 w-16 text-right" />
                         </TableCell>
                         <TableCell className="text-right">
+                          <Input type="number" value={editData.follower_gain ?? 0} onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })} className="h-8 w-16 text-right" />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input type="number" value={editData.follower_convert ?? ""} onChange={(e) => setEditData({ ...editData, follower_convert: e.target.value ? Number(e.target.value) : null })} className="h-8 w-16 text-right" />
+                        </TableCell>
+                        <TableCell className="text-right">
                           <Input type="number" value={editData.likes ?? 0} onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })} className="h-8 w-16 text-right" />
                         </TableCell>
                         <TableCell className="text-right">
@@ -189,6 +208,12 @@ export function DataManager({ reports, defaultDate, avgPlayBySubmitter = {}, day
                         </TableCell>
                         <TableCell className="text-right">
                           <Input type="number" value={editData.favorites ?? 0} onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })} className="h-8 w-16 text-right" />
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatShanghaiDateTime(r.published_at)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatShanghaiDateTime(r.uploaded_at)}
                         </TableCell>
                         <TableCell />
                         <TableCell className="text-right space-x-1">
@@ -212,10 +237,14 @@ export function DataManager({ reports, defaultDate, avgPlayBySubmitter = {}, day
                           })()}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{r.completion_rate ?? "-"}</TableCell>
+                        <TableCell className="text-right tabular-nums">{r.follower_gain}</TableCell>
+                        <TableCell className="text-right tabular-nums">{r.follower_convert ?? "-"}</TableCell>
                         <TableCell className="text-right tabular-nums">{r.likes}</TableCell>
                         <TableCell className="text-right tabular-nums">{r.comments}</TableCell>
                         <TableCell className="text-right tabular-nums">{r.shares}</TableCell>
                         <TableCell className="text-right tabular-nums">{r.favorites}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{formatShanghaiDateTime(r.published_at)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{formatShanghaiDateTime(r.uploaded_at)}</TableCell>
                         <TableCell>
                           {r.content ? (
                             <Button size="sm" variant="ghost" onClick={() => setContentDialog({ title: r.title, content: r.content! })} className="h-7 text-xs text-blue-500 hover:text-blue-600">查看</Button>
@@ -269,12 +298,28 @@ export function DataManager({ reports, defaultDate, avgPlayBySubmitter = {}, day
                     <p className="tabular-nums">{r.completion_rate ?? "-"}</p>
                   </div>
                   <div>
+                    <p className="text-muted-foreground">涨粉</p>
+                    <p className="tabular-nums">{r.follower_gain}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">导粉</p>
+                    <p className="tabular-nums">{r.follower_convert ?? "-"}</p>
+                  </div>
+                  <div>
                     <p className="text-muted-foreground">点赞</p>
                     <p className="tabular-nums">{r.likes}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">评论</p>
                     <p className="tabular-nums">{r.comments}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">发布时间</p>
+                    <p>{formatShanghaiDateTime(r.published_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">上传时间</p>
+                    <p>{formatShanghaiDateTime(r.uploaded_at)}</p>
                   </div>
                 </div>
                 {r.content && (

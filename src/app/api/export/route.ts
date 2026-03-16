@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { formatShanghaiDateTime } from "@/lib/日报";
 import * as XLSX from "xlsx";
 
 export async function GET(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("daily_reports")
-    .select("report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, content, published_at")
+    .select("report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at")
     .order("report_date", { ascending: false })
     .order("submitter", { ascending: true });
 
@@ -53,12 +54,15 @@ export async function GET(request: NextRequest) {
     平均播放时长: r.avg_play_duration ?? "",
     "2s跳出率": r.bounce_rate_2s ?? "",
     "5s完播率": r.completion_rate_5s ?? "",
+    涨粉: r.follower_gain,
+    导粉: r.follower_convert ?? "",
     点赞: r.likes,
     评论: r.comments,
     分享: r.shares,
     收藏: r.favorites,
     文案内容: r.content ? (r.content.length > 50 ? r.content.slice(0, 50) + "..." : r.content) : "",
-    发布时间: r.published_at ? new Date(r.published_at).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" }) : "",
+    发布时间: r.published_at ? formatShanghaiDateTime(r.published_at) : "",
+    上传时间: r.uploaded_at ? formatShanghaiDateTime(r.uploaded_at) : "",
   }));
 
   const wb = XLSX.utils.book_new();
@@ -74,12 +78,15 @@ export async function GET(request: NextRequest) {
     { wch: 14 }, // 平均播放时长
     { wch: 10 }, // 2s跳出率
     { wch: 10 }, // 5s完播率
+    { wch: 8 },  // 涨粉
+    { wch: 8 },  // 导粉
     { wch: 8 },  // 点赞
     { wch: 8 },  // 评论
     { wch: 8 },  // 分享
     { wch: 8 },  // 收藏
     { wch: 40 }, // 文案内容
     { wch: 18 }, // 发布时间
+    { wch: 18 }, // 上传时间
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, "数据日报");

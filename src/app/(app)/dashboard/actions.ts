@@ -2,11 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePublishedAtForStorage } from "@/lib/日报";
 
 export async function submitReport(formData: FormData) {
   const supabase = await createClient();
 
-  const user_id = formData.get("user_id") as string;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "请先登录" };
+  }
+
+  const account_id = formData.get("account_id") as string;
   const title = formData.get("title") as string;
   const report_date = formData.get("report_date") as string;
   const play_count = Math.round(Number(formData.get("play_count")) * 10000);
@@ -18,32 +27,49 @@ export async function submitReport(formData: FormData) {
   const comments = Number(formData.get("comments"));
   const shares = Number(formData.get("shares"));
   const favorites = Number(formData.get("favorites"));
+  const follower_gain = Number(formData.get("follower_gain"));
+  const followerConvertRaw = formData.get("follower_convert") as string;
+  const follower_convert = followerConvertRaw ? Number(followerConvertRaw) : null;
   const content = (formData.get("content") as string) || null;
-  const publishedAtRaw = formData.get("published_at") as string;
-  const published_at = publishedAtRaw ? new Date(publishedAtRaw).toISOString() : null;
+  const published_at = normalizePublishedAtForStorage(formData.get("published_at"));
+
+  const { data: account, error: accountError } = await supabase
+    .from("accounts")
+    .select("id, profile_id")
+    .eq("id", account_id)
+    .single();
+
+  if (accountError || !account || account.profile_id !== user.id) {
+    return { error: "账号不存在或无权限提交" };
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("name")
-    .eq("id", user_id)
+    .eq("id", user.id)
     .single();
 
   const submitter = profile?.name ?? "未知";
 
-  if (!title || !report_date) {
-    return { error: "标题和日期为必填项" };
+  if (!account_id || !title || !report_date) {
+    return { error: "账号、标题和日期为必填项" };
+  }
+
+  if (!Number.isFinite(follower_gain) || follower_gain < 0) {
+    return { error: "涨粉为必填项" };
   }
 
   // 检查是否已有该日期的记录（upsert）
   const { data: existing } = await supabase
     .from("daily_reports")
     .select("id")
-    .eq("user_id", user_id)
+    .eq("account_id", account_id)
     .eq("report_date", report_date)
     .maybeSingle();
 
   const payload = {
-    user_id,
+    user_id: user.id,
+    account_id,
     title,
     submitter,
     report_date,
@@ -56,6 +82,8 @@ export async function submitReport(formData: FormData) {
     comments,
     shares,
     favorites,
+    follower_gain,
+    follower_convert,
     content,
     published_at,
   };

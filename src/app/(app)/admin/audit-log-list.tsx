@@ -27,7 +27,8 @@ interface AuditLogListProps {
 const ACTION_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   update_report: { label: "编辑数据", variant: "secondary" },
   delete_report: { label: "删除数据", variant: "destructive" },
-  toggle_exempt: { label: "切换豁免", variant: "outline" },
+  set_exempt: { label: "设置豁免", variant: "outline" },
+  clear_exempt: { label: "清除豁免", variant: "outline" },
   submit_notify: { label: "提交通知", variant: "default" },
 };
 

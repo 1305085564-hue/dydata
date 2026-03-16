@@ -1,5 +1,6 @@
 export type UserRole = "member" | "admin" | "owner";
 export type UserStatus = "active" | "exempt";
+export type ExemptType = "permanent" | "temporary";
 
 export const PERMISSION_KEYS = [
   "view_all_data",
@@ -40,6 +41,10 @@ export interface Profile {
   name: string;
   role: UserRole;
   status: UserStatus;
+  exempt_type: ExemptType | null;
+  exempt_start_date: string | null;
+  exempt_end_date: string | null;
+  exempt_reason: string | null;
   permissions: Permissions;
   created_at: string;
 }
@@ -69,7 +74,10 @@ export interface DailyReport {
   comments: number;
   shares: number;
   favorites: number;
+  follower_gain: number;
+  follower_convert: number | null;
   content: string | null;
   published_at: string | null;
+  uploaded_at: string;
   created_at: string;
 }

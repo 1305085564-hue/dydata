@@ -29,7 +29,7 @@ export default async function AnalyticsPage() {
   const ninetyDaysAgo = ninetyDaysAgoDate.toISOString().split("T")[0];
   const { data: reports } = await supabase
     .from("daily_reports")
-    .select("id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, content, published_at")
+    .select("id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at")
     .gte("report_date", ninetyDaysAgo)
     .order("report_date", { ascending: false });
 

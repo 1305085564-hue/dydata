@@ -18,6 +18,7 @@ import { AuditLogList } from "./audit-log-list";
 import { TeamDashboard } from "./team-dashboard";
 import { PermissionManager } from "./permission-manager";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { loadProfilesWithExemptionFallback } from "./资料加载";
 import type { UserRole, Permissions } from "@/types";
 
 interface AdminPageProps {
@@ -41,10 +42,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const queryDate = params.date || new Date().toISOString().split("T")[0];
 
   // All profiles with status
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, name, role, status")
-    .order("created_at", { ascending: true });
+  const { data: profiles } = await loadProfilesWithExemptionFallback({
+    loadWithExemption: async () =>
+      supabase
+        .from("profiles")
+        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason")
+        .order("created_at", { ascending: true }),
+    loadWithoutExemption: async () =>
+      supabase
+        .from("profiles")
+        .select("id, name, role, status")
+        .order("created_at", { ascending: true }),
+  });
 
   // Submissions for selected date
   const { data: dateReports } = await supabase
@@ -57,7 +66,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   // Full reports for selected date (for data manager)
   const { data: fullReports } = await supabase
     .from("daily_reports")
-    .select("id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, content")
+    .select("id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at")
     .eq("report_date", queryDate)
     .order("submitter", { ascending: true });
 
@@ -87,10 +96,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   // All profiles for member list
-  const { data: allProfiles } = await supabase
-    .from("profiles")
-    .select("id, name, role, status, permissions, created_at")
-    .order("created_at", { ascending: true });
+  const { data: allProfiles } = await loadProfilesWithExemptionFallback({
+    loadWithExemption: async () =>
+      supabase
+        .from("profiles")
+        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, permissions, created_at")
+        .order("created_at", { ascending: true }),
+    loadWithoutExemption: async () =>
+      supabase
+        .from("profiles")
+        .select("id, name, role, status, permissions, created_at")
+        .order("created_at", { ascending: true }),
+  });
 
   // Audit logs (recent 50)
   const { data: auditLogs } = await supabase
@@ -193,7 +210,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {new Date(p.created_at).toLocaleDateString("zh-CN")}
+                        {p.created_at ? new Date(p.created_at).toLocaleDateString("zh-CN") : "-"}
                       </TableCell>
                     </TableRow>
                   ))}

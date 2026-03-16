@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { submitReport } from "./actions";
+import { getDefaultPublishedAtValue, normalizePublishedAtInputValue } from "@/lib/日报";
 
 interface ReportData {
   id: string;
+  account_id: string;
   title: string;
   report_date: string;
   play_count: number | null;
@@ -21,12 +24,21 @@ interface ReportData {
   comments: number;
   shares: number;
   favorites: number;
+  follower_gain: number;
+  follower_convert: number | null;
   content: string | null;
   published_at: string | null;
+  uploaded_at: string;
+}
+
+interface AccountOption {
+  id: string;
+  name: string;
 }
 
 interface Props {
-  userId: string;
+  accounts: AccountOption[];
+  defaultAccountId?: string;
   today: string;
   existingData?: ReportData | null;
 }
@@ -36,10 +48,11 @@ function stripSuffix(val: string | null, suffix: string): string {
   return val.replace(suffix, "");
 }
 
-export function DashboardForm({ userId, today, existingData }: Props) {
+export function DashboardForm({ accounts, defaultAccountId, today, existingData }: Props) {
   const [isPending, startTransition] = useTransition();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState("提交成功");
+  const [selectedAccountId, setSelectedAccountId] = useState(existingData?.account_id ?? defaultAccountId ?? accounts[0]?.id ?? "");
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -78,13 +91,28 @@ export function DashboardForm({ userId, today, existingData }: Props) {
       )}
 
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-5 pb-20 sm:pb-0">
-        <input type="hidden" name="user_id" value={userId} />
+        <input type="hidden" name="account_id" value={selectedAccountId} />
 
         {/* 基本信息 */}
         <Card className="card-elevated">
           <CardContent className="pt-5 pb-5 space-y-4">
             <h3 className="text-sm font-semibold text-foreground tracking-wide">基本信息</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2 space-y-1.5">
+                <Label htmlFor="account_id">账号</Label>
+                <Select value={selectedAccountId} onValueChange={(value) => setSelectedAccountId(value ?? "")}>
+                  <SelectTrigger id="account_id" className="h-10 w-full">
+                    <SelectValue placeholder="请选择账号" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="sm:col-span-2 space-y-1.5">
                 <Label htmlFor="title">视频标题</Label>
                 <Input id="title" name="title" placeholder="请输入视频标题" required className="h-10" defaultValue={existingData?.title ?? ""} />
@@ -99,6 +127,10 @@ export function DashboardForm({ userId, today, existingData }: Props) {
                   <Input id="play_count" name="play_count" type="number" step="0.01" min={0} placeholder="3.21" required className="pr-10 h-10" defaultValue={existingData?.play_count != null ? (existingData.play_count / 10000).toFixed(2) : ""} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">万</span>
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="follower_gain">涨粉</Label>
+                <Input id="follower_gain" name="follower_gain" type="number" min={0} defaultValue={existingData?.follower_gain ?? 0} required className="h-10" />
               </div>
             </div>
           </CardContent>
@@ -136,6 +168,10 @@ export function DashboardForm({ userId, today, existingData }: Props) {
                   <Input id="completion_rate_5s" name="completion_rate_5s" type="number" step="0.01" min={0} max={100} placeholder="20" className="pr-8 h-10" defaultValue={stripSuffix(existingData?.completion_rate_5s ?? null, "%")} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="follower_convert">导粉（选填）</Label>
+                <Input id="follower_convert" name="follower_convert" type="number" min={0} defaultValue={existingData?.follower_convert ?? ""} className="h-10" />
               </div>
             </div>
           </CardContent>
@@ -181,13 +217,13 @@ export function DashboardForm({ userId, today, existingData }: Props) {
               />
             </div>
             <div className="space-y-1.5 sm:w-1/2">
-              <Label htmlFor="published_at">发布时间（选填）</Label>
+              <Label htmlFor="published_at">发布时间</Label>
               <Input
                 id="published_at"
                 name="published_at"
                 type="datetime-local"
                 className="h-10"
-                defaultValue={existingData?.published_at ? existingData.published_at.slice(0, 16) : ""}
+                defaultValue={normalizePublishedAtInputValue(existingData?.published_at) || getDefaultPublishedAtValue()}
               />
             </div>
           </CardContent>

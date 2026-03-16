@@ -80,6 +80,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --app-nav-height: 3.5rem;
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
 }
 
 .dark {
@@ -120,11 +123,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+  }
   body {
     @apply bg-background text-foreground;
   }
-  html {
-    @apply font-sans;
+  body [data-sonner-toaster] {
+    --offset-top: calc(var(--app-top-offset) + 0.75rem);
   }
   /* 去掉 number input 的上下箭头 */
   input[type="number"]::-webkit-inner-spin-button,

@@ -1,0 +1,229 @@
+"use client";
+
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  clearExemption,
+  updateExemption,
+} from "./actions";
+import {
+  deriveExemptionFormValues,
+  type ExemptionFormValues,
+  type ExemptionProfileLike,
+} from "@/lib/豁免";
+
+type DialogProfile = ExemptionProfileLike & {
+  name: string;
+};
+
+interface ExemptionDialogProps {
+  open: boolean;
+  profile: DialogProfile | null;
+  onOpenChange: (open: boolean) => void;
+}
+
+const MODE_LABELS: Record<ExemptionFormValues["mode"], string> = {
+  none: "正常",
+  permanent: "永久豁免",
+  "temporary-single": "临时单天",
+  "temporary-range": "临时范围",
+};
+
+export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialogProps) {
+  const [isPending, startTransition] = useTransition();
+
+  const initialValues = useMemo<ExemptionFormValues>(() => {
+    if (!profile) {
+      return {
+        userId: "",
+        mode: "none",
+        reason: "",
+      };
+    }
+
+    return {
+      ...deriveExemptionFormValues(profile),
+      reason: deriveExemptionFormValues(profile).reason ?? "",
+    };
+  }, [profile]);
+
+  const [formValues, setFormValues] = useState<ExemptionFormValues>(initialValues);
+
+  useEffect(() => {
+    setFormValues(initialValues);
+  }, [initialValues]);
+
+  function updateField<K extends keyof ExemptionFormValues>(key: K, value: ExemptionFormValues[K]) {
+    setFormValues((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  function handleModeChange(value: string | null) {
+    if (!value) return;
+
+    const mode = value as ExemptionFormValues["mode"];
+    setFormValues((current) => ({
+      userId: current.userId,
+      mode,
+      reason: current.reason ?? "",
+      date: mode === "temporary-single" ? current.date ?? current.startDate ?? current.endDate ?? "" : undefined,
+      startDate: mode === "temporary-range" ? current.startDate ?? current.date ?? "" : undefined,
+      endDate: mode === "temporary-range" ? current.endDate ?? current.date ?? "" : undefined,
+    }));
+  }
+
+  function closeDialog() {
+    if (!isPending) {
+      onOpenChange(false);
+    }
+  }
+
+  function handleSubmit() {
+    if (!profile) return;
+
+    startTransition(async () => {
+      const result = await updateExemption({
+        ...formValues,
+        userId: profile.id,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(`${profile.name}已更新为${MODE_LABELS[formValues.mode]}`);
+      onOpenChange(false);
+    });
+  }
+
+  function handleClear() {
+    if (!profile) return;
+
+    startTransition(async () => {
+      const result = await clearExemption(profile.id);
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(`已恢复${profile.name}为正常状态`);
+      onOpenChange(false);
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={closeDialog}>
+      <DialogContent className="sm:max-w-md" showCloseButton={!isPending}>
+        <DialogHeader>
+          <DialogTitle>设置豁免</DialogTitle>
+          <DialogDescription>
+            {profile ? `为 ${profile.name} 设置正常、永久豁免或临时豁免。` : ""}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">豁免类型</label>
+            <Select value={formValues.mode} onValueChange={handleModeChange} disabled={isPending}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">正常</SelectItem>
+                <SelectItem value="permanent">永久豁免</SelectItem>
+                <SelectItem value="temporary-single">临时单天</SelectItem>
+                <SelectItem value="temporary-range">临时范围</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formValues.mode === "temporary-single" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">日期</label>
+              <Input
+                type="date"
+                value={formValues.date ?? ""}
+                onChange={(e) => updateField("date", e.target.value)}
+                disabled={isPending}
+              />
+            </div>
+          )}
+
+          {formValues.mode === "temporary-range" && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">开始日期</label>
+                <Input
+                  type="date"
+                  value={formValues.startDate ?? ""}
+                  onChange={(e) => updateField("startDate", e.target.value)}
+                  disabled={isPending}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">结束日期</label>
+                <Input
+                  type="date"
+                  value={formValues.endDate ?? ""}
+                  onChange={(e) => updateField("endDate", e.target.value)}
+                  disabled={isPending}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">原因</label>
+            <textarea
+              value={formValues.reason ?? ""}
+              onChange={(e) => updateField("reason", e.target.value)}
+              disabled={isPending}
+              rows={3}
+              className="flex min-h-20 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
+              placeholder="可选，建议写明原因"
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 sm:justify-between">
+          <div>
+            {profile && profile.exempt_type && (
+              <Button variant="outline" onClick={handleClear} disabled={isPending}>
+                清除豁免
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+              取消
+            </Button>
+            <Button onClick={handleSubmit} disabled={isPending}>
+              保存
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

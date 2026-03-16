@@ -13,6 +13,10 @@ interface Report {
   comments: number;
   shares: number;
   favorites: number;
+  follower_gain: number;
+  follower_convert: number | null;
+  published_at?: string | null;
+  uploaded_at?: string;
 }
 
 interface PersonnelAnalysisProps {
