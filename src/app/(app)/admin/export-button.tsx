@@ -1,0 +1,56 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export function ExportButton() {
+  const today = new Date().toISOString().split("T")[0];
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+  const [from, setFrom] = useState(weekAgo);
+  const [to, setTo] = useState(today);
+  const [loading, setLoading] = useState(false);
+
+  async function handleExport() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      const url = `/api/export?${params.toString()}`;
+
+      const res = await fetch(url);
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "导出失败");
+        return;
+      }
+
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `抖音数据日报_${from}_至_${to}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+      <div className="space-y-1.5">
+        <Label htmlFor="export-from">开始日期</Label>
+        <Input id="export-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 w-auto" />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="export-to">结束日期</Label>
+        <Input id="export-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 w-auto" />
+      </div>
+      <Button onClick={handleExport} disabled={loading} variant="outline">
+        {loading ? "导出中..." : "导出 Excel"}
+      </Button>
+    </div>
+  );
+}
