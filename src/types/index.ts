@@ -1,6 +1,8 @@
 export type UserRole = "member" | "admin" | "owner";
 export type UserStatus = "active" | "exempt";
 export type ExemptType = "permanent" | "temporary";
+export type LeaderboardRange = "today" | "week" | "month";
+export type LeaderboardType = "overall" | "tag" | "progress";
 
 export const PERMISSION_KEYS = [
   "view_all_data",
@@ -80,4 +82,40 @@ export interface DailyReport {
   published_at: string | null;
   uploaded_at: string;
   created_at: string;
+}
+
+export interface AccountLeaderboardRow {
+  account_id: string;
+  account_name: string;
+  profile_id: string;
+  owner_name: string;
+  content_direction: string | null;
+  presentation_format: string | null;
+  report_date: string;
+  play_count: number | null;
+  likes: number | null;
+  follower_gain: number | null;
+  completion_rate: string | null;
+  avg_play_duration: string | null;
+  bounce_rate_2s: string | null;
+  completion_rate_5s: string | null;
+}
+
+export interface AccountLeaderboardItem {
+  accountId: string;
+  accountName: string;
+  ownerName: string;
+  contentDirection: string | null;
+  presentationFormat: string | null;
+  isOwn: boolean;
+  rank: number;
+  views: number;
+  likes: number;
+  followerGain: number;
+  completionRate: number | null;
+  watchDuration: number | null;
+  bounceRate: number | null;
+  completedViewers: number;
+  progressRate: number | null;
+  isBreakout: boolean;
 }

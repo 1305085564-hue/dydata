@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Leaderboard } from "@/components/leaderboard/leaderboard";
+import type { AccountLeaderboardRow } from "@/types";
 import {
   Table,
   TableBody,
@@ -9,9 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DashboardForm } from "./dashboard-form";
-import { TrendChart } from "./trend-chart";
-import { Leaderboard } from "./leaderboard";
+import { ResultTrend } from "@/components/charts/result-trend";
+import { InteractionTrend } from "@/components/charts/interaction-trend";
+import { build个人趋势数据 } from "@/lib/趋势图";
+import { 日报提交面板 } from "./日报提交面板";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -22,273 +25,285 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name")
-    .eq("id", user.id)
-    .single();
-
-  const { data: accounts } = await supabase
-    .from("accounts")
-    .select("id, name")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true });
+  const [{ data: profile }, { data: accounts }] = await Promise.all([
+    supabase.from("profiles").select("name").eq("id", user.id).single(),
+    supabase
+      .from("accounts")
+      .select("id, name, content_direction")
+      .eq("profile_id", user.id)
+      .order("created_at", { ascending: true }),
+  ]);
 
   const today = new Date().toISOString().split("T")[0];
-
   const accountIds = (accounts ?? []).map((account) => account.id);
+  const ownContentDirections = Array.from(
+    new Set(
+      (accounts ?? [])
+        .map((account) => account.content_direction?.trim())
+        .filter((value): value is string => Boolean(value))
+    )
+  );
 
   const { data: userTodayReports } = accountIds.length
     ? await supabase
         .from("daily_reports")
-        .select("*")
+        .select(
+          "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+        )
         .in("account_id", accountIds)
         .eq("report_date", today)
         .order("uploaded_at", { ascending: false })
     : { data: [] };
 
-  const todayReport = userTodayReports?.[0] ?? null;
-
   const { data: history } = accountIds.length
     ? await supabase
         .from("daily_reports")
-        .select("*")
+        .select(
+          "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, uploaded_at, accounts(name)"
+        )
         .in("account_id", accountIds)
         .order("report_date", { ascending: false })
         .order("uploaded_at", { ascending: false })
         .limit(30)
     : { data: [] };
 
-  const hasSubmittedToday = !!todayReport;
-
-  // 排行榜数据：当天、近7天和近30天
-  const weekAgoDate = new Date();
-  weekAgoDate.setDate(weekAgoDate.getDate() - 7);
-  const weekAgo = weekAgoDate.toISOString().split("T")[0];
   const monthAgoDate = new Date();
   monthAgoDate.setDate(monthAgoDate.getDate() - 30);
   const monthAgo = monthAgoDate.toISOString().split("T")[0];
 
-  const [{ data: todayReports }, { data: weekReports }, { data: monthReports }, { data: teamHistory }] = await Promise.all([
+  const [{ data: leaderboardRows }, { data: teamHistory }, { data: activeProfiles }] = await Promise.all([
+    supabase.rpc("get_leaderboard_rows", { since_date: monthAgo }),
     supabase
       .from("daily_reports")
-      .select("submitter, play_count, likes, comments, shares, favorites")
-      .eq("report_date", today),
-    supabase
-      .from("daily_reports")
-      .select("submitter, play_count, likes, comments, shares, favorites")
-      .gte("report_date", weekAgo),
-    supabase
-      .from("daily_reports")
-      .select("submitter, play_count, likes, comments, shares, favorites")
+      .select("report_date, user_id, play_count, follower_gain, likes, comments, shares, favorites")
       .gte("report_date", monthAgo),
-    // 团队 P70 分位线：近30天全团队数据
-    supabase
-      .from("daily_reports")
-      .select("report_date, play_count, likes, comments, shares, favorites")
-      .gte("report_date", monthAgo),
+    supabase.from("profiles").select("id, status"),
   ]);
 
-  function aggregate(reports: typeof weekReports) {
-    const map = new Map<string, { total_play: number; total_likes: number; total_comments: number; total_shares: number; total_favorites: number; count: number }>();
-    for (const r of reports ?? []) {
-      const key = r.submitter ?? "未知";
-      const cur = map.get(key) ?? { total_play: 0, total_likes: 0, total_comments: 0, total_shares: 0, total_favorites: 0, count: 0 };
-      cur.total_play += r.play_count ?? 0;
-      cur.total_likes += r.likes ?? 0;
-      cur.total_comments += r.comments ?? 0;
-      cur.total_shares += r.shares ?? 0;
-      cur.total_favorites += r.favorites ?? 0;
-      cur.count += 1;
-      map.set(key, cur);
-    }
-    return Array.from(map.entries()).map(([name, d]) => ({ name, ...d }));
-  }
+  const activeUserIds = (activeProfiles ?? [])
+    .filter((profile) => (profile.status ?? "active") === "active")
+    .map((profile) => profile.id);
 
-  const todayRank = aggregate(todayReports);
-  const weekRank = aggregate(weekReports);
-  const monthRank = aggregate(monthReports);
+  const trendData = build个人趋势数据(
+    (history ?? []).map((report) => ({
+      report_date: report.report_date,
+      user_id: user.id,
+      play_count: report.play_count,
+      follower_gain: report.follower_gain,
+      likes: report.likes,
+      comments: report.comments,
+      shares: report.shares,
+      favorites: report.favorites,
+    })),
+    (teamHistory ?? []).map((report) => ({
+      report_date: report.report_date,
+      user_id: report.user_id,
+      play_count: report.play_count,
+      follower_gain: report.follower_gain,
+      likes: report.likes,
+      comments: report.comments,
+      shares: report.shares,
+      favorites: report.favorites,
+    })),
+    activeUserIds
+  );
 
-  // 计算团队分位线（P50/P70/P90，按日期分组）
-  function computePercentiles(reports: typeof teamHistory) {
-    const byDate = new Map<string, number[]>();
-    const byDateEng = new Map<string, number[]>();
-    for (const r of reports ?? []) {
-      const d = r.report_date;
-      if (!byDate.has(d)) { byDate.set(d, []); byDateEng.set(d, []); }
-      byDate.get(d)!.push(r.play_count ?? 0);
-      byDateEng.get(d)!.push((r.likes ?? 0) + (r.comments ?? 0) + (r.shares ?? 0) + (r.favorites ?? 0));
+  const leaderboardData = (leaderboardRows ?? []) as AccountLeaderboardRow[];
+
+  function getAccountName(accountRelation: unknown) {
+    if (Array.isArray(accountRelation)) {
+      const firstAccount = accountRelation[0] as { name?: string | null } | undefined;
+      return firstAccount?.name;
     }
-    function pct(sorted: number[], p: number) {
-      const idx = Math.max(0, Math.ceil(sorted.length * p) - 1);
-      return sorted[idx];
+
+    if (accountRelation && typeof accountRelation === "object") {
+      return (accountRelation as { name?: string | null }).name;
     }
-    const result: Record<string, { p50_play: number; p70_play: number; p90_play: number; p50_eng: number; p70_eng: number; p90_eng: number }> = {};
-    for (const [date, values] of byDate) {
-      const sorted = [...values].sort((a, b) => a - b);
-      const engSorted = [...byDateEng.get(date)!].sort((a, b) => a - b);
-      result[date] = {
-        p50_play: pct(sorted, 0.5), p70_play: pct(sorted, 0.7), p90_play: pct(sorted, 0.9),
-        p50_eng: pct(engSorted, 0.5), p70_eng: pct(engSorted, 0.7), p90_eng: pct(engSorted, 0.9),
-      };
-    }
-    return result;
+
+    return undefined;
   }
-  const teamPercentiles = computePercentiles(teamHistory);
 
   return (
-        <div className="mx-auto max-w-5xl space-y-8">
-          <div>
-            <h1 className="text-2xl font-semibold">
-              你好，{profile?.name ?? user.email}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {!accounts?.length ? (
-                <span className="text-orange-500">⚠️ 暂无可用账号，请联系管理员</span>
-              ) : hasSubmittedToday ? (
-                <span className="text-green-600">✅ 今日已提交</span>
-              ) : (
-                <span className="text-orange-500">⚠️ 今日尚未提交</span>
-              )}
-            </p>
-          </div>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold">
+          你好，{profile?.name ?? user.email}
+        </h1>
+      </div>
 
-          {/* 表单区域 */}
-          <section>
-            <h2 className="text-lg font-semibold mb-4">提交日报</h2>
-            {!accounts?.length ? (
-              <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700">
-                当前账号尚未初始化，暂时无法提交日报。
+      <日报提交面板
+        accounts={accounts ?? []}
+        today={today}
+        todayReports={userTodayReports ?? []}
+      />
+
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle>数据趋势</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <ResultTrend
+            data={trendData.结果趋势}
+            personalLabel="我的数据"
+            teamAverageLabel="团队人均"
+            emptyText="提交 2 天以上数据后可查看趋势图"
+          />
+          <InteractionTrend
+            data={trendData.互动趋势}
+            personalLabel="我的质量分"
+            teamAverageLabel="团队人均"
+            emptyText="提交 2 天以上数据后可查看互动质量分趋势"
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle>账号排行榜</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Leaderboard
+            data={leaderboardData}
+            ownAccountIds={accountIds}
+            ownContentDirections={ownContentDirections}
+            currentDate={today}
+            defaultRange="week"
+            defaultCompact
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle>历史记录（最近 30 条）</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!history || history.length === 0 ? (
+            <p className="text-sm text-muted-foreground">暂无记录</p>
+          ) : (
+            <>
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>日期</TableHead>
+                      <TableHead>账号</TableHead>
+                      <TableHead>视频标题</TableHead>
+                      <TableHead className="text-right">播放量</TableHead>
+                      <TableHead className="text-right">完播率</TableHead>
+                      <TableHead className="text-right">均播时长</TableHead>
+                      <TableHead className="text-right hidden lg:table-cell">
+                        2s跳出
+                      </TableHead>
+                      <TableHead className="text-right hidden lg:table-cell">
+                        5s完播
+                      </TableHead>
+                      <TableHead className="text-right">点赞</TableHead>
+                      <TableHead className="text-right">评论</TableHead>
+                      <TableHead className="text-right">分享</TableHead>
+                      <TableHead className="text-right hidden lg:table-cell">
+                        收藏
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {history.map((report) => {
+                      const dateText = report.report_date?.slice(5);
+                      const accountName = getAccountName(report.accounts);
+                      return (
+                        <TableRow key={report.id}>
+                          <TableCell className="whitespace-nowrap text-muted-foreground">
+                            {dateText}
+                          </TableCell>
+                          <TableCell className="max-w-[120px] truncate text-muted-foreground">
+                            {accountName ?? "-"}
+                          </TableCell>
+                          <TableCell className="max-w-[160px] truncate">
+                            {report.title}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold tabular-nums">
+                            {report.play_count != null
+                              ? `${(report.play_count / 10000).toFixed(2)}万`
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {report.completion_rate ?? "-"}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {report.avg_play_duration ?? "-"}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums hidden lg:table-cell">
+                            {report.bounce_rate_2s ?? "-"}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums hidden lg:table-cell">
+                            {report.completion_rate_5s ?? "-"}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {report.likes}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {report.comments}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {report.shares}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums hidden lg:table-cell">
+                            {report.favorites}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
-            ) : hasSubmittedToday ? (
-              <div>
-                <div className="rounded-xl border bg-green-50 border-green-200 px-4 py-3 mb-4">
-                  <p className="text-sm text-green-700">今日已有账号提交日报。如需补交其他日期，可修改日期后提交。</p>
-                </div>
-                <details>
-                  <summary className="cursor-pointer text-sm text-primary hover:underline mb-4 inline-block">修改最新一条今日数据</summary>
-                  <DashboardForm accounts={accounts} defaultAccountId={todayReport?.account_id} today={today} existingData={todayReport} />
-                </details>
-              </div>
-            ) : (
-              <DashboardForm accounts={accounts} defaultAccountId={accounts[0]?.id} today={today} existingData={null} />
-            )}
-          </section>
 
-        {/* 趋势图 */}
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle>数据趋势</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TrendChart
-              history={(history ?? []).map((r) => ({
-                report_date: r.report_date,
-                play_count: r.play_count,
-                likes: r.likes,
-                comments: r.comments,
-                shares: r.shares,
-                favorites: r.favorites,
-              }))}
-              teamPercentiles={teamPercentiles}
-            />
-          </CardContent>
-        </Card>
-
-        {/* 排行榜 */}
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle>团队排行榜</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Leaderboard todayData={todayRank} weekData={weekRank} monthData={monthRank} />
-          </CardContent>
-        </Card>
-
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle>历史记录（最近 30 条）</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!history || history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">暂无记录</p>
-            ) : (
-              <>
-                {/* 桌面端表格 */}
-                <div className="hidden md:block overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>日期</TableHead>
-                        <TableHead>视频标题</TableHead>
-                        <TableHead className="text-right">播放量</TableHead>
-                        <TableHead className="text-right">完播率</TableHead>
-                        <TableHead className="text-right">均播时长</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">2s跳出</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">5s完播</TableHead>
-                        <TableHead className="text-right">点赞</TableHead>
-                        <TableHead className="text-right">评论</TableHead>
-                        <TableHead className="text-right">分享</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">收藏</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {history.map((r) => {
-                        const d = r.report_date?.slice(5);
-                        return (
-                          <TableRow key={r.id}>
-                            <TableCell className="whitespace-nowrap text-muted-foreground">{d}</TableCell>
-                            <TableCell className="max-w-[160px] truncate">{r.title}</TableCell>
-                            <TableCell className="text-right font-semibold tabular-nums">{r.play_count != null ? (r.play_count / 10000).toFixed(2) + "万" : "-"}</TableCell>
-                            <TableCell className="text-right tabular-nums">{r.completion_rate ?? "-"}</TableCell>
-                            <TableCell className="text-right tabular-nums">{r.avg_play_duration ?? "-"}</TableCell>
-                            <TableCell className="text-right hidden lg:table-cell tabular-nums">{r.bounce_rate_2s ?? "-"}</TableCell>
-                            <TableCell className="text-right hidden lg:table-cell tabular-nums">{r.completion_rate_5s ?? "-"}</TableCell>
-                            <TableCell className="text-right tabular-nums">{r.likes}</TableCell>
-                            <TableCell className="text-right tabular-nums">{r.comments}</TableCell>
-                            <TableCell className="text-right tabular-nums">{r.shares}</TableCell>
-                            <TableCell className="text-right hidden lg:table-cell tabular-nums">{r.favorites}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* 手机端卡片 */}
-                <div className="md:hidden space-y-3">
-                  {history.map((r) => (
-                    <div key={r.id} className="rounded-lg border bg-background p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground">{r.report_date?.slice(5)}</p>
-                        <p className="text-sm font-semibold tabular-nums">{r.play_count != null ? (r.play_count / 10000).toFixed(2) + "万" : "-"}</p>
+              <div className="space-y-3 md:hidden">
+                {history.map((report) => (
+                  <div
+                    key={report.id}
+                    className="space-y-2 rounded-lg border bg-background p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          {report.report_date?.slice(5)}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {getAccountName(report.accounts) ?? "-"}
+                        </p>
                       </div>
-                      <p className="text-sm truncate">{r.title}</p>
-                      <div className="grid grid-cols-4 gap-2 text-xs">
-                        <div>
-                          <p className="text-muted-foreground">完播率</p>
-                          <p className="tabular-nums">{r.completion_rate ?? "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">点赞</p>
-                          <p className="tabular-nums">{r.likes}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">评论</p>
-                          <p className="tabular-nums">{r.comments}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">分享</p>
-                          <p className="tabular-nums">{r.shares}</p>
-                        </div>
+                      <p className="text-sm font-semibold tabular-nums">
+                        {report.play_count != null
+                          ? `${(report.play_count / 10000).toFixed(2)}万`
+                          : "-"}
+                      </p>
+                    </div>
+                    <p className="truncate text-sm">{report.title}</p>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">完播率</p>
+                        <p className="tabular-nums">{report.completion_rate ?? "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">点赞</p>
+                        <p className="tabular-nums">{report.likes}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">评论</p>
+                        <p className="tabular-nums">{report.comments}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">分享</p>
+                        <p className="tabular-nums">{report.shares}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

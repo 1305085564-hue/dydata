@@ -34,6 +34,9 @@ export function NavBarClient({ name, isAdmin }: NavBarClientProps) {
             <Link href="/dashboard" className={linkClass("/dashboard")}>
               数据填报
             </Link>
+            <Link href="/growth" className={linkClass("/growth")}>
+              成长分析
+            </Link>
             {isAdmin && (
               <Link href="/admin" className={linkClass("/admin")}>
                 管理后台

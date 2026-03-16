@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   getDefaultPublishedAtValue,
   normalizePublishedAtInputValue,
-} from "./日报.ts";
+} from "./日报";
 
 test("新建日报时发布时间默认昨天同一时分", () => {
   const now = new Date(2026, 2, 17, 9, 30, 0);

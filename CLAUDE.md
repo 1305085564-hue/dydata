@@ -107,7 +107,8 @@
 | owner 看不到管理后台 | 部署失败 → 线上跑旧代码（login 只认 admin 不认 owner） | 修复部署后自动解决 |
 | cron 接口返回 Unauthorized | 项目记忆写的是 `CRON_SECRET`，代码早期只认 `REMIND_SECRET` | `/api/remind`、`/api/report` 改为兼容 `CRON_SECRET ?? REMIND_SECRET` |
 | cron 报表接口查不到数据 | 定时接口用 anon key 读 `daily_reports`，受 RLS/权限影响 | 服务端接口优先改用 `SUPABASE_SERVICE_ROLE_KEY` |
-
+| dashboard 页面 build 失败 | `page.tsx` 里复用同名解构变量 `todayReports`，修完后继续暴露出 Select 组件 `onValueChange` 类型不兼容 | 先按编译报错逐个收口：重命名冲突变量，再把 `onValueChange` 改成显式兜底 `null` 的回调 |
+| React Hooks lint 误报/回填状态错乱 | 中文导出组件名未被 lint 识别为 Hook 组件，且表单局部 state 依赖 `useEffect` 同步 props 容易触发 `set-state-in-effect` | 内部组件名改成英文 PascalCase 再导出中文别名；表单切换时优先用 `key` 重建组件，避免用 effect 同步初始化 state |
 ## 排查方法论（遇到线上问题时按顺序检查）
 
 1. **先确认线上跑的是哪个版本**
@@ -125,3 +126,64 @@
    - 环境变量缺失导致 build 报错
    - Node 版本不兼容
 5. **× 反复改代码碰运气** → 先定位根因再动手
+
+## 已安装 Skills（.claude/skills/）
+
+以下 skill 已安装到项目，执行任务时自动遵守：
+
+### nextjs-best-practices
+- Server Component（默认）vs Client Component（'use client'）：按需拆分
+- 数据获取在 Server Component 做，交互逻辑在 Client Component 做
+- 布局用 layout.tsx，loading/error 用约定文件
+- 避免在 Client Component 里直接 fetch 数据库
+
+### nextjs-supabase-auth
+- 用 @supabase/ssr 做 App Router 集成
+- middleware 里刷新 session + 保护路由
+- Server Actions 处理认证操作
+- × 把 auth token 暴露给客户端
+
+### verification-before-completion
+- 声称"完成"之前必须跑验证命令（build/test/curl）
+- 没跑过验证 = 不能说完成
+- 流程：确定验证命令 → 执行 → 读完整输出 → 确认通过 → 才能声称完成
+
+### systematic-debugging
+- 遇到 bug 先定位根因，× 猜测性修复
+- 流程：复现 → 收集证据 → 缩小范围 → 找到根因 → 才能动手修
+- 尤其在时间压力下更要遵守（越急越不能瞎改）
+
+### 前端/UI/动效类（10 个）
+- **frontend-design**: 生产级前端界面，避免 AI 通用审美，追求独特设计感
+- **ui-ux-pro-max**: 50+ 风格、21 调色板、50 字体搭配、shadcn/ui 深度集成
+- **tailwind-patterns**: Tailwind CSS v4，CSS-first 配置、容器查询、设计 token
+- **scroll-experience**: 滚动驱动动画、视差效果、沉浸式叙事体验
+- **3d-web-experience**: Three.js / React Three Fiber / WebGL 3D 交互
+- **mobile-design**: 移动端优先设计思维、触控交互、平台规范
+- **web-design-guidelines**: Web 界面设计规范审查
+- **theme-factory**: 10 套预设主题，可应用到任何页面
+- **accessibility-auditor**: WCAG 无障碍审计
+- **claude-d3js-skill**: D3.js 交互式数据可视化
+
+### 框架/性能类（6 个）
+- **react-patterns**: 现代 React Hooks、组合、性能、TypeScript
+- **react-ui-patterns**: 加载状态、错误处理、异步数据 UI 模式
+- **core-web-vitals**: LCP/INP/CLS 优化
+- **performance**: 网页性能优化（加载速度、页面速度）
+- **vercel-deployment**: Vercel 部署最佳实践
+- **clean-code**: 简洁代码标准，× 过度工程
+
+### 数据库（1 个）
+- **supabase-postgres-best-practices**: Postgres 查询优化、索引策略、RLS
+
+### 工程质量类（5 个）
+- **production-code-audit**: 全代码库深度扫描，升级到生产级质量
+- **code-reviewer**: 代码审查（安全/性能/可维护性）
+- **test-driven-development**: TDD 红绿重构
+- **error-resolver**: 系统化错误诊断
+- **lint-and-validate**: 自动质量控制和静态分析
+
+### 工具类（3 个）
+- **mermaid-diagrams**: Mermaid 图表（架构/流程/ER/序列图）
+- **dispatching-parallel-agents**: 多任务并行子代理调度
+- **git-pushing**: git commit + push 规范
