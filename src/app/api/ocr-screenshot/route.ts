@@ -21,9 +21,27 @@ type ParsedOcrResult = {
   confidence: Record<OcrFieldKey, ConfidenceLevel>;
 };
 
+type OpenAICompatibleMessageContentBlock = {
+  type?: string;
+  text?: string;
+};
+
+type UpstreamRequestBody = {
+  model: string;
+  messages: Array<{
+    role: "user";
+    content: Array<
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: { url: string } }
+    >;
+  }>;
+  max_tokens: number;
+  response_format: { type: "json_object" };
+};
+
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const OCR_MODEL = process.env.OCR_MODEL || "claude-haiku-4-5-20251001";
+const OCR_MODEL = process.env.OCR_MODEL || "claude-haiku-4-5";
 const OCR_FIELDS: OcrFieldKey[] = [
   "play_count",
   "likes",
@@ -60,55 +78,77 @@ export async function POST(request: NextRequest) {
       ? await parseMultipartPayload(request)
       : await parseJsonPayload(request);
 
-    if (imagePayload.error) {
-      return NextResponse.json({ error: imagePayload.error }, { status: 400 });
+    if (imagePayload.error || !imagePayload.dataUrl) {
+      return NextResponse.json({ error: imagePayload.error || "图片为空、损坏或请求格式不正确" }, { status: 400 });
     }
+
+    const dataUrl = imagePayload.dataUrl;
+    const upstreamUrl = buildUpstreamUrl(baseUrl);
+    const requestBody: UpstreamRequestBody = {
+      model: OCR_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: buildPrompt(),
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: dataUrl,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 1000,
+      response_format: { type: "json_object" as const },
+    };
+
+    console.log(
+      "[ocr-screenshot] upstream request",
+      JSON.stringify({
+        url: upstreamUrl,
+        body: serializeRequestBodyForLog(requestBody),
+      })
+    );
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
-      const aiRes = await fetch(`${baseUrl}/chat/completions`, {
+      const aiRes = await fetch(upstreamUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model: OCR_MODEL,
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: buildPrompt(),
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: imagePayload.dataUrl,
-                  },
-                },
-              ],
-            },
-          ],
-          max_tokens: 1000,
-          response_format: { type: "json_object" },
-        }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
 
+      const rawText = await aiRes.text();
+
+      console.log(
+        "[ocr-screenshot] upstream response",
+        JSON.stringify({
+          status: aiRes.status,
+          ok: aiRes.ok,
+          body: rawText,
+        })
+      );
+
       if (!aiRes.ok) {
-        console.error(`OCR API error: ${aiRes.status}`, await aiRes.text().catch(() => ""));
         return NextResponse.json(
-          { error: "截图识别失败，请稍后重试或手动输入数据" },
+          { error: extractUpstreamError(rawText) || "截图识别失败，请稍后重试或手动输入数据" },
           { status: 500 }
         );
       }
 
-      const aiData = await aiRes.json();
-      const content = aiData.choices?.[0]?.message?.content;
+      const aiData = safeJsonParse(rawText);
+      const content = aiData?.choices?.[0]?.message?.content;
       const parsed = parseOcrContent(content);
 
       if (!parsed) {
@@ -122,12 +162,14 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ data: parsed });
     } catch (error) {
+      console.error("[ocr-screenshot] request failed", error);
+
       if ((error as Error).name === "AbortError") {
         return NextResponse.json({ error: "AI 识别超时，请稍后重试" }, { status: 504 });
       }
 
       return NextResponse.json(
-        { error: "截图识别出错，请稍后重试或手动输入" },
+        { error: (error as Error).message || "截图识别出错，请稍后重试或手动输入" },
         { status: 500 }
       );
     } finally {
@@ -224,12 +266,53 @@ function buildPrompt(): string {
   ].join("\n");
 }
 
+function buildUpstreamUrl(baseUrl: string): string {
+  return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
+}
+
+function serializeRequestBodyForLog(body: UpstreamRequestBody) {
+  return {
+    ...body,
+    messages: body.messages.map((message) => ({
+      ...message,
+      content: message.content.map((item) => {
+        if (item.type !== "image_url") {
+          return item;
+        }
+
+        return {
+          type: item.type,
+          image_url: {
+            url_preview: item.image_url.url.slice(0, 120),
+            url_length: item.image_url.url.length,
+          },
+        };
+      }),
+    })),
+  };
+}
+
+function extractUpstreamError(rawText: string): string | null {
+  const parsed = safeJsonParse(rawText);
+  const message = parsed?.error?.message;
+  return typeof message === "string" && message.trim() ? message : null;
+}
+
+function safeJsonParse(rawText: string): any {
+  try {
+    return JSON.parse(rawText);
+  } catch {
+    return null;
+  }
+}
+
 function parseOcrContent(content: unknown): ParsedOcrResult | null {
-  if (typeof content !== "string" || !content.trim()) {
+  const normalizedContent = normalizeMessageContent(content);
+  if (!normalizedContent) {
     return null;
   }
 
-  const jsonText = extractJson(content);
+  const jsonText = extractJson(normalizedContent);
   if (!jsonText) {
     return null;
   }
@@ -260,6 +343,24 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
   } catch {
     return null;
   }
+}
+
+function normalizeMessageContent(content: unknown): string | null {
+  if (typeof content === "string" && content.trim()) {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    const text = (content as OpenAICompatibleMessageContentBlock[])
+      .filter((item) => item?.type === "text" && typeof item.text === "string")
+      .map((item) => item.text?.trim() || "")
+      .filter(Boolean)
+      .join("\n");
+
+    return text || null;
+  }
+
+  return null;
 }
 
 function extractJson(content: string): string | null {
