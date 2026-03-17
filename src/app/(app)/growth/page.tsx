@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 
 import {
   calcDimensionScores,
-  calcInteractionScore,
   calcRates,
   findBenchmarks,
   parsePercentText,
@@ -10,6 +9,8 @@ import {
   type MetricsAccount,
   type MetricsReport,
 } from "@/lib/metrics";
+import type { 标杆画像卡Props, 核心指标差距项 } from "@/components/growth/benchmark-card";
+import type { 个人诊断卡Props, 诊断弱项, 诊断维度项 } from "@/components/growth/diagnosis-card";
 import { createClient } from "@/lib/supabase/server";
 import { GrowthClientShell } from "./growth-client";
 
@@ -60,7 +61,7 @@ function buildStatusCards(myReports: MetricsReport[], prevReports: MetricsReport
   ];
 }
 
-function buildDiagnosisProps(dimensionScores: ReturnType<typeof calcDimensionScores>) {
+function buildDiagnosisProps(dimensionScores: ReturnType<typeof calcDimensionScores>): Omit<个人诊断卡Props, "className"> {
   const dims = [
     { key: "likeRate", name: "互动吸引" },
     { key: "commentRate", name: "评论互动" },
@@ -77,14 +78,21 @@ function buildDiagnosisProps(dimensionScores: ReturnType<typeof calcDimensionSco
     return { 维度名: d.name, 分位值: Math.round(percentile), key: d.key, diff: s.value };
   });
 
+  const scoreItems = scored.slice(0, 5).map((s) => ({ 维度名: s.维度名, 分位值: s.分位值 })) as [
+    诊断维度项,
+    诊断维度项,
+    诊断维度项,
+    诊断维度项,
+    诊断维度项,
+  ];
   const sorted = [...scored].sort((a, b) => b.分位值 - a.分位值);
-  const strong = sorted.slice(0, 3).map((s) => s.维度名);
-  const weak = sorted.slice(-2).map((s) => ({ 名称: s.维度名 }));
+  const strong = sorted.slice(0, 3).map((s) => s.维度名) as [string, string, string];
+  const weak = sorted.slice(-2).map((s) => ({ 名称: s.维度名 })) as [诊断弱项, 诊断弱项];
 
   return {
-    五维评分数据: scored.slice(0, 5).map((s) => ({ 维度名: s.维度名, 分位值: s.分位值 })) as [any, any, any, any, any],
-    强项: strong as [string, string, string],
-    弱项: weak as [any, any],
+    五维评分数据: scoreItems,
+    强项: strong,
+    弱项: weak,
   };
 }
 
@@ -93,15 +101,8 @@ function buildBenchmarkCards(
   profileNameMap: Map<string, string>,
   myReports: MetricsReport[],
   teamReports: MetricsReport[],
-) {
-  const cards: Array<{
-    标杆类型: "同标签最佳" | "单项最佳" | "近期跃迁";
-    账号名: string;
-    标签: string[];
-    推荐理由: string;
-    核心指标差距: any;
-    代表样本入口: { 标题: string; 链接: string };
-  }> = [];
+): Array<Omit<标杆画像卡Props, "className">> {
+  const cards: Array<Omit<标杆画像卡Props, "className">> = [];
 
   const myAvgRates = myReports.length > 0
     ? {
@@ -111,7 +112,7 @@ function buildBenchmarkCards(
       }
     : { likeRate: 0, completionRate: 0, followerRate: 0 };
 
-  function makeDiffItems(match: BenchmarkMatch) {
+  function makeDiffItems(match: BenchmarkMatch): [核心指标差距项, 核心指标差距项, 核心指标差距项] {
     const benchReports = teamReports.filter((r) => r.account_id === match.accountId);
     const benchAvg = benchReports.length > 0
       ? {

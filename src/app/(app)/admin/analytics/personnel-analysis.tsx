@@ -200,15 +200,15 @@ export function PersonnelAnalysis({ reports }: PersonnelAnalysisProps) {
 
 function PersonCard({ person }: { person: PersonStats }) {
   return (
-    <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4 shadow-sm shadow-black/5 backdrop-blur-sm">
+    <div className="glass-card-static space-y-3 rounded-2xl p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-medium">{person.name}</p>
+          <p className="truncate text-sm font-semibold tracking-tight">{person.name}</p>
           <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${person.suggestion.color}`}>
             {person.suggestion.label}
           </span>
         </div>
-        <span className="shrink-0 text-xs text-muted-foreground">{person.count} 条数据</span>
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{person.count} 条数据</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-0.5">
@@ -217,7 +217,7 @@ function PersonCard({ person }: { person: PersonStats }) {
             variant={person.hitRate >= 40 ? "default" : person.hitRate >= 20 ? "secondary" : "outline"}
             className={person.hitRate >= 40 ? "bg-green-500" : person.hitRate < 20 ? "border-red-300 text-red-500" : ""}
           >
-            {person.hitRate.toFixed(1)}%
+            <span className="tabular-nums">{person.hitRate.toFixed(1)}%</span>
           </Badge>
         </div>
         <div className="space-y-0.5">
@@ -235,8 +235,10 @@ function PersonCard({ person }: { person: PersonStats }) {
             variant={person.trend > 10 ? "default" : person.trend < -10 ? "outline" : "secondary"}
             className={person.trend > 10 ? "bg-green-500" : person.trend < -10 ? "border-red-300 text-red-500" : ""}
           >
-            {person.trend > 0 ? "+" : ""}
-            {person.trend.toFixed(1)}%
+            <span className="tabular-nums">
+              {person.trend > 0 ? "+" : ""}
+              {person.trend.toFixed(1)}%
+            </span>
           </Badge>
         </div>
         <div className="space-y-0.5">
@@ -245,7 +247,7 @@ function PersonCard({ person }: { person: PersonStats }) {
             variant={person.engagementRate >= 5 ? "default" : person.engagementRate >= 2 ? "secondary" : "outline"}
             className={person.engagementRate >= 5 ? "bg-green-500" : person.engagementRate < 2 ? "border-red-300 text-red-500" : ""}
           >
-            {person.engagementRate.toFixed(2)}%
+            <span className="tabular-nums">{person.engagementRate.toFixed(2)}%</span>
           </Badge>
         </div>
       </div>

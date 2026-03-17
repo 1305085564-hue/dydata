@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { DashboardAnimatedSection } from "../dashboard/dashboard-animated-section";
 import { InviteCodeManager } from "./generate-invite-button";
 import { SubmissionStatus } from "./submission-status";
 import { ExportButton } from "./export-button";
@@ -208,147 +209,190 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   );
 
   return (
-        <div className="mx-auto max-w-5xl space-y-8">
-          <h1 className="text-2xl font-semibold">管理员后台</h1>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <h1 className="text-2xl font-semibold tracking-tight">管理员后台</h1>
 
-          <SubmissionStatus
-            profiles={(profiles ?? []).map((p) => ({
-              ...p,
-              status: p.status ?? "active",
-            }))}
-            accounts={accountRows}
-            submittedProfileIds={submittedProfileIds}
-            submittedAccountIds={submittedAccountIds}
-            defaultDate={queryDate}
-          />
-
-          {/* Team dashboard */}
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>团队仪表盘</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <ResultTrend
-                data={trendData.结果趋势}
-                personalLabel="团队总量"
-                teamAverageLabel="团队人均"
-                emptyText="提交 2 天以上数据后可查看趋势图"
-              />
-              <InteractionTrend
-                data={trendData.互动趋势}
-                personalLabel="团队质量分"
-                teamAverageLabel="团队人均"
-                emptyText="提交 2 天以上数据后可查看互动质量分趋势"
-              />
-            </CardContent>
-          </Card>
-
-          {/* Member list */}
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>成员列表</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>姓名</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>注册时间</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(allProfiles ?? []).map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>{p.name}</TableCell>
-                      <TableCell>
-                        <Badge variant={p.role === "owner" ? "destructive" : p.role === "admin" ? "default" : "secondary"}>
-                          {p.role === "owner" ? "创始人" : p.role === "admin" ? "管理员" : "成员"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={p.status === "exempt" ? "outline" : "default"} className="text-xs">
-                          {p.status === "exempt" ? "豁免" : "在岗"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {p.created_at ? new Date(p.created_at).toLocaleDateString("zh-CN") : "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Permission manager - owner only */}
-          {isOwner && (
-            <Card className="card-elevated">
+      {[
+        {
+          key: "submission-status",
+          content: (
+            <SubmissionStatus
+              profiles={(profiles ?? []).map((p) => ({
+                ...p,
+                status: p.status ?? "active",
+              }))}
+              accounts={accountRows}
+              submittedProfileIds={submittedProfileIds}
+              submittedAccountIds={submittedAccountIds}
+              defaultDate={queryDate}
+            />
+          ),
+        },
+        {
+          key: "team-dashboard",
+          content: (
+            <Card className="glass-card border-white/60 bg-white/70">
               <CardHeader>
-                <CardTitle>权限管理</CardTitle>
+                <CardTitle className="font-semibold tracking-tight">团队仪表盘</CardTitle>
               </CardHeader>
-              <CardContent>
-                <PermissionManager
-                  members={(allProfiles ?? []).map((p) => ({
-                    id: p.id,
-                    name: p.name,
-                    role: p.role as UserRole,
-                    permissions: (p.permissions ?? {}) as Permissions,
-                  }))}
-                  currentUserId={user.id}
+              <CardContent className="space-y-6">
+                <ResultTrend
+                  data={trendData.结果趋势}
+                  personalLabel="团队总量"
+                  teamAverageLabel="团队人均"
+                  emptyText="提交 2 天以上数据后可查看趋势图"
+                />
+                <InteractionTrend
+                  data={trendData.互动趋势}
+                  personalLabel="团队质量分"
+                  teamAverageLabel="团队人均"
+                  emptyText="提交 2 天以上数据后可查看互动质量分趋势"
                 />
               </CardContent>
             </Card>
-          )}
-
-          {/* Data manager */}
-          {hasPermission(perm.role, perm.permissions, "edit_data") && (
-            <Card className="card-elevated">
+          ),
+        },
+        {
+          key: "member-list",
+          content: (
+            <Card className="glass-card-static border-white/60 bg-white/70">
               <CardHeader>
-                <CardTitle>数据管理</CardTitle>
+                <CardTitle className="font-semibold tracking-tight">成员列表</CardTitle>
               </CardHeader>
               <CardContent>
-                <DataManager reports={fullReports ?? []} defaultDate={queryDate} avgPlayBySubmitter={avgPlayBySubmitter} dayCountBySubmitter={dayCountBySubmitter} avgPlayByAccount={avgPlayByAccount} dayCountByAccount={dayCountByAccount} />
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>姓名</TableHead>
+                      <TableHead>角色</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead>注册时间</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(allProfiles ?? []).map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>{p.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={p.role === "owner" ? "destructive" : p.role === "admin" ? "default" : "secondary"}>
+                            {p.role === "owner" ? "创始人" : p.role === "admin" ? "管理员" : "成员"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={p.status === "exempt" ? "outline" : "default"} className="text-xs">
+                            {p.status === "exempt" ? "豁免" : "在岗"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground tabular-nums">
+                          {p.created_at ? new Date(p.created_at).toLocaleDateString("zh-CN") : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
-          )}
-
-          {/* Data export */}
-          {hasPermission(perm.role, perm.permissions, "export_data") && (
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle>数据导出</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ExportButton />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Invite code */}
-          {hasPermission(perm.role, perm.permissions, "manage_invite") && (
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle>邀请码管理</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <InviteCodeManager adminId={user.id} existingCodes={inviteCodes ?? []} profileNames={Object.fromEntries(profileMap)} />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Audit logs */}
-          {hasPermission(perm.role, perm.permissions, "view_audit_log") && (
-            <Card className="card-elevated">
-              <CardHeader>
-                <CardTitle>操作日志（最近 50 条）</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AuditLogList logs={logsWithNames} />
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          ),
+        },
+        ...(isOwner
+          ? [
+              {
+                key: "permission-manager",
+                content: (
+                  <Card className="glass-card-static border-white/60 bg-white/70">
+                    <CardHeader>
+                      <CardTitle className="font-semibold tracking-tight">权限管理</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <PermissionManager
+                        members={(allProfiles ?? []).map((p) => ({
+                          id: p.id,
+                          name: p.name,
+                          role: p.role as UserRole,
+                          permissions: (p.permissions ?? {}) as Permissions,
+                        }))}
+                        currentUserId={user.id}
+                      />
+                    </CardContent>
+                  </Card>
+                ),
+              },
+            ]
+          : []),
+        ...(hasPermission(perm.role, perm.permissions, "edit_data")
+          ? [
+              {
+                key: "data-manager",
+                content: (
+                  <Card className="glass-card-static border-white/60 bg-white/70">
+                    <CardHeader>
+                      <CardTitle className="font-semibold tracking-tight">数据管理</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <DataManager reports={fullReports ?? []} defaultDate={queryDate} avgPlayBySubmitter={avgPlayBySubmitter} dayCountBySubmitter={dayCountBySubmitter} avgPlayByAccount={avgPlayByAccount} dayCountByAccount={dayCountByAccount} />
+                    </CardContent>
+                  </Card>
+                ),
+              },
+            ]
+          : []),
+        ...(hasPermission(perm.role, perm.permissions, "export_data")
+          ? [
+              {
+                key: "data-export",
+                content: (
+                  <Card className="glass-card-static border-white/60 bg-white/70">
+                    <CardHeader>
+                      <CardTitle className="font-semibold tracking-tight">数据导出</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ExportButton />
+                    </CardContent>
+                  </Card>
+                ),
+              },
+            ]
+          : []),
+        ...(hasPermission(perm.role, perm.permissions, "manage_invite")
+          ? [
+              {
+                key: "invite-code",
+                content: (
+                  <Card className="glass-card-static border-white/60 bg-white/70">
+                    <CardHeader>
+                      <CardTitle className="font-semibold tracking-tight">邀请码管理</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <InviteCodeManager adminId={user.id} existingCodes={inviteCodes ?? []} profileNames={Object.fromEntries(profileMap)} />
+                    </CardContent>
+                  </Card>
+                ),
+              },
+            ]
+          : []),
+        ...(hasPermission(perm.role, perm.permissions, "view_audit_log")
+          ? [
+              {
+                key: "audit-logs",
+                content: (
+                  <Card className="glass-card-static border-white/60 bg-white/70">
+                    <CardHeader>
+                      <CardTitle className="font-semibold tracking-tight">操作日志（最近 50 条）</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <AuditLogList logs={logsWithNames} />
+                    </CardContent>
+                  </Card>
+                ),
+              },
+            ]
+          : []),
+      ].map((section, index) => (
+        <DashboardAnimatedSection key={section.key} index={index}>
+          {section.content}
+        </DashboardAnimatedSection>
+      ))}
+    </div>
   );
+
 }

@@ -46,8 +46,8 @@ function getTimeSlot(hour: number): string {
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border bg-background px-3 py-2 shadow-md">
-      <p className="text-xs font-medium">{label}</p>
+    <div className="glass-card-static rounded-2xl px-3 py-2">
+      <p className="text-xs font-semibold tracking-tight">{label}</p>
       <p className="text-xs tabular-nums text-blue-500">平均播放：{payload[0].value.toFixed(2)}万</p>
     </div>
   );
@@ -104,15 +104,17 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
   return (
     <div className="space-y-6">
       {!hasEnoughPublished && (
-        <p className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
-          {publishedCount === 0
-            ? "暂无发布时间数据，按提交日期分析星期分布。填写「发布时间」后可解锁时间段分析。"
-            : `发布时间数据积累中（${publishedCount}/5），需要更多数据后才能展示时间段分析。当前按提交日期分析星期分布。`}
-        </p>
+        <div className="glass-card-static rounded-2xl p-3">
+          <p className="text-xs text-muted-foreground">
+            {publishedCount === 0
+              ? "暂无发布时间数据，按提交日期分析星期分布。填写「发布时间」后可解锁时间段分析。"
+              : `发布时间数据积累中（${publishedCount}/5），需要更多数据后才能展示时间段分析。当前按提交日期分析星期分布。`}
+          </p>
+        </div>
       )}
 
-      <div>
-        <h4 className="text-sm font-medium text-foreground mb-3">按星期分布</h4>
+      <div className="glass-card-static rounded-2xl p-4">
+        <h4 className="mb-3 text-sm font-semibold tracking-tight text-foreground">按星期分布</h4>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={weekdayData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -125,8 +127,8 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
       </div>
 
       {timeSlotData && (
-        <div>
-          <h4 className="text-sm font-medium text-foreground mb-3">按时间段分布</h4>
+        <div className="glass-card-static rounded-2xl p-4">
+          <h4 className="mb-3 text-sm font-semibold tracking-tight text-foreground">按时间段分布</h4>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={timeSlotData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

@@ -23,7 +23,7 @@ type ParsedOcrResult = {
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const VISION_MODEL_FALLBACK = "gpt-4.1-mini";
+const OCR_MODEL = "claude-haiku-4-5-20251001";
 const OCR_FIELDS: OcrFieldKey[] = [
   "play_count",
   "likes",
@@ -46,11 +46,10 @@ export async function POST(request: NextRequest) {
 
   const baseUrl = process.env.AI_BASE_URL;
   const apiKey = process.env.AI_API_KEY;
-  const configuredModel = process.env.AI_MODEL || "claude-sonnet-4-6";
 
   if (!baseUrl || !apiKey) {
     return NextResponse.json(
-      { error: "AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）" },
+      { error: "截图识别功能暂不可用，请手动输入数据" },
       { status: 500 }
     );
   }
@@ -76,7 +75,7 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: resolveVisionModel(configuredModel),
+          model: OCR_MODEL,
           messages: [
             {
               role: "user",
@@ -101,9 +100,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (!aiRes.ok) {
-        const text = await aiRes.text();
+        console.error(`OCR API error: ${aiRes.status}`, await aiRes.text().catch(() => ""));
         return NextResponse.json(
-          { error: `AI 请求失败: ${aiRes.status} ${text.slice(0, 200)}` },
+          { error: "截图识别失败，请稍后重试或手动输入数据" },
           { status: 500 }
         );
       }
@@ -128,7 +127,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: `AI 请求异常: ${(error as Error).message}` },
+        { error: "截图识别出错，请稍后重试或手动输入" },
         { status: 500 }
       );
     } finally {
@@ -192,22 +191,6 @@ async function fileToDataUrl(
   return {
     dataUrl: `data:${file.type};base64,${buffer.toString("base64")}`,
   };
-}
-
-function resolveVisionModel(configuredModel: string): string {
-  if (isLikelyVisionModel(configuredModel)) {
-    return configuredModel;
-  }
-  return VISION_MODEL_FALLBACK;
-}
-
-function isLikelyVisionModel(model: string): boolean {
-  const normalized = model.toLowerCase();
-  return (
-    normalized.includes("gpt-4.1") ||
-    normalized.includes("gpt-4o") ||
-    normalized.includes("vision")
-  );
 }
 
 function buildPrompt(): string {

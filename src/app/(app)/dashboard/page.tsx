@@ -15,6 +15,7 @@ import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { 日报提交面板 } from "./日报提交面板";
+import { DashboardAnimatedSection } from "./dashboard-animated-section";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -125,185 +126,195 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold">
-          你好，{profile?.name ?? user.email}
-        </h1>
-      </div>
+      <DashboardAnimatedSection index={0}>
+        <div>
+          <h1 className="text-2xl font-semibold">
+            你好，{profile?.name ?? user.email}
+          </h1>
+        </div>
+      </DashboardAnimatedSection>
 
-      <日报提交面板
-        accounts={accounts ?? []}
-        today={today}
-        todayReports={userTodayReports ?? []}
-      />
+      <DashboardAnimatedSection index={1}>
+        <日报提交面板
+          accounts={accounts ?? []}
+          today={today}
+          todayReports={userTodayReports ?? []}
+        />
+      </DashboardAnimatedSection>
 
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle>数据趋势</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <ResultTrend
-            data={trendData.结果趋势}
-            personalLabel="我的数据"
-            teamAverageLabel="团队人均"
-            emptyText="提交 2 天以上数据后可查看趋势图"
-          />
-          <InteractionTrend
-            data={trendData.互动趋势}
-            personalLabel="我的质量分"
-            teamAverageLabel="团队人均"
-            emptyText="提交 2 天以上数据后可查看互动质量分趋势"
-          />
-        </CardContent>
-      </Card>
+      <DashboardAnimatedSection index={2}>
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>数据趋势</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <ResultTrend
+              data={trendData.结果趋势}
+              personalLabel="我的数据"
+              teamAverageLabel="团队 P70"
+              emptyText="提交 2 天以上数据后可查看趋势图"
+            />
+            <InteractionTrend
+              data={trendData.互动趋势}
+              personalLabel="我的质量分"
+              teamAverageLabel="团队 P70"
+              emptyText="提交 2 天以上数据后可查看互动质量分趋势"
+            />
+          </CardContent>
+        </Card>
+      </DashboardAnimatedSection>
 
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle>账号排行榜</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Leaderboard
-            data={leaderboardData}
-            ownAccountIds={accountIds}
-            ownContentDirections={ownContentDirections}
-            currentDate={today}
-            defaultRange="week"
-            defaultCompact
-          />
-        </CardContent>
-      </Card>
+      <DashboardAnimatedSection index={3}>
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>账号排行榜</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Leaderboard
+              data={leaderboardData}
+              ownAccountIds={accountIds}
+              ownContentDirections={ownContentDirections}
+              currentDate={today}
+              defaultRange="week"
+              defaultCompact
+            />
+          </CardContent>
+        </Card>
+      </DashboardAnimatedSection>
 
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle>历史记录（最近 30 条）</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!history || history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无记录</p>
-          ) : (
-            <>
-              <div className="hidden overflow-x-auto md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>日期</TableHead>
-                      <TableHead>账号</TableHead>
-                      <TableHead>视频标题</TableHead>
-                      <TableHead className="text-right">播放量</TableHead>
-                      <TableHead className="text-right">完播率</TableHead>
-                      <TableHead className="text-right">均播时长</TableHead>
-                      <TableHead className="text-right hidden lg:table-cell">
-                        2s跳出
-                      </TableHead>
-                      <TableHead className="text-right hidden lg:table-cell">
-                        5s完播
-                      </TableHead>
-                      <TableHead className="text-right">点赞</TableHead>
-                      <TableHead className="text-right">评论</TableHead>
-                      <TableHead className="text-right">分享</TableHead>
-                      <TableHead className="text-right hidden lg:table-cell">
-                        收藏
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {history.map((report) => {
-                      const dateText = report.report_date?.slice(5);
-                      const accountName = getAccountName(report.accounts);
-                      return (
-                        <TableRow key={report.id}>
-                          <TableCell className="whitespace-nowrap text-muted-foreground">
-                            {dateText}
-                          </TableCell>
-                          <TableCell className="max-w-[120px] truncate text-muted-foreground">
-                            {accountName ?? "-"}
-                          </TableCell>
-                          <TableCell className="max-w-[160px] truncate">
-                            {report.title}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold tabular-nums">
-                            {report.play_count != null
-                              ? `${(report.play_count / 10000).toFixed(2)}万`
-                              : "-"}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {report.completion_rate ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {report.avg_play_duration ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums hidden lg:table-cell">
-                            {report.bounce_rate_2s ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums hidden lg:table-cell">
-                            {report.completion_rate_5s ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {report.likes}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {report.comments}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {report.shares}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums hidden lg:table-cell">
-                            {report.favorites}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+      <DashboardAnimatedSection index={4}>
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>历史记录（最近 30 条）</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!history || history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">暂无记录</p>
+            ) : (
+              <>
+                <div className="hidden overflow-x-auto md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>日期</TableHead>
+                        <TableHead>账号</TableHead>
+                        <TableHead>视频标题</TableHead>
+                        <TableHead className="text-right">播放量</TableHead>
+                        <TableHead className="text-right">完播率</TableHead>
+                        <TableHead className="text-right">均播时长</TableHead>
+                        <TableHead className="text-right hidden lg:table-cell">
+                          2s跳出
+                        </TableHead>
+                        <TableHead className="text-right hidden lg:table-cell">
+                          5s完播
+                        </TableHead>
+                        <TableHead className="text-right">点赞</TableHead>
+                        <TableHead className="text-right">评论</TableHead>
+                        <TableHead className="text-right">分享</TableHead>
+                        <TableHead className="text-right hidden lg:table-cell">
+                          收藏
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {history.map((report) => {
+                        const dateText = report.report_date?.slice(5);
+                        const accountName = getAccountName(report.accounts);
+                        return (
+                          <TableRow key={report.id}>
+                            <TableCell className="whitespace-nowrap text-muted-foreground">
+                              {dateText}
+                            </TableCell>
+                            <TableCell className="max-w-[120px] truncate text-muted-foreground">
+                              {accountName ?? "-"}
+                            </TableCell>
+                            <TableCell className="max-w-[160px] truncate">
+                              {report.title}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold tabular-nums">
+                              {report.play_count != null
+                                ? `${(report.play_count / 10000).toFixed(2)}万`
+                                : "-"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {report.completion_rate ?? "-"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {report.avg_play_duration ?? "-"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums hidden lg:table-cell">
+                              {report.bounce_rate_2s ?? "-"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums hidden lg:table-cell">
+                              {report.completion_rate_5s ?? "-"}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {report.likes}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {report.comments}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {report.shares}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums hidden lg:table-cell">
+                              {report.favorites}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
 
-              <div className="space-y-3 md:hidden">
-                {history.map((report) => (
-                  <div
-                    key={report.id}
-                    className="space-y-2 rounded-lg border bg-background p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          {report.report_date?.slice(5)}
+                <div className="space-y-3 md:hidden">
+                  {history.map((report) => (
+                    <div
+                      key={report.id}
+                      className="space-y-2 rounded-lg border bg-background p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            {report.report_date?.slice(5)}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {getAccountName(report.accounts) ?? "-"}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold tabular-nums">
+                          {report.play_count != null
+                            ? `${(report.play_count / 10000).toFixed(2)}万`
+                            : "-"}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {getAccountName(report.accounts) ?? "-"}
-                        </p>
                       </div>
-                      <p className="text-sm font-semibold tabular-nums">
-                        {report.play_count != null
-                          ? `${(report.play_count / 10000).toFixed(2)}万`
-                          : "-"}
-                      </p>
-                    </div>
-                    <p className="truncate text-sm">{report.title}</p>
-                    <div className="grid grid-cols-4 gap-2 text-xs">
-                      <div>
-                        <p className="text-muted-foreground">完播率</p>
-                        <p className="tabular-nums">{report.completion_rate ?? "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">点赞</p>
-                        <p className="tabular-nums">{report.likes}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">评论</p>
-                        <p className="tabular-nums">{report.comments}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">分享</p>
-                        <p className="tabular-nums">{report.shares}</p>
+                      <p className="truncate text-sm">{report.title}</p>
+                      <div className="grid grid-cols-4 gap-2 text-xs">
+                        <div>
+                          <p className="text-muted-foreground">完播率</p>
+                          <p className="tabular-nums">{report.completion_rate ?? "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">点赞</p>
+                          <p className="tabular-nums">{report.likes}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">评论</p>
+                          <p className="tabular-nums">{report.comments}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">分享</p>
+                          <p className="tabular-nums">{report.shares}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </DashboardAnimatedSection>
     </div>
   );
 }

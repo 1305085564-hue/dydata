@@ -45,6 +45,39 @@ function 汇总单日报告(reports: 趋势报告[]) {
   );
 }
 
+function 构建团队P70映射(reports: 趋势报告[], activeUserIds: string[]) {
+  const activeUserIdSet = new Set(activeUserIds);
+  const byDateAndUser = new Map<string, Map<string, 趋势报告[]>>();
+
+  for (const report of reports) {
+    if (!activeUserIdSet.has(report.user_id)) continue;
+
+    const byUser = byDateAndUser.get(report.report_date) ?? new Map<string, 趋势报告[]>();
+    const userReports = byUser.get(report.user_id) ?? [];
+    userReports.push(report);
+    byUser.set(report.user_id, userReports);
+    byDateAndUser.set(report.report_date, byUser);
+  }
+
+  const result = new Map<string, 汇总结果>();
+
+  for (const [date, byUser] of byDateAndUser) {
+    const userTotals = Array.from(byUser.values()).map((userReports) => 汇总单日报告(userReports));
+    const playCounts = userTotals.map((item) => item.playCount).sort((a, b) => a - b);
+    const followerGains = userTotals.map((item) => item.followerGain).sort((a, b) => a - b);
+    const scores = userTotals.map((item) => item.score).sort((a, b) => a - b);
+    const p70Index = Math.ceil(userTotals.length * 0.7) - 1;
+
+    result.set(date, {
+      playCount: playCounts[p70Index] ?? 0,
+      followerGain: followerGains[p70Index] ?? 0,
+      score: Number((scores[p70Index] ?? 0).toFixed(2)),
+    });
+  }
+
+  return result;
+}
+
 function 构建团队日均映射(reports: 趋势报告[], activeUserIds: string[]) {
   const activeUserIdSet = new Set(activeUserIds);
   const byDateAndUser = new Map<string, Map<string, 趋势报告[]>>();
@@ -104,7 +137,7 @@ export function build个人趋势数据(
   activeUserIds: string[]
 ): 趋势结果 {
   const selfByDate = 构建个人日汇总映射(selfReports);
-  const teamAverageByDate = 构建团队日均映射(teamReports, activeUserIds);
+  const teamAverageByDate = 构建团队P70映射(teamReports, activeUserIds);
   const dates = Array.from(selfByDate.keys()).sort((a, b) => a.localeCompare(b));
 
   return {

@@ -50,7 +50,9 @@ export function AiInsight() {
       </div>
 
       {error && (
-        <p className="text-sm text-red-500 bg-red-50 rounded p-2">{error}</p>
+        <div className="glass-card-static rounded-2xl p-3">
+          <p className="text-sm text-red-500">{error}</p>
+        </div>
       )}
 
       {loading && (
@@ -65,13 +67,15 @@ export function AiInsight() {
       )}
 
       {insight && (
-        <div className="rounded-lg border bg-muted/30 p-4">
+        <div className="glass-card-static rounded-2xl p-4">
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{insight}</p>
         </div>
       )}
 
       {!insight && !error && !loading && (
-        <p className="text-sm text-muted-foreground">点击「生成分析」获取 AI 数据洞察</p>
+        <div className="glass-card-static rounded-2xl p-3">
+          <p className="text-sm text-muted-foreground">点击「生成分析」获取 AI 数据洞察</p>
+        </div>
       )}
     </div>
   );

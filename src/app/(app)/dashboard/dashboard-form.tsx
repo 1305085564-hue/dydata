@@ -181,33 +181,43 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
+        <Card className="card-elevated border-dashed bg-muted/20">
           <CardContent className="space-y-4 pt-5 pb-5">
-            <h3 className="text-sm font-semibold tracking-wide text-foreground">基本信息</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="account_id">账号</Label>
-                <Select value={selectedAccountId} disabled>
-                  <SelectTrigger id="account_id" className="h-10 w-full">
-                    <SelectValue placeholder="请选择账号" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
+            <h3 className="text-sm font-semibold tracking-wide text-foreground">📋 基本信息</h3>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
                 <Label htmlFor="title">视频标题</Label>
                 <Input id="title" name="title" placeholder="请输入视频标题" required className="h-10" defaultValue={existingData?.title ?? ""} />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="report_date">提交日期</Label>
-                <Input id="report_date" name="report_date" type="date" defaultValue={existingData?.report_date ?? today} required className="h-10 text-base" />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="account_id">账号</Label>
+                  <Select value={selectedAccountId} disabled>
+                    <SelectTrigger id="account_id" className="h-10 w-full bg-background/80">
+                      <SelectValue placeholder="请选择账号" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="report_date">提交日期</Label>
+                  <Input id="report_date" name="report_date" type="date" defaultValue={existingData?.report_date ?? today} required className="h-10 text-base bg-background/80" />
+                </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-elevated">
+          <CardContent className="space-y-5 pt-5 pb-5">
+            <h3 className="text-base font-bold text-foreground">🔥 核心数据</h3>
+            <div className="grid grid-cols-1 gap-4 rounded-xl bg-primary/5 p-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="play_count">播放量</Label>
                 <div className="relative">
@@ -219,7 +229,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                     min={0}
                     placeholder="3.21"
                     required
-                    className="h-10 pr-10"
+                    className="h-12 rounded-xl border-primary/10 bg-background pr-10 text-lg font-semibold"
                     value={ocrValues.play_count}
                     onChange={(e) => updateOcrValue("play_count", e.target.value)}
                   />
@@ -234,18 +244,12 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                   type="number"
                   min={0}
                   required
-                  className="h-10"
+                  className="h-12 rounded-xl border-primary/10 bg-background text-lg font-semibold"
                   value={ocrValues.follower_gain}
                   onChange={(e) => updateOcrValue("follower_gain", e.target.value)}
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-elevated">
-          <CardContent className="space-y-4 pt-5 pb-5">
-            <h3 className="text-sm font-semibold tracking-wide text-foreground">核心指标</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="completion_rate">完播率</Label>
@@ -275,17 +279,13 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                   <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">%</span>
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="follower_convert">导粉（选填）</Label>
-                <Input id="follower_convert" name="follower_convert" type="number" min={0} defaultValue={existingData?.follower_convert ?? ""} className="h-10" />
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
-          <CardContent className="space-y-4 pt-5 pb-5">
-            <h3 className="text-sm font-semibold tracking-wide text-foreground">互动指标</h3>
+        <Card className="card-elevated bg-muted/10">
+          <CardContent className="space-y-5 pt-5 pb-5">
+            <h3 className="text-sm font-semibold tracking-wide text-foreground">📎 补充信息</h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="space-y-1.5">
                 <Label htmlFor="likes">点赞</Label>
@@ -340,30 +340,30 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="card-elevated">
-          <CardContent className="space-y-4 pt-5 pb-5">
-            <h3 className="text-sm font-semibold tracking-wide text-foreground">补充信息</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="follower_convert">导粉（选填）</Label>
+                <Input id="follower_convert" name="follower_convert" type="number" min={0} defaultValue={existingData?.follower_convert ?? ""} className="h-10" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="published_at">发布时间</Label>
+                <Input
+                  id="published_at"
+                  name="published_at"
+                  type="datetime-local"
+                  className="h-10"
+                  defaultValue={normalizePublishedAtInputValue(existingData?.published_at) || getDefaultPublishedAtValue()}
+                />
+              </div>
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="content">文案内容（选填）</Label>
               <textarea
                 id="content"
                 name="content"
                 placeholder="粘贴今日发布的视频文案（选填）"
-                className="min-h-[120px] w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-[120px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 defaultValue={existingData?.content ?? ""}
-              />
-            </div>
-            <div className="space-y-1.5 sm:w-1/2">
-              <Label htmlFor="published_at">发布时间</Label>
-              <Input
-                id="published_at"
-                name="published_at"
-                type="datetime-local"
-                className="h-10"
-                defaultValue={normalizePublishedAtInputValue(existingData?.published_at) || getDefaultPublishedAtValue()}
               />
             </div>
           </CardContent>
@@ -375,7 +375,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </Button>
         </div>
 
-        <div className="fixed right-0 bottom-0 left-0 z-20 border-t bg-background/90 p-4 backdrop-blur-md sm:hidden">
+        <div className="fixed right-0 bottom-0 left-0 z-20 border-t bg-background/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden">
           <Button type="submit" disabled={isPending} className="h-12 w-full text-base">
             {isPending ? "提交中..." : existingData ? "修改日报" : "提交日报"}
           </Button>

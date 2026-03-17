@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { AnimatedNumber } from "@/components/animated-number";
 import {
+  Area,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,6 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ChartSkeleton } from "./chart-skeleton";
 
 export interface InteractionTrendDatum {
   date: string;
@@ -26,6 +29,7 @@ interface InteractionTrendProps {
   personalLabel?: string;
   teamAverageLabel?: string;
   emptyText?: string;
+  isLoading?: boolean;
 }
 
 type RangeKey = 7 | 30;
@@ -34,42 +38,106 @@ function formatDateLabel(value: string) {
   return value.length >= 10 ? value.slice(5) : value;
 }
 
+function 趋势方向图标({ positive }: { positive: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 12 12"
+      className={cn("h-3 w-3", positive ? "text-emerald-500" : "text-orange-500")}
+      fill="none"
+    >
+      <path
+        d={positive ? "M2.25 7.75 6 4l3.75 3.75M6 4v6" : "M2.25 4.25 6 8l3.75-3.75M6 8V2"}
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function 趋势空状态({ text }: { text: string }) {
+  return (
+    <motion.div
+      className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-border/70 bg-muted/[0.18] px-6 text-center"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: "easeOut" }}
+    >
+      <svg aria-hidden="true" viewBox="0 0 220 120" className="h-28 w-full max-w-[220px] text-slate-300">
+        <path d="M18 96H202" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
+        <path d="M24 26V96" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
+        <path d="M34 82c15-10 23-16 33-11 11 5 18 19 28 18 14-1 20-26 33-26 10 0 16 11 25 11 10 0 18-10 29-15" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <path d="M34 69c12-7 20-10 28-7 12 4 20 19 32 17 10-2 17-13 26-13 8 0 14 7 24 7 8 0 15-6 24-10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.5" />
+        <path d="M34 58c11-6 18-9 25-8 10 1 20 12 31 10 9-2 16-10 24-10 8 0 13 6 20 6 7 0 14-4 20-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.32" />
+      </svg>
+      <p className="text-sm text-muted-foreground">{text}</p>
+    </motion.div>
+  );
+}
+
 function InteractionTooltip({
   active,
   payload,
   label,
+  personalLabel,
+  teamAverageLabel,
 }: {
   active?: boolean;
   payload?: Array<{ dataKey?: string; name?: string; value?: number; color?: string }>;
   label?: string;
+  personalLabel: string;
+  teamAverageLabel: string;
 }) {
   if (!active || !payload?.length) return null;
 
+  const personalItem = payload.find((item) => item.dataKey === personalLabel);
+  const teamItem = payload.find((item) => item.dataKey === teamAverageLabel);
+  const personalValue = typeof personalItem?.value === "number" ? personalItem.value : null;
+  const teamValue = typeof teamItem?.value === "number" ? teamItem.value : null;
+  const isPositive = personalValue != null && teamValue != null ? personalValue > teamValue : null;
+
   return (
-    <div className="min-w-36 rounded-2xl border border-white/70 bg-white/88 px-3 py-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="min-w-40 rounded-2xl border border-white/70 bg-white/88 px-3 py-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl"
+    >
       <p className="text-[11px] font-medium tracking-[0.01em] text-foreground/70">{label}</p>
       <div className="mt-2 space-y-1.5">
-        {payload.map((item) => (
-          <div key={item.dataKey} className="flex items-center justify-between gap-3 text-xs tabular-nums">
-            <span className="flex items-center gap-2 text-foreground/70">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-              {item.name}
-            </span>
-            <span className="font-medium text-foreground">{typeof item.value === "number" ? item.value.toLocaleString() : "-"}</span>
-          </div>
-        ))}
+        {payload.map((item) => {
+          const numericValue = typeof item.value === "number" ? item.value : null;
+          const showTrend = item.dataKey === personalLabel && isPositive != null;
+
+          return (
+            <div key={item.dataKey} className="flex items-center justify-between gap-3 text-xs tabular-nums">
+              <span className="flex items-center gap-2 text-foreground/70">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                {item.name}
+              </span>
+              <span className="flex items-center gap-1 font-medium text-foreground">
+                {numericValue != null ? <AnimatedNumber value={numericValue} duration={280} /> : "-"}
+                {showTrend ? <趋势方向图标 positive={isPositive} /> : null}
+              </span>
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function InteractionTrend({
   data,
   personalLabel = "个人",
-  teamAverageLabel = "团队平均",
+  teamAverageLabel = "团队 P70",
   emptyText = "提交 2 天以上数据后可查看趋势图",
+  isLoading = false,
 }: InteractionTrendProps) {
   const [range, setRange] = useState<RangeKey>(7);
+  const gradientId = useId().replace(/:/g, "");
 
   const sorted = useMemo(() => [...data].sort((a, b) => a.date.localeCompare(b.date)), [data]);
   const visibleData = useMemo(() => sorted.slice(-range), [range, sorted]);
@@ -83,16 +151,12 @@ export function InteractionTrend({
     [personalLabel, teamAverageLabel, visibleData]
   );
 
-  if (sorted.length < 2) {
-    return <p className="py-6 text-sm text-muted-foreground">{emptyText}</p>;
-  }
-
   return (
-    <section className="rounded-[1rem] border border-white/70 bg-white/75 p-4 shadow-sm backdrop-blur-xl sm:p-5">
+    <section className="glass-card-static p-4 sm:p-5">
       <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">互动质量分趋势</h3>
-          <p className="text-xs font-light text-muted-foreground">评论×0.35 + 分享×0.25 + 点赞×0.25 + 收藏×0.15</p>
+          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">互动质量分趋势</h3>
+          <p className="text-xs text-muted-foreground">评论×0.35 + 分享×0.25 + 点赞×0.25 + 收藏×0.15</p>
         </div>
         <div className="inline-flex rounded-2xl border border-border/70 bg-muted/45 p-1 backdrop-blur">
           {([7, 30] as const).map((value) => (
@@ -113,57 +177,82 @@ export function InteractionTrend({
       </div>
 
       <div className="mt-4 h-[280px] w-full sm:h-[320px]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={String(range)}
-            className="h-full w-full"
-            initial={{ opacity: 0, y: 10, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.99 }}
-            transition={{ type: "spring", stiffness: 220, damping: 26, mass: 0.9 }}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
-                <XAxis
-                  dataKey="date"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
-                  tickMargin={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
-                  width={56}
-                />
-                <Tooltip content={<InteractionTooltip />} cursor={{ stroke: "rgba(15,23,42,0.1)", strokeWidth: 1 }} />
-                <Line
-                  type="monotone"
-                  dataKey={personalLabel}
-                  name={personalLabel}
-                  stroke="rgb(37, 99, 235)"
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 5, fill: "rgb(37, 99, 235)", stroke: "white", strokeWidth: 2 }}
-                  connectNulls
-                />
-                <Line
-                  type="monotone"
-                  dataKey={teamAverageLabel}
-                  name={teamAverageLabel}
-                  stroke="rgba(15, 23, 42, 0.35)"
-                  strokeWidth={2}
-                  dot={false}
-                  strokeDasharray="4 5"
-                  activeDot={{ r: 4, fill: "rgba(15, 23, 42, 0.55)", stroke: "white", strokeWidth: 2 }}
-                  connectNulls
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </motion.div>
-        </AnimatePresence>
+        {isLoading ? (
+          <ChartSkeleton />
+        ) : sorted.length < 2 ? (
+          <趋势空状态 text={emptyText} />
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={String(range)}
+              className="h-full w-full"
+              initial={{ opacity: 0, y: 10, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.99 }}
+              transition={{ type: "spring", stiffness: 220, damping: 26, mass: 0.9 }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="rgb(37, 99, 235)" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="rgb(37, 99, 235)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
+                    tickMargin={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
+                    width={56}
+                  />
+                  <Tooltip
+                    content={<InteractionTooltip personalLabel={personalLabel} teamAverageLabel={teamAverageLabel} />}
+                    cursor={{ stroke: "rgba(15,23,42,0.1)", strokeWidth: 1 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey={personalLabel}
+                    fill={`url(#${gradientId})`}
+                    stroke="none"
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey={personalLabel}
+                    name={personalLabel}
+                    stroke="rgb(37, 99, 235)"
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ r: 5, fill: "rgb(37, 99, 235)", stroke: "white", strokeWidth: 2 }}
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey={teamAverageLabel}
+                    name={teamAverageLabel}
+                    stroke="rgba(15, 23, 42, 0.35)"
+                    strokeWidth={2}
+                    dot={false}
+                    strokeDasharray="4 5"
+                    activeDot={{ r: 4, fill: "rgba(15, 23, 42, 0.55)", stroke: "white", strokeWidth: 2 }}
+                    connectNulls
+                    isAnimationActive={false}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
     </section>
   );

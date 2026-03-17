@@ -1,7 +1,9 @@
 "use client";
 
+import { motion, type Variants } from "framer-motion";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, TrendingUp } from "lucide-react";
+import { AnimatedNumber } from "@/components/animated-number";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +61,24 @@ const METRICS: Array<{ key: MetricKey; label: string }> = [
   { key: "bounceRate", label: "跳出率" },
   { key: "completedViewers", label: "完播人数" },
 ];
+
+const containerVariants: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 export function Leaderboard({
   data,
@@ -156,7 +176,7 @@ export function Leaderboard({
   const visibleMetrics = compact ? METRICS.slice(0, 4) : METRICS;
 
   return (
-    <div className="space-y-4">
+    <div className="glass-card-static space-y-4 p-4 sm:p-5">
       <div className="space-y-3 rounded-2xl bg-muted/50 p-3 ring-1 ring-foreground/8 backdrop-blur supports-[backdrop-filter]:bg-background/75">
         <SegmentedControl
           options={TYPE_OPTIONS}
@@ -219,8 +239,8 @@ export function Leaderboard({
                   <TableRow
                     key={item.accountId}
                     className={cn(
-                      "border-b border-border/70 bg-background/85",
-                      item.isOwn && "border-l-4 border-l-primary bg-primary/5"
+                      "border-b border-border/70 bg-background/85 transition-colors hover:bg-muted/50",
+                      item.isOwn && "border-l-4 border-l-primary bg-primary/5 hover:bg-muted/50"
                     )}
                   >
                     <TableCell>
@@ -265,13 +285,20 @@ export function Leaderboard({
             </Table>
           </div>
 
-          <div className="space-y-3 md:hidden">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="space-y-3 md:hidden"
+          >
             {items.map((item) => (
-              <div
+              <motion.div
                 key={item.accountId}
+                variants={itemVariants}
                 className={cn(
-                  "rounded-2xl bg-background/95 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(15,23,42,0.05)] ring-1 ring-foreground/8",
-                  item.isOwn && "bg-primary/5 ring-primary/20"
+                  "rounded-2xl bg-background/95 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(15,23,42,0.05)] ring-1 ring-foreground/8 transition-colors hover:bg-muted/50",
+                  item.isOwn && "bg-primary/5 ring-primary/20 hover:bg-muted/50"
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -312,9 +339,9 @@ export function Leaderboard({
                     />
                   ))}
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </>
       )}
     </div>
@@ -407,7 +434,7 @@ function RankBadge({ rank }: { rank: number }) {
         badgeClass
       )}
     >
-      {rank}
+      <AnimatedNumber value={rank} duration={0.5} className="text-sm font-semibold" />
     </span>
   );
 }

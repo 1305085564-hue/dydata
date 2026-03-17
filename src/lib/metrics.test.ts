@@ -6,7 +6,7 @@ import {
   findBenchmarks,
   type MetricsAccount,
   type MetricsReport,
-} from "./metrics.ts";
+} from "./metrics";
 
 function buildReport(overrides: Partial<MetricsReport>): MetricsReport {
   return {

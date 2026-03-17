@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnalyticsSections } from "./analytics-sections";
+import type { AnalyticsSection } from "./analytics-sections";
 import { HitAnalyzer } from "./hit-analyzer";
 import { PersonnelAnalysis } from "./personnel-analysis";
 import { TimeAnalysis } from "./time-analysis";
@@ -23,7 +24,6 @@ export default async function AnalyticsPage() {
 
   if (profile?.role !== "admin" && profile?.role !== "owner") redirect("/dashboard");
 
-  // 近 90 天全部 daily_reports
   const ninetyDaysAgoDate = new Date();
   ninetyDaysAgoDate.setDate(ninetyDaysAgoDate.getDate() - 90);
   const ninetyDaysAgo = ninetyDaysAgoDate.toISOString().split("T")[0];
@@ -33,53 +33,35 @@ export default async function AnalyticsPage() {
     .gte("report_date", ninetyDaysAgo)
     .order("report_date", { ascending: false });
 
-  // 提交人列表
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, name")
     .order("name");
 
   const submitters = (profiles ?? []).map((p) => p.name);
+  const sections: AnalyticsSection[] = [
+    {
+      title: "爆款分析器",
+      content: <HitAnalyzer reports={reports ?? []} submitters={submitters} />,
+    },
+    {
+      title: "人员深度分析",
+      content: <PersonnelAnalysis reports={reports ?? []} />,
+    },
+    {
+      title: "时间维度分析",
+      content: <TimeAnalysis reports={reports ?? []} />,
+    },
+    {
+      title: "AI 洞察",
+      content: <AiInsight />,
+    },
+  ];
 
   return (
-        <div className="mx-auto max-w-5xl space-y-8">
-          <h1 className="text-2xl font-semibold">数据分析</h1>
-
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>爆款分析器</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <HitAnalyzer reports={reports ?? []} submitters={submitters} />
-            </CardContent>
-          </Card>
-
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>人员深度分析</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PersonnelAnalysis reports={reports ?? []} />
-            </CardContent>
-          </Card>
-
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>时间维度分析</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TimeAnalysis reports={reports ?? []} />
-            </CardContent>
-          </Card>
-
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>AI 洞察</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AiInsight />
-            </CardContent>
-          </Card>
-        </div>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <h1 className="text-2xl font-semibold tracking-tight">数据分析</h1>
+      <AnalyticsSections sections={sections} />
+    </div>
   );
 }

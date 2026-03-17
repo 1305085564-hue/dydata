@@ -234,7 +234,7 @@ export function SubmissionStatus({
           <CardContent className="pt-6 pb-5">
             <p className="text-xs font-medium text-violet-400 uppercase tracking-wide">提交率</p>
             <p className="text-3xl font-bold text-violet-600 mt-1">
-              <AnimatedNumber value={summary.submitRate} suffix="%" />
+              <AnimatedNumber value={summary.submitRate} format={(n) => `${n}%`} />
             </p>
           </CardContent>
         </Card>

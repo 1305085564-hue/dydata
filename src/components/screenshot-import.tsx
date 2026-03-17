@@ -185,9 +185,28 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
       }
 
       const nextValues = toEditableValues(payload.data);
-      setEditableValues(nextValues);
-      setConfidence(payload.data.confidence ?? getEmptyConfidence());
-      toast.success("截图识别完成，可继续手动校对");
+      // 合并模式：只覆盖新识别到的非空字段，保留已有值
+      setEditableValues((current) => {
+        const merged = { ...current };
+        for (const key of Object.keys(nextValues) as OcrFieldKey[]) {
+          if (nextValues[key] !== "") {
+            merged[key] = nextValues[key];
+          }
+        }
+        return merged;
+      });
+      // 置信度也合并：新识别的覆盖，未识别的保留
+      setConfidence((current) => {
+        const newConf = payload.data!.confidence ?? getEmptyConfidence();
+        const merged = { ...current };
+        for (const key of Object.keys(newConf) as OcrFieldKey[]) {
+          if (nextValues[key] !== "") {
+            merged[key] = newConf[key];
+          }
+        }
+        return merged;
+      });
+      toast.success("截图识别完成，可继续上传其他截图或手动校对");
     } catch (error) {
       toast.error((error as Error).message || "识别失败，请稍后重试");
     } finally {
@@ -207,8 +226,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
   }
 
   function resetAndPickAgain() {
-    setEditableValues(initialValues);
-    setConfidence(getEmptyConfidence());
+    // 保留已识别的值，只重置文件状态以便继续上传
     setFileName("");
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -318,7 +336,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
           <div className="flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <Button type="button" variant="outline" onClick={resetAndPickAgain}>
               <RefreshCcw className="size-4" />
-              重新上传
+              继续识别下一张
             </Button>
             <Button type="button" onClick={() => onConfirm(editableValues)}>
               <ImagePlus className="size-4" />

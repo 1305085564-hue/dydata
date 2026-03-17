@@ -1,43 +1,62 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
 
 interface AnimatedNumberProps {
   value: number;
-  suffix?: string;
   className?: string;
   duration?: number;
+  format?: (n: number) => string;
 }
 
-export function AnimatedNumber({ value, suffix = "", className = "", duration = 600 }: AnimatedNumberProps) {
-  const [display, setDisplay] = useState(0);
-  const ref = useRef<number | null>(null);
+function useHydrated() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
+export function AnimatedNumber({
+  value,
+  className = "",
+  duration = 0.6,
+  format = defaultFormat,
+}: AnimatedNumberProps) {
+  const reduceMotion = useReducedMotion();
+  const isHydrated = useHydrated();
+  const motionValue = useMotionValue(0);
+  const previousValueRef = useRef(0);
+  const display = useTransform(motionValue, (latest) => format(Math.round(latest)));
+  const fallbackDisplay = useMemo(() => format(value), [format, value]);
+  const animationDuration = duration > 10 ? duration / 1000 : duration;
 
   useEffect(() => {
-    const start = performance.now();
-    const from = 0;
-    const to = value;
+    if (!isHydrated) return;
 
-    function tick(now: number) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(from + (to - from) * eased));
-      if (progress < 1) {
-        ref.current = requestAnimationFrame(tick);
-      }
+    const previousValue = previousValueRef.current;
+    previousValueRef.current = value;
+
+    if (reduceMotion || previousValue === value) {
+      motionValue.set(value);
+      return;
     }
 
-    ref.current = requestAnimationFrame(tick);
-    return () => {
-      if (ref.current) cancelAnimationFrame(ref.current);
-    };
-  }, [value, duration]);
+    motionValue.set(previousValue);
+    const controls = animate(motionValue, value, {
+      duration: animationDuration,
+      ease: [0.22, 1, 0.36, 1],
+    });
 
-  return (
-    <span className={`tabular-nums ${className}`}>
-      {display}{suffix}
-    </span>
-  );
+    return () => {
+      controls.stop();
+    };
+  }, [animationDuration, isHydrated, motionValue, reduceMotion, value]);
+
+  return <motion.span className={`tabular-nums ${className}`}>{isHydrated ? display : fallbackDisplay}</motion.span>;
+}
+
+function defaultFormat(value: number) {
+  return value.toLocaleString("zh-CN");
 }

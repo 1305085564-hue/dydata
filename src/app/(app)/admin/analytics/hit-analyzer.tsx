@@ -264,9 +264,9 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
 
       {/* 共性面板 */}
       {stats ? (
-        <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-          <p className="text-sm font-medium">筛选结果：{stats.count} 条</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-sm">
+        <div className="glass-card-static rounded-2xl p-4 space-y-4">
+          <p className="text-sm font-semibold tracking-tight">筛选结果：<span className="tabular-nums">{stats.count}</span> 条</p>
+          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <div>
               <p className="text-muted-foreground text-xs">平均播放量</p>
               <p className="font-medium tabular-nums">{stats.avgPlay}万</p>
@@ -308,28 +308,30 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
           </div>
 
           {stats.contents.length > 0 && (
-            <div className="space-y-2 pt-2 border-t">
-              <p className="text-xs font-medium text-muted-foreground">文案列表（{stats.contents.length} 条）</p>
-              <div className="max-h-[200px] overflow-y-auto space-y-2">
+            <div className="space-y-2 border-t pt-2">
+              <p className="text-xs font-semibold tracking-tight text-muted-foreground">文案列表（<span className="tabular-nums">{stats.contents.length}</span> 条）</p>
+              <div className="max-h-[200px] space-y-2 overflow-y-auto">
                 {stats.contents.map((c, i) => (
-                  <p key={i} className="text-xs bg-background rounded p-2 whitespace-pre-wrap">{c}</p>
+                  <div key={i} className="glass-card-static rounded-xl p-2">
+                    <p className="whitespace-pre-wrap text-xs">{c}</p>
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
           {/* 规律总结 */}
-          <div className="space-y-3 pt-3 border-t">
-            <p className="text-sm font-medium">规律总结</p>
+          <div className="space-y-3 border-t pt-3">
+            <p className="text-sm font-semibold tracking-tight">规律总结</p>
 
             {stats.crDistribution && (
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">完播率区间分布</p>
                 <div className="flex gap-2 flex-wrap">
                   {stats.crDistribution.map((d) => (
-                    <div key={d.label} className="text-xs rounded bg-background px-2 py-1 border">
-                      <span className="font-medium">{d.label}</span>
-                      <span className="text-muted-foreground ml-1">{d.count}条 ({d.pct}%)</span>
+                    <div key={d.label} className="glass-card-static rounded-xl px-2 py-1 text-xs">
+                      <span className="font-semibold tracking-tight">{d.label}</span>
+                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
                     </div>
                   ))}
                 </div>
@@ -340,9 +342,9 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
               <p className="text-xs text-muted-foreground">标题长度分布</p>
               <div className="flex gap-2 flex-wrap">
                 {stats.titleLenDist.map((d) => (
-                  <div key={d.label} className="text-xs rounded bg-background px-2 py-1 border">
-                    <span className="font-medium">{d.label}</span>
-                    <span className="text-muted-foreground ml-1">{d.count}条 ({d.pct}%)</span>
+                  <div key={d.label} className="glass-card-static rounded-xl px-2 py-1 text-xs">
+                    <span className="font-semibold tracking-tight">{d.label}</span>
+                    <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
                   </div>
                 ))}
               </div>
@@ -353,9 +355,9 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
                 <p className="text-xs text-muted-foreground">文案长度分布</p>
                 <div className="flex gap-2 flex-wrap">
                   {stats.contentLenDist.map((d) => (
-                    <div key={d.label} className="text-xs rounded bg-background px-2 py-1 border">
-                      <span className="font-medium">{d.label}</span>
-                      <span className="text-muted-foreground ml-1">{d.count}条 ({d.pct}%)</span>
+                    <div key={d.label} className="glass-card-static rounded-xl px-2 py-1 text-xs">
+                      <span className="font-semibold tracking-tight">{d.label}</span>
+                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
                     </div>
                   ))}
                 </div>
@@ -367,9 +369,9 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
                 <p className="text-xs text-muted-foreground">发布时间段分布</p>
                 <div className="flex gap-2 flex-wrap">
                   {stats.timeSlotTop.map((d) => (
-                    <div key={d.slot} className="text-xs rounded bg-background px-2 py-1 border">
-                      <span className="font-medium">{d.slot}</span>
-                      <span className="text-muted-foreground ml-1">{d.count}条 ({d.pct}%)</span>
+                    <div key={d.slot} className="glass-card-static rounded-xl px-2 py-1 text-xs">
+                      <span className="font-semibold tracking-tight">{d.slot}</span>
+                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
                     </div>
                   ))}
                 </div>
@@ -381,9 +383,9 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
                 <p className="text-xs text-muted-foreground">发布星期分布</p>
                 <div className="flex gap-2 flex-wrap">
                   {stats.weekdayTop.map((d) => (
-                    <div key={d.day} className="text-xs rounded bg-background px-2 py-1 border">
-                      <span className="font-medium">{d.day}</span>
-                      <span className="text-muted-foreground ml-1">{d.count}条 ({d.pct}%)</span>
+                    <div key={d.day} className="glass-card-static rounded-xl px-2 py-1 text-xs">
+                      <span className="font-semibold tracking-tight">{d.day}</span>
+                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
                     </div>
                   ))}
                 </div>

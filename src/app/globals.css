@@ -83,6 +83,10 @@
   --app-nav-height: 3.5rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
+  --radius-card: 16px;
+  --shadow-light: 0 1px 3px rgba(15,23,42,0.06);
+  --shadow-medium: 0 8px 24px -8px rgba(15,23,42,0.12);
+  --shadow-heavy: 0 18px 48px -32px rgba(15,23,42,0.28);
 }
 
 .dark {
@@ -132,6 +136,16 @@
   body [data-sonner-toaster] {
     --offset-top: calc(var(--app-top-offset) + 0.75rem);
   }
+  input,
+  textarea,
+  select,
+  [role="combobox"] {
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
   /* 去掉 number input 的上下箭头 */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
@@ -140,6 +154,18 @@
   }
   input[type="number"] {
     -moz-appearance: textfield;
+  }
+}
+
+@keyframes auth-glow-drift {
+  0% {
+    transform: translate3d(-8%, -6%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(10%, 8%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(18%, 16%, 0) scale(1);
   }
 }
 
@@ -152,6 +178,59 @@
     transform: scale(0.97);
   }
 
+  .auth-background-glow {
+    isolation: isolate;
+  }
+
+  .auth-background-glow-spot {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.08;
+    animation: auth-glow-drift 20s linear infinite;
+    will-change: transform;
+  }
+
+  .auth-background-glow-spot-primary {
+    top: -12rem;
+    left: -10rem;
+    width: 28rem;
+    height: 28rem;
+    background: radial-gradient(circle, rgba(99,102,241,0.9) 0%, rgba(99,102,241,0) 72%);
+  }
+
+  .auth-background-glow-spot-secondary {
+    right: -12rem;
+    bottom: -14rem;
+    width: 30rem;
+    height: 30rem;
+    background: radial-gradient(circle, rgba(56,189,248,0.8) 0%, rgba(56,189,248,0) 70%);
+    animation-delay: -10s;
+  }
+
+  .input-focus-line {
+    position: relative;
+  }
+
+  .input-focus-line::after {
+    content: "";
+    position: absolute;
+    right: 0.625rem;
+    bottom: 0;
+    left: 0.625rem;
+    height: 2px;
+    transform: scaleX(0);
+    transform-origin: center;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, transparent 0%, var(--primary) 50%, transparent 100%);
+    transition: transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  .input-focus-line:focus-within::after {
+    transform: scaleX(1);
+  }
+
   /* 数字等宽 */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
@@ -160,5 +239,73 @@
   /* 卡片阴影 */
   .card-elevated {
     box-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 4px 12px oklch(0 0 0 / 0.03);
+  }
+
+  .glass-card {
+    border-radius: var(--radius-card);
+    border: 1px solid rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: var(--shadow-medium);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-heavy);
+    border-color: rgba(99,102,241,0.2);
+  }
+
+  .glass-card-static {
+    border-radius: var(--radius-card);
+    border: 1px solid rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: var(--shadow-medium);
+  }
+
+  .dark .glass-card {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(15,23,42,0.75);
+  }
+
+  .dark .glass-card-static {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(15,23,42,0.75);
+  }
+
+  [data-sonner-toast] {
+    border-radius: var(--radius-card) !important;
+    border: 1px solid rgba(255,255,255,0.7) !important;
+    background: rgba(255,255,255,0.78) !important;
+    color: hsl(var(--foreground)) !important;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: var(--shadow-medium) !important;
+  }
+
+  [data-sonner-toast] [data-title] {
+    font-weight: 600;
+  }
+
+  [data-sonner-toast] [data-description] {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  .dark [data-sonner-toast] {
+    border-color: rgba(255,255,255,0.1) !important;
+    background: rgba(15,23,42,0.78) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-background-glow-spot {
+    animation: none;
+  }
+
+  .input-focus-line::after {
+    transition: none;
   }
 }
