@@ -23,7 +23,7 @@ type ParsedOcrResult = {
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const OCR_MODEL = "claude-haiku-4-5-20251001";
+const OCR_MODEL = process.env.OCR_MODEL || "claude-haiku-4-5-20251001";
 const OCR_FIELDS: OcrFieldKey[] = [
   "play_count",
   "likes",
