@@ -119,3 +119,102 @@ export interface AccountLeaderboardItem {
   progressRate: number | null;
   isBreakout: boolean;
 }
+
+// === 阶段 1.5 新增类型 ===
+
+export type AnomalyStatus = "正常" | "删稿" | "限流" | "投流" | "活动干预" | "未满24h";
+export type SnapshotType = "24h" | "72h";
+export type TagDimension = "题材" | "表达形式" | "CTA类型" | "内容结构" | "目标受众";
+export type TagSource = "ai" | "manual";
+export type MarketSentiment = "强" | "中" | "弱";
+export type AdviceSource = "ai" | "manager";
+export type AdviceStatus = "待查看" | "已查看" | "待执行" | "已执行" | "已忽略" | "已复核";
+export type ReviewResult = "有效" | "无效" | "不确定";
+export type AccountTargetMode = "起号" | "稳号" | "导粉";
+
+export const TAG_ENUMS: Record<TagDimension, string[]> = {
+  "题材": ["大盘复盘", "板块机会", "个股拆解", "情绪周期", "战法教学", "风险提醒", "热点追踪", "盘前预判"],
+  "表达形式": ["结论先行", "问答式", "清单式", "案例拆解", "情绪点评", "故事引入", "观点输出"],
+  "CTA类型": ["关注", "评论", "私信", "看主页", "进群", "无明显CTA"],
+  "内容结构": ["先结论后逻辑", "先冲突后解释", "三段式", "总分总", "盘面现象→原因→操作", "错误案例→正确做法"],
+  "目标受众": ["新手股民", "短线交易者", "老股民", "上班族投资者", "追热点用户"],
+};
+
+export interface Video {
+  id: string;
+  account_id: string;
+  user_id: string;
+  video_url: string | null;
+  video_title: string | null;
+  content: string | null;
+  published_at: string | null;
+  uploaded_at: string;
+  anomaly_status: AnomalyStatus;
+  created_at: string;
+}
+
+export interface VideoMetricsSnapshot {
+  id: string;
+  video_id: string;
+  snapshot_type: SnapshotType;
+  play_count: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  favorites: number;
+  follower_gain: number;
+  follower_loss: number;
+  fan_play_ratio: number | null;
+  homepage_visits: number;
+  follower_convert: number;
+  cover_click_rate: number | null;
+  avg_play_duration: number | null;
+  completion_rate: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  avg_play_ratio: number | null;
+  vs_previous: Record<string, unknown> | null;
+  screenshot_urls: string[] | null;
+  curve_screenshot_url: string | null;
+  retention_screenshot_url: string | null;
+  captured_at: string;
+}
+
+export interface VideoTag {
+  id: string;
+  video_id: string;
+  tag_dimension: TagDimension;
+  tag_value: string;
+  source: TagSource;
+  confidence: number | null;
+  reviewed_by: string | null;
+  created_at: string;
+}
+
+export interface MarketContextDaily {
+  id: string;
+  context_date: string;
+  is_trading_day: boolean;
+  market_change: Record<string, number> | null;
+  market_sentiment: MarketSentiment | null;
+  hot_sectors: string[] | null;
+  source: string;
+  updated_by: string | null;
+  created_at: string;
+}
+
+export interface AdviceAction {
+  id: string;
+  target_user_id: string;
+  target_account_id: string | null;
+  advice_content: string;
+  evidence: string | null;
+  advice_source: AdviceSource;
+  status: AdviceStatus;
+  assigned_by: string | null;
+  executed_video_id: string | null;
+  review_result: ReviewResult | null;
+  reviewed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
