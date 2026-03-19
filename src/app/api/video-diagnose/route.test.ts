@@ -6,7 +6,7 @@ import {
   createBatchSummary,
   createDiagnosisRecord,
   normalizeBatchPayload,
-} from "./route.ts";
+} from "./route";
 
 test("normalizeBatchPayload 限制默认天数和上限 20 条", () => {
   const result = normalizeBatchPayload({ user_id: "u1" });

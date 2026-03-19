@@ -5,7 +5,7 @@ import { 生成视频结论卡结果 } from "./视频结论卡-计算";
 import { 干预结论单卡, 视频结论单卡 } from "./视频结论卡-单卡";
 import type { 视频结论卡Props } from "./视频结论卡-类型";
 
-export function 视频结论卡(props: 视频结论卡Props) {
+function VideoConclusionCards(props: 视频结论卡Props) {
   const result = useMemo(() => 生成视频结论卡结果(props), [props]);
 
   return (
@@ -24,3 +24,5 @@ export function 视频结论卡(props: 视频结论卡Props) {
     </section>
   );
 }
+
+export const 视频结论卡 = VideoConclusionCards;
