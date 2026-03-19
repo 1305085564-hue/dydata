@@ -12,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Video } from "@/types";
+import type { Video, VideoTagReviewDimension } from "@/types";
 import { VideoSubmitForm } from "./video-submit-form";
+import { VideoTagReviewCard } from "./video-tag-review-card";
 
 interface VideoSubmitPanelProps {
   accounts: { id: string; name: string; content_direction: string | null }[];
@@ -24,16 +25,33 @@ interface VideoSubmitPanelProps {
 export function VideoSubmitPanel({ accounts, userId, today }: VideoSubmitPanelProps) {
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [submittedAccountIds, setSubmittedAccountIds] = useState<string[]>([]);
+  const [lastSubmittedVideoId, setLastSubmittedVideoId] = useState<string | null>(null);
+  const [lastAiTags, setLastAiTags] = useState<Array<{
+    tag_dimension: VideoTagReviewDimension;
+    tag_value: string;
+    confidence: number | null;
+    reason: string | null;
+  }>>([]);
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? accounts[0] ?? null,
     [accounts, selectedAccountId]
   );
 
-  function handleSubmitted(video: Video) {
+  function handleSubmitted(
+    video: Video,
+    aiTags: Array<{
+      tag_dimension: VideoTagReviewDimension;
+      tag_value: string;
+      confidence: number | null;
+      reason: string | null;
+    }>
+  ) {
     setSubmittedAccountIds((current) =>
       current.includes(video.account_id) ? current : [...current, video.account_id]
     );
+    setLastSubmittedVideoId(video.id);
+    setLastAiTags(aiTags);
   }
 
   if (!accounts.length) {
@@ -132,6 +150,18 @@ export function VideoSubmitPanel({ accounts, userId, today }: VideoSubmitPanelPr
                 {submittedAccountIds.includes(selectedAccount.id) ? "已提交" : "待提交"}
               </span>
             </div>
+          ) : null}
+
+          {lastSubmittedVideoId && lastAiTags.length ? (
+            <VideoTagReviewCard
+              videoId={lastSubmittedVideoId}
+              tags={lastAiTags}
+              onConfirmed={(tags) => setLastAiTags(tags)}
+              onSkipped={() => {
+                setLastSubmittedVideoId(null);
+                setLastAiTags([]);
+              }}
+            />
           ) : null}
 
           <VideoSubmitForm

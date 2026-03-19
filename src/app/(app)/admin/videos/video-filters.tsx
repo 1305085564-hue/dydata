@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { AnomalyStatus, Profile } from "@/types";
+import { TAG_ENUMS, type AnomalyStatus, type Profile } from "@/types";
 
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
@@ -21,6 +21,9 @@ export interface VideoFilterValue {
   startDate: string;
   endDate: string;
   status: AnomalyStatus | "all";
+  topicTags: string[];
+  formatTags: string[];
+  ctaTags: string[];
 }
 
 interface VideoFiltersProps {
@@ -35,6 +38,9 @@ const INITIAL_FILTERS: VideoFilterValue = {
   startDate: "",
   endDate: "",
   status: "all",
+  topicTags: [],
+  formatTags: [],
+  ctaTags: [],
 };
 
 const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [
@@ -56,6 +62,15 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
 
   function updateFilter<Key extends keyof VideoFilterValue>(key: Key, value: VideoFilterValue[Key]) {
     setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleArrayFilter(key: "topicTags" | "formatTags" | "ctaTags", value: string) {
+    setFilters((current) => ({
+      ...current,
+      [key]: current[key].includes(value)
+        ? current[key].filter((item) => item !== value)
+        : [...current[key], value],
+    }));
   }
 
   function handleReset() {
@@ -139,6 +154,38 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-3">
+        {[
+          { label: "题材", key: "topicTags" as const, options: TAG_ENUMS["题材"] },
+          { label: "表达形式", key: "formatTags" as const, options: TAG_ENUMS["表达形式"] },
+          { label: "CTA类型", key: "ctaTags" as const, options: TAG_ENUMS["CTA类型"] },
+        ].map((group) => (
+          <div key={group.label} className="space-y-2 rounded-2xl border border-border/60 bg-background/60 p-4">
+            <div className="text-sm font-medium text-foreground">{group.label}</div>
+            <div className="flex flex-wrap gap-2">
+              {group.options.map((option) => {
+                const active = filters[group.key].includes(option);
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => toggleArrayFilter(group.key, option)}
+                    className={[
+                      "rounded-full border px-3 py-1.5 text-xs transition-colors",
+                      active
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/50",
+                    ].join(" ")}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

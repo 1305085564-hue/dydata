@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Video, AnomalyStatus } from "@/types";
+import type { Video, AnomalyStatus, VideoTagReviewDimension } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,15 @@ interface VideoSubmitFormProps {
   account: { id: string; name: string; content_direction: string | null } | null;
   userId: string;
   today: string;
-  onSubmitted: (video: Video) => void;
+  onSubmitted: (
+    video: Video,
+    aiTags: Array<{
+      tag_dimension: VideoTagReviewDimension;
+      tag_value: string;
+      confidence: number | null;
+      reason: string | null;
+    }>
+  ) => void;
 }
 
 type OcrFieldKey =
@@ -40,6 +48,12 @@ type OcrResponse = {
 type SubmitResponse = {
   data?: Video;
   video?: Video;
+  ai_tags?: Array<{
+    tag_dimension: VideoTagReviewDimension;
+    tag_value: string;
+    confidence: number | null;
+    reason: string | null;
+  }>;
   error?: string;
 };
 
@@ -250,7 +264,9 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
         throw new Error("提交成功，但返回数据格式不正确");
       }
 
-      onSubmitted(submittedVideo);
+      const aiTags = !isVideo(payload) && Array.isArray(payload.ai_tags) ? payload.ai_tags : [];
+
+      onSubmitted(submittedVideo, aiTags);
       resetForm();
       toast.success("视频数据提交成功");
     } catch (error) {

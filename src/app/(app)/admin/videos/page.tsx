@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
 import { VideoList } from "./video-list";
-import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
+import type { Profile, Video, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -25,7 +25,7 @@ export default async function AdminVideosPage() {
 
   const supabase = await createClient();
 
-  const [{ data: videos }, { data: snapshots }, { data: profiles }, { data: accounts }] =
+  const [{ data: videos }, { data: snapshots }, { data: profiles }, { data: accounts }, { data: videoTags }] =
     await Promise.all([
       supabase
         .from("videos")
@@ -34,6 +34,7 @@ export default async function AdminVideosPage() {
       supabase.from("video_metrics_snapshots").select("*"),
       supabase.from("profiles").select("id, name").order("name", { ascending: true }),
       supabase.from("accounts").select("id, name").order("name", { ascending: true }),
+      supabase.from("video_tags").select("*"),
     ]);
 
   return (
@@ -50,6 +51,7 @@ export default async function AdminVideosPage() {
         snapshots={(snapshots ?? []) as VideoMetricsSnapshot[]}
         profiles={(profiles ?? []) as FilterOption[]}
         accounts={(accounts ?? []) as AccountOption[]}
+        videoTags={(videoTags ?? []) as VideoTag[]}
       />
     </div>
   );

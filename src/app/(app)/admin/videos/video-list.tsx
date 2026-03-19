@@ -16,7 +16,8 @@ import { VideoDetailDialog } from "./video-detail-dialog";
 import { Patch24hDialog } from "./patch-24h-dialog";
 import { interactionRate } from "@/lib/video-metrics";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
-import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
+import { getTagReviewStatus, isVideoMatchedByTagFilters } from "@/lib/video-tags";
+import type { Profile, Video, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -31,6 +32,7 @@ interface VideoListProps {
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
   accounts: AccountOption[];
+  videoTags: VideoTag[];
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -67,18 +69,22 @@ function formatPercent(value: number | null | undefined) {
   return `${(value * 100).toFixed(2)}%`;
 }
 
-export function VideoList({ videos, snapshots, profiles, accounts }: VideoListProps) {
+export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: VideoListProps) {
   const [filters, setFilters] = useState<VideoFilterValue>({
     profileId: "all",
     accountId: "all",
     startDate: "",
     endDate: "",
     status: "all",
+    topicTags: [],
+    formatTags: [],
+    ctaTags: [],
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [patchingVideoId, setPatchingVideoId] = useState<string | null>(null);
   const [videoRows, setVideoRows] = useState(videos);
   const [snapshotRows, setSnapshotRows] = useState(snapshots);
+  const [tagRows, setTagRows] = useState(videoTags);
 
   const snapshots24h = useMemo(
     () => snapshotRows.filter((snapshot) => snapshot.snapshot_type === "24h"),
@@ -98,6 +104,16 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
     }),
     [videoRows]
   );
+
+  const tagMap = useMemo(() => {
+    const map = new Map<string, VideoTag[]>();
+    for (const tag of tagRows) {
+      const current = map.get(tag.video_id) ?? [];
+      current.push(tag);
+      map.set(tag.video_id, current);
+    }
+    return map;
+  }, [tagRows]);
 
   const filteredVideos = useMemo(() => {
     return sortedVideos.filter((video) => {
@@ -123,9 +139,9 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
         return false;
       }
 
-      return true;
+      return isVideoMatchedByTagFilters(tagMap.get(video.id) ?? [], filters);
     });
-  }, [filters, sortedVideos]);
+  }, [filters, sortedVideos, tagMap]);
 
   const selectedVideo = useMemo(
     () => filteredVideos.find((video) => video.id === selectedVideoId) ?? null,
@@ -182,6 +198,7 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
             {filteredVideos.length ? (
               filteredVideos.map((video) => {
                 const snapshot = snapshotMap.get(video.id) ?? null;
+                const tags = tagMap.get(video.id) ?? [];
                 const showPatchButton = shouldShowPatch24hButton(video, snapshot);
 
                 return (
@@ -201,9 +218,16 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
                     <TableCell>{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
                     <TableCell>{formatNumber(snapshot?.follower_gain)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={statusClassName[video.anomaly_status]}>
-                        {video.anomaly_status}
-                      </Badge>
+                      <div className="space-y-2">
+                        <Badge variant="outline" className={statusClassName[video.anomaly_status]}>
+                          {video.anomaly_status}
+                        </Badge>
+                        {tags.some((tag) => getTagReviewStatus(tag.confidence) === "待确认") ? (
+                          <Badge variant="outline" className="border-amber-200 bg-amber-500/10 text-amber-700">
+                            标签待确认
+                          </Badge>
+                        ) : null}
+                      </div>
                     </TableCell>
                     <TableCell className="px-4 text-right">
                       <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
@@ -248,6 +272,13 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
         }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
+        tags={selectedVideo ? tagMap.get(selectedVideo.id) ?? [] : []}
+        onTagsSaved={(tags) => {
+          setTagRows((current) => {
+            const rest = current.filter((tag) => tag.video_id !== selectedVideo?.id || !tags.some((saved) => saved.tag_dimension === tag.tag_dimension));
+            return [...rest, ...tags];
+          });
+        }}
       />
 
       <Patch24hDialog

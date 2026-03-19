@@ -1,6 +1,10 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +12,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   fanConversionRate,
   followerConversionRate,
   homepageVisitRate,
   interactionRate,
 } from "@/lib/video-metrics";
-import type { Video, VideoMetricsSnapshot } from "@/types";
+import { buildTagFilterState, getTagReviewStatus } from "@/lib/video-tags";
+import { TAG_ENUMS, VIDEO_TAG_REVIEW_DIMENSIONS, type Video, type VideoMetricsSnapshot, type VideoTag } from "@/types";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -25,6 +37,8 @@ interface VideoDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   video: VideoRow | null;
   snapshot: VideoMetricsSnapshot | null;
+  tags: VideoTag[];
+  onTagsSaved: (tags: VideoTag[]) => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -91,7 +105,50 @@ function renderSnapshotFields(snapshot: VideoMetricsSnapshot) {
   ));
 }
 
-export function VideoDetailDialog({ open, onOpenChange, video, snapshot }: VideoDetailDialogProps) {
+export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, onTagsSaved }: VideoDetailDialogProps) {
+  const supabase = useMemo(() => createClient(), []);
+  const [selection, setSelection] = useState(() => buildTagFilterState(tags));
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setSelection(buildTagFilterState(tags));
+  }, [tags]);
+
+  async function handleSaveTags() {
+    if (!video) return;
+
+    setIsSaving(true);
+    try {
+      const payload = VIDEO_TAG_REVIEW_DIMENSIONS.map((dimension) => {
+        const currentTag = tags.find((tag) => tag.tag_dimension === dimension) ?? null;
+        return {
+          video_id: video.id,
+          tag_dimension: dimension,
+          tag_value: selection[dimension] || currentTag?.tag_value || TAG_ENUMS[dimension][0],
+          source: "manual" as const,
+          confidence: currentTag?.confidence ?? null,
+          reason: currentTag?.reason ?? null,
+        };
+      });
+
+      const { data, error } = await supabase
+        .from("video_tags")
+        .upsert(payload, { onConflict: "video_id,tag_dimension" })
+        .select("*");
+
+      if (error) {
+        throw new Error(error.message || "标签保存失败");
+      }
+
+      toast.success("标签已更新");
+      onTagsSaved((data ?? []) as VideoTag[]);
+    } catch (error) {
+      toast.error((error as Error).message || "标签保存失败");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl rounded-[32px] border-border/60 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl sm:max-w-4xl">
@@ -177,6 +234,65 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot }: Video
                     {formatPercent(snapshot ? homepageVisitRate(snapshot) : null)}
                   </div>
                 </div>
+              </div>
+            </section>
+
+            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-base font-semibold text-foreground">标签信息</div>
+                <Button type="button" variant="outline" className="rounded-2xl bg-background/80" onClick={handleSaveTags} disabled={isSaving}>
+                  {isSaving ? "保存中..." : "保存标签"}
+                </Button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {VIDEO_TAG_REVIEW_DIMENSIONS.map((dimension) => {
+                  const tag = tags.find((item) => item.tag_dimension === dimension) ?? null;
+                  const status = getTagReviewStatus(tag?.confidence ?? null);
+                  return (
+                    <div key={dimension} className="space-y-3 rounded-2xl bg-background/80 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-medium text-foreground">{dimension}</div>
+                        <Badge
+                          variant="outline"
+                          className={
+                            status === "可信"
+                              ? "border-emerald-200 bg-emerald-500/10 text-emerald-700"
+                              : "border-amber-200 bg-amber-500/10 text-amber-700"
+                          }
+                        >
+                          {status}
+                        </Badge>
+                      </div>
+
+                      <Select
+                        value={selection[dimension] || tag?.tag_value || ""}
+                        onValueChange={(value) =>
+                          setSelection((current) => ({
+                            ...current,
+                            [dimension]: value ?? "",
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="h-11 rounded-2xl bg-muted/35">
+                          <SelectValue placeholder={`选择${dimension}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TAG_ENUMS[dimension].map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        <div>来源：{tag?.source === "manual" ? "手动" : "AI"}</div>
+                        <div>置信度：{tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}</div>
+                        <div className="line-clamp-3">理由：{tag?.reason || "-"}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 

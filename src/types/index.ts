@@ -125,6 +125,7 @@ export interface AccountLeaderboardItem {
 export type AnomalyStatus = "正常" | "删稿" | "限流" | "投流" | "活动干预" | "未满24h";
 export type SnapshotType = "24h" | "72h";
 export type TagDimension = "题材" | "表达形式" | "CTA类型" | "内容结构" | "目标受众";
+export type VideoTagReviewDimension = "题材" | "表达形式" | "CTA类型";
 export type TagSource = "ai" | "manual";
 export type MarketSentiment = "强" | "中" | "弱";
 export type AdviceSource = "ai" | "manager";
@@ -139,6 +140,8 @@ export const TAG_ENUMS: Record<TagDimension, string[]> = {
   "内容结构": ["先结论后逻辑", "先冲突后解释", "三段式", "总分总", "盘面现象→原因→操作", "错误案例→正确做法"],
   "目标受众": ["新手股民", "短线交易者", "老股民", "上班族投资者", "追热点用户"],
 };
+
+export const VIDEO_TAG_REVIEW_DIMENSIONS: VideoTagReviewDimension[] = ["题材", "表达形式", "CTA类型"];
 
 export interface Video {
   id: string;
@@ -187,6 +190,7 @@ export interface VideoTag {
   tag_value: string;
   source: TagSource;
   confidence: number | null;
+  reason: string | null;
   reviewed_by: string | null;
   created_at: string;
 }
