@@ -16,6 +16,7 @@ import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { 日报提交面板 } from "./日报提交面板";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
+import { VideoSubmitPanel } from "./video-submit-panel";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -36,6 +37,7 @@ export default async function DashboardPage() {
   ]);
 
   const today = new Date().toISOString().split("T")[0];
+  const todayStart = `${today}T00:00:00.000Z`;
   const accountIds = (accounts ?? []).map((account) => account.id);
   const ownContentDirections = Array.from(
     new Set(
@@ -45,28 +47,57 @@ export default async function DashboardPage() {
     )
   );
 
-  const { data: userTodayReports } = accountIds.length
-    ? await supabase
-        .from("daily_reports")
-        .select(
-          "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
-        )
-        .in("account_id", accountIds)
-        .eq("report_date", today)
-        .order("uploaded_at", { ascending: false })
-    : { data: [] };
+  const [
+    { data: userTodayReports },
+    { data: history },
+    { data: todayVideos },
+    { data: allVideos },
+    { data: videoSnapshots },
+  ] = await Promise.all([
+    accountIds.length
+      ? supabase
+          .from("daily_reports")
+          .select(
+            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+          )
+          .in("account_id", accountIds)
+          .eq("report_date", today)
+          .order("uploaded_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    accountIds.length
+      ? supabase
+          .from("daily_reports")
+          .select(
+            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, uploaded_at, accounts(name)"
+          )
+          .in("account_id", accountIds)
+          .order("report_date", { ascending: false })
+          .order("uploaded_at", { ascending: false })
+          .limit(30)
+      : Promise.resolve({ data: [] }),
+    accountIds.length
+      ? supabase
+          .from("videos")
+          .select("id, account_id")
+          .in("account_id", accountIds)
+          .gte("created_at", todayStart)
+      : Promise.resolve({ data: [] }),
+    accountIds.length
+      ? supabase.from("videos").select("id").in("account_id", accountIds)
+      : Promise.resolve({ data: [] }),
+    accountIds.length
+      ? supabase
+          .from("video_metrics_snapshots")
+          .select("video_id")
+          .in("account_id", accountIds)
+      : Promise.resolve({ data: [] }),
+  ]);
 
-  const { data: history } = accountIds.length
-    ? await supabase
-        .from("daily_reports")
-        .select(
-          "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, uploaded_at, accounts(name)"
-        )
-        .in("account_id", accountIds)
-        .order("report_date", { ascending: false })
-        .order("uploaded_at", { ascending: false })
-        .limit(30)
-    : { data: [] };
+  const todaySubmittedAccountIds = new Set((todayVideos ?? []).map((video) => video.account_id));
+  const pendingVideoCount = (accounts ?? []).filter((account) => !todaySubmittedAccountIds.has(account.id)).length;
+  const snapshotVideoIds = new Set((videoSnapshots ?? []).map((snapshot) => snapshot.video_id));
+  const pending24hCount = (allVideos ?? []).filter((video) => !snapshotVideoIds.has(video.id)).length;
+  const allTasksCompleted = pendingVideoCount === 0 && pending24hCount === 0;
 
   const monthAgoDate = new Date();
   monthAgoDate.setDate(monthAgoDate.getDate() - 30);
@@ -135,14 +166,58 @@ export default async function DashboardPage() {
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={1}>
-        <日报提交面板
-          accounts={accounts ?? []}
-          today={today}
-          todayReports={userTodayReports ?? []}
-        />
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>待办清单</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {allTasksCompleted ? (
+              <p className="text-sm font-medium text-emerald-600">✅ 今日任务已完成</p>
+            ) : (
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between gap-4 rounded-lg border bg-background px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden="true">◻</span>
+                    <span>今日待提交视频</span>
+                  </div>
+                  <span className="font-semibold tabular-nums">{pendingVideoCount}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 rounded-lg border bg-background px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden="true">◷</span>
+                    <span>待补24h数据</span>
+                  </div>
+                  <span className="font-semibold tabular-nums">{pending24hCount}</span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={2}>
+        <VideoSubmitPanel accounts={accounts ?? []} userId={user.id} today={today} />
+      </DashboardAnimatedSection>
+
+      <DashboardAnimatedSection index={3}>
+        <details className="group rounded-3xl border border-border/60 bg-background/85 shadow-sm backdrop-blur-md">
+          <summary className="cursor-pointer list-none px-6 py-4 text-sm font-medium text-foreground marker:content-none">
+            <div className="flex items-center justify-between gap-4">
+              <span>旧版日报提交</span>
+              <span className="text-xs text-muted-foreground transition group-open:rotate-180">⌄</span>
+            </div>
+          </summary>
+          <div className="px-6 pb-6">
+            <日报提交面板
+              accounts={accounts ?? []}
+              today={today}
+              todayReports={userTodayReports ?? []}
+            />
+          </div>
+        </details>
+      </DashboardAnimatedSection>
+
+      <DashboardAnimatedSection index={4}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle>数据趋势</CardTitle>
@@ -164,7 +239,7 @@ export default async function DashboardPage() {
         </Card>
       </DashboardAnimatedSection>
 
-      <DashboardAnimatedSection index={3}>
+      <DashboardAnimatedSection index={5}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle>账号排行榜</CardTitle>
@@ -182,7 +257,7 @@ export default async function DashboardPage() {
         </Card>
       </DashboardAnimatedSection>
 
-      <DashboardAnimatedSection index={4}>
+      <DashboardAnimatedSection index={6}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle>历史记录（最近 30 条）</CardTitle>
