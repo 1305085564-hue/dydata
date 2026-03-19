@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 type ConfidenceLevel = "high" | "medium" | "low";
+type ScreenshotType = "data" | "curve" | "retention";
+type CurvePattern = "前高后低" | "平稳增长" | "二次起量" | "低开高走" | "断崖式";
+type DropSeverity = "high" | "medium" | "low";
+type TailStrength = "high" | "medium" | "low";
 
 type OcrFieldKey =
   | "play_count"
@@ -20,6 +24,42 @@ type ParsedOcrResult = {
   follower_gain: number | null;
   confidence: Record<OcrFieldKey, ConfidenceLevel>;
 };
+
+type CurveRecognitionResult =
+  | {
+      recognized: true;
+      curve_pattern: CurvePattern;
+      first_peak_position: string | null;
+      drop_severity: DropSeverity | null;
+      tail_strength: TailStrength | null;
+      confidence: number | null;
+    }
+  | {
+      recognized: false;
+      reason: string;
+    };
+
+type RetentionSegmentSummary = {
+  segment: string;
+  performance: string;
+};
+
+type RetentionAnalysis = {
+  bounce_peak_time: string | null;
+  replay_peak_time: string | null;
+  segment_summary: RetentionSegmentSummary[];
+};
+
+type RetentionRecognitionResult =
+  | {
+      recognized: true;
+      retention_analysis: RetentionAnalysis;
+      confidence: number | null;
+    }
+  | {
+      recognized: false;
+      reason: string;
+    };
 
 type OpenAICompatibleMessageContentBlock = {
   type?: string;
@@ -50,6 +90,15 @@ type UpstreamSuccessResponse = {
   }>;
 };
 
+type ImagePayloadSuccess = {
+  dataUrl: string;
+  screenshotType: ScreenshotType | null;
+};
+
+type ImagePayloadError = {
+  error: string;
+};
+
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const OCR_MODEL = process.env.OCR_MODEL || "claude-haiku-4-5";
@@ -61,6 +110,9 @@ const OCR_FIELDS: OcrFieldKey[] = [
   "favorites",
   "follower_gain",
 ];
+const SCREENSHOT_TYPES: ScreenshotType[] = ["data", "curve", "retention"];
+const CURVE_PATTERNS: CurvePattern[] = ["前高后低", "平稳增长", "二次起量", "低开高走", "断崖式"];
+const QUALITATIVE_LEVELS: Array<"high" | "medium" | "low"> = ["high", "medium", "low"];
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -89,12 +141,18 @@ export async function POST(request: NextRequest) {
       ? await parseMultipartPayload(request)
       : await parseJsonPayload(request);
 
-    if (imagePayload.error || !imagePayload.dataUrl) {
-      return NextResponse.json({ error: imagePayload.error || "图片为空、损坏或请求格式不正确" }, { status: 400 });
+    if ("error" in imagePayload) {
+      return NextResponse.json({ error: imagePayload.error }, { status: 400 });
+    }
+
+    if (!imagePayload.dataUrl) {
+      return NextResponse.json({ error: "图片为空、损坏或请求格式不正确" }, { status: 400 });
     }
 
     const dataUrl = imagePayload.dataUrl;
     const upstreamUrl = buildUpstreamUrl(baseUrl);
+    const screenshotType = imagePayload.screenshotType ?? (await detectScreenshotType(dataUrl, upstreamUrl, apiKey));
+    const prompt = buildPromptByType(screenshotType);
     const requestBody: UpstreamRequestBody = {
       model: OCR_MODEL,
       messages: [
@@ -103,7 +161,7 @@ export async function POST(request: NextRequest) {
           content: [
             {
               type: "text",
-              text: buildPrompt(),
+              text: prompt,
             },
             {
               type: "image_url",
@@ -143,6 +201,23 @@ export async function POST(request: NextRequest) {
 
       const aiData = safeJsonParse(rawText) as UpstreamSuccessResponse | null;
       const content = aiData?.choices?.[0]?.message?.content;
+
+      if (screenshotType === "curve") {
+        const parsed = parseCurveContent(content);
+        if (!parsed) {
+          return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
+        }
+        return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
+      }
+
+      if (screenshotType === "retention") {
+        const parsed = parseRetentionContent(content);
+        if (!parsed) {
+          return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
+        }
+        return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
+      }
+
       const parsed = parseOcrContent(content);
 
       if (!parsed) {
@@ -154,7 +229,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "图片不清晰或未识别到数据" }, { status: 500 });
       }
 
-      return NextResponse.json({ data: parsed });
+      return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
     } catch (error) {
       if ((error as Error).name === "AbortError") {
         return NextResponse.json({ error: "AI 识别超时，请稍后重试" }, { status: 504 });
@@ -172,9 +247,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function parseMultipartPayload(
-  request: NextRequest
-): Promise<{ dataUrl: string; error?: undefined } | { dataUrl?: undefined; error: string }> {
+async function parseMultipartPayload(request: NextRequest): Promise<ImagePayloadSuccess | ImagePayloadError> {
   const formData = await request.formData();
   const file = formData.get("file");
 
@@ -182,12 +255,18 @@ async function parseMultipartPayload(
     return { error: "请上传图片文件" };
   }
 
-  return fileToDataUrl(file);
+  const filePayload = await fileToDataUrl(file);
+  if ("error" in filePayload) {
+    return filePayload;
+  }
+
+  return {
+    ...filePayload,
+    screenshotType: normalizeScreenshotType(formData.get("screenshot_type")),
+  };
 }
 
-async function parseJsonPayload(
-  request: NextRequest
-): Promise<{ dataUrl: string; error?: undefined } | { dataUrl?: undefined; error: string }> {
+async function parseJsonPayload(request: NextRequest): Promise<ImagePayloadSuccess | ImagePayloadError> {
   const body = await request.json();
   const image = typeof body?.image === "string" ? body.image.trim() : "";
 
@@ -200,15 +279,16 @@ async function parseJsonPayload(
     if (!ACCEPTED_TYPES.has(mimeType)) {
       return { error: "仅支持 jpg、png、webp 图片" };
     }
-    return { dataUrl: image };
+    return {
+      dataUrl: image,
+      screenshotType: normalizeScreenshotType(body?.screenshot_type),
+    };
   }
 
   return { error: "JSON 请求需提供 data URL 格式图片" };
 }
 
-async function fileToDataUrl(
-  file: File
-): Promise<{ dataUrl: string; error?: undefined } | { dataUrl?: undefined; error: string }> {
+async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error: string }> {
   if (!ACCEPTED_TYPES.has(file.type)) {
     return { error: "仅支持 jpg、png、webp 图片" };
   }
@@ -225,6 +305,62 @@ async function fileToDataUrl(
   return {
     dataUrl: `data:${file.type};base64,${buffer.toString("base64")}`,
   };
+}
+
+async function detectScreenshotType(dataUrl: string, upstreamUrl: string, apiKey: string): Promise<ScreenshotType> {
+  const requestBody: UpstreamRequestBody = {
+    model: OCR_MODEL,
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: buildClassificationPrompt() },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+    max_tokens: 300,
+    response_format: { type: "json_object" },
+  };
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const response = await fetch(upstreamUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return "data";
+    }
+
+    const rawText = await response.text();
+    const parsed = safeJsonParse(rawText) as UpstreamSuccessResponse | null;
+    return parseClassificationContent(parsed?.choices?.[0]?.message?.content) ?? "data";
+  } catch {
+    return "data";
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function buildPromptByType(type: ScreenshotType): string {
+  if (type === "curve") {
+    return buildCurvePrompt();
+  }
+
+  if (type === "retention") {
+    return buildRetentionPrompt();
+  }
+
+  return buildPrompt();
 }
 
 function buildPrompt(): string {
@@ -258,6 +394,60 @@ function buildPrompt(): string {
   ].join("\n");
 }
 
+function buildClassificationPrompt(): string {
+  return [
+    "你是抖音截图分类助手。",
+    "请判断截图类型，只能返回 data、curve、retention 三种之一。",
+    "data=常规数据截图，curve=每小时新增播放量推流曲线，retention=跳出率/回看率图。",
+    "只返回 JSON。",
+    JSON.stringify({ screenshot_type: "data" }),
+  ].join("\n");
+}
+
+function buildCurvePrompt(): string {
+  return [
+    "你是抖音推流曲线识别助手。",
+    "请识别‘每小时新增播放量’曲线，并严格返回 JSON。",
+    "字段固定为 recognized、curve_pattern、first_peak_position、drop_severity、tail_strength、confidence。",
+    "curve_pattern 只能是：前高后低、平稳增长、二次起量、低开高走、断崖式。",
+    "drop_severity 和 tail_strength 只能是 high、medium、low。",
+    "无法识别时返回 { recognized:false, reason:'...' }。",
+    "只返回 JSON，不要解释。",
+    JSON.stringify({
+      recognized: true,
+      curve_pattern: "二次起量",
+      first_peak_position: "前段",
+      drop_severity: "medium",
+      tail_strength: "high",
+      confidence: 0.86,
+    }),
+  ].join("\n");
+}
+
+function buildRetentionPrompt(): string {
+  return [
+    "你是抖音跳出回看图识别助手。",
+    "请识别跳出率和回看率峰值时间点，并严格返回 JSON。",
+    "字段固定为 recognized、retention_analysis、confidence。",
+    "retention_analysis 必须包含 bounce_peak_time、replay_peak_time、segment_summary。",
+    "segment_summary 为数组，每项包含 segment、performance。",
+    "无法识别时返回 { recognized:false, reason:'...' }。",
+    "只返回 JSON，不要解释。",
+    JSON.stringify({
+      recognized: true,
+      retention_analysis: {
+        bounce_peak_time: "0-3秒",
+        replay_peak_time: "12-15秒",
+        segment_summary: [
+          { segment: "0-5秒", performance: "跳出高" },
+          { segment: "10-15秒", performance: "回看明显" },
+        ],
+      },
+      confidence: 0.78,
+    }),
+  ].join("\n");
+}
+
 function buildUpstreamUrl(baseUrl: string): string {
   return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
 }
@@ -276,6 +466,25 @@ function safeJsonParse(rawText: string): JsonObject | null {
     return parsed && typeof parsed === "object" && !Array.isArray(parsed)
       ? (parsed as JsonObject)
       : null;
+  } catch {
+    return null;
+  }
+}
+
+export function parseClassificationContent(content: unknown): ScreenshotType | null {
+  const normalizedContent = normalizeMessageContent(content);
+  if (!normalizedContent) {
+    return null;
+  }
+
+  const jsonText = extractJson(normalizedContent);
+  if (!jsonText) {
+    return null;
+  }
+
+  try {
+    const raw = JSON.parse(jsonText) as { screenshot_type?: unknown };
+    return normalizeScreenshotType(raw.screenshot_type);
   } catch {
     return null;
   }
@@ -315,6 +524,98 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
     };
 
     return normalized;
+  } catch {
+    return null;
+  }
+}
+
+export function parseCurveContent(content: unknown): CurveRecognitionResult | null {
+  const normalizedContent = normalizeMessageContent(content);
+  if (!normalizedContent) {
+    return null;
+  }
+
+  const jsonText = extractJson(normalizedContent);
+  if (!jsonText) {
+    return null;
+  }
+
+  try {
+    const raw = JSON.parse(jsonText) as {
+      recognized?: unknown;
+      reason?: unknown;
+      curve_pattern?: unknown;
+      first_peak_position?: unknown;
+      drop_severity?: unknown;
+      tail_strength?: unknown;
+      confidence?: unknown;
+    };
+
+    if (raw.recognized === false) {
+      const reason = normalizeReason(raw.reason);
+      return reason ? { recognized: false, reason } : null;
+    }
+
+    const curvePattern = normalizeCurvePattern(raw.curve_pattern);
+    if (!curvePattern) {
+      return null;
+    }
+
+    return {
+      recognized: true,
+      curve_pattern: curvePattern,
+      first_peak_position: normalizeOptionalText(raw.first_peak_position),
+      drop_severity: normalizeLevel(raw.drop_severity),
+      tail_strength: normalizeLevel(raw.tail_strength),
+      confidence: normalizeScore(raw.confidence),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function parseRetentionContent(content: unknown): RetentionRecognitionResult | null {
+  const normalizedContent = normalizeMessageContent(content);
+  if (!normalizedContent) {
+    return null;
+  }
+
+  const jsonText = extractJson(normalizedContent);
+  if (!jsonText) {
+    return null;
+  }
+
+  try {
+    const raw = JSON.parse(jsonText) as {
+      recognized?: unknown;
+      reason?: unknown;
+      retention_analysis?: {
+        bounce_peak_time?: unknown;
+        replay_peak_time?: unknown;
+        segment_summary?: unknown;
+      };
+      confidence?: unknown;
+    };
+
+    if (raw.recognized === false) {
+      const reason = normalizeReason(raw.reason);
+      return reason ? { recognized: false, reason } : null;
+    }
+
+    const segmentSummary = normalizeSegmentSummary(raw.retention_analysis?.segment_summary);
+    if (!segmentSummary) {
+      return null;
+    }
+
+    return {
+      recognized: true,
+      retention_analysis: {
+        bounce_peak_time: normalizeOptionalText(raw.retention_analysis?.bounce_peak_time),
+        replay_peak_time: normalizeOptionalText(raw.retention_analysis?.replay_peak_time),
+        segment_summary: segmentSummary,
+      },
+      confidence: normalizeScore(raw.confidence),
+    };
   } catch {
     return null;
   }
@@ -380,4 +681,63 @@ function normalizeConfidence(value: unknown): ConfidenceLevel {
     return value;
   }
   return "low";
+}
+
+function normalizeScreenshotType(value: unknown): ScreenshotType | null {
+  return typeof value === "string" && SCREENSHOT_TYPES.includes(value as ScreenshotType)
+    ? (value as ScreenshotType)
+    : null;
+}
+
+function normalizeOptionalText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeCurvePattern(value: unknown): CurvePattern | null {
+  return typeof value === "string" && CURVE_PATTERNS.includes(value as CurvePattern)
+    ? (value as CurvePattern)
+    : null;
+}
+
+function normalizeLevel(value: unknown): DropSeverity | TailStrength | null {
+  return typeof value === "string" && QUALITATIVE_LEVELS.includes(value as DropSeverity)
+    ? (value as DropSeverity)
+    : null;
+}
+
+function normalizeScore(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return Math.max(0, Math.min(1, Math.round(value * 100) / 100));
+}
+
+function normalizeReason(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeSegmentSummary(value: unknown): RetentionSegmentSummary[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const normalized = value
+    .map((item) => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const segment = normalizeOptionalText((item as { segment?: unknown }).segment);
+      const performance = normalizeOptionalText((item as { performance?: unknown }).performance);
+
+      if (!segment || !performance) {
+        return null;
+      }
+
+      return { segment, performance };
+    })
+    .filter((item): item is RetentionSegmentSummary => item !== null);
+
+  return normalized.length > 0 ? normalized : null;
 }
