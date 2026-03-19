@@ -5,7 +5,7 @@ import {
   extractJsonString,
   isContentToolsAction,
   parseTopicSuggestions,
-} from "./route";
+} from "./helpers.ts";
 
 test("isContentToolsAction recognizes supported actions", () => {
   assert.equal(isContentToolsAction("topic_suggest"), true);

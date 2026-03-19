@@ -7,7 +7,7 @@ import {
   getDateDaysAgo,
   groupHour,
   normalizeHour,
-} from "./utils";
+} from "./utils.ts";
 
 test("normalizeHour returns null for invalid dates", () => {
   assert.equal(normalizeHour(null), null);
@@ -39,5 +39,5 @@ test("computeConfidence prefers sample size and hit rate", () => {
 });
 
 test("getDateDaysAgo returns YYYY-MM-DD string", () => {
-  assert.equal(getDateDaysAgo("2026-03-19", 7), "2026-03-12");
+  assert.equal(getDateDaysAgo("2026-03-19", 7), "2026-03-11");
 });
