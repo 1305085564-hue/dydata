@@ -286,59 +286,61 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
         </CardHeader>
         <CardContent>
           {rankedVideos.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">排名</TableHead>
-                  <TableHead className="min-w-[240px]">视频标题</TableHead>
-                  <TableHead>账号</TableHead>
-                  <TableHead>负责人</TableHead>
-                  <TableHead className="text-right">播放量</TableHead>
-                  <TableHead className="text-right">互动率</TableHead>
-                  <TableHead className="text-right">涨粉</TableHead>
-                  <TableHead>状态</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rankedVideos.map((video) => {
-                  const rate = calculateInteractionRate(video.snapshot24h);
-                  return (
-                    <TableRow key={video.id}>
-                      <TableCell className="font-medium tabular-nums text-muted-foreground">#{video.rank}</TableCell>
-                      <TableCell className="max-w-[320px] whitespace-normal">
-                        <div className="space-y-1">
-                          <p className="line-clamp-2 font-medium tracking-tight text-foreground">
-                            {video.video_title || "未命名视频"}
-                          </p>
-                          {video.video_url ? (
-                            <a
-                              href={video.video_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                            >
-                              查看视频
-                            </a>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell>{video.accounts.name}</TableCell>
-                      <TableCell>{video.profiles.name}</TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">
-                        {formatCompactNumber(video.snapshot24h.play_count)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{formatPercent(rate)}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCompactNumber(video.snapshot24h.follower_gain)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(video.anomaly_status)}>{getStatusLabel(video.anomaly_status)}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">排名</TableHead>
+                    <TableHead className="min-w-[240px]">视频标题</TableHead>
+                    <TableHead>账号</TableHead>
+                    <TableHead>负责人</TableHead>
+                    <TableHead className="text-right">播放量</TableHead>
+                    <TableHead className="text-right">互动率</TableHead>
+                    <TableHead className="text-right">涨粉</TableHead>
+                    <TableHead>状态</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rankedVideos.map((video) => {
+                    const rate = calculateInteractionRate(video.snapshot24h);
+                    return (
+                      <TableRow key={video.id}>
+                        <TableCell className="font-medium tabular-nums text-muted-foreground">#{video.rank}</TableCell>
+                        <TableCell className="max-w-[320px] whitespace-normal">
+                          <div className="space-y-1">
+                            <p className="line-clamp-2 font-medium tracking-tight text-foreground">
+                              {video.video_title || "未命名视频"}
+                            </p>
+                            {video.video_url ? (
+                              <a
+                                href={video.video_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                              >
+                                查看视频
+                              </a>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell>{video.accounts.name}</TableCell>
+                        <TableCell>{video.profiles.name}</TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {formatCompactNumber(video.snapshot24h.play_count)}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">{formatPercent(rate)}</TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {formatCompactNumber(video.snapshot24h.follower_gain)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(video.anomaly_status)}>{getStatusLabel(video.anomaly_status)}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">暂无 24h 快照数据，无法展示视频排行榜。</p>
           )}

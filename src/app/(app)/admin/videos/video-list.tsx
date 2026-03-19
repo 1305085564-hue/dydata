@@ -133,7 +133,7 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
     <div className="space-y-5">
       <VideoFilters profiles={profiles} accounts={accounts} onFilter={setFilters} />
 
-      <div className="overflow-hidden rounded-[28px] border border-border/60 bg-background/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl">
+      <div className="overflow-x-auto rounded-[28px] border border-border/60 bg-background/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">

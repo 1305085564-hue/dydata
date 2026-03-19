@@ -1,0 +1,65 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e87]:
+    - banner [ref=e89]:
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - link "Supabase" [ref=e92] [cursor=pointer]:
+            - /url: /dashboard/org/kgaztjzfuilobduebmau
+            - img "Supabase" [ref=e93]
+          - generic [ref=e94]:
+            - img [ref=e96]
+            - generic [ref=e98]: Organizations
+        - generic [ref=e99]:
+          - generic [ref=e101] [cursor=pointer]: Feedback
+          - generic [ref=e102]:
+            - button "Search..." [ref=e103] [cursor=pointer]:
+              - generic [ref=e104]:
+                - img [ref=e105]
+                - paragraph [ref=e108]: Search...
+              - generic [ref=e110]:
+                - img [ref=e111]
+                - generic [ref=e113]: K
+            - button [ref=e114] [cursor=pointer]:
+              - img [ref=e116]
+            - button [ref=e120] [cursor=pointer]:
+              - img [ref=e122]
+          - button [ref=e124] [cursor=pointer]:
+            - figure [ref=e126]:
+              - img [ref=e127]
+    - generic [ref=e134]:
+      - heading "Your Organizations" [level=1] [ref=e141]
+      - generic [ref=e143]:
+        - alert [ref=e144]:
+          - heading "NOTICE Privacy Policy Update – Effective March 16, 2026" [level=5] [ref=e145]:
+            - generic [ref=e146]: NOTICE
+            - text: Privacy Policy Update – Effective March 16, 2026
+          - generic [ref=e147]:
+            - text: We've updated our
+            - link "Privacy Policy" [ref=e148] [cursor=pointer]:
+              - /url: https://supabase.com/privacy
+            - text: to clarify our use of analytics, cookies, and advertising audience management tools. By continuing to use Supabase after March 16, you agree to the new terms. Questions? Contact
+            - link "our team" [ref=e149] [cursor=pointer]:
+              - /url: mailto:privacy@supabase.com
+            - text: .
+          - button [ref=e150] [cursor=pointer]:
+            - img [ref=e152]
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - textbox "Search for an organization" [ref=e157]
+            - generic:
+              - img
+          - link "New organization" [ref=e158] [cursor=pointer]:
+            - /url: /dashboard/new
+            - img [ref=e160]
+            - generic [ref=e161]: New organization
+        - link "1305085564@qq.com's Org Free Plan · 1 project" [ref=e163] [cursor=pointer]:
+          - /url: /dashboard/org/kgaztjzfuilobduebmau
+          - generic [ref=e165]:
+            - img [ref=e167]
+            - generic [ref=e177]:
+              - heading "1305085564@qq.com's Org" [level=3] [ref=e178]
+              - generic [ref=e180]:
+                - generic [ref=e181]: Free Plan
+                - generic [ref=e182]: ·
+                - generic [ref=e183]: 1 project
+  - alert [ref=e84]: Supabase

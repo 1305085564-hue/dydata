@@ -81,7 +81,7 @@ export function MarketList({ initialData }: MarketListProps) {
               暂无市场环境记录
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border/60 bg-background">
+            <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background">
               <Table>
                 <TableHeader>
                   <TableRow>

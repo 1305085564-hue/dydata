@@ -39,6 +39,17 @@ type UpstreamRequestBody = {
   response_format: { type: "json_object" };
 };
 
+type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
+type UpstreamSuccessResponse = {
+  choices?: Array<{
+    message?: {
+      content?: unknown;
+    };
+  }>;
+};
+
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const OCR_MODEL = process.env.OCR_MODEL || "claude-haiku-4-5";
@@ -107,14 +118,6 @@ export async function POST(request: NextRequest) {
       response_format: { type: "json_object" as const },
     };
 
-    console.log(
-      "[ocr-screenshot] upstream request",
-      JSON.stringify({
-        url: upstreamUrl,
-        body: serializeRequestBodyForLog(requestBody),
-      })
-    );
-
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
 
@@ -131,15 +134,6 @@ export async function POST(request: NextRequest) {
 
       const rawText = await aiRes.text();
 
-      console.log(
-        "[ocr-screenshot] upstream response",
-        JSON.stringify({
-          status: aiRes.status,
-          ok: aiRes.ok,
-          body: rawText,
-        })
-      );
-
       if (!aiRes.ok) {
         return NextResponse.json(
           { error: extractUpstreamError(rawText) || "截图识别失败，请稍后重试或手动输入数据" },
@@ -147,7 +141,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const aiData = safeJsonParse(rawText);
+      const aiData = safeJsonParse(rawText) as UpstreamSuccessResponse | null;
       const content = aiData?.choices?.[0]?.message?.content;
       const parsed = parseOcrContent(content);
 
@@ -270,37 +264,20 @@ function buildUpstreamUrl(baseUrl: string): string {
   return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
 }
 
-function serializeRequestBodyForLog(body: UpstreamRequestBody) {
-  return {
-    ...body,
-    messages: body.messages.map((message) => ({
-      ...message,
-      content: message.content.map((item) => {
-        if (item.type !== "image_url") {
-          return item;
-        }
-
-        return {
-          type: item.type,
-          image_url: {
-            url_preview: item.image_url.url.slice(0, 120),
-            url_length: item.image_url.url.length,
-          },
-        };
-      }),
-    })),
-  };
-}
-
 function extractUpstreamError(rawText: string): string | null {
   const parsed = safeJsonParse(rawText);
-  const message = parsed?.error?.message;
+  const error = parsed?.error;
+  const message =
+    error && typeof error === "object" && "message" in error ? error.message : null;
   return typeof message === "string" && message.trim() ? message : null;
 }
 
-function safeJsonParse(rawText: string): any {
+function safeJsonParse(rawText: string): JsonObject | null {
   try {
-    return JSON.parse(rawText);
+    const parsed = JSON.parse(rawText);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as JsonObject)
+      : null;
   } catch {
     return null;
   }
