@@ -17,6 +17,7 @@ import { build个人趋势数据 } from "@/lib/趋势图";
 import { 日报提交面板 } from "./日报提交面板";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
+import { AdvicePanel } from "./advice-panel";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -189,6 +190,7 @@ export default async function DashboardPage() {
                   </div>
                   <span className="font-semibold tabular-nums">{pending24hCount}</span>
                 </div>
+                <AdvicePanel />
               </div>
             )}
           </CardContent>
