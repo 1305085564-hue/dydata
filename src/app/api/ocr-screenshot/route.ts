@@ -156,8 +156,6 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ data: parsed });
     } catch (error) {
-      console.error("[ocr-screenshot] request failed", error);
-
       if ((error as Error).name === "AbortError") {
         return NextResponse.json({ error: "AI 识别超时，请稍后重试" }, { status: 504 });
       }

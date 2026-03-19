@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/table";
 import { VideoFilters, type VideoFilterValue } from "./video-filters";
 import { VideoDetailDialog } from "./video-detail-dialog";
+import { Patch24hDialog } from "./patch-24h-dialog";
 import { interactionRate } from "@/lib/video-metrics";
+import { shouldShowPatch24hButton } from "@/lib/video-admin";
 import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
 
 type VideoRow = Video & {
@@ -74,10 +76,13 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
     status: "all",
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [patchingVideoId, setPatchingVideoId] = useState<string | null>(null);
+  const [videoRows, setVideoRows] = useState(videos);
+  const [snapshotRows, setSnapshotRows] = useState(snapshots);
 
   const snapshots24h = useMemo(
-    () => snapshots.filter((snapshot) => snapshot.snapshot_type === "24h"),
-    [snapshots]
+    () => snapshotRows.filter((snapshot) => snapshot.snapshot_type === "24h"),
+    [snapshotRows]
   );
 
   const snapshotMap = useMemo(
@@ -86,12 +91,12 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
   );
 
   const sortedVideos = useMemo(
-    () => [...videos].sort((a, b) => {
+    () => [...videoRows].sort((a, b) => {
       const aTime = a.published_at ? new Date(a.published_at).getTime() : 0;
       const bTime = b.published_at ? new Date(b.published_at).getTime() : 0;
       return bTime - aTime;
     }),
-    [videos]
+    [videoRows]
   );
 
   const filteredVideos = useMemo(() => {
@@ -128,6 +133,31 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
   );
 
   const selectedSnapshot = selectedVideo ? snapshotMap.get(selectedVideo.id) ?? null : null;
+  const patchingVideo = useMemo(
+    () => videoRows.find((video) => video.id === patchingVideoId) ?? null,
+    [patchingVideoId, videoRows]
+  );
+  const patchingSnapshot = patchingVideo ? snapshotMap.get(patchingVideo.id) ?? null : null;
+
+  function handlePatchSaved(result: { video: VideoRow; snapshot: VideoMetricsSnapshot }) {
+    setVideoRows((current) =>
+      current.map((video) => (video.id === result.video.id ? result.video : video))
+    );
+
+    setSnapshotRows((current) => {
+      const matchIndex = current.findIndex(
+        (snapshot) =>
+          snapshot.id === result.snapshot.id ||
+          (snapshot.video_id === result.snapshot.video_id && snapshot.snapshot_type === "24h")
+      );
+
+      if (matchIndex === -1) {
+        return [result.snapshot, ...current];
+      }
+
+      return current.map((snapshot, index) => (index === matchIndex ? result.snapshot : snapshot));
+    });
+  }
 
   return (
     <div className="space-y-5">
@@ -152,6 +182,7 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
             {filteredVideos.length ? (
               filteredVideos.map((video) => {
                 const snapshot = snapshotMap.get(video.id) ?? null;
+                const showPatchButton = shouldShowPatch24hButton(video, snapshot);
 
                 return (
                   <TableRow key={video.id}>
@@ -175,13 +206,24 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 text-right">
-                      <Button
-                        variant="outline"
-                        className="rounded-2xl bg-muted/40"
-                        onClick={() => setSelectedVideoId(video.id)}
-                      >
-                        查看详情
-                      </Button>
+                      <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
+                        {showPatchButton ? (
+                          <Button
+                            variant="secondary"
+                            className="rounded-2xl"
+                            onClick={() => setPatchingVideoId(video.id)}
+                          >
+                            补录24h数据
+                          </Button>
+                        ) : null}
+                        <Button
+                          variant="outline"
+                          className="rounded-2xl bg-muted/40"
+                          onClick={() => setSelectedVideoId(video.id)}
+                        >
+                          查看详情
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -206,6 +248,18 @@ export function VideoList({ videos, snapshots, profiles, accounts }: VideoListPr
         }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
+      />
+
+      <Patch24hDialog
+        open={patchingVideo !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPatchingVideoId(null);
+          }
+        }}
+        video={patchingVideo}
+        snapshot={patchingSnapshot}
+        onSaved={handlePatchSaved}
       />
     </div>
   );
