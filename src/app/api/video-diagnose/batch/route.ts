@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
 import {
   createBatchSummary,
   listBatchCandidates,
   normalizeBatchPayload,
   runVideoDiagnosis,
 } from "../route";
-import { createClient } from "@/lib/supabase/server";
+
+import { buildBatchResponse, resolveBatchRequest } from "./批量诊断";
 
 export async function POST(request: NextRequest) {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
+  const permission = await getUserPermissions();
 
-  if (!user) {
+  if (!permission) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
+
+  if (!isAdminLevel(permission.role)) {
+    return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
   let body: unknown;
@@ -25,15 +28,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "请求体不是合法 JSON" }, { status: 400 });
   }
 
-  const payload = normalizeBatchPayload(body);
-
-  if (!payload.userId && !payload.accountId) {
-    return NextResponse.json({ error: "至少提供 user_id 或 account_id" }, { status: 400 });
-  }
-
   try {
+    const payload = resolveBatchRequest(normalizeBatchPayload(body));
     const candidates = await listBatchCandidates(payload);
-    const results = [] as Array<{ ok: true; videoId: string } | { ok: false; videoId: string; error: string }>;
+    const results: Array<{ ok: true; videoId: string } | { ok: false; videoId: string; error: string }> = [];
 
     for (const candidate of candidates) {
       try {
@@ -43,15 +41,18 @@ export async function POST(request: NextRequest) {
         results.push({
           ok: false,
           videoId: candidate.id,
-          error: (error as Error).message || "诊断失败",
+          error: error instanceof Error ? error.message : "诊断失败",
         });
       }
     }
 
-    return NextResponse.json(createBatchSummary(results));
+    return NextResponse.json(
+      buildBatchResponse({
+        candidates: candidates.map((candidate) => candidate.id),
+        summary: createBatchSummary(results),
+      })
+    );
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message || "批量诊断失败" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "批量诊断失败" }, { status: 500 });
   }
 }
-
-export { pickBatchCandidates } from "../route";
