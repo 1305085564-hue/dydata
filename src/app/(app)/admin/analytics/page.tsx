@@ -83,7 +83,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       .order("report_date", { ascending: false }),
     adminSupabase
       .from("videos")
-      .select("*, accounts!inner(name), profiles!inner(name)")
+      .select("*, accounts(name)")
       .in("user_id", teamUserIds)
       .order("published_at", { ascending: false }),
     adminSupabase.from("video_metrics_snapshots").select("*"),
