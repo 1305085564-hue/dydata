@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Clock } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -10,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Report {
   id: string;
@@ -98,7 +100,13 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
   }, [reports, hasEnoughPublished]);
 
   if (reports.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">暂无数据</p>;
+    return (
+      <EmptyState
+        icon={Clock}
+        title="暂无时间维度数据"
+        description="成员提交数据后可查看发布时段与星期的播放量分布"
+      />
+    );
   }
 
   return (

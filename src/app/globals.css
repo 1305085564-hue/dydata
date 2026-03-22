@@ -96,7 +96,9 @@
   --app-nav-height: 3.5rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
-  --radius-card: 16px;
+  --radius-card: var(--radius-lg);
+  --radius-dialog: var(--radius-2xl);
+  --radius-button: var(--radius-md);
   --shadow-light: 0 1px 3px rgba(15,23,42,0.06);
   --shadow-medium: 0 8px 24px -8px rgba(15,23,42,0.12);
   --shadow-heavy: 0 18px 48px -32px rgba(15,23,42,0.28);
@@ -150,8 +152,15 @@
       linear-gradient(180deg, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 92%, white) 100%);
     color: var(--color-text-primary);
   }
+  /* Toast 居中主控制点 */
   body [data-sonner-toaster] {
-    --offset-top: calc(var(--app-top-offset) + 0.75rem);
+    --offset-top: 0px;
+    --offset-bottom: 0px;
+    top: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
   }
   input,
   textarea,
@@ -223,14 +232,6 @@
 }
 
 @layer components {
-  /* 按钮微交互 */
-  button, [role="button"] {
-    transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  button:active:not(:disabled), [role="button"]:active:not(:disabled) {
-    transform: scale(0.97);
-  }
-
   .auth-background-glow {
     isolation: isolate;
   }

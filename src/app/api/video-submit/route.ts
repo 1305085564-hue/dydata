@@ -12,6 +12,8 @@ type VideoSubmitRequestBody = {
   published_at_text?: string | null;
   biz_date?: string | null;
   anomaly_status?: string | null;
+  topic_tag?: string | null;
+  content_keywords?: string[];
   assets?: SubmissionAssetMeta[];
   metrics?: {
     play_count?: number;
@@ -354,6 +356,40 @@ export async function POST(request: NextRequest) {
       })),
       { onConflict: "video_id,tag_dimension" }
     );
+  }
+
+  const manualTags: Array<{ video_id: string; tag_dimension: string; tag_value: string; source: string; confidence: null; reason: null; reviewed_by: null }> = [];
+
+  if (body.topic_tag) {
+    manualTags.push({
+      video_id: newVideo.id,
+      tag_dimension: "话题",
+      tag_value: body.topic_tag,
+      source: "manual",
+      confidence: null,
+      reason: null,
+      reviewed_by: null,
+    });
+  }
+
+  if (Array.isArray(body.content_keywords)) {
+    for (const kw of body.content_keywords.slice(0, 3)) {
+      if (typeof kw === "string" && kw.trim()) {
+        manualTags.push({
+          video_id: newVideo.id,
+          tag_dimension: "关键词",
+          tag_value: kw.trim(),
+          source: "manual",
+          confidence: null,
+          reason: null,
+          reviewed_by: null,
+        });
+      }
+    }
+  }
+
+  if (manualTags.length) {
+    await supabase.from("video_tags").upsert(manualTags, { onConflict: "video_id,tag_dimension" });
   }
 
   return NextResponse.json({ ok: true, video: newVideo, ai_tags: aiTags });

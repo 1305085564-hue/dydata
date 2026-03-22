@@ -200,6 +200,8 @@ export default async function GrowthPage() {
       pkPanel={pkPanel}
       scriptBreakdown={scriptBreakdown}
       advice={advice}
+      myReports={myAllReports}
+      teamReports={teamReports}
     />
   );
 }

@@ -32,12 +32,15 @@ interface LeaderboardProps {
 
 type MetricKey =
   | "views"
-  | "likes"
   | "followerGain"
-  | "completionRate"
+  | "followerConvert"
+  | "likes"
+  | "comments"
+  | "shares"
+  | "favorites"
   | "watchDuration"
   | "bounceRate"
-  | "completedViewers";
+  | "completionRate5s";
 
 const RANGE_OPTIONS: Array<{ value: LeaderboardRange; label: string }> = [
   { value: "today", label: "当天" },
@@ -53,12 +56,15 @@ const TYPE_OPTIONS: Array<{ value: LeaderboardType; label: string }> = [
 
 const METRICS: Array<{ key: MetricKey; label: string }> = [
   { key: "views", label: "播放量" },
-  { key: "likes", label: "点赞" },
   { key: "followerGain", label: "涨粉" },
-  { key: "completionRate", label: "完播率" },
-  { key: "watchDuration", label: "停留时长" },
-  { key: "bounceRate", label: "跳出率" },
-  { key: "completedViewers", label: "完播人数" },
+  { key: "followerConvert", label: "导粉" },
+  { key: "likes", label: "点赞" },
+  { key: "comments", label: "评论" },
+  { key: "shares", label: "分享" },
+  { key: "favorites", label: "收藏" },
+  { key: "watchDuration", label: "均播时长" },
+  { key: "bounceRate", label: "2s跳出率" },
+  { key: "completionRate5s", label: "5s完播率" },
 ];
 
 
@@ -73,6 +79,17 @@ export function Leaderboard({
   const [range, setRange] = useState<LeaderboardRange>(defaultRange);
   const [boardType, setBoardType] = useState<LeaderboardType>("overall");
   const [compact, setCompact] = useState(defaultCompact);
+  const [sortKey, setSortKey] = useState<MetricKey>("views");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  function handleSortClick(key: MetricKey) {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  }
 
   const normalizedOwnDirections = useMemo(
     () => new Set(ownContentDirections.map(normalizeTag).filter(Boolean)),
@@ -134,8 +151,9 @@ export function Leaderboard({
         return a.accountName.localeCompare(b.accountName, "zh-CN");
       }
 
-      if (b.views !== a.views) return b.views - a.views;
-      if (b.likes !== a.likes) return b.likes - a.likes;
+      const va = getMetricValue(a, sortKey);
+      const vb = getMetricValue(b, sortKey);
+      if (va !== vb) return sortDir === "desc" ? vb - va : va - vb;
       return a.accountName.localeCompare(b.accountName, "zh-CN");
     });
 
@@ -153,9 +171,9 @@ export function Leaderboard({
           ? "当前时间范围内暂无同标签账号数据。"
           : "当前时间范围内暂无排行榜数据。",
     };
-  }, [baseRows, boardType, normalizedOwnDirections, ownAccountIds, progressByAccount]);
+  }, [baseRows, boardType, normalizedOwnDirections, ownAccountIds, progressByAccount, sortKey, sortDir]);
 
-  const visibleMetrics = compact ? METRICS.slice(0, 4) : METRICS;
+  const visibleItems = compact ? items.slice(0, 10) : items;
 
   return (
     <div className="glass-card-static space-y-4 p-4 sm:p-5">
@@ -200,7 +218,7 @@ export function Leaderboard({
       ) : (
         <>
           <div className="overflow-x-auto rounded-2xl ring-1 ring-foreground/8">
-            <Table className="min-w-[920px]">
+            <Table className="min-w-[1380px]">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="sticky left-0 z-20 w-16 bg-background/95 backdrop-blur">排名</TableHead>
@@ -209,15 +227,24 @@ export function Leaderboard({
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
-                  {visibleMetrics.map((metric) => (
-                    <TableHead key={metric.key} className="min-w-[110px] text-right">
-                      {metric.label}
+                  {METRICS.map((metric) => (
+                    <TableHead
+                      key={metric.key}
+                      className="min-w-[96px] cursor-pointer select-none text-right"
+                      onClick={() => handleSortClick(metric.key)}
+                    >
+                      <span className="inline-flex items-center justify-end gap-1">
+                        {metric.label}
+                        {sortKey === metric.key ? (
+                          sortDir === "desc" ? <ChevronDown className="size-3" /> : <ChevronUp className="size-3" />
+                        ) : null}
+                      </span>
                     </TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {visibleItems.map((item) => (
                   <TableRow
                     key={item.accountId}
                     className={cn(
@@ -252,7 +279,7 @@ export function Leaderboard({
                         <ProgressValue item={item} />
                       </TableCell>
                     ) : null}
-                    {visibleMetrics.map((metric) => (
+                    {METRICS.map((metric) => (
                       <TableCell key={metric.key} className="text-right tabular-nums">
                         {formatMetric(item, metric.key)}
                       </TableCell>
@@ -383,14 +410,17 @@ function aggregateRows(rows: AccountLeaderboardRow[], ownAccountIds: Set<string>
       isOwn: boolean;
       views: number;
       likes: number;
+      comments: number;
+      shares: number;
+      favorites: number;
       followerGain: number;
-      completedViewers: number;
-      completionWeighted: number;
-      completionWeight: number;
+      followerConvert: number;
       watchWeighted: number;
       watchWeight: number;
       bounceWeighted: number;
       bounceWeight: number;
+      completion5sWeighted: number;
+      completion5sWeight: number;
     }
   >();
 
@@ -398,10 +428,14 @@ function aggregateRows(rows: AccountLeaderboardRow[], ownAccountIds: Set<string>
     const accountId = row.account_id;
     const views = row.play_count ?? 0;
     const likes = row.likes ?? 0;
+    const comments = row.comments ?? 0;
+    const shares = row.shares ?? 0;
+    const favorites = row.favorites ?? 0;
     const followerGain = row.follower_gain ?? 0;
-    const completionRate = parsePercent(row.completion_rate);
+    const followerConvert = row.follower_convert ?? 0;
     const watchDuration = parseSeconds(row.avg_play_duration);
     const bounceRate = parsePercent(row.bounce_rate_2s);
+    const completionRate5s = parsePercent(row.completion_rate_5s);
 
     const current = map.get(accountId) ?? {
       accountId,
@@ -412,25 +446,26 @@ function aggregateRows(rows: AccountLeaderboardRow[], ownAccountIds: Set<string>
       isOwn: ownAccountIds.has(accountId),
       views: 0,
       likes: 0,
+      comments: 0,
+      shares: 0,
+      favorites: 0,
       followerGain: 0,
-      completedViewers: 0,
-      completionWeighted: 0,
-      completionWeight: 0,
+      followerConvert: 0,
       watchWeighted: 0,
       watchWeight: 0,
       bounceWeighted: 0,
       bounceWeight: 0,
+      completion5sWeighted: 0,
+      completion5sWeight: 0,
     };
 
     current.views += views;
     current.likes += likes;
+    current.comments += comments;
+    current.shares += shares;
+    current.favorites += favorites;
     current.followerGain += followerGain;
-
-    if (completionRate !== null) {
-      current.completionWeighted += completionRate * views;
-      current.completionWeight += views;
-      current.completedViewers += views * (completionRate / 100);
-    }
+    current.followerConvert += followerConvert;
 
     if (watchDuration !== null) {
       current.watchWeighted += watchDuration * views;
@@ -440,6 +475,11 @@ function aggregateRows(rows: AccountLeaderboardRow[], ownAccountIds: Set<string>
     if (bounceRate !== null) {
       current.bounceWeighted += bounceRate * views;
       current.bounceWeight += views;
+    }
+
+    if (completionRate5s !== null) {
+      current.completion5sWeighted += completionRate5s * views;
+      current.completion5sWeight += views;
     }
 
     map.set(accountId, current);
@@ -455,16 +495,19 @@ function aggregateRows(rows: AccountLeaderboardRow[], ownAccountIds: Set<string>
     rank: 0,
     views: item.views,
     likes: item.likes,
+    comments: item.comments,
+    shares: item.shares,
+    favorites: item.favorites,
     followerGain: item.followerGain,
-    completionRate:
-      item.completionWeight > 0
-        ? item.completionWeighted / item.completionWeight
-        : null,
+    followerConvert: item.followerConvert,
     watchDuration:
       item.watchWeight > 0 ? item.watchWeighted / item.watchWeight : null,
     bounceRate:
       item.bounceWeight > 0 ? item.bounceWeighted / item.bounceWeight : null,
-    completedViewers: Math.round(item.completedViewers),
+    completionRate5s:
+      item.completion5sWeight > 0
+        ? item.completion5sWeighted / item.completion5sWeight
+        : null,
     progressRate: null,
     isBreakout: false,
   }));
@@ -520,24 +563,43 @@ function filterRowsByDirections(
   });
 }
 
+function getMetricValue(item: AccountLeaderboardItem, key: MetricKey): number {
+  switch (key) {
+    case "views": return item.views;
+    case "followerGain": return item.followerGain;
+    case "followerConvert": return item.followerConvert;
+    case "likes": return item.likes;
+    case "comments": return item.comments;
+    case "shares": return item.shares;
+    case "favorites": return item.favorites;
+    case "watchDuration": return item.watchDuration ?? -1;
+    case "bounceRate": return item.bounceRate ?? -1;
+    case "completionRate5s": return item.completionRate5s ?? -1;
+  }
+}
+
 function formatMetric(item: AccountLeaderboardItem, key: MetricKey) {
   switch (key) {
     case "views":
       return formatLargeNumber(item.views);
+    case "followerGain":
+      return item.followerGain.toLocaleString("zh-CN");
+    case "followerConvert":
+      return item.followerConvert.toLocaleString("zh-CN");
     case "likes":
       return formatLargeNumber(item.likes);
-    case "followerGain":
-      return formatLargeNumber(item.followerGain);
-    case "completionRate":
-      return item.completionRate === null ? "-" : `${item.completionRate.toFixed(1)}%`;
+    case "comments":
+      return formatLargeNumber(item.comments);
+    case "shares":
+      return formatLargeNumber(item.shares);
+    case "favorites":
+      return formatLargeNumber(item.favorites);
     case "watchDuration":
       return item.watchDuration === null ? "-" : `${item.watchDuration.toFixed(1)}秒`;
     case "bounceRate":
       return item.bounceRate === null ? "-" : `${item.bounceRate.toFixed(1)}%`;
-    case "completedViewers":
-      return formatLargeNumber(item.completedViewers);
-    default:
-      return "-";
+    case "completionRate5s":
+      return item.completionRate5s === null ? "-" : `${item.completionRate5s.toFixed(1)}%`;
   }
 }
 

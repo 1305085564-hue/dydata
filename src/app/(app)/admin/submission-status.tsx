@@ -54,6 +54,14 @@ export function SubmissionStatus({
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const router = useRouter();
 
+  const SS_PAGE_SIZE = 10;
+  const [profilePage, setProfilePage] = useState(1);
+  const [profileShowAll, setProfileShowAll] = useState(false);
+  const [profileSubmittedExpanded, setProfileSubmittedExpanded] = useState(false);
+  const [accountPage, setAccountPage] = useState(1);
+  const [accountShowAll, setAccountShowAll] = useState(false);
+  const [accountSubmittedExpanded, setAccountSubmittedExpanded] = useState(false);
+
   const submittedProfileSet = useMemo(() => new Set(submittedProfileIds), [submittedProfileIds]);
   const submittedAccountSet = useMemo(() => new Set(submittedAccountIds), [submittedAccountIds]);
 
@@ -203,6 +211,47 @@ export function SubmissionStatus({
     );
   }
 
+  const unsubmittedProfileRows = profileRows.activeRows.filter((r) => !r.isSubmitted);
+  const submittedProfileRowsList = profileRows.activeRows.filter((r) => r.isSubmitted);
+  const profileTotalPages = Math.ceil(unsubmittedProfileRows.length / SS_PAGE_SIZE);
+  const visibleUnsubmittedProfileRows = profileShowAll
+    ? unsubmittedProfileRows
+    : unsubmittedProfileRows.slice((profilePage - 1) * SS_PAGE_SIZE, profilePage * SS_PAGE_SIZE);
+
+  const unsubmittedAccountRows = accountRows.activeRows.filter((r) => !r.isSubmitted);
+  const submittedAccountRowsList = accountRows.activeRows.filter((r) => r.isSubmitted);
+  const accountTotalPages = Math.ceil(unsubmittedAccountRows.length / SS_PAGE_SIZE);
+  const visibleUnsubmittedAccountRows = accountShowAll
+    ? unsubmittedAccountRows
+    : unsubmittedAccountRows.slice((accountPage - 1) * SS_PAGE_SIZE, accountPage * SS_PAGE_SIZE);
+
+  function renderPagination(
+    page: number,
+    totalPages: number,
+    showAll: boolean,
+    total: number,
+    onPageChange: (p: number) => void,
+    onToggleShowAll: () => void,
+  ) {
+    if (total <= SS_PAGE_SIZE) return null;
+    return (
+      <div className="flex flex-col items-center gap-2 pt-3">
+        {!showAll && totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-center gap-1">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="h-8 px-3 text-xs">上一页</Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-xs${p === page ? " bg-[#007AFF] hover:bg-[#0066DD] border-[#007AFF]" : ""}`}>{p}</Button>
+            ))}
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="h-8 px-3 text-xs">下一页</Button>
+          </div>
+        )}
+        <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-8" onClick={onToggleShowAll}>
+          {showAll ? "收起" : `展开全部（共 ${total} 人）`}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -246,10 +295,10 @@ export function SubmissionStatus({
             <div className="space-y-3">
               <CardTitle>提交状态</CardTitle>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant={viewMode === "profile" ? "default" : "outline"} onClick={() => setViewMode("profile")}>
+                <Button size="sm" variant={viewMode === "profile" ? "default" : "outline"} onClick={() => { setViewMode("profile"); setProfilePage(1); }}>
                   按人查看
                 </Button>
-                <Button size="sm" variant={viewMode === "account" ? "default" : "outline"} onClick={() => setViewMode("account")}>
+                <Button size="sm" variant={viewMode === "account" ? "default" : "outline"} onClick={() => { setViewMode("account"); setAccountPage(1); }}>
                   按账号查看
                 </Button>
               </div>
@@ -279,9 +328,9 @@ export function SubmissionStatus({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {profileRows.activeRows.map((row) => (
-                      <TableRow key={row.id} className={!row.isSubmitted ? "bg-red-50/70" : ""}>
-                        <TableCell className={!row.isSubmitted ? "font-medium text-red-600" : ""}>{row.name}</TableCell>
+                    {visibleUnsubmittedProfileRows.map((row) => (
+                      <TableRow key={row.id} className="bg-red-50/70">
+                        <TableCell className="font-medium text-red-600">{row.name}</TableCell>
                         <TableCell>
                           <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">
                             {renderRole(row.role)}
@@ -327,6 +376,44 @@ export function SubmissionStatus({
                         </TableCell>
                       </TableRow>
                     ))}
+                    {submittedProfileRowsList.length > 0 && (
+                      <>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/30"
+                          onClick={() => setProfileSubmittedExpanded((v) => !v)}
+                        >
+                          <TableCell colSpan={7} className="py-2 text-xs text-muted-foreground select-none">
+                            已提交 {submittedProfileRowsList.length} 人 {profileSubmittedExpanded ? "▲" : "▼"}
+                          </TableCell>
+                        </TableRow>
+                        {profileSubmittedExpanded && submittedProfileRowsList.map((row) => (
+                          <TableRow key={row.id}>
+                            <TableCell>{row.name}</TableCell>
+                            <TableCell>
+                              <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">{renderRole(row.role)}</Badge>
+                            </TableCell>
+                            <TableCell className="tabular-nums">{row.accountCount}</TableCell>
+                            <TableCell><Badge variant="default" className="text-xs">{row.statusText}</Badge></TableCell>
+                            <TableCell>
+                              {row.ownAccounts.length ? (
+                                <div className="space-y-1 text-xs text-muted-foreground">
+                                  {row.ownAccounts.map((account) => (
+                                    <div key={account.id} className="flex items-center gap-2">
+                                      <span>{account.name}</span>
+                                      {submittedAccountSet.has(account.id) ? <Badge variant="outline" className="text-[10px] px-1 py-0">已交</Badge> : null}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : <span className="text-xs text-muted-foreground">暂无账号</span>}
+                            </TableCell>
+                            <TableCell>{renderExemptionHint(row.exemption.label, row.exemption.reason)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" onClick={() => openDialog(row)} className="text-xs text-muted-foreground">设置豁免</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </>
+                    )}
                     {profileRows.exemptRows.length > 0 && (
                       <>
                         <TableRow>
@@ -372,17 +459,18 @@ export function SubmissionStatus({
                     )}
                   </TableBody>
                 </Table>
+                {renderPagination(profilePage, profileTotalPages, profileShowAll, unsubmittedProfileRows.length, setProfilePage, () => { setProfileShowAll((v) => !v); setProfilePage(1); })}
               </div>
 
               <div className="space-y-3 sm:hidden">
-                {profileRows.activeRows.map((row) => (
+                {visibleUnsubmittedProfileRows.map((row) => (
                   <div
                     key={row.id}
-                    className={`rounded-lg border p-3 ${!row.isSubmitted ? "border-red-200 bg-red-50/70" : "bg-background"}`}
+                    className="rounded-lg border p-3 border-red-200 bg-red-50/70"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <p className={`text-sm font-medium ${!row.isSubmitted ? "text-red-600" : ""}`}>{row.name}</p>
+                        <p className="text-sm font-medium text-red-600">{row.name}</p>
                         <p className="text-xs text-muted-foreground">{renderRole(row.role)} · {row.accountCount} 个账号</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -416,6 +504,31 @@ export function SubmissionStatus({
                     </div>
                   </div>
                 ))}
+                {submittedProfileRowsList.length > 0 && (
+                  <>
+                    <button
+                      className="w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setProfileSubmittedExpanded((v) => !v)}
+                    >
+                      已提交 {submittedProfileRowsList.length} 人 {profileSubmittedExpanded ? "▲" : "▼"}
+                    </button>
+                    {profileSubmittedExpanded && submittedProfileRowsList.map((row) => (
+                      <div key={row.id} className="rounded-lg border p-3 bg-background">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">{row.name}</p>
+                            <p className="text-xs text-muted-foreground">{renderRole(row.role)} · {row.accountCount} 个账号</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <Badge variant="default" className="text-xs">{row.statusText}</Badge>
+                            <Button variant="ghost" size="sm" onClick={() => openDialog(row)} className="h-7 px-2 text-xs text-muted-foreground">豁免</Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {renderPagination(profilePage, profileTotalPages, profileShowAll, unsubmittedProfileRows.length, setProfilePage, () => { setProfileShowAll((v) => !v); setProfilePage(1); })}
                 {profileRows.exemptRows.length > 0 && (
                   <>
                     <p className="pt-2 text-xs text-muted-foreground">豁免人员</p>
@@ -460,9 +573,9 @@ export function SubmissionStatus({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {accountRows.activeRows.map((row) => (
-                      <TableRow key={row.id} className={!row.isSubmitted ? "bg-red-50/70" : ""}>
-                        <TableCell className={!row.isSubmitted ? "font-medium text-red-600" : ""}>{row.name}</TableCell>
+                    {visibleUnsubmittedAccountRows.map((row) => (
+                      <TableRow key={row.id} className="bg-red-50/70">
+                        <TableCell className="font-medium text-red-600">{row.name}</TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <p>{row.profile_name}</p>
@@ -488,6 +601,32 @@ export function SubmissionStatus({
                         </TableCell>
                       </TableRow>
                     ))}
+                    {submittedAccountRowsList.length > 0 && (
+                      <>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/30"
+                          onClick={() => setAccountSubmittedExpanded((v) => !v)}
+                        >
+                          <TableCell colSpan={6} className="py-2 text-xs text-muted-foreground select-none">
+                            已提交 {submittedAccountRowsList.length} 个账号 {accountSubmittedExpanded ? "▲" : "▼"}
+                          </TableCell>
+                        </TableRow>
+                        {accountSubmittedExpanded && submittedAccountRowsList.map((row) => (
+                          <TableRow key={row.id}>
+                            <TableCell>{row.name}</TableCell>
+                            <TableCell>
+                              <div className="space-y-1"><p>{row.profile_name}</p><p className="text-xs text-muted-foreground">{renderRole(row.profile.role)}</p></div>
+                            </TableCell>
+                            <TableCell>{renderAccountMeta(row)}</TableCell>
+                            <TableCell><Badge variant="default" className="text-xs">已提交</Badge></TableCell>
+                            <TableCell>{renderExemptionHint(row.exemption.label, row.exemption.reason)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="text-xs text-muted-foreground">设置豁免</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </>
+                    )}
                     {accountRows.exemptRows.length > 0 && (
                       <>
                         <TableRow>
@@ -522,23 +661,22 @@ export function SubmissionStatus({
                     )}
                   </TableBody>
                 </Table>
+                {renderPagination(accountPage, accountTotalPages, accountShowAll, unsubmittedAccountRows.length, setAccountPage, () => { setAccountShowAll((v) => !v); setAccountPage(1); })}
               </div>
 
               <div className="space-y-3 sm:hidden">
-                {accountRows.activeRows.map((row) => (
+                {visibleUnsubmittedAccountRows.map((row) => (
                   <div
                     key={row.id}
-                    className={`rounded-lg border p-3 ${!row.isSubmitted ? "border-red-200 bg-red-50/70" : "bg-background"}`}
+                    className="rounded-lg border p-3 border-red-200 bg-red-50/70"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <p className={`text-sm font-medium ${!row.isSubmitted ? "text-red-600" : ""}`}>{row.name}</p>
+                        <p className="text-sm font-medium text-red-600">{row.name}</p>
                         <p className="text-xs text-muted-foreground">{row.profile_name} · {renderRole(row.profile.role)}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <Badge variant={row.isSubmitted ? "default" : "destructive"} className="text-xs">
-                          {row.isSubmitted ? "已交" : "未交"}
-                        </Badge>
+                        <Badge variant="destructive" className="text-xs">未交</Badge>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -555,6 +693,34 @@ export function SubmissionStatus({
                     </div>
                   </div>
                 ))}
+                {submittedAccountRowsList.length > 0 && (
+                  <>
+                    <button
+                      className="w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setAccountSubmittedExpanded((v) => !v)}
+                    >
+                      已提交 {submittedAccountRowsList.length} 个账号 {accountSubmittedExpanded ? "▲" : "▼"}
+                    </button>
+                    {accountSubmittedExpanded && submittedAccountRowsList.map((row) => (
+                      <div key={row.id} className="rounded-lg border p-3 bg-background">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">{row.name}</p>
+                            <p className="text-xs text-muted-foreground">{row.profile_name} · {renderRole(row.profile.role)}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <Badge variant="default" className="text-xs">已交</Badge>
+                            <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="h-7 px-2 text-xs text-muted-foreground">豁免</Button>
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-2 text-xs text-muted-foreground">
+                          {renderAccountMeta(row)}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {renderPagination(accountPage, accountTotalPages, accountShowAll, unsubmittedAccountRows.length, setAccountPage, () => { setAccountShowAll((v) => !v); setAccountPage(1); })}
                 {accountRows.exemptRows.length > 0 && (
                   <>
                     <p className="pt-2 text-xs text-muted-foreground">豁免账号</p>

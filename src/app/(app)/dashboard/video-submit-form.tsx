@@ -110,6 +110,8 @@ type FormMetaState = {
   publishedAtText: string;
   anomalyStatus: AnomalyStatus;
   uploadedAt: string;
+  topicTag: string;
+  contentKeywords: string[];
 };
 
 type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
@@ -141,7 +143,24 @@ function createInitialMeta(today: string): FormMetaState {
     publishedAtText: "",
     anomalyStatus: "正常",
     uploadedAt: new Date().toLocaleString("zh-CN"),
+    topicTag: "",
+    contentKeywords: [],
   };
+}
+
+function extractKeywordSuggestions(content: string): string[] {
+  if (!content.trim()) return [];
+  const words = content
+    .split(/[\s，。！？、；：""''（）【】\n]+/)
+    .filter((w) => w.length >= 2);
+  const freq = new Map<string, number>();
+  for (const word of words) {
+    freq.set(word, (freq.get(word) ?? 0) + 1);
+  }
+  return Array.from(freq.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([word]) => word);
 }
 
 function parseMetric(value: string, fallback = 0) {
@@ -232,10 +251,14 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
+  const [keywordInput, setKeywordInput] = useState("");
 
   const recentBizDates = useMemo(() => getRecentBizDateRange(today), [today]);
+  const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
   const submitCheck = canSubmit(submissionState);
+  const topicTagMissing = !meta.topicTag;
+  const canActuallySubmit = submitCheck.ok && !topicTagMissing;
   const currentStage = getSubmissionStage(submissionState);
   const bizDateHelper = getBizDateHelperText(meta.bizDate);
 
@@ -444,6 +467,11 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
       return;
     }
 
+    if (!meta.topicTag) {
+      feedbackToast.error("请选择话题标签（干货或复盘）");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -467,6 +495,8 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
           published_at: meta.publishedAt || getDefaultPublishedAtValue(),
           published_at_text: normalizeOptionalText(meta.publishedAtText),
           anomaly_status: meta.anomalyStatus,
+          topic_tag: meta.topicTag || null,
+          content_keywords: meta.contentKeywords,
           assets: buildAssets(slots),
           metrics: {
             play_count: parseMetric(fields.play_count.value),
@@ -632,6 +662,113 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                 />
               </div>
 
+              <div className="space-y-3">
+                <Label>话题标签 <span className="text-red-500">*</span></Label>
+                <div className="flex gap-3">
+                  {(["干货", "复盘"] as const).map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
+                      className={[
+                        "flex-1 h-11 rounded-[var(--radius-lg)] border text-sm font-medium transition-all",
+                        meta.topicTag === tag
+                          ? "border-[#007AFF] bg-[#007AFF] text-white"
+                          : "border-black/10 bg-white text-[var(--color-text-primary)] hover:border-[#007AFF]/50",
+                      ].join(" ")}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>
+                  内容标签{" "}
+                  <span className="text-xs text-[var(--color-text-secondary)] font-normal">最多3个</span>
+                </Label>
+                {keywordSuggestions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {keywordSuggestions.map((kw) => (
+                      <button
+                        key={kw}
+                        type="button"
+                        disabled={meta.contentKeywords.length >= 3 && !meta.contentKeywords.includes(kw)}
+                        onClick={() => {
+                          if (meta.contentKeywords.includes(kw)) {
+                            updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw));
+                          } else if (meta.contentKeywords.length < 3) {
+                            updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
+                          }
+                        }}
+                        className={[
+                          "rounded-full border px-3 py-1 text-xs transition-all",
+                          meta.contentKeywords.includes(kw)
+                            ? "border-[#007AFF] bg-[#007AFF] text-white"
+                            : "border-black/10 bg-white text-[var(--color-text-secondary)] hover:border-[#007AFF]/50 disabled:opacity-40",
+                        ].join(" ")}
+                      >
+                        {kw}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {meta.contentKeywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {meta.contentKeywords.map((kw) => (
+                      <span
+                        key={kw}
+                        className="flex items-center gap-1 rounded-full border border-[#007AFF] bg-[#007AFF]/8 px-3 py-1 text-xs text-[#007AFF]"
+                      >
+                        {kw}
+                        <button
+                          type="button"
+                          onClick={() => updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw))}
+                          className="ml-0.5 opacity-70 hover:opacity-100"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.key === "Enter" || e.key === " ") && keywordInput.trim() && meta.contentKeywords.length < 3) {
+                        e.preventDefault();
+                        const kw = keywordInput.trim();
+                        if (!meta.contentKeywords.includes(kw)) {
+                          updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
+                        }
+                        setKeywordInput("");
+                      }
+                    }}
+                    placeholder={meta.contentKeywords.length >= 3 ? "最多3个标签" : "输入后按空格或回车添加"}
+                    disabled={meta.contentKeywords.length >= 3}
+                    className="h-9 rounded-[var(--radius-lg)] bg-white text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={!keywordInput.trim() || meta.contentKeywords.length >= 3}
+                    onClick={() => {
+                      const kw = keywordInput.trim();
+                      if (kw && !meta.contentKeywords.includes(kw) && meta.contentKeywords.length < 3) {
+                        updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
+                        setKeywordInput("");
+                      }
+                    }}
+                    className="h-9 rounded-[var(--radius-lg)] px-3 text-sm"
+                  >
+                    添加
+                  </Button>
+                </div>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="biz_date">归属日期</Label>
@@ -757,8 +894,8 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !submitCheck.ok}
-                  title={submitCheck.ok ? undefined : submitCheck.reason || undefined}
+                  disabled={isSubmitting || !canActuallySubmit}
+                  title={canActuallySubmit ? undefined : (topicTagMissing ? "请选择话题标签" : submitCheck.reason || undefined)}
                   className="h-11 rounded-[10px] px-6"
                 >
                   {isSubmitting ? "提交中..." : "提交视频数据"}
@@ -772,7 +909,7 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-white/92 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur-[18px] md:hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-2">
           <p className="text-xs text-[var(--color-text-secondary)]">
-            {submitCheck.ok ? "已满足提交条件" : submitCheck.reason || "请补全表单后提交"}
+            {canActuallySubmit ? "已满足提交条件" : (topicTagMissing ? "请选择话题标签（干货或复盘）" : submitCheck.reason || "请补全表单后提交")}
           </p>
           <div className="grid grid-cols-3 gap-2">
             <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={confirmLowConfidenceItems}>
@@ -784,8 +921,8 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
             <Button
               type="submit"
               form="video-submit-form"
-              disabled={isSubmitting || !submitCheck.ok}
-              title={submitCheck.ok ? undefined : submitCheck.reason || undefined}
+              disabled={isSubmitting || !canActuallySubmit}
+              title={canActuallySubmit ? undefined : (topicTagMissing ? "请选择话题标签" : submitCheck.reason || undefined)}
               className="h-11 rounded-[10px] px-2 text-xs"
             >
               {isSubmitting ? "提交中..." : "提交"}

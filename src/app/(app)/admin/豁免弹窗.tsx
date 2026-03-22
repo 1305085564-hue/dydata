@@ -56,18 +56,21 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     if (!profile) {
       return {
         userId: "",
-        mode: "none",
+        mode: "temporary-single",
         reason: "",
       };
     }
 
+    const derived = deriveExemptionFormValues(profile);
     return {
-      ...deriveExemptionFormValues(profile),
-      reason: deriveExemptionFormValues(profile).reason ?? "",
+      ...derived,
+      mode: derived.mode === "none" ? "temporary-single" : derived.mode,
+      reason: derived.reason ?? "",
     };
   }, [profile]);
 
   const [formValues, setFormValues] = useState<ExemptionFormValues>(initialValues);
+  const [rangeDays, setRangeDays] = useState<3 | 4 | 5>(3);
 
   useEffect(() => {
     setFormValues(initialValues);
@@ -77,6 +80,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     if (!open) {
       setShowClearConfirm(false);
       setShowPermanentConfirm(false);
+      setRangeDays(3);
     }
   }, [open]);
 
@@ -91,13 +95,12 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     if (!value) return;
 
     const mode = value as ExemptionFormValues["mode"];
+    setRangeDays(3);
     setFormValues((current) => ({
       userId: current.userId,
       mode,
       reason: current.reason ?? "",
       date: mode === "temporary-single" ? current.date ?? current.startDate ?? current.endDate ?? "" : undefined,
-      startDate: mode === "temporary-range" ? current.startDate ?? current.date ?? "" : undefined,
-      endDate: mode === "temporary-range" ? current.endDate ?? current.date ?? "" : undefined,
     }));
   }
 
@@ -111,10 +114,14 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     if (!profile) return;
 
     startTransition(async () => {
-      const result = await updateExemption({
-        ...formValues,
-        userId: profile.id,
-      });
+      let values = { ...formValues, userId: profile.id };
+      if (formValues.mode === "temporary-range") {
+        const today = new Date();
+        const start = today.toISOString().slice(0, 10);
+        const end = new Date(today.getTime() + (rangeDays - 1) * 86400000).toISOString().slice(0, 10);
+        values = { ...values, startDate: start, endDate: end };
+      }
+      const result = await updateExemption(values);
 
       if (result.error) {
         feedbackToast.error(result.error);
@@ -193,24 +200,21 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
           )}
 
           {formValues.mode === "temporary-range" && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">开始日期</label>
-                <Input
-                  type="date"
-                  value={formValues.startDate ?? ""}
-                  onChange={(e) => updateField("startDate", e.target.value)}
-                  disabled={isPending}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">结束日期</label>
-                <Input
-                  type="date"
-                  value={formValues.endDate ?? ""}
-                  onChange={(e) => updateField("endDate", e.target.value)}
-                  disabled={isPending}
-                />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">豁免天数</label>
+              <div className="flex gap-2">
+                {([3, 4, 5] as const).map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setRangeDays(n)}
+                    className="flex-1 rounded-lg border py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                    style={rangeDays === n ? { background: "#007AFF", borderColor: "#007AFF", color: "#fff" } : {}}
+                  >
+                    {n}天
+                  </button>
+                ))}
               </div>
             </div>
           )}

@@ -1,12 +1,17 @@
 "use client";
 
+import { BarChart2 } from "lucide-react";
 import { CapabilityGrid } from "@/components/growth/capability-grid";
+import { DiagnosisCard } from "@/components/growth/diagnosis-card";
 import { StatusCardGrid } from "@/components/growth/status-card-grid";
 import { WeaknessBenchmarkGrid } from "@/components/growth/weakness-benchmark-grid";
 import { ScriptBreakdown } from "@/components/growth/script-breakdown";
 import { AdvicePanel } from "@/components/growth/advice-panel";
+import { GrowthInsightPanel } from "@/components/growth/growth-insight-panel";
 import { GrowthPkPanel } from "@/components/growth/growth-pk-panel";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { AdviceSections, GrowthDimensionCard, GrowthPkRow, ScriptBreakdownData, StatusCardItem, WeakBenchmarkCard } from "@/lib/growth-page";
+import type { MetricsReport } from "@/lib/metrics";
 
 interface GrowthClientShellProps {
   profileName: string;
@@ -18,6 +23,8 @@ interface GrowthClientShellProps {
   pkPanel: { leftName: string; rightName: string; rows: GrowthPkRow[] } | null;
   scriptBreakdown: ScriptBreakdownData;
   advice: AdviceSections;
+  myReports: MetricsReport[];
+  teamReports: MetricsReport[];
 }
 
 export function GrowthClientShell({
@@ -30,7 +37,11 @@ export function GrowthClientShell({
   pkPanel,
   scriptBreakdown,
   advice,
+  myReports,
+  teamReports,
 }: GrowthClientShellProps) {
+  const hasEnoughData = reportCount >= 3;
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
       <div>
@@ -40,12 +51,25 @@ export function GrowthClientShell({
         </p>
       </div>
 
-      <StatusCardGrid items={statusCards} />
-      <CapabilityGrid items={capabilityCards} />
-      <WeaknessBenchmarkGrid items={weakBenchmarkCards} />
-      {pkPanel ? <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} /> : null}
-      <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
-      <AdvicePanel data={advice} />
+      {!hasEnoughData ? (
+        <EmptyState
+          icon={BarChart2}
+          title="连续提交 3 天后解锁分析"
+          description={`当前已有 ${reportCount} 条数据，再提交 ${3 - reportCount} 天即可解锁成长分析`}
+          className="py-16"
+        />
+      ) : (
+        <>
+          <StatusCardGrid items={statusCards} />
+          <CapabilityGrid items={capabilityCards} />
+          <WeaknessBenchmarkGrid items={weakBenchmarkCards} />
+          {pkPanel ? <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} /> : null}
+          <DiagnosisCard myReports={myReports} teamReports={teamReports} />
+          <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
+          <GrowthInsightPanel />
+          <AdvicePanel data={advice} />
+        </>
+      )}
     </div>
   );
 }

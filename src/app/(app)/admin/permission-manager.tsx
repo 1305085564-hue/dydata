@@ -15,7 +15,7 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { PERMISSION_KEYS, PERMISSION_LABELS } from "@/types";
-import { updatePermissions, changeRole } from "./actions";
+import { updatePermissions, changeRole, removeMember } from "./actions";
 import {
   applyRoleChangeToMember,
   getChangedAdminPermissions,
@@ -27,6 +27,12 @@ import {
 interface PermissionManagerProps {
   members: PermissionManagerMember[];
   currentUserId: string;
+  isOwner: boolean;
+}
+
+interface RemoveTarget {
+  memberId: string;
+  memberName: string;
 }
 
 interface RoleChangeTarget {
@@ -35,13 +41,17 @@ interface RoleChangeTarget {
   role: "member" | "admin";
 }
 
-export function PermissionManager({ members, currentUserId }: PermissionManagerProps) {
+export function PermissionManager({ members, currentUserId, isOwner }: PermissionManagerProps) {
   const router = useRouter();
   const [editableMembers, setEditableMembers] = useState(members);
   const [baselineMembers, setBaselineMembers] = useState(members);
   const [isSavingPermissions, startSavingPermissions] = useTransition();
   const [isChangingRole, startChangingRole] = useTransition();
   const [roleChangeTarget, setRoleChangeTarget] = useState<RoleChangeTarget | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null);
+  const [isRemoving, startRemoving] = useTransition();
+  const [pmPage, setPmPage] = useState(1);
+  const [pmShowAll, setPmShowAll] = useState(false);
 
   useEffect(() => {
     setEditableMembers(members);
@@ -116,6 +126,20 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
     setRoleChangeTarget(null);
   }
 
+  function handleRemoveMember() {
+    if (!removeTarget) return;
+    startRemoving(async () => {
+      const res = await removeMember(removeTarget.memberId);
+      if (res.error) {
+        feedbackToast.error(res.error);
+        return;
+      }
+      feedbackToast.success(`已将 ${removeTarget.memberName} 移出团队`);
+      setRemoveTarget(null);
+      router.refresh();
+    });
+  }
+
   return (
     <div className="space-y-6">
       {nonOwners.length === 0 ? (
@@ -146,7 +170,7 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
           </div>
 
           <div className="space-y-4">
-            {nonOwners.map((member) => (
+            {(pmShowAll ? nonOwners : nonOwners.slice((pmPage - 1) * 10, pmPage * 10)).map((member) => (
               <div key={member.id} className="rounded-lg border p-4 space-y-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
@@ -155,12 +179,24 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
                       {member.role === "admin" ? "管理员" : "成员"}
                     </Badge>
                   </div>
+                  <div className="flex items-center gap-2">
+                  {isOwner && member.role !== "owner" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-11 sm:h-10 text-muted-foreground hover:text-destructive hover:border-destructive"
+                      onClick={() => setRemoveTarget({ memberId: member.id, memberName: member.name })}
+                      disabled={isChangingRole || isSavingPermissions || isRemoving}
+                    >
+                      移除
+                    </Button>
+                  )}
                   <Select
                     value={member.role}
                     onValueChange={(value) =>
                       requestRoleChange(member.id, member.name, value as "member" | "admin")
                     }
-                    disabled={isChangingRole || isSavingPermissions}
+                    disabled={isChangingRole || isSavingPermissions || isRemoving}
                   >
                     <SelectTrigger className="h-11 w-full sm:h-10 sm:w-28">
                       <SelectValue />
@@ -170,6 +206,7 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
                       <SelectItem value="member">成员</SelectItem>
                     </SelectContent>
                   </Select>
+                  </div>
                 </div>
 
                 {member.role === "admin" && (
@@ -194,6 +231,22 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
               </div>
             ))}
           </div>
+          {nonOwners.length > 10 && (
+            <div className="flex flex-col items-center gap-2 pt-2">
+              {!pmShowAll && Math.ceil(nonOwners.length / 10) > 1 && (
+                <div className="flex flex-wrap items-center justify-center gap-1">
+                  <Button variant="outline" size="sm" disabled={pmPage === 1} onClick={() => setPmPage((p) => p - 1)} className="h-8 px-3 text-xs">上一页</Button>
+                  {Array.from({ length: Math.ceil(nonOwners.length / 10) }, (_, i) => i + 1).map((p) => (
+                    <Button key={p} size="sm" variant={p === pmPage ? "default" : "outline"} onClick={() => setPmPage(p)} className={`h-8 w-8 p-0 text-xs${p === pmPage ? " bg-[#007AFF] hover:bg-[#0066DD] border-[#007AFF]" : ""}`}>{p}</Button>
+                  ))}
+                  <Button variant="outline" size="sm" disabled={pmPage === Math.ceil(nonOwners.length / 10)} onClick={() => setPmPage((p) => p + 1)} className="h-8 px-3 text-xs">下一页</Button>
+                </div>
+              )}
+              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-8" onClick={() => { setPmShowAll((v) => !v); if (pmShowAll) setPmPage(1); }}>
+                {pmShowAll ? "收起" : `展开全部（共 ${nonOwners.length} 人）`}
+              </Button>
+            </div>
+          )}
         </>
       )}
       <ConfirmDialog
@@ -212,6 +265,18 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
         onConfirm={confirmRoleChange}
         onOpenChange={(open) => {
           if (!open) setRoleChangeTarget(null);
+        }}
+      />
+      <ConfirmDialog
+        open={removeTarget !== null}
+        title="确认移除成员"
+        description={removeTarget ? `确定将 ${removeTarget.memberName} 移出团队？此操作不可撤销。` : ""}
+        confirmText="确认移除"
+        destructive
+        loading={isRemoving}
+        onConfirm={handleRemoveMember}
+        onOpenChange={(open) => {
+          if (!open) setRemoveTarget(null);
         }}
       />
     </div>

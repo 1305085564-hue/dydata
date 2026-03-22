@@ -13,7 +13,7 @@ export const ANIMATION_TIMINGS = {
 
 const DEFAULT_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const EXIT_EASE: [number, number, number, number] = [0.4, 0, 1, 1];
-const SPRING_EASE: [number, number, number, number] = [0.34, 1.56, 0.64, 1];
+export const SPRING_EASE: [number, number, number, number] = [0.34, 1.56, 0.64, 1];
 
 export const containerVariants: Variants = {
   hidden: {},
@@ -121,7 +121,7 @@ export const barVariants: Variants = {
     scaleX: 1,
     transformOrigin: "left center",
     transition: {
-      duration: ANIMATION_TIMINGS.slow / 1000,
+      duration: ANIMATION_TIMINGS.number / 1000,
       ease: DEFAULT_EASE,
     },
   },
@@ -134,6 +134,7 @@ export const shakeVariants: Variants = {
     transition: {
       duration: 0.2,
       ease: "easeInOut",
+      times: [0, 0.17, 0.33, 0.5, 0.67, 0.83, 0.92, 1],
     },
   },
 };

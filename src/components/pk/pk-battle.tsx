@@ -1,10 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MotionCard } from "@/components/ui/motion-card";
-import { barVariants, containerVariants, itemVariants } from "@/lib/animations";
+import { containerVariants, itemVariants } from "@/lib/animations";
 import { calcRates, parsePercentText, type CalculatedRates } from "@/lib/metrics";
 
 export type PKBattleDimensionKey =
@@ -82,7 +83,54 @@ function formatMetric(value: number) {
   return `${value.toFixed(1)}%`;
 }
 
-export function PKBattle({ playerA, playerB, dimensions, className }: { playerA: PKBattleCompetitor; playerB?: PKBattleCompetitor; dimensions: PKBattleDimensionKey[]; className?: string; mode?: string; teamAvg?: PKBattleCompetitor; }) {
+function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; rightRatio: number; leftLeads: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+
+  return (
+    <div ref={ref} className="flex h-3 w-full overflow-hidden rounded-full bg-[rgba(0,0,0,0.07)]">
+      <motion.div
+        className="h-full rounded-l-full"
+        style={{ backgroundColor: leftLeads ? "#007AFF" : "#d1d5db" }}
+        initial={{ width: 0 }}
+        animate={inView ? { width: `${leftRatio * 100}%` } : { width: 0 }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+      />
+      <div className="flex flex-1 justify-end">
+        <motion.div
+          className="h-full rounded-r-full"
+          style={{ backgroundColor: leftLeads ? "#d1d5db" : "#007AFF" }}
+          initial={{ width: 0 }}
+          animate={inView ? { width: `${rightRatio * 100}%` } : { width: 0 }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
+  if (tied) return <span className="text-xs text-[var(--color-text-secondary)]">持平</span>;
+  return leftLeads ? (
+    <span className="rounded-full bg-[#007AFF]/10 px-2 py-0.5 text-xs font-medium text-[#007AFF]">领先</span>
+  ) : (
+    <span className="rounded-full bg-[rgba(0,0,0,0.06)] px-2 py-0.5 text-xs font-medium text-[var(--color-text-secondary)]">落后</span>
+  );
+}
+
+export function PKBattle({
+  playerA,
+  playerB,
+  dimensions,
+  className,
+}: {
+  playerA: PKBattleCompetitor;
+  playerB?: PKBattleCompetitor;
+  dimensions: PKBattleDimensionKey[];
+  className?: string;
+  mode?: string;
+  teamAvg?: PKBattleCompetitor;
+}) {
   if (!playerB) {
     return (
       <Card className={className}>
@@ -98,7 +146,6 @@ export function PKBattle({ playerA, playerB, dimensions, className }: { playerA:
     const left = resolveMetric(playerA, key);
     const right = resolveMetric(playerB, key);
     const max = Math.max(left, right, 1);
-    const gap = (Math.abs(left - right) / max) * 100;
     return {
       key,
       label: labels[key],
@@ -106,41 +153,61 @@ export function PKBattle({ playerA, playerB, dimensions, className }: { playerA:
       right,
       leftText: formatMetric(left),
       rightText: formatMetric(right),
-      leftWidth: `${(left / max) * 100}%`,
-      rightWidth: `${(right / max) * 100}%`,
-      isDanger: gap > 30,
-      insight: left >= right ? `${playerA.name} 在${labels[key]}上领先 ${gap.toFixed(1)}%。` : `${playerA.name} 在${labels[key]}上落后 ${gap.toFixed(1)}%。`,
+      leftRatio: left / max,
+      rightRatio: right / max,
+      leftLeads: left >= right,
+      tied: left === right,
     };
   });
+
+  const winCount = rows.filter((row) => row.left > row.right).length;
+  const total = rows.length;
 
   return (
     <MotionCard className={className}>
       <div className="space-y-4 p-5">
-        <div>
-          <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">PK 对比</h2>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">左右对比关键维度，中间差距条从 0 动画到实际值。</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">PK 对比</h2>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              {playerA.name} vs {playerB.name}
+            </p>
+          </div>
+          {total > 0 && (
+            <div className="shrink-0 rounded-[10px] bg-[#007AFF]/10 px-3 py-1.5 text-center">
+              <div className="text-base font-bold tabular-nums text-[#007AFF]">{winCount}/{total}</div>
+              <div className="text-[10px] text-[#007AFF]/70">项领先</div>
+            </div>
+          )}
         </div>
-        <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} className="space-y-3">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          className="space-y-3"
+        >
           {rows.map((row) => (
-            <motion.div key={row.key} variants={itemVariants} className="rounded-[12px] border border-[var(--color-border)] bg-[rgba(255,255,255,0.76)] p-4">
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_minmax(0,1fr)] md:items-center">
-                <div className="rounded-xl bg-[rgba(255,255,255,0.75)] px-3 py-2 text-center md:bg-transparent md:px-0 md:py-0 md:text-right">
-                  <div className="text-xs text-[var(--color-text-secondary)]">{playerA.name}</div>
-                  <div className="mt-1 text-sm font-semibold tabular-nums text-[var(--color-text-primary)]">{row.leftText}</div>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-center text-sm font-semibold text-[var(--color-text-primary)]">{row.label} · VS</div>
-                  <div className="relative h-3 overflow-hidden rounded-full bg-[rgba(0,0,0,0.08)]">
-                    <motion.div variants={barVariants} initial="hidden" animate="visible" className={`absolute left-0 top-0 h-full rounded-full ${row.isDanger ? "bg-[var(--color-danger)]" : "bg-[var(--color-primary)]"}`} style={{ width: row.leftWidth }} />
-                    <motion.div variants={barVariants} initial="hidden" animate="visible" className="absolute right-0 top-0 h-full rounded-full bg-[var(--color-text-secondary)]/45" style={{ width: row.rightWidth }} />
-                  </div>
-                </div>
-                <div className="rounded-xl bg-[rgba(255,255,255,0.75)] px-3 py-2 text-center md:bg-transparent md:px-0 md:py-0 md:text-left">
-                  <div className="text-xs text-[var(--color-text-secondary)]">{playerB.name}</div>
-                  <div className="mt-1 text-sm font-semibold tabular-nums text-[var(--color-text-primary)]">{row.rightText}</div>
-                </div>
+            <motion.div
+              key={row.key}
+              variants={itemVariants}
+              className="rounded-[12px] border border-[var(--color-border)] bg-[rgba(255,255,255,0.76)] p-4"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-[var(--color-text-primary)]">{row.label}</span>
+                <WinBadge leftLeads={row.leftLeads} tied={row.tied} />
               </div>
-              <p className={`mt-3 text-sm leading-6 ${row.isDanger ? "text-[var(--color-danger)]" : "text-[var(--color-text-secondary)]"}`}>{row.insight}</p>
+              <GapBar leftRatio={row.leftRatio} rightRatio={row.rightRatio} leftLeads={row.leftLeads} />
+              <div className="mt-2 flex justify-between gap-2 text-xs text-[var(--color-text-secondary)]">
+                <span className="min-w-0 truncate">
+                  <span className="font-medium text-[var(--color-text-primary)]">{playerA.name}</span>{" "}
+                  <span className="tabular-nums">{row.leftText}</span>
+                </span>
+                <span className="min-w-0 shrink-0 text-right">
+                  <span className="tabular-nums">{row.rightText}</span>{" "}
+                  <span className="font-medium text-[var(--color-text-primary)]">{playerB.name}</span>
+                </span>
+              </div>
             </motion.div>
           ))}
         </motion.div>
@@ -148,4 +215,3 @@ export function PKBattle({ playerA, playerB, dimensions, className }: { playerA:
     </MotionCard>
   );
 }
-

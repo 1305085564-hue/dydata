@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MotionCard } from "@/components/ui/motion-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { containerVariants, itemVariants, useCountUp } from "@/lib/animations";
 
 interface Report {
@@ -138,7 +140,13 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
   const hiddenItems = sorted.slice(5);
 
   if (stats.length === 0) {
-    return <p className="py-4 text-sm text-muted-foreground">暂无数据</p>;
+    return (
+      <EmptyState
+        icon={Users}
+        title="暂无人员数据"
+        description="成员提交数据后可查看各成员的爆款率、稳定性和成长趋势"
+      />
+    );
   }
 
   return (

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
+import { buildRequestDraft, type GrantMode } from "@/lib/豁免流程";
 
 export async function submitReport(formData: FormData) {
   const supabase = await createClient();
@@ -103,6 +104,60 @@ export async function submitReport(formData: FormData) {
 
   revalidatePath("/dashboard");
   return { success: true, isUpdate: !!existing };
+}
+
+export async function hasPendingExemptionRequest(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data } = await supabase
+    .from("exemption_request")
+    .select("id")
+    .eq("applicant_user_id", user.id)
+    .eq("request_status", "pending")
+    .limit(1);
+
+  return (data?.length ?? 0) > 0;
+}
+
+export async function submitExemptionRequest(input: {
+  mode: GrantMode;
+  reason: string;
+}): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "请先登录" };
+
+  const { data: existing } = await supabase
+    .from("exemption_request")
+    .select("id")
+    .eq("applicant_user_id", user.id)
+    .eq("request_status", "pending")
+    .limit(1);
+
+  if ((existing?.length ?? 0) > 0) return { error: "已有待审批申请" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", user.id)
+    .single();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const draft = buildRequestDraft({
+    applicantUserId: user.id,
+    teamId: profile?.team_id ?? null,
+    mode: input.mode,
+    reason: input.reason,
+    today,
+  });
+
+  const { error } = await supabase.from("exemption_request").insert(draft);
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return {};
 }
 
 async function notifyFeishu(submitter: string, title: string, playCount: number) {

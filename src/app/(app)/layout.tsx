@@ -6,7 +6,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="app-shell">
       <NavBar />
       <main
-        className="min-h-screen px-4 pb-8 pt-[calc(var(--app-top-offset)+2rem)] sm:px-6"
+        className="min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+2rem)] sm:px-6"
         style={{
           background:
             "radial-gradient(ellipse at top, rgba(224,231,255,0.2) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(199,210,254,0.15) 0%, transparent 50%), hsl(var(--muted) / 0.3)",

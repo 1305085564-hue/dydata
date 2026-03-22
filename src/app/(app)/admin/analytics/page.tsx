@@ -17,6 +17,7 @@ import { TimeAnalysis } from "./time-analysis";
 import { AiInsight } from "./ai-insight";
 import { 视频结论卡 } from "./视频结论卡";
 import type { AnalyticsVideoRow } from "./视频结论卡-类型";
+import { FollowerConvertTrend } from "./follower-convert-trend";
 
 interface AnalyticsPageProps {
   searchParams: Promise<{
@@ -61,20 +62,21 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     demoTeamId: demoTeam?.id ?? null,
   });
 
-  if (!access.effectiveTeamId) {
-    redirect("/dashboard");
-  }
+  const teamProfiles = access.effectiveTeamId
+    ? (
+        await adminSupabase
+          .from("profiles")
+          .select("id, name, team_id")
+          .eq("team_id", access.effectiveTeamId)
+          .order("name")
+      ).data ?? []
+    : [{ id: user.id, name: currentUserName, team_id: null }];
 
-  const { data: teamProfiles } = await adminSupabase
-    .from("profiles")
-    .select("id, name, team_id")
-    .eq("team_id", access.effectiveTeamId)
-    .order("name");
-
-  const teamUserIds = (teamProfiles ?? []).map((item) => item.id);
+  const teamUserIds = teamProfiles.map((item) => item.id);
   const submitters = access.canViewAllMembers
-    ? (teamProfiles ?? []).map((item) => item.name)
+    ? teamProfiles.map((item) => item.name)
     : [currentUserName];
+
 
   const [{ data: reports }, { data: videos }, { data: snapshots }, { data: videoTags }] = await Promise.all([
     adminSupabase
@@ -109,7 +111,17 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     filteredVideos.some((video) => video.id === tag.video_id),
   );
 
+  const isPrivileged = role === "admin" || role === "owner";
+
   const sections: AnalyticsSection[] = [
+    ...(isPrivileged
+      ? [
+          {
+            title: "导粉趋势",
+            content: <FollowerConvertTrend reports={filteredReports} />,
+          },
+        ]
+      : []),
     {
       title: "爆款分析器",
       content: <HitAnalyzer reports={filteredReports} submitters={submitters} />,

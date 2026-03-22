@@ -6,7 +6,7 @@ import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { MotionCard } from "@/components/ui/motion-card";
-import { shakeVariants } from "@/lib/animations";
+import { SPRING_EASE, shakeVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { NETWORK_RETRY_MESSAGE, OCR_FAIL_MESSAGE } from "./截图上传错误";
 import type { SubmissionSlotRole, SubmissionSlotStatus } from "./提交状态机";
@@ -119,18 +119,20 @@ export function SubmissionSlotCard({
           className={cn(
             "relative flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-[var(--radius-2xl)] border-2 border-dashed px-4 py-6 text-center transition-transform duration-200",
             "bg-[color:rgba(255,255,255,0.75)]",
+            isProcessing && "border-[color:rgba(0,122,255,0.45)] shadow-[0_0_0_1px_rgba(0,122,255,0.08),0_0_20px_rgba(0,122,255,0.12)]",
             isWarning && "border-[color:var(--color-warning)] bg-[color:rgba(255,149,0,0.06)]",
             isError && "border-[color:var(--color-danger)] bg-[color:rgba(255,59,48,0.06)]",
             isSuccess && "border-[color:var(--color-success)] bg-[color:rgba(52,199,89,0.06)]",
-            !isWarning && !isError && !isSuccess && "border-black/10 hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]"
+            !isProcessing && !isWarning && !isError && !isSuccess && "border-black/10 hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]"
           )}
         >
           {isProcessing ? (
-            <motion.div
-              className="absolute inset-y-0 left-[-35%] w-1/3 bg-linear-to-r from-transparent via-white/75 to-transparent"
-              animate={{ x: ["0%", "260%"] }}
-              transition={{ duration: 1.2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-            />
+            <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+              <div
+                className="absolute inset-y-0 left-[-35%] w-1/3 bg-linear-to-r from-transparent via-white/80 to-transparent [animation:var(--animate-shimmer)] [animation-timing-function:linear] [animation-iteration-count:infinite]"
+                style={{ animationDuration: "1.5s" }}
+              />
+            </div>
           ) : null}
 
           <div className="relative flex size-14 items-center justify-center rounded-[var(--radius-xl)] bg-black/5 text-[var(--color-primary)]">
@@ -141,7 +143,7 @@ export function SubmissionSlotCard({
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+                  transition={{ duration: 0.3, ease: SPRING_EASE }}
                   className="absolute -right-1 -top-1 flex size-6 items-center justify-center rounded-full bg-[var(--color-success)] text-white"
                 >
                   <Check className="size-3.5" />

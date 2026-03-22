@@ -14,9 +14,13 @@ import {
 import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BarChart2, Clock, TrendingUp, Users } from "lucide-react";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
 import { AdvicePanel } from "./advice-panel";
+import { hasPendingExemptionRequest } from "./actions";
+import { 申请豁免弹窗 } from "./申请豁免弹窗";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -142,6 +146,8 @@ export default async function DashboardPage() {
 
   const leaderboardData = (leaderboardRows ?? []) as AccountLeaderboardRow[];
 
+  const hasPending = await hasPendingExemptionRequest();
+
   function getAccountName(accountRelation: unknown) {
     if (Array.isArray(accountRelation)) {
       const firstAccount = accountRelation[0] as { name?: string | null } | undefined;
@@ -156,7 +162,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8 pb-24 md:pb-0">
       <DashboardAnimatedSection index={0}>
         <div>
           <h1 className="text-2xl font-semibold">
@@ -168,7 +174,10 @@ export default async function DashboardPage() {
       <DashboardAnimatedSection index={1}>
         <Card className="card-elevated">
           <CardHeader>
-            <CardTitle>待办清单</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>待办清单</CardTitle>
+              <申请豁免弹窗 hasPending={hasPending} />
+            </div>
           </CardHeader>
           <CardContent>
             {allTasksCompleted ? (
@@ -247,7 +256,11 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {!history || history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">暂无记录</p>
+              <EmptyState
+                icon={Clock}
+                title="暂无历史记录"
+                description="提交第一条数据后即可在此查看近30天历史"
+              />
             ) : (
               <>
                 <div className="hidden overflow-x-auto md:block">

@@ -48,6 +48,8 @@ export interface Profile {
   exempt_end_date: string | null;
   exempt_reason: string | null;
   permissions: Permissions;
+  team_id?: string | null;
+  group_id?: string | null;
   created_at: string;
 }
 
@@ -94,7 +96,11 @@ export interface AccountLeaderboardRow {
   report_date: string;
   play_count: number | null;
   likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
   follower_gain: number | null;
+  follower_convert: number | null;
   completion_rate: string | null;
   avg_play_duration: string | null;
   bounce_rate_2s: string | null;
@@ -111,11 +117,14 @@ export interface AccountLeaderboardItem {
   rank: number;
   views: number;
   likes: number;
+  comments: number;
+  shares: number;
+  favorites: number;
   followerGain: number;
-  completionRate: number | null;
+  followerConvert: number;
   watchDuration: number | null;
   bounceRate: number | null;
-  completedViewers: number;
+  completionRate5s: number | null;
   progressRate: number | null;
   isBreakout: boolean;
 }
@@ -126,7 +135,7 @@ export type AnomalyStatus = "正常" | "删稿" | "限流" | "投流" | "活动�
 export type SnapshotType = "24h" | "72h";
 export type SubmissionAssetRole = "overview" | "traffic_curve" | "retention_curve" | "engagement_extra" | "other";
 export type SubmissionFieldSource = "ocr" | "manual";
-export type TagDimension = "题材" | "表达形式" | "CTA类型" | "内容结构" | "目标受众";
+export type TagDimension = "题材" | "表达形式" | "CTA类型" | "内容结构" | "目标受众" | "话题" | "关键词";
 export type VideoTagReviewDimension = "题材" | "表达形式" | "CTA类型";
 export type TagSource = "ai" | "manual";
 export type MarketSentiment = "强" | "中" | "弱";
@@ -141,6 +150,8 @@ export const TAG_ENUMS: Record<TagDimension, string[]> = {
   "CTA类型": ["关注", "评论", "私信", "看主页", "进群", "无明显CTA"],
   "内容结构": ["先结论后逻辑", "先冲突后解释", "三段式", "总分总", "盘面现象→原因→操作", "错误案例→正确做法"],
   "目标受众": ["新手股民", "短线交易者", "老股民", "上班族投资者", "追热点用户"],
+  "话题": ["干货", "复盘"],
+  "关键词": [],
 };
 
 export const VIDEO_TAG_REVIEW_DIMENSIONS: VideoTagReviewDimension[] = ["题材", "表达形式", "CTA类型"];
@@ -230,4 +241,143 @@ export interface AdviceAction {
   reviewed_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// === 阶段 3（migration 019-032）新增类型 ===
+
+export type SubmissionBatchStatus =
+  | "draft"
+  | "processing"
+  | "need_confirm"
+  | "ready_submit"
+  | "submitted"
+  | "returned"
+  | "deleted";
+
+export type PublishPrecision = "minute" | "hour" | "date" | "unknown";
+
+export type ScriptSegmentType = "hook" | "background" | "core_point" | "action_cta" | "closing";
+export type ScriptSegmentMappingStatus = "unmapped" | "estimated" | "confirmed";
+
+export type AiInsightScope = "single_video" | "member_week" | "member_month" | "team_week" | "team_month";
+export type AiDataQualityState = "sufficient" | "partial" | "insufficient";
+export type AiInsightType = "growth_edit" | "period_direction";
+
+export type ExemptionRequestType = "single" | "3days" | "4days" | "5days" | "permanent";
+export type ExemptionRequestStatus = "pending" | "approved" | "rejected";
+
+export interface SubmissionBatch {
+  id: string;
+  org_id: string | null;
+  team_id: string | null;
+  submitter_user_id: string | null;
+  task_date: string;
+  batch_status: SubmissionBatchStatus;
+  idempotency_key: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentItem {
+  id: string;
+  batch_id: string | null;
+  org_id: string | null;
+  team_id: string | null;
+  account_id: string | null;
+  owner_user_id: string | null;
+  biz_date: string;
+  task_date: string | null;
+  publish_at: string | null;
+  publish_precision: PublishPrecision | null;
+  publish_time_text: string | null;
+  uploaded_at: string | null;
+  submitted_at: string | null;
+  content_status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScriptDocument {
+  id: string;
+  content_item_id: string;
+  raw_text: string | null;
+  structured_version: number | null;
+  word_count: number | null;
+  estimated_duration_sec: number | null;
+  created_at: string;
+}
+
+export interface ScriptSegment {
+  id: string;
+  script_document_id: string | null;
+  segment_type: ScriptSegmentType;
+  segment_order: number | null;
+  content: string | null;
+  start_sec: number | null;
+  end_sec: number | null;
+  mapping_status: ScriptSegmentMappingStatus | null;
+}
+
+export interface AiInputBundle {
+  id: string;
+  insight_scope: AiInsightScope;
+  scope_entity_id: string | null;
+  input_version: number | null;
+  data_quality_state: AiDataQualityState | null;
+  input_json: Record<string, unknown>;
+  generated_at: string;
+}
+
+export interface AiInsightResult {
+  id: string;
+  input_bundle_id: string | null;
+  insight_type: AiInsightType;
+  model_name: string | null;
+  prompt_version: string | null;
+  result_status: string | null;
+  result_json: Record<string, unknown> | null;
+  rendered_text: string | null;
+  created_at: string;
+}
+
+export interface ExemptionRequest {
+  id: string;
+  applicant_user_id: string | null;
+  team_id: string | null;
+  exemption_type: ExemptionRequestType;
+  start_date: string;
+  end_date: string | null;
+  reason: string | null;
+  request_status: ExemptionRequestStatus | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface ExemptionGrant {
+  id: string;
+  request_id: string | null;
+  user_id: string | null;
+  team_id: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  grant_type: ExemptionRequestType | null;
+  status: string | null;
+  created_at: string;
+}
+
+export interface Team {
+  id: string;
+  org_id: string | null;
+  name: string;
+  is_demo: boolean | null;
+  created_at: string;
+}
+
+export interface Group {
+  id: string;
+  team_id: string | null;
+  org_id: string | null;
+  name: string;
+  created_at: string;
 }

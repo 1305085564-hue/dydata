@@ -286,17 +286,23 @@ export async function submitExemptionRequest(input: {
 
 export async function reviewExemptionRequest(input: {
   requestId: string;
-  applicantUserId: string;
   decision: ReviewDecision;
-  mode: GrantMode;
-  reason?: string | null;
-  teamId?: string | null;
 }): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
   if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
 
   const supabase = await createClient();
+
+  const { data: request, error: fetchError } = await supabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, exemption_type, reason, request_status")
+    .eq("id", input.requestId)
+    .single();
+
+  if (fetchError || !request) return { error: "申请不存在" };
+  if (request.request_status !== "pending") return { error: "该申请已处理" };
+
   const patch = buildReviewPatch({ reviewerId: perm.userId, decision: input.decision });
 
   const { error: requestError } = await supabase
@@ -309,12 +315,13 @@ export async function reviewExemptionRequest(input: {
   }
 
   if (input.decision === "approved") {
+    const teamId = await getProfileTeamId(supabase, request.applicant_user_id);
     const result = await applyGrantToProfile(supabase, {
-      userId: input.applicantUserId,
-      teamId: input.teamId ?? (await getProfileTeamId(supabase, input.applicantUserId)),
-      mode: input.mode,
-      reason: input.reason,
-      requestId: input.requestId,
+      userId: request.applicant_user_id,
+      teamId,
+      mode: request.exemption_type as GrantMode,
+      reason: request.reason,
+      requestId: request.id,
       today: new Date().toISOString().slice(0, 10),
     });
 
@@ -328,7 +335,7 @@ export async function reviewExemptionRequest(input: {
     perm.userId,
     input.decision === "approved" ? "approve_exemption_request" : "reject_exemption_request",
     input.requestId,
-    `${input.applicantUserId}|${input.mode}`
+    `${request.applicant_user_id}|${request.exemption_type}`
   );
 
   revalidatePath("/admin");
@@ -410,6 +417,39 @@ export async function updatePermissions(
   if (error) return { error: error.message };
 
   await writeAuditLog(supabase, perm.userId, "update_permissions", targetUserId, JSON.stringify(newPermissions));
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function removeMember(targetUserId: string): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (perm.role !== "owner") return { error: "仅创始人可操作" };
+  if (targetUserId === perm.userId) return { error: "不能移除自己" };
+
+  const supabase = await createClient();
+
+  const { data: target } = await supabase.from("profiles").select("role, name, team_id").eq("id", targetUserId).single();
+  if (!target) return { error: "用户不存在" };
+  if (target.role === "owner") return { error: "不能移除创始人" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ role: null, permissions: {} })
+    .eq("id", targetUserId);
+
+  if (error) return { error: error.message };
+
+  const teamId = await getProfileTeamId(supabase, perm.userId);
+  await supabase.from("member_change_log").insert({
+    user_id: targetUserId,
+    team_id: teamId,
+    action_type: "remove",
+    operator_id: perm.userId,
+  }).then(() => {}, () => {});
+
+  await writeAuditLog(supabase, perm.userId, "remove_member", targetUserId, `移除成员: ${target.name}`);
 
   revalidatePath("/admin");
   return {};

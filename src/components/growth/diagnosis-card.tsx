@@ -1,168 +1,196 @@
-import { ArrowUpRight } from "lucide-react"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+import { motion } from "framer-motion";
 
-export type 诊断维度项 = {
-  维度名: string
-  分位值: number
-  分位标签?: string
-}
+import { MotionCard } from "@/components/ui/motion-card";
+import { containerVariants, itemVariants } from "@/lib/animations";
+import { calcRates, parsePercentText, type MetricsReport } from "@/lib/metrics";
 
-export type 诊断弱项 = {
-  名称: string
-  跳转链接?: string
-}
+// ── 维度计算 ────────────────────────────────────────────────
+type DimKey = "播放量" | "涨粉" | "点赞" | "完播率" | "5s完播率" | "2s跳出率";
 
-export type 个人诊断卡Props = {
-  五维评分数据: [诊断维度项, 诊断维度项, 诊断维度项, 诊断维度项, 诊断维度项]
-  强项: [string, string, string]
-  弱项: [诊断弱项, 诊断弱项]
-  className?: string
-}
+const DIM_LABELS: Record<DimKey, string> = {
+  播放量: "播放量",
+  涨粉: "涨粉数",
+  点赞: "点赞率",
+  完播率: "完播率",
+  "5s完播率": "5秒完播率",
+  "2s跳出率": "2秒跳出率",
+};
 
-function clamp(value: number) {
-  return Math.min(100, Math.max(0, value))
-}
-
-function 获取分位标签(item: 诊断维度项) {
-  if (item.分位标签) return item.分位标签
-  if (item.分位值 >= 80) return "前 20%"
-  if (item.分位值 <= 20) return "后 20%"
-  return "中段"
-}
-
-function 获取颜色(分位值: number) {
-  if (分位值 >= 80) {
-    return {
-      bar: "bg-emerald-500",
-      chip: "bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200",
+function avgDim(reports: MetricsReport[], dim: DimKey): number {
+  if (!reports.length) return 0;
+  const vals = reports.map((r) => {
+    switch (dim) {
+      case "播放量": return r.play_count ?? 0;
+      case "涨粉": return r.follower_gain ?? 0;
+      case "点赞": {
+        const rates = calcRates(r);
+        return rates.likeRate;
+      }
+      case "完播率": return parsePercentText(r.completion_rate);
+      case "5s完播率": return parsePercentText(r.completion_rate_5s);
+      case "2s跳出率": return parsePercentText((r as MetricsReport & { bounce_rate_2s?: string | null }).bounce_rate_2s);
     }
-  }
-
-  if (分位值 <= 20) {
-    return {
-      bar: "bg-orange-500",
-      chip: "bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-200",
-    }
-  }
-
-  return {
-    bar: "bg-slate-400",
-    chip: "bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-200",
-  }
+  });
+  return vals.reduce((s, v) => s + v, 0) / vals.length;
 }
 
-export function DiagnosisCard({
-  五维评分数据,
-  强项,
-  弱项,
-  className,
-}: 个人诊断卡Props) {
+// ── 建议模板 ────────────────────────────────────────────────
+const ADVICE_TEMPLATES: Record<DimKey, string[]> = {
+  播放量: [
+    "发布时间选在 18:00–21:00 黄金时段 → 预计提升自然曝光 15%+",
+    "标题前 5 字加强关键词密度，契合平台算法推荐逻辑 → 扩大初始推流池",
+    "与同类高播放账号互评互关，借助关联流量破圈",
+  ],
+  涨粉: [
+    "结尾明确引导关注（口播+字幕双重提示）→ 预计提升关注转化率 10%+",
+    "发布系列内容并在简介中标明「第X集」，增强用户追更动力",
+    "主页头图+简介突出账号定位，让新访客在 3 秒内看懂你能提供什么",
+  ],
+  点赞: [
+    "在内容高潮处停顿 0.5 秒后加引导弹幕/字幕「双击支持一下」→ 提升互动密度",
+    "内容结尾设置争议性话题引发评论，间接带动点赞",
+    "选择正向情绪共鸣型内容方向，共鸣感强的内容点赞转化更高",
+  ],
+  完播率: [
+    "精简视频时长至核心信息，删除铺垫冗余部分 → 预计提升完播率 8%+",
+    "中段加入反转/悬念/干货列表，维持观看动力至结尾",
+    "前 10 秒节奏加快，用快切+字幕降低中段跳出率",
+  ],
+  "5s完播率": [
+    "开头前 3 秒加强悬念钩子（提问/反常识/冲突画面）→ 预计提升 2s 完播率 10%+",
+    "首帧画面避免黑屏/logo，直接呈现视觉冲击点",
+    "前 5 秒字幕放大核心利益点，让用户快速判断值不值得看完",
+  ],
+  "2s跳出率": [
+    "首帧换成高对比度、有人脸/动作的画面，降低第一眼跳出率",
+    "封面文字放大至 80%+ 屏幕宽度，清晰传达内容价值",
+    "开头台词从核心结论开始说，避免自我介绍或过场铺垫",
+  ],
+};
+
+// ── 主组件 ────────────────────────────────────────────────
+export type DiagnosisCardProps = {
+  myReports: MetricsReport[];
+  teamReports: MetricsReport[];
+  className?: string;
+};
+
+type WeakItem = {
+  dim: DimKey;
+  selfAvg: number;
+  teamAvg: number;
+  gapPct: number;
+  label: string;
+};
+
+const DIMS: DimKey[] = ["播放量", "涨粉", "点赞", "完播率", "5s完播率", "2s跳出率"];
+const WEAK_THRESHOLD = 0.2; // 低于团队均值 20% 算弱项
+
+function fmt(dim: DimKey, value: number): string {
+  if (dim === "播放量" || dim === "涨粉") {
+    if (value >= 10000) return `${(value / 10000).toFixed(1)}万`;
+    return Math.round(value).toLocaleString("zh-CN");
+  }
+  return `${value.toFixed(1)}%`;
+}
+
+export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCardProps) {
+  const week = myReports.slice(-7);
+  const teamWeek = teamReports;
+
+  const weakItems: WeakItem[] = DIMS.map((dim) => {
+    const self = avgDim(week, dim);
+    const team = avgDim(teamWeek, dim);
+    const gap = team > 0 ? (team - self) / team : 0;
+    return { dim, selfAvg: self, teamAvg: team, gapPct: gap, label: DIM_LABELS[dim] };
+  }).filter((item) => item.teamAvg > 0 && item.gapPct > WEAK_THRESHOLD);
+
+  const adviceItems = weakItems
+    .slice(0, 3)
+    .flatMap((item) => {
+      const tips = ADVICE_TEMPLATES[item.dim];
+      return tips.slice(0, 1).map((tip) => ({ dim: item.dim, label: item.label, tip }));
+    })
+    .slice(0, 3);
+
   return (
-    <Card
-      className={cn(
-        "card-elevated rounded-[16px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,250,251,0.9))] shadow-[0_18px_48px_-32px_rgba(15,23,42,0.3)] backdrop-blur dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.7))]",
-        className
-      )}
-    >
-      <CardHeader className="gap-2 border-b border-border/70 pb-5">
-        <CardTitle className="text-[15px] font-semibold text-foreground sm:text-base">
-          个人诊断
-        </CardTitle>
-        <p className="text-sm leading-6 text-muted-foreground">
-          先看你在哪些维度已经领先，再把弱项直接映射到可学习的标杆样本。
-        </p>
-      </CardHeader>
-
-      <CardContent className="space-y-6 pt-5">
-        <div className="space-y-4">
-          {五维评分数据.map((item) => {
-            const 分位值 = clamp(item.分位值)
-            const 颜色 = 获取颜色(分位值)
-
-            return (
-              <div key={item.维度名} className="grid grid-cols-[72px_minmax(0,1fr)_64px] items-center gap-3 sm:grid-cols-[88px_minmax(0,1fr)_72px]">
-                <div className="text-sm font-medium text-foreground">{item.维度名}</div>
-
-                <div className="h-2.5 overflow-hidden rounded-full bg-slate-200/75 dark:bg-slate-800/80">
-                  <div
-                    className={cn("h-full rounded-full transition-[width]", 颜色.bar)}
-                    style={{ width: `${分位值}%` }}
-                  />
-                </div>
-
-                <div
-                  className={cn(
-                    "rounded-full px-2 py-1 text-center text-[11px] font-semibold tabular-nums",
-                    颜色.chip
-                  )}
-                >
-                  {获取分位标签(item)}
-                </div>
-              </div>
-            )
-          })}
+    <MotionCard className={`border-[var(--color-border)] bg-[var(--color-surface)] ${className ?? ""}`}>
+      <div className="space-y-4 p-5">
+        {/* 标题 */}
+        <div>
+          <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断建议</h2>
+          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+            近7天数据 · 与团队均值对比
+          </p>
         </div>
 
-        <div className="grid gap-4 border-t border-border/70 pt-5 sm:grid-cols-2">
-          <section className="space-y-3">
-            <div className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              强项
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {强项.map((item) => (
-                <Badge
-                  key={item}
-                  variant="outline"
-                  className="rounded-full border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200"
+        {/* 诊断区 */}
+        <div className="space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">诊断</div>
+          {weakItems.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="rounded-[12px] border border-emerald-200/60 bg-emerald-50/60 p-4 text-sm text-emerald-700"
+            >
+              本周各项指标均达团队均值，继续保持 🎯
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-2"
+            >
+              {weakItems.map((item) => (
+                <motion.div
+                  key={item.dim}
+                  variants={itemVariants}
+                  className="rounded-[12px] border border-orange-200/60 bg-orange-50/60 p-3"
                 >
-                  {item}
-                </Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-orange-800">{item.label}</span>
+                    <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                      低 {(item.gapPct * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-orange-700/80">
+                    你的{item.label}（{fmt(item.dim, item.selfAvg)}）比团队均值（{fmt(item.dim, item.teamAvg)}）低 {(item.gapPct * 100).toFixed(0)}%
+                  </p>
+                </motion.div>
               ))}
-            </div>
-          </section>
-
-          <section className="space-y-3">
-            <div className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              弱项
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {弱项.map((item) => {
-                const content = (
-                  <>
-                    <span>{item.名称}</span>
-                    {item.跳转链接 ? <ArrowUpRight className="size-3.5" /> : null}
-                  </>
-                )
-
-                if (item.跳转链接) {
-                  return (
-                    <a
-                      key={item.名称}
-                      href={item.跳转链接}
-                      className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700 transition-opacity hover:opacity-75 dark:border-orange-400/20 dark:bg-orange-400/10 dark:text-orange-200"
-                    >
-                      {content}
-                    </a>
-                  )
-                }
-
-                return (
-                  <Badge
-                    key={item.名称}
-                    variant="outline"
-                    className="rounded-full border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700 dark:border-orange-400/20 dark:bg-orange-400/10 dark:text-orange-200"
-                  >
-                    {item.名称}
-                  </Badge>
-                )
-              })}
-            </div>
-          </section>
+            </motion.div>
+          )}
         </div>
-      </CardContent>
-    </Card>
-  )
+
+        {/* 动作建议区 */}
+        {adviceItems.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">动作建议</div>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-40px" }}
+              className="space-y-2"
+            >
+              {adviceItems.map((item, i) => (
+                <motion.div
+                  key={`${item.dim}-${i}`}
+                  variants={itemVariants}
+                  className="rounded-[12px] border border-[#007AFF]/20 bg-[#007AFF]/5 p-3"
+                >
+                  <div className="mb-1 text-xs font-medium text-[#007AFF]/70">{item.label}</div>
+                  <p className="text-sm leading-5 text-[var(--color-text-primary)]">{item.tip}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        )}
+      </div>
+    </MotionCard>
+  );
 }

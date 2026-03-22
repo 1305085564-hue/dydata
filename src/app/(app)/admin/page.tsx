@@ -24,7 +24,10 @@ import { build团队趋势数据 } from "@/lib/趋势图";
 import { PermissionManager } from "./permission-manager";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { loadProfilesWithExemptionFallback } from "./资料加载";
+import { 豁免申请列表 } from "./豁免申请列表";
+import type { ExemptionRequestRow } from "./豁免申请列表";
 import type { UserRole, Permissions } from "@/types";
+import { Users } from "lucide-react";
 
 interface AdminPageProps {
   searchParams: Promise<{ date?: string }>;
@@ -173,6 +176,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     user_name: profileMap.get(log.user_id) ?? undefined,
   }));
 
+  // Pending exemption requests
+  const { data: pendingRequests } = await supabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, exemption_type, reason, created_at")
+    .eq("request_status", "pending")
+    .order("created_at", { ascending: true });
+
+  const exemptionRequests: ExemptionRequestRow[] = (pendingRequests ?? []).map((r) => ({
+    id: r.id,
+    applicant_user_id: r.applicant_user_id,
+    applicant_name: profileMap.get(r.applicant_user_id) ?? "未知成员",
+    exemption_type: r.exemption_type,
+    reason: r.reason,
+    created_at: r.created_at,
+  }));
+
   // Invite codes
   const { data: inviteCodes } = await supabase
     .from("invite_codes")
@@ -284,6 +303,30 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </Card>
           ),
         },
+        ...(hasPermission(perm.role, perm.permissions, "manage_members")
+          ? [
+              {
+                key: "exemption-requests",
+                content: (
+                  <Card className="glass-card-static border-white/60 bg-white/70">
+                    <CardHeader>
+                      <CardTitle className="font-semibold tracking-tight">
+                        豁免申请
+                        {exemptionRequests.length > 0 && (
+                          <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[11px] font-semibold text-destructive-foreground">
+                            {exemptionRequests.length}
+                          </span>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <豁免申请列表 requests={exemptionRequests} />
+                    </CardContent>
+                  </Card>
+                ),
+              },
+            ]
+          : []),
         {
           key: "member-list",
           content: (
@@ -304,7 +347,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(allProfiles ?? []).map((p) => (
+                    {(allProfiles ?? []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6}>
+                          <div className="flex flex-col items-center gap-3 py-10 text-center">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+                              <Users className="size-5 text-muted-foreground" />
+                            </div>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">还没有成员</p>
+                            <p className="text-xs text-[var(--color-text-secondary)]">先生成邀请码邀请成员加入</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (allProfiles ?? []).map((p) => (
                       <TableRow key={p.id}>
                         <TableCell>{p.name}</TableCell>
                         <TableCell>
@@ -348,6 +403,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           permissions: (p.permissions ?? {}) as Permissions,
                         }))}
                         currentUserId={user.id}
+                        isOwner={isOwner}
                       />
                     </CardContent>
                   </Card>

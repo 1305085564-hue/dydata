@@ -31,7 +31,7 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
             </div>
             <span className="text-sm font-semibold">DYData</span>
           </Link>
-          <div className="flex min-w-0 items-center gap-1 overflow-x-auto pb-1 text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link href="/dashboard" className={linkClass("/dashboard")}>
               数据填报
             </Link>
