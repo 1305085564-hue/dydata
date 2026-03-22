@@ -4,11 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
 export type ScreenshotAssetRole =
-  | "overview"
-  | "traffic_curve"
-  | "retention_curve"
-  | "engagement_extra"
-  | "other";
+  | "screenshot_1"
+  | "screenshot_2"
+  | "screenshot_3";
 type CurvePattern = "前高后低" | "平稳增长" | "二次起量" | "低开高走" | "断崖式";
 type DropSeverity = "high" | "medium" | "low";
 type TailStrength = "high" | "medium" | "low";
@@ -224,7 +222,7 @@ export async function POST(request: NextRequest) {
       const content = aiData?.choices?.[0]?.message?.content;
 
       if (screenshotType === "curve") {
-        const parsed = parseOcrResponse(content, imagePayload.assetRole ?? "traffic_curve");
+        const parsed = parseOcrResponse(content, "curve");
         if (!parsed) {
           return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
         }
@@ -232,14 +230,14 @@ export async function POST(request: NextRequest) {
       }
 
       if (screenshotType === "retention") {
-        const parsed = parseOcrResponse(content, imagePayload.assetRole ?? "retention_curve");
+        const parsed = parseOcrResponse(content, "retention");
         if (!parsed) {
           return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
         }
         return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
       }
 
-      const parsed = parseOcrResponse(content, imagePayload.assetRole ?? "overview");
+      const parsed = parseOcrResponse(content, "data");
 
       if (!parsed) {
         return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
@@ -514,9 +512,8 @@ export function parseClassificationContent(content: unknown): ScreenshotType | n
 
 export function parseOcrResponse(
   content: unknown,
-  assetRole: ScreenshotAssetRole
+  screenshotType: ScreenshotType
 ): ParsedScreenshotResponse | null {
-  const screenshotType = getScreenshotTypeByAssetRole(assetRole);
   if (!screenshotType) {
     return null;
   }
@@ -813,18 +810,7 @@ function normalizeConfidence(value: unknown): ConfidenceLevel {
 }
 
 export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType | null {
-  if (assetRole === "overview" || assetRole === "engagement_extra" || assetRole === "other") {
-    return "data";
-  }
-
-  if (assetRole === "traffic_curve") {
-    return "curve";
-  }
-
-  if (assetRole === "retention_curve") {
-    return "retention";
-  }
-
+  // screenshot_1/2/3 不强制映射类型，走 AI 自动检测
   return null;
 }
 
@@ -835,11 +821,9 @@ function normalizeScreenshotType(value: unknown): ScreenshotType | null {
 }
 
 function normalizeAssetRole(value: unknown): ScreenshotAssetRole | null {
-  return value === "overview" ||
-    value === "traffic_curve" ||
-    value === "retention_curve" ||
-    value === "engagement_extra" ||
-    value === "other"
+  return value === "screenshot_1" ||
+    value === "screenshot_2" ||
+    value === "screenshot_3"
     ? value
     : null;
 }

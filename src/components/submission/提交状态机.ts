@@ -1,9 +1,7 @@
 export type SubmissionSlotRole =
-  | "overview"
-  | "traffic_curve"
-  | "retention_curve"
-  | "engagement_extra"
-  | "other";
+  | "screenshot_1"
+  | "screenshot_2"
+  | "screenshot_3";
 
 export type SubmissionSlotStatus =
   | "empty"
@@ -80,11 +78,9 @@ export function createInitialSubmissionState(
 ): SubmissionState {
   return {
     slots: {
-      overview: createSlot("overview", true),
-      traffic_curve: createSlot("traffic_curve", true),
-      retention_curve: createSlot("retention_curve", true),
-      engagement_extra: createSlot("engagement_extra", false),
-      other: createSlot("other", false),
+      screenshot_1: createSlot("screenshot_1", true),
+      screenshot_2: createSlot("screenshot_2", true),
+      screenshot_3: createSlot("screenshot_3", false),
       ...overrides.slots,
     },
     fields: {

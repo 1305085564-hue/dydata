@@ -19,11 +19,9 @@ const SLOT_META: Array<{
   description: string;
   required: boolean;
 }> = [
-  { role: "overview", title: "槽1 overview", description: "数据总览截图", required: true },
-  { role: "traffic_curve", title: "槽2 traffic_curve", description: "推流曲线图", required: true },
-  { role: "retention_curve", title: "槽3 retention_curve", description: "跳出/完播图", required: true },
-  { role: "engagement_extra", title: "槽4 engagement_extra", description: "互动补充图", required: false },
-  { role: "other", title: "槽5 other", description: "其他", required: false },
+  { role: "screenshot_1", title: "截图 1", description: "播放数据 + 互动数据 + 推流曲线", required: true },
+  { role: "screenshot_2", title: "截图 2", description: "完播/均播/2s跳出/5s完播 + 跳出率/回看率曲线", required: true },
+  { role: "screenshot_3", title: "截图 3（可选）", description: "补充截图", required: false },
 ];
 
 export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry }: SubmissionSlotsProps) {
@@ -31,14 +29,14 @@ export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry }: Subm
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
-          截图槽位区
+          截图上传
         </h3>
         <p className="text-sm text-[var(--color-text-secondary)]">
-          3 个必传槽位全部确认后，才能继续提交。
+          上传 2 张截图（必传），AI 自动识别图片类型。可选上传第 3 张补充截图。
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {SLOT_META.map((item) => {
           const slot = slots[item.role];
 

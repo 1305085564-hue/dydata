@@ -121,7 +121,7 @@ type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   file?: File | null;
 };
 
-const ANOMALY_OPTIONS: AnomalyStatus[] = ["正常", "删稿", "限流", "投流", "活动干预", "未满24h"];
+const ANOMALY_OPTIONS: AnomalyStatus[] = ["正常", "删稿", "限流", "投流"];
 const OVERVIEW_FIELDS: EditableMetricKey[] = [
   "play_count",
   "follower_gain",
@@ -209,11 +209,9 @@ function createEditableFields(): SubmissionState["fields"] {
 function createEditableSlots(): Record<SubmissionSlotRole, SlotViewState> {
   const initial = createInitialSubmissionState().slots;
   return {
-    overview: { ...initial.overview },
-    traffic_curve: { ...initial.traffic_curve },
-    retention_curve: { ...initial.retention_curve },
-    engagement_extra: { ...initial.engagement_extra },
-    other: { ...initial.other },
+    screenshot_1: { ...initial.screenshot_1 },
+    screenshot_2: { ...initial.screenshot_2 },
+    screenshot_3: { ...initial.screenshot_3 },
   };
 }
 
@@ -380,11 +378,13 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
         return;
       }
 
-      if (role === "overview" && data.recognized_fields) {
+      const detectedType = (payload as { screenshot_type?: string }).screenshot_type;
+
+      if (detectedType === "data" && data.recognized_fields) {
         applyOverviewFields(data.recognized_fields, data.confidence);
       }
 
-      if (role === "retention_curve" && data.recognized_fields) {
+      if (detectedType === "retention" && data.recognized_fields) {
         setFields((current) => ({
           ...current,
           avg_play_duration: { ...current.avg_play_duration, source: "ocr", requiresManualConfirmation: true, confirmed: false },
@@ -769,84 +769,42 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="biz_date">归属日期</Label>
-                  <Input
-                    id="biz_date"
-                    type="date"
-                    value={meta.bizDate}
-                    min={recentBizDates[0]}
-                    max={recentBizDates[recentBizDates.length - 1]}
-                    onChange={(event) => {
-                      const nextValue = event.target.value;
-                      if (isBizDateSelectable(today, nextValue)) {
-                        updateMeta("bizDate", nextValue);
-                      }
-                    }}
-                    className="h-11 rounded-[var(--radius-lg)] bg-white"
-                  />
-                  {bizDateHelper ? (
-                    <p className="text-xs text-[var(--color-warning)]">{bizDateHelper}</p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>异常状态</Label>
-                  <Select
-                    value={meta.anomalyStatus}
-                    onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-                  >
-                    <SelectTrigger className="h-11 rounded-[var(--radius-lg)] bg-white">
-                      <SelectValue placeholder="请选择异常状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ANOMALY_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label>异常状态</Label>
+                <Select
+                  value={meta.anomalyStatus}
+                  onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
+                >
+                  <SelectTrigger className="h-11 rounded-[var(--radius-lg)] bg-white">
+                    <SelectValue placeholder="请选择异常状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ANOMALY_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="published_at">发布时间</Label>
-                  <Input
-                    id="published_at"
-                    type="datetime-local"
-                    step={3600}
-                    value={meta.publishedAt}
-                    onChange={(event) => {
-                      const synced = syncPublishedAtAndText({
-                        nextPublishedAt: event.target.value,
-                        nextPublishedAtText: meta.publishedAtText,
-                        changedField: "published_at",
-                      });
-                      setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
-                    }}
-                    className="h-11 rounded-[var(--radius-lg)] bg-white"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="published_at_text">发布时间说明</Label>
-                  <Input
-                    id="published_at_text"
-                    value={meta.publishedAtText}
-                    onChange={(event) => {
-                      const synced = syncPublishedAtAndText({
-                        nextPublishedAt: meta.publishedAt,
-                        nextPublishedAtText: event.target.value,
-                        changedField: "published_at_text",
-                      });
-                      setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
-                    }}
-                    placeholder="如：10点左右"
-                    className="h-11 rounded-[var(--radius-lg)] bg-white"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="published_at">发布时间</Label>
+                <Input
+                  id="published_at"
+                  type="datetime-local"
+                  step={3600}
+                  value={meta.publishedAt}
+                  onChange={(event) => {
+                    const synced = syncPublishedAtAndText({
+                      nextPublishedAt: event.target.value,
+                      nextPublishedAtText: meta.publishedAtText,
+                      changedField: "published_at",
+                    });
+                    setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
+                  }}
+                  className="h-11 rounded-[var(--radius-lg)] bg-white"
+                />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

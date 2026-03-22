@@ -137,18 +137,18 @@ export async function POST(request: NextRequest) {
     // 尝试从 ocr_result 表获取曲线图描述（若表存在）
     // 如不存在则跳过，不影响主流程
     try {
-      const { data: ocrSlots } = await serviceClient
-        .from("submission_screenshot")
-        .select("slot_key, ocr_text")
+      const { data: ocrAssets } = await serviceClient
+        .from("content_asset")
+        .select("asset_role, ocr_result_json")
         .eq("content_item_id", contentItemId)
-        .in("slot_key", ["traffic_curve", "retention_curve"]);
+        .in("asset_role", ["traffic_curve", "retention_curve"]);
 
-      if (ocrSlots) {
-        trafficCurveDesc = ocrSlots.find((r: { slot_key: string }) => r.slot_key === "traffic_curve")?.ocr_text ?? null;
-        retentionCurveDesc = ocrSlots.find((r: { slot_key: string }) => r.slot_key === "retention_curve")?.ocr_text ?? null;
+      if (ocrAssets) {
+        trafficCurveDesc = ocrAssets.find((a: { asset_role: string }) => a.asset_role === "traffic_curve")?.ocr_result_json?.text ?? null;
+        retentionCurveDesc = ocrAssets.find((a: { asset_role: string }) => a.asset_role === "retention_curve")?.ocr_result_json?.text ?? null;
       }
     } catch {
-      // 表不存在或查询失败，跳过
+      // content_asset 查询失败，跳过
     }
   }
 

@@ -228,12 +228,16 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-0.5">
           <p className="text-xs text-[var(--color-text-secondary)]">爆款率</p>
-          <Badge
-            variant={person.hitRate >= 40 ? "default" : person.hitRate >= 20 ? "secondary" : "outline"}
-            className={person.hitRate >= 40 ? "bg-green-500" : person.hitRate < 20 ? "border-red-300 text-red-500" : ""}
-          >
-            <MetricValue value={person.hitRate} suffix="%" />
-          </Badge>
+          {person.count === 0 ? (
+            <Badge variant="outline" className="text-slate-400">暂无数据</Badge>
+          ) : (
+            <Badge
+              variant={person.hitRate >= 40 ? "default" : person.hitRate >= 20 ? "secondary" : "outline"}
+              className={person.hitRate >= 40 ? "bg-green-500" : person.hitRate < 20 ? "border-red-300 text-red-500" : ""}
+            >
+              <MetricValue value={person.hitRate} suffix="%" />
+            </Badge>
+          )}
         </div>
         <div className="space-y-0.5">
           <p className="text-xs text-[var(--color-text-secondary)]">稳定性</p>
@@ -246,21 +250,29 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
         </div>
         <div className="space-y-0.5">
           <p className="text-xs text-[var(--color-text-secondary)]">趋势</p>
-          <Badge
-            variant={person.trend > 10 ? "default" : person.trend < -10 ? "outline" : "secondary"}
-            className={person.trend > 10 ? "bg-green-500" : person.trend < -10 ? "border-red-300 text-red-500" : ""}
-          >
-            <span className="tabular-nums">{person.trend > 0 ? "+" : ""}<MetricValue value={person.trend} suffix="%" /></span>
-          </Badge>
+          {person.count === 0 ? (
+            <Badge variant="outline" className="text-slate-400">暂无数据</Badge>
+          ) : (
+            <Badge
+              variant={person.trend > 10 ? "default" : person.trend < -10 ? "outline" : "secondary"}
+              className={person.trend > 10 ? "bg-green-500" : person.trend < -10 ? "border-red-300 text-red-500" : ""}
+            >
+              <span className="tabular-nums">{person.trend > 0 ? "+" : ""}<MetricValue value={person.trend} suffix="%" /></span>
+            </Badge>
+          )}
         </div>
         <div className="space-y-0.5">
           <p className="text-xs text-[var(--color-text-secondary)]">互动效率</p>
-          <Badge
-            variant={person.engagementRate >= 5 ? "default" : person.engagementRate >= 2 ? "secondary" : "outline"}
-            className={person.engagementRate >= 5 ? "bg-green-500" : person.engagementRate < 2 ? "border-red-300 text-red-500" : ""}
-          >
-            <MetricValue value={person.engagementRate} suffix="%" maximumFractionDigits={2} />
-          </Badge>
+          {person.totalPlay === 0 ? (
+            <Badge variant="outline" className="text-slate-400">暂无数据</Badge>
+          ) : (
+            <Badge
+              variant={person.engagementRate >= 5 ? "default" : person.engagementRate >= 2 ? "secondary" : "outline"}
+              className={person.engagementRate >= 5 ? "bg-green-500" : person.engagementRate < 2 ? "border-red-300 text-red-500" : ""}
+            >
+              <MetricValue value={person.engagementRate} suffix="%" maximumFractionDigits={2} />
+            </Badge>
+          )}
         </div>
       </div>
     </MotionCard>

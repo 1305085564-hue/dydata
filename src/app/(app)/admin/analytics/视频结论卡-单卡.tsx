@@ -34,8 +34,8 @@ export function 视频结论单卡({ card }: { card: 结论卡数据 }) {
             {card.insufficient ? <AlertCircle className="size-4" /> : <Sparkles className="size-4" />}
             <span className="text-xs font-medium">核心结论</span>
           </div>
-          <p className="mt-3 text-[22px] leading-tight font-semibold tracking-tight text-slate-950">{card.summary}</p>
-          {card.footnote ? <p className="mt-2 text-xs leading-5 text-slate-500">{card.footnote}</p> : null}
+          <p className="mt-3 text-[22px] leading-tight font-semibold tracking-tight text-slate-950 line-clamp-3">{card.summary}</p>
+          {card.footnote ? <p className="mt-2 text-xs leading-5 text-slate-500 line-clamp-2">{card.footnote}</p> : null}
         </div>
 
         <div className="grid grid-cols-1 gap-2.5">
@@ -75,8 +75,8 @@ export function 干预结论单卡({ card }: { card: 干预结论卡数据 }) {
             {card.items.length > 0 ? <ArrowUpRight className="size-4" /> : <AlertCircle className="size-4" />}
             <span className="text-xs font-medium">干预信号</span>
           </div>
-          <p className="mt-3 text-[22px] leading-tight font-semibold tracking-tight text-slate-950">{card.summary}</p>
-          {card.footnote ? <p className="mt-2 text-xs leading-5 text-slate-500">{card.footnote}</p> : null}
+          <p className="mt-3 text-[22px] leading-tight font-semibold tracking-tight text-slate-950 line-clamp-3">{card.summary}</p>
+          {card.footnote ? <p className="mt-2 text-xs leading-5 text-slate-500 line-clamp-2">{card.footnote}</p> : null}
         </div>
 
         <div className="grid grid-cols-3 gap-2.5">

@@ -3,24 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import type { AccountLeaderboardRow } from "@/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { EmptyState } from "@/components/ui/empty-state";
-import { BarChart2, Clock, TrendingUp, Users } from "lucide-react";
+import { Clock } from "lucide-react";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
 import { AdvicePanel } from "./advice-panel";
 import { hasPendingExemptionRequest } from "./actions";
 import { 申请豁免弹窗 } from "./申请豁免弹窗";
+import { HistoryList } from "./history-list";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -148,19 +141,6 @@ export default async function DashboardPage() {
 
   const hasPending = await hasPendingExemptionRequest();
 
-  function getAccountName(accountRelation: unknown) {
-    if (Array.isArray(accountRelation)) {
-      const firstAccount = accountRelation[0] as { name?: string | null } | undefined;
-      return firstAccount?.name;
-    }
-
-    if (accountRelation && typeof accountRelation === "object") {
-      return (accountRelation as { name?: string | null }).name;
-    }
-
-    return undefined;
-  }
-
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-24 md:pb-0">
       <DashboardAnimatedSection index={0}>
@@ -262,126 +242,7 @@ export default async function DashboardPage() {
                 description="提交第一条数据后即可在此查看近30天历史"
               />
             ) : (
-              <>
-                <div className="hidden overflow-x-auto md:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>日期</TableHead>
-                        <TableHead>账号</TableHead>
-                        <TableHead>视频标题</TableHead>
-                        <TableHead className="text-right">播放量</TableHead>
-                        <TableHead className="text-right">完播率</TableHead>
-                        <TableHead className="text-right">均播时长</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">
-                          2s跳出
-                        </TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">
-                          5s完播
-                        </TableHead>
-                        <TableHead className="text-right">点赞</TableHead>
-                        <TableHead className="text-right">评论</TableHead>
-                        <TableHead className="text-right">分享</TableHead>
-                        <TableHead className="text-right hidden lg:table-cell">
-                          收藏
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {history.map((report) => {
-                        const dateText = report.report_date?.slice(5);
-                        const accountName = getAccountName(report.accounts);
-                        return (
-                          <TableRow key={report.id}>
-                            <TableCell className="whitespace-nowrap text-muted-foreground">
-                              {dateText}
-                            </TableCell>
-                            <TableCell className="max-w-[120px] truncate text-muted-foreground">
-                              {accountName ?? "-"}
-                            </TableCell>
-                            <TableCell className="max-w-[160px] truncate">
-                              {report.title}
-                            </TableCell>
-                            <TableCell className="text-right font-semibold tabular-nums">
-                              {report.play_count != null
-                                ? `${(report.play_count / 10000).toFixed(2)}万`
-                                : "-"}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {report.completion_rate ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {report.avg_play_duration ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums hidden lg:table-cell">
-                              {report.bounce_rate_2s ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums hidden lg:table-cell">
-                              {report.completion_rate_5s ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {report.likes}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {report.comments}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {report.shares}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums hidden lg:table-cell">
-                              {report.favorites}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div className="space-y-3 md:hidden">
-                  {history.map((report) => (
-                    <div
-                      key={report.id}
-                      className="space-y-2 rounded-lg border bg-background p-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            {report.report_date?.slice(5)}
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {getAccountName(report.accounts) ?? "-"}
-                          </p>
-                        </div>
-                        <p className="text-sm font-semibold tabular-nums">
-                          {report.play_count != null
-                            ? `${(report.play_count / 10000).toFixed(2)}万`
-                            : "-"}
-                        </p>
-                      </div>
-                      <p className="truncate text-sm">{report.title}</p>
-                      <div className="grid grid-cols-4 gap-2 text-xs">
-                        <div>
-                          <p className="text-muted-foreground">完播率</p>
-                          <p className="tabular-nums">{report.completion_rate ?? "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">点赞</p>
-                          <p className="tabular-nums">{report.likes}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">评论</p>
-                          <p className="tabular-nums">{report.comments}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">分享</p>
-                          <p className="tabular-nums">{report.shares}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
+              <HistoryList history={history} />
             )}
           </CardContent>
         </Card>

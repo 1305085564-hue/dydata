@@ -269,11 +269,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: videoError?.message || "视频记录创建失败" }, { status: 500 });
   }
 
-  const screenshotUrls = assets
-    .filter((asset) => asset.role === "overview" || asset.role === "engagement_extra" || asset.role === "other")
-    .map((asset) => asset.url);
-  const curveScreenshotUrl = assets.find((asset) => asset.role === "traffic_curve")?.url ?? null;
-  const retentionScreenshotUrl = assets.find((asset) => asset.role === "retention_curve")?.url ?? null;
+  const screenshotUrls = assets.map((asset) => asset.url);
+  const curveScreenshotUrl = null;
+  const retentionScreenshotUrl = null;
 
   const snapshotPayload = {
     video_id: newVideo.id,

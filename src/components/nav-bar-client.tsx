@@ -39,7 +39,7 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
               成长分析
             </Link>
             {showAnalytics && (
-              <Link href="/admin/analytics" className={linkClass("/admin/analytics")}>
+              <Link href="/analytics" className={linkClass("/analytics")}>
                 数据分析
               </Link>
             )}

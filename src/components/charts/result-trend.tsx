@@ -250,6 +250,7 @@ export function ResultTrend({
             <motion.div
               key={`${metric}-${range}`}
               className="h-full w-full"
+              style={{ minHeight: 280, minWidth: 0 }}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}

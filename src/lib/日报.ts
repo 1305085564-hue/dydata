@@ -9,6 +9,7 @@ function formatLocalDateTime(date: Date) {
 export function getDefaultPublishedAtValue(now: Date = new Date()) {
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(19, 0, 0, 0);
   return formatLocalDateTime(yesterday);
 }
 
