@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { CalendarDays, Download, Settings2, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -148,15 +149,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     dayCountByAccount[accountId] = count;
   }
 
-  // All profiles for member list
+  // All profiles for member list — use service_role client to bypass RLS
+  const adminSupabase = createAdminClient();
   const { data: allProfiles } = await loadProfilesWithExemptionFallback({
     loadWithExemption: async () =>
-      supabase
+      adminSupabase
         .from("profiles")
         .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, permissions, created_at")
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
-      supabase
+      adminSupabase
         .from("profiles")
         .select("id, name, role, status, permissions, created_at")
         .order("created_at", { ascending: true }),

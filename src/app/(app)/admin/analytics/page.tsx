@@ -44,37 +44,29 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     to: params.to,
   });
 
-  const [{ data: profile }, demoTeamRow] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("name, role")
-      .eq("id", user.id)
-      .single(),
-    adminSupabase.from("teams").select("id").eq("is_demo", true).limit(1).maybeSingle(),
-  ]);
-  const demoTeam = demoTeamRow?.data ?? null;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, role")
+    .eq("id", user.id)
+    .single();
 
   const role = profile?.role ?? "member";
   const currentUserName = profile?.name ?? user.email ?? "我";
+  const isPrivilegedUser = role === "admin" || role === "owner";
   const access = buildAnalyticsAccessContext({
     userId: user.id,
     role,
-    teamId: null,
-    demoTeamId: demoTeam?.id ?? null,
+    teamId: isPrivilegedUser ? "__all__" : null,
+    demoTeamId: null,
   });
 
-  const teamProfiles = access.effectiveTeamId
-    ? (
-        await adminSupabase
-          .from("profiles")
-          .select("id, name")
-          .eq("team_id", access.effectiveTeamId)
-          .order("name")
-      ).data ?? []
+  // admin/owner 查全团队；member 只查自己
+  const teamProfiles: { id: string; name: string }[] = isPrivilegedUser
+    ? (await adminSupabase.from("profiles").select("id, name").order("name")).data ?? []
     : [{ id: user.id, name: currentUserName }];
 
   const teamUserIds = teamProfiles.map((item) => item.id);
-  const submitters = access.canViewAllMembers
+  const submitters = isPrivilegedUser
     ? teamProfiles.map((item) => item.name)
     : [currentUserName];
 
@@ -112,10 +104,8 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     filteredVideos.some((video) => video.id === tag.video_id),
   );
 
-  const isPrivileged = role === "admin" || role === "owner";
-
   const sections: AnalyticsSection[] = [
-    ...(isPrivileged
+    ...(isPrivilegedUser
       ? [
           {
             title: "导粉趋势",
