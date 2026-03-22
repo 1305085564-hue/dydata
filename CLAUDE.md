@@ -82,7 +82,7 @@
 ## 外部服务
 - Cloudflare NS：aron/hal.ns.cloudflare.com
 - 飞书 webhook：已配置到环境变量
-- 首个管理员：1305085574@qq.com
+- 首个管理员：1305085564@qq.com（owner，profiles.id = a689874f-12f1-43e1-8e20-87e2195fe041）
 
 ## 当前状态（2026-03-22 晚）
 - 阶段三 P1/P2/P3 全部完成，build 零错误
