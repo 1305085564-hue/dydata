@@ -153,12 +153,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     loadWithExemption: async () =>
       supabase
         .from("profiles")
-        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, permissions, created_at, team_id, group_id, teams(name)")
+        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, permissions, created_at")
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
       supabase
         .from("profiles")
-        .select("id, name, role, status, permissions, created_at, team_id, group_id, teams(name)")
+        .select("id, name, role, status, permissions, created_at")
         .order("created_at", { ascending: true }),
   });
 

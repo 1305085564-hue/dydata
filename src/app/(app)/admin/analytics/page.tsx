@@ -44,21 +44,22 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     to: params.to,
   });
 
-  const [{ data: profile }, { data: demoTeam }] = await Promise.all([
+  const [{ data: profile }, demoTeamRow] = await Promise.all([
     supabase
       .from("profiles")
-      .select("name, role, team_id")
+      .select("name, role")
       .eq("id", user.id)
       .single(),
     adminSupabase.from("teams").select("id").eq("is_demo", true).limit(1).maybeSingle(),
   ]);
+  const demoTeam = demoTeamRow?.data ?? null;
 
   const role = profile?.role ?? "member";
   const currentUserName = profile?.name ?? user.email ?? "我";
   const access = buildAnalyticsAccessContext({
     userId: user.id,
     role,
-    teamId: profile?.team_id ?? null,
+    teamId: null,
     demoTeamId: demoTeam?.id ?? null,
   });
 
@@ -66,11 +67,11 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     ? (
         await adminSupabase
           .from("profiles")
-          .select("id, name, team_id")
+          .select("id, name")
           .eq("team_id", access.effectiveTeamId)
           .order("name")
       ).data ?? []
-    : [{ id: user.id, name: currentUserName, team_id: null }];
+    : [{ id: user.id, name: currentUserName }];
 
   const teamUserIds = teamProfiles.map((item) => item.id);
   const submitters = access.canViewAllMembers
@@ -90,7 +91,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       .order("report_date", { ascending: false }),
     adminSupabase
       .from("videos")
-      .select("*, accounts!inner(name), profiles!inner(name, team_id)")
+      .select("*, accounts!inner(name), profiles!inner(name)")
       .in("user_id", teamUserIds)
       .order("published_at", { ascending: false }),
     adminSupabase.from("video_metrics_snapshots").select("*"),
