@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,9 +85,9 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
         }
 
         onUpdated(result.item as AdviceRow);
-        toast.success("建议已更新");
+        feedbackToast.success("建议已更新");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "更新失败");
+        feedbackToast.error(error instanceof Error ? error.message : "更新失败");
       }
     });
   }

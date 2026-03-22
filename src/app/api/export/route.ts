@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { buildAnalyticsAccessContext } from "@/lib/analytics-access";
 import { formatShanghaiDateTime } from "@/lib/日报";
 import * as XLSX from "xlsx";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
   const {
     data: { user },
@@ -14,26 +17,43 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 验证管理员权限
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: demoTeam }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("name, role, team_id")
+      .eq("id", user.id)
+      .single(),
+    adminSupabase.from("teams").select("id").eq("is_demo", true).limit(1).maybeSingle(),
+  ]);
 
-  if (profile?.role !== "admin" && profile?.role !== "owner") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const role = profile?.role ?? "member";
+  const access = buildAnalyticsAccessContext({
+    userId: user.id,
+    role,
+    teamId: profile?.team_id ?? null,
+    demoTeamId: demoTeam?.id ?? null,
+  });
+
+  if (!access.effectiveTeamId) {
+    return NextResponse.json({ error: "No team available" }, { status: 400 });
   }
 
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  let query = supabase
+  let query = adminSupabase
     .from("daily_reports")
-    .select("report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at")
+    .select(
+      "report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, user_id, profiles!inner(team_id)"
+    )
+    .eq("profiles.team_id", access.effectiveTeamId)
     .order("report_date", { ascending: false })
     .order("submitter", { ascending: true });
+
+  if (!access.canViewAllMembers) {
+    query = query.eq("user_id", user.id);
+  }
 
   if (from) query = query.gte("report_date", from);
   if (to) query = query.lte("report_date", to);

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 export function ExportButton() {
   const today = new Date().toISOString().split("T")[0];
@@ -23,7 +24,7 @@ export function ExportButton() {
       const res = await fetch(url);
       if (!res.ok) {
         const err = await res.json();
-        alert(err.error || "导出失败");
+        feedbackToast.error(err.error || "导出失败");
         return;
       }
 
@@ -33,6 +34,7 @@ export function ExportButton() {
       a.download = `抖音数据日报_${from}_至_${to}.xlsx`;
       a.click();
       URL.revokeObjectURL(a.href);
+      feedbackToast.success("导出成功");
     } finally {
       setLoading(false);
     }

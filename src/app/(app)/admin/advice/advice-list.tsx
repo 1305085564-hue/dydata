@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -136,10 +136,10 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
         }
 
         const failedCount = Array.isArray(result.failed) ? result.failed.length : 0;
-        toast.success(`已生成 ${result.diagnosed} 条建议${failedCount ? `，失败 ${failedCount} 条` : ""}`);
+        feedbackToast.success(`已生成 ${result.diagnosed} 条建议${failedCount ? `，失败 ${failedCount} 条` : ""}`);
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "批量生成失败");
+        feedbackToast.error(error instanceof Error ? error.message : "批量生成失败");
       }
     });
   }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ScanSearch } from "lucide-react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,7 +111,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
     startTransition(async () => {
       const result = await submitReport(formData);
       if (result?.error) {
-        toast.error(result.error);
+        feedbackToast.error(result.error);
       } else {
         setSuccessMsg(result?.isUpdate ? "修改成功" : "提交成功");
         setShowSuccess(true);
@@ -123,7 +123,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
   function handleImportConfirm(values: ScreenshotImportEditableValues) {
     setOcrValues(normalizeImportedValues(values));
     setIsImportOpen(false);
-    toast.success("截图数据已回填，可继续检查后提交");
+    feedbackToast.success("截图数据已回填，可继续检查后提交");
   }
 
   function updateOcrValue(field: OcrFieldKey, value: string) {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,6 +49,8 @@ const MODE_LABELS: Record<ExemptionFormValues["mode"], string> = {
 
 export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialogProps) {
   const [isPending, startTransition] = useTransition();
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showPermanentConfirm, setShowPermanentConfirm] = useState(false);
 
   const initialValues = useMemo<ExemptionFormValues>(() => {
     if (!profile) {
@@ -69,6 +72,13 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
   useEffect(() => {
     setFormValues(initialValues);
   }, [initialValues]);
+
+  useEffect(() => {
+    if (!open) {
+      setShowClearConfirm(false);
+      setShowPermanentConfirm(false);
+    }
+  }, [open]);
 
   function updateField<K extends keyof ExemptionFormValues>(key: K, value: ExemptionFormValues[K]) {
     setFormValues((current) => ({
@@ -97,7 +107,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     }
   }
 
-  function handleSubmit() {
+  function submitExemption() {
     if (!profile) return;
 
     startTransition(async () => {
@@ -107,29 +117,41 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
       });
 
       if (result.error) {
-        toast.error(result.error);
+        feedbackToast.error(result.error);
         return;
       }
 
-      toast.success(`${profile.name}已更新为${MODE_LABELS[formValues.mode]}`);
+      feedbackToast.success(`${profile.name}已更新为${MODE_LABELS[formValues.mode]}`);
       onOpenChange(false);
     });
   }
 
-  function handleClear() {
+  function clearCurrentExemption() {
     if (!profile) return;
 
     startTransition(async () => {
       const result = await clearExemption(profile.id);
 
       if (result.error) {
-        toast.error(result.error);
+        feedbackToast.error(result.error);
         return;
       }
 
-      toast.success(`已恢复${profile.name}为正常状态`);
+      feedbackToast.success(`已恢复${profile.name}为正常状态`);
       onOpenChange(false);
     });
+  }
+
+  function handleClearClick() {
+    setShowClearConfirm(true);
+  }
+
+  function handleSaveClick() {
+    if (formValues.mode === "permanent") {
+      setShowPermanentConfirm(true);
+      return;
+    }
+    submitExemption();
   }
 
   return (
@@ -209,7 +231,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
         <DialogFooter className="gap-2 sm:justify-between">
           <div>
             {profile && profile.exempt_type && (
-              <Button variant="outline" onClick={handleClear} disabled={isPending}>
+              <Button variant="outline" onClick={handleClearClick} disabled={isPending}>
                 清除豁免
               </Button>
             )}
@@ -218,12 +240,31 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
               取消
             </Button>
-            <Button onClick={handleSubmit} disabled={isPending}>
+            <Button onClick={handleSaveClick} disabled={isPending}>
               保存
             </Button>
           </div>
         </DialogFooter>
       </DialogContent>
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="确认清除豁免"
+        description={profile ? `确定清除 ${profile.name} 的豁免状态并恢复为正常吗？` : ""}
+        confirmText="确认清除"
+        destructive
+        loading={isPending}
+        onConfirm={clearCurrentExemption}
+        onOpenChange={setShowClearConfirm}
+      />
+      <ConfirmDialog
+        open={showPermanentConfirm}
+        title="确认设置永久豁免"
+        description={profile ? `确定将 ${profile.name} 设置为永久豁免吗？` : ""}
+        confirmText="确认设置"
+        loading={isPending}
+        onConfirm={submitExemption}
+        onOpenChange={setShowPermanentConfirm}
+      />
     </Dialog>
   );
 }

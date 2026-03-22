@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 
 interface NavBarClientProps {
   name: string;
-  isAdmin: boolean;
+  showAdmin: boolean;
+  showAnalytics: boolean;
 }
 
-export function NavBarClient({ name, isAdmin }: NavBarClientProps) {
+export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientProps) {
   const pathname = usePathname();
 
   const linkClass = (href: string) =>
@@ -37,12 +38,12 @@ export function NavBarClient({ name, isAdmin }: NavBarClientProps) {
             <Link href="/growth" className={linkClass("/growth")}>
               成长分析
             </Link>
-            {isAdmin && (
+            {showAdmin && (
               <Link href="/admin" className={linkClass("/admin")}>
                 管理后台
               </Link>
             )}
-            {isAdmin && (
+            {showAnalytics && (
               <Link href="/admin/analytics" className={linkClass("/admin/analytics")}>
                 数据分析
               </Link>

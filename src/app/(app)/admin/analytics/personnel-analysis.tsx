@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MotionCard } from "@/components/ui/motion-card";
+import { containerVariants, itemVariants, useCountUp } from "@/lib/animations";
 
 interface Report {
   id: string;
@@ -22,6 +24,7 @@ interface Report {
 
 interface PersonnelAnalysisProps {
   reports: Report[];
+  title?: string;
 }
 
 type SortKey = "hitRate" | "stability" | "trend" | "engagementRate";
@@ -74,7 +77,7 @@ function stdDev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
-export function PersonnelAnalysis({ reports }: PersonnelAnalysisProps) {
+export function PersonnelAnalysis({ reports, title = "人员深度分析" }: PersonnelAnalysisProps) {
   const [sortBy, setSortBy] = useState<SortKey>("hitRate");
   const [expanded, setExpanded] = useState(false);
 
@@ -140,56 +143,55 @@ export function PersonnelAnalysis({ reports }: PersonnelAnalysisProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <span className="self-center text-xs text-muted-foreground">排序：</span>
-        {([
-          ["hitRate", "爆款率"],
-          ["stability", "稳定性"],
-          ["trend", "趋势"],
-          ["engagementRate", "互动效率"],
-        ] as const).map(([key, label]) => (
-          <Button key={key} size="sm" variant={sortBy === key ? "default" : "outline"} onClick={() => setSortBy(key)}>
-            {label}
-          </Button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-base font-semibold tracking-tight text-[var(--color-text-primary)]">{title}</h3>
+        <div className="flex flex-wrap gap-2">
+          <span className="self-center text-xs text-[var(--color-text-secondary)]">排序：</span>
+          {([
+            ["hitRate", "爆款率"],
+            ["stability", "稳定性"],
+            ["trend", "趋势"],
+            ["engagementRate", "互动效率"],
+          ] as const).map(([key, label]) => (
+            <Button
+              key={key}
+              size="sm"
+              variant={sortBy === key ? "default" : "outline"}
+              className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]"
+              onClick={() => setSortBy(key)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {visibleItems.map((p) => (
-          <PersonCard key={p.name} person={p} />
-        ))}
-      </div>
-
-      <AnimatePresence initial={false}>
-        {expanded && hiddenItems.length > 0 ? (
-          <motion.div
-            key="more-people"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-3">
-              {hiddenItems.map((p) => (
-                <motion.div
-                  key={p.name}
-                  initial={{ y: 12, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -8, opacity: 0 }}
-                  transition={{ duration: 0.22, ease: "easeOut" }}
-                >
-                  <PersonCard person={p} />
-                </motion.div>
-              ))}
-            </div>
+      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {visibleItems.map((person, index) => (
+          <motion.div key={person.name} variants={itemVariants}>
+            <PersonCard person={person} index={index} />
           </motion.div>
-        ) : null}
-      </AnimatePresence>
+        ))}
+      </motion.div>
+
+      {expanded && hiddenItems.length > 0 ? (
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-3">
+          {hiddenItems.map((person, index) => (
+            <motion.div key={person.name} variants={itemVariants}>
+              <PersonCard person={person} index={visibleItems.length + index} />
+            </motion.div>
+          ))}
+        </motion.div>
+      ) : null}
 
       {hiddenItems.length > 0 ? (
         <div className="flex justify-center pt-1">
-          <Button variant="outline" size="sm" onClick={() => setExpanded((value) => !value)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]"
+            onClick={() => setExpanded((value) => !value)}
+          >
             {expanded ? "收起" : `展开更多（+${hiddenItems.length}）`}
           </Button>
         </div>
@@ -198,30 +200,35 @@ export function PersonnelAnalysis({ reports }: PersonnelAnalysisProps) {
   );
 }
 
-function PersonCard({ person }: { person: PersonStats }) {
+function MetricValue({ value, suffix = "", maximumFractionDigits = 1 }: { value: number; suffix?: string; maximumFractionDigits?: number }) {
+  const { formattedValue } = useCountUp(value, undefined, true, { maximumFractionDigits });
+  return <span className="tabular-nums">{formattedValue}{suffix}</span>;
+}
+
+function PersonCard({ person, index }: { person: PersonStats; index: number }) {
   return (
-    <div className="glass-card-static space-y-3 rounded-2xl p-4">
+    <MotionCard index={index} className="space-y-3 p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-semibold tracking-tight">{person.name}</p>
+          <p className="truncate text-sm font-semibold tracking-tight text-[var(--color-text-primary)]">{person.name}</p>
           <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${person.suggestion.color}`}>
             {person.suggestion.label}
           </span>
         </div>
-        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{person.count} 条数据</span>
+        <span className="shrink-0 text-xs text-[var(--color-text-secondary)] tabular-nums">{person.count} 条数据</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">爆款率</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">爆款率</p>
           <Badge
             variant={person.hitRate >= 40 ? "default" : person.hitRate >= 20 ? "secondary" : "outline"}
             className={person.hitRate >= 40 ? "bg-green-500" : person.hitRate < 20 ? "border-red-300 text-red-500" : ""}
           >
-            <span className="tabular-nums">{person.hitRate.toFixed(1)}%</span>
+            <MetricValue value={person.hitRate} suffix="%" />
           </Badge>
         </div>
         <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">稳定性</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">稳定性</p>
           <Badge
             variant={person.stability < 5 ? "default" : person.stability < 15 ? "secondary" : "outline"}
             className={person.stability < 5 ? "bg-green-500" : person.stability >= 15 ? "border-red-300 text-red-500" : ""}
@@ -230,27 +237,24 @@ function PersonCard({ person }: { person: PersonStats }) {
           </Badge>
         </div>
         <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">趋势</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">趋势</p>
           <Badge
             variant={person.trend > 10 ? "default" : person.trend < -10 ? "outline" : "secondary"}
             className={person.trend > 10 ? "bg-green-500" : person.trend < -10 ? "border-red-300 text-red-500" : ""}
           >
-            <span className="tabular-nums">
-              {person.trend > 0 ? "+" : ""}
-              {person.trend.toFixed(1)}%
-            </span>
+            <span className="tabular-nums">{person.trend > 0 ? "+" : ""}<MetricValue value={person.trend} suffix="%" /></span>
           </Badge>
         </div>
         <div className="space-y-0.5">
-          <p className="text-xs text-muted-foreground">互动效率</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">互动效率</p>
           <Badge
             variant={person.engagementRate >= 5 ? "default" : person.engagementRate >= 2 ? "secondary" : "outline"}
             className={person.engagementRate >= 5 ? "bg-green-500" : person.engagementRate < 2 ? "border-red-300 text-red-500" : ""}
           >
-            <span className="tabular-nums">{person.engagementRate.toFixed(2)}%</span>
+            <MetricValue value={person.engagementRate} suffix="%" maximumFractionDigits={2} />
           </Badge>
         </div>
       </div>
-    </div>
+    </MotionCard>
   );
 }

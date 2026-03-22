@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 type AdviceRow = Pick<
   AdviceAction,
@@ -133,7 +133,7 @@ export function AdvicePanel() {
         setVideoOptions((videoData ?? []) as VideoOption[]);
       } catch (error) {
         if (!isMounted) return;
-        toast.error((error as Error).message || "建议加载失败，请稍后重试");
+        feedbackToast.error((error as Error).message || "建议加载失败，请稍后重试");
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -186,10 +186,10 @@ export function AdvicePanel() {
         setAdviceList((current) => current.filter((item) => item.id !== adviceId));
       }
 
-      toast.success(`已更新为${status}`);
+      feedbackToast.success(`已更新为${status}`);
       return true;
     } catch (error) {
-      toast.error((error as Error).message || "状态更新失败");
+      feedbackToast.error((error as Error).message || "状态更新失败");
       return false;
     } finally {
       setPendingId(null);
@@ -200,7 +200,7 @@ export function AdvicePanel() {
     if (!executingAdviceId) return;
 
     if (!selectedVideoId) {
-      toast.error("请先选择关联视频");
+      feedbackToast.error("请先选择关联视频");
       return;
     }
 

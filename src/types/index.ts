@@ -124,6 +124,8 @@ export interface AccountLeaderboardItem {
 
 export type AnomalyStatus = "正常" | "删稿" | "限流" | "投流" | "活动干预" | "未满24h";
 export type SnapshotType = "24h" | "72h";
+export type SubmissionAssetRole = "overview" | "traffic_curve" | "retention_curve" | "engagement_extra" | "other";
+export type SubmissionFieldSource = "ocr" | "manual";
 export type TagDimension = "题材" | "表达形式" | "CTA类型" | "内容结构" | "目标受众";
 export type VideoTagReviewDimension = "题材" | "表达形式" | "CTA类型";
 export type TagSource = "ai" | "manual";
@@ -181,6 +183,13 @@ export interface VideoMetricsSnapshot {
   curve_screenshot_url: string | null;
   retention_screenshot_url: string | null;
   captured_at: string;
+}
+
+export interface SubmissionAssetMeta {
+  role: SubmissionAssetRole;
+  url: string;
+  confirmed: boolean;
+  confidence_score: number | null;
 }
 
 export interface VideoTag {

@@ -3,6 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
+export type ScreenshotAssetRole =
+  | "overview"
+  | "traffic_curve"
+  | "retention_curve"
+  | "engagement_extra"
+  | "other";
 type CurvePattern = "前高后低" | "平稳增长" | "二次起量" | "低开高走" | "断崖式";
 type DropSeverity = "high" | "medium" | "low";
 type TailStrength = "high" | "medium" | "low";
@@ -93,10 +99,21 @@ type UpstreamSuccessResponse = {
 type ImagePayloadSuccess = {
   dataUrl: string;
   screenshotType: ScreenshotType | null;
+  assetRole: ScreenshotAssetRole | null;
 };
 
 type ImagePayloadError = {
   error: string;
+};
+
+export type ParsedScreenshotResponse = {
+  slot_status: "pending_confirm" | "confirmed" | "failed";
+  screenshot_type: ScreenshotType;
+  confidence_score: number;
+  requires_manual_confirmation: boolean;
+  recognized_fields: JsonObject | null;
+  confidence?: Record<OcrFieldKey, ConfidenceLevel>;
+  error?: string;
 };
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
@@ -151,7 +168,11 @@ export async function POST(request: NextRequest) {
 
     const dataUrl = imagePayload.dataUrl;
     const upstreamUrl = buildUpstreamUrl(baseUrl);
-    const screenshotType = imagePayload.screenshotType ?? (await detectScreenshotType(dataUrl, upstreamUrl, apiKey));
+    const forcedScreenshotType = getScreenshotTypeByAssetRole(imagePayload.assetRole);
+    const screenshotType =
+      forcedScreenshotType ??
+      imagePayload.screenshotType ??
+      (await detectScreenshotType(dataUrl, upstreamUrl, apiKey));
     const prompt = buildPromptByType(screenshotType);
     const requestBody: UpstreamRequestBody = {
       model: OCR_MODEL,
@@ -203,7 +224,7 @@ export async function POST(request: NextRequest) {
       const content = aiData?.choices?.[0]?.message?.content;
 
       if (screenshotType === "curve") {
-        const parsed = parseCurveContent(content);
+        const parsed = parseOcrResponse(content, imagePayload.assetRole ?? "traffic_curve");
         if (!parsed) {
           return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
         }
@@ -211,22 +232,21 @@ export async function POST(request: NextRequest) {
       }
 
       if (screenshotType === "retention") {
-        const parsed = parseRetentionContent(content);
+        const parsed = parseOcrResponse(content, imagePayload.assetRole ?? "retention_curve");
         if (!parsed) {
           return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
         }
         return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
       }
 
-      const parsed = parseOcrContent(content);
+      const parsed = parseOcrResponse(content, imagePayload.assetRole ?? "overview");
 
       if (!parsed) {
         return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
       }
 
-      const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null);
-      if (!hasAnyValue) {
-        return NextResponse.json({ error: "图片不清晰或未识别到数据" }, { status: 500 });
+      if (parsed.slot_status === "failed") {
+        return NextResponse.json({ data: parsed, screenshot_type: screenshotType }, { status: 200 });
       }
 
       return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
@@ -263,6 +283,7 @@ async function parseMultipartPayload(request: NextRequest): Promise<ImagePayload
   return {
     ...filePayload,
     screenshotType: normalizeScreenshotType(formData.get("screenshot_type")),
+    assetRole: normalizeAssetRole(formData.get("asset_role")),
   };
 }
 
@@ -282,6 +303,7 @@ async function parseJsonPayload(request: NextRequest): Promise<ImagePayloadSucce
     return {
       dataUrl: image,
       screenshotType: normalizeScreenshotType(body?.screenshot_type),
+      assetRole: normalizeAssetRole(body?.asset_role),
     };
   }
 
@@ -490,6 +512,102 @@ export function parseClassificationContent(content: unknown): ScreenshotType | n
   }
 }
 
+export function parseOcrResponse(
+  content: unknown,
+  assetRole: ScreenshotAssetRole
+): ParsedScreenshotResponse | null {
+  const screenshotType = getScreenshotTypeByAssetRole(assetRole);
+  if (!screenshotType) {
+    return null;
+  }
+
+  if (screenshotType === "curve") {
+    const parsed = parseCurveContent(content);
+    if (!parsed) {
+      return null;
+    }
+
+    if (!parsed.recognized) {
+      return {
+        slot_status: "failed",
+        screenshot_type: screenshotType,
+        confidence_score: 0,
+        requires_manual_confirmation: true,
+        error: parsed.reason,
+        recognized_fields: null,
+      };
+    }
+
+    const confidenceScore = parsed.confidence ?? 0;
+    return {
+      slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
+      screenshot_type: screenshotType,
+      confidence_score: confidenceScore,
+      requires_manual_confirmation: confidenceScore < 0.7,
+      recognized_fields: parsed as unknown as JsonObject,
+    };
+  }
+
+  if (screenshotType === "retention") {
+    const parsed = parseRetentionContent(content);
+    if (!parsed) {
+      return null;
+    }
+
+    if (!parsed.recognized) {
+      return {
+        slot_status: "failed",
+        screenshot_type: screenshotType,
+        confidence_score: 0,
+        requires_manual_confirmation: true,
+        error: parsed.reason,
+        recognized_fields: null,
+      };
+    }
+
+    const confidenceScore = parsed.confidence ?? 0;
+    return {
+      slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
+      screenshot_type: screenshotType,
+      confidence_score: confidenceScore,
+      requires_manual_confirmation: confidenceScore < 0.7,
+      recognized_fields: parsed as unknown as JsonObject,
+    };
+  }
+
+  const parsed = parseOcrContent(content);
+  if (!parsed) {
+    return null;
+  }
+
+  const recognizedFields = Object.fromEntries(
+    OCR_FIELDS.filter((field) => parsed[field] !== null).map((field) => [field, parsed[field]])
+  ) as JsonObject;
+
+  const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null);
+  if (!hasAnyValue) {
+    return {
+      slot_status: "failed",
+      screenshot_type: screenshotType,
+      confidence_score: 0,
+      requires_manual_confirmation: true,
+      error: "图片不清晰或未识别到数据",
+      recognized_fields: null,
+    };
+  }
+
+  const confidenceScore = getConfidenceScore(parsed.confidence);
+
+  return {
+    slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
+    screenshot_type: screenshotType,
+    confidence_score: confidenceScore,
+    requires_manual_confirmation: confidenceScore < 0.7,
+    recognized_fields: recognizedFields,
+    confidence: parsed.confidence,
+  };
+}
+
 function parseOcrContent(content: unknown): ParsedOcrResult | null {
   const normalizedContent = normalizeMessageContent(content);
   if (!normalizedContent) {
@@ -676,6 +794,17 @@ function normalizeNumber(value: unknown, allowDecimal = false): number | null {
   return null;
 }
 
+function getConfidenceScore(confidence: Record<OcrFieldKey, ConfidenceLevel>) {
+  const scoreMap: Record<ConfidenceLevel, number> = {
+    high: 1,
+    medium: 0.5,
+    low: 0,
+  };
+
+  const total = OCR_FIELDS.reduce((sum, field) => sum + scoreMap[confidence[field]], 0);
+  return Math.round((total / OCR_FIELDS.length) * 100) / 100;
+}
+
 function normalizeConfidence(value: unknown): ConfidenceLevel {
   if (value === "high" || value === "medium" || value === "low") {
     return value;
@@ -683,9 +812,35 @@ function normalizeConfidence(value: unknown): ConfidenceLevel {
   return "low";
 }
 
+export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType | null {
+  if (assetRole === "overview" || assetRole === "engagement_extra" || assetRole === "other") {
+    return "data";
+  }
+
+  if (assetRole === "traffic_curve") {
+    return "curve";
+  }
+
+  if (assetRole === "retention_curve") {
+    return "retention";
+  }
+
+  return null;
+}
+
 function normalizeScreenshotType(value: unknown): ScreenshotType | null {
   return typeof value === "string" && SCREENSHOT_TYPES.includes(value as ScreenshotType)
     ? (value as ScreenshotType)
+    : null;
+}
+
+function normalizeAssetRole(value: unknown): ScreenshotAssetRole | null {
+  return value === "overview" ||
+    value === "traffic_curve" ||
+    value === "retention_curve" ||
+    value === "engagement_extra" ||
+    value === "other"
+    ? value
     : null;
 }
 

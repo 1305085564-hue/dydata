@@ -4,6 +4,10 @@ export interface QueryErrorLike {
 
 import type { UserStatus, ExemptType } from "@/types";
 
+export interface TeamRelation {
+  name: string | null;
+}
+
 export interface ProfileWithExemptionFields {
   id: string;
   name: string;
@@ -15,6 +19,9 @@ export interface ProfileWithExemptionFields {
   exempt_reason: string | null;
   permissions?: unknown;
   created_at?: string;
+  team_id?: string | null;
+  group_id?: string | null;
+  teams?: TeamRelation | TeamRelation[] | null;
 }
 
 export interface ProfileWithoutExemptionFields {
@@ -24,6 +31,9 @@ export interface ProfileWithoutExemptionFields {
   status: UserStatus;
   permissions?: unknown;
   created_at?: string;
+  team_id?: string | null;
+  group_id?: string | null;
+  teams?: TeamRelation | TeamRelation[] | null;
 }
 
 interface QueryResult<T> {

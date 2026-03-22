@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,7 +69,7 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
         throw new Error(result.error || "标签确认失败");
       }
 
-      toast.success("标签已确认");
+      feedbackToast.success("标签已确认");
       onConfirmed(
         payload.map((item) => ({
           tag_dimension: item.tag_dimension,
@@ -79,7 +79,7 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
         }))
       );
     } catch (error) {
-      toast.error((error as Error).message || "标签确认失败");
+      feedbackToast.error((error as Error).message || "标签确认失败");
     } finally {
       setIsSaving(false);
     }

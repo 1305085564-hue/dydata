@@ -15,6 +15,8 @@ import {
 } from "recharts";
 
 import { Button } from "@/components/ui/button";
+import { ANIMATION_TIMINGS } from "@/lib/animations";
+import { getTrendAxisUpperBound } from "@/lib/趋势图";
 import { cn } from "@/lib/utils";
 import { ChartSkeleton } from "./chart-skeleton";
 
@@ -43,7 +45,7 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
     <svg
       aria-hidden="true"
       viewBox="0 0 12 12"
-      className={cn("h-3 w-3", positive ? "text-emerald-500" : "text-orange-500")}
+      className={cn("h-3 w-3", positive ? "text-[var(--color-success)]" : "text-[var(--color-warning)]")}
       fill="none"
     >
       <path
@@ -63,7 +65,7 @@ function 趋势空状态({ text }: { text: string }) {
       className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-border/70 bg-muted/[0.18] px-6 text-center"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
+      transition={{ duration: ANIMATION_TIMINGS.fast / 1000, ease: [0.16, 1, 0.3, 1] }}
     >
       <svg aria-hidden="true" viewBox="0 0 220 120" className="h-28 w-full max-w-[220px] text-slate-300">
         <path d="M18 96H202" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
@@ -100,10 +102,10 @@ function InteractionTooltip({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: 4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
-      className="min-w-40 rounded-2xl border border-white/70 bg-white/88 px-3 py-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl"
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="min-w-40 rounded-[16px] border border-white/70 bg-[var(--glass-bg)] px-3 py-2.5 shadow-[var(--shadow-toast)] backdrop-blur-[20px]"
     >
       <p className="text-[11px] font-medium tracking-[0.01em] text-foreground/70">{label}</p>
       <div className="mt-2 space-y-1.5">
@@ -150,6 +152,13 @@ export function InteractionTrend({
       })),
     [personalLabel, teamAverageLabel, visibleData]
   );
+  const yAxisUpperBound = useMemo(
+    () =>
+      getTrendAxisUpperBound(
+        chartData.flatMap((item) => [item[personalLabel] as number | null, item[teamAverageLabel] as number | null])
+      ),
+    [chartData, personalLabel, teamAverageLabel]
+  );
 
   return (
     <section className="glass-card-static p-4 sm:p-5">
@@ -165,7 +174,7 @@ export function InteractionTrend({
               size="sm"
               variant="ghost"
               className={cn(
-                "rounded-xl px-3 text-xs font-medium text-muted-foreground shadow-none",
+                "rounded-xl px-3 text-xs font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]",
                 range === value && "bg-background text-foreground shadow-sm"
               )}
               onClick={() => setRange(value)}
@@ -186,17 +195,17 @@ export function InteractionTrend({
             <motion.div
               key={String(range)}
               className="h-full w-full"
-              initial={{ opacity: 0, y: 10, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.99 }}
-              transition={{ type: "spring", stiffness: 220, damping: 26, mass: 0.9 }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: ANIMATION_TIMINGS.normal / 1000, ease: [0.16, 1, 0.3, 1] }}
             >
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgb(37, 99, 235)" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="rgb(37, 99, 235)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
@@ -211,6 +220,7 @@ export function InteractionTrend({
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
+                    domain={[0, yAxisUpperBound]}
                     width={56}
                   />
                   <Tooltip
@@ -229,10 +239,10 @@ export function InteractionTrend({
                     type="monotone"
                     dataKey={personalLabel}
                     name={personalLabel}
-                    stroke="rgb(37, 99, 235)"
+                    stroke="var(--color-primary)"
                     strokeWidth={2.5}
                     dot={false}
-                    activeDot={{ r: 5, fill: "rgb(37, 99, 235)", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 5, fill: "var(--color-primary)", stroke: "white", strokeWidth: 2 }}
                     connectNulls
                     isAnimationActive={false}
                   />

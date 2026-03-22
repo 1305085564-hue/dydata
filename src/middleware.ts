@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { createServerClient } from "@supabase/ssr";
+import { canAccessAdminPath } from "@/lib/analytics-access";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -56,7 +57,9 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (profile?.role !== "admin" && profile?.role !== "owner") {
+    const role = profile?.role ?? "member";
+
+    if (!canAccessAdminPath(pathname, role)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

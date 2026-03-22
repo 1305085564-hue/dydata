@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"name": "dydata",
+			"path": "../../../.."
+		},
+		{
+			"name": "memory",
+			"path": "../../../../../../我的坚果云/openclaw-workspace/memory"
+		},
+		{
+			"name": "Obsidian",
+			"path": "../../../../../../我的坚果云/Obsidian"
+		},
+		{
+			"name": "memory",
+			"path": "../../../../../../.openclaw/workspace-crab/memory"
+		}
+	]
+}

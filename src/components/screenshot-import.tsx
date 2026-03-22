@@ -2,7 +2,7 @@
 
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, RefreshCcw, Upload } from "lucide-react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -162,7 +162,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
   async function processFile(file: File) {
     const validationError = validateFile(file);
     if (validationError) {
-      toast.error(validationError);
+      feedbackToast.error(validationError);
       return;
     }
 
@@ -206,9 +206,9 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         }
         return merged;
       });
-      toast.success("截图识别完成，可继续上传其他截图或手动校对");
+      feedbackToast.success("截图识别完成，可继续上传其他截图或手动校对");
     } catch (error) {
-      toast.error((error as Error).message || "识别失败，请稍后重试");
+      feedbackToast.error((error as Error).message || "识别失败，请稍后重试");
     } finally {
       setIsLoading(false);
     }

@@ -45,6 +45,7 @@ function 汇总单日报告(reports: 趋势报告[]) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function 构建团队P70映射(reports: 趋势报告[], activeUserIds: string[]) {
   const activeUserIdSet = new Set(activeUserIds);
   const byDateAndUser = new Map<string, Map<string, 趋势报告[]>>();
@@ -131,13 +132,40 @@ function 构建个人日汇总映射(reports: 趋势报告[]) {
   );
 }
 
+export function getTrendAxisUpperBound(values: Array<number | null | undefined>) {
+  let maxValue = 0;
+
+  for (const value of values) {
+    const safeValue = typeof value === "number" && Number.isFinite(value) ? value : null;
+    if (safeValue === null) {
+      continue;
+    }
+
+    maxValue = Math.max(maxValue, safeValue);
+  }
+
+  if (maxValue <= 0) {
+    return 0;
+  }
+
+  if (maxValue < 1000) {
+    return Math.ceil(maxValue / 100) * 100;
+  }
+
+  if (maxValue < 10000) {
+    return Math.ceil(maxValue / 1000) * 1000;
+  }
+
+  return Math.ceil(maxValue / 10000) * 10000;
+}
+
 export function build个人趋势数据(
   selfReports: 趋势报告[],
   teamReports: 趋势报告[],
   activeUserIds: string[]
 ): 趋势结果 {
   const selfByDate = 构建个人日汇总映射(selfReports);
-  const teamAverageByDate = 构建团队P70映射(teamReports, activeUserIds);
+  const teamAverageByDate = 构建团队日均映射(teamReports, activeUserIds);
   const dates = Array.from(selfByDate.keys()).sort((a, b) => a.localeCompare(b));
 
   return {
@@ -197,3 +225,4 @@ export function build团队趋势数据(
     }),
   };
 }
+

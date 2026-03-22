@@ -8,6 +8,13 @@ import {
   formatExemptionDetail,
   type ExemptionFormValues,
 } from "@/lib/豁免";
+import {
+  buildGrantDraft,
+  buildRequestDraft,
+  buildReviewPatch,
+  type GrantMode,
+  type ReviewDecision,
+} from "@/lib/豁免流程";
 import type { Permissions } from "@/types";
 
 async function writeAuditLog(
@@ -22,7 +29,80 @@ async function writeAuditLog(
     action,
     target,
     detail: detail ?? null,
-  }).then(() => {}, () => {}); // 静默失败，不影响主流程
+  }).then(() => {}, () => {});
+}
+
+async function getProfileTeamId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+) {
+  const { data: profile } = await supabase.from("profiles").select("team_id").eq("id", userId).single();
+  return profile?.team_id ?? null;
+}
+
+async function syncProfileExemptionProjection(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  fields: {
+    status: "active" | "exempt";
+    exempt_type: "permanent" | "temporary" | null;
+    exempt_start_date: string | null;
+    exempt_end_date: string | null;
+    exempt_reason: string | null;
+  }
+) {
+  return supabase
+    .from("profiles")
+    .update({
+      status: fields.status,
+      exempt_type: fields.exempt_type,
+      exempt_start_date: fields.exempt_start_date,
+      exempt_end_date: fields.exempt_end_date,
+      exempt_reason: fields.exempt_reason,
+    })
+    .eq("id", userId);
+}
+
+async function deactivateExistingGrants(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+) {
+  await supabase
+    .from("exemption_grant")
+    .update({ status: "inactive" })
+    .eq("user_id", userId)
+    .eq("status", "active");
+}
+
+async function applyGrantToProfile(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: {
+    userId: string;
+    teamId: string | null;
+    mode: GrantMode;
+    reason?: string | null;
+    requestId: string | null;
+    today?: string;
+  }
+) {
+  const draft = buildGrantDraft({
+    ...input,
+    today: input.today ?? new Date().toISOString().slice(0, 10),
+  });
+
+  await deactivateExistingGrants(supabase, input.userId);
+
+  const { error: grantError } = await supabase.from("exemption_grant").insert(draft.grant);
+  if (grantError) {
+    return { error: grantError.message };
+  }
+
+  const { error: profileError } = await syncProfileExemptionProjection(supabase, input.userId, draft.profile);
+  if (profileError) {
+    return { error: profileError.message };
+  }
+
+  return { error: undefined };
 }
 
 export async function generateInviteCode(
@@ -61,29 +141,71 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
   if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
 
   const supabase = await createClient();
-  let fields;
 
   try {
-    fields = buildExemptionFields(values);
+    if (values.mode === "none") {
+      const { error: profileError } = await syncProfileExemptionProjection(supabase, values.userId, {
+        status: "active",
+        exempt_type: null,
+        exempt_start_date: null,
+        exempt_end_date: null,
+        exempt_reason: null,
+      });
+
+      if (profileError) {
+        return { error: profileError.message };
+      }
+
+      await deactivateExistingGrants(supabase, values.userId);
+      await writeAuditLog(supabase, perm.userId, "clear_exempt", values.userId, "清除豁免");
+      revalidatePath("/admin");
+      revalidatePath("/dashboard");
+      return {};
+    }
+
+    const teamId = await getProfileTeamId(supabase, values.userId);
+    let mode: GrantMode;
+
+    if (values.mode === "permanent") {
+      mode = "permanent";
+    } else if (values.mode === "temporary-single") {
+      mode = "single";
+    } else {
+      const startDate = values.startDate ?? "";
+      const endDate = values.endDate ?? "";
+      const days = Math.floor((new Date(`${endDate}T00:00:00.000Z`).getTime() - new Date(`${startDate}T00:00:00.000Z`).getTime()) / 86400000) + 1;
+
+      if (days === 3 || days === 4 || days === 5) {
+        mode = `${days}days` as GrantMode;
+      } else {
+        const fields = buildExemptionFields(values);
+        const { error } = await syncProfileExemptionProjection(supabase, values.userId, fields);
+        if (error) {
+          return { error: error.message };
+        }
+        await writeAuditLog(supabase, perm.userId, "set_exempt", values.userId, formatExemptionDetail(values));
+        revalidatePath("/admin");
+        revalidatePath("/dashboard");
+        return {};
+      }
+    }
+
+    const result = await applyGrantToProfile(supabase, {
+      userId: values.userId,
+      teamId,
+      mode,
+      reason: values.reason,
+      requestId: null,
+      today: new Date().toISOString().slice(0, 10),
+    });
+
+    if (result.error) {
+      return result;
+    }
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "豁免设置失败",
     };
-  }
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      status: fields.status,
-      exempt_type: fields.exempt_type,
-      exempt_start_date: fields.exempt_start_date,
-      exempt_end_date: fields.exempt_end_date,
-      exempt_reason: fields.exempt_reason,
-    })
-    .eq("id", values.userId);
-
-  if (error) {
-    return { error: error.message };
   }
 
   await writeAuditLog(
@@ -95,6 +217,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
   );
 
   revalidatePath("/admin");
+  revalidatePath("/dashboard");
   return {};
 }
 
@@ -105,16 +228,15 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
 
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      status: "active",
-      exempt_type: null,
-      exempt_start_date: null,
-      exempt_end_date: null,
-      exempt_reason: null,
-    })
-    .eq("id", userId);
+  await deactivateExistingGrants(supabase, userId);
+
+  const { error } = await syncProfileExemptionProjection(supabase, userId, {
+    status: "active",
+    exempt_type: null,
+    exempt_start_date: null,
+    exempt_end_date: null,
+    exempt_reason: null,
+  });
 
   if (error) {
     return { error: error.message };
@@ -123,6 +245,94 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
   await writeAuditLog(supabase, perm.userId, "clear_exempt", userId, "清除豁免");
 
   revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function submitExemptionRequest(input: {
+  mode: GrantMode;
+  reason?: string | null;
+}): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+
+  const supabase = await createClient();
+  const teamId = await getProfileTeamId(supabase, perm.userId);
+
+  try {
+    const draft = buildRequestDraft({
+      applicantUserId: perm.userId,
+      teamId,
+      mode: input.mode,
+      reason: input.reason,
+      today: new Date().toISOString().slice(0, 10),
+    });
+
+    const { error } = await supabase.from("exemption_request").insert(draft);
+    if (error) {
+      return { error: error.message };
+    }
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "提交申请失败",
+    };
+  }
+
+  await writeAuditLog(supabase, perm.userId, "submit_exemption_request", perm.userId, `${input.mode}|${input.reason ?? ""}`);
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function reviewExemptionRequest(input: {
+  requestId: string;
+  applicantUserId: string;
+  decision: ReviewDecision;
+  mode: GrantMode;
+  reason?: string | null;
+  teamId?: string | null;
+}): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+
+  const supabase = await createClient();
+  const patch = buildReviewPatch({ reviewerId: perm.userId, decision: input.decision });
+
+  const { error: requestError } = await supabase
+    .from("exemption_request")
+    .update(patch)
+    .eq("id", input.requestId);
+
+  if (requestError) {
+    return { error: requestError.message };
+  }
+
+  if (input.decision === "approved") {
+    const result = await applyGrantToProfile(supabase, {
+      userId: input.applicantUserId,
+      teamId: input.teamId ?? (await getProfileTeamId(supabase, input.applicantUserId)),
+      mode: input.mode,
+      reason: input.reason,
+      requestId: input.requestId,
+      today: new Date().toISOString().slice(0, 10),
+    });
+
+    if (result.error) {
+      return result;
+    }
+  }
+
+  await writeAuditLog(
+    supabase,
+    perm.userId,
+    input.decision === "approved" ? "approve_exemption_request" : "reject_exemption_request",
+    input.requestId,
+    `${input.applicantUserId}|${input.mode}`
+  );
+
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
   return {};
 }
 

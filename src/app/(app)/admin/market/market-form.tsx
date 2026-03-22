@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,7 +89,7 @@ export function MarketForm({ initialData, onSaved }: MarketFormProps) {
     };
 
     if (Object.values(marketChange).some((value) => Number.isNaN(value))) {
-      toast.error("涨跌幅请输入有效数字");
+      feedbackToast.error("涨跌幅请输入有效数字");
       return;
     }
 
@@ -112,11 +112,11 @@ export function MarketForm({ initialData, onSaved }: MarketFormProps) {
       );
 
       if (error) {
-        toast.error(error.message || "保存失败，请稍后重试");
+        feedbackToast.error(error.message || "保存失败，请稍后重试");
         return;
       }
 
-      toast.success(isEditMode ? "市场环境已更新" : "市场环境已保存");
+      feedbackToast.success(isEditMode ? "市场环境已更新" : "市场环境已保存");
       if (!isEditMode) {
         resetForm();
       }

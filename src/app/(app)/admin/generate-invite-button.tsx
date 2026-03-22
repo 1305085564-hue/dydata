@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,10 +45,10 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
         expiresInDays === "" ? null : expiresInDays
       );
       if (result.error) {
-        toast.error(result.error);
+        feedbackToast.error(result.error);
       } else if (result.codes) {
         setCodes(result.codes);
-        toast.success(`已生成 ${result.codes.length} 个邀请码`);
+        feedbackToast.success(`已生成 ${result.codes.length} 个邀请码`);
       }
     });
   }
@@ -56,7 +56,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
   function handleCopyAll() {
     if (codes.length === 0) return;
     navigator.clipboard.writeText(codes.join("\n"));
-    toast.success("已复制全部邀请码");
+    feedbackToast.success("已复制全部邀请码");
   }
 
   const now = new Date();
@@ -104,7 +104,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
               <code
                 key={c}
                 className="rounded bg-muted px-3 py-2 text-sm font-mono tracking-widest cursor-pointer hover:bg-muted/80"
-                onClick={() => { navigator.clipboard.writeText(c); toast.success(`已复制 ${c}`); }}
+                onClick={() => { navigator.clipboard.writeText(c); feedbackToast.success(`已复制 ${c}`); }}
               >
                 {c}
               </code>
@@ -159,7 +159,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
                             variant="ghost"
                             size="sm"
                             className="h-7 text-xs"
-                            onClick={() => { navigator.clipboard.writeText(c.code); toast.success(`已复制 ${c.code}`); }}
+                            onClick={() => { navigator.clipboard.writeText(c.code); feedbackToast.success(`已复制 ${c.code}`); }}
                           >
                             复制
                           </Button>
@@ -178,7 +178,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
                 <div key={c.id} className={`flex items-center justify-between rounded-lg border p-3 ${expired ? "opacity-50" : ""}`}>
                   <code
                     className="font-mono text-sm tracking-wider cursor-pointer hover:text-primary"
-                    onClick={() => { navigator.clipboard.writeText(c.code); toast.success(`已复制 ${c.code}`); }}
+                    onClick={() => { navigator.clipboard.writeText(c.code); feedbackToast.success(`已复制 ${c.code}`); }}
                   >
                     {c.code}
                   </code>

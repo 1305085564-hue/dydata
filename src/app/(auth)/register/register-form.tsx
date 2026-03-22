@@ -4,7 +4,7 @@ import { motion, useAnimationControls, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -114,7 +114,7 @@ export function RegisterForm({ action }: RegisterFormProps) {
 
   useEffect(() => {
     if (state.error) {
-      toast.error(state.error);
+      feedbackToast.error(state.error);
       void formControls.start({
         x: [0, -8, 8, -4, 4, 0],
         transition: { duration: 0.4 },

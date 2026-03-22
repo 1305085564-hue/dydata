@@ -14,7 +14,6 @@ import {
 import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
-import { 日报提交面板 } from "./日报提交面板";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
 import { AdvicePanel } from "./advice-panel";
@@ -49,7 +48,7 @@ export default async function DashboardPage() {
   );
 
   const [
-    { data: userTodayReports },
+    { data: _userTodayReports },
     { data: history },
     { data: todayVideos },
     { data: allVideos },
@@ -202,24 +201,6 @@ export default async function DashboardPage() {
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={3}>
-        <details className="group rounded-3xl border border-border/60 bg-background/85 shadow-sm backdrop-blur-md">
-          <summary className="cursor-pointer list-none px-6 py-4 text-sm font-medium text-foreground marker:content-none">
-            <div className="flex items-center justify-between gap-4">
-              <span>旧版日报提交</span>
-              <span className="text-xs text-muted-foreground transition group-open:rotate-180">⌄</span>
-            </div>
-          </summary>
-          <div className="px-6 pb-6">
-            <日报提交面板
-              accounts={accounts ?? []}
-              today={today}
-              todayReports={userTodayReports ?? []}
-            />
-          </div>
-        </details>
-      </DashboardAnimatedSection>
-
-      <DashboardAnimatedSection index={4}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle>数据趋势</CardTitle>
@@ -241,7 +222,7 @@ export default async function DashboardPage() {
         </Card>
       </DashboardAnimatedSection>
 
-      <DashboardAnimatedSection index={5}>
+      <DashboardAnimatedSection index={4}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle>账号排行榜</CardTitle>
@@ -259,7 +240,7 @@ export default async function DashboardPage() {
         </Card>
       </DashboardAnimatedSection>
 
-      <DashboardAnimatedSection index={6}>
+      <DashboardAnimatedSection index={5}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle>历史记录（最近 30 条）</CardTitle>

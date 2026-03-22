@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
+import type { SubmissionAssetMeta } from "@/types";
 
 type VideoSubmitRequestBody = {
   account_id?: string;
@@ -8,7 +9,10 @@ type VideoSubmitRequestBody = {
   video_title?: string | null;
   content?: string | null;
   published_at?: string | null;
+  published_at_text?: string | null;
+  biz_date?: string | null;
   anomaly_status?: string | null;
+  assets?: SubmissionAssetMeta[];
   metrics?: {
     play_count?: number;
     likes?: number;
@@ -18,6 +22,10 @@ type VideoSubmitRequestBody = {
     follower_gain?: number;
     follower_loss?: number;
     follower_convert?: number;
+    avg_play_duration?: number;
+    bounce_rate_2s?: number;
+    completion_rate_5s?: number;
+    completion_rate?: number;
   };
 };
 
@@ -48,6 +56,14 @@ function normalizeOptionalDate(value: unknown) {
 
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function normalizeDateOnly(value: unknown, fallback = getTodayDateString()) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return fallback;
+  }
+
+  return value;
 }
 
 function normalizeNumber(value: unknown, fallback = 0) {
@@ -215,6 +231,8 @@ export async function POST(request: NextRequest) {
   }
 
   const metrics = body.metrics ?? {};
+  const assets = Array.isArray(body.assets) ? body.assets : [];
+  const bizDate = normalizeDateOnly(body.biz_date);
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -249,6 +267,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: videoError?.message || "视频记录创建失败" }, { status: 500 });
   }
 
+  const screenshotUrls = assets
+    .filter((asset) => asset.role === "overview" || asset.role === "engagement_extra" || asset.role === "other")
+    .map((asset) => asset.url);
+  const curveScreenshotUrl = assets.find((asset) => asset.role === "traffic_curve")?.url ?? null;
+  const retentionScreenshotUrl = assets.find((asset) => asset.role === "retention_curve")?.url ?? null;
+
   const snapshotPayload = {
     video_id: newVideo.id,
     snapshot_type: "24h",
@@ -263,15 +287,15 @@ export async function POST(request: NextRequest) {
     homepage_visits: 0,
     fan_play_ratio: null,
     cover_click_rate: null,
-    avg_play_duration: null,
-    completion_rate: null,
-    bounce_rate_2s: null,
-    completion_rate_5s: null,
+    avg_play_duration: normalizeNumber(metrics.avg_play_duration),
+    completion_rate: normalizeNumber(metrics.completion_rate),
+    bounce_rate_2s: normalizeNumber(metrics.bounce_rate_2s),
+    completion_rate_5s: normalizeNumber(metrics.completion_rate_5s),
     avg_play_ratio: null,
-    vs_previous: null,
-    screenshot_urls: null,
-    curve_screenshot_url: null,
-    retention_screenshot_url: null,
+    vs_previous: body.published_at_text ? { published_at_text: body.published_at_text } : null,
+    screenshot_urls: screenshotUrls.length ? screenshotUrls : null,
+    curve_screenshot_url: curveScreenshotUrl,
+    retention_screenshot_url: retentionScreenshotUrl,
   };
 
   const { error: snapshotError } = await supabase
@@ -284,7 +308,7 @@ export async function POST(request: NextRequest) {
 
   const dailyReportPayload = {
     user_id: user.id,
-    report_date: getTodayDateString(),
+    report_date: bizDate,
     title: videoPayload.video_title || "视频提交",
     submitter,
     play_count: normalizeNumber(metrics.play_count),
@@ -294,6 +318,13 @@ export async function POST(request: NextRequest) {
     favorites: normalizeNumber(metrics.favorites),
     follower_gain: normalizeNumber(metrics.follower_gain),
     follower_convert: normalizeNumber(metrics.follower_convert),
+    completion_rate: metrics.completion_rate == null ? null : `${normalizeNumber(metrics.completion_rate)}%`,
+    avg_play_duration:
+      metrics.avg_play_duration == null ? null : `${normalizeNumber(metrics.avg_play_duration)}秒`,
+    bounce_rate_2s:
+      metrics.bounce_rate_2s == null ? null : `${normalizeNumber(metrics.bounce_rate_2s)}%`,
+    completion_rate_5s:
+      metrics.completion_rate_5s == null ? null : `${normalizeNumber(metrics.completion_rate_5s)}%`,
     content: videoPayload.content,
     published_at: videoPayload.published_at,
     uploaded_at: new Date().toISOString(),

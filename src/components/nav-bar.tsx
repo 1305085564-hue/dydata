@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getNavigationAccess } from "@/lib/analytics-access";
 import { NavBarClient } from "./nav-bar-client";
 
 export async function NavBar() {
@@ -11,14 +12,18 @@ export async function NavBar() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, role")
+    .select("name, role, team_id")
     .eq("id", user.id)
     .single();
+
+  const role = profile?.role ?? "member";
+  const navigation = getNavigationAccess(role);
 
   return (
     <NavBarClient
       name={profile?.name ?? user.email ?? ""}
-      isAdmin={profile?.role === "admin" || profile?.role === "owner"}
+      showAdmin={navigation.showAdmin}
+      showAnalytics={navigation.showAnalytics}
     />
   );
 }

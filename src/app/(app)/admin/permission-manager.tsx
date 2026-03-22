@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { PERMISSION_KEYS, PERMISSION_LABELS } from "@/types";
 import { updatePermissions, changeRole } from "./actions";
 import {
@@ -28,12 +29,19 @@ interface PermissionManagerProps {
   currentUserId: string;
 }
 
+interface RoleChangeTarget {
+  memberId: string;
+  memberName: string;
+  role: "member" | "admin";
+}
+
 export function PermissionManager({ members, currentUserId }: PermissionManagerProps) {
   const router = useRouter();
   const [editableMembers, setEditableMembers] = useState(members);
   const [baselineMembers, setBaselineMembers] = useState(members);
   const [isSavingPermissions, startSavingPermissions] = useTransition();
   const [isChangingRole, startChangingRole] = useTransition();
+  const [roleChangeTarget, setRoleChangeTarget] = useState<RoleChangeTarget | null>(null);
 
   useEffect(() => {
     setEditableMembers(members);
@@ -71,29 +79,41 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
       const error = results.find((result) => result.error)?.error;
 
       if (error) {
-        toast.error(error);
+        feedbackToast.error(error);
         return;
       }
 
       setBaselineMembers(changedMembers.length > 0 ? editableMembers : baselineMembers);
-      toast.success("权限已保存");
+      feedbackToast.success("权限已保存");
       router.refresh();
     });
+  }
+
+  function requestRoleChange(memberId: string, memberName: string, newRole: "member" | "admin") {
+    const current = editableMembers.find((member) => member.id === memberId);
+    if (!current || current.role === newRole) return;
+    setRoleChangeTarget({ memberId, memberName, role: newRole });
   }
 
   function handleRoleChange(memberId: string, newRole: "member" | "admin") {
     startChangingRole(async () => {
       const res = await changeRole(memberId, newRole);
       if (res.error) {
-        toast.error(res.error);
+        feedbackToast.error(res.error);
         return;
       }
 
       setEditableMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
       setBaselineMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
-      toast.success("角色已更新");
+      feedbackToast.success("角色已更新");
       router.refresh();
     });
+  }
+
+  function confirmRoleChange() {
+    if (!roleChangeTarget) return;
+    handleRoleChange(roleChangeTarget.memberId, roleChangeTarget.role);
+    setRoleChangeTarget(null);
   }
 
   return (
@@ -109,12 +129,14 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
+                className="h-11 md:h-8"
                 onClick={handleCancelPermissions}
                 disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
               >
                 取消
               </Button>
               <Button
+                className="h-11 md:h-8"
                 onClick={handleSavePermissions}
                 disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
               >
@@ -126,7 +148,7 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
           <div className="space-y-4">
             {nonOwners.map((member) => (
               <div key={member.id} className="rounded-lg border p-4 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
                     <span className="font-medium">{member.name}</span>
                     <Badge variant={member.role === "admin" ? "default" : "secondary"}>
@@ -135,10 +157,12 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
                   </div>
                   <Select
                     value={member.role}
-                    onValueChange={(value) => handleRoleChange(member.id, value as "member" | "admin")}
+                    onValueChange={(value) =>
+                      requestRoleChange(member.id, member.name, value as "member" | "admin")
+                    }
                     disabled={isChangingRole || isSavingPermissions}
                   >
-                    <SelectTrigger className="w-28">
+                    <SelectTrigger className="h-11 w-full sm:h-10 sm:w-28">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -172,6 +196,24 @@ export function PermissionManager({ members, currentUserId }: PermissionManagerP
           </div>
         </>
       )}
+      <ConfirmDialog
+        open={roleChangeTarget !== null}
+        title={roleChangeTarget?.role === "member" ? "确认调整为成员" : "确认调整为管理员"}
+        description={
+          roleChangeTarget
+            ? roleChangeTarget.role === "member"
+              ? `确定将 ${roleChangeTarget.memberName} 调整为成员吗？该操作会移除其管理员权限。`
+              : `确定将 ${roleChangeTarget.memberName} 调整为管理员吗？`
+            : ""
+        }
+        confirmText="确认调整"
+        destructive={roleChangeTarget?.role === "member"}
+        loading={isChangingRole}
+        onConfirm={confirmRoleChange}
+        onOpenChange={(open) => {
+          if (!open) setRoleChangeTarget(null);
+        }}
+      />
     </div>
   );
 }

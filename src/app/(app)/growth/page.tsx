@@ -1,256 +1,58 @@
 import { redirect } from "next/navigation";
 
-import {
-  calcDimensionScores,
-  calcRates,
-  findBenchmarks,
-  parsePercentText,
-  type BenchmarkMatch,
-  type MetricsAccount,
-  type MetricsReport,
-} from "@/lib/metrics";
-import type { 标杆画像卡Props, 核心指标差距项 } from "@/components/growth/benchmark-card";
-import type { 个人诊断卡Props, 诊断弱项, 诊断维度项 } from "@/components/growth/diagnosis-card";
 import { createClient } from "@/lib/supabase/server";
+import type { MetricsAccount, MetricsReport } from "@/lib/metrics";
+import {
+  buildAdviceSections,
+  buildGrowthDimensionCards,
+  buildPkComparisonData,
+  buildScriptBreakdownData,
+  buildStatusCards,
+  buildWeakBenchmarkCards,
+  getWeakestDimensions,
+} from "@/lib/growth-page";
 import { GrowthClientShell } from "./growth-client";
+
+type ProfileRow = { id: string; name: string | null };
+type DailyReportRow = MetricsReport & { content?: string | null };
+type ContentItemRow = { id: string; account_id: string | null; biz_date: string; owner_user_id: string };
+type ScriptDocumentRow = { id: string; content_item_id: string; raw_text: string | null; estimated_duration_sec: number | null };
+type ScriptSegmentRow = {
+  id: string;
+  script_document_id: string;
+  segment_type: "hook" | "background" | "core_point" | "action_cta" | "closing";
+  segment_order: number | null;
+  content: string;
+  start_sec: number | null;
+  end_sec: number | null;
+};
+type AiInsightRow = {
+  id: string;
+  insight_type: string;
+  result_status: string | null;
+  result_json: Record<string, unknown> | null;
+  rendered_text: string | null;
+  created_at: string;
+};
 
 function collectTags(accounts: MetricsAccount[]): string[] {
   return Array.from(
     new Set(
       accounts
-        .flatMap((a) => [a.content_direction, a.presentation_format])
-        .map((t) => t?.trim())
-        .filter((t): t is string => Boolean(t)),
+        .flatMap((account) => [account.content_direction, account.presentation_format])
+        .map((tag) => tag?.trim())
+        .filter((tag): tag is string => Boolean(tag)),
     ),
   );
 }
 
-function safeDiv(a: number, b: number) {
-  return b > 0 ? a / b : 0;
-}
-
-function pct(v: number) {
-  return `${v.toFixed(1)}%`;
-}
-
-function buildStatusCards(myReports: MetricsReport[], prevReports: MetricsReport[]) {
-  const totalPlay = myReports.reduce((s, r) => s + (r.play_count ?? 0), 0);
-  const totalFollower = myReports.reduce((s, r) => s + (r.follower_gain ?? 0), 0);
-  const avgLikeRate = myReports.length > 0
-    ? myReports.reduce((s, r) => s + calcRates(r).likeRate, 0) / myReports.length
-    : 0;
-  const avgCompletionRate = myReports.length > 0
-    ? myReports.reduce((s, r) => s + parsePercentText(r.completion_rate), 0) / myReports.length
-    : 0;
-
-  const prevTotalPlay = prevReports.reduce((s, r) => s + (r.play_count ?? 0), 0);
-  const prevTotalFollower = prevReports.reduce((s, r) => s + (r.follower_gain ?? 0), 0);
-  const prevAvgLikeRate = prevReports.length > 0
-    ? prevReports.reduce((s, r) => s + calcRates(r).likeRate, 0) / prevReports.length
-    : 0;
-  const prevAvgCompletionRate = prevReports.length > 0
-    ? prevReports.reduce((s, r) => s + parsePercentText(r.completion_rate), 0) / prevReports.length
-    : 0;
-
-  return [
-    { label: "发布数", value: String(myReports.length), prev: prevReports.length },
-    { label: "总播放", value: (totalPlay / 10000).toFixed(1) + "万", delta: safeDiv(totalPlay - prevTotalPlay, prevTotalPlay || 1) * 100 },
-    { label: "总涨粉", value: String(totalFollower), delta: safeDiv(totalFollower - prevTotalFollower, prevTotalFollower || 1) * 100 },
-    { label: "平均点赞率", value: pct(avgLikeRate), delta: avgLikeRate - prevAvgLikeRate },
-    { label: "平均完播率", value: pct(avgCompletionRate), delta: avgCompletionRate - prevAvgCompletionRate },
-  ];
-}
-
-function buildDiagnosisProps(dimensionScores: ReturnType<typeof calcDimensionScores>): Omit<个人诊断卡Props, "className"> {
-  const dims = [
-    { key: "likeRate", name: "互动吸引" },
-    { key: "commentRate", name: "评论互动" },
-    { key: "completionRate", name: "内容留存" },
-    { key: "followerRate", name: "增长转化" },
-    { key: "completionRate5s", name: "开头留人" },
-  ] as const;
-
-  const scored = dims.map((d) => {
-    const s = dimensionScores[d.key];
-    const teamVal = s.team || 1;
-    const ratio = s.self / teamVal;
-    const percentile = Math.min(100, Math.max(0, ratio * 50));
-    return { 维度名: d.name, 分位值: Math.round(percentile), key: d.key, diff: s.value };
-  });
-
-  const scoreItems = scored.slice(0, 5).map((s) => ({ 维度名: s.维度名, 分位值: s.分位值 })) as [
-    诊断维度项,
-    诊断维度项,
-    诊断维度项,
-    诊断维度项,
-    诊断维度项,
-  ];
-  const sorted = [...scored].sort((a, b) => b.分位值 - a.分位值);
-  const strong = sorted.slice(0, 3).map((s) => s.维度名) as [string, string, string];
-  const weak = sorted.slice(-2).map((s) => ({ 名称: s.维度名 })) as [诊断弱项, 诊断弱项];
-
-  return {
-    五维评分数据: scoreItems,
-    强项: strong,
-    弱项: weak,
-  };
-}
-
-function buildBenchmarkCards(
-  benchmarks: ReturnType<typeof findBenchmarks>,
-  profileNameMap: Map<string, string>,
-  myReports: MetricsReport[],
-  teamReports: MetricsReport[],
-): Array<Omit<标杆画像卡Props, "className">> {
-  const cards: Array<Omit<标杆画像卡Props, "className">> = [];
-
-  const myAvgRates = myReports.length > 0
-    ? {
-        likeRate: myReports.reduce((s, r) => s + calcRates(r).likeRate, 0) / myReports.length,
-        completionRate: myReports.reduce((s, r) => s + parsePercentText(r.completion_rate), 0) / myReports.length,
-        followerRate: myReports.reduce((s, r) => s + calcRates(r).followerRate, 0) / myReports.length,
-      }
-    : { likeRate: 0, completionRate: 0, followerRate: 0 };
-
-  function makeDiffItems(match: BenchmarkMatch): [核心指标差距项, 核心指标差距项, 核心指标差距项] {
-    const benchReports = teamReports.filter((r) => r.account_id === match.accountId);
-    const benchAvg = benchReports.length > 0
-      ? {
-          likeRate: benchReports.reduce((s, r) => s + calcRates(r).likeRate, 0) / benchReports.length,
-          completionRate: benchReports.reduce((s, r) => s + parsePercentText(r.completion_rate), 0) / benchReports.length,
-          followerRate: benchReports.reduce((s, r) => s + calcRates(r).followerRate, 0) / benchReports.length,
-        }
-      : { likeRate: 0, completionRate: 0, followerRate: 0 };
-
-    return [
-      { 指标名: "点赞率", 我的值: Number(myAvgRates.likeRate.toFixed(2)), 标杆值: Number(benchAvg.likeRate.toFixed(2)), 单位: "%" },
-      { 指标名: "完播率", 我的值: Number(myAvgRates.completionRate.toFixed(1)), 标杆值: Number(benchAvg.completionRate.toFixed(1)), 单位: "%" },
-      { 指标名: "涨粉率", 我的值: Number(myAvgRates.followerRate.toFixed(2)), 标杆值: Number(benchAvg.followerRate.toFixed(2)), 单位: "%" },
-    ];
-  }
-
-  const typeMap: Array<[keyof typeof benchmarks, "同标签最佳" | "单项最佳" | "近期跃迁"]> = [
-    ["sameTagBest", "同标签最佳"],
-    ["weakestDimBest", "单项最佳"],
-    ["recentRiser", "近期跃迁"],
-  ];
-
-  for (const [key, type] of typeMap) {
-    const match = benchmarks[key];
-    if (!match) continue;
-    const ownerName = profileNameMap.get(match.profileId) ?? "";
-    cards.push({
-      标杆类型: type,
-      账号名: ownerName || match.name || match.accountId.slice(0, 8),
-      标签: [],
-      推荐理由: match.reason,
-      核心指标差距: makeDiffItems(match),
-      代表样本入口: { 标题: "查看 TA 的作品", 链接: "#" },
-    });
-  }
-
-  return cards;
-}
-
-function buildPKData(
-  myReports: MetricsReport[],
-  benchmarks: ReturnType<typeof findBenchmarks>,
-  profileNameMap: Map<string, string>,
-  teamReports: MetricsReport[],
-  profileName: string,
-) {
-  const myAvg = myReports.length > 0
-    ? {
-        play_count: myReports.reduce((s, r) => s + (r.play_count ?? 0), 0) / myReports.length,
-        likes: myReports.reduce((s, r) => s + (r.likes ?? 0), 0) / myReports.length,
-        comments: myReports.reduce((s, r) => s + (r.comments ?? 0), 0) / myReports.length,
-        shares: myReports.reduce((s, r) => s + (r.shares ?? 0), 0) / myReports.length,
-        favorites: myReports.reduce((s, r) => s + (r.favorites ?? 0), 0) / myReports.length,
-        follower_gain: myReports.reduce((s, r) => s + (r.follower_gain ?? 0), 0) / myReports.length,
-        completion_rate: String(myReports.reduce((s, r) => s + parsePercentText(r.completion_rate), 0) / myReports.length),
-        completion_rate_5s: String(myReports.reduce((s, r) => s + parsePercentText(r.completion_rate_5s), 0) / myReports.length),
-      }
-    : null;
-
-  const opponent = benchmarks.sameTagBest ?? benchmarks.weakestDimBest ?? benchmarks.recentRiser;
-  if (!myAvg || !opponent) return null;
-
-  const oppReports = teamReports.filter((r) => r.account_id === opponent.accountId);
-  const oppAvg = oppReports.length > 0
-    ? {
-        play_count: oppReports.reduce((s, r) => s + (r.play_count ?? 0), 0) / oppReports.length,
-        likes: oppReports.reduce((s, r) => s + (r.likes ?? 0), 0) / oppReports.length,
-        comments: oppReports.reduce((s, r) => s + (r.comments ?? 0), 0) / oppReports.length,
-        shares: oppReports.reduce((s, r) => s + (r.shares ?? 0), 0) / oppReports.length,
-        favorites: oppReports.reduce((s, r) => s + (r.favorites ?? 0), 0) / oppReports.length,
-        follower_gain: oppReports.reduce((s, r) => s + (r.follower_gain ?? 0), 0) / oppReports.length,
-        completion_rate: String(oppReports.reduce((s, r) => s + parsePercentText(r.completion_rate), 0) / oppReports.length),
-        completion_rate_5s: String(oppReports.reduce((s, r) => s + parsePercentText(r.completion_rate_5s), 0) / oppReports.length),
-      }
-    : null;
-
-  if (!oppAvg) return null;
-
-  const oppName = profileNameMap.get(opponent.profileId) ?? opponent.name ?? "标杆";
-
-  return {
-    playerA: { id: "self", name: profileName, ...myAvg },
-    playerB: { id: opponent.accountId, name: oppName, ...oppAvg },
-  };
-}
-
-function buildSampleList(
-  benchmarks: ReturnType<typeof findBenchmarks>,
-  teamReports: MetricsReport[],
-  profileNameMap: Map<string, string>,
-  allAccounts: MetricsAccount[],
-) {
-  const targetIds = [benchmarks.sameTagBest, benchmarks.weakestDimBest, benchmarks.recentRiser]
-    .filter((b): b is BenchmarkMatch => b !== null)
-    .map((b) => b.accountId);
-
-  if (targetIds.length === 0) return [];
-
-  const accountMap = new Map(allAccounts.map((a) => [a.id, a]));
-
-  const samples = teamReports
-    .filter((r) => targetIds.includes(r.account_id))
-    .sort((a, b) => b.report_date.localeCompare(a.report_date))
-    .slice(0, 6)
-    .map((r) => {
-      const account = accountMap.get(r.account_id);
-      const ownerName = profileNameMap.get(r.user_id) ?? "";
-      const rates = calcRates(r);
-      return {
-        id: `${r.account_id}-${r.report_date}`,
-        视频标题: `${ownerName} ${r.report_date} 作品`,
-        发布时间: r.report_date,
-        账号名: account?.name ?? ownerName,
-        标签: [account?.content_direction, account?.presentation_format].filter((t): t is string => Boolean(t)),
-        播放量: ((r.play_count ?? 0) / 10000).toFixed(1) + "万",
-        点赞率: rates.likeRate.toFixed(2) + "%",
-        完播率: parsePercentText(r.completion_rate).toFixed(1) + "%",
-        涨粉率: rates.followerRate.toFixed(2) + "%",
-        文案: "",
-        推荐理由: "该作品在关键指标上表现突出",
-        来源: "标杆样本" as const,
-      };
-    });
-
-  return samples;
-}
-
 export default async function GrowthPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name")
-    .eq("id", user.id)
-    .single();
 
   const now = new Date();
   const monthAgoDate = new Date(now);
@@ -265,53 +67,139 @@ export default async function GrowthPage() {
   twoWeeksAgoDate.setDate(twoWeeksAgoDate.getDate() - 14);
   const twoWeeksAgo = twoWeeksAgoDate.toISOString().split("T")[0];
 
-  const [accountsResult, teamReportsResult, profilesResult, allAccountsResult] = await Promise.all([
+  const [
+    profileResult,
+    myAccountsResult,
+    allAccountsResult,
+    teamReportsResult,
+    profilesResult,
+    contentItemsResult,
+    scriptDocumentsResult,
+    scriptSegmentsResult,
+    aiInsightResult,
+  ] = await Promise.all([
+    supabase.from("profiles").select("id, name").eq("id", user.id).single(),
     supabase
       .from("accounts")
       .select("id, profile_id, name, content_direction, presentation_format")
       .eq("profile_id", user.id)
       .order("created_at", { ascending: true }),
+    supabase.from("accounts").select("id, profile_id, name, content_direction, presentation_format"),
     supabase
       .from("daily_reports")
-      .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s")
+      .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
       .gte("report_date", monthAgo),
     supabase.from("profiles").select("id, name"),
-    supabase.from("accounts").select("id, profile_id, name, content_direction, presentation_format"),
+    supabase.from("content_item").select("id, account_id, biz_date, owner_user_id").eq("owner_user_id", user.id),
+    supabase.from("script_document").select("id, content_item_id, raw_text, estimated_duration_sec"),
+    supabase.from("script_segment").select("id, script_document_id, segment_type, segment_order, content, start_sec, end_sec"),
+    supabase
+      .from("ai_insight_result")
+      .select("id, insight_type, result_status, result_json, rendered_text, created_at")
+      .eq("insight_type", "growth_edit")
+      .order("created_at", { ascending: false })
+      .limit(1),
   ]);
 
-  const myAccounts = (accountsResult.data ?? []) as MetricsAccount[];
+  const profile = profileResult.data as ProfileRow | null;
+  const myAccounts = (myAccountsResult.data ?? []) as MetricsAccount[];
   const allAccounts = (allAccountsResult.data ?? []) as MetricsAccount[];
-  const teamReports = (teamReportsResult.data ?? []) as MetricsReport[];
-  const profileNameMap = new Map((profilesResult.data ?? []).map((p) => [p.id, p.name]));
+  const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
+  const profileNameMap = new Map(((profilesResult.data ?? []) as ProfileRow[]).map((item) => [item.id, item.name ?? ""])) ;
+  const contentItems = (contentItemsResult.data ?? []) as ContentItemRow[];
+  const scriptDocuments = (scriptDocumentsResult.data ?? []) as ScriptDocumentRow[];
+  const scriptSegments = (scriptSegmentsResult.data ?? []) as ScriptSegmentRow[];
+  const aiInsight = ((aiInsightResult.data ?? [])[0] ?? null) as AiInsightRow | null;
 
-  const myAccountIds = myAccounts.map((a) => a.id);
-  const myAllReports = teamReports.filter((r) => myAccountIds.includes(r.account_id));
-  const myReports7d = myAllReports.filter((r) => r.report_date >= weekAgo);
-  const myReportsPrev7d = myAllReports.filter((r) => r.report_date >= twoWeeksAgo && r.report_date < weekAgo);
+  const myAccountIds = myAccounts.map((account) => account.id);
+  const myAllReports = teamReports.filter((report) => myAccountIds.includes(report.account_id));
+  const myReports7d = myAllReports.filter((report) => report.report_date >= weekAgo);
+  const myReportsPrev7d = myAllReports.filter((report) => report.report_date >= twoWeeksAgo && report.report_date < weekAgo);
+
+  const statusCards = buildStatusCards(myReports7d, myReportsPrev7d);
+  const capabilityCards = buildGrowthDimensionCards({ myReports: myAllReports, teamReports });
+  const weakestDimensions = getWeakestDimensions(myAllReports, teamReports);
+
+  const contentItemByAccountAndDate = new Map(contentItems.map((item) => [`${item.account_id ?? ""}-${item.biz_date}`, item]));
+  const latestReport = [...myAllReports].sort((left, right) => right.report_date.localeCompare(left.report_date))[0] ?? null;
+  const linkedContentItem = latestReport ? contentItemByAccountAndDate.get(`${latestReport.account_id}-${latestReport.report_date}`) ?? null : null;
+  const linkedScriptDocument = linkedContentItem
+    ? scriptDocuments.find((document) => document.content_item_id === linkedContentItem.id) ?? null
+    : null;
+  const linkedScriptSegments = linkedScriptDocument
+    ? scriptSegments
+        .filter((segment) => segment.script_document_id === linkedScriptDocument.id)
+        .sort((left, right) => (left.segment_order ?? 0) - (right.segment_order ?? 0))
+        .map((segment) => ({
+          id: segment.id,
+          segmentType: segment.segment_type,
+          content: segment.content,
+          startSec: segment.start_sec,
+          endSec: segment.end_sec,
+        }))
+    : [];
+
+  const scriptSegmentsByAccountId = new Map<string, Array<{ content: string }>>();
+  for (const document of scriptDocuments) {
+    const contentItem = contentItems.find((item) => item.id === document.content_item_id);
+    const accountId = contentItem?.account_id;
+    if (!accountId) continue;
+    const segments = scriptSegments.filter((segment) => segment.script_document_id === document.id);
+    if (!segments.length) continue;
+    scriptSegmentsByAccountId.set(
+      accountId,
+      segments.sort((left, right) => (left.segment_order ?? 0) - (right.segment_order ?? 0)).map((segment) => ({ content: segment.content })),
+    );
+  }
+
+  const weakBenchmarkCards = buildWeakBenchmarkCards({
+    weakestDimensions,
+    myAccountId: myAccountIds[0] ?? "",
+    myProfileId: user.id,
+    myReports: myAllReports,
+    teamReports,
+    accounts: allAccounts,
+    scriptSegmentsByAccountId,
+  });
 
   const myTags = collectTags(myAccounts);
-  const dimensionScores = calcDimensionScores(myAllReports, teamReports);
-  const benchmarks = findBenchmarks(myAllReports, myTags, teamReports, allAccounts);
+  const pkOpponentAccount = allAccounts.find(
+    (account) => account.profile_id !== user.id && [account.content_direction, account.presentation_format].some((tag) => tag && myTags.includes(tag)),
+  );
+  const pkPanel = pkOpponentAccount
+    ? buildPkComparisonData({
+        leftName: profile?.name ?? user.email ?? "我",
+        rightName: profileNameMap.get(pkOpponentAccount.profile_id) ?? pkOpponentAccount.name,
+        leftReports: myAllReports,
+        rightReports: teamReports.filter((report) => report.account_id === pkOpponentAccount.id),
+      })
+    : null;
 
-  const profileName = profile?.name ?? user.email ?? "";
-  const statusCards = buildStatusCards(myReports7d, myReportsPrev7d);
-  const diagnosisProps = buildDiagnosisProps(dimensionScores);
-  const benchmarkCards = buildBenchmarkCards(benchmarks, profileNameMap, myAllReports, teamReports);
-  const pkData = buildPKData(myAllReports, benchmarks, profileNameMap, teamReports, profileName);
-  const sampleList = buildSampleList(benchmarks, teamReports, profileNameMap, allAccounts);
+  const weakestCard = capabilityCards.find((item) => item.name === weakestDimensions[0]);
+  const advice = buildAdviceSections({
+    aiInsight,
+    weakestDimension: weakestDimensions[0],
+    selfValue: weakestCard?.metricValue ?? 0,
+    teamValue: 0,
+  });
+
+  const scriptBreakdown = buildScriptBreakdownData({
+    rawText: latestReport?.content ?? linkedScriptDocument?.raw_text ?? "",
+    scriptDocument: linkedScriptDocument,
+    scriptSegments: linkedScriptSegments,
+  });
 
   return (
     <GrowthClientShell
-      profileName={profileName}
+      profileName={profile?.name ?? user.email ?? ""}
       accountCount={myAccounts.length}
       reportCount={myAllReports.length}
       statusCards={statusCards}
-      diagnosisProps={diagnosisProps}
-      benchmarkCards={benchmarkCards}
-      pkData={pkData}
-      sampleList={sampleList}
-      userId={user.id}
-      accountId={myAccountIds[0] ?? ""}
+      capabilityCards={capabilityCards}
+      weakBenchmarkCards={weakBenchmarkCards}
+      pkPanel={pkPanel}
+      scriptBreakdown={scriptBreakdown}
+      advice={advice}
     />
   );
 }

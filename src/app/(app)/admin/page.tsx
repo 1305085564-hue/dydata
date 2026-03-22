@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { CalendarDays, Download, Settings2, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -148,12 +150,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     loadWithExemption: async () =>
       supabase
         .from("profiles")
-        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, permissions, created_at")
+        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, permissions, created_at, team_id, group_id, teams(name)")
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
       supabase
         .from("profiles")
-        .select("id, name, role, status, permissions, created_at")
+        .select("id, name, role, status, permissions, created_at, team_id, group_id, teams(name)")
         .order("created_at", { ascending: true }),
   });
 
@@ -210,7 +212,37 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <h1 className="text-2xl font-semibold tracking-tight">管理员后台</h1>
+      <section className="rounded-[var(--radius-2xl)] border border-white/60 bg-[var(--glass-bg)] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur-[20px]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">Admin Console</p>
+            <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">管理员后台</h1>
+            <p className="text-sm text-[var(--color-text-secondary)]">集中管理成员、数据、权限与导出操作。</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
+              <CalendarDays className="size-4" />
+              {queryDate}
+            </Button>
+            {hasPermission(perm.role, perm.permissions, "export_data") ? (
+              <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
+                <Download className="size-4" />
+                数据导出
+              </Button>
+            ) : null}
+            {isOwner ? (
+              <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
+                <ShieldCheck className="size-4" />
+                权限管理
+              </Button>
+            ) : null}
+            <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
+              <Settings2 className="size-4" />
+              管理操作
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {[
         {
@@ -265,8 +297,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <TableRow>
                       <TableHead>姓名</TableHead>
                       <TableHead>角色</TableHead>
+                      <TableHead className="hidden md:table-cell">所属团队</TableHead>
+                      <TableHead className="hidden md:table-cell">所属小组</TableHead>
                       <TableHead>状态</TableHead>
-                      <TableHead>注册时间</TableHead>
+                      <TableHead className="hidden md:table-cell">注册时间</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -278,12 +312,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             {p.role === "owner" ? "创始人" : p.role === "admin" ? "管理员" : "成员"}
                           </Badge>
                         </TableCell>
+                        <TableCell className="hidden md:table-cell">{typeof p.teams === "object" && p.teams && "name" in p.teams ? (p.teams.name as string) : "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell text-[var(--color-text-secondary)]">即将推出</TableCell>
                         <TableCell>
                           <Badge variant={p.status === "exempt" ? "outline" : "default"} className="text-xs">
                             {p.status === "exempt" ? "豁免" : "在岗"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground tabular-nums">
+                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground tabular-nums">
                           {p.created_at ? new Date(p.created_at).toLocaleDateString("zh-CN") : "-"}
                         </TableCell>
                       </TableRow>

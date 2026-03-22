@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -140,10 +140,10 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
         throw new Error(error.message || "标签保存失败");
       }
 
-      toast.success("标签已更新");
+      feedbackToast.success("标签已更新");
       onTagsSaved((data ?? []) as VideoTag[]);
     } catch (error) {
-      toast.error((error as Error).message || "标签保存失败");
+      feedbackToast.error((error as Error).message || "标签保存失败");
     } finally {
       setIsSaving(false);
     }

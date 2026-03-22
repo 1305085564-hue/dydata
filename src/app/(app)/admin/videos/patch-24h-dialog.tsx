@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,7 +98,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
       favorites: values.favorites,
       follower_gain: values.follower_gain,
     }));
-    toast.success("OCR 结果已回填，可继续补充其余指标");
+    feedbackToast.success("OCR 结果已回填，可继续补充其余指标");
   }
 
   function handleSubmit() {
@@ -124,7 +124,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
 
       const { error: snapshotError } = await snapshotQuery;
       if (snapshotError) {
-        toast.error(snapshotError.message || "24h 数据保存失败");
+        feedbackToast.error(snapshotError.message || "24h 数据保存失败");
         return;
       }
 
@@ -135,7 +135,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
           .eq("id", video.id);
 
         if (videoError) {
-          toast.error(videoError.message || "状态更新失败");
+          feedbackToast.error(videoError.message || "状态更新失败");
           return;
         }
       }
@@ -151,7 +151,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
         anomaly_status: video.anomaly_status === "未满24h" ? "正常" : video.anomaly_status,
       };
 
-      toast.success("24h 数据已补录");
+      feedbackToast.success("24h 数据已补录");
       onOpenChange(false);
       onSaved({ video: savedVideo, snapshot: savedSnapshot });
     });

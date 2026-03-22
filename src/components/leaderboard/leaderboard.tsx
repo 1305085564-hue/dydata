@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, TrendingUp } from "lucide-react";
 import { AnimatedNumber } from "@/components/animated-number";
@@ -62,23 +61,6 @@ const METRICS: Array<{ key: MetricKey; label: string }> = [
   { key: "completedViewers", label: "完播人数" },
 ];
 
-const containerVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
-  },
-};
 
 export function Leaderboard({
   data,
@@ -193,7 +175,7 @@ export function Leaderboard({
             type="button"
             size="sm"
             variant="outline"
-            className="h-8 rounded-2xl bg-background/80 px-3"
+            className="h-11 rounded-2xl bg-background/80 px-3 md:h-8"
             onClick={() => setCompact((prev) => !prev)}
           >
             {compact ? (
@@ -217,18 +199,18 @@ export function Leaderboard({
         </div>
       ) : (
         <>
-          <div className="hidden md:block overflow-hidden rounded-2xl ring-1 ring-foreground/8">
-            <Table>
+          <div className="overflow-x-auto rounded-2xl ring-1 ring-foreground/8">
+            <Table className="min-w-[920px]">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-16">排名</TableHead>
-                  <TableHead>账号</TableHead>
-                  <TableHead>标签</TableHead>
+                  <TableHead className="sticky left-0 z-20 w-16 bg-background/95 backdrop-blur">排名</TableHead>
+                  <TableHead className="sticky left-16 z-20 min-w-[180px] bg-background/95 backdrop-blur">账号</TableHead>
+                  <TableHead className="min-w-[150px]">标签</TableHead>
                   {boardType === "progress" ? (
-                    <TableHead className="text-right">近7天环比</TableHead>
+                    <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
                   {visibleMetrics.map((metric) => (
-                    <TableHead key={metric.key} className="text-right">
+                    <TableHead key={metric.key} className="min-w-[110px] text-right">
                       {metric.label}
                     </TableHead>
                   ))}
@@ -243,24 +225,20 @@ export function Leaderboard({
                       item.isOwn && "border-l-4 border-l-primary bg-primary/5 hover:bg-muted/50"
                     )}
                   >
-                    <TableCell>
+                    <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur">
                       <RankBadge rank={item.rank} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="sticky left-16 z-10 bg-background/95 backdrop-blur">
                       <div className="min-w-[180px]">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground">
-                            {item.accountName}
-                          </span>
+                          <span className="font-semibold text-foreground">{item.accountName}</span>
                           {item.isOwn ? (
                             <Badge variant="secondary" className="rounded-full">
                               我的账号
                             </Badge>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {item.ownerName}
-                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">{item.ownerName}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -285,63 +263,6 @@ export function Leaderboard({
             </Table>
           </div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="space-y-3 md:hidden"
-          >
-            {items.map((item) => (
-              <motion.div
-                key={item.accountId}
-                variants={itemVariants}
-                className={cn(
-                  "rounded-2xl bg-background/95 p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(15,23,42,0.05)] ring-1 ring-foreground/8 transition-colors hover:bg-muted/50",
-                  item.isOwn && "bg-primary/5 ring-primary/20 hover:bg-muted/50"
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <RankBadge rank={item.rank} />
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {item.accountName}
-                        </p>
-                        {item.isOwn ? (
-                          <Badge variant="secondary" className="rounded-full">
-                            我的
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {item.ownerName}
-                      </p>
-                    </div>
-                  </div>
-                  {boardType === "progress" ? <ProgressValue item={item} /> : null}
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <TagStack
-                    contentDirection={item.contentDirection}
-                    presentationFormat={item.presentationFormat}
-                  />
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
-                  {visibleMetrics.map((metric) => (
-                    <MetricCard
-                      key={metric.key}
-                      label={metric.label}
-                      value={formatMetric(item, metric.key)}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
         </>
       )}
     </div>
@@ -368,7 +289,7 @@ function SegmentedControl({
             size="sm"
             variant="ghost"
             className={cn(
-              "h-8 rounded-xl px-3 text-[13px] font-medium text-muted-foreground",
+              "h-11 rounded-xl px-3 text-[13px] font-medium text-muted-foreground md:h-8",
               active && "bg-background text-foreground shadow-sm ring-1 ring-foreground/8"
             )}
             onClick={() => onChange(option.value)}
@@ -404,15 +325,6 @@ function TagStack({
           {presentationFormat}
         </Badge>
       ) : null}
-    </div>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-muted/35 p-3 ring-1 ring-foreground/6">
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="mt-1 font-medium tabular-nums">{value}</p>
     </div>
   );
 }

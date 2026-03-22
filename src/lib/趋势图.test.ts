@@ -224,3 +224,21 @@ test("团队趋势数据会返回每日总和与 active 成员人均", async () 
     ],
   });
 });
+
+test("图表 Y 轴上限会按最大值向上取整", async () => {
+  const mod = await load趋势图模块();
+  const getTrendAxisUpperBound = mod?.getTrendAxisUpperBound;
+
+  assert.equal(getTrendAxisUpperBound?.([85000, 3200, 450]), 90000);
+  assert.equal(getTrendAxisUpperBound?.([3200]), 4000);
+  assert.equal(getTrendAxisUpperBound?.([450]), 500);
+});
+
+test("图表 Y 轴上限会忽略空值并处理全零数据", async () => {
+  const mod = await load趋势图模块();
+  const getTrendAxisUpperBound = mod?.getTrendAxisUpperBound;
+
+  assert.equal(getTrendAxisUpperBound?.([null, undefined, 0, 0]), 0);
+  assert.equal(getTrendAxisUpperBound?.([null, 980, 1200]), 2000);
+});
+

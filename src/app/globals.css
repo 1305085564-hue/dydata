@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../styles/design-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -38,6 +39,15 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-mac-bg: var(--color-bg);
+  --color-mac-surface: var(--color-surface);
+  --color-mac-primary: var(--color-primary);
+  --color-mac-success: var(--color-success);
+  --color-mac-danger: var(--color-danger);
+  --color-mac-warning: var(--color-warning);
+  --color-mac-text-primary: var(--color-text-primary);
+  --color-mac-text-secondary: var(--color-text-secondary);
+  --color-mac-text-tertiary: var(--color-text-tertiary);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -45,6 +55,9 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-shimmer: shimmer 1.8s linear infinite;
+  --animate-shake: shake 0.2s ease-in-out;
+  --animate-pulse-soft: pulse-soft 2.4s var(--ease-out) infinite;
 }
 
 :root {
@@ -132,6 +145,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    background:
+      radial-gradient(circle at top, rgba(255, 255, 255, 0.72), transparent 42%),
+      linear-gradient(180deg, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 92%, white) 100%);
+    color: var(--color-text-primary);
   }
   body [data-sonner-toaster] {
     --offset-top: calc(var(--app-top-offset) + 0.75rem);
@@ -166,6 +183,42 @@
   }
   100% {
     transform: translate3d(18%, 16%, 0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
   }
 }
 
@@ -243,47 +296,72 @@
 
   .glass-card {
     border-radius: var(--radius-card);
-    border: 1px solid rgba(255,255,255,0.7);
-    background: rgba(255,255,255,0.75);
+    border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
+    background: var(--glass-bg);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    box-shadow: var(--shadow-medium);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: var(--shadow-card);
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
   }
 
   .glass-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-heavy);
-    border-color: rgba(99,102,241,0.2);
+    box-shadow: var(--shadow-card-hover);
+    border-color: color-mix(in srgb, var(--color-primary) 24%, transparent);
   }
 
   .glass-card-static {
     border-radius: var(--radius-card);
-    border: 1px solid rgba(255,255,255,0.7);
-    background: rgba(255,255,255,0.75);
+    border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
+    background: var(--glass-bg);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-card);
   }
 
   .dark .glass-card {
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(15,23,42,0.75);
+    border-color: color-mix(in srgb, var(--color-border) 85%, transparent);
+    background: var(--glass-bg);
   }
 
   .dark .glass-card-static {
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(15,23,42,0.75);
+    border-color: color-mix(in srgb, var(--color-border) 85%, transparent);
+    background: var(--glass-bg);
+  }
+
+  .typewriter-cursor {
+    display: inline-block;
+    width: 1px;
+    height: 1em;
+    margin-left: 0.125rem;
+    vertical-align: -0.12em;
+    background: currentColor;
+    animation: pulse-soft 1s steps(1, end) infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.8s linear infinite;
+  }
+
+  .animate-shake {
+    animation: shake 0.2s ease-in-out;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2.4s var(--ease-out) infinite;
   }
 
   [data-sonner-toast] {
     border-radius: var(--radius-card) !important;
-    border: 1px solid rgba(255,255,255,0.7) !important;
-    background: rgba(255,255,255,0.78) !important;
-    color: hsl(var(--foreground)) !important;
+    border: 1px solid color-mix(in srgb, var(--color-border) 70%, white) !important;
+    background: color-mix(in srgb, var(--glass-bg) 92%, white) !important;
+    color: var(--color-text-primary) !important;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    box-shadow: var(--shadow-medium) !important;
+    box-shadow: var(--shadow-toast) !important;
   }
 
   [data-sonner-toast] [data-title] {
@@ -291,12 +369,12 @@
   }
 
   [data-sonner-toast] [data-description] {
-    color: hsl(var(--muted-foreground)) !important;
+    color: var(--color-text-secondary) !important;
   }
 
   .dark [data-sonner-toast] {
-    border-color: rgba(255,255,255,0.1) !important;
-    background: rgba(15,23,42,0.78) !important;
+    border-color: color-mix(in srgb, var(--color-border) 85%, transparent) !important;
+    background: color-mix(in srgb, var(--glass-bg) 96%, transparent) !important;
   }
 }
 
@@ -305,7 +383,12 @@
     animation: none;
   }
 
-  .input-focus-line::after {
+  .input-focus-line::after,
+  .typewriter-cursor,
+  .animate-shimmer,
+  .animate-shake,
+  .animate-pulse-soft {
     transition: none;
+    animation: none !important;
   }
 }

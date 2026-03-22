@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -111,6 +112,7 @@ export function DataManager({
   const [editData, setEditData] = useState<Partial<Report>>({});
   const [isPending, startTransition] = useTransition();
   const [contentDialog, setContentDialog] = useState<{ title: string; content: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; submitter: string } | null>(null);
   const router = useRouter();
 
   const reportsWithMeta = useMemo(
@@ -216,23 +218,30 @@ export function DataManager({
         follower_convert: editData.follower_convert ?? null,
       });
       if (result.error) {
-        toast.error(result.error);
+        feedbackToast.error(result.error);
       } else {
-        toast.success("已更新");
+        feedbackToast.success("已更新");
         setEditingId(null);
       }
     });
   }
 
   function handleDelete(reportId: string, submitter: string) {
-    if (!confirm(`确定删除 ${submitter} 的这条记录？`)) return;
+    setDeleteTarget({ id: reportId, submitter });
+  }
+
+  function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+
     startTransition(async () => {
-      const result = await adminDeleteReport(reportId);
+      const result = await adminDeleteReport(deleteTarget.id);
       if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("已删除");
+        feedbackToast.error(result.error);
+        return;
       }
+
+      feedbackToast.success("已删除");
+      setDeleteTarget(null);
     });
   }
 
@@ -662,6 +671,22 @@ export function DataManager({
           <div className="space-y-3 md:hidden">{reportsWithMeta.map(renderMobileReportCard)}</div>
         </>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="确认删除数据"
+        description={deleteTarget ? `确定删除 ${deleteTarget.submitter} 的这条记录？` : ""}
+        confirmText="确认删除"
+        cancelText="取消"
+        destructive
+        loading={isPending}
+        onConfirm={handleDeleteConfirm}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+      />
 
       <Dialog open={!!contentDialog} onOpenChange={() => setContentDialog(null)}>
         <DialogContent className="max-w-lg">
