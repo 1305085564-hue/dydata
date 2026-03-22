@@ -38,14 +38,14 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
             <Link href="/growth" className={linkClass("/growth")}>
               成长分析
             </Link>
-            {showAdmin && (
-              <Link href="/admin" className={linkClass("/admin")}>
-                管理后台
-              </Link>
-            )}
             {showAnalytics && (
               <Link href="/admin/analytics" className={linkClass("/admin/analytics")}>
                 数据分析
+              </Link>
+            )}
+            {showAdmin && (
+              <Link href="/admin" className={linkClass("/admin")}>
+                管理后台
               </Link>
             )}
           </div>

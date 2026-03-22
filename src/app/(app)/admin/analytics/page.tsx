@@ -132,7 +132,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     },
     {
       title: "AI 洞察",
-      content: <AiInsight />,
+      content: <AiInsight scopeEntityId={user.id} />,
     },
   ];
 

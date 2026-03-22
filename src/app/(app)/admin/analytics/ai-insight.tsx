@@ -6,7 +6,11 @@ import { MotionCard } from "@/components/ui/motion-card";
 import { Button } from "@/components/ui/button";
 import { useTypewriter } from "@/lib/animations";
 
-export function AiInsight() {
+interface AiInsightProps {
+  scopeEntityId: string;
+}
+
+export function AiInsight({ scopeEntityId }: AiInsightProps) {
   const [type, setType] = useState<"week" | "month">("week");
   const [loading, setLoading] = useState(false);
   const [insight, setInsight] = useState<string | null>(null);
@@ -19,10 +23,13 @@ export function AiInsight() {
     setInsight(null);
 
     try {
-      const res = await fetch("/api/ai-insight", {
+      const res = await fetch("/api/ai/insight/period", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({
+          period_type: type,
+          scope_entity_id: scopeEntityId,
+        }),
       });
 
       const data = await res.json();
@@ -30,7 +37,7 @@ export function AiInsight() {
       if (!res.ok) {
         setError(data.error || "请求失败");
       } else {
-        setInsight(data.insight);
+        setInsight(data.insight ?? data.content ?? JSON.stringify(data));
       }
     } catch {
       setError("网络错误");
