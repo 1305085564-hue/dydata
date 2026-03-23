@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import type { GrowthDimensionCard, WeakBenchmarkCard } from "@/lib/growth-page";
 
 // ─── 雷达图常量 ───────────────────────────────────────────────
-const RADAR_SIZE = 360;
+const RADAR_SIZE = 400;
 const CENTER = RADAR_SIZE / 2;
-const MAX_RADIUS = 140;
+const MAX_RADIUS = 150;
 const LEVELS = 5;
 const DIMS = 6;
 
@@ -41,9 +41,9 @@ function buildGridPolygon(level: number) {
   }).join(" ");
 }
 
-const LABEL_OFFSET = 20;
+const LABEL_OFFSET = 28;
 const labelAnchors = ["middle", "start", "start", "middle", "end", "end"] as const;
-const labelDyAdjust = [-6, 4, 4, 10, 4, 4];
+const labelDyAdjust = [-8, 4, 4, 12, 4, 4];
 
 // ─── 维度图标 ─────────────────────────────────────────────────
 const dimIcons: Record<string, string> = {
@@ -199,41 +199,35 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
 
         {/* ── 右列：雷达图 ── */}
         <div className="relative flex items-center justify-center">
-          {/* 右上角：图例 + 选择器 */}
-          <div className="absolute right-0 top-0 flex flex-col items-end gap-1 text-xs text-[var(--color-text-secondary)]">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" />
-                我的数据
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-orange-400" />
-                {compareLabel}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-md border border-[var(--color-border)] bg-white px-2 py-0.5 text-[11px]">
-                团队 P80
-              </span>
-              <select
-                value={comparePersonId}
-                onChange={(e) => setComparePersonId(e.target.value)}
-                className="rounded-md border border-[var(--color-border)] bg-white px-2 py-0.5 text-[11px] focus:outline-none"
-              >
-                <option value="">对比个人…</option>
-                {teamMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* 右上角：图例 + 对比选择 */}
+          <div className="absolute right-0 top-0 flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-sm backdrop-blur">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+              我
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full bg-orange-400" />
+              {compareLabel}
+            </span>
+            <span className="mx-0.5 h-3 w-px bg-gray-200" />
+            <select
+              value={comparePersonId}
+              onChange={(e) => setComparePersonId(e.target.value)}
+              className="rounded border border-[var(--color-border)] bg-transparent px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-300"
+            >
+              <option value="">团队 P80</option>
+              {teamMembers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* SVG 雷达图 - 占满右列 */}
+          {/* SVG 雷达图 - 占满右列，留出标签边距 */}
           <svg
-            viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
-            className="w-full max-w-[380px]"
+            viewBox={`-50 -30 ${RADAR_SIZE + 100} ${RADAR_SIZE + 50}`}
+            className="w-full max-w-[420px]"
             aria-label="六维能力雷达图"
           >
             {/* 网格 */}

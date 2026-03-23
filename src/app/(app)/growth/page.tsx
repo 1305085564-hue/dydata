@@ -189,6 +189,24 @@ export default async function GrowthPage() {
     scriptSegments: linkedScriptSegments,
   });
 
+  // ─── 组装 teamMembers（六维雷达对比用） ──────────────────
+  const ratingToScore = (label: string): number => (label === "强" ? 85 : label === "中" ? 65 : 40);
+  const allProfileIds = Array.from(new Set(allAccounts.map((a) => a.profile_id)));
+  const teamMembersForRadar = allProfileIds
+    .filter((pid) => pid !== user.id)
+    .map((pid) => {
+      const memberAccountIds = allAccounts.filter((a) => a.profile_id === pid).map((a) => a.id);
+      const memberReports = teamReports.filter((r) => memberAccountIds.includes(r.account_id));
+      if (memberReports.length < 3) return null;
+      const memberCards = buildGrowthDimensionCards({ myReports: memberReports, teamReports });
+      return {
+        id: pid,
+        name: profileNameMap.get(pid) ?? "未知",
+        scores: memberCards.map((c) => ratingToScore(c.rating.label)),
+      };
+    })
+    .filter((m): m is NonNullable<typeof m> => m !== null && m.scores.length === 6);
+
   return (
     <GrowthClientShell
       profileName={profile?.name ?? user.email ?? ""}
@@ -202,6 +220,7 @@ export default async function GrowthPage() {
       advice={advice}
       myReports={myAllReports}
       teamReports={teamReports}
+      teamMembers={teamMembersForRadar}
     />
   );
 }

@@ -12,6 +12,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import type { AdviceSections, GrowthDimensionCard, GrowthPkRow, ScriptBreakdownData, StatusCardItem, WeakBenchmarkCard } from "@/lib/growth-page";
 import type { MetricsReport } from "@/lib/metrics";
 
+interface TeamMember {
+  id: string;
+  name: string;
+  scores: number[];
+}
+
 interface GrowthClientShellProps {
   profileName: string;
   accountCount: number;
@@ -24,6 +30,7 @@ interface GrowthClientShellProps {
   advice: AdviceSections;
   myReports: MetricsReport[];
   teamReports: MetricsReport[];
+  teamMembers?: TeamMember[];
 }
 
 export function GrowthClientShell({
@@ -38,6 +45,7 @@ export function GrowthClientShell({
   advice,
   myReports,
   teamReports,
+  teamMembers = [],
 }: GrowthClientShellProps) {
   const hasEnoughData = reportCount >= 3;
 
@@ -60,7 +68,7 @@ export function GrowthClientShell({
       ) : (
         <>
           <StatusCardGrid items={statusCards} />
-          <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} />
+          <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
           {pkPanel ? <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} /> : null}
           <DiagnosisCard myReports={myReports} teamReports={teamReports} />
           <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />

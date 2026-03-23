@@ -1,12 +1,12 @@
-[    4477ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
+[    5336ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
        please check the style of container, or the props width(100%) and height(100%),
        or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
        height and width. @ https://dydata.cc/_next/static/chunks/9201f5f0076c2c93.js:0
-[    4477ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
+[    5336ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
        please check the style of container, or the props width(100%) and height(100%),
        or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
        height and width. @ https://dydata.cc/_next/static/chunks/9201f5f0076c2c93.js:0
-[    4494ms] Error: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+[    5378ms] Error: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
     at rK (https://dydata.cc/_next/static/chunks/edf728ade32a04ce.js:1:46764)
     at rX (https://dydata.cc/_next/static/chunks/edf728ade32a04ce.js:1:47797)
     at https://dydata.cc/_next/static/chunks/edf728ade32a04ce.js:1:141516
@@ -16,13 +16,11 @@
     at u9 (https://dydata.cc/_next/static/chunks/edf728ade32a04ce.js:1:132947)
     at sV (https://dydata.cc/_next/static/chunks/edf728ade32a04ce.js:1:159329)
     at MessagePort.O (https://dydata.cc/_next/static/chunks/edf728ade32a04ce.js:1:8295)
-[ 4545215ms] An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.
-[ 4566985ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
+[   85247ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
        please check the style of container, or the props width(100%) and height(100%),
        or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
        height and width. @ https://dydata.cc/_next/static/chunks/9201f5f0076c2c93.js:0
-[ 4566986ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
+[   85248ms] [WARNING] The width(-1) and height(-1) of chart should be greater than 0,
        please check the style of container, or the props width(100%) and height(100%),
        or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
        height and width. @ https://dydata.cc/_next/static/chunks/9201f5f0076c2c93.js:0
-[ 4573751ms] An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.
