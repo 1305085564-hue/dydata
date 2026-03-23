@@ -124,16 +124,41 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
 
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-white/85 p-5 shadow backdrop-blur sm:p-6">
-      {/* 标题 */}
-      <h2 className="mb-4 text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
+      {/* 标题行：左=标题，右=图例+选择器 */}
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
+        <div className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-sm backdrop-blur">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+            我
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full bg-orange-400" />
+            {compareLabel}
+          </span>
+          <span className="mx-0.5 h-3 w-px bg-gray-200" />
+          <select
+            value={comparePersonId}
+            onChange={(e) => setComparePersonId(e.target.value)}
+            className="rounded border border-[var(--color-border)] bg-transparent px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-300"
+          >
+            <option value="">团队 P80</option>
+            {teamMembers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* 主体：左列(列表+强弱) + 右列(雷达图) */}
-      <div className="flex flex-col gap-6 lg:grid lg:gap-4" style={{ gridTemplateColumns: "5fr 7fr" }}>
+      <div className="flex flex-col gap-4 lg:grid lg:items-start lg:gap-4" style={{ gridTemplateColumns: "2fr 3fr" }}>
 
         {/* ── 左列 ── */}
-        <div className="flex flex-col">
-          {/* 六维进度条，垂直居中 */}
-          <div className="flex flex-1 flex-col justify-center gap-3">
+        <div className="flex flex-col gap-2">
+          {/* 六维进度条，从顶部开始 */}
+          <div className="flex flex-col gap-2">
             {capabilityCards.map((card, i) => {
               const score = myScores[i];
               const hasData = score > 0;
@@ -146,7 +171,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                   type="button"
                   onClick={() => setActiveIndex(isActive ? null : i)}
                   className={cn(
-                    "rounded-lg px-2 py-1.5 text-left transition-colors",
+                    "rounded-lg px-2 py-1 text-left transition-colors",
                     isActive ? "bg-blue-50" : "hover:bg-slate-50",
                   )}
                 >
@@ -169,8 +194,8 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
             })}
           </div>
 
-          {/* 最强 / 最弱，左下 */}
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          {/* 最强 / 最弱 */}
+          <div className="mt-2 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3">
               <p className="text-[11px] font-medium text-rose-400">最强 · {capabilityCards[strongIndex]?.name}</p>
               <p className="mt-0.5 text-sm font-semibold text-rose-500">
@@ -198,39 +223,10 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         </div>
 
         {/* ── 右列：雷达图 ── */}
-        <div className="flex flex-col items-center">
-          {/* 图例 + 对比选择（顶部右对齐，不遮挡雷达图） */}
-          <div className="mb-2 flex w-full justify-end">
-            <div className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-sm backdrop-blur">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
-                我
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2 w-2 rounded-full bg-orange-400" />
-                {compareLabel}
-              </span>
-              <span className="mx-0.5 h-3 w-px bg-gray-200" />
-              <select
-                value={comparePersonId}
-                onChange={(e) => setComparePersonId(e.target.value)}
-                className="rounded border border-[var(--color-border)] bg-transparent px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-300"
-              >
-                <option value="">团队 P80</option>
-                {teamMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* SVG 雷达图 */}
-          <div className="-mt-2 w-full">
+        <div>
           <svg
             viewBox="-60 -40 520 480"
-            className="w-full"
+            className="mx-auto w-full max-w-[480px]"
             aria-label="六维能力雷达图"
           >
             {/* 网格 */}
@@ -315,6 +311,5 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         </div>
       </div>
     </div>
-  </div>
   );
 }
