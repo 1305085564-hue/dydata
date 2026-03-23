@@ -52,13 +52,13 @@ const metricMeta: Record<
     label: "播放量",
     valueKey: "playCount",
     averageKey: "playCountTeamAverage",
-    formatter: (value) => value.toLocaleString(),
+    formatter: (value) => value >= 10000 ? `${(value / 10000).toFixed(1)}万` : value.toLocaleString(),
   },
   followerGain: {
     label: "涨粉",
     valueKey: "followerGain",
     averageKey: "followerGainTeamAverage",
-    formatter: (value) => value.toLocaleString(),
+    formatter: (value) => value >= 10000 ? `${(value / 10000).toFixed(1)}万` : value.toLocaleString(),
   },
 };
 
@@ -313,11 +313,11 @@ export function ResultTrend({
                     type="monotone"
                     dataKey={teamAverageLabel}
                     name={teamAverageLabel}
-                    stroke="rgba(15, 23, 42, 0.35)"
+                    stroke="#f97316"
                     strokeWidth={2}
                     dot={false}
                     strokeDasharray="4 5"
-                    activeDot={{ r: 4, fill: "rgba(15, 23, 42, 0.55)", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: "#f97316", stroke: "white", strokeWidth: 2 }}
                     connectNulls
                     isAnimationActive={false}
                   />

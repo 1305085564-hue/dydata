@@ -788,26 +788,25 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="published_at">发布时间</Label>
-                <Input
-                  id="published_at"
-                  type="datetime-local"
-                  step={3600}
-                  value={meta.publishedAt}
-                  onChange={(event) => {
-                    const synced = syncPublishedAtAndText({
-                      nextPublishedAt: event.target.value,
-                      nextPublishedAtText: meta.publishedAtText,
-                      changedField: "published_at",
-                    });
-                    setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
-                  }}
-                  className="h-11 rounded-[var(--radius-lg)] bg-white"
-                />
-              </div>
-
               <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="published_at">发布时间</Label>
+                  <Input
+                    id="published_at"
+                    type="datetime-local"
+                    step={3600}
+                    value={meta.publishedAt}
+                    onChange={(event) => {
+                      const synced = syncPublishedAtAndText({
+                        nextPublishedAt: event.target.value,
+                        nextPublishedAtText: meta.publishedAtText,
+                        changedField: "published_at",
+                      });
+                      setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
+                    }}
+                    className="h-11 rounded-[var(--radius-lg)] bg-white"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label>上传时间</Label>
                   <div className="flex h-11 items-center rounded-[var(--radius-lg)] border border-black/8 bg-[color:rgba(255,255,255,0.7)] px-3 text-sm text-[var(--color-text-secondary)]">
@@ -829,7 +828,7 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <指标分组区 fields={fields} onFieldChange={updateField} />
+          <指标分组区 fields={fields} onFieldChange={updateField} anomalyStatus={meta.anomalyStatus} />
         </motion.div>
 
         <motion.div variants={itemVariants} className="hidden md:block">

@@ -20,13 +20,55 @@ const sectionTone = {
   action: "border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/10",
 } as const;
 
-export function AdvicePanel({ data }: { data: AdviceSections }) {
+const DEMO_SECTIONS = [
+  {
+    key: "diagnosis",
+    title: "诊断",
+    text: "2秒跳出率偏高（38%），开头钩子吸引力不足，用户在前2秒未被留住。",
+  },
+  {
+    key: "reference",
+    title: "参考",
+    text: "同题材高播放账号普遍在前3秒使用悬念问句或冲突画面，完播率比均值高20%+。",
+  },
+  {
+    key: "action",
+    title: "动作",
+    text: "1. 开头留人：前3秒加入悬念问句，降低跳出率\n2. 互动引导：在第15秒插入互动提问，提升评论率\n3. 转化优化：结尾用「点击主页看更多」替代通用CTA",
+  },
+];
+
+export function AdvicePanel({ data, noData = false }: { data: AdviceSections; noData?: boolean }) {
   if (data.source === "error") {
     return (
       <MotionCard className="border-[var(--color-danger)]/20 bg-[color:rgba(255,59,48,0.06)]">
         <div className="space-y-2 p-5">
           <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断 / 参考 / 动作</h2>
           <p className="text-sm text-[var(--color-danger)]">AI 分析暂时不可用</p>
+        </div>
+      </MotionCard>
+    );
+  }
+
+  if (noData) {
+    return (
+      <MotionCard className="border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="space-y-4 p-5">
+          <div>
+            <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断 / 参考 / 动作</h2>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">暂无数据，以下为示范参考</p>
+          </div>
+          <div className="grid gap-3">
+            {DEMO_SECTIONS.map((section) => (
+              <div key={section.key} className={`rounded-[12px] border border-dashed p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">{section.title}</span>
+                  <span className="rounded-full border border-gray-300 bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">示范数据</span>
+                </div>
+                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[var(--color-text-primary)]">{section.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </MotionCard>
     );

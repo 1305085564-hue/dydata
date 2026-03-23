@@ -14,16 +14,24 @@ interface MetricInputCardProps {
   step?: string;
   suffix?: string;
   onChange: (value: string) => void;
+  size?: "primary" | "secondary";
+  optional?: boolean;
 }
 
-export function 指标输入卡({ label, field, step = "1", suffix, onChange }: MetricInputCardProps) {
+export function 指标输入卡({ label, field, step = "1", suffix, onChange, size = "secondary", optional = false }: MetricInputCardProps) {
   const isWarning = field.requiresManualConfirmation && !field.confirmed;
   const sourceLabel = field.source === "ocr" ? "OCR识别" : "手动输入";
 
   return (
     <div className="space-y-2 rounded-[var(--radius-lg)] border border-black/6 bg-white/80 p-3 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between gap-2">
-        <Label className="text-sm font-semibold text-[var(--color-text-primary)]">{label}</Label>
+        <Label className={cn(
+          "font-semibold text-[var(--color-text-primary)]",
+          size === "primary" ? "text-sm" : "text-xs"
+        )}>
+          {label}
+          {optional && <span className="ml-1 text-[var(--color-text-secondary)] font-normal">可选</span>}
+        </Label>
         <span
           className={cn(
             badgeClass(isWarning ? "warning" : "neutral"),
@@ -42,7 +50,8 @@ export function 指标输入卡({ label, field, step = "1", suffix, onChange }: 
           value={field.value}
           onChange={(event) => onChange(event.target.value)}
           className={cn(
-            "h-11 rounded-[var(--radius-lg)] border bg-white pr-9 text-base font-semibold text-[var(--color-text-primary)] transition-transform duration-200",
+            "rounded-[var(--radius-lg)] border bg-white pr-9 font-semibold text-[var(--color-text-primary)] transition-transform duration-200",
+            size === "primary" ? "h-11 text-xl" : "h-9 text-base",
             isWarning &&
               "border-[color:var(--color-warning)] bg-[color:rgba(255,149,0,0.08)] ring-2 ring-[color:rgba(255,149,0,0.12)]"
           )}

@@ -129,7 +129,27 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
         {/* 诊断区 */}
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">诊断</div>
-          {weakItems.length === 0 ? (
+          {myReports.length === 0 ? (
+            <div className="space-y-2">
+              <div className="rounded-[12px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-3">
+                <span className="text-xs text-[var(--color-text-secondary)]">暂无数据，以下为示范参考</span>
+              </div>
+              <div className="rounded-[12px] border border-dashed border-orange-200/60 bg-orange-50/60 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-orange-800">2秒跳出率</span>
+                  <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">低 35% <span className="font-normal text-orange-500">示范数据</span></span>
+                </div>
+                <p className="mt-1 text-xs text-orange-700/80">你的2秒跳出率（38%）比团队均值（25%）高 35%，开头钩子需要优化</p>
+              </div>
+              <div className="rounded-[12px] border border-dashed border-orange-200/60 bg-orange-50/60 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-orange-800">涨粉数</span>
+                  <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">低 40% <span className="font-normal text-orange-500">示范数据</span></span>
+                </div>
+                <p className="mt-1 text-xs text-orange-700/80">你的涨粉数（12）比团队均值（20）低 40%，结尾CTA引导需加强</p>
+              </div>
+            </div>
+          ) : weakItems.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -167,7 +187,24 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
         </div>
 
         {/* 动作建议区 */}
-        {adviceItems.length > 0 && (
+        {myReports.length === 0 && (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">动作建议 <span className="ml-1 normal-case text-[var(--color-text-secondary)]/60">示范数据</span></div>
+            <div className="space-y-2">
+              {[
+                { label: "2秒跳出率", tip: "开头留人：前3秒加入悬念问句，降低跳出率" },
+                { label: "互动引导", tip: "在第15秒插入互动提问，提升评论率" },
+                { label: "转化优化", tip: "结尾用「点击主页看更多」替代通用CTA" },
+              ].map((item, i) => (
+                <div key={i} className="rounded-[12px] border border-dashed border-[#007AFF]/20 bg-[#007AFF]/5 p-3">
+                  <div className="mb-1 text-xs font-medium text-[#007AFF]/70">{item.label}</div>
+                  <p className="text-sm leading-5 text-[var(--color-text-primary)]">{item.tip}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {myReports.length > 0 && adviceItems.length > 0 && (
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">动作建议</div>
             <motion.div

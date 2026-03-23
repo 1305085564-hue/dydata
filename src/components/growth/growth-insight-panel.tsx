@@ -106,8 +106,29 @@ export function GrowthInsightPanel() {
         {state.status === "loading" && <Skeleton />}
 
         {state.status === "no_data" && (
-          <div className="rounded-[12px] border border-[var(--color-border)] p-4">
-            <p className="text-sm text-[var(--color-text-secondary)]">暂无昨日视频数据，先提交数据后再看洞察</p>
+          <div className="space-y-3">
+            <div className="rounded-[12px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-3">
+              <span className="text-xs text-[var(--color-text-secondary)]">暂无昨日视频数据，以下为示范参考</span>
+            </div>
+            <div className="rounded-[12px] border border-dashed border-[color:var(--color-warning)]/40 bg-[color:var(--color-warning)]/5 p-4">
+              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">诊断 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
+              <p className="text-sm leading-6 text-[var(--color-text-primary)]">昨日视频《如何3天涨粉1000》2s跳出率偏高（38%），说明开头钩子吸引力不足，用户在前2秒未被留住。</p>
+            </div>
+            <div className="rounded-[12px] border border-dashed border-[color:var(--color-danger)]/30 bg-[color:rgba(255,59,48,0.04)] p-4">
+              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">案发现场 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
+              <p className="text-sm leading-6 text-[var(--color-text-primary)]">播放12.5万，完播率41%，中段完播稳定，但转粉率0.3%低于团队均值（0.8%）。</p>
+            </div>
+            <div className="rounded-[12px] border border-dashed border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/5 p-4">
+              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">归因 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
+              <p className="text-sm leading-6 text-[var(--color-text-primary)]">开头3秒直接进入内容讲解，缺少悬念或冲突设置，导致跳出率高；结尾无明确CTA，转粉路径不清晰。</p>
+            </div>
+            <div className="rounded-[12px] border border-dashed border-[color:var(--color-success)]/30 bg-[color:var(--color-success)]/5 p-4">
+              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">改写建议 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
+              <blockquote className="border-l-2 border-[color:var(--color-success)] pl-3 text-sm leading-6 text-[var(--color-text-primary)]">
+                开头改为：「你知道为什么大多数人涨粉失败吗？」（悬念问句）{"\n"}
+                结尾加：「点击主页，看完整涨粉方法论」（明确CTA）
+              </blockquote>
+            </div>
           </div>
         )}
 

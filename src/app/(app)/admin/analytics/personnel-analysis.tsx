@@ -214,8 +214,18 @@ function MetricValue({ value, suffix = "", maximumFractionDigits = 1 }: { value:
 }
 
 function PersonCard({ person, index }: { person: PersonStats; index: number }) {
+  const isInsufficient = person.count < 10;
+
+  const borderColor = isInsufficient
+    ? "border-l-4 border-l-gray-300 bg-gray-50/50"
+    : person.suggestion.label === "继续放量"
+    ? "border-l-4 border-l-green-400 bg-green-50/50"
+    : person.suggestion.label === "保持观察"
+    ? "border-l-4 border-l-blue-400 bg-blue-50/50"
+    : "border-l-4 border-l-orange-400 bg-orange-50/50";
+
   return (
-    <MotionCard index={index} className="space-y-3 p-4">
+    <MotionCard index={index} className={`space-y-3 p-4 ${borderColor}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-sm font-semibold tracking-tight text-[var(--color-text-primary)]">{person.name}</p>
@@ -223,7 +233,12 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
             {person.suggestion.label}
           </span>
         </div>
-        <span className="shrink-0 text-xs text-[var(--color-text-secondary)] tabular-nums">{person.count} 条数据</span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {isInsufficient && (
+            <span className="rounded-full border border-gray-300 bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">数据不足</span>
+          )}
+          <span className="text-xs text-[var(--color-text-secondary)] tabular-nums">{person.count} 条数据</span>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-0.5">

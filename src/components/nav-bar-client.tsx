@@ -40,7 +40,7 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
             </Link>
             {showAnalytics && (
               <Link href="/analytics" className={linkClass("/analytics")}>
-                数据分析
+                爆款分析
               </Link>
             )}
             {showAdmin && (

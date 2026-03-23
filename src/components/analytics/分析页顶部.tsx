@@ -52,10 +52,10 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
     <section className="rounded-[var(--radius-2xl)] border border-white/60 bg-[var(--glass-bg)] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur-[20px]">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">Analytics Center</p>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">Hit Analysis</p>
           <div className="flex items-center gap-2">
             <CalendarDays className="size-5 text-[var(--color-primary)]" />
-            <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">数据分析</h1>
+            <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">爆款分析</h1>
           </div>
           <p className="text-sm text-[var(--color-text-secondary)]">按团队范围查看整体趋势，并根据权限查看个人明细。</p>
         </div>

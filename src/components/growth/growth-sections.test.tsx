@@ -101,6 +101,8 @@ test("GrowthClientShell 无数据时仍渲染模块级空态", () => {
         reference: "测试参考",
         action: "测试动作",
       }}
+      myReports={[]}
+      teamReports={[]}
     />,
   );
 

@@ -221,6 +221,7 @@ export function InteractionTrend({
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
+                    tickFormatter={(value: number) => value >= 10000 ? `${(value / 10000).toFixed(1)}万` : value.toLocaleString()}
                     domain={[0, yAxisUpperBound]}
                     width={56}
                   />
@@ -251,11 +252,11 @@ export function InteractionTrend({
                     type="monotone"
                     dataKey={teamAverageLabel}
                     name={teamAverageLabel}
-                    stroke="rgba(15, 23, 42, 0.35)"
+                    stroke="#f97316"
                     strokeWidth={2}
                     dot={false}
                     strokeDasharray="4 5"
-                    activeDot={{ r: 4, fill: "rgba(15, 23, 42, 0.55)", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: "#f97316", stroke: "white", strokeWidth: 2 }}
                     connectNulls
                     isAnimationActive={false}
                   />

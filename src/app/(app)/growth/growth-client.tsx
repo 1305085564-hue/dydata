@@ -1,10 +1,9 @@
 "use client";
 
 import { BarChart2 } from "lucide-react";
-import { CapabilityGrid } from "@/components/growth/capability-grid";
+import { 六维雷达面板 } from "@/components/growth/六维雷达面板";
 import { DiagnosisCard } from "@/components/growth/diagnosis-card";
 import { StatusCardGrid } from "@/components/growth/status-card-grid";
-import { WeaknessBenchmarkGrid } from "@/components/growth/weakness-benchmark-grid";
 import { ScriptBreakdown } from "@/components/growth/script-breakdown";
 import { AdvicePanel } from "@/components/growth/advice-panel";
 import { GrowthInsightPanel } from "@/components/growth/growth-insight-panel";
@@ -61,13 +60,12 @@ export function GrowthClientShell({
       ) : (
         <>
           <StatusCardGrid items={statusCards} />
-          <CapabilityGrid items={capabilityCards} />
-          <WeaknessBenchmarkGrid items={weakBenchmarkCards} />
+          <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} />
           {pkPanel ? <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} /> : null}
           <DiagnosisCard myReports={myReports} teamReports={teamReports} />
           <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
           <GrowthInsightPanel />
-          <AdvicePanel data={advice} />
+          <AdvicePanel data={advice} noData={myReports.length === 0} />
         </>
       )}
     </div>
