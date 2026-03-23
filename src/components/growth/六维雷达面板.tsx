@@ -7,7 +7,7 @@ import type { GrowthDimensionCard, WeakBenchmarkCard } from "@/lib/growth-page";
 // ─── 雷达图常量 ───────────────────────────────────────────────
 const RADAR_SIZE = 300;
 const CENTER = RADAR_SIZE / 2;
-const MAX_RADIUS = 120;
+const MAX_RADIUS = 125;
 const LEVELS = 5;
 const DIMS = 6;
 
@@ -151,12 +151,12 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         </div>
       </div>
 
-      {/* 主体：左列(进度条+强弱) + 右列(雷达图)，垂直居中对齐 */}
-      <div className="flex flex-col gap-4 lg:grid lg:items-center lg:gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      {/* 主体：左列(进度条+强弱) + 右列(雷达图) */}
+      <div className="flex flex-col gap-4 lg:grid lg:items-center lg:gap-6" style={{ gridTemplateColumns: "2fr 3fr" }}>
 
         {/* ── 左列 ── */}
         <div>
-          {/* 六维进度条 */}
+          {/* 六维进度条（缩短：名称+短条+分数） */}
           <div className="flex flex-col gap-2.5">
             {capabilityCards.map((card, i) => {
               const score = myScores[i];
@@ -174,17 +174,17 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                     isActive ? "bg-blue-50" : "hover:bg-slate-50",
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-[5.5rem] shrink-0 text-[15px] font-semibold text-[var(--color-text-primary)]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-[5rem] shrink-0 text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {dimIcons[card.name] ?? "·"} {card.name}
                     </span>
-                    <div className="h-[7px] flex-1 rounded-full bg-gray-100">
+                    <div className="h-[6px] w-16 shrink-0 rounded-full bg-gray-100">
                       <div
                         className={cn("h-full rounded-full transition-all", barColor)}
                         style={{ width: hasData ? `${score}%` : "0%" }}
                       />
                     </div>
-                    <span className={cn("w-8 shrink-0 text-right text-sm font-bold tabular-nums", textColor)}>
+                    <span className={cn("w-7 shrink-0 text-right text-sm font-bold tabular-nums", textColor)}>
                       {hasData ? score : "—"}
                     </span>
                   </div>
@@ -193,27 +193,27 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
             })}
           </div>
 
-          {/* 最强 / 最弱 */}
+          {/* 最强 / 最弱（加高，与进度条等宽） */}
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3">
+            <div className="rounded-xl border border-rose-200 bg-rose-50/60 px-3 py-4">
               <p className="text-[11px] font-medium text-rose-400">最强 · {capabilityCards[strongIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-rose-500">
+              <p className="mt-1 text-sm font-semibold text-rose-500">
                 {strongCard && strongCard.state === "benchmark"
                   ? `${strongCard.personName} — ${strongCard.metricText}`
                   : strongCard?.state === "self_best"
                     ? `你 — ${strongCard.metricText}`
                     : `得分 ${myScores[strongIndex]}`}
               </p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">
+              <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
                 {strongCard?.snippet || "继续保持，这是你的核心优势维度。"}
               </p>
             </div>
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-4">
               <p className="text-[11px] font-medium text-emerald-500">最弱 · {capabilityCards[weakIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-emerald-700">
+              <p className="mt-1 text-sm font-semibold text-emerald-700">
                 你 — {capabilityCards[weakIndex]?.metricText ?? `${myScores[weakIndex]} 分`}
               </p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">
+              <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
                 {weakCard?.snippet ||
                   `${capabilityCards[weakIndex]?.name}低于团队基准，建议优先针对此项做单点优化。`}
               </p>
@@ -221,11 +221,11 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
           </div>
         </div>
 
-        {/* ── 右列：雷达图（紧凑viewBox，图形撑满） ── */}
+        {/* ── 右列：雷达图（放大，重心略偏上） ── */}
         <div className="flex items-center justify-center">
           <svg
-            viewBox="-45 -25 390 365"
-            className="w-full max-w-[400px]"
+            viewBox="-40 -22 380 368"
+            className="w-full"
             aria-label="六维能力雷达图"
           >
             {/* 网格 */}
