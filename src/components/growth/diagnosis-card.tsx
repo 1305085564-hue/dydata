@@ -36,38 +36,56 @@ function avgDim(reports: MetricsReport[], dim: DimKey): number {
   return vals.reduce((s, v) => s + v, 0) / vals.length;
 }
 
+// 找该维度比 selfAvg 更好的人（至少10篇），返回 { name, avg } 或 null
+function findBenchmark(
+  dim: DimKey,
+  selfAvg: number,
+  teamReports: MetricsReport[],
+  myName: string | undefined,
+): { name: string; avg: number } | null {
+  // 按 submitter 分组
+  const byPerson = new Map<string, MetricsReport[]>();
+  for (const r of teamReports) {
+    const name = (r as MetricsReport & { submitter?: string }).submitter;
+    if (!name || name === myName) continue;
+    const arr = byPerson.get(name) ?? [];
+    arr.push(r);
+    byPerson.set(name, arr);
+  }
+
+  let best: { name: string; avg: number } | null = null;
+  for (const [name, reps] of byPerson) {
+    if (reps.length < 10) continue;
+    const avg = avgDim(reps, dim);
+    // 对于 2s跳出率，越低越好；其余越高越好
+    const isBetter =
+      dim === "2s跳出率" ? avg < selfAvg : avg > selfAvg;
+    if (isBetter && (!best || (dim === "2s跳出率" ? avg < best.avg : avg > best.avg))) {
+      best = { name, avg };
+    }
+  }
+  return best;
+}
+
 // ── 建议模板 ────────────────────────────────────────────────
-const ADVICE_TEMPLATES: Record<DimKey, string[]> = {
-  播放量: [
-    "发布时间选在 18:00–21:00 黄金时段 → 预计提升自然曝光 15%+",
-    "标题前 5 字加强关键词密度，契合平台算法推荐逻辑 → 扩大初始推流池",
-    "与同类高播放账号互评互关，借助关联流量破圈",
-  ],
-  涨粉: [
-    "结尾明确引导关注（口播+字幕双重提示）→ 预计提升关注转化率 10%+",
-    "发布系列内容并在简介中标明「第X集」，增强用户追更动力",
-    "主页头图+简介突出账号定位，让新访客在 3 秒内看懂你能提供什么",
-  ],
-  点赞: [
-    "在内容高潮处停顿 0.5 秒后加引导弹幕/字幕「双击支持一下」→ 提升互动密度",
-    "内容结尾设置争议性话题引发评论，间接带动点赞",
-    "选择正向情绪共鸣型内容方向，共鸣感强的内容点赞转化更高",
-  ],
-  完播率: [
-    "精简视频时长至核心信息，删除铺垫冗余部分 → 预计提升完播率 8%+",
-    "中段加入反转/悬念/干货列表，维持观看动力至结尾",
-    "前 10 秒节奏加快，用快切+字幕降低中段跳出率",
-  ],
-  "5s完播率": [
-    "开头前 3 秒加强悬念钩子（提问/反常识/冲突画面）→ 预计提升 2s 完播率 10%+",
-    "首帧画面避免黑屏/logo，直接呈现视觉冲击点",
-    "前 5 秒字幕放大核心利益点，让用户快速判断值不值得看完",
-  ],
-  "2s跳出率": [
-    "首帧换成高对比度、有人脸/动作的画面，降低第一眼跳出率",
-    "封面文字放大至 80%+ 屏幕宽度，清晰传达内容价值",
-    "开头台词从核心结论开始说，避免自我介绍或过场铺垫",
-  ],
+// 未达标时的学习建议
+const WEAK_ADVICE: Record<DimKey, string> = {
+  播放量: "发布时间选在 18:00–21:00 黄金时段，标题前 5 字加强关键词密度，扩大初始推流池",
+  涨粉: "结尾明确引导关注（口播+字幕双重提示），主页简介突出账号定位，让新访客 3 秒内看懂价值",
+  点赞: "内容高潮处加引导字幕「双击支持一下」，结尾设置争议性话题引发评论，间接带动点赞",
+  完播率: "精简视频时长至核心信息，中段加入反转/悬念维持观看动力，前 10 秒节奏加快",
+  "5s完播率": "开头前 3 秒加强悬念钩子（提问/反常识/冲突画面），首帧直接呈现视觉冲击点",
+  "2s跳出率": "首帧换成高对比度有人脸/动作的画面，封面文字放大至 80%+ 屏幕宽度，开头从核心结论开始说",
+};
+
+// 已达标时的进阶建议
+const STRONG_ADVICE: Record<DimKey, string> = {
+  播放量: "尝试更多垂类话题测试，找到下一个爆款选题方向，进一步扩大播放天花板",
+  涨粉: "优化主页内容矩阵，提升老粉复访率，同时测试不同 CTA 话术提升转化",
+  点赞: "分析高点赞内容的共同特征，复制情绪共鸣点，持续强化内容风格",
+  完播率: "在完播率高的内容基础上加长时长测试，探索更深度内容的可能性",
+  "5s完播率": "测试不同开头钩子类型（悬念/干货/反转），找到最适合你账号的开头公式",
+  "2s跳出率": "在低跳出率封面基础上 A/B 测试文案，进一步提升点击转化率",
 };
 
 // ── 主组件 ────────────────────────────────────────────────
@@ -77,12 +95,13 @@ export type DiagnosisCardProps = {
   className?: string;
 };
 
-type WeakItem = {
+type DimItem = {
   dim: DimKey;
   selfAvg: number;
   teamAvg: number;
   gapPct: number;
   label: string;
+  isWeak: boolean;
 };
 
 const DIMS: DimKey[] = ["播放量", "涨粉", "点赞", "完播率", "5s完播率", "2s跳出率"];
@@ -96,24 +115,38 @@ function fmt(dim: DimKey, value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
+// 从 teamReports 推断当前用户名（myReports 中的 submitter）
+function getMyName(myReports: MetricsReport[]): string | undefined {
+  return (myReports[0] as MetricsReport & { submitter?: string })?.submitter;
+}
+
 export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCardProps) {
   const week = myReports.slice(-7);
-  const teamWeek = teamReports;
+  const myName = getMyName(myReports);
 
-  const weakItems: WeakItem[] = DIMS.map((dim) => {
+  const dimItems: DimItem[] = DIMS.map((dim) => {
     const self = avgDim(week, dim);
-    const team = avgDim(teamWeek, dim);
+    const team = avgDim(teamReports, dim);
     const gap = team > 0 ? (team - self) / team : 0;
-    return { dim, selfAvg: self, teamAvg: team, gapPct: gap, label: DIM_LABELS[dim] };
-  }).filter((item) => item.teamAvg > 0 && item.gapPct > WEAK_THRESHOLD);
+    return { dim, selfAvg: self, teamAvg: team, gapPct: gap, label: DIM_LABELS[dim], isWeak: team > 0 && gap > WEAK_THRESHOLD };
+  }).filter((item) => item.teamAvg > 0);
 
-  const adviceItems = weakItems
-    .slice(0, 3)
-    .flatMap((item) => {
-      const tips = ADVICE_TEMPLATES[item.dim];
-      return tips.slice(0, 1).map((tip) => ({ dim: item.dim, label: item.label, tip }));
-    })
-    .slice(0, 3);
+  const weakItems = dimItems.filter((i) => i.isWeak);
+  const strongItems = dimItems.filter((i) => !i.isWeak);
+
+  // 动作建议：弱项用 WEAK_ADVICE，强项用 STRONG_ADVICE + 对标人
+  const adviceItems: { dim: DimKey; label: string; tip: string; isWeak: boolean; benchmark?: { name: string; avg: number } }[] = [
+    ...weakItems.slice(0, 3).map((item) => ({
+      dim: item.dim,
+      label: item.label,
+      tip: WEAK_ADVICE[item.dim],
+      isWeak: true,
+    })),
+    ...strongItems.slice(0, 2).map((item) => {
+      const benchmark = findBenchmark(item.dim, item.selfAvg, teamReports, myName);
+      return { dim: item.dim, label: item.label, tip: STRONG_ADVICE[item.dim], isWeak: false, benchmark: benchmark ?? undefined };
+    }),
+  ].slice(0, 4);
 
   return (
     <MotionCard className={`border-[var(--color-border)] bg-[var(--color-surface)] ${className ?? ""}`}>
@@ -149,28 +182,11 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                 <p className="mt-1 text-xs text-orange-700/80">你的涨粉数（12）比团队均值（20）低 40%，结尾CTA引导需加强</p>
               </div>
             </div>
-          ) : weakItems.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-              className="rounded-[12px] border border-emerald-200/60 bg-emerald-50/60 p-4 text-sm text-emerald-700"
-            >
-              本周各项指标均达团队均值，继续保持 🎯
-            </motion.div>
           ) : (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="space-y-2"
-            >
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-2">
+              {/* 未达标维度 */}
               {weakItems.map((item) => (
-                <motion.div
-                  key={item.dim}
-                  variants={itemVariants}
-                  className="rounded-[12px] border border-orange-200/60 bg-orange-50/60 p-3"
-                >
+                <motion.div key={`weak-${item.dim}`} variants={itemVariants} className="rounded-[12px] border border-orange-200/60 bg-orange-50/60 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-orange-800">{item.label}</span>
                     <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
@@ -182,6 +198,28 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                   </p>
                 </motion.div>
               ))}
+              {/* 已达标维度 */}
+              {strongItems.map((item) => {
+                const benchmark = findBenchmark(item.dim, item.selfAvg, teamReports, myName);
+                return (
+                  <motion.div key={`strong-${item.dim}`} variants={itemVariants} className="rounded-[12px] border border-emerald-200/60 bg-emerald-50/60 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-emerald-800">{item.label}</span>
+                      <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">已达标</span>
+                    </div>
+                    <p className="mt-1 text-xs text-emerald-700/80">
+                      {benchmark
+                        ? `对标 ${benchmark.name}（${fmt(item.dim, benchmark.avg)}），继续向更高水平冲刺`
+                        : "你是该维度团队最强，继续保持领先优势"}
+                    </p>
+                  </motion.div>
+                );
+              })}
+              {dimItems.length === 0 && (
+                <div className="rounded-[12px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-3">
+                  <span className="text-xs text-[var(--color-text-secondary)]">团队数据不足，暂无对比</span>
+                </div>
+              )}
             </motion.div>
           )}
         </div>
@@ -220,7 +258,12 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                   variants={itemVariants}
                   className="rounded-[12px] border border-[#007AFF]/20 bg-[#007AFF]/5 p-3"
                 >
-                  <div className="mb-1 text-xs font-medium text-[#007AFF]/70">{item.label}</div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-xs font-medium text-[#007AFF]/70">{item.label}</span>
+                    {!item.isWeak && item.benchmark && (
+                      <span className="rounded-full bg-[#007AFF]/10 px-1.5 py-0.5 text-[10px] text-[#007AFF]/60">对标 {item.benchmark.name}</span>
+                    )}
+                  </div>
                   <p className="text-sm leading-5 text-[var(--color-text-primary)]">{item.tip}</p>
                 </motion.div>
               ))}

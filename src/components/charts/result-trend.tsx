@@ -163,7 +163,7 @@ function ResultTooltip({
 export function ResultTrend({
   data,
   personalLabel = "个人",
-  teamAverageLabel = "团队 P70",
+  teamAverageLabel = "团队 P80",
   emptyText = "提交 2 天以上数据后可查看趋势图",
   isLoading = false,
 }: ResultTrendProps) {
@@ -197,7 +197,7 @@ export function ResultTrend({
       <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h3 className="text-[15px] font-semibold tracking-tight text-foreground">结果趋势</h3>
-          <p className="text-xs text-muted-foreground">{activeMetric.label}对比团队 P70，保留最近 {range} 天</p>
+          <p className="text-xs text-muted-foreground">{activeMetric.label}对比团队 P80，保留最近 {range} 天</p>
         </div>
         <div className="flex flex-col gap-2 sm:items-end">
           <div className="inline-flex rounded-2xl border border-border/70 bg-muted/50 p-1 backdrop-blur">
@@ -313,11 +313,11 @@ export function ResultTrend({
                     type="monotone"
                     dataKey={teamAverageLabel}
                     name={teamAverageLabel}
-                    stroke="#f97316"
-                    strokeWidth={2}
+                    stroke="#ea580c"
+                    strokeWidth={2.5}
                     dot={false}
                     strokeDasharray="4 5"
-                    activeDot={{ r: 4, fill: "#f97316", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: "#ea580c", stroke: "white", strokeWidth: 2 }}
                     connectNulls
                     isAnimationActive={false}
                   />

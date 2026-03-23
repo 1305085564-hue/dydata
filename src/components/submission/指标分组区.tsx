@@ -46,7 +46,7 @@ const RETENTION_ITEMS = [
   { key: "completion_rate" as EditableMetricKey, label: "整体完播率", step: "0.01", suffix: "%" },
 ];
 
-const DIVIDER = <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-4" />;
+const DIVIDER = <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-2" />;
 
 export function 指标分组区({ fields, onFieldChange, anomalyStatus }: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
@@ -54,7 +54,7 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
   return (
     <motion.div variants={itemVariants}>
       <MotionCard index={0} className="border-none bg-white/70">
-        <div className="space-y-0 p-5">
+        <div className="space-y-0 p-4">
           {/* 核心数据 - 大字 */}
           <div className="mb-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">核心数据</p>

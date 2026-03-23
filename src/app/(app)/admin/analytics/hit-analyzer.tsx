@@ -246,26 +246,29 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
       </div>
 
       {/* 提交人筛选 */}
-      <div className="space-y-1.5">
-        <Label className="text-xs">提交人</Label>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">提交人</Label>
+        <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
           {submitters.map((name) => (
-            <Badge
+            <button
               key={name}
-              variant={selectedSubmitters.includes(name) ? "default" : "outline"}
-              className="cursor-pointer"
               onClick={() => toggleSubmitter(name)}
+              className={`rounded-xl border px-3 py-2 text-base font-medium transition-colors truncate ${
+                selectedSubmitters.includes(name)
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white/80 text-slate-700 hover:border-slate-400"
+              }`}
             >
               {name}
-            </Badge>
+            </button>
           ))}
         </div>
       </div>
 
       {/* 共性面板 */}
       {stats ? (
-        <div className="glass-card-static rounded-2xl p-4 space-y-4">
-          <p className="text-sm font-semibold tracking-tight">筛选结果：<span className="tabular-nums">{stats.count}</span> 条</p>
+        <div className="rounded-2xl bg-white/85 backdrop-blur-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-white/70 p-5 space-y-4">
+          <p className="text-sm font-semibold tracking-[-0.02em]">筛选结果：<span className="tabular-nums">{stats.count}</span> 条</p>
           <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <div>
               <p className="text-muted-foreground text-xs">平均播放量</p>
@@ -322,75 +325,77 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
 
           {/* 规律总结 */}
           <div className="space-y-3 border-t pt-3">
-            <p className="text-sm font-semibold tracking-tight">规律总结</p>
+            <p className="text-sm font-semibold tracking-[-0.02em]">规律总结</p>
 
-            {stats.crDistribution && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">完播率区间分布</p>
-                <div className="flex gap-2 flex-wrap">
-                  {stats.crDistribution.map((d) => (
-                    <div key={d.label} className="glass-card-static rounded-xl px-2 py-1 text-xs">
-                      <span className="font-semibold tracking-tight">{d.label}</span>
-                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">标题长度分布</p>
-              <div className="flex gap-2 flex-wrap">
-                {stats.titleLenDist.map((d) => (
-                  <div key={d.label} className="glass-card-static rounded-xl px-2 py-1 text-xs">
-                    <span className="font-semibold tracking-tight">{d.label}</span>
-                    <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {stats.crDistribution && (
+                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
+                  <p className="text-xs font-medium text-slate-500">完播率区间分布</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {stats.crDistribution.map((d) => (
+                      <div key={d.label} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
+                        <span className="font-semibold tracking-tight">{d.label}</span>
+                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              )}
 
-            {stats.contentLenDist && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">文案长度分布</p>
-                <div className="flex gap-2 flex-wrap">
-                  {stats.contentLenDist.map((d) => (
-                    <div key={d.label} className="glass-card-static rounded-xl px-2 py-1 text-xs">
+              <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
+                <p className="text-xs font-medium text-slate-500">标题长度分布</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {stats.titleLenDist.map((d) => (
+                    <div key={d.label} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
                       <span className="font-semibold tracking-tight">{d.label}</span>
-                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
+                      <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
 
-            {stats.timeSlotTop && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">发布时间段分布</p>
-                <div className="flex gap-2 flex-wrap">
-                  {stats.timeSlotTop.map((d) => (
-                    <div key={d.slot} className="glass-card-static rounded-xl px-2 py-1 text-xs">
-                      <span className="font-semibold tracking-tight">{d.slot}</span>
-                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
-                    </div>
-                  ))}
+              {stats.contentLenDist && (
+                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
+                  <p className="text-xs font-medium text-slate-500">文案长度分布</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {stats.contentLenDist.map((d) => (
+                      <div key={d.label} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
+                        <span className="font-semibold tracking-tight">{d.label}</span>
+                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {stats.weekdayTop && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">发布星期分布</p>
-                <div className="flex gap-2 flex-wrap">
-                  {stats.weekdayTop.map((d) => (
-                    <div key={d.day} className="glass-card-static rounded-xl px-2 py-1 text-xs">
-                      <span className="font-semibold tracking-tight">{d.day}</span>
-                      <span className="ml-1 tabular-nums text-muted-foreground">{d.count}条 ({d.pct}%)</span>
-                    </div>
-                  ))}
+              {stats.timeSlotTop && (
+                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
+                  <p className="text-xs font-medium text-slate-500">发布时间段分布</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {stats.timeSlotTop.map((d) => (
+                      <div key={d.slot} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
+                        <span className="font-semibold tracking-tight">{d.slot}</span>
+                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {stats.weekdayTop && (
+                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
+                  <p className="text-xs font-medium text-slate-500">发布星期分布</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {stats.weekdayTop.map((d) => (
+                      <div key={d.day} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
+                        <span className="font-semibold tracking-tight">{d.day}</span>
+                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ) : (

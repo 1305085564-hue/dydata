@@ -134,7 +134,7 @@ function InteractionTooltip({
 export function InteractionTrend({
   data,
   personalLabel = "个人",
-  teamAverageLabel = "团队 P70",
+  teamAverageLabel = "团队 P80",
   emptyText = "提交 2 天以上数据后可查看趋势图",
   isLoading = false,
 }: InteractionTrendProps) {
@@ -252,11 +252,11 @@ export function InteractionTrend({
                     type="monotone"
                     dataKey={teamAverageLabel}
                     name={teamAverageLabel}
-                    stroke="#f97316"
-                    strokeWidth={2}
+                    stroke="#ea580c"
+                    strokeWidth={2.5}
                     dot={false}
                     strokeDasharray="4 5"
-                    activeDot={{ r: 4, fill: "#f97316", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: "#ea580c", stroke: "white", strokeWidth: 2 }}
                     connectNulls
                     isAnimationActive={false}
                   />

@@ -198,13 +198,13 @@ export default async function DashboardPage() {
             <ResultTrend
               data={trendData.结果趋势}
               personalLabel="我的数据"
-              teamAverageLabel="团队 P70"
+              teamAverageLabel="团队 P80"
               emptyText="提交 2 天以上数据后可查看趋势图"
             />
             <InteractionTrend
               data={trendData.互动趋势}
               personalLabel="我的质量分"
-              teamAverageLabel="团队 P70"
+              teamAverageLabel="团队 P80"
               emptyText="提交 2 天以上数据后可查看互动质量分趋势"
             />
           </CardContent>

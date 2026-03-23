@@ -43,15 +43,15 @@ interface PersonStats {
 }
 
 function getSuggestion(p: { hitRate: number; stability: number; trend: number; engagementRate: number }): { label: string; color: string } {
-  // 波动异常：稳定性极差
-  if (p.stability >= 15) return { label: "波动异常", color: "bg-orange-100 text-orange-700 border-orange-300" };
-  // 需要辅导：爆款率低 + 趋势下滑或互动差
-  if (p.hitRate < 20 && (p.trend < -10 || p.engagementRate < 2)) return { label: "需要辅导", color: "bg-red-100 text-red-700 border-red-300" };
-  // 重点关注：趋势明显下滑
-  if (p.trend < -10) return { label: "重点关注", color: "bg-yellow-100 text-yellow-700 border-yellow-300" };
-  // 继续放量：爆款率高 + 趋势上升或稳定
-  if (p.hitRate >= 30 && p.trend >= 0) return { label: "继续放量", color: "bg-green-100 text-green-700 border-green-300" };
-  // 默认：保持观察
+  // 波动异常：稳定性极差 → 黄色
+  if (p.stability >= 15) return { label: "波动异常", color: "bg-yellow-100 text-yellow-700 border-yellow-300" };
+  // 需要辅导：爆款率低 + 趋势下滑或互动差 → 绿色（差）
+  if (p.hitRate < 20 && (p.trend < -10 || p.engagementRate < 2)) return { label: "需要辅导", color: "bg-green-100 text-green-700 border-green-300" };
+  // 重点关注：趋势明显下滑 → 绿色（差）
+  if (p.trend < -10) return { label: "重点关注", color: "bg-green-100 text-green-700 border-green-300" };
+  // 继续放量：爆款率高 + 趋势上升或稳定 → 红色（优秀）
+  if (p.hitRate >= 30 && p.trend >= 0) return { label: "继续放量", color: "bg-red-100 text-red-700 border-red-300" };
+  // 默认：保持观察 → 蓝色
   return { label: "保持观察", color: "bg-gray-100 text-gray-600 border-gray-300" };
 }
 
@@ -81,7 +81,6 @@ function stdDev(values: number[]): number {
 
 export function PersonnelAnalysis({ reports, title = "人员深度分析" }: PersonnelAnalysisProps) {
   const [sortBy, setSortBy] = useState<SortKey>("hitRate");
-  const [expanded, setExpanded] = useState(false);
 
   const stats = useMemo(() => {
     const p70Map = computeP70Map(reports);
@@ -136,9 +135,6 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
     });
   }, [stats, sortBy]);
 
-  const visibleItems = sorted.slice(0, 5);
-  const hiddenItems = sorted.slice(5);
-
   if (stats.length === 0) {
     return (
       <EmptyState
@@ -175,35 +171,12 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
       </div>
 
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {visibleItems.map((person, index) => (
+        {sorted.map((person, index) => (
           <motion.div key={person.name} variants={itemVariants}>
             <PersonCard person={person} index={index} />
           </motion.div>
         ))}
       </motion.div>
-
-      {expanded && hiddenItems.length > 0 ? (
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-3">
-          {hiddenItems.map((person, index) => (
-            <motion.div key={person.name} variants={itemVariants}>
-              <PersonCard person={person} index={visibleItems.length + index} />
-            </motion.div>
-          ))}
-        </motion.div>
-      ) : null}
-
-      {hiddenItems.length > 0 ? (
-        <div className="flex justify-center pt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]"
-            onClick={() => setExpanded((value) => !value)}
-          >
-            {expanded ? "收起" : `展开更多（+${hiddenItems.length}）`}
-          </Button>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -219,10 +192,12 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
   const borderColor = isInsufficient
     ? "border-l-4 border-l-gray-300 bg-gray-50/50"
     : person.suggestion.label === "继续放量"
-    ? "border-l-4 border-l-green-400 bg-green-50/50"
+    ? "border-l-4 border-l-red-400 bg-red-50/50"
     : person.suggestion.label === "保持观察"
     ? "border-l-4 border-l-blue-400 bg-blue-50/50"
-    : "border-l-4 border-l-orange-400 bg-orange-50/50";
+    : person.suggestion.label === "波动异常"
+    ? "border-l-4 border-l-yellow-400 bg-yellow-50/50"
+    : "border-l-4 border-l-green-400 bg-green-50/50";
 
   return (
     <MotionCard index={index} className={`space-y-3 p-4 ${borderColor}`}>
@@ -248,7 +223,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           ) : (
             <Badge
               variant={person.hitRate >= 40 ? "default" : person.hitRate >= 20 ? "secondary" : "outline"}
-              className={person.hitRate >= 40 ? "bg-green-500" : person.hitRate < 20 ? "border-red-300 text-red-500" : ""}
+              className={person.hitRate >= 40 ? "bg-red-500" : person.hitRate < 20 ? "border-green-300 text-green-600" : ""}
             >
               <MetricValue value={person.hitRate} suffix="%" />
             </Badge>
@@ -258,7 +233,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           <p className="text-xs text-[var(--color-text-secondary)]">稳定性</p>
           <Badge
             variant={person.stability < 5 ? "default" : person.stability < 15 ? "secondary" : "outline"}
-            className={person.stability < 5 ? "bg-green-500" : person.stability >= 15 ? "border-red-300 text-red-500" : ""}
+            className={person.stability < 5 ? "bg-red-500" : person.stability >= 15 ? "border-green-300 text-green-600" : ""}
           >
             {person.stability < 5 ? "稳定" : person.stability < 15 ? "一般" : "波动大"}
           </Badge>
@@ -270,7 +245,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           ) : (
             <Badge
               variant={person.trend > 10 ? "default" : person.trend < -10 ? "outline" : "secondary"}
-              className={person.trend > 10 ? "bg-green-500" : person.trend < -10 ? "border-red-300 text-red-500" : ""}
+              className={person.trend > 10 ? "bg-red-500" : person.trend < -10 ? "border-green-300 text-green-600" : ""}
             >
               <span className="tabular-nums">{person.trend > 0 ? "+" : ""}<MetricValue value={person.trend} suffix="%" /></span>
             </Badge>
@@ -283,7 +258,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           ) : (
             <Badge
               variant={person.engagementRate >= 5 ? "default" : person.engagementRate >= 2 ? "secondary" : "outline"}
-              className={person.engagementRate >= 5 ? "bg-green-500" : person.engagementRate < 2 ? "border-red-300 text-red-500" : ""}
+              className={person.engagementRate >= 5 ? "bg-red-500" : person.engagementRate < 2 ? "border-green-300 text-green-600" : ""}
             >
               <MetricValue value={person.engagementRate} suffix="%" maximumFractionDigits={2} />
             </Badge>
