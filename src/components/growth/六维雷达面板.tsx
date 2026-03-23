@@ -150,7 +150,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-20 shrink-0 text-sm font-semibold text-[var(--color-text-primary)]">
+                  <span className="w-24 shrink-0 text-base font-semibold text-[var(--color-text-primary)]">
                     {dimIcons[card.name] ?? "·"} {card.name}
                   </span>
                   <div className="h-2 flex-1 rounded-full bg-gray-200">

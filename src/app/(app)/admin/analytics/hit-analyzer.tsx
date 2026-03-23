@@ -255,7 +255,7 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
               onClick={() => toggleSubmitter(name)}
               className={`rounded-xl border px-2.5 py-1.5 text-sm font-medium transition-colors truncate ${
                 selectedSubmitters.includes(name)
-                  ? "border-slate-900 bg-slate-900 text-white"
+                  ? "border-blue-500 bg-blue-500 text-white"
                   : "border-slate-200 bg-white/80 text-slate-700 hover:border-slate-400"
               }`}
             >
