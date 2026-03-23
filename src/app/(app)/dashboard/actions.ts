@@ -19,7 +19,7 @@ export async function submitReport(formData: FormData) {
   const account_id = formData.get("account_id") as string;
   const title = formData.get("title") as string;
   const report_date = formData.get("report_date") as string;
-  const play_count = Math.round(Number(formData.get("play_count")) * 10000);
+  const play_count = Number(formData.get("play_count"));
   const completion_rate = formData.get("completion_rate") ? `${formData.get("completion_rate")}%` : null;
   const avg_play_duration = formData.get("avg_play_duration") ? `${formData.get("avg_play_duration")}秒` : null;
   const bounce_rate_2s = formData.get("bounce_rate_2s") ? `${formData.get("bounce_rate_2s")}%` : null;
@@ -164,8 +164,7 @@ async function notifyFeishu(submitter: string, title: string, playCount: number)
   const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
   if (!webhookUrl) return;
 
-  const playWan = (playCount / 10000).toFixed(2);
-  const content = `**${submitter}** 提交了日报\n视频：${title}\n播放量：${playWan}万`;
+  const content = `**${submitter}** 提交了日报\n视频：${title}\n播放量：${playCount.toLocaleString("zh-CN")}`;
 
   await fetch(webhookUrl, {
     method: "POST",

@@ -65,7 +65,7 @@ export default async function DashboardPage() {
       ? supabase
           .from("daily_reports")
           .select(
-            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, uploaded_at, accounts(name)"
+            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(name)"
           )
           .in("account_id", accountIds)
           .order("report_date", { ascending: false })
@@ -242,7 +242,7 @@ export default async function DashboardPage() {
                 description="提交第一条数据后即可在此查看近30天历史"
               />
             ) : (
-              <HistoryList history={history} />
+              <HistoryList history={history} accounts={(accounts ?? []).map(a => ({ id: a.id, name: a.name }))} today={today} />
             )}
           </CardContent>
         </Card>

@@ -2,7 +2,7 @@ import type { Video, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 export type AnalyticsVideoRow = Video & {
   accounts: { name: string };
-  profiles: { name: string };
+  profiles?: { name: string } | null;
 };
 
 export type 可信度等级 = "low" | "medium" | "high";

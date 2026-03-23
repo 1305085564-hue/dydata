@@ -74,7 +74,7 @@ function stripSuffix(val: string | null, suffix: string): string {
 function getInitialOcrState(existingData?: DashboardReportData | null): OcrFormState {
   return {
     play_count:
-      existingData?.play_count != null ? (existingData.play_count / 10000).toFixed(2) : "",
+      existingData?.play_count != null ? String(existingData.play_count) : "",
     likes: existingData?.likes != null ? String(existingData.likes) : "0",
     comments: existingData?.comments != null ? String(existingData.comments) : "0",
     shares: existingData?.shares != null ? String(existingData.shares) : "0",
@@ -220,21 +220,18 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
             <div className="grid grid-cols-1 gap-4 rounded-xl bg-primary/5 p-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="play_count">播放量</Label>
-                <div className="relative">
-                  <Input
-                    id="play_count"
-                    name="play_count"
-                    type="number"
-                    step="0.01"
-                    min={0}
-                    placeholder="3.21"
-                    required
-                    className="h-12 rounded-xl border-primary/10 bg-background pr-10 text-lg font-semibold"
-                    value={ocrValues.play_count}
-                    onChange={(e) => updateOcrValue("play_count", e.target.value)}
-                  />
-                  <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">万</span>
-                </div>
+                <Input
+                  id="play_count"
+                  name="play_count"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="32100"
+                  required
+                  className="h-12 rounded-xl border-primary/10 bg-background text-lg font-semibold"
+                  value={ocrValues.play_count}
+                  onChange={(e) => updateOcrValue("play_count", e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="follower_gain">涨粉</Label>

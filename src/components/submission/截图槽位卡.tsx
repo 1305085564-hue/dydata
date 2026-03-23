@@ -20,6 +20,7 @@ interface SubmissionSlotCardProps {
   fileName?: string;
   error?: string | null;
   confidenceScore?: number | null;
+  ocrSummary?: string[];
   onSelectFile: (file: File) => void;
   onDelete: () => void;
   onRetry?: () => void;
@@ -52,6 +53,7 @@ export function SubmissionSlotCard({
   fileName,
   error,
   confidenceScore,
+  ocrSummary,
   onSelectFile,
   onDelete,
   onRetry,
@@ -181,6 +183,17 @@ export function SubmissionSlotCard({
                 重试
               </button>
             ) : null}
+          </div>
+        ) : null}
+
+        {ocrSummary && ocrSummary.length > 0 ? (
+          <div className="space-y-2 rounded-[var(--radius-lg)] bg-[color:rgba(0,122,255,0.06)] px-3 py-2 text-xs text-[var(--color-text-primary)]">
+            <div className="font-medium text-[var(--color-text-secondary)]">识别结果</div>
+            <ul className="space-y-1">
+              {ocrSummary.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </div>
         ) : null}
 

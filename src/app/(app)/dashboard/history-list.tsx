@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,9 +11,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { DashboardForm, type DashboardAccountOption, type DashboardReportData } from "./dashboard-form";
 
 type HistoryReport = {
   id: string;
+  account_id: string;
   report_date: string | null;
   title: string | null;
   play_count: number | null;
@@ -24,8 +33,19 @@ type HistoryReport = {
   comments: number | null;
   shares: number | null;
   favorites: number | null;
+  follower_gain: number | null;
+  follower_convert: number | null;
+  content: string | null;
+  published_at: string | null;
+  uploaded_at: string | null;
   accounts: unknown;
 };
+
+interface HistoryListProps {
+  history: HistoryReport[];
+  accounts: DashboardAccountOption[];
+  today: string;
+}
 
 function getAccountName(accountRelation: unknown) {
   if (Array.isArray(accountRelation)) {
@@ -38,10 +58,34 @@ function getAccountName(accountRelation: unknown) {
   return undefined;
 }
 
+function toExistingData(report: HistoryReport): DashboardReportData {
+  return {
+    id: report.id,
+    account_id: report.account_id,
+    title: report.title ?? "",
+    report_date: report.report_date ?? "",
+    play_count: report.play_count,
+    completion_rate: report.completion_rate,
+    avg_play_duration: report.avg_play_duration,
+    bounce_rate_2s: report.bounce_rate_2s,
+    completion_rate_5s: report.completion_rate_5s,
+    likes: report.likes ?? 0,
+    comments: report.comments ?? 0,
+    shares: report.shares ?? 0,
+    favorites: report.favorites ?? 0,
+    follower_gain: report.follower_gain ?? 0,
+    follower_convert: report.follower_convert,
+    content: report.content,
+    published_at: report.published_at,
+    uploaded_at: report.uploaded_at ?? "",
+  };
+}
+
 const DEFAULT_VISIBLE = 10;
 
-export function HistoryList({ history }: { history: HistoryReport[] }) {
+export function HistoryList({ history, accounts, today }: HistoryListProps) {
   const [expanded, setExpanded] = useState(false);
+  const [editingReport, setEditingReport] = useState<HistoryReport | null>(null);
   const visible = expanded ? history : history.slice(0, DEFAULT_VISIBLE);
   const hasMore = history.length > DEFAULT_VISIBLE;
 
@@ -63,6 +107,7 @@ export function HistoryList({ history }: { history: HistoryReport[] }) {
               <TableHead className="text-right">评论</TableHead>
               <TableHead className="text-right">分享</TableHead>
               <TableHead className="text-right hidden lg:table-cell">收藏</TableHead>
+              <TableHead className="w-[60px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -76,7 +121,7 @@ export function HistoryList({ history }: { history: HistoryReport[] }) {
                 </TableCell>
                 <TableCell className="max-w-[160px] truncate">{report.title}</TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">
-                  {report.play_count != null ? `${(report.play_count / 10000).toFixed(2)}万` : "-"}
+                  {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{report.completion_rate ?? "-"}</TableCell>
                 <TableCell className="text-right tabular-nums">{report.avg_play_duration ?? "-"}</TableCell>
@@ -86,6 +131,11 @@ export function HistoryList({ history }: { history: HistoryReport[] }) {
                 <TableCell className="text-right tabular-nums">{report.comments}</TableCell>
                 <TableCell className="text-right tabular-nums">{report.shares}</TableCell>
                 <TableCell className="text-right tabular-nums hidden lg:table-cell">{report.favorites}</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditingReport(report)}>
+                    <Pencil className="size-3.5" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -102,9 +152,14 @@ export function HistoryList({ history }: { history: HistoryReport[] }) {
                   {getAccountName(report.accounts) ?? "-"}
                 </p>
               </div>
-              <p className="text-sm font-semibold tabular-nums">
-                {report.play_count != null ? `${(report.play_count / 10000).toFixed(2)}万` : "-"}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold tabular-nums">
+                  {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
+                </p>
+                <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditingReport(report)}>
+                  <Pencil className="size-3.5" />
+                </Button>
+              </div>
             </div>
             <p className="truncate text-sm">{report.title}</p>
             <div className="grid grid-cols-4 gap-2 text-xs">
@@ -136,6 +191,23 @@ export function HistoryList({ history }: { history: HistoryReport[] }) {
           </Button>
         </div>
       )}
+
+      <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>修改日报</DialogTitle>
+          </DialogHeader>
+          {editingReport && (
+            <DashboardForm
+              key={editingReport.id}
+              accounts={accounts}
+              defaultAccountId={editingReport.account_id}
+              today={today}
+              existingData={toExistingData(editingReport)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

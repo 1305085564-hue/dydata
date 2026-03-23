@@ -7,7 +7,7 @@ import type { GrowthDimensionCard, WeakBenchmarkCard } from "@/lib/growth-page";
 // ─── 雷达图常量 ───────────────────────────────────────────────
 const RADAR_SIZE = 400;
 const CENTER = RADAR_SIZE / 2;
-const MAX_RADIUS = 155;
+const MAX_RADIUS = 160;
 const LEVELS = 5;
 const DIMS = 6;
 
@@ -227,10 +227,11 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
           </div>
 
           {/* SVG 雷达图 */}
-          <div className="mt-[-8px] w-full">
+          <div className="mt-[-8px] w-full flex flex-col items-end">
           <svg
             viewBox="-60 -40 520 480"
-            className="w-full max-w-[420px]"
+            className="w-full max-w-[460px]"
+            style={{ marginTop: "-12px" }}
             aria-label="六维能力雷达图"
           >
             {/* 网格 */}

@@ -85,7 +85,18 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       .from("videos")
       .select("*, accounts(name)")
       .in("user_id", teamUserIds)
-      .order("published_at", { ascending: false }),
+      .order("published_at", { ascending: false })
+      .then((res) => {
+        // 用已查到的 teamProfiles 补齐 profiles.name，避免缺少 FK join 导致前端崩溃
+        const nameMap = new Map(teamProfiles.map((p) => [p.id, p.name]));
+        return {
+          ...res,
+          data: (res.data ?? []).map((v) => ({
+            ...v,
+            profiles: { name: nameMap.get(v.user_id) ?? "未知" },
+          })),
+        };
+      }),
     adminSupabase.from("video_metrics_snapshots").select("*"),
     adminSupabase.from("video_tags").select("*"),
   ]);

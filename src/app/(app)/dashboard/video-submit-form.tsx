@@ -119,6 +119,9 @@ type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   error?: string | null;
   assetUrl?: string | null;
   file?: File | null;
+  screenshotType?: "data" | "curve" | "retention" | null;
+  recognizedFields?: Record<string, string | number | boolean | null> | null;
+  ocrSummary?: string[];
 };
 
 const ANOMALY_OPTIONS: AnomalyStatus[] = ["正常", "删稿", "限流", "投流"];
@@ -190,6 +193,38 @@ function createFieldState(value = ""): SubmissionFieldState {
   };
 }
 
+function buildOcrSummary(
+  screenshotType: "data" | "curve" | "retention" | null | undefined,
+  recognizedFields: Record<string, string | number | boolean | null> | null | undefined
+): string[] {
+  if (!recognizedFields) {
+    return [];
+  }
+
+  if (screenshotType === "curve") {
+    return [
+      recognizedFields.curve_pattern ? `曲线类型：${recognizedFields.curve_pattern}` : null,
+      recognizedFields.first_peak_position ? `首峰位置：${recognizedFields.first_peak_position}` : null,
+      recognizedFields.drop_severity ? `掉速程度：${recognizedFields.drop_severity}` : null,
+      recognizedFields.tail_strength ? `长尾强弱：${recognizedFields.tail_strength}` : null,
+    ].filter((item): item is string => Boolean(item));
+  }
+
+  if (screenshotType === "retention") {
+    const segmentSummary = recognizedFields.segment_summary;
+    return [
+      recognizedFields.bounce_peak_time ? `跳出峰值：${recognizedFields.bounce_peak_time}` : null,
+      recognizedFields.replay_peak_time ? `回放峰值：${recognizedFields.replay_peak_time}` : null,
+      typeof segmentSummary === "string" ? `分段摘要：${segmentSummary}` : null,
+    ].filter((item): item is string => Boolean(item));
+  }
+
+  return Object.entries(recognizedFields)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .slice(0, 4)
+    .map(([key, value]) => `${key}：${String(value)}`);
+}
+
 function createEditableFields(): SubmissionState["fields"] {
   return {
     play_count: { ...createFieldState(), key: "play_count" },
@@ -238,6 +273,8 @@ function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>): Submissi
       url: slot.assetUrl!,
       confirmed: slot.confirmed,
       confidence_score: slot.confidenceScore,
+      recognized_fields: slot.recognizedFields ?? null,
+      screenshot_type: slot.screenshotType ?? null,
     }));
 }
 
@@ -357,6 +394,8 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
 
       const { data } = payload;
       const assetUrl = URL.createObjectURL(file);
+      const detectedType = data.screenshot_type;
+      const ocrSummary = buildOcrSummary(detectedType, data.recognized_fields);
 
       const normalizedSlotError = data.error ? toSlotUploadErrorMessage(data.error) : null;
 
@@ -370,6 +409,9 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
           confidenceScore: data.confidence_score,
           error: data.slot_status === "failed" ? normalizedSlotError ?? OCR_FAIL_MESSAGE : normalizedSlotError,
           assetUrl,
+          screenshotType: detectedType,
+          recognizedFields: data.recognized_fields,
+          ocrSummary,
         },
       }));
 
@@ -378,19 +420,38 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
         return;
       }
 
-      const detectedType = (payload as { screenshot_type?: string }).screenshot_type;
-
       if (detectedType === "data" && data.recognized_fields) {
         applyOverviewFields(data.recognized_fields, data.confidence);
       }
 
       if (detectedType === "retention" && data.recognized_fields) {
+        const bouncePeakTime = data.recognized_fields.bounce_peak_time;
+        const replayPeakTime = data.recognized_fields.replay_peak_time;
+        const segmentSummary = data.recognized_fields.segment_summary;
         setFields((current) => ({
           ...current,
           avg_play_duration: { ...current.avg_play_duration, source: "ocr", requiresManualConfirmation: true, confirmed: false },
-          bounce_rate_2s: { ...current.bounce_rate_2s, source: "ocr", requiresManualConfirmation: true, confirmed: false },
-          completion_rate_5s: { ...current.completion_rate_5s, source: "ocr", requiresManualConfirmation: true, confirmed: false },
-          completion_rate: { ...current.completion_rate, source: "ocr", requiresManualConfirmation: true, confirmed: false },
+          bounce_rate_2s: {
+            ...current.bounce_rate_2s,
+            value: typeof bouncePeakTime === "string" ? bouncePeakTime : current.bounce_rate_2s.value,
+            source: "ocr",
+            requiresManualConfirmation: true,
+            confirmed: false,
+          },
+          completion_rate_5s: {
+            ...current.completion_rate_5s,
+            value: typeof replayPeakTime === "string" ? replayPeakTime : current.completion_rate_5s.value,
+            source: "ocr",
+            requiresManualConfirmation: true,
+            confirmed: false,
+          },
+          completion_rate: {
+            ...current.completion_rate,
+            value: typeof segmentSummary === "string" ? segmentSummary : current.completion_rate.value,
+            source: "ocr",
+            requiresManualConfirmation: true,
+            confirmed: false,
+          },
         }));
       }
 

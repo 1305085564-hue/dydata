@@ -24,13 +24,13 @@ export type ScreenshotImportEditableValues = Record<OcrFieldKey, string>;
 
 type OcrApiResponse = {
   data?: {
-    play_count: number | null;
-    likes: number | null;
-    comments: number | null;
-    shares: number | null;
-    favorites: number | null;
-    follower_gain: number | null;
-    confidence: Record<OcrFieldKey, ConfidenceLevel>;
+    slot_status: "pending_confirm" | "confirmed" | "failed";
+    screenshot_type: "data" | "curve" | "retention";
+    confidence_score: number;
+    requires_manual_confirmation: boolean;
+    recognized_fields: Partial<Record<OcrFieldKey, number | null>> | null;
+    confidence?: Record<OcrFieldKey, ConfidenceLevel>;
+    error?: string;
   };
   error?: string;
 };
@@ -44,7 +44,7 @@ const FIELD_META: Array<{
   placeholder: string;
   suffix?: string;
 }> = [
-  { key: "play_count", label: "播放量", step: "0.01", placeholder: "3.21", suffix: "万" },
+  { key: "play_count", label: "播放量", step: "0.01", placeholder: "32100" },
   { key: "likes", label: "点赞", step: "1", placeholder: "1280" },
   { key: "comments", label: "评论", step: "1", placeholder: "68" },
   { key: "shares", label: "分享", step: "1", placeholder: "15" },
@@ -184,7 +184,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         throw new Error(payload.error || "识别失败，请换清晰截图重试");
       }
 
-      const nextValues = toEditableValues(payload.data);
+      const nextValues = toEditableValues(payload.data.recognized_fields ?? {});
       // 合并模式：只覆盖新识别到的非空字段，保留已有值
       setEditableValues((current) => {
         const merged = { ...current };

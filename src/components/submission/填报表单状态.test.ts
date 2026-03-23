@@ -25,10 +25,10 @@ test("biz_date 默认可选最近 7 天", () => {
   ]);
 });
 
-test("只允许选择最近 7 天的 biz_date", () => {
+test("biz_date 允许补交历史日期但不允许未来日期", () => {
   assert.equal(isBizDateSelectable("2026-03-22", "2026-03-22"), true);
   assert.equal(isBizDateSelectable("2026-03-22", "2026-03-16"), true);
-  assert.equal(isBizDateSelectable("2026-03-22", "2026-03-15"), false);
+  assert.equal(isBizDateSelectable("2026-03-22", "2026-03-01"), true);
   assert.equal(isBizDateSelectable("2026-03-22", "2026-03-23"), false);
 });
 

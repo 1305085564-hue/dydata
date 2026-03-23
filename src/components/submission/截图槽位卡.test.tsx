@@ -38,3 +38,23 @@ test("网络异常时显示重试按钮", () => {
   assert.match(html, /网络异常，请重试/);
   assert.match(html, /<button[^>]*>\s*重试\s*<\/button>/);
 });
+
+test("识别成功后展示 OCR 文字摘要", () => {
+  const html = renderToStaticMarkup(
+    <SubmissionSlotCard
+      role="traffic_curve"
+      title="槽2 曲线图"
+      description="推流曲线截图"
+      required={false}
+      status="confirmed"
+      onSelectFile={() => {}}
+      onDelete={() => {}}
+      {...({
+        ocrSummary: ["曲线类型：二次起量", "长尾强弱：高"],
+      } as Record<string, unknown>)}
+    />,
+  );
+
+  assert.match(html, /曲线类型：二次起量/);
+  assert.match(html, /长尾强弱：高/);
+});

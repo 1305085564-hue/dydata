@@ -7,7 +7,7 @@ import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机"
 import { SubmissionSlotCard } from "./截图槽位卡";
 
 interface SubmissionSlotsProps {
-  slots: Record<SubmissionSlotRole, SubmissionSlotState & { fileName?: string; error?: string | null }>;
+  slots: Record<SubmissionSlotRole, SubmissionSlotState & { fileName?: string; error?: string | null; ocrSummary?: string[] }>;
   onSelectFile: (role: SubmissionSlotRole, file: File) => void;
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
@@ -51,6 +51,7 @@ export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry }: Subm
                 fileName={slot.fileName}
                 error={slot.error}
                 confidenceScore={slot.confidenceScore}
+                ocrSummary={slot.ocrSummary}
                 onSelectFile={(file) => onSelectFile(item.role, file)}
                 onDelete={() => onDelete(item.role)}
                 onRetry={onRetry ? () => onRetry(item.role) : undefined}

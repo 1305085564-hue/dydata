@@ -298,8 +298,8 @@ function buildInterventionCard(samples: VideoSample[]): 干预结论卡数据 {
     const first = sortedSamples[0];
     items.push({
       accountId,
-      accountName: first.video.accounts.name,
-      ownerName: first.video.profiles.name,
+      accountName: first.video.accounts?.name ?? "未知账号",
+      ownerName: first.video.profiles?.name ?? "未知",
       dropRatio,
       triggerReasons: reasons,
     });

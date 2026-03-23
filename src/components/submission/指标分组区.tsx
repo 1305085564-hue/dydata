@@ -26,24 +26,26 @@ interface MetricGroupProps {
   anomalyStatus?: string;
 }
 
-const CORE_ITEMS = [
-  { key: "play_count" as EditableMetricKey, label: "播放量", step: "0.01", suffix: "万" },
-  { key: "follower_gain" as EditableMetricKey, label: "涨粉数" },
-  { key: "follower_convert" as EditableMetricKey, label: "导粉数", optional: true },
+type MetricItem = { key: EditableMetricKey; label: string; step?: string; suffix?: string; optional?: boolean };
+
+const CORE_ITEMS: MetricItem[] = [
+  { key: "play_count", label: "播放量", step: "0.01" },
+  { key: "follower_gain", label: "涨粉数" },
+  { key: "follower_convert", label: "导粉数", optional: true },
 ];
 
-const INTERACTION_ITEMS = [
-  { key: "likes" as EditableMetricKey, label: "点赞数" },
-  { key: "comments" as EditableMetricKey, label: "评论数" },
-  { key: "shares" as EditableMetricKey, label: "分享数" },
-  { key: "favorites" as EditableMetricKey, label: "收藏数" },
+const INTERACTION_ITEMS: MetricItem[] = [
+  { key: "likes", label: "点赞数" },
+  { key: "comments", label: "评论数" },
+  { key: "shares", label: "分享数" },
+  { key: "favorites", label: "收藏数" },
 ];
 
-const RETENTION_ITEMS = [
-  { key: "avg_play_duration" as EditableMetricKey, label: "均播时长", step: "0.1", suffix: "秒" },
-  { key: "bounce_rate_2s" as EditableMetricKey, label: "2s跳出率", step: "0.01", suffix: "%" },
-  { key: "completion_rate_5s" as EditableMetricKey, label: "5s完播率", step: "0.01", suffix: "%" },
-  { key: "completion_rate" as EditableMetricKey, label: "整体完播率", step: "0.01", suffix: "%" },
+const RETENTION_ITEMS: MetricItem[] = [
+  { key: "avg_play_duration", label: "均播时长", step: "0.1", suffix: "秒" },
+  { key: "bounce_rate_2s", label: "2s跳出率", step: "0.01", suffix: "%" },
+  { key: "completion_rate_5s", label: "5s完播率", step: "0.01", suffix: "%" },
+  { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%" },
 ];
 
 const DIVIDER = <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-2" />;

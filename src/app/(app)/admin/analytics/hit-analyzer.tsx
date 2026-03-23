@@ -9,18 +9,18 @@ import { Badge } from "@/components/ui/badge";
 interface Report {
   id: string;
   submitter: string;
-  title: string;
+  title: string | null;
   report_date: string;
   play_count: number | null;
   completion_rate: string | null;
   avg_play_duration: string | null;
   bounce_rate_2s: string | null;
   completion_rate_5s: string | null;
-  likes: number;
-  comments: number;
-  shares: number;
-  favorites: number;
-  follower_gain: number;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+  follower_gain: number | null;
   follower_convert: number | null;
   content?: string | null;
   published_at?: string | null;
@@ -42,6 +42,10 @@ function parseSeconds(val: string | null): number | null {
   if (!val) return null;
   const n = parseFloat(val.replace("秒", ""));
   return isNaN(n) ? null : n;
+}
+
+function formatPlayCount(value: number) {
+  return value.toLocaleString("zh-CN");
 }
 
 export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
@@ -68,8 +72,8 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
   const filtered = useMemo(() => {
     return reports.filter((r) => {
       const play = r.play_count ?? 0;
-      if (playMin && play < Number(playMin) * 10000) return false;
-      if (playMax && play > Number(playMax) * 10000) return false;
+      if (playMin && play < Number(playMin)) return false;
+      if (playMax && play > Number(playMax)) return false;
       if (dateFrom && r.report_date < dateFrom) return false;
       if (dateTo && r.report_date > dateTo) return false;
       const cr = parsePercent(r.completion_rate);
@@ -100,12 +104,13 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
       if (cr !== null) { totalCr += cr; crCount++; crValues.push(cr); }
       const dur = parseSeconds(r.avg_play_duration);
       if (dur !== null) { totalDur += dur; durCount++; }
-      totalLikes += r.likes;
-      totalComments += r.comments;
-      totalShares += r.shares;
-      totalFavorites += r.favorites;
+      totalLikes += r.likes ?? 0;
+      totalComments += r.comments ?? 0;
+      totalShares += r.shares ?? 0;
+      totalFavorites += r.favorites ?? 0;
       if (r.content) { contents.push(r.content); contentLengths.push(r.content.length); }
-      titleLengths.push(r.title.length);
+      const safeTitle = r.title?.trim() ?? "";
+      titleLengths.push(safeTitle.length);
 
       if (r.published_at) {
         const d = new Date(r.published_at);
@@ -173,7 +178,7 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
 
     return {
       count: n,
-      avgPlay: (totalPlay / n / 10000).toFixed(2),
+      avgPlay: Math.round(totalPlay / n),
       avgCr: crCount > 0 ? (totalCr / crCount).toFixed(2) : null,
       avgDur: durCount > 0 ? (totalDur / durCount).toFixed(1) : null,
       engagementRate: totalPlay > 0 ? (totalEngagement / totalPlay * 100).toFixed(2) : null,
@@ -195,10 +200,10 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
     <div className="space-y-6">
       {/* 模式切换 */}
       <div className="flex gap-2">
-        <Button size="sm" variant={mode === "hit" ? "default" : "outline"} onClick={() => { setMode("hit"); applyPreset("10", ""); }}>
+        <Button size="sm" variant={mode === "hit" ? "default" : "outline"} onClick={() => { setMode("hit"); applyPreset("50000", ""); }}>
           爆款分析
         </Button>
-        <Button size="sm" variant={mode === "low" ? "default" : "outline"} onClick={() => { setMode("low"); applyPreset("", "1"); }}>
+        <Button size="sm" variant={mode === "low" ? "default" : "outline"} onClick={() => { setMode("low"); applyPreset("", "5000"); }}>
           低表现分析
         </Button>
       </div>
@@ -206,17 +211,15 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
       {/* 筛选面板 */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="space-y-1.5">
-          <Label className="text-xs">播放量最低（万）</Label>
-          <div className="relative">
-            <Input type="number" step="0.01" value={playMin} onChange={(e) => setPlayMin(e.target.value)} placeholder="0" className="h-8 pr-8" />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">万</span>
+          <Label className="text-xs">播放量最低</Label>
+          <div>
+            <Input type="number" step="1" value={playMin} onChange={(e) => setPlayMin(e.target.value)} placeholder="0" className="h-8" />
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">播放量最高（万）</Label>
-          <div className="relative">
-            <Input type="number" step="0.01" value={playMax} onChange={(e) => setPlayMax(e.target.value)} placeholder="不限" className="h-8 pr-8" />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">万</span>
+          <Label className="text-xs">播放量最高</Label>
+          <div>
+            <Input type="number" step="1" value={playMax} onChange={(e) => setPlayMax(e.target.value)} placeholder="不限" className="h-8" />
           </div>
         </div>
         <div className="space-y-1.5">
@@ -239,9 +242,10 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
 
       {/* 快捷按钮 */}
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => applyPreset("10", "")}>{">"} 10万</Button>
-        <Button size="sm" variant="outline" onClick={() => applyPreset("50", "")}>{">"} 50万</Button>
-        <Button size="sm" variant="outline" onClick={() => applyPreset("", "1")}>{"<"} 1万</Button>
+        <Button size="sm" variant="outline" onClick={() => applyPreset("10000", "")}>{">"} 10,000</Button>
+        <Button size="sm" variant="outline" onClick={() => applyPreset("100000", "")}>{">"} 100,000</Button>
+        <Button size="sm" variant="outline" onClick={() => applyPreset("500000", "")}>{">"} 500,000</Button>
+        <Button size="sm" variant="outline" onClick={() => applyPreset("", "10000")}>{"<"} 10,000</Button>
         <Button size="sm" variant="outline" onClick={() => { setPlayMin(""); setPlayMax(""); setCrMin(""); setCrMax(""); setDateFrom(""); setDateTo(""); setSelectedSubmitters([]); }}>重置</Button>
       </div>
 
@@ -272,7 +276,7 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
           <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
             <div>
               <p className="text-muted-foreground text-xs">平均播放量</p>
-              <p className="font-medium tabular-nums">{stats.avgPlay}万</p>
+              <p className="font-medium tabular-nums">{formatPlayCount(stats.avgPlay)}</p>
             </div>
             {stats.avgCr && (
               <div>

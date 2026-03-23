@@ -27,7 +27,11 @@ export function getRecentBizDateRange(today: string): string[] {
 }
 
 export function isBizDateSelectable(today: string, value: string): boolean {
-  return getRecentBizDateRange(today).includes(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  return value <= today;
 }
 
 export function getBizDateHelperText(value: string): string | null {

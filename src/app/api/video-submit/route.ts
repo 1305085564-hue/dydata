@@ -5,6 +5,7 @@ import type { SubmissionAssetMeta } from "@/types";
 
 type VideoSubmitRequestBody = {
   account_id?: string;
+  video_id?: string;
   video_url?: string | null;
   video_title?: string | null;
   content?: string | null;
@@ -70,6 +71,10 @@ function normalizeDateOnly(value: unknown, fallback = getTodayDateString()) {
 
 function normalizeNumber(value: unknown, fallback = 0) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeInteger(value: unknown, fallback = 0) {
+  return Math.round(normalizeNumber(value, fallback));
 }
 
 function getTodayDateString(now: Date = new Date()) {
@@ -249,6 +254,19 @@ export async function POST(request: NextRequest) {
   const submitter = profile?.name ?? "未知";
   const anomaly_status = normalizeOptionalText(body.anomaly_status) ?? "正常";
 
+  const roundedPlayCount = normalizeNumber(metrics.play_count);
+  const roundedLikes = normalizeInteger(metrics.likes);
+  const roundedComments = normalizeInteger(metrics.comments);
+  const roundedShares = normalizeInteger(metrics.shares);
+  const roundedFavorites = normalizeInteger(metrics.favorites);
+  const roundedFollowerGain = normalizeInteger(metrics.follower_gain);
+  const roundedFollowerLoss = normalizeInteger(metrics.follower_loss);
+  const roundedFollowerConvert = normalizeInteger(metrics.follower_convert);
+  const roundedAvgPlayDuration = normalizeNumber(metrics.avg_play_duration);
+  const roundedCompletionRate = normalizeNumber(metrics.completion_rate);
+  const roundedBounceRate2s = normalizeNumber(metrics.bounce_rate_2s);
+  const roundedCompletionRate5s = normalizeNumber(metrics.completion_rate_5s);
+
   const videoPayload = {
     account_id,
     user_id: user.id,
@@ -270,29 +288,41 @@ export async function POST(request: NextRequest) {
   }
 
   const screenshotUrls = assets.map((asset) => asset.url);
-  const curveScreenshotUrl = null;
-  const retentionScreenshotUrl = null;
+  const ocrSummary = assets.reduce<Record<string, unknown>>((acc, asset) => {
+    const fields = (asset as SubmissionAssetMeta & { recognized_fields?: Record<string, unknown> | null }).recognized_fields;
+    if (fields) {
+      acc[asset.role] = fields;
+    }
+    return acc;
+  }, {});
+  const curveScreenshotUrl = assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
+  const retentionScreenshotUrl = assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
 
   const snapshotPayload = {
     video_id: newVideo.id,
     snapshot_type: "24h",
-    play_count: normalizeNumber(metrics.play_count),
-    likes: normalizeNumber(metrics.likes),
-    comments: normalizeNumber(metrics.comments),
-    shares: normalizeNumber(metrics.shares),
-    favorites: normalizeNumber(metrics.favorites),
-    follower_gain: normalizeNumber(metrics.follower_gain),
-    follower_loss: normalizeNumber(metrics.follower_loss),
-    follower_convert: normalizeNumber(metrics.follower_convert),
+    play_count: roundedPlayCount,
+    likes: roundedLikes,
+    comments: roundedComments,
+    shares: roundedShares,
+    favorites: roundedFavorites,
+    follower_gain: roundedFollowerGain,
+    follower_loss: roundedFollowerLoss,
+    follower_convert: roundedFollowerConvert,
     homepage_visits: 0,
     fan_play_ratio: null,
     cover_click_rate: null,
-    avg_play_duration: normalizeNumber(metrics.avg_play_duration),
-    completion_rate: normalizeNumber(metrics.completion_rate),
-    bounce_rate_2s: normalizeNumber(metrics.bounce_rate_2s),
-    completion_rate_5s: normalizeNumber(metrics.completion_rate_5s),
+    avg_play_duration: roundedAvgPlayDuration,
+    completion_rate: roundedCompletionRate,
+    bounce_rate_2s: roundedBounceRate2s,
+    completion_rate_5s: roundedCompletionRate5s,
     avg_play_ratio: null,
-    vs_previous: body.published_at_text ? { published_at_text: body.published_at_text } : null,
+    vs_previous: body.published_at_text || Object.keys(ocrSummary).length
+      ? {
+          published_at_text: body.published_at_text ?? null,
+          ocr_summary: Object.keys(ocrSummary).length ? ocrSummary : null,
+        }
+      : null,
     screenshot_urls: screenshotUrls.length ? screenshotUrls : null,
     curve_screenshot_url: curveScreenshotUrl,
     retention_screenshot_url: retentionScreenshotUrl,
@@ -311,29 +341,37 @@ export async function POST(request: NextRequest) {
     report_date: bizDate,
     title: videoPayload.video_title || "视频提交",
     submitter,
-    play_count: normalizeNumber(metrics.play_count),
-    likes: normalizeNumber(metrics.likes),
-    comments: normalizeNumber(metrics.comments),
-    shares: normalizeNumber(metrics.shares),
-    favorites: normalizeNumber(metrics.favorites),
-    follower_gain: normalizeNumber(metrics.follower_gain),
-    follower_convert: normalizeNumber(metrics.follower_convert),
-    completion_rate: metrics.completion_rate == null ? null : `${normalizeNumber(metrics.completion_rate)}%`,
+    play_count: roundedPlayCount,
+    likes: roundedLikes,
+    comments: roundedComments,
+    shares: roundedShares,
+    favorites: roundedFavorites,
+    follower_gain: roundedFollowerGain,
+    follower_convert: roundedFollowerConvert,
+    completion_rate: metrics.completion_rate == null ? null : `${roundedCompletionRate}%`,
     avg_play_duration:
-      metrics.avg_play_duration == null ? null : `${normalizeNumber(metrics.avg_play_duration)}秒`,
+      metrics.avg_play_duration == null ? null : `${roundedAvgPlayDuration}秒`,
     bounce_rate_2s:
-      metrics.bounce_rate_2s == null ? null : `${normalizeNumber(metrics.bounce_rate_2s)}%`,
+      metrics.bounce_rate_2s == null ? null : `${roundedBounceRate2s}%`,
     completion_rate_5s:
-      metrics.completion_rate_5s == null ? null : `${normalizeNumber(metrics.completion_rate_5s)}%`,
+      metrics.completion_rate_5s == null ? null : `${roundedCompletionRate5s}%`,
     content: videoPayload.content,
     published_at: videoPayload.published_at,
     uploaded_at: new Date().toISOString(),
     account_id,
   };
 
-  const { error: dailyReportError } = await supabase
+  // 补交/修改：同一账号同一日期 → 更新已有记录
+  const { data: existingReport } = await supabase
     .from("daily_reports")
-    .insert(dailyReportPayload);
+    .select("id")
+    .eq("account_id", account_id)
+    .eq("report_date", bizDate)
+    .maybeSingle();
+
+  const { error: dailyReportError } = existingReport
+    ? await supabase.from("daily_reports").update(dailyReportPayload).eq("id", existingReport.id)
+    : await supabase.from("daily_reports").insert(dailyReportPayload);
 
   if (dailyReportError) {
     return NextResponse.json({ error: dailyReportError.message }, { status: 500 });

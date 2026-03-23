@@ -201,6 +201,8 @@ export interface SubmissionAssetMeta {
   url: string;
   confirmed: boolean;
   confidence_score: number | null;
+  recognized_fields?: Record<string, unknown> | null;
+  screenshot_type?: "data" | "curve" | "retention" | null;
 }
 
 export interface VideoTag {

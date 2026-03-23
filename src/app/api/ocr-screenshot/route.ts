@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
+type ScreenshotTypeInput = ScreenshotType | "overview" | "traffic_curve" | "retention_curve" | "engagement_extra" | "other";
 export type ScreenshotAssetRole =
   | "screenshot_1"
   | "screenshot_2"
@@ -116,7 +117,7 @@ export type ParsedScreenshotResponse = {
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const OCR_MODEL = process.env.OCR_MODEL || "claude-haiku-4-5";
+const OCR_MODEL = process.env.OCR_MODEL || process.env.AI_MODEL || "claude-sonnet-4-6";
 const OCR_FIELDS: OcrFieldKey[] = [
   "play_count",
   "likes",
@@ -226,7 +227,7 @@ export async function POST(request: NextRequest) {
         if (!parsed) {
           return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
         }
-        return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
+        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type });
       }
 
       if (screenshotType === "retention") {
@@ -234,7 +235,7 @@ export async function POST(request: NextRequest) {
         if (!parsed) {
           return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
         }
-        return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
+        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type });
       }
 
       const parsed = parseOcrResponse(content, "data");
@@ -389,14 +390,14 @@ function buildPrompt(): string {
     "请识别截图中的 6 个核心指标，并严格只返回 JSON。",
     "要求：",
     "1. 字段固定为 play_count、likes、comments、shares、favorites、follower_gain、confidence。",
-    "2. play_count 返回以‘万’为单位的小数，例如 3.21；如果截图写的是 32100，请换算为 3.21。",
+    "2. play_count 返回真实播放量数字，例如 32100；如果截图写的是 3.21万，请换算为 32100。",
     "3. likes、comments、shares、favorites、follower_gain 返回整数。",
     "4. 无法确定时返回 null。",
     "5. confidence 必须包含以上 6 个字段，值只能是 high、medium、low。",
     "6. 只返回 JSON，不要 markdown，不要解释。",
     "返回示例：",
     JSON.stringify({
-      play_count: 3.21,
+      play_count: 32100,
       likes: 1280,
       comments: 68,
       shares: 15,
@@ -510,15 +511,34 @@ export function parseClassificationContent(content: unknown): ScreenshotType | n
   }
 }
 
+function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
+  switch (value) {
+    case "overview":
+    case "engagement_extra":
+    case "other":
+    case "data":
+      return "data";
+    case "traffic_curve":
+    case "curve":
+      return "curve";
+    case "retention_curve":
+    case "retention":
+      return "retention";
+    default:
+      return null;
+  }
+}
+
 export function parseOcrResponse(
   content: unknown,
-  screenshotType: ScreenshotType
+  screenshotType: ScreenshotTypeInput
 ): ParsedScreenshotResponse | null {
-  if (!screenshotType) {
+  const normalizedType = normalizeScreenshotTypeInput(screenshotType);
+  if (!normalizedType) {
     return null;
   }
 
-  if (screenshotType === "curve") {
+  if (normalizedType === "curve") {
     const parsed = parseCurveContent(content);
     if (!parsed) {
       return null;
@@ -527,7 +547,7 @@ export function parseOcrResponse(
     if (!parsed.recognized) {
       return {
         slot_status: "failed",
-        screenshot_type: screenshotType,
+        screenshot_type: normalizedType,
         confidence_score: 0,
         requires_manual_confirmation: true,
         error: parsed.reason,
@@ -538,14 +558,14 @@ export function parseOcrResponse(
     const confidenceScore = parsed.confidence ?? 0;
     return {
       slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
-      screenshot_type: screenshotType,
+      screenshot_type: normalizedType,
       confidence_score: confidenceScore,
       requires_manual_confirmation: confidenceScore < 0.7,
       recognized_fields: parsed as unknown as JsonObject,
     };
   }
 
-  if (screenshotType === "retention") {
+  if (normalizedType === "retention") {
     const parsed = parseRetentionContent(content);
     if (!parsed) {
       return null;
@@ -554,7 +574,7 @@ export function parseOcrResponse(
     if (!parsed.recognized) {
       return {
         slot_status: "failed",
-        screenshot_type: screenshotType,
+        screenshot_type: normalizedType,
         confidence_score: 0,
         requires_manual_confirmation: true,
         error: parsed.reason,
@@ -565,7 +585,7 @@ export function parseOcrResponse(
     const confidenceScore = parsed.confidence ?? 0;
     return {
       slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
-      screenshot_type: screenshotType,
+      screenshot_type: normalizedType,
       confidence_score: confidenceScore,
       requires_manual_confirmation: confidenceScore < 0.7,
       recognized_fields: parsed as unknown as JsonObject,
@@ -585,7 +605,7 @@ export function parseOcrResponse(
   if (!hasAnyValue) {
     return {
       slot_status: "failed",
-      screenshot_type: screenshotType,
+      screenshot_type: normalizedType,
       confidence_score: 0,
       requires_manual_confirmation: true,
       error: "图片不清晰或未识别到数据",
@@ -597,7 +617,7 @@ export function parseOcrResponse(
 
   return {
     slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
-    screenshot_type: screenshotType,
+    screenshot_type: normalizedType,
     confidence_score: confidenceScore,
     requires_manual_confirmation: confidenceScore < 0.7,
     recognized_fields: recognizedFields,
@@ -810,8 +830,7 @@ function normalizeConfidence(value: unknown): ConfidenceLevel {
 }
 
 export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType | null {
-  // screenshot_1/2/3 不强制映射类型，走 AI 自动检测
-  return null;
+  return normalizeScreenshotTypeInput(assetRole);
 }
 
 function normalizeScreenshotType(value: unknown): ScreenshotType | null {

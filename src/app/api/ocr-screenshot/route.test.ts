@@ -27,7 +27,7 @@ test("自动分类识别截图类型", () => {
 test("overview OCR 返回待确认结果结构", () => {
   const result = parseOcrResponse(
     JSON.stringify({
-      play_count: 3.21,
+      play_count: 32100,
       likes: 1280,
       comments: 68,
       shares: 15,
@@ -51,7 +51,7 @@ test("overview OCR 返回待确认结果结构", () => {
     confidence_score: 0.67,
     requires_manual_confirmation: true,
     recognized_fields: {
-      play_count: 3.21,
+      play_count: 32100,
       likes: 1280,
       comments: 68,
       shares: 15,
