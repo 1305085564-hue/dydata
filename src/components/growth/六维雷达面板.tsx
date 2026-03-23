@@ -128,7 +128,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
       <h2 className="mb-4 text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
 
       {/* 主体：左列(列表+强弱) + 右列(雷达图) */}
-      <div className="flex flex-col gap-6 lg:grid lg:gap-6" style={{ gridTemplateColumns: "2fr 3fr" }}>
+      <div className="flex flex-col gap-6 lg:grid lg:gap-4" style={{ gridTemplateColumns: "5fr 7fr" }}>
 
         {/* ── 左列 ── */}
         <div className="flex flex-col">
@@ -227,11 +227,10 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
           </div>
 
           {/* SVG 雷达图 */}
-          <div className="mt-[-8px] w-full flex flex-col items-end">
+          <div className="-mt-2 w-full">
           <svg
             viewBox="-60 -40 520 480"
-            className="w-full max-w-[460px]"
-            style={{ marginTop: "-12px" }}
+            className="w-full"
             aria-label="六维能力雷达图"
           >
             {/* 网格 */}
