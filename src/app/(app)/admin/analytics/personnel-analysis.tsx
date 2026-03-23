@@ -50,7 +50,7 @@ function getSuggestion(p: { hitRate: number; stability: number; trend: number; e
   // 重点关注：趋势明显下滑 → 绿色（差）
   if (p.trend < -10) return { label: "重点关注", color: "bg-green-100 text-green-700 border-green-300" };
   // 继续放量：爆款率高 + 趋势上升或稳定 → 红色（优秀）
-  if (p.hitRate >= 30 && p.trend >= 0) return { label: "继续放量", color: "bg-red-100 text-red-700 border-red-300" };
+  if (p.hitRate >= 30 && p.trend >= 0) return { label: "继续放量", color: "bg-rose-100 text-rose-700 border-rose-300" };
   // 默认：保持观察 → 蓝色
   return { label: "保持观察", color: "bg-gray-100 text-gray-600 border-gray-300" };
 }
@@ -192,7 +192,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
   const borderColor = isInsufficient
     ? "border-l-4 border-l-gray-300 bg-gray-50/50"
     : person.suggestion.label === "继续放量"
-    ? "border-l-4 border-l-red-400 bg-red-50/50"
+    ? "border-l-4 border-l-rose-400 bg-rose-50/50"
     : person.suggestion.label === "保持观察"
     ? "border-l-4 border-l-blue-400 bg-blue-50/50"
     : person.suggestion.label === "波动异常"
@@ -223,7 +223,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           ) : (
             <Badge
               variant={person.hitRate >= 40 ? "default" : person.hitRate >= 20 ? "secondary" : "outline"}
-              className={person.hitRate >= 40 ? "bg-red-500" : person.hitRate < 20 ? "border-green-300 text-green-600" : ""}
+              className={person.hitRate >= 40 ? "bg-rose-400" : person.hitRate < 20 ? "border-green-300 text-green-600" : ""}
             >
               <MetricValue value={person.hitRate} suffix="%" />
             </Badge>
@@ -233,7 +233,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           <p className="text-xs text-[var(--color-text-secondary)]">稳定性</p>
           <Badge
             variant={person.stability < 5 ? "default" : person.stability < 15 ? "secondary" : "outline"}
-            className={person.stability < 5 ? "bg-red-500" : person.stability >= 15 ? "border-green-300 text-green-600" : ""}
+            className={person.stability < 5 ? "bg-rose-400" : person.stability >= 15 ? "border-green-300 text-green-600" : ""}
           >
             {person.stability < 5 ? "稳定" : person.stability < 15 ? "一般" : "波动大"}
           </Badge>
@@ -245,7 +245,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           ) : (
             <Badge
               variant={person.trend > 10 ? "default" : person.trend < -10 ? "outline" : "secondary"}
-              className={person.trend > 10 ? "bg-red-500" : person.trend < -10 ? "border-green-300 text-green-600" : ""}
+              className={person.trend > 10 ? "bg-rose-400" : person.trend < -10 ? "border-green-300 text-green-600" : ""}
             >
               <span className="tabular-nums">{person.trend > 0 ? "+" : ""}<MetricValue value={person.trend} suffix="%" /></span>
             </Badge>
@@ -258,7 +258,7 @@ function PersonCard({ person, index }: { person: PersonStats; index: number }) {
           ) : (
             <Badge
               variant={person.engagementRate >= 5 ? "default" : person.engagementRate >= 2 ? "secondary" : "outline"}
-              className={person.engagementRate >= 5 ? "bg-red-500" : person.engagementRate < 2 ? "border-green-300 text-green-600" : ""}
+              className={person.engagementRate >= 5 ? "bg-rose-400" : person.engagementRate < 2 ? "border-green-300 text-green-600" : ""}
             >
               <MetricValue value={person.engagementRate} suffix="%" maximumFractionDigits={2} />
             </Badge>

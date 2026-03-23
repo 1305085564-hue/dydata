@@ -36,14 +36,12 @@ function avgDim(reports: MetricsReport[], dim: DimKey): number {
   return vals.reduce((s, v) => s + v, 0) / vals.length;
 }
 
-// 找该维度比 selfAvg 更好的人（至少10篇），返回 { name, avg } 或 null
-function findBenchmark(
+// 按 submitter 分组，返回 Map<name, avg>（至少5篇）
+function buildPersonAvgMap(
   dim: DimKey,
-  selfAvg: number,
   teamReports: MetricsReport[],
   myName: string | undefined,
-): { name: string; avg: number } | null {
-  // 按 submitter 分组
+): Map<string, number> {
   const byPerson = new Map<string, MetricsReport[]>();
   for (const r of teamReports) {
     const name = (r as MetricsReport & { submitter?: string }).submitter;
@@ -52,19 +50,51 @@ function findBenchmark(
     arr.push(r);
     byPerson.set(name, arr);
   }
-
-  let best: { name: string; avg: number } | null = null;
+  const result = new Map<string, number>();
   for (const [name, reps] of byPerson) {
-    if (reps.length < 10) continue;
-    const avg = avgDim(reps, dim);
-    // 对于 2s跳出率，越低越好；其余越高越好
-    const isBetter =
-      dim === "2s跳出率" ? avg < selfAvg : avg > selfAvg;
+    if (reps.length < 5) continue;
+    result.set(name, avgDim(reps, dim));
+  }
+  return result;
+}
+
+// 找该维度比 selfAvg 更好的人，返回最好的那个
+function findBenchmark(
+  dim: DimKey,
+  selfAvg: number,
+  teamReports: MetricsReport[],
+  myName: string | undefined,
+): { name: string; avg: number } | null {
+  const personMap = buildPersonAvgMap(dim, teamReports, myName);
+  let best: { name: string; avg: number } | null = null;
+  for (const [name, avg] of personMap) {
+    const isBetter = dim === "2s跳出率" ? avg < selfAvg : avg > selfAvg;
     if (isBetter && (!best || (dim === "2s跳出率" ? avg < best.avg : avg > best.avg))) {
       best = { name, avg };
     }
   }
   return best;
+}
+
+// 找该维度第二名（比自己差一点的最强者，用于领先时展示差距）
+function findSecondPlace(
+  dim: DimKey,
+  selfAvg: number,
+  teamReports: MetricsReport[],
+  myName: string | undefined,
+): { name: string; avg: number } | null {
+  const personMap = buildPersonAvgMap(dim, teamReports, myName);
+  // 找所有比自己弱的人中最强的那个（即第二名）
+  let second: { name: string; avg: number } | null = null;
+  for (const [name, avg] of personMap) {
+    const isWeaker = dim === "2s跳出率" ? avg >= selfAvg : avg <= selfAvg;
+    if (isWeaker) {
+      if (!second || (dim === "2s跳出率" ? avg < second.avg : avg > second.avg)) {
+        second = { name, avg };
+      }
+    }
+  }
+  return second;
 }
 
 // ── 建议模板 ────────────────────────────────────────────────
@@ -76,6 +106,16 @@ const WEAK_ADVICE: Record<DimKey, string> = {
   完播率: "精简视频时长至核心信息，中段加入反转/悬念维持观看动力，前 10 秒节奏加快",
   "5s完播率": "开头前 3 秒加强悬念钩子（提问/反常识/冲突画面），首帧直接呈现视觉冲击点",
   "2s跳出率": "首帧换成高对比度有人脸/动作的画面，封面文字放大至 80%+ 屏幕宽度，开头从核心结论开始说",
+};
+
+// 未达标时学习对标人的重点方向
+const WEAK_FOCUS: Record<DimKey, string> = {
+  播放量: "选题策略和发布时间",
+  涨粉: "结尾CTA引导话术",
+  点赞: "情绪共鸣和互动引导",
+  完播率: "内容节奏和时长控制",
+  "5s完播率": "开头钩子设计",
+  "2s跳出率": "封面和首帧吸引力",
 };
 
 // 已达标时的进阶建议
@@ -134,17 +174,15 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
   const weakItems = dimItems.filter((i) => i.isWeak);
   const strongItems = dimItems.filter((i) => !i.isWeak);
 
-  // 动作建议：弱项用 WEAK_ADVICE，强项用 STRONG_ADVICE + 对标人
-  const adviceItems: { dim: DimKey; label: string; tip: string; isWeak: boolean; benchmark?: { name: string; avg: number } }[] = [
-    ...weakItems.slice(0, 3).map((item) => ({
-      dim: item.dim,
-      label: item.label,
-      tip: WEAK_ADVICE[item.dim],
-      isWeak: true,
-    })),
-    ...strongItems.slice(0, 2).map((item) => {
+  // 动作建议：弱项找对标人学习，强项展示第二名差距
+  const adviceItems: { dim: DimKey; label: string; tip: string; isWeak: boolean; benchmark?: { name: string; avg: number }; second?: { name: string; avg: number } }[] = [
+    ...weakItems.slice(0, 3).map((item) => {
       const benchmark = findBenchmark(item.dim, item.selfAvg, teamReports, myName);
-      return { dim: item.dim, label: item.label, tip: STRONG_ADVICE[item.dim], isWeak: false, benchmark: benchmark ?? undefined };
+      return { dim: item.dim, label: item.label, tip: WEAK_ADVICE[item.dim], isWeak: true, benchmark: benchmark ?? undefined };
+    }),
+    ...strongItems.slice(0, 2).map((item) => {
+      const second = findSecondPlace(item.dim, item.selfAvg, teamReports, myName);
+      return { dim: item.dim, label: item.label, tip: STRONG_ADVICE[item.dim], isWeak: false, second: second ?? undefined };
     }),
   ].slice(0, 4);
 
@@ -184,33 +222,41 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
             </div>
           ) : (
             <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-2">
-              {/* 未达标维度 */}
-              {weakItems.map((item) => (
-                <motion.div key={`weak-${item.dim}`} variants={itemVariants} className="rounded-[12px] border border-orange-200/60 bg-orange-50/60 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-orange-800">{item.label}</span>
-                    <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
-                      低 {(item.gapPct * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-orange-700/80">
-                    你的{item.label}（{fmt(item.dim, item.selfAvg)}）比团队均值（{fmt(item.dim, item.teamAvg)}）低 {(item.gapPct * 100).toFixed(0)}%
-                  </p>
-                </motion.div>
-              ))}
-              {/* 已达标维度 */}
-              {strongItems.map((item) => {
+              {/* 未达标维度：向团队中谁学习 */}
+              {weakItems.map((item) => {
                 const benchmark = findBenchmark(item.dim, item.selfAvg, teamReports, myName);
+                return (
+                  <motion.div key={`weak-${item.dim}`} variants={itemVariants} className="rounded-[12px] border border-orange-200/60 bg-orange-50/60 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-orange-800">{item.label}</span>
+                      <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                        团队中游 · {fmt(item.dim, item.selfAvg)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-orange-700/80">
+                      {benchmark
+                        ? `${item.label}处于团队中游（得分 ${fmt(item.dim, item.selfAvg)}），建议参考 ${benchmark.name} 的做法（得分 ${fmt(item.dim, benchmark.avg)}），重点学习其${WEAK_FOCUS[item.dim]}`
+                        : `${item.label}（${fmt(item.dim, item.selfAvg)}）比团队均值（${fmt(item.dim, item.teamAvg)}）低 ${(item.gapPct * 100).toFixed(0)}%，${WEAK_ADVICE[item.dim]}`}
+                    </p>
+                  </motion.div>
+                );
+              })}
+              {/* 已达标维度：第二名距离你有多近 */}
+              {strongItems.map((item) => {
+                const second = findSecondPlace(item.dim, item.selfAvg, teamReports, myName);
+                const gap = second
+                  ? Math.abs(item.selfAvg - second.avg)
+                  : null;
                 return (
                   <motion.div key={`strong-${item.dim}`} variants={itemVariants} className="rounded-[12px] border border-emerald-200/60 bg-emerald-50/60 p-3">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium text-emerald-800">{item.label}</span>
-                      <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">已达标</span>
+                      <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">团队领先</span>
                     </div>
                     <p className="mt-1 text-xs text-emerald-700/80">
-                      {benchmark
-                        ? `对标 ${benchmark.name}（${fmt(item.dim, benchmark.avg)}），继续向更高水平冲刺`
-                        : "你是该维度团队最强，继续保持领先优势"}
+                      {second && gap !== null
+                        ? `${item.label}你是团队领先（得分 ${fmt(item.dim, item.selfAvg)}），第二名 ${second.name}（得分 ${fmt(item.dim, second.avg)}）距你仅差 ${fmt(item.dim, gap)}，保持优势`
+                        : `${item.label}你是团队最强（得分 ${fmt(item.dim, item.selfAvg)}），继续保持领先优势`}
                     </p>
                   </motion.div>
                 );
@@ -260,8 +306,11 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                 >
                   <div className="mb-1 flex items-center gap-2">
                     <span className="text-xs font-medium text-[#007AFF]/70">{item.label}</span>
-                    {!item.isWeak && item.benchmark && (
-                      <span className="rounded-full bg-[#007AFF]/10 px-1.5 py-0.5 text-[10px] text-[#007AFF]/60">对标 {item.benchmark.name}</span>
+                    {item.isWeak && item.benchmark && (
+                      <span className="rounded-full bg-[#007AFF]/10 px-1.5 py-0.5 text-[10px] text-[#007AFF]/60">参考 {item.benchmark.name}</span>
+                    )}
+                    {!item.isWeak && item.second && (
+                      <span className="rounded-full bg-[#007AFF]/10 px-1.5 py-0.5 text-[10px] text-[#007AFF]/60">第二名 {item.second.name}</span>
                     )}
                   </div>
                   <p className="text-sm leading-5 text-[var(--color-text-primary)]">{item.tip}</p>
