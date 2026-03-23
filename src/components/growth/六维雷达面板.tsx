@@ -224,7 +224,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         {/* ── 右列：雷达图（紧凑viewBox，图形撑满） ── */}
         <div className="flex items-center justify-center">
           <svg
-            viewBox="-80 -45 460 420"
+            viewBox="-80 -45 400 378"
             className="w-full max-w-[420px]"
             aria-label="六维能力雷达图"
           >
