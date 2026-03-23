@@ -178,7 +178,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                     <span className="w-[5.5rem] shrink-0 text-[15px] font-semibold text-[var(--color-text-primary)]">
                       {dimIcons[card.name] ?? "·"} {card.name}
                     </span>
-                    <div className="h-[7px] flex-1 max-w-[60%] rounded-full bg-gray-100">
+                    <div className="h-[7px] flex-1 max-w-[35%] rounded-full bg-gray-100">
                       <div
                         className={cn("h-full rounded-full transition-all", barColor)}
                         style={{ width: hasData ? `${score}%` : "0%" }}
@@ -224,7 +224,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         {/* ── 右列：雷达图（紧凑viewBox，图形撑满） ── */}
         <div className="flex items-center justify-center">
           <svg
-            viewBox="-50 -40 400 378"
+            viewBox="-50 -53 400 378"
             className="w-full max-w-[420px]"
             aria-label="六维能力雷达图"
           >
