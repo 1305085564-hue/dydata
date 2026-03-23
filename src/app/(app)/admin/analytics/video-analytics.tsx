@@ -221,7 +221,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">负责人</p>
-                      <p className="mt-1 text-base font-semibold tracking-tight">{video.profiles.name}</p>
+                      <p className="mt-1 text-base font-semibold tracking-tight">{video.profiles?.name ?? "未知"}</p>
                     </div>
                   </div>
 
@@ -324,7 +324,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                           </div>
                         </TableCell>
                         <TableCell>{video.accounts.name}</TableCell>
-                        <TableCell>{video.profiles.name}</TableCell>
+                        <TableCell>{video.profiles?.name ?? "未知"}</TableCell>
                         <TableCell className="text-right font-medium tabular-nums">
                           {formatCompactNumber(video.snapshot24h.play_count)}
                         </TableCell>
