@@ -38,7 +38,7 @@ export default async function AdminVideosPage() {
     ]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">视频管理</h1>
         <p className="text-sm text-muted-foreground">

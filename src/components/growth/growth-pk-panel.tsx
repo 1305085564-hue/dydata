@@ -46,8 +46,8 @@ function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
 
 function Row({ row, leftName, rightName }: { row: GrowthPkRow; leftName: string; rightName: string }) {
   const max = Math.max(row.leftValue, row.rightValue, 1);
-  const leftRatio = row.leftValue / max;
-  const rightRatio = row.rightValue / max;
+  const leftRatio = Math.max(row.leftValue / max, row.leftValue === 0 ? 0.01 : 0);
+  const rightRatio = Math.max(row.rightValue / max, row.rightValue === 0 ? 0.01 : 0);
   const leftLeads = row.leftValue > row.rightValue;
   const tied = row.leftValue === row.rightValue;
 

@@ -273,16 +273,22 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
         {/* 动作建议区 */}
         {myReports.length === 0 && (
           <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">动作建议 <span className="ml-1 normal-case text-[var(--color-text-secondary)]/60">示范数据</span></div>
-            <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">动作建议</div>
+            <div className="space-y-2 relative">
+              {/* Demo 水印覆盖 */}
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px]">
+                <div className="rounded-lg bg-slate-800/80 px-4 py-1.5 text-sm font-bold tracking-widest text-white shadow-xl rotate-[-5deg]">
+                  DEMO / 示例数据
+                </div>
+              </div>
               {[
                 { label: "2秒跳出率", tip: "开头留人：前3秒加入悬念问句，降低跳出率" },
                 { label: "互动引导", tip: "在第15秒插入互动提问，提升评论率" },
                 { label: "转化优化", tip: "结尾用「点击主页看更多」替代通用CTA" },
               ].map((item, i) => (
-                <div key={i} className="rounded-[12px] border border-dashed border-[#007AFF]/20 bg-[#007AFF]/5 p-3">
-                  <div className="mb-1 text-xs font-medium text-[#007AFF]/70">{item.label}</div>
-                  <p className="text-sm leading-5 text-[var(--color-text-primary)]">{item.tip}</p>
+                <div key={i} className="rounded-[12px] border border-dashed border-slate-300 bg-slate-50 p-3 opacity-60">
+                  <div className="mb-1 text-xs font-medium text-slate-500">{item.label}</div>
+                  <p className="text-sm leading-5 text-slate-400">{item.tip}</p>
                 </div>
               ))}
             </div>

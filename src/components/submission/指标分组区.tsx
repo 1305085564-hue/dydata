@@ -79,7 +79,7 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
           {DIVIDER}
 
           {/* 互动数据 - 小字 */}
-          <div className="opacity-75">
+          <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">互动数据</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {INTERACTION_ITEMS.map((item) => (
@@ -97,7 +97,7 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
           {DIVIDER}
 
           {/* 完播留存 - 小字 */}
-          <div className={retentionOptional ? "opacity-50" : "opacity-75"}>
+          <div className={retentionOptional ? "opacity-50" : ""}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">
               完播留存{retentionOptional && <span className="ml-1 normal-case">（可选）</span>}
             </p>

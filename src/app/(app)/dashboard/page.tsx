@@ -144,10 +144,16 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-24 md:pb-0">
       <DashboardAnimatedSection index={0}>
-        <div>
-          <h1 className="text-2xl font-semibold">
+        <div className="flex items-end justify-between">
+          <h1 className="text-2xl font-semibold text-foreground">
             你好，{profile?.name ?? user.email}
+            <span className="ml-3 text-sm font-normal text-muted-foreground hidden sm:inline-block">
+              {new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" })}
+            </span>
           </h1>
+          <span className="text-sm text-muted-foreground sm:hidden">
+            {new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric" })}
+          </span>
         </div>
       </DashboardAnimatedSection>
 

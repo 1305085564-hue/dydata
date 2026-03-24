@@ -174,6 +174,11 @@ export function Leaderboard({
   }, [baseRows, boardType, normalizedOwnDirections, ownAccountIds, progressByAccount, sortKey, sortDir]);
 
   const visibleItems = compact ? items.slice(0, 10) : items;
+  const visibleMetrics = compact
+    ? METRICS.filter((m) =>
+        ["views", "followerGain", "likes", "completionRate5s"].includes(m.key)
+      )
+    : METRICS;
 
   return (
     <div className="glass-card-static space-y-4 p-4 sm:p-5">
@@ -199,12 +204,12 @@ export function Leaderboard({
             {compact ? (
               <>
                 <ChevronDown className="size-3.5" />
-                展开版
+                展开完整数据
               </>
             ) : (
               <>
                 <ChevronUp className="size-3.5" />
-                简版
+                收起次要数据
               </>
             )}
           </Button>
@@ -218,7 +223,7 @@ export function Leaderboard({
       ) : (
         <>
           <div className="overflow-x-auto rounded-2xl ring-1 ring-foreground/8">
-            <Table className="min-w-[1380px] table-fixed">
+            <Table className={cn("table-fixed", compact ? "min-w-[800px]" : "min-w-[1380px]")}>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="sticky left-0 z-20 w-16 bg-background/95 backdrop-blur">排名</TableHead>
@@ -226,7 +231,7 @@ export function Leaderboard({
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
-                  {METRICS.map((metric) => (
+                  {visibleMetrics.map((metric) => (
                     <TableHead
                       key={metric.key}
                       className="min-w-[96px] cursor-pointer select-none text-right"
@@ -273,7 +278,7 @@ export function Leaderboard({
                         <ProgressValue item={item} />
                       </TableCell>
                     ) : null}
-                    {METRICS.map((metric) => (
+                    {visibleMetrics.map((metric) => (
                       <TableCell key={metric.key} className="text-right tabular-nums">
                         {formatMetric(item, metric.key)}
                       </TableCell>

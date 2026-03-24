@@ -41,7 +41,7 @@ export default async function AdminAdvicePage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">建议管理</h1>
         <p className="text-sm text-muted-foreground">按员工、账号、状态和来源查看建议闭环，并支持批量生成与复核。</p>

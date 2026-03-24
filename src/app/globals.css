@@ -111,7 +111,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  --primary: oklch(0.6 0.2 260);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -154,13 +154,8 @@
   }
   /* Toast 居中主控制点 */
   body [data-sonner-toaster] {
-    --offset-top: 0px;
+    --offset-top: 1rem;
     --offset-bottom: 0px;
-    top: 50% !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
   }
   input,
   textarea,

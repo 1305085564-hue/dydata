@@ -119,7 +119,7 @@ export function SubmissionSlotCard({
             }
           }}
           className={cn(
-            "relative flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-[var(--radius-2xl)] border-2 border-dashed px-4 py-6 text-center transition-transform duration-200",
+            "relative flex min-h-28 md:min-h-40 w-full flex-col items-center justify-center gap-3 rounded-[var(--radius-2xl)] border-2 border-dashed px-4 py-4 md:py-6 text-center transition-transform duration-200",
             "bg-[color:rgba(255,255,255,0.75)]",
             isProcessing && "border-[color:rgba(0,122,255,0.45)] shadow-[0_0_0_1px_rgba(0,122,255,0.08),0_0_20px_rgba(0,122,255,0.12)]",
             isWarning && "border-[color:var(--color-warning)] bg-[color:rgba(255,149,0,0.06)]",

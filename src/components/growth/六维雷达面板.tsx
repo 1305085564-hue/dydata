@@ -60,19 +60,19 @@ function ratingToScore(card: GrowthDimensionCard): number {
   return card.rating.label === "强" ? 85 : card.rating.label === "中" ? 65 : 40;
 }
 
-// ─── 颜色规则（红=好>=80，黄=警告50-79，绿=差<50，灰=无数据） ──
+// ─── 颜色规则（强/绿=好>=80，黄=警告50-79，弱/红=差<50，灰=无数据） ──
 function scoreToBarColor(score: number, hasData: boolean): string {
   if (!hasData) return "bg-gray-300";
-  if (score >= 80) return "bg-rose-400";
+  if (score >= 80) return "bg-emerald-500";
   if (score >= 50) return "bg-amber-400";
-  return "bg-emerald-400";
+  return "bg-rose-500";
 }
 
 function scoreToTextColor(score: number, hasData: boolean): string {
   if (!hasData) return "text-gray-400";
-  if (score >= 80) return "text-rose-500";
+  if (score >= 80) return "text-emerald-600";
   if (score >= 50) return "text-amber-600";
-  return "text-emerald-600";
+  return "text-rose-600";
 }
 
 // ─── P80 基准分 ───────────────────────────────────────────────
@@ -197,7 +197,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3">
               <p className="text-[11px] font-medium text-rose-400">最强 · {capabilityCards[strongIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-rose-500">
+              <p className="mt-0.5 text-sm font-semibold text-emerald-600">
                 {strongCard && strongCard.state === "benchmark"
                   ? `${strongCard.personName} — ${strongCard.metricText}`
                   : strongCard?.state === "self_best"
@@ -209,8 +209,8 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
               </p>
             </div>
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
-              <p className="text-[11px] font-medium text-emerald-500">最弱 · {capabilityCards[weakIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-emerald-700">
+              <p className="text-[11px] font-medium text-rose-500">最弱 · {capabilityCards[weakIndex]?.name}</p>
+              <p className="mt-0.5 text-sm font-semibold text-rose-600">
                 你 — {capabilityCards[weakIndex]?.metricText ?? `${myScores[weakIndex]} 分`}
               </p>
               <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">
@@ -222,10 +222,10 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         </div>
 
         {/* ── 右列：雷达图（紧凑viewBox，图形撑满） ── */}
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center max-h-[300px]">
           <svg
             viewBox="-55 -45 410 380"
-            className="w-full max-w-[420px]"
+            className="w-full max-w-[420px] max-h-full"
             aria-label="六维能力雷达图"
           >
             {/* 网格 */}

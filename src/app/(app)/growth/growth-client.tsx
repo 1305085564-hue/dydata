@@ -50,7 +50,7 @@ export function GrowthClientShell({
   const hasEnoughData = reportCount >= 3;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
       <div>
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">成长分析</h1>
         <p className="mt-1 text-sm text-[var(--color-text-secondary)]">

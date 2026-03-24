@@ -54,6 +54,9 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
           <span className="hidden text-sm text-muted-foreground min-[420px]:inline">
             {name}
           </span>
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary min-[420px]:hidden">
+            {name?.charAt(0)?.toUpperCase() || "?"}
+          </div>
           <form action={signOut}>
             <Button variant="ghost" size="sm" type="submit">
               退出

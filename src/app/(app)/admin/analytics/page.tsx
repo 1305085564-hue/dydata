@@ -148,7 +148,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-2 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-2 sm:px-6 lg:px-8">
       <AnalyticsPageHeader preset={range.preset} from={range.from} to={range.to} />
       <视频结论卡
         videos={filteredVideos as AnalyticsVideoRow[]}

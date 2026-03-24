@@ -232,35 +232,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-8">
       <section className="rounded-[var(--radius-2xl)] border border-white/60 bg-[var(--glass-bg)] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur-[20px]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">Admin Console</p>
             <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">管理员后台</h1>
             <p className="text-sm text-[var(--color-text-secondary)]">集中管理成员、数据、权限与导出操作。</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
-              <CalendarDays className="size-4" />
-              {queryDate}
-            </Button>
-            {hasPermission(perm.role, perm.permissions, "export_data") ? (
-              <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
-                <Download className="size-4" />
-                数据导出
-              </Button>
-            ) : null}
-            {isOwner ? (
-              <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
-                <ShieldCheck className="size-4" />
-                权限管理
-              </Button>
-            ) : null}
-            <Button variant="outline" size="sm" className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]">
-              <Settings2 className="size-4" />
-              管理操作
-            </Button>
           </div>
         </div>
       </section>
@@ -343,7 +321,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       <TableHead>姓名</TableHead>
                       <TableHead>角色</TableHead>
                       <TableHead className="hidden md:table-cell">所属团队</TableHead>
-                      <TableHead className="hidden md:table-cell">所属小组</TableHead>
                       <TableHead>状态</TableHead>
                       <TableHead className="hidden md:table-cell">注册时间</TableHead>
                     </TableRow>
@@ -351,7 +328,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <TableBody>
                     {(allProfiles ?? []).length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6}>
+                        <TableCell colSpan={5}>
                           <div className="flex flex-col items-center gap-3 py-10 text-center">
                             <div className="flex size-10 items-center justify-center rounded-full bg-muted">
                               <Users className="size-5 text-muted-foreground" />
@@ -370,7 +347,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{typeof p.teams === "object" && p.teams && "name" in p.teams ? (p.teams.name as string) : "-"}</TableCell>
-                        <TableCell className="hidden md:table-cell text-[var(--color-text-secondary)]">即将推出</TableCell>
                         <TableCell>
                           <Badge variant={p.status === "exempt" ? "outline" : "default"} className="text-xs">
                             {p.status === "exempt" ? "豁免" : "在岗"}

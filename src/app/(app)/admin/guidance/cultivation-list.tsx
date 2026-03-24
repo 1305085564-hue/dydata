@@ -119,7 +119,7 @@ export function CultivationList(props: GuidanceInput) {
   const result = useMemo(() => buildGuidanceResult(props), [props]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-2 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-2 sm:px-6 lg:px-8">
       <div className="space-y-3">
         <div className="inline-flex items-center rounded-full border border-white/70 bg-white/75 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-xl">
           Admin Guidance
