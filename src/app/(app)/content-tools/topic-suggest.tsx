@@ -57,9 +57,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
     }
   }
 
-  useEffect(() => {
-    void loadSuggestions();
-  }, [accountId, days]);
+
 
   return (
     <div className="space-y-4">

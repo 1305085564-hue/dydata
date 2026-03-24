@@ -98,7 +98,7 @@ export function LoginForm({ action }: LoginFormProps) {
           <CardHeader className="text-center">
             <motion.div
               animate={{ scale: [1, 1.05, 1] }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
               className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-xl font-bold text-primary-foreground"
             >
               DY
