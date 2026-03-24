@@ -218,11 +218,11 @@ export function Leaderboard({
       ) : (
         <>
           <div className="overflow-x-auto rounded-2xl ring-1 ring-foreground/8">
-            <Table className="min-w-[1380px]">
+            <Table className="min-w-[1380px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="sticky left-0 z-20 w-16 bg-background/95 backdrop-blur">排名</TableHead>
-                  <TableHead className="sticky left-16 z-20 min-w-[180px] bg-background/95 backdrop-blur">账号</TableHead>
+                  <TableHead className="sticky left-16 z-20 w-[180px] bg-background/95 backdrop-blur">账号</TableHead>
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
@@ -256,7 +256,7 @@ export function Leaderboard({
                       <RankBadge rank={item.rank} />
                     </TableCell>
                     <TableCell className="sticky left-16 z-10 bg-background/95 backdrop-blur">
-                      <div className="min-w-[180px]">
+                      <div className="w-[180px]">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{item.accountName}</span>
                           {item.isOwn ? (
