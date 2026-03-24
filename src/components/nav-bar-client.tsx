@@ -51,10 +51,10 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
           </div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-          <span className="hidden text-sm text-muted-foreground min-[420px]:inline">
+          <span className="hidden text-sm text-muted-foreground sm:inline">
             {name}
           </span>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary min-[420px]:hidden">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary sm:hidden">
             {name?.charAt(0)?.toUpperCase() || "?"}
           </div>
           <form action={signOut}>
