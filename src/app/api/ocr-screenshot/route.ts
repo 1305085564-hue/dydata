@@ -20,6 +20,15 @@ type OcrFieldKey =
   | "favorites"
   | "follower_gain";
 
+type CurveInfoExtra = {
+  curve_pattern?: string | null;
+};
+
+type RetentionInfoExtra = {
+  bounce_peak_time?: string | null;
+  replay_peak_time?: string | null;
+};
+
 type ParsedOcrResult = {
   play_count: number | null;
   likes: number | null;
@@ -28,6 +37,8 @@ type ParsedOcrResult = {
   favorites: number | null;
   follower_gain: number | null;
   confidence: Record<OcrFieldKey, ConfidenceLevel>;
+  curve_info?: CurveInfoExtra | null;
+  retention_info?: RetentionInfoExtra | null;
 };
 
 type CurveRecognitionResult =
@@ -394,7 +405,10 @@ function buildPrompt(): string {
     "3. likes、comments、shares、favorites、follower_gain 返回整数。",
     "4. 无法确定时返回 null。",
     "5. confidence 必须包含以上 6 个字段，值只能是 high、medium、low。",
-    "6. 只返回 JSON，不要 markdown，不要解释。",
+    "6. 如果截图中还包含推流曲线（每小时新增播放量图），增加 curve_info 字段，包含 curve_pattern（前高后低/平稳增长/二次起量/低开高走/断崖式）。",
+    "7. 如果截图中还包含跳出率/回看率图表，增加 retention_info 字段，包含 bounce_peak_time 和 replay_peak_time。",
+    "8. 如果没有推流曲线或跳出率图表，不用返回 curve_info 或 retention_info。",
+    "9. 只返回 JSON，不要 markdown，不要解释。",
     "返回示例：",
     JSON.stringify({
       play_count: 32100,
@@ -411,6 +425,7 @@ function buildPrompt(): string {
         favorites: "low",
         follower_gain: "medium",
       },
+      curve_info: { curve_pattern: "二次起量" },
     }),
   ].join("\n");
 }
@@ -419,7 +434,10 @@ function buildClassificationPrompt(): string {
   return [
     "你是抖音截图分类助手。",
     "请判断截图类型，只能返回 data、curve、retention 三种之一。",
-    "data=常规数据截图，curve=每小时新增播放量推流曲线，retention=跳出率/回看率图。",
+    "data=包含播放量、点赞、评论、分享、收藏、涨粉等数字指标的截图。",
+    "curve=仅包含每小时新增播放量推流曲线图（没有数字指标）。",
+    "retention=仅包含跳出率/回看率曲线图（没有数字指标）。",
+    "重要：如果截图同时包含数字指标（播放量等）和曲线图，必须返回 data。",
     "只返回 JSON。",
     JSON.stringify({ screenshot_type: "data" }),
   ].join("\n");
@@ -601,6 +619,13 @@ export function parseOcrResponse(
     OCR_FIELDS.filter((field) => parsed[field] !== null).map((field) => [field, parsed[field]])
   ) as JsonObject;
 
+  if (parsed.curve_info) {
+    (recognizedFields as Record<string, JsonValue>).curve_info = parsed.curve_info as unknown as JsonObject;
+  }
+  if (parsed.retention_info) {
+    (recognizedFields as Record<string, JsonValue>).retention_info = parsed.retention_info as unknown as JsonObject;
+  }
+
   const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null);
   if (!hasAnyValue) {
     return {
@@ -639,6 +664,8 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
   try {
     const raw = JSON.parse(jsonText) as Partial<ParsedOcrResult> & {
       confidence?: Partial<Record<OcrFieldKey, ConfidenceLevel>>;
+      curve_info?: { curve_pattern?: unknown };
+      retention_info?: { bounce_peak_time?: unknown; replay_peak_time?: unknown };
     };
 
     const normalized: ParsedOcrResult = {
@@ -656,6 +683,13 @@ function parseOcrContent(content: unknown): ParsedOcrResult | null {
         favorites: normalizeConfidence(raw.confidence?.favorites),
         follower_gain: normalizeConfidence(raw.confidence?.follower_gain),
       },
+      curve_info: raw.curve_info ? {
+        curve_pattern: normalizeOptionalText(raw.curve_info.curve_pattern) ?? null,
+      } : null,
+      retention_info: raw.retention_info ? {
+        bounce_peak_time: normalizeOptionalText(raw.retention_info.bounce_peak_time) ?? null,
+        replay_peak_time: normalizeOptionalText(raw.retention_info.replay_peak_time) ?? null,
+      } : null,
     };
 
     return normalized;

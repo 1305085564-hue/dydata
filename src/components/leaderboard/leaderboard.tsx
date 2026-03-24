@@ -223,7 +223,6 @@ export function Leaderboard({
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="sticky left-0 z-20 w-16 bg-background/95 backdrop-blur">排名</TableHead>
                   <TableHead className="sticky left-16 z-20 min-w-[180px] bg-background/95 backdrop-blur">账号</TableHead>
-                  <TableHead className="min-w-[150px]">标签</TableHead>
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
@@ -241,6 +240,7 @@ export function Leaderboard({
                       </span>
                     </TableHead>
                   ))}
+                  <TableHead className="min-w-[150px]">标签</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -268,12 +268,6 @@ export function Leaderboard({
                         <p className="mt-1 text-xs text-muted-foreground">{item.ownerName}</p>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <TagStack
-                        contentDirection={item.contentDirection}
-                        presentationFormat={item.presentationFormat}
-                      />
-                    </TableCell>
                     {boardType === "progress" ? (
                       <TableCell className="text-right">
                         <ProgressValue item={item} />
@@ -284,6 +278,12 @@ export function Leaderboard({
                         {formatMetric(item, metric.key)}
                       </TableCell>
                     ))}
+                    <TableCell>
+                      <TagStack
+                        contentDirection={item.contentDirection}
+                        presentationFormat={item.presentationFormat}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

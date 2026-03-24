@@ -219,10 +219,22 @@ function buildOcrSummary(
     ].filter((item): item is string => Boolean(item));
   }
 
-  return Object.entries(recognizedFields)
-    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+  const baseSummary = Object.entries(recognizedFields)
+    .filter(([key, value]) => value !== null && value !== undefined && value !== "" && key !== "curve_info" && key !== "retention_info")
     .slice(0, 4)
     .map(([key, value]) => `${key}：${String(value)}`);
+
+  const curveInfo = recognizedFields.curve_info as unknown as Record<string, string | null> | undefined;
+  const retentionInfo = recognizedFields.retention_info as unknown as Record<string, string | null> | undefined;
+
+  if (curveInfo?.curve_pattern) {
+    baseSummary.push(`推流曲线：${curveInfo.curve_pattern}`);
+  }
+  if (retentionInfo?.bounce_peak_time) {
+    baseSummary.push(`跳出峰值：${retentionInfo.bounce_peak_time}`);
+  }
+
+  return baseSummary;
 }
 
 function createEditableFields(): SubmissionState["fields"] {
@@ -830,23 +842,46 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>异常状态</Label>
-                <Select
-                  value={meta.anomalyStatus}
-                  onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-                >
-                  <SelectTrigger className="h-11 rounded-[var(--radius-lg)] bg-white">
-                    <SelectValue placeholder="请选择异常状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ANOMALY_OPTIONS.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="biz_date">数据日期 <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="biz_date"
+                    type="date"
+                    value={meta.bizDate}
+                    max={today}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (isBizDateSelectable(today, value)) {
+                        updateMeta("bizDate", value);
+                      }
+                    }}
+                    className="h-11 rounded-[var(--radius-lg)] bg-white"
+                  />
+                  {bizDateHelper ? (
+                    <p className="text-xs text-amber-600">{bizDateHelper}</p>
+                  ) : meta.bizDate !== today ? (
+                    <p className="text-xs text-blue-600">补交 {meta.bizDate} 的数据</p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label>异常状态</Label>
+                  <Select
+                    value={meta.anomalyStatus}
+                    onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
+                  >
+                    <SelectTrigger className="h-11 rounded-[var(--radius-lg)] bg-white">
+                      <SelectValue placeholder="请选择异常状态" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ANOMALY_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
