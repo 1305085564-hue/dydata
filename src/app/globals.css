@@ -238,10 +238,10 @@
     height: 14rem;
     border-radius: 0 0 2rem 2rem;
     background:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 14%, white) 0%, transparent 48%),
-      linear-gradient(180deg, color-mix(in srgb, white 82%, var(--background)) 0%, transparent 100%);
+      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 8%, white) 0%, transparent 38%),
+      linear-gradient(180deg, color-mix(in srgb, white 88%, var(--background)) 0%, transparent 78%);
     pointer-events: none;
-    opacity: 0.95;
+    opacity: 0.72;
   }
 
   .dashboard-surface {

@@ -227,7 +227,7 @@ export function Leaderboard({
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="sticky left-0 z-20 w-14 bg-background/95 backdrop-blur">排名</TableHead>
-                  <TableHead className="sticky left-14 z-20 w-[110px] bg-background/95 backdrop-blur">账号</TableHead>
+                  <TableHead className="sticky left-14 z-20 w-[96px] bg-background/95 backdrop-blur">账号</TableHead>
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
@@ -261,14 +261,10 @@ export function Leaderboard({
                       <RankBadge rank={item.rank} />
                     </TableCell>
                     <TableCell className="sticky left-14 z-10 bg-background/95 backdrop-blur">
-                      <div className="w-[110px]">
-                        <div className="flex flex-wrap items-center gap-1">
-                          <span className="font-semibold text-foreground">{item.accountName}</span>
-                          {item.isOwn ? (
-                            <Badge variant="secondary" className="rounded-full">
-                              我的账号
-                            </Badge>
-                          ) : null}
+                      <div className="w-[96px]">
+                        <div className="flex items-center gap-1">
+                          <span className="truncate font-semibold text-foreground">{item.accountName}</span>
+                          {item.isOwn ? <span className="size-1.5 shrink-0 rounded-full bg-primary" /> : null}
                         </div>
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.ownerName}</p>
                       </div>

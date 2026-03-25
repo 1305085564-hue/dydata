@@ -207,7 +207,6 @@ export function buildStatusCards(myReports: MetricsReport[], prevReports: Metric
       deltaText: formatPercent(Math.abs(makeDelta(totalPlay, prevTotalPlay))),
       compact: true,
       precision: 1,
-      suffix: "万",
     },
     {
       label: "总涨粉",
