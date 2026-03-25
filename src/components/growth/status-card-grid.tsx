@@ -33,15 +33,15 @@ export function StatusCardGrid({ items }: { items: StatusCardItem[] }) {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-40px" }}
-      className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5"
+      className="grid grid-cols-3 gap-2 sm:grid-cols-3 xl:grid-cols-5"
     >
       {items.map((item, index) => (
         <motion.div key={item.label} variants={itemVariants} className="h-full">
           <MotionCard index={index} className="h-full border-[var(--color-border)] bg-[var(--color-surface)]">
-            <div className="flex h-full flex-col justify-between gap-3 p-4">
+            <div className="flex h-full flex-col justify-between gap-2 p-3">
               <p className="text-xs font-medium text-[var(--color-text-secondary)]">{item.label}</p>
-              <div className="flex items-end justify-between gap-2">
-                <div className="text-2xl font-bold tabular-nums tracking-[-0.02em] text-[var(--color-text-primary)]">
+              <div className="flex items-end justify-between gap-1">
+                <div className="text-xl font-bold tabular-nums tracking-[-0.02em] text-[var(--color-text-primary)]">
                   <StatusValue item={item} />
                 </div>
                 <Delta item={item} />

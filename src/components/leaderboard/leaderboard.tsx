@@ -176,19 +176,19 @@ export function Leaderboard({
   const visibleItems = compact ? items.slice(0, 10) : items;
   const visibleMetrics = compact
     ? METRICS.filter((m) =>
-        ["views", "followerGain", "likes", "completionRate5s"].includes(m.key)
+        ["views", "followerGain", "likes", "bounceRate", "completionRate5s"].includes(m.key)
       )
     : METRICS;
 
   return (
     <div className="glass-card-static space-y-4 p-4 sm:p-5">
-      <div className="space-y-3 rounded-2xl bg-muted/50 p-3 ring-1 ring-foreground/8 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+      <div className="space-y-2 rounded-2xl bg-muted/50 p-2 ring-1 ring-foreground/8 backdrop-blur supports-[backdrop-filter]:bg-background/75">
         <SegmentedControl
           options={TYPE_OPTIONS}
           value={boardType}
           onChange={(value) => setBoardType(value as LeaderboardType)}
         />
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <SegmentedControl
             options={RANGE_OPTIONS}
             value={range}
@@ -223,18 +223,18 @@ export function Leaderboard({
       ) : (
         <>
           <div className="overflow-x-auto rounded-2xl ring-1 ring-foreground/8">
-            <Table className={cn("table-fixed", compact ? "min-w-[800px]" : "min-w-[1380px]")}>
+            <Table className={cn("table-fixed", compact ? "min-w-[560px]" : "min-w-[1380px]")}>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="sticky left-0 z-20 w-16 bg-background/95 backdrop-blur">排名</TableHead>
-                  <TableHead className="sticky left-16 z-20 w-[180px] bg-background/95 backdrop-blur">账号</TableHead>
+                  <TableHead className="sticky left-0 z-20 w-14 bg-background/95 backdrop-blur">排名</TableHead>
+                  <TableHead className="sticky left-14 z-20 w-[110px] bg-background/95 backdrop-blur">账号</TableHead>
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
                   {visibleMetrics.map((metric) => (
                     <TableHead
                       key={metric.key}
-                      className="min-w-[96px] cursor-pointer select-none text-right"
+                      className="min-w-[72px] cursor-pointer select-none text-right"
                       onClick={() => handleSortClick(metric.key)}
                     >
                       <span className="inline-flex items-center justify-end gap-1">
@@ -260,9 +260,9 @@ export function Leaderboard({
                     <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur">
                       <RankBadge rank={item.rank} />
                     </TableCell>
-                    <TableCell className="sticky left-16 z-10 bg-background/95 backdrop-blur">
-                      <div className="w-[180px]">
-                        <div className="flex items-center gap-2">
+                    <TableCell className="sticky left-14 z-10 bg-background/95 backdrop-blur">
+                      <div className="w-[110px]">
+                        <div className="flex flex-wrap items-center gap-1">
                           <span className="font-semibold text-foreground">{item.accountName}</span>
                           {item.isOwn ? (
                             <Badge variant="secondary" className="rounded-full">
@@ -270,7 +270,7 @@ export function Leaderboard({
                             </Badge>
                           ) : null}
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">{item.ownerName}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.ownerName}</p>
                       </div>
                     </TableCell>
                     {boardType === "progress" ? (

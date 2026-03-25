@@ -157,8 +157,8 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports }: Vide
           ) : null}
         </CardHeader>
 
-        <CardContent className="space-y-4 px-5 pb-5 sm:px-6 sm:pb-6">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
+          <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
             {accounts.map((account) => {
               const isSelected = account.id === (selectedAccount?.id ?? "");
               const summary = getTodaySubmissionSummary(mergedTodayReports, account.id);
@@ -175,7 +175,7 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports }: Vide
                     setLastAiTags([]);
                   }}
                   className={[
-                    "rounded-[1.35rem] border p-4 text-left transition-all duration-200",
+                    "rounded-[1.35rem] border p-3 text-left transition-all duration-200 sm:p-4",
                     isSelected
                       ? "border-primary/35 bg-primary/8 shadow-[0_14px_30px_-20px_rgba(37,99,235,0.42)]"
                       : "border-border/60 bg-background/72 hover:bg-background/92",
