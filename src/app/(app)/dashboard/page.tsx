@@ -7,12 +7,10 @@ import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Clock, Sparkles } from "lucide-react";
+import { Clock } from "lucide-react";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
-import { AdvicePanel } from "./advice-panel";
 import { hasPendingExemptionRequest } from "./actions";
-import { 申请豁免弹窗 } from "./申请豁免弹窗";
 import { HistoryList } from "./history-list";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
 
@@ -25,17 +23,13 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: accounts }] = await Promise.all([
-    supabase.from("profiles").select("name").eq("id", user.id).single(),
-    supabase
-      .from("accounts")
-      .select("id, name, content_direction")
-      .eq("profile_id", user.id)
-      .order("created_at", { ascending: true }),
-  ]);
+  const { data: accounts } = await supabase
+    .from("accounts")
+    .select("id, name, content_direction")
+    .eq("profile_id", user.id)
+    .order("created_at", { ascending: true });
 
   const today = new Date().toISOString().split("T")[0];
-  const todayStart = `${today}T00:00:00.000Z`;
   const accountIds = (accounts ?? []).map((account) => account.id);
   const ownContentDirections = Array.from(
     new Set(
@@ -45,13 +39,7 @@ export default async function DashboardPage() {
     )
   );
 
-  const [
-    { data: _userTodayReports },
-    { data: history },
-    { data: todayVideos },
-    { data: allVideos },
-    { data: videoSnapshots },
-  ] = await Promise.all([
+  const [{ data: _userTodayReports }, { data: history }] = await Promise.all([
     accountIds.length
       ? supabase
           .from("daily_reports")
@@ -73,32 +61,11 @@ export default async function DashboardPage() {
           .order("uploaded_at", { ascending: false })
           .limit(30)
       : Promise.resolve({ data: [] }),
-    accountIds.length
-      ? supabase
-          .from("videos")
-          .select("id, account_id")
-          .in("account_id", accountIds)
-          .gte("created_at", todayStart)
-      : Promise.resolve({ data: [] }),
-    accountIds.length
-      ? supabase.from("videos").select("id").in("account_id", accountIds)
-      : Promise.resolve({ data: [] }),
-    accountIds.length
-      ? supabase
-          .from("video_metrics_snapshots")
-          .select("video_id")
-          .in("account_id", accountIds)
-      : Promise.resolve({ data: [] }),
   ]);
 
-  const todaySubmittedAccountIds = new Set((todayVideos ?? []).map((video) => video.account_id));
   const todayReports = ((_userTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
   );
-  const pendingVideoCount = (accounts ?? []).filter((account) => !todaySubmittedAccountIds.has(account.id)).length;
-  const snapshotVideoIds = new Set((videoSnapshots ?? []).map((snapshot) => snapshot.video_id));
-  const pending24hCount = (allVideos ?? []).filter((video) => !snapshotVideoIds.has(video.id)).length;
-  const allTasksCompleted = pendingVideoCount === 0 && pending24hCount === 0;
 
   const monthAgoDate = new Date();
   monthAgoDate.setDate(monthAgoDate.getDate() - 30);
@@ -148,94 +115,16 @@ export default async function DashboardPage() {
   return (
     <div className="dashboard-shell mx-auto max-w-5xl space-y-6 px-1 pb-24 md:space-y-8 md:pb-0">
       <DashboardAnimatedSection index={0}>
-        <Card className="dashboard-surface dashboard-surface-hero card-elevated overflow-hidden rounded-[1.75rem] border-0">
-          <CardContent className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <div className="dashboard-section-kicker inline-flex items-center gap-2">
-                  <Sparkles className="size-3.5" />
-                  今日填报
-                </div>
-                <div>
-                  <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
-                    你好，{profile?.name ?? user.email}
-                  </h1>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
-                    先完成今日提交，再回看趋势、排行和历史记录。
-                  </p>
-                </div>
-              </div>
-              <div className="dashboard-summary-chip shrink-0 text-xs sm:text-sm">
-                {new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" })}
-              </div>
-            </div>
-
-            <div className="dashboard-summary-bar">
-              <div className="grid w-full grid-cols-2 gap-2">
-                <div className="dashboard-summary-chip w-full justify-between">
-                  <span className="text-xs text-muted-foreground">今日待提交</span>
-                  <span className="tabular-nums text-sm font-semibold text-foreground">{pendingVideoCount}</span>
-                </div>
-                <div className="dashboard-summary-chip w-full justify-between">
-                  <span className="text-xs text-muted-foreground">待补 24h</span>
-                  <span className="tabular-nums text-sm font-semibold text-foreground">{pending24hCount}</span>
-                </div>
-              </div>
-              <div className="dashboard-summary-chip w-full justify-between">
-                <span className="text-xs text-muted-foreground">当前状态</span>
-                <span className={allTasksCompleted ? "dashboard-status dashboard-status-submitted" : "dashboard-status dashboard-status-pending"}>
-                  {allTasksCompleted ? "今日已清空" : "还有待办"}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <VideoSubmitPanel
+          accounts={accounts ?? []}
+          userId={user.id}
+          today={today}
+          todayReports={todayReports}
+          hasPendingExemption={hasPending}
+        />
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={1}>
-        <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="dashboard-section-kicker mb-1">待办概览</div>
-                <CardTitle className="dashboard-section-title">先完成这两项</CardTitle>
-              </div>
-              <申请豁免弹窗 hasPending={hasPending} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {allTasksCompleted ? (
-              <div className="dashboard-field-group">
-                <p className="dashboard-status dashboard-status-submitted">✅ 今日任务已完成</p>
-              </div>
-            ) : (
-              <div className="space-y-3 text-sm">
-                <div className="dashboard-field-group flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden="true">◻</span>
-                    <span>今日待提交视频</span>
-                  </div>
-                  <span className="text-base font-semibold tabular-nums">{pendingVideoCount}</span>
-                </div>
-                <div className="dashboard-field-group flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden="true">◷</span>
-                    <span>待补24h数据</span>
-                  </div>
-                  <span className="text-base font-semibold tabular-nums">{pending24hCount}</span>
-                </div>
-                <AdvicePanel />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </DashboardAnimatedSection>
-
-      <DashboardAnimatedSection index={2}>
-        <VideoSubmitPanel accounts={accounts ?? []} userId={user.id} today={today} todayReports={todayReports} />
-      </DashboardAnimatedSection>
-
-      <DashboardAnimatedSection index={3}>
         <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
           <CardHeader>
             <CardTitle>数据趋势</CardTitle>
@@ -257,7 +146,7 @@ export default async function DashboardPage() {
         </Card>
       </DashboardAnimatedSection>
 
-      <DashboardAnimatedSection index={4}>
+      <DashboardAnimatedSection index={2}>
         <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
           <CardHeader>
             <CardTitle>账号排行榜</CardTitle>
@@ -275,7 +164,7 @@ export default async function DashboardPage() {
         </Card>
       </DashboardAnimatedSection>
 
-      <DashboardAnimatedSection index={5}>
+      <DashboardAnimatedSection index={3}>
         <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
           <CardHeader>
             <CardTitle>历史记录（最近 30 条）</CardTitle>

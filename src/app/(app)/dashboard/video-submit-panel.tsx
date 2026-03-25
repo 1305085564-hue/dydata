@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { 申请豁免弹窗 } from "./申请豁免弹窗";
 import {
   Select,
   SelectContent,
@@ -34,9 +35,10 @@ interface VideoSubmitPanelProps {
   userId: string;
   today: string;
   todayReports: TodaySubmissionReportLike[];
+  hasPendingExemption?: boolean;
 }
 
-export function VideoSubmitPanel({ accounts, userId, today, todayReports }: VideoSubmitPanelProps) {
+export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPendingExemption = false }: VideoSubmitPanelProps) {
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [lastSubmittedVideoId, setLastSubmittedVideoId] = useState<string | null>(null);
@@ -118,12 +120,15 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports }: Vide
               </div>
             </div>
 
-            {selectedAccount ? (
-              <div className="dashboard-summary-chip self-start text-xs sm:text-sm">
-                当前账号
-                <span className="font-semibold text-foreground">{selectedAccount.name}</span>
-              </div>
-            ) : null}
+            <div className="flex items-start gap-2">
+              {selectedAccount ? (
+                <div className="dashboard-summary-chip self-start text-xs sm:text-sm">
+                  当前账号
+                  <span className="font-semibold text-foreground">{selectedAccount.name}</span>
+                </div>
+              ) : null}
+              <申请豁免弹窗 hasPending={hasPendingExemption} />
+            </div>
           </div>
 
           {accounts.length > 1 ? (
