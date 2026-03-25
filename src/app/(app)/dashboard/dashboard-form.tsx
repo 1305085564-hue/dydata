@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ScanSearch } from "lucide-react";
+import { ScanSearch, Sparkles } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
   type ScreenshotImportEditableValues,
 } from "@/components/screenshot-import";
 import { submitReport } from "./actions";
+import { getDashboardMetricGridClass, getDashboardSurfaceClass } from "./dashboard-visuals";
 import { getDefaultPublishedAtValue, normalizePublishedAtInputValue } from "@/lib/日报";
 
 export interface DashboardReportData {
@@ -133,8 +134,8 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
   return (
     <div className="relative">
       {showSuccess && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm">
-          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4">
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[1.5rem] bg-background/78 backdrop-blur-md">
+          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-[1.75rem] bg-white/78 px-8 py-7 shadow-[0_20px_60px_-28px_rgba(16,185,129,0.48)] dark:bg-emerald-950/55">
             <div className="relative flex h-20 w-20 items-center justify-center">
               <div className="absolute inset-0 rounded-full bg-green-100 animate-ping opacity-30" />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
@@ -148,21 +149,27 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
         </div>
       )}
 
-      <form key={formKey} onSubmit={handleSubmit} className="space-y-5 pb-20 sm:pb-0">
+      <form key={formKey} onSubmit={handleSubmit} className="space-y-5 pb-24 sm:pb-0">
         <input type="hidden" name="account_id" value={selectedAccountId} />
 
-        <Card className="card-elevated border-dashed bg-background/70 backdrop-blur-sm">
-          <CardContent className="flex flex-col gap-4 pt-5 pb-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <h3 className="text-sm font-semibold tracking-wide text-foreground">截图识别导入</h3>
-              <p className="text-sm text-muted-foreground">
-                上传抖音数据截图，自动提取播放、互动与涨粉指标，再手动校对后回填。
-              </p>
+        <Card className={`${getDashboardSurfaceClass("hero")} card-elevated overflow-hidden rounded-[1.5rem] border-0`}>
+          <CardContent className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="space-y-2">
+              <div className="dashboard-section-kicker inline-flex items-center gap-2">
+                <Sparkles className="size-3.5" />
+                截图导入
+              </div>
+              <div className="space-y-1">
+                <h3 className="dashboard-section-title">先导入截图，再校对回填</h3>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  上传抖音数据截图，自动提取播放、互动与涨粉指标。确认后再写入主表单，避免你重复输入。
+                </p>
+              </div>
             </div>
             <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
               <DialogTrigger
                 render={
-                  <Button type="button" variant="outline" className="w-full sm:w-auto" />
+                  <Button type="button" className="h-12 w-full rounded-2xl px-5 text-base sm:w-auto" />
                 }
               >
                 <ScanSearch className="size-4" />
@@ -181,10 +188,13 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </CardContent>
         </Card>
 
-        <Card className="card-elevated border-dashed bg-muted/20">
-          <CardContent className="space-y-4 pt-5 pb-5">
-            <h3 className="text-sm font-semibold tracking-wide text-foreground">📋 基本信息</h3>
-            <div className="space-y-4">
+        <Card className={`${getDashboardSurfaceClass("panel")} card-elevated rounded-[1.5rem] border-0`}>
+          <CardContent className="space-y-4 px-5 py-5 sm:px-6">
+            <div className="space-y-1">
+              <div className="dashboard-section-kicker">基本信息</div>
+              <h3 className="dashboard-section-title">先把这几项填清楚</h3>
+            </div>
+            <div className="dashboard-field-group space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="title">视频标题</Label>
                 <Input id="title" name="title" placeholder="请输入视频标题" required className="h-10" defaultValue={existingData?.title ?? ""} />
@@ -214,11 +224,14 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
-          <CardContent className="space-y-5 pt-5 pb-5">
-            <h3 className="text-base font-bold text-foreground">🔥 核心数据</h3>
-            <div className="grid grid-cols-1 gap-4 rounded-xl bg-primary/5 p-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
+        <Card className={`${getDashboardSurfaceClass("panel")} card-elevated rounded-[1.5rem] border-0`}>
+          <CardContent className="space-y-5 px-5 py-5 sm:px-6">
+            <div className="space-y-1">
+              <div className="dashboard-section-kicker">核心数据</div>
+              <h3 className="dashboard-section-title">先盯播放量和涨粉</h3>
+            </div>
+            <div className={`${getDashboardMetricGridClass("primary")} rounded-[1.5rem] bg-primary/6 p-3 sm:p-4`}>
+              <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                 <Label htmlFor="play_count">播放量</Label>
                 <Input
                   id="play_count"
@@ -233,7 +246,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                   onChange={(e) => updateOcrValue("play_count", e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                 <Label htmlFor="follower_gain">涨粉</Label>
                 <Input
                   id="follower_gain"
@@ -247,29 +260,29 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
+            <div className={`${getDashboardMetricGridClass("primary")} mt-1`}>
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="completion_rate">完播率</Label>
                 <div className="relative">
                   <Input id="completion_rate" name="completion_rate" type="number" step="0.01" min={0} max={100} placeholder="14.81" className="h-10 pr-8" defaultValue={stripSuffix(existingData?.completion_rate ?? null, "%")} />
                   <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">%</span>
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="avg_play_duration">平均播放时长</Label>
                 <div className="relative">
                   <Input id="avg_play_duration" name="avg_play_duration" type="number" step="0.1" min={0} placeholder="56" className="h-10 pr-8" defaultValue={stripSuffix(existingData?.avg_play_duration ?? null, "秒")} />
                   <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">秒</span>
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="bounce_rate_2s">2s跳出率</Label>
                 <div className="relative">
                   <Input id="bounce_rate_2s" name="bounce_rate_2s" type="number" step="0.01" min={0} max={100} placeholder="30" className="h-10 pr-8" defaultValue={stripSuffix(existingData?.bounce_rate_2s ?? null, "%")} />
                   <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">%</span>
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="completion_rate_5s">5s完播率</Label>
                 <div className="relative">
                   <Input id="completion_rate_5s" name="completion_rate_5s" type="number" step="0.01" min={0} max={100} placeholder="20" className="h-10 pr-8" defaultValue={stripSuffix(existingData?.completion_rate_5s ?? null, "%")} />
@@ -280,11 +293,14 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </CardContent>
         </Card>
 
-        <Card className="card-elevated bg-muted/10">
-          <CardContent className="space-y-5 pt-5 pb-5">
-            <h3 className="text-sm font-semibold tracking-wide text-foreground">📎 补充信息</h3>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <div className="space-y-1.5">
+        <Card className={`${getDashboardSurfaceClass("panel")} card-elevated rounded-[1.5rem] border-0`}>
+          <CardContent className="space-y-5 px-5 py-5 sm:px-6">
+            <div className="space-y-1">
+              <div className="dashboard-section-kicker">补充信息</div>
+              <h3 className="dashboard-section-title">把互动、发布时间和文案补齐</h3>
+            </div>
+            <div className={getDashboardMetricGridClass("secondary")}>
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="likes">点赞</Label>
                 <Input
                   id="likes"
@@ -297,7 +313,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                   onChange={(e) => updateOcrValue("likes", e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="comments">评论</Label>
                 <Input
                   id="comments"
@@ -310,7 +326,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                   onChange={(e) => updateOcrValue("comments", e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="shares">分享</Label>
                 <Input
                   id="shares"
@@ -323,7 +339,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                   onChange={(e) => updateOcrValue("shares", e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="favorites">收藏</Label>
                 <Input
                   id="favorites"
@@ -337,12 +353,12 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
+            <div className="dashboard-field-group grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="dashboard-field-group space-y-1.5">
                 <Label htmlFor="follower_convert">导粉（选填）</Label>
                 <Input id="follower_convert" name="follower_convert" type="number" min={0} defaultValue={existingData?.follower_convert ?? ""} className="h-10" />
               </div>
-              <div className="space-y-1.5">
+              <div className="dashboard-field-group space-y-1.5">
                 <Label htmlFor="published_at">发布时间</Label>
                 <Input
                   id="published_at"
@@ -353,7 +369,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                 />
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="dashboard-field-group space-y-1.5">
               <Label htmlFor="content">文案内容（选填）</Label>
               <textarea
                 id="content"
@@ -362,18 +378,19 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                 className="min-h-[120px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 defaultValue={existingData?.content ?? ""}
               />
+              <p className="text-xs leading-5 text-muted-foreground">只填今天这条视频的实际发布文案，方便后面回看和复盘。</p>
             </div>
           </CardContent>
         </Card>
 
         <div className="hidden sm:block">
-          <Button type="submit" disabled={isPending} className="w-auto">
+          <Button type="submit" disabled={isPending} className="h-11 min-w-[168px] rounded-2xl px-6 text-sm">
             {isPending ? "提交中..." : existingData ? "修改日报" : "提交日报"}
           </Button>
         </div>
 
-        <div className="fixed right-0 bottom-0 left-0 z-20 border-t bg-background/90 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:hidden">
-          <Button type="submit" disabled={isPending} className="h-12 w-full text-base">
+        <div className="fixed right-0 bottom-0 left-0 z-20 dashboard-mobile-submit-bar p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:hidden">
+          <Button type="submit" disabled={isPending} className="h-12 w-full rounded-2xl text-base font-semibold shadow-[0_18px_40px_-20px_rgba(37,99,235,0.6)]">
             {isPending ? "提交中..." : existingData ? "修改日报" : "提交日报"}
           </Button>
         </div>

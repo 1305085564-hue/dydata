@@ -1,29 +1,31 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  extractJsonString,
-  isContentToolsAction,
-  parseTopicSuggestions,
-} from "./helpers.ts";
-
-test("isContentToolsAction recognizes supported actions", () => {
+test("isContentToolsAction recognizes supported actions", async () => {
+  const mod = await import(new URL("./helpers.ts", import.meta.url).href);
+  const { isContentToolsAction } = mod;
   assert.equal(isContentToolsAction("topic_suggest"), true);
   assert.equal(isContentToolsAction("template_library"), true);
   assert.equal(isContentToolsAction("publish_recommend"), true);
   assert.equal(isContentToolsAction("other"), false);
 });
 
-test("extractJsonString handles fenced JSON", () => {
+test("extractJsonString handles fenced JSON", async () => {
+  const mod = await import(new URL("./helpers.ts", import.meta.url).href);
+  const { extractJsonString } = mod;
   const content = '```json\n{"foo":1}\n```';
   assert.equal(extractJsonString(content), '{"foo":1}');
 });
 
-test("parseTopicSuggestions returns null for invalid payload", () => {
+test("parseTopicSuggestions returns null for invalid payload", async () => {
+  const mod = await import(new URL("./helpers.ts", import.meta.url).href);
+  const { parseTopicSuggestions } = mod;
   assert.equal(parseTopicSuggestions("{}"), null);
 });
 
-test("parseTopicSuggestions parses valid suggestion list", () => {
+test("parseTopicSuggestions parses valid suggestion list", async () => {
+  const mod = await import(new URL("./helpers.ts", import.meta.url).href);
+  const { parseTopicSuggestions } = mod;
   const content = JSON.stringify({
     suggestions: [
       {

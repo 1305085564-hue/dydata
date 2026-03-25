@@ -7,7 +7,7 @@ import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Clock } from "lucide-react";
+import { Clock, Sparkles } from "lucide-react";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
 import { AdvicePanel } from "./advice-panel";
@@ -146,47 +146,81 @@ export default async function DashboardPage() {
   const hasPending = await hasPendingExemptionRequest();
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-24 md:pb-0">
+    <div className="dashboard-shell mx-auto max-w-5xl space-y-6 px-1 pb-24 md:space-y-8 md:pb-0">
       <DashboardAnimatedSection index={0}>
-        <div className="flex items-end justify-between">
-          <h1 className="text-2xl font-semibold text-foreground">
-            你好，{profile?.name ?? user.email}
-            <span className="ml-3 text-sm font-normal text-muted-foreground hidden sm:inline-block">
-              {new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" })}
-            </span>
-          </h1>
-          <span className="text-sm text-muted-foreground sm:hidden">
-            {new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric" })}
-          </span>
-        </div>
+        <Card className="dashboard-surface dashboard-surface-hero card-elevated overflow-hidden rounded-[1.75rem] border-0">
+          <CardContent className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <div className="dashboard-section-kicker inline-flex items-center gap-2">
+                  <Sparkles className="size-3.5" />
+                  今日填报
+                </div>
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[2rem]">
+                    你好，{profile?.name ?? user.email}
+                  </h1>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
+                    先完成今日提交，再回看趋势、排行和历史记录。
+                  </p>
+                </div>
+              </div>
+              <div className="dashboard-summary-chip shrink-0 text-xs sm:text-sm">
+                {new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" })}
+              </div>
+            </div>
+
+            <div className="dashboard-summary-bar">
+              <div className="dashboard-summary-chip">
+                <span className="text-xs text-muted-foreground">今日待提交</span>
+                <span className="tabular-nums text-sm font-semibold text-foreground">{pendingVideoCount}</span>
+              </div>
+              <div className="dashboard-summary-chip">
+                <span className="text-xs text-muted-foreground">待补 24h</span>
+                <span className="tabular-nums text-sm font-semibold text-foreground">{pending24hCount}</span>
+              </div>
+              <div className="dashboard-summary-chip">
+                <span className="text-xs text-muted-foreground">当前状态</span>
+                <span className={allTasksCompleted ? "dashboard-status dashboard-status-submitted" : "dashboard-status dashboard-status-pending"}>
+                  {allTasksCompleted ? "今日已清空" : "还有待办"}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={1}>
-        <Card className="card-elevated">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>待办清单</CardTitle>
+        <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="dashboard-section-kicker mb-1">待办概览</div>
+                <CardTitle className="dashboard-section-title">先完成这两项</CardTitle>
+              </div>
               <申请豁免弹窗 hasPending={hasPending} />
             </div>
           </CardHeader>
           <CardContent>
             {allTasksCompleted ? (
-              <p className="text-sm font-medium text-emerald-600">✅ 今日任务已完成</p>
+              <div className="dashboard-field-group">
+                <p className="dashboard-status dashboard-status-submitted">✅ 今日任务已完成</p>
+              </div>
             ) : (
               <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between gap-4 rounded-lg border bg-background px-4 py-3">
+                <div className="dashboard-field-group flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <span aria-hidden="true">◻</span>
                     <span>今日待提交视频</span>
                   </div>
-                  <span className="font-semibold tabular-nums">{pendingVideoCount}</span>
+                  <span className="text-base font-semibold tabular-nums">{pendingVideoCount}</span>
                 </div>
-                <div className="flex items-center justify-between gap-4 rounded-lg border bg-background px-4 py-3">
+                <div className="dashboard-field-group flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <span aria-hidden="true">◷</span>
                     <span>待补24h数据</span>
                   </div>
-                  <span className="font-semibold tabular-nums">{pending24hCount}</span>
+                  <span className="text-base font-semibold tabular-nums">{pending24hCount}</span>
                 </div>
                 <AdvicePanel />
               </div>
@@ -200,7 +234,7 @@ export default async function DashboardPage() {
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={3}>
-        <Card className="card-elevated">
+        <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
           <CardHeader>
             <CardTitle>数据趋势</CardTitle>
           </CardHeader>
@@ -222,7 +256,7 @@ export default async function DashboardPage() {
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={4}>
-        <Card className="card-elevated">
+        <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
           <CardHeader>
             <CardTitle>账号排行榜</CardTitle>
           </CardHeader>
@@ -240,7 +274,7 @@ export default async function DashboardPage() {
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={5}>
-        <Card className="card-elevated">
+        <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.5rem] border-0">
           <CardHeader>
             <CardTitle>历史记录（最近 30 条）</CardTitle>
           </CardHeader>
