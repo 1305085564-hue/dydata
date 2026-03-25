@@ -11,6 +11,7 @@ interface SubmissionSlotsProps {
   onSelectFile: (role: SubmissionSlotRole, file: File) => void;
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
+  issueCount?: number;
 }
 
 const SLOT_META: Array<{
@@ -24,16 +25,23 @@ const SLOT_META: Array<{
   { role: "screenshot_3", title: "截图 3（可选）", description: "补充截图", required: false },
 ];
 
-export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry }: SubmissionSlotsProps) {
+export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry, issueCount = 0 }: SubmissionSlotsProps) {
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
-          截图上传
-        </h3>
-        <p className="text-sm text-[var(--color-text-secondary)]">
-          上传 2 张截图（必传），AI 自动识别图片类型。可选上传第 3 张补充截图。
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
+            截图上传
+          </h3>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            上传 2 张截图（必传），AI 自动识别图片类型。可选上传第 3 张补充截图。
+          </p>
+        </div>
+        {issueCount > 0 ? (
+          <span className="rounded-full bg-[color:rgba(255,149,0,0.12)] px-3 py-1 text-xs font-medium text-[var(--color-warning)]">
+            待处理 {issueCount}
+          </span>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

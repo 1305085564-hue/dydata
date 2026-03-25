@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
@@ -37,6 +37,7 @@ import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import {
   canSubmit,
   createInitialSubmissionState,
+  summarizeSubmissionIssues,
   type EditableMetricKey,
   type SubmissionFieldState,
   type SubmissionSlotRole,
@@ -140,6 +141,26 @@ const OVERVIEW_FIELDS: EditableMetricKey[] = [
   "shares",
   "favorites",
 ];
+
+const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
+  screenshot_1: "截图1",
+  screenshot_2: "截图2",
+  screenshot_3: "截图3",
+};
+
+const FIELD_LABELS: Record<EditableMetricKey, string> = {
+  play_count: "播放量",
+  follower_gain: "涨粉数",
+  follower_convert: "导粉数",
+  likes: "点赞数",
+  comments: "评论数",
+  shares: "分享数",
+  favorites: "收藏数",
+  avg_play_duration: "均播时长",
+  bounce_rate_2s: "2s跳出率",
+  completion_rate_5s: "5s完播率",
+  completion_rate: "整体完播率",
+};
 
 function createInitialMeta(today: string): FormMetaState {
   const publishedAt = getDefaultPublishedAtValue();
@@ -338,6 +359,48 @@ function createSummaryOverride(
   };
 }
 
+function buildIssueMessages(summary: ReturnType<typeof summarizeSubmissionIssues>) {
+  const messages: string[] = [];
+
+  if (summary.missingRequiredSlots.length > 0) {
+    messages.push(`必传截图缺失：${summary.missingRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`);
+  }
+
+  if (summary.failedRequiredSlots.length > 0) {
+    messages.push(`识别失败：${summary.failedRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`);
+  }
+
+  if (summary.pendingSlotConfirmations.length > 0) {
+    messages.push(`待确认截图：${summary.pendingSlotConfirmations.map((role) => SLOT_LABELS[role]).join("、")}`);
+  }
+
+  if (summary.missingRequiredFields.length > 0) {
+    messages.push(`必填指标未填：${summary.missingRequiredFields.map((key) => FIELD_LABELS[key]).join("、")}`);
+  }
+
+  if (summary.unconfirmedFields.length > 0) {
+    messages.push(`待确认指标：${summary.unconfirmedFields.map((key) => FIELD_LABELS[key]).join("、")}`);
+  }
+
+  if (summary.topicTagMissing) {
+    messages.push("必填项未完成：话题标签");
+  }
+
+  return messages;
+}
+
+function buildIssueHintText(messages: string[]) {
+  if (messages.length === 0) {
+    return null;
+  }
+
+  if (messages.length === 1) {
+    return messages[0];
+  }
+
+  return `${messages[0]}；另外还有 ${messages.length - 1} 处问题`;
+}
+
 export function VideoSubmitForm({ account, userId, today, mode, initialSummary, onSubmitted, onCancel }: VideoSubmitFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today));
@@ -347,6 +410,9 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
+  const slotsSectionRef = useRef<HTMLDivElement | null>(null);
+  const metricsSectionRef = useRef<HTMLDivElement | null>(null);
+  const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
 
   useEffect(() => {
@@ -373,12 +439,14 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
   const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
+  const issueSummary = useMemo(
+    () => summarizeSubmissionIssues(submissionState, { topicTag: meta.topicTag, anomalyStatus: meta.anomalyStatus }),
+    [submissionState, meta.topicTag, meta.anomalyStatus]
+  );
   const submitCheck = canSubmit(submissionState);
-  const topicTagMissing = !meta.topicTag;
-  const canActuallySubmit = submitCheck.ok && !topicTagMissing;
-  const pendingConfirmCount =
-    Object.values(slots).filter((slot) => slot.status === "pending_confirm").length +
-    Object.values(fields).filter((field) => field.requiresManualConfirmation && !field.confirmed).length;
+  const canActuallySubmit = issueSummary.canSubmit;
+  const issueMessages = useMemo(() => buildIssueMessages(issueSummary), [issueSummary]);
+  const issueHintText = useMemo(() => buildIssueHintText(issueMessages), [issueMessages]);
   const bizDateHelper = getBizDateHelperText(meta.bizDate);
 
   function updateMeta<Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) {
@@ -393,6 +461,19 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         value,
       }),
     }));
+  }
+
+  function scrollToIssueAnchor(anchor: "slots" | "metrics" | "topicTag" | null) {
+    const target =
+      anchor === "slots"
+        ? slotsSectionRef.current
+        : anchor === "metrics"
+          ? metricsSectionRef.current
+          : anchor === "topicTag"
+            ? topicTagSectionRef.current
+            : null;
+
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function applyOverviewFields(
@@ -585,13 +666,15 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       return;
     }
 
-    if (!submitCheck.ok) {
-      feedbackToast.error(submitCheck.reason || "当前还不能提交");
+    if (!submitCheck.ok || !issueSummary.canSubmit) {
+      feedbackToast.error(issueHintText || issueSummary.reason || submitCheck.reason || "当前还不能提交");
+      scrollToIssueAnchor(issueSummary.firstIssueAnchor);
       return;
     }
 
     if (!meta.topicTag) {
       feedbackToast.error("请选择话题标签（干货或复盘）");
+      scrollToIssueAnchor("topicTag");
       return;
     }
 
@@ -744,29 +827,45 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-                {pendingConfirmCount > 0
-                  ? `还有 ${pendingConfirmCount} 项待确认，确认后即可提交。`
-                  : canActuallySubmit
-                    ? "当前已满足提交条件，可以直接提交。"
-                    : topicTagMissing
-                      ? "请先选择话题标签后再提交。"
-                      : submitCheck.reason || "请补全表单后提交。"}
+                {issueSummary.totalIssueCount > 0 ? (
+                  <div className="space-y-2">
+                    <p className="font-medium text-[var(--color-text-primary)]">还不能提交，请先处理这些问题：</p>
+                    <ul className="space-y-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+                      {issueMessages.map((message) => (
+                        <li key={message}>• {message}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  "当前已满足提交条件，可以直接提交。"
+                )}
               </div>
             </div>
           </MotionCard>
         </motion.div>
 
-        <motion.div variants={itemVariants}>
+        <motion.div ref={slotsSectionRef} variants={itemVariants}>
           <截图槽位区
             slots={slots}
             onSelectFile={handleSlotUpload}
             onDelete={(role) => setDeleteTargetRole(role)}
             onRetry={handleSlotRetry}
+            issueCount={
+              issueSummary.missingRequiredSlots.length +
+              issueSummary.failedRequiredSlots.length +
+              issueSummary.pendingSlotConfirmations.length
+            }
           />
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <指标分组区 fields={fields} onFieldChange={updateField} anomalyStatus={meta.anomalyStatus} />
+        <motion.div ref={metricsSectionRef} variants={itemVariants}>
+          <指标分组区
+            fields={fields}
+            onFieldChange={updateField}
+            anomalyStatus={meta.anomalyStatus}
+            missingRequiredFields={issueSummary.missingRequiredFields}
+            unconfirmedFields={issueSummary.unconfirmedFields}
+          />
         </motion.div>
 
         <motion.div variants={itemVariants}>
@@ -806,7 +905,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 />
               </div>
 
-              <div className="space-y-3">
+              <div ref={topicTagSectionRef} className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={issueSummary.topicTagMissing}>
                 <Label>话题标签 <span className="text-red-500">*</span></Label>
                 <div className="flex gap-3">
                   {(["干货", "复盘"] as const).map((tag) => (
@@ -825,6 +924,9 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     </button>
                   ))}
                 </div>
+                {issueSummary.topicTagMissing ? (
+                  <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未选择话题标签</p>
+                ) : null}
               </div>
 
               <div className="space-y-3">
@@ -989,10 +1091,14 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                  {submitCheck.ok ? "已满足提交条件" : submitCheck.reason || "请补全表单后提交"}
+                  {canActuallySubmit ? "已满足提交条件" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
-                  {pendingConfirmCount > 0 ? `还有 ${pendingConfirmCount} 项待确认，请逐项检查后提交。` : "截图识别完成后，再补充视频信息即可提交。"}
+                  {canActuallySubmit
+                    ? "截图识别完成后，再补充视频信息即可提交。"
+                    : issueSummary.totalIssueCount > 0
+                      ? `当前还有 ${issueSummary.totalIssueCount} 项问题未处理。`
+                      : "截图识别完成后，再补充视频信息即可提交。"}
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -1004,7 +1110,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 <Button
                   type="submit"
                   disabled={isSubmitting || !canActuallySubmit}
-                  title={canActuallySubmit ? undefined : (topicTagMissing ? "请选择话题标签" : submitCheck.reason || undefined)}
+                  title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
                   className="h-11 rounded-[10px] px-6"
                 >
                   {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交数据" : "保存修改"}
@@ -1020,9 +1126,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           <p className="text-xs text-[var(--color-text-secondary)]">
             {canActuallySubmit
               ? "已满足提交条件"
-              : topicTagMissing
-                ? "请选择话题标签（干货或复盘）"
-                : submitCheck.reason || "请补全表单后提交"}
+              : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
           </p>
           <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>
             {onCancel ? (
@@ -1034,7 +1138,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               type="submit"
               form="video-submit-form"
               disabled={isSubmitting || !canActuallySubmit}
-              title={canActuallySubmit ? undefined : (topicTagMissing ? "请选择话题标签" : submitCheck.reason || undefined)}
+              title={canActuallySubmit ? undefined : issueSummary.reason || submitCheck.reason || undefined}
               className="h-11 rounded-[10px] px-2 text-xs"
             >
               {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : "保存修改"}

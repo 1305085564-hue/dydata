@@ -7,7 +7,7 @@ import { SubmissionSlotCard } from "./截图槽位卡";
 test("槽位失败态默认显示统一识别失败文案", () => {
   const html = renderToStaticMarkup(
     <SubmissionSlotCard
-      role="overview"
+      role="screenshot_1"
       title="槽1 overview"
       description="数据总览截图"
       required
@@ -23,7 +23,7 @@ test("槽位失败态默认显示统一识别失败文案", () => {
 test("网络异常时显示重试按钮", () => {
   const html = renderToStaticMarkup(
     <SubmissionSlotCard
-      role="overview"
+      role="screenshot_1"
       title="槽1 overview"
       description="数据总览截图"
       required
@@ -42,7 +42,7 @@ test("网络异常时显示重试按钮", () => {
 test("识别成功后展示 OCR 文字摘要", () => {
   const html = renderToStaticMarkup(
     <SubmissionSlotCard
-      role="traffic_curve"
+      role="screenshot_2"
       title="槽2 曲线图"
       description="推流曲线截图"
       required={false}

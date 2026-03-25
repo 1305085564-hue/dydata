@@ -4,26 +4,15 @@ import { motion } from "framer-motion";
 
 import { MotionCard } from "@/components/ui/motion-card";
 import { itemVariants } from "@/lib/animations";
-import type { SubmissionFieldState } from "@/components/submission/提交状态机";
+import type { EditableMetricKey, SubmissionFieldState } from "@/components/submission/提交状态机";
 import { 指标输入卡 } from "@/components/submission/指标输入卡";
-
-type EditableMetricKey =
-  | "play_count"
-  | "follower_gain"
-  | "follower_convert"
-  | "likes"
-  | "comments"
-  | "shares"
-  | "favorites"
-  | "avg_play_duration"
-  | "bounce_rate_2s"
-  | "completion_rate_5s"
-  | "completion_rate";
 
 interface MetricGroupProps {
   fields: Record<string, SubmissionFieldState>;
   onFieldChange: (key: EditableMetricKey, value: string) => void;
   anomalyStatus?: string;
+  missingRequiredFields?: EditableMetricKey[];
+  unconfirmedFields?: EditableMetricKey[];
 }
 
 type MetricItem = { key: EditableMetricKey; label: string; step?: string; suffix?: string; optional?: boolean };
@@ -48,18 +37,39 @@ const RETENTION_ITEMS: MetricItem[] = [
   { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%" },
 ];
 
-const DIVIDER = <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-2" />;
+const DIVIDER = <div className="my-2 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />;
 
-export function 指标分组区({ fields, onFieldChange, anomalyStatus }: MetricGroupProps) {
+export function 指标分组区({
+  fields,
+  onFieldChange,
+  anomalyStatus,
+  missingRequiredFields = [],
+  unconfirmedFields = [],
+}: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
+  const issueCount = missingRequiredFields.length + unconfirmedFields.length;
+  const missingSet = new Set(missingRequiredFields);
 
   return (
     <motion.div variants={itemVariants}>
       <MotionCard index={0} className="border-none bg-white/70">
         <div className="space-y-0 p-4">
-          {/* 核心数据 - 大字 */}
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                {issueCount > 0 ? `还有 ${issueCount} 项指标待处理，请优先看红框和黄框。` : "指标已齐全，确认后可提交。"}
+              </p>
+            </div>
+            {issueCount > 0 ? (
+              <span className="rounded-full bg-[color:rgba(255,149,0,0.12)] px-3 py-1 text-xs font-medium text-[var(--color-warning)]">
+                待处理 {issueCount}
+              </span>
+            ) : null}
+          </div>
+
           <div className="mb-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">核心数据</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">核心数据</p>
             <div className="grid grid-cols-3 gap-3">
               {CORE_ITEMS.map((item) => (
                 <指标输入卡
@@ -70,6 +80,7 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
                   suffix={item.suffix}
                   size="primary"
                   optional={item.optional}
+                  missingRequired={missingSet.has(item.key)}
                   onChange={(value) => onFieldChange(item.key, value)}
                 />
               ))}
@@ -78,9 +89,8 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
 
           {DIVIDER}
 
-          {/* 互动数据 - 小字 */}
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">互动数据</p>
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">互动数据</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {INTERACTION_ITEMS.map((item) => (
                 <指标输入卡
@@ -88,6 +98,7 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
                   label={item.label}
                   field={fields[item.key]}
                   size="secondary"
+                  missingRequired={missingSet.has(item.key)}
                   onChange={(value) => onFieldChange(item.key, value)}
                 />
               ))}
@@ -96,9 +107,8 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
 
           {DIVIDER}
 
-          {/* 完播留存 - 小字 */}
           <div className={retentionOptional ? "opacity-50" : ""}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
               完播留存{retentionOptional && <span className="ml-1 normal-case">（可选）</span>}
             </p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -111,6 +121,7 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
                   suffix={item.suffix}
                   size="secondary"
                   optional={retentionOptional}
+                  missingRequired={missingSet.has(item.key)}
                   onChange={(value) => onFieldChange(item.key, value)}
                 />
               ))}
