@@ -195,7 +195,7 @@ function createFieldState(value = ""): SubmissionFieldState {
 
 function buildOcrSummary(
   screenshotType: "data" | "curve" | "retention" | null | undefined,
-  recognizedFields: Record<string, string | number | boolean | null> | null | undefined
+  recognizedFields: Record<string, unknown> | null | undefined
 ): string[] {
   if (!recognizedFields) {
     return [];
@@ -211,11 +211,27 @@ function buildOcrSummary(
   }
 
   if (screenshotType === "retention") {
-    const segmentSummary = recognizedFields.segment_summary;
+    const retentionMetrics = recognizedFields.retention_metrics as Record<string, number | null> | undefined;
+    const retentionAnalysis = recognizedFields.retention_analysis as
+      | {
+          bounce_peak_time?: string | null;
+          replay_peak_time?: string | null;
+          segment_summary?: Array<{ segment?: string; performance?: string }>;
+        }
+      | undefined;
+
+    const firstSegment = retentionAnalysis?.segment_summary?.[0];
+
     return [
-      recognizedFields.bounce_peak_time ? `跳出峰值：${recognizedFields.bounce_peak_time}` : null,
-      recognizedFields.replay_peak_time ? `回放峰值：${recognizedFields.replay_peak_time}` : null,
-      typeof segmentSummary === "string" ? `分段摘要：${segmentSummary}` : null,
+      retentionMetrics?.avg_play_duration != null ? `均播时长：${retentionMetrics.avg_play_duration}秒` : null,
+      retentionMetrics?.bounce_rate_2s != null ? `2秒跳出率：${retentionMetrics.bounce_rate_2s}%` : null,
+      retentionMetrics?.completion_rate_5s != null ? `5秒完播率：${retentionMetrics.completion_rate_5s}%` : null,
+      retentionMetrics?.completion_rate != null ? `整体完播率：${retentionMetrics.completion_rate}%` : null,
+      retentionAnalysis?.bounce_peak_time ? `跳出峰值：${retentionAnalysis.bounce_peak_time}` : null,
+      retentionAnalysis?.replay_peak_time ? `回放峰值：${retentionAnalysis.replay_peak_time}` : null,
+      firstSegment?.segment && firstSegment?.performance
+        ? `分段摘要：${firstSegment.segment}${firstSegment.performance}`
+        : null,
     ].filter((item): item is string => Boolean(item));
   }
 
@@ -437,29 +453,45 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
       }
 
       if (detectedType === "retention" && data.recognized_fields) {
-        const bouncePeakTime = data.recognized_fields.bounce_peak_time;
-        const replayPeakTime = data.recognized_fields.replay_peak_time;
-        const segmentSummary = data.recognized_fields.segment_summary;
+        const retentionMetrics = data.recognized_fields.retention_metrics as unknown as Record<string, number | null> | undefined;
         setFields((current) => ({
           ...current,
-          avg_play_duration: { ...current.avg_play_duration, source: "ocr", requiresManualConfirmation: true, confirmed: false },
+          avg_play_duration: {
+            ...current.avg_play_duration,
+            value:
+              typeof retentionMetrics?.avg_play_duration === "number"
+                ? String(retentionMetrics.avg_play_duration)
+                : current.avg_play_duration.value,
+            source: "ocr",
+            requiresManualConfirmation: true,
+            confirmed: false,
+          },
           bounce_rate_2s: {
             ...current.bounce_rate_2s,
-            value: typeof bouncePeakTime === "string" ? bouncePeakTime : current.bounce_rate_2s.value,
+            value:
+              typeof retentionMetrics?.bounce_rate_2s === "number"
+                ? String(retentionMetrics.bounce_rate_2s)
+                : current.bounce_rate_2s.value,
             source: "ocr",
             requiresManualConfirmation: true,
             confirmed: false,
           },
           completion_rate_5s: {
             ...current.completion_rate_5s,
-            value: typeof replayPeakTime === "string" ? replayPeakTime : current.completion_rate_5s.value,
+            value:
+              typeof retentionMetrics?.completion_rate_5s === "number"
+                ? String(retentionMetrics.completion_rate_5s)
+                : current.completion_rate_5s.value,
             source: "ocr",
             requiresManualConfirmation: true,
             confirmed: false,
           },
           completion_rate: {
             ...current.completion_rate,
-            value: typeof segmentSummary === "string" ? segmentSummary : current.completion_rate.value,
+            value:
+              typeof retentionMetrics?.completion_rate === "number"
+                ? String(retentionMetrics.completion_rate)
+                : current.completion_rate.value,
             source: "ocr",
             requiresManualConfirmation: true,
             confirmed: false,

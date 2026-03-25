@@ -3,7 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
-type ScreenshotTypeInput = ScreenshotType | "overview" | "traffic_curve" | "retention_curve" | "engagement_extra" | "other";
+type ScreenshotTypeInput =
+  | ScreenshotType
+  | "overview"
+  | "traffic_curve"
+  | "retention_curve"
+  | "engagement_extra"
+  | "other"
+  | ScreenshotAssetRole;
 export type ScreenshotAssetRole =
   | "screenshot_1"
   | "screenshot_2"
@@ -66,9 +73,17 @@ type RetentionAnalysis = {
   segment_summary: RetentionSegmentSummary[];
 };
 
+type RetentionMetrics = {
+  avg_play_duration: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
+};
+
 type RetentionRecognitionResult =
   | {
       recognized: true;
+      retention_metrics: RetentionMetrics;
       retention_analysis: RetentionAnalysis;
       confidence: number | null;
     }
@@ -466,14 +481,24 @@ function buildCurvePrompt(): string {
 function buildRetentionPrompt(): string {
   return [
     "你是抖音跳出回看图识别助手。",
-    "请识别跳出率和回看率峰值时间点，并严格返回 JSON。",
-    "字段固定为 recognized、retention_analysis、confidence。",
+    "请识别截图中的完播留存核心数值，并严格返回 JSON。",
+    "字段固定为 recognized、retention_metrics、retention_analysis、confidence。",
+    "retention_metrics 必须包含 avg_play_duration、bounce_rate_2s、completion_rate_5s、completion_rate。",
+    "avg_play_duration 返回秒数纯数字，不要带‘秒’。",
+    "bounce_rate_2s、completion_rate_5s、completion_rate 返回百分比纯数字，不要带‘%’。",
+    "无法确定的字段返回 null。",
     "retention_analysis 必须包含 bounce_peak_time、replay_peak_time、segment_summary。",
     "segment_summary 为数组，每项包含 segment、performance。",
     "无法识别时返回 { recognized:false, reason:'...' }。",
     "只返回 JSON，不要解释。",
     JSON.stringify({
       recognized: true,
+      retention_metrics: {
+        avg_play_duration: 23.6,
+        bounce_rate_2s: 41.2,
+        completion_rate_5s: 32.8,
+        completion_rate: 18.5,
+      },
       retention_analysis: {
         bounce_peak_time: "0-3秒",
         replay_peak_time: "12-15秒",
@@ -535,12 +560,14 @@ function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
     case "engagement_extra":
     case "other":
     case "data":
+    case "screenshot_1":
       return "data";
     case "traffic_curve":
     case "curve":
       return "curve";
     case "retention_curve":
     case "retention":
+    case "screenshot_2":
       return "retention";
     default:
       return null;
@@ -758,6 +785,12 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
     const raw = JSON.parse(jsonText) as {
       recognized?: unknown;
       reason?: unknown;
+      retention_metrics?: {
+        avg_play_duration?: unknown;
+        bounce_rate_2s?: unknown;
+        completion_rate_5s?: unknown;
+        completion_rate?: unknown;
+      };
       retention_analysis?: {
         bounce_peak_time?: unknown;
         replay_peak_time?: unknown;
@@ -771,17 +804,27 @@ export function parseRetentionContent(content: unknown): RetentionRecognitionRes
       return reason ? { recognized: false, reason } : null;
     }
 
-    const segmentSummary = normalizeSegmentSummary(raw.retention_analysis?.segment_summary);
-    if (!segmentSummary) {
+    const retentionMetrics: RetentionMetrics = {
+      avg_play_duration: normalizeMetricNumber(raw.retention_metrics?.avg_play_duration),
+      bounce_rate_2s: normalizeMetricNumber(raw.retention_metrics?.bounce_rate_2s),
+      completion_rate_5s: normalizeMetricNumber(raw.retention_metrics?.completion_rate_5s),
+      completion_rate: normalizeMetricNumber(raw.retention_metrics?.completion_rate),
+    };
+
+    const hasAnyMetric = Object.values(retentionMetrics).some((value) => value !== null);
+    if (!hasAnyMetric) {
       return null;
     }
 
+    const segmentSummary = normalizeSegmentSummary(raw.retention_analysis?.segment_summary);
+
     return {
       recognized: true,
+      retention_metrics: retentionMetrics,
       retention_analysis: {
         bounce_peak_time: normalizeOptionalText(raw.retention_analysis?.bounce_peak_time),
         replay_peak_time: normalizeOptionalText(raw.retention_analysis?.replay_peak_time),
-        segment_summary: segmentSummary,
+        segment_summary: segmentSummary ?? [],
       },
       confidence: normalizeScore(raw.confidence),
     };
@@ -843,6 +886,14 @@ function normalizeNumber(value: unknown, allowDecimal = false): number | null {
   }
 
   return null;
+}
+
+function normalizeMetricNumber(value: unknown): number | null {
+  if (typeof value === "string") {
+    return normalizeNumber(value.replace(/[秒sS]/g, ""), true);
+  }
+
+  return normalizeNumber(value, true);
 }
 
 function getConfidenceScore(confidence: Record<OcrFieldKey, ConfidenceLevel>) {

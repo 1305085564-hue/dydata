@@ -15,6 +15,8 @@ test("asset_role 强制映射截图类型", () => {
   assert.equal(getScreenshotTypeByAssetRole("retention_curve"), "retention");
   assert.equal(getScreenshotTypeByAssetRole("engagement_extra"), "data");
   assert.equal(getScreenshotTypeByAssetRole("other"), "data");
+  assert.equal(getScreenshotTypeByAssetRole("screenshot_1"), "data");
+  assert.equal(getScreenshotTypeByAssetRole("screenshot_2"), "retention");
   assert.equal(getScreenshotTypeByAssetRole("unknown"), null);
 });
 
@@ -120,10 +122,16 @@ test("低置信曲线结果会标记待确认", () => {
   });
 });
 
-test("跳出回看图识别返回 retention_analysis", () => {
+test("跳出回看图识别返回 retention_metrics 和 retention_analysis", () => {
   const result = parseRetentionContent(
     JSON.stringify({
       recognized: true,
+      retention_metrics: {
+        avg_play_duration: "23.6秒",
+        bounce_rate_2s: "41.2%",
+        completion_rate_5s: "32.8%",
+        completion_rate: "18.5%",
+      },
       retention_analysis: {
         bounce_peak_time: "0-3秒",
         replay_peak_time: "12-15秒",
@@ -138,6 +146,12 @@ test("跳出回看图识别返回 retention_analysis", () => {
 
   assert.deepEqual(result, {
     recognized: true,
+    retention_metrics: {
+      avg_play_duration: 23.6,
+      bounce_rate_2s: 41.2,
+      completion_rate_5s: 32.8,
+      completion_rate: 18.5,
+    },
     retention_analysis: {
       bounce_peak_time: "0-3秒",
       replay_peak_time: "12-15秒",
@@ -147,6 +161,49 @@ test("跳出回看图识别返回 retention_analysis", () => {
       ],
     },
     confidence: 0.78,
+  });
+});
+
+test("retention 部分识别也返回待确认结果", () => {
+  const result = parseOcrResponse(
+    JSON.stringify({
+      recognized: true,
+      retention_metrics: {
+        avg_play_duration: null,
+        bounce_rate_2s: "41.2%",
+        completion_rate_5s: null,
+        completion_rate: "18.5%",
+      },
+      retention_analysis: {
+        bounce_peak_time: null,
+        replay_peak_time: "12-15秒",
+        segment_summary: [{ segment: "10-15秒", performance: "回看明显" }],
+      },
+      confidence: 0.69,
+    }),
+    "retention_curve"
+  );
+
+  assert.deepEqual(result, {
+    slot_status: "pending_confirm",
+    screenshot_type: "retention",
+    confidence_score: 0.69,
+    requires_manual_confirmation: true,
+    recognized_fields: {
+      recognized: true,
+      retention_metrics: {
+        avg_play_duration: null,
+        bounce_rate_2s: 41.2,
+        completion_rate_5s: null,
+        completion_rate: 18.5,
+      },
+      retention_analysis: {
+        bounce_peak_time: null,
+        replay_peak_time: "12-15秒",
+        segment_summary: [{ segment: "10-15秒", performance: "回看明显" }],
+      },
+      confidence: 0.69,
+    },
   });
 });
 
@@ -168,3 +225,35 @@ test("识别失败时返回 failed 槽位状态", () => {
     recognized_fields: null,
   });
 });
+
+test("retention 识别：AI 没返回 segment_summary 也能成功", () => {
+  const result = parseRetentionContent(
+    JSON.stringify({
+      recognized: true,
+      retention_metrics: {
+        avg_play_duration: "23.6秒",
+        bounce_rate_2s: "41.2%",
+        completion_rate_5s: null,
+        completion_rate: "18.5%",
+      },
+      confidence: 0.8,
+    })
+  );
+
+  assert.deepEqual(result, {
+    recognized: true,
+    retention_metrics: {
+      avg_play_duration: 23.6,
+      bounce_rate_2s: 41.2,
+      completion_rate_5s: null,
+      completion_rate: 18.5,
+    },
+    retention_analysis: {
+      bounce_peak_time: null,
+      replay_peak_time: null,
+      segment_summary: [],
+    },
+    confidence: 0.8,
+  });
+});
+

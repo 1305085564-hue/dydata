@@ -17,5 +17,5 @@ export function toSlotUploadErrorMessage(error: unknown): string {
   if (!message) return OCR_FAIL_MESSAGE;
   if (message.includes("登录状态已失效")) return message;
   if (message === NETWORK_RETRY_MESSAGE || isNetworkErrorMessage(message)) return NETWORK_RETRY_MESSAGE;
-  return OCR_FAIL_MESSAGE;
+  return message;
 }
