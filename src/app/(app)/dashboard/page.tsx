@@ -14,6 +14,7 @@ import { AdvicePanel } from "./advice-panel";
 import { hasPendingExemptionRequest } from "./actions";
 import { 申请豁免弹窗 } from "./申请豁免弹窗";
 import { HistoryList } from "./history-list";
+import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -91,6 +92,9 @@ export default async function DashboardPage() {
   ]);
 
   const todaySubmittedAccountIds = new Set((todayVideos ?? []).map((video) => video.account_id));
+  const todayReports = ((_userTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
+    (report) => typeof report.account_id === "string",
+  );
   const pendingVideoCount = (accounts ?? []).filter((account) => !todaySubmittedAccountIds.has(account.id)).length;
   const snapshotVideoIds = new Set((videoSnapshots ?? []).map((snapshot) => snapshot.video_id));
   const pending24hCount = (allVideos ?? []).filter((video) => !snapshotVideoIds.has(video.id)).length;
@@ -192,7 +196,7 @@ export default async function DashboardPage() {
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={2}>
-        <VideoSubmitPanel accounts={accounts ?? []} userId={user.id} today={today} />
+        <VideoSubmitPanel accounts={accounts ?? []} userId={user.id} today={today} todayReports={todayReports} />
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={3}>

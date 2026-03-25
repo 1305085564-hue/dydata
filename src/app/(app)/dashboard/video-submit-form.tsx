@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
@@ -28,18 +28,15 @@ import { containerVariants, itemVariants } from "@/lib/animations";
 import { getDefaultPublishedAtValue } from "@/lib/日报";
 import type {
   AnomalyStatus,
-  SubmissionAssetMeta,
   Video,
   VideoTagReviewDimension,
 } from "@/types";
 import { 提交成功卡 } from "@/components/submission/提交成功卡";
-import { 提交进度条 } from "@/components/submission/提交进度条";
 import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import {
   canSubmit,
   createInitialSubmissionState,
-  getSubmissionStage,
   type EditableMetricKey,
   type SubmissionFieldState,
   type SubmissionSlotRole,
@@ -52,16 +49,24 @@ import {
 } from "@/components/submission/截图上传错误";
 import {
   getBizDateHelperText,
-  getRecentBizDateRange,
   isBizDateSelectable,
   syncPublishedAtAndText,
   toManualFieldState,
 } from "@/components/submission/填报表单状态";
+import { normalizeOptionalText } from "./video-submit-form-state";
+
+import type {
+  SubmitPanelMode,
+  TodaySubmissionReportLike,
+  TodaySubmissionSummary,
+} from "./video-submit-panel-state";
 
 interface VideoSubmitFormProps {
   account: { id: string; name: string; content_direction: string | null } | null;
   userId: string;
   today: string;
+  mode: SubmitPanelMode;
+  initialSummary: TodaySubmissionSummary | null;
   onSubmitted: (
     video: Video,
     aiTags: Array<{
@@ -69,8 +74,10 @@ interface VideoSubmitFormProps {
       tag_value: string;
       confidence: number | null;
       reason: string | null;
-    }>
+    }>,
+    summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
+  onCancel?: () => void;
 }
 
 
@@ -171,11 +178,6 @@ function parseMetric(value: string, fallback = 0) {
   if (!trimmed) return fallback;
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-function normalizeOptionalText(value: string) {
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
 }
 
 function isVideo(value: unknown): value is Video {
@@ -292,7 +294,7 @@ function buildSubmissionState(
   return { slots, fields, submitted };
 }
 
-function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>): SubmissionAssetMeta[] {
+function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>) {
   return (Object.keys(slots) as SubmissionSlotRole[])
     .map((role) => slots[role])
     .filter((slot) => slot.assetUrl)
@@ -306,7 +308,37 @@ function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>): Submissi
     }));
 }
 
-export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSubmitFormProps) {
+function createSummaryOverride(
+  accountId: string,
+  meta: FormMetaState,
+  fields: SubmissionState["fields"],
+): TodaySubmissionReportLike {
+  const stringifyMetric = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed || "0";
+  };
+
+  return {
+    account_id: accountId,
+    title: normalizeOptionalText(meta.videoTitle),
+    content: normalizeOptionalText(meta.content),
+    report_date: meta.bizDate,
+    play_count: parseMetric(fields.play_count.value),
+    likes: parseMetric(fields.likes.value),
+    comments: parseMetric(fields.comments.value),
+    shares: parseMetric(fields.shares.value),
+    favorites: parseMetric(fields.favorites.value),
+    follower_gain: parseMetric(fields.follower_gain.value),
+    completion_rate: stringifyMetric(fields.completion_rate.value),
+    avg_play_duration: stringifyMetric(fields.avg_play_duration.value),
+    bounce_rate_2s: stringifyMetric(fields.bounce_rate_2s.value),
+    completion_rate_5s: stringifyMetric(fields.completion_rate_5s.value),
+    published_at: meta.publishedAt || null,
+    uploaded_at: meta.uploadedAt,
+  };
+}
+
+export function VideoSubmitForm({ account, userId, today, mode, initialSummary, onSubmitted, onCancel }: VideoSubmitFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today));
   const [fields, setFields] = useState<SubmissionState["fields"]>(() => createEditableFields());
@@ -315,25 +347,42 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
+  const isBackfillMode = mode === "backfill";
 
-  const recentBizDates = useMemo(() => getRecentBizDateRange(today), [today]);
+  useEffect(() => {
+    const nextMeta = createInitialMeta(today);
+    if (isBackfillMode) {
+      nextMeta.bizDate = "";
+    }
+
+    if (initialSummary) {
+      nextMeta.videoTitle = initialSummary.title ?? "";
+      nextMeta.content = initialSummary.content ?? "";
+      nextMeta.bizDate = initialSummary.reportDate;
+      nextMeta.publishedAt = initialSummary.publishedAt ?? nextMeta.publishedAt;
+      nextMeta.uploadedAt = initialSummary.uploadedAt ?? nextMeta.uploadedAt;
+    }
+
+    setMeta(nextMeta);
+    setFields(createEditableFields());
+    setSlots(createEditableSlots());
+    setIsSubmitted(false);
+    setDeleteTargetRole(null);
+    setKeywordInput("");
+  }, [account?.id, initialSummary, isBackfillMode, today]);
+
   const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
   const submitCheck = canSubmit(submissionState);
   const topicTagMissing = !meta.topicTag;
   const canActuallySubmit = submitCheck.ok && !topicTagMissing;
-  const currentStage = getSubmissionStage(submissionState);
+  const pendingConfirmCount =
+    Object.values(slots).filter((slot) => slot.status === "pending_confirm").length +
+    Object.values(fields).filter((field) => field.requiresManualConfirmation && !field.confirmed).length;
   const bizDateHelper = getBizDateHelperText(meta.bizDate);
 
   function updateMeta<Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) {
     setMeta((current) => ({ ...current, [key]: value }));
-  }
-
-  function resetForm() {
-    setMeta(createInitialMeta(today));
-    setFields(createEditableFields());
-    setSlots(createEditableSlots());
-    setIsSubmitted(false);
   }
 
   function updateField(key: EditableMetricKey, value: string) {
@@ -528,37 +577,6 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
     void handleSlotUpload(role, slot.file);
   }
 
-  function confirmLowConfidenceItems() {
-    setSlots((current) => {
-      const next = { ...current };
-      for (const role of Object.keys(next) as SubmissionSlotRole[]) {
-        if (next[role].status === "pending_confirm") {
-          next[role] = {
-            ...next[role],
-            status: "confirmed",
-            confirmed: true,
-            requiresManualConfirmation: false,
-          };
-        }
-      }
-      return next;
-    });
-
-    setFields((current) => {
-      const next = { ...current };
-      for (const key of Object.keys(next) as EditableMetricKey[]) {
-        if (next[key].requiresManualConfirmation) {
-          next[key] = {
-            ...next[key],
-            requiresManualConfirmation: false,
-            confirmed: true,
-          };
-        }
-      }
-      return next;
-    });
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -639,15 +657,16 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
       }
 
       const aiTags = !isVideo(payload) && Array.isArray(payload.ai_tags) ? payload.ai_tags : [];
+      const summaryOverride = createSummaryOverride(account.id, meta, fields);
       setIsSubmitted(true);
-      onSubmitted(submittedVideo, aiTags);
+      onSubmitted(submittedVideo, aiTags, summaryOverride);
       feedbackToast.success("数据提交成功", {
         duration: 2000,
         className:
           "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
       });
       window.setTimeout(() => {
-        resetForm();
+        onCancel?.();
       }, 2200);
     } catch (error) {
       feedbackToast.error((error as Error).message || "提交失败，请稍后重试");
@@ -715,19 +734,39 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
       >
         <motion.div variants={itemVariants}>
           <MotionCard className="border-none bg-white/70">
-            <div className="space-y-5 p-5">
+            <div className="space-y-3 p-5">
               <div className="space-y-1">
                 <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
-                  数据填报
+                  {isBackfillMode ? "补交数据" : "修改数据"}
                 </h3>
                 <p className="text-sm text-[var(--color-text-secondary)]">
                   当前账号：{account.name} · 内容方向：{account.content_direction?.trim() || "未设置内容方向"}
                 </p>
               </div>
-
-              <提交进度条 currentStage={currentStage} />
+              <div className="rounded-2xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                {pendingConfirmCount > 0
+                  ? `还有 ${pendingConfirmCount} 项待确认，确认后即可提交。`
+                  : canActuallySubmit
+                    ? "当前已满足提交条件，可以直接提交。"
+                    : topicTagMissing
+                      ? "请先选择话题标签后再提交。"
+                      : submitCheck.reason || "请补全表单后提交。"}
+              </div>
             </div>
           </MotionCard>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <截图槽位区
+            slots={slots}
+            onSelectFile={handleSlotUpload}
+            onDelete={(role) => setDeleteTargetRole(role)}
+            onRetry={handleSlotRetry}
+          />
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <指标分组区 fields={fields} onFieldChange={updateField} anomalyStatus={meta.anomalyStatus} />
         </motion.div>
 
         <motion.div variants={itemVariants}>
@@ -790,10 +829,9 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
 
               <div className="space-y-3">
                 <Label>
-                  内容标签{" "}
-                  <span className="text-xs text-[var(--color-text-secondary)] font-normal">最多3个</span>
+                  内容标签 <span className="text-xs font-normal text-[var(--color-text-secondary)]">最多3个</span>
                 </Label>
-                {keywordSuggestions.length > 0 && (
+                {keywordSuggestions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {keywordSuggestions.map((kw) => (
                       <button
@@ -818,8 +856,8 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                       </button>
                     ))}
                   </div>
-                )}
-                {meta.contentKeywords.length > 0 && (
+                ) : null}
+                {meta.contentKeywords.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {meta.contentKeywords.map((kw) => (
                       <span
@@ -837,14 +875,14 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                       </span>
                     ))}
                   </div>
-                )}
+                ) : null}
                 <div className="flex gap-2">
                   <Input
                     value={keywordInput}
-                    onChange={(e) => setKeywordInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if ((e.key === "Enter" || e.key === " ") && keywordInput.trim() && meta.contentKeywords.length < 3) {
-                        e.preventDefault();
+                    onChange={(event) => setKeywordInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if ((event.key === "Enter" || event.key === " ") && keywordInput.trim() && meta.contentKeywords.length < 3) {
+                        event.preventDefault();
                         const kw = keywordInput.trim();
                         if (!meta.contentKeywords.includes(kw)) {
                           updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
@@ -884,7 +922,7 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                     max={today}
                     onChange={(event) => {
                       const value = event.target.value;
-                      if (isBizDateSelectable(today, value)) {
+                      if (!value || isBizDateSelectable(today, value)) {
                         updateMeta("bizDate", value);
                       }
                     }}
@@ -892,7 +930,7 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                   />
                   {bizDateHelper ? (
                     <p className="text-xs text-amber-600">{bizDateHelper}</p>
-                  ) : meta.bizDate !== today ? (
+                  ) : meta.bizDate && meta.bizDate !== today ? (
                     <p className="text-xs text-blue-600">补交 {meta.bizDate} 的数据</p>
                   ) : null}
                 </div>
@@ -946,19 +984,6 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
           </MotionCard>
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <截图槽位区
-            slots={slots}
-            onSelectFile={handleSlotUpload}
-            onDelete={(role) => setDeleteTargetRole(role)}
-            onRetry={handleSlotRetry}
-          />
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <指标分组区 fields={fields} onFieldChange={updateField} anomalyStatus={meta.anomalyStatus} />
-        </motion.div>
-
         <motion.div variants={itemVariants} className="hidden md:block">
           <MotionCard className="border-none bg-white/70">
             <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -967,23 +992,22 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
                   {submitCheck.ok ? "已满足提交条件" : submitCheck.reason || "请补全表单后提交"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
-                  必传槽位确认 + 低置信字段确认后才可提交。
+                  {pendingConfirmCount > 0 ? `还有 ${pendingConfirmCount} 项待确认，请逐项检查后提交。` : "截图识别完成后，再补充视频信息即可提交。"}
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button type="button" variant="outline" className="h-11 rounded-[10px] px-6" onClick={confirmLowConfidenceItems}>
-                  一键确认低置信
-                </Button>
-                <Button type="button" variant="outline" className="h-11 rounded-[10px] px-6" onClick={resetForm}>
-                  重置表单
-                </Button>
+                {onCancel ? (
+                  <Button type="button" variant="outline" className="h-11 rounded-[10px] px-6" onClick={onCancel}>
+                    取消
+                  </Button>
+                ) : null}
                 <Button
                   type="submit"
                   disabled={isSubmitting || !canActuallySubmit}
                   title={canActuallySubmit ? undefined : (topicTagMissing ? "请选择话题标签" : submitCheck.reason || undefined)}
                   className="h-11 rounded-[10px] px-6"
                 >
-                  {isSubmitting ? "提交中..." : "提交视频数据"}
+                  {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交数据" : "保存修改"}
                 </Button>
               </div>
             </div>
@@ -994,15 +1018,18 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-white/92 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur-[18px] md:hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-2">
           <p className="text-xs text-[var(--color-text-secondary)]">
-            {canActuallySubmit ? "已满足提交条件" : (topicTagMissing ? "请选择话题标签（干货或复盘）" : submitCheck.reason || "请补全表单后提交")}
+            {canActuallySubmit
+              ? "已满足提交条件"
+              : topicTagMissing
+                ? "请选择话题标签（干货或复盘）"
+                : submitCheck.reason || "请补全表单后提交"}
           </p>
-          <div className="grid grid-cols-3 gap-2">
-            <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={confirmLowConfidenceItems}>
-              确认低置信
-            </Button>
-            <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={resetForm}>
-              重置
-            </Button>
+          <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>
+            {onCancel ? (
+              <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={onCancel}>
+                取消
+              </Button>
+            ) : null}
             <Button
               type="submit"
               form="video-submit-form"
@@ -1010,7 +1037,7 @@ export function VideoSubmitForm({ account, userId, today, onSubmitted }: VideoSu
               title={canActuallySubmit ? undefined : (topicTagMissing ? "请选择话题标签" : submitCheck.reason || undefined)}
               className="h-11 rounded-[10px] px-2 text-xs"
             >
-              {isSubmitting ? "提交中..." : "提交"}
+              {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : "保存修改"}
             </Button>
           </div>
         </div>

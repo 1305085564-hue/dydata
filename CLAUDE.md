@@ -42,6 +42,13 @@
 4. select 只查实际用到的字段，× 查未执行 migration 的列
 5. × 反复改代码碰运气 → 先定位根因再动手
 
+## 日志规则
+- 每次完成一个任务/修复/功能后，追加记录到 `~/.claude/memory/日志/YYYY-MM-DD.md`
+- 格式：`- [HH:MM] 简述做了什么（一行，关键改动+结果）`
+- 当天文件不存在就新建，已存在就追加
+- 遇到坑/踩雷也记一条，方便复盘
+- 这是硬规则，不能省略
+
 ## 关键规则
 - git config user.email = 1305085564@qq.com（Vercel Hobby 要求）
 - git remote：git@github.com:1305085564-hue/dydata.git
