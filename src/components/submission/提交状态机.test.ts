@@ -65,54 +65,12 @@ test("必传槽已识别但未确认时为待确认", () => {
   });
 });
 
-test("低置信字段未人工确认时不可提交", () => {
+test("上传两张必传截图后即可提交", () => {
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
       screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
       screenshot_3: createSlot({ role: "screenshot_3", required: false }),
-    },
-    fields: {
-      play_count: createField(),
-      follower_gain: createField({ key: "follower_gain" }),
-      follower_convert: createField({ key: "follower_convert" }),
-      likes: createField({ key: "likes" }),
-      comments: createField({ key: "comments" }),
-      shares: createField({ key: "shares" }),
-      favorites: createField({ key: "favorites" }),
-      avg_play_duration: createField({ key: "avg_play_duration", value: "18", requiresManualConfirmation: true, confirmed: false }),
-      bounce_rate_2s: createField({ key: "bounce_rate_2s" }),
-      completion_rate_5s: createField({ key: "completion_rate_5s" }),
-      completion_rate: createField({ key: "completion_rate" }),
-    },
-  });
-
-  assert.equal(getSubmissionStage(state), "待确认");
-  assert.deepEqual(canSubmit(state), {
-    ok: false,
-    reason: "请先确认低置信字段",
-  });
-});
-
-test("必传槽和低置信字段都确认后可提交", () => {
-  const state = createInitialSubmissionState({
-    slots: {
-      screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
-      screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
-    },
-    fields: {
-      play_count: createField(),
-      follower_gain: createField({ key: "follower_gain" }),
-      follower_convert: createField({ key: "follower_convert" }),
-      likes: createField({ key: "likes" }),
-      comments: createField({ key: "comments" }),
-      shares: createField({ key: "shares" }),
-      favorites: createField({ key: "favorites" }),
-      avg_play_duration: createField({ key: "avg_play_duration" }),
-      bounce_rate_2s: createField({ key: "bounce_rate_2s" }),
-      completion_rate_5s: createField({ key: "completion_rate_5s" }),
-      completion_rate: createField({ key: "completion_rate" }),
     },
   });
 
@@ -123,7 +81,7 @@ test("必传槽和低置信字段都确认后可提交", () => {
   });
 });
 
-test("问题汇总会列出缺截图待确认字段和话题标签", () => {
+test("问题汇总只保留截图与话题标签缺项", () => {
   const { summarizeSubmissionIssues } = require("./提交状态机") as typeof import("./提交状态机");
 
   const state = createInitialSubmissionState({
@@ -152,15 +110,37 @@ test("问题汇总会列出缺截图待确认字段和话题标签", () => {
     anomalyStatus: "正常",
   });
 
-  assert.equal(summary.totalIssueCount, 8);
+  assert.equal(summary.totalIssueCount, 3);
   assert.equal(summary.firstIssueAnchor, "slots");
   assert.deepEqual(summary.missingRequiredSlots, ["screenshot_1"]);
   assert.deepEqual(summary.pendingSlotConfirmations, ["screenshot_2"]);
-  assert.deepEqual(summary.missingRequiredFields, ["play_count", "comments", "completion_rate_5s"]);
-  assert.deepEqual(summary.unconfirmedFields, ["avg_play_duration", "bounce_rate_2s"]);
+  assert.deepEqual(summary.missingRequiredFields, []);
+  assert.deepEqual(summary.unconfirmedFields, []);
   assert.equal(summary.topicTagMissing, true);
   assert.equal(summary.canSubmit, false);
 });
+
+test("默认话题标签为空时会被识别为唯一缺项", () => {
+  const { summarizeSubmissionIssues } = require("./提交状态机") as typeof import("./提交状态机");
+
+  const state = createInitialSubmissionState({
+    slots: {
+      screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
+      screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
+      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
+    },
+  });
+
+  const summary = summarizeSubmissionIssues(state, {
+    topicTag: "",
+    anomalyStatus: "正常",
+  });
+
+  assert.equal(summary.totalIssueCount, 1);
+  assert.equal(summary.firstIssueAnchor, "topicTag");
+  assert.equal(summary.topicTagMissing, true);
+});
+
 
 test("限流时留存字段为空不计入缺项", () => {
   const { summarizeSubmissionIssues } = require("./提交状态机") as typeof import("./提交状态机");

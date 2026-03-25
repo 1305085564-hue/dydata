@@ -11,8 +11,6 @@ interface MetricGroupProps {
   fields: Record<string, SubmissionFieldState>;
   onFieldChange: (key: EditableMetricKey, value: string) => void;
   anomalyStatus?: string;
-  missingRequiredFields?: EditableMetricKey[];
-  unconfirmedFields?: EditableMetricKey[];
 }
 
 type MetricItem = { key: EditableMetricKey; label: string; step?: string; suffix?: string; optional?: boolean };
@@ -39,33 +37,16 @@ const RETENTION_ITEMS: MetricItem[] = [
 
 const DIVIDER = <div className="my-2 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />;
 
-export function 指标分组区({
-  fields,
-  onFieldChange,
-  anomalyStatus,
-  missingRequiredFields = [],
-  unconfirmedFields = [],
-}: MetricGroupProps) {
+export function 指标分组区({ fields, onFieldChange, anomalyStatus }: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
-  const issueCount = missingRequiredFields.length + unconfirmedFields.length;
-  const missingSet = new Set(missingRequiredFields);
 
   return (
     <motion.div variants={itemVariants}>
       <MotionCard index={0} className="border-none bg-white/70">
         <div className="space-y-0 p-4">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                {issueCount > 0 ? `还有 ${issueCount} 项指标待处理，请优先看红框和黄框。` : "指标已齐全，确认后可提交。"}
-              </p>
-            </div>
-            {issueCount > 0 ? (
-              <span className="rounded-full bg-[color:rgba(255,149,0,0.12)] px-3 py-1 text-xs font-medium text-[var(--color-warning)]">
-                待处理 {issueCount}
-              </span>
-            ) : null}
+          <div className="mb-4">
+            <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
+            <p className="text-sm text-[var(--color-text-secondary)]">OCR 识别后可直接修改，当前不再要求逐项二次确认。</p>
           </div>
 
           <div className="mb-1">
@@ -80,7 +61,6 @@ export function 指标分组区({
                   suffix={item.suffix}
                   size="primary"
                   optional={item.optional}
-                  missingRequired={missingSet.has(item.key)}
                   onChange={(value) => onFieldChange(item.key, value)}
                 />
               ))}
@@ -98,7 +78,6 @@ export function 指标分组区({
                   label={item.label}
                   field={fields[item.key]}
                   size="secondary"
-                  missingRequired={missingSet.has(item.key)}
                   onChange={(value) => onFieldChange(item.key, value)}
                 />
               ))}
@@ -121,7 +100,6 @@ export function 指标分组区({
                   suffix={item.suffix}
                   size="secondary"
                   optional={retentionOptional}
-                  missingRequired={missingSet.has(item.key)}
                   onChange={(value) => onFieldChange(item.key, value)}
                 />
               ))}

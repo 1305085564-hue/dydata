@@ -148,20 +148,6 @@ const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
   screenshot_3: "截图3",
 };
 
-const FIELD_LABELS: Record<EditableMetricKey, string> = {
-  play_count: "播放量",
-  follower_gain: "涨粉数",
-  follower_convert: "导粉数",
-  likes: "点赞数",
-  comments: "评论数",
-  shares: "分享数",
-  favorites: "收藏数",
-  avg_play_duration: "均播时长",
-  bounce_rate_2s: "2s跳出率",
-  completion_rate_5s: "5s完播率",
-  completion_rate: "整体完播率",
-};
-
 function createInitialMeta(today: string): FormMetaState {
   const publishedAt = getDefaultPublishedAtValue();
 
@@ -174,7 +160,7 @@ function createInitialMeta(today: string): FormMetaState {
     publishedAtText: "",
     anomalyStatus: "正常",
     uploadedAt: new Date().toLocaleString("zh-CN"),
-    topicTag: "",
+    topicTag: "复盘",
     contentKeywords: [],
   };
 }
@@ -374,14 +360,6 @@ function buildIssueMessages(summary: ReturnType<typeof summarizeSubmissionIssues
     messages.push(`待确认截图：${summary.pendingSlotConfirmations.map((role) => SLOT_LABELS[role]).join("、")}`);
   }
 
-  if (summary.missingRequiredFields.length > 0) {
-    messages.push(`必填指标未填：${summary.missingRequiredFields.map((key) => FIELD_LABELS[key]).join("、")}`);
-  }
-
-  if (summary.unconfirmedFields.length > 0) {
-    messages.push(`待确认指标：${summary.unconfirmedFields.map((key) => FIELD_LABELS[key]).join("、")}`);
-  }
-
   if (summary.topicTagMissing) {
     messages.push("必填项未完成：话题标签");
   }
@@ -490,8 +468,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             ...next[key],
             value: String(rawValue),
             source: "ocr",
-            requiresManualConfirmation: confidence?.[key as keyof typeof confidence] === "low",
-            confirmed: confidence?.[key as keyof typeof confidence] !== "low",
+            requiresManualConfirmation: false,
+            confirmed: true,
             confidenceScore: mapConfidenceToScore(confidence?.[key as keyof typeof confidence]),
           };
         }
@@ -593,8 +571,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 ? String(retentionMetrics.avg_play_duration)
                 : current.avg_play_duration.value,
             source: "ocr",
-            requiresManualConfirmation: true,
-            confirmed: false,
+            requiresManualConfirmation: false,
+            confirmed: true,
           },
           bounce_rate_2s: {
             ...current.bounce_rate_2s,
@@ -603,8 +581,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 ? String(retentionMetrics.bounce_rate_2s)
                 : current.bounce_rate_2s.value,
             source: "ocr",
-            requiresManualConfirmation: true,
-            confirmed: false,
+            requiresManualConfirmation: false,
+            confirmed: true,
           },
           completion_rate_5s: {
             ...current.completion_rate_5s,
@@ -613,8 +591,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 ? String(retentionMetrics.completion_rate_5s)
                 : current.completion_rate_5s.value,
             source: "ocr",
-            requiresManualConfirmation: true,
-            confirmed: false,
+            requiresManualConfirmation: false,
+            confirmed: true,
           },
           completion_rate: {
             ...current.completion_rate,
@@ -623,8 +601,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 ? String(retentionMetrics.completion_rate)
                 : current.completion_rate.value,
             source: "ocr",
-            requiresManualConfirmation: true,
-            confirmed: false,
+            requiresManualConfirmation: false,
+            confirmed: true,
           },
         }));
       }
@@ -837,7 +815,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     </ul>
                   </div>
                 ) : (
-                  "当前已满足提交条件，可以直接提交。"
+                  "当前已满足最低提交条件，可以直接提交。"
                 )}
               </div>
             </div>
@@ -863,8 +841,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             fields={fields}
             onFieldChange={updateField}
             anomalyStatus={meta.anomalyStatus}
-            missingRequiredFields={issueSummary.missingRequiredFields}
-            unconfirmedFields={issueSummary.unconfirmedFields}
           />
         </motion.div>
 
@@ -1091,7 +1067,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                  {canActuallySubmit ? "已满足提交条件" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
+                  {canActuallySubmit ? "已满足最低提交条件" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
                   {canActuallySubmit
@@ -1125,7 +1101,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         <div className="mx-auto flex max-w-6xl flex-col gap-2">
           <p className="text-xs text-[var(--color-text-secondary)]">
             {canActuallySubmit
-              ? "已满足提交条件"
+              ? "已满足最低提交条件"
               : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
           </p>
           <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>

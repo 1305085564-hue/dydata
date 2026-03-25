@@ -70,22 +70,6 @@ interface SubmissionIssueMeta {
   anomalyStatus?: string;
 }
 
-const ALWAYS_REQUIRED_FIELDS: EditableMetricKey[] = [
-  "play_count",
-  "follower_gain",
-  "likes",
-  "comments",
-  "shares",
-  "favorites",
-];
-
-const RETENTION_FIELDS: EditableMetricKey[] = [
-  "avg_play_duration",
-  "bounce_rate_2s",
-  "completion_rate_5s",
-  "completion_rate",
-];
-
 function createSlot(role: SubmissionSlotRole, required: boolean): SubmissionSlotState {
   return {
     role,
@@ -106,11 +90,6 @@ function createField(key: EditableMetricKey): SubmissionFieldState {
     confirmed: true,
     confidenceScore: null,
   };
-}
-
-function getRequiredFieldKeys(anomalyStatus?: string): EditableMetricKey[] {
-  const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
-  return retentionOptional ? ALWAYS_REQUIRED_FIELDS : [...ALWAYS_REQUIRED_FIELDS, ...RETENTION_FIELDS];
 }
 
 export function createInitialSubmissionState(
@@ -160,30 +139,19 @@ export function summarizeSubmissionIssues(
     )
     .map((slot) => slot.role);
 
-  const requiredFieldKeys = getRequiredFieldKeys(meta.anomalyStatus);
-  const missingRequiredFields = requiredFieldKeys.filter((key) => !state.fields[key].value.trim());
-  const unconfirmedFields = Object.values(state.fields)
-    .filter((field) => field.requiresManualConfirmation && !field.confirmed)
-    .filter((field) => !missingRequiredFields.includes(field.key))
-    .map((field) => field.key);
-
   const topicTagMissing = !meta.topicTag?.trim();
   const totalIssueCount =
     missingRequiredSlots.length +
     failedRequiredSlots.length +
     pendingSlotConfirmations.length +
-    missingRequiredFields.length +
-    unconfirmedFields.length +
     (topicTagMissing ? 1 : 0);
 
   const firstIssueAnchor: SubmissionIssueAnchor =
     missingRequiredSlots.length > 0 || failedRequiredSlots.length > 0 || pendingSlotConfirmations.length > 0
       ? "slots"
-      : missingRequiredFields.length > 0 || unconfirmedFields.length > 0
-        ? "metrics"
-        : topicTagMissing
-          ? "topicTag"
-          : null;
+      : topicTagMissing
+        ? "topicTag"
+        : null;
 
   let reason: string | null = null;
   if (missingRequiredSlots.length > 0) {
@@ -192,10 +160,6 @@ export function summarizeSubmissionIssues(
     reason = "请先处理识别失败的截图";
   } else if (pendingSlotConfirmations.length > 0) {
     reason = "请先确认必传截图槽位";
-  } else if (missingRequiredFields.length > 0) {
-    reason = "请补全必填指标";
-  } else if (unconfirmedFields.length > 0) {
-    reason = "请先确认低置信字段";
   } else if (topicTagMissing) {
     reason = "请选择话题标签（干货或复盘）";
   }
@@ -204,8 +168,8 @@ export function summarizeSubmissionIssues(
     missingRequiredSlots,
     failedRequiredSlots,
     pendingSlotConfirmations,
-    missingRequiredFields,
-    unconfirmedFields,
+    missingRequiredFields: [],
+    unconfirmedFields: [],
     topicTagMissing,
     totalIssueCount,
     firstIssueAnchor,
@@ -219,10 +183,6 @@ export function canSubmit(state: SubmissionState): { ok: boolean; reason: string
 
   if (summary.missingRequiredSlots.length > 0 || summary.failedRequiredSlots.length > 0 || summary.pendingSlotConfirmations.length > 0) {
     return { ok: false, reason: "请先确认必传截图槽位" };
-  }
-
-  if (summary.unconfirmedFields.length > 0) {
-    return { ok: false, reason: "请先确认低置信字段" };
   }
 
   return { ok: true, reason: null };
@@ -246,13 +206,9 @@ export function getSubmissionStage(state: SubmissionState): SubmissionStage {
     return "可提交";
   }
 
-  const hasAnyPendingConfirmation =
-    Object.values(state.slots).some(
-      (slot) => slot.status === "pending_confirm" || (slot.required && !slot.confirmed && slot.status !== "empty")
-    ) ||
-    Object.values(state.fields).some(
-      (field) => field.requiresManualConfirmation && !field.confirmed
-    );
+  const hasAnyPendingConfirmation = Object.values(state.slots).some(
+    (slot) => slot.status === "pending_confirm" || (slot.required && !slot.confirmed && slot.status !== "empty")
+  );
 
   if (hasAnyPendingConfirmation) {
     return "待确认";
