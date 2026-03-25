@@ -1,14 +1,23 @@
 import { redirect } from "next/navigation";
 
+import { getLoginNotice } from "@/lib/auth-password";
 import { createClient } from "@/lib/supabase/server";
 
 import { LoginForm } from "./login-form";
 
 type LoginFormState = {
   error: string | null;
+  email: string;
 };
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{
+    registered?: string;
+    reset?: string;
+  }>;
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   async function loginAction(_: LoginFormState, formData: FormData): Promise<LoginFormState> {
     "use server";
 
@@ -16,7 +25,7 @@ export default function LoginPage() {
     const password = formData.get("password")?.toString() ?? "";
 
     if (!email || !password) {
-      return { error: "请输入邮箱和密码。" };
+      return { error: "请输入邮箱和密码。", email };
     }
 
     const supabase = await createClient();
@@ -26,7 +35,7 @@ export default function LoginPage() {
     });
 
     if (error || !data.user) {
-      return { error: error?.message ?? "登录失败，请检查邮箱和密码。" };
+      return { error: error?.message ?? "登录失败，请检查邮箱和密码。", email };
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -36,11 +45,13 @@ export default function LoginPage() {
       .single();
 
     if (profileError || !profile) {
-      return { error: "未找到账号资料，请联系管理员。" };
+      return { error: "未找到账号资料，请联系管理员。", email };
     }
 
     redirect(profile.role === "admin" || profile.role === "owner" ? "/admin" : "/dashboard");
   }
 
-  return <LoginForm action={loginAction} />;
+  const params = await searchParams;
+
+  return <LoginForm action={loginAction} notice={getLoginNotice(params)} />;
 }

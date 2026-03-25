@@ -2,7 +2,7 @@
 
 import { motion, useAnimationControls, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
@@ -14,19 +14,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 type LoginFormState = {
   error: string | null;
+  email: string;
 };
 
 type LoginFormProps = {
   action: (state: LoginFormState, formData: FormData) => Promise<LoginFormState>;
+  initialEmail?: string;
+  notice?: string | null;
 };
+
+const STORAGE_KEY = "dydata.rememberedEmail";
 
 const initialState: LoginFormState = {
   error: null,
+  email: "",
 };
 
 function SubmitButton() {
@@ -71,13 +78,42 @@ function SubmitButton() {
   );
 }
 
-export function LoginForm({ action }: LoginFormProps) {
-  const [state, formAction] = useActionState(action, initialState);
+export function LoginForm({ action, initialEmail = "", notice = null }: LoginFormProps) {
+  const [state, formAction] = useActionState(action, { ...initialState, email: initialEmail });
   const formControls = useAnimationControls();
   const shouldReduceMotion = useReducedMotion();
+  const [email, setEmail] = useState(initialEmail);
+  const [password, setPassword] = useState("");
+  const [rememberEmail, setRememberEmail] = useState(Boolean(initialEmail));
+
+  useEffect(() => {
+    const savedEmail = window.localStorage.getItem(STORAGE_KEY);
+    if (!initialEmail && savedEmail) {
+      setEmail(savedEmail);
+      setRememberEmail(true);
+    }
+  }, [initialEmail]);
+
+  useEffect(() => {
+    if (state.email) {
+      setEmail(state.email);
+    }
+  }, [state.email]);
+
+  useEffect(() => {
+    if (rememberEmail) {
+      if (email.trim()) {
+        window.localStorage.setItem(STORAGE_KEY, email.trim());
+      }
+      return;
+    }
+
+    window.localStorage.removeItem(STORAGE_KEY);
+  }, [email, rememberEmail]);
 
   useEffect(() => {
     if (state.error) {
+      setPassword("");
       feedbackToast.error(state.error);
       void formControls.start({
         x: [0, -8, 8, -4, 4, 0],
@@ -85,6 +121,12 @@ export function LoginForm({ action }: LoginFormProps) {
       });
     }
   }, [formControls, state.error]);
+
+  useEffect(() => {
+    if (notice) {
+      feedbackToast.success(notice);
+    }
+  }, [notice]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
@@ -110,6 +152,11 @@ export function LoginForm({ action }: LoginFormProps) {
           </CardHeader>
           <CardContent>
             <motion.form action={formAction} animate={formControls} className="space-y-4">
+              {notice ? (
+                <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/8 px-3 py-2 text-sm text-emerald-700">
+                  {notice}
+                </p>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="email">邮箱</Label>
                 <div className="input-focus-line">
@@ -118,26 +165,44 @@ export function LoginForm({ action }: LoginFormProps) {
                     className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
                     id="email"
                     name="email"
+                    onChange={(event) => setEmail(event.target.value)}
                     placeholder="name@example.com"
                     required
                     type="email"
+                    value={email}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">密码</Label>
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="password">密码</Label>
+                  <Link className="text-sm text-muted-foreground underline underline-offset-4" href="/forgot-password">
+                    忘记密码？
+                  </Link>
+                </div>
                 <div className="input-focus-line">
                   <Input
                     autoComplete="current-password"
                     className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
                     id="password"
                     name="password"
+                    onChange={(event) => setPassword(event.target.value)}
                     placeholder="请输入密码"
                     required
                     type="password"
+                    value={password}
                   />
                 </div>
               </div>
+              <label className="flex items-center gap-2 text-sm text-muted-foreground" htmlFor="remember-email">
+                <Checkbox
+                  checked={rememberEmail}
+                  id="remember-email"
+                  name="rememberEmail"
+                  onCheckedChange={(checked) => setRememberEmail(checked === true)}
+                />
+                记住邮箱
+              </label>
               <SubmitButton />
               <p className="text-center text-sm text-muted-foreground">
                 还没有账号？
