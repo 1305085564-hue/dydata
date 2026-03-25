@@ -271,45 +271,43 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
 
       {/* 共性面板 */}
       {stats ? (
-        <div className="rounded-2xl bg-white/85 backdrop-blur-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-white/70 p-5 space-y-4">
+        <div className="rounded-2xl bg-white/85 backdrop-blur-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-white/70 p-4 space-y-3">
           <p className="text-sm font-semibold tracking-[-0.02em]">筛选结果：<span className="tabular-nums">{stats.count}</span> 条</p>
-          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <div>
-              <p className="text-muted-foreground text-xs">平均播放量</p>
-              <p className="font-medium tabular-nums">{formatPlayCount(stats.avgPlay)}</p>
+
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-2.5 py-2">
+              <p className="text-[11px] text-muted-foreground">平均播放量</p>
+              <p className="mt-1 font-semibold tabular-nums text-slate-900">{formatPlayCount(stats.avgPlay)}</p>
             </div>
-            {stats.avgCr && (
-              <div>
-                <p className="text-muted-foreground text-xs">平均完播率</p>
-                <p className="font-medium tabular-nums">{stats.avgCr}%</p>
-              </div>
-            )}
-            {stats.avgDur && (
-              <div>
-                <p className="text-muted-foreground text-xs">平均播放时长</p>
-                <p className="font-medium tabular-nums">{stats.avgDur}秒</p>
-              </div>
-            )}
-            {stats.engagementRate && (
-              <div>
-                <p className="text-muted-foreground text-xs">平均互动率</p>
-                <p className="font-medium tabular-nums">{stats.engagementRate}%</p>
-              </div>
-            )}
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-2.5 py-2">
+              <p className="text-[11px] text-muted-foreground">平均完播率</p>
+              <p className="mt-1 font-semibold tabular-nums text-slate-900">{stats.avgCr ? `${stats.avgCr}%` : "—"}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-2.5 py-2">
+              <p className="text-[11px] text-muted-foreground">平均互动率</p>
+              <p className="mt-1 font-semibold tabular-nums text-slate-900">{stats.engagementRate ? `${stats.engagementRate}%` : "—"}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
             <div>
-              <p className="text-muted-foreground text-xs">平均点赞</p>
+              <p className="text-muted-foreground text-[11px]">平均播放时长</p>
+              <p className="font-medium tabular-nums">{stats.avgDur ? `${stats.avgDur}秒` : "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-[11px]">平均点赞</p>
               <p className="font-medium tabular-nums">{stats.avgLikes}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">平均评论</p>
+              <p className="text-muted-foreground text-[11px]">平均评论</p>
               <p className="font-medium tabular-nums">{stats.avgComments}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">平均分享</p>
+              <p className="text-muted-foreground text-[11px]">平均分享</p>
               <p className="font-medium tabular-nums">{stats.avgShares}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">平均收藏</p>
+              <p className="text-muted-foreground text-[11px]">平均收藏</p>
               <p className="font-medium tabular-nums">{stats.avgFavorites}</p>
             </div>
           </div>

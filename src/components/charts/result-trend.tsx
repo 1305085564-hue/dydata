@@ -199,8 +199,8 @@ export function ResultTrend({
           <h3 className="text-[15px] font-semibold tracking-tight text-foreground">结果趋势</h3>
           <p className="text-xs text-muted-foreground">{activeMetric.label}对比团队 P80，保留最近 {range} 天</p>
         </div>
-        <div className="flex flex-col gap-2 sm:items-end">
-          <div className="inline-flex rounded-2xl border border-border/70 bg-muted/50 p-1 backdrop-blur">
+        <div className="flex flex-col gap-1.5 sm:items-end">
+          <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/50 p-0.5 backdrop-blur">
             {(
               [
                 ["playCount", "播放量"],
@@ -212,7 +212,7 @@ export function ResultTrend({
                 size="sm"
                 variant="ghost"
                 className={cn(
-                  "rounded-xl px-3 text-xs font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]",
+                  "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.01] hover:brightness-105 active:scale-[0.98]",
                   metric === key && "bg-background text-foreground shadow-sm"
                 )}
                 onClick={() => setMetric(key)}
@@ -221,14 +221,14 @@ export function ResultTrend({
               </Button>
             ))}
           </div>
-          <div className="inline-flex rounded-2xl border border-border/70 bg-muted/45 p-1 backdrop-blur">
+          <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/45 p-0.5 backdrop-blur">
             {([7, 30] as const).map((value) => (
               <Button
                 key={value}
                 size="sm"
                 variant="ghost"
                 className={cn(
-                  "rounded-xl px-3 text-xs font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]",
+                  "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.01] hover:brightness-105 active:scale-[0.98]",
                   range === value && "bg-background text-foreground shadow-sm"
                 )}
                 onClick={() => setRange(value)}

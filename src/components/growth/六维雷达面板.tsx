@@ -123,9 +123,9 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
   const weakCard = weakBenchmarkCards.find((c) => c.dimension === capabilityCards[weakIndex]?.name);
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white/85 p-5 shadow backdrop-blur sm:p-6">
+    <div className="rounded-2xl border border-[var(--color-border)] bg-white/85 p-4 shadow backdrop-blur sm:p-6">
       {/* 标题行：左=标题，右=图例+选择器 */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
         <div className="flex items-center gap-2.5 text-xs text-[var(--color-text-secondary)]">
           <span className="flex items-center gap-1.5">
@@ -152,7 +152,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
       </div>
 
       {/* 主体：左列(进度条+强弱) + 右列(雷达图)，垂直居中对齐 */}
-      <div className="flex flex-col gap-4 lg:grid lg:items-center lg:gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className="flex flex-col gap-3 lg:grid lg:items-center lg:gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
 
         {/* ── 左列 ── */}
         <div>
@@ -174,11 +174,11 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                     isActive ? "bg-blue-50" : "hover:bg-slate-50",
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="w-[5.5rem] shrink-0 text-[15px] font-semibold text-[var(--color-text-primary)]">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-[4.6rem] shrink-0 text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {dimIcons[card.name] ?? "·"} {card.name}
                     </span>
-                    <div className="h-[7px] flex-1 max-w-[35%] rounded-full bg-gray-100">
+                    <div className="h-[7px] flex-1 max-w-[44%] rounded-full bg-gray-100">
                       <div
                         className={cn("h-full rounded-full transition-all", barColor)}
                         style={{ width: hasData ? `${score}%` : "0%" }}

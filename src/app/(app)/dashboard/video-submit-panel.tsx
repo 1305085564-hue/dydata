@@ -158,7 +158,7 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports }: Vide
         </CardHeader>
 
         <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
-          <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+          <div className={accounts.length > 1 ? "grid grid-cols-2 gap-2 xl:grid-cols-3" : "grid grid-cols-1 gap-2"}>
             {accounts.map((account) => {
               const isSelected = account.id === (selectedAccount?.id ?? "");
               const summary = getTodaySubmissionSummary(mergedTodayReports, account.id);

@@ -16,7 +16,7 @@ function 信号色(confidence: 结论卡数据["confidence"]) {
 export function 视频结论单卡({ card }: { card: 结论卡数据 }) {
   return (
     <Card className="min-h-[244px] rounded-[16px] border border-white/70 bg-white/88 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.28)] backdrop-blur-xl">
-      <CardHeader className="space-y-3 pb-2">
+      <CardHeader className="space-y-2 pb-2">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <p className="text-[11px] font-medium tracking-[0.18em] text-slate-400 uppercase">{card.eyebrow}</p>
@@ -28,13 +28,13 @@ export function 视频结论单卡({ card }: { card: 结论卡数据 }) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex h-full flex-col gap-4">
-        <div className="rounded-[14px] bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(241,245,249,0.78))] p-4 ring-1 ring-slate-200/70">
+      <CardContent className="flex h-full flex-col gap-3">
+        <div className="rounded-[14px] bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(241,245,249,0.78))] p-3 ring-1 ring-slate-200/70">
           <div className="flex items-center gap-2 text-slate-500">
             {card.insufficient ? <AlertCircle className="size-4" /> : <Sparkles className="size-4" />}
             <span className="text-xs font-medium">核心结论</span>
           </div>
-          <p className="mt-3 text-[22px] leading-tight font-semibold tracking-tight text-slate-950 line-clamp-3">{card.summary}</p>
+          <p className="mt-2 text-[18px] leading-tight font-semibold tracking-tight text-slate-950 line-clamp-3 sm:text-[22px]">{card.summary}</p>
           {card.footnote ? <p className="mt-2 text-xs leading-5 text-slate-500 line-clamp-2">{card.footnote}</p> : null}
         </div>
 
@@ -57,7 +57,7 @@ export function 视频结论单卡({ card }: { card: 结论卡数据 }) {
 export function 干预结论单卡({ card }: { card: 干预结论卡数据 }) {
   return (
     <Card className="min-h-[244px] rounded-[16px] border border-white/70 bg-white/88 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.28)] backdrop-blur-xl">
-      <CardHeader className="space-y-3 pb-2">
+      <CardHeader className="space-y-2 pb-2">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <p className="text-[11px] font-medium tracking-[0.18em] text-slate-400 uppercase">{card.eyebrow}</p>
@@ -69,13 +69,13 @@ export function 干预结论单卡({ card }: { card: 干预结论卡数据 }) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex h-full flex-col gap-4">
-        <div className="rounded-[14px] bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(241,245,249,0.78))] p-4 ring-1 ring-slate-200/70">
+      <CardContent className="flex h-full flex-col gap-3">
+        <div className="rounded-[14px] bg-[linear-gradient(180deg,rgba(248,250,252,0.92),rgba(241,245,249,0.78))] p-3 ring-1 ring-slate-200/70">
           <div className="flex items-center gap-2 text-slate-500">
             {card.items.length > 0 ? <ArrowUpRight className="size-4" /> : <AlertCircle className="size-4" />}
             <span className="text-xs font-medium">干预信号</span>
           </div>
-          <p className="mt-3 text-[22px] leading-tight font-semibold tracking-tight text-slate-950 line-clamp-3">{card.summary}</p>
+          <p className="mt-2 text-[18px] leading-tight font-semibold tracking-tight text-slate-950 line-clamp-3 sm:text-[22px]">{card.summary}</p>
           {card.footnote ? <p className="mt-2 text-xs leading-5 text-slate-500 line-clamp-2">{card.footnote}</p> : null}
         </div>
 

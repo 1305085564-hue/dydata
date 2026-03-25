@@ -171,15 +171,17 @@ export default async function DashboardPage() {
             </div>
 
             <div className="dashboard-summary-bar">
-              <div className="dashboard-summary-chip">
-                <span className="text-xs text-muted-foreground">今日待提交</span>
-                <span className="tabular-nums text-sm font-semibold text-foreground">{pendingVideoCount}</span>
+              <div className="grid w-full grid-cols-2 gap-2">
+                <div className="dashboard-summary-chip w-full justify-between">
+                  <span className="text-xs text-muted-foreground">今日待提交</span>
+                  <span className="tabular-nums text-sm font-semibold text-foreground">{pendingVideoCount}</span>
+                </div>
+                <div className="dashboard-summary-chip w-full justify-between">
+                  <span className="text-xs text-muted-foreground">待补 24h</span>
+                  <span className="tabular-nums text-sm font-semibold text-foreground">{pending24hCount}</span>
+                </div>
               </div>
-              <div className="dashboard-summary-chip">
-                <span className="text-xs text-muted-foreground">待补 24h</span>
-                <span className="tabular-nums text-sm font-semibold text-foreground">{pending24hCount}</span>
-              </div>
-              <div className="dashboard-summary-chip">
+              <div className="dashboard-summary-chip w-full justify-between">
                 <span className="text-xs text-muted-foreground">当前状态</span>
                 <span className={allTasksCompleted ? "dashboard-status dashboard-status-submitted" : "dashboard-status dashboard-status-pending"}>
                   {allTasksCompleted ? "今日已清空" : "还有待办"}

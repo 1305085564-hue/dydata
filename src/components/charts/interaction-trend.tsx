@@ -162,19 +162,19 @@ export function InteractionTrend({
 
   return (
     <section className="glass-card-static p-4 sm:p-5">
-      <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2 border-b border-border/60 pb-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h3 className="text-[15px] font-semibold tracking-tight text-foreground">互动质量分趋势</h3>
           <p className="text-xs text-muted-foreground">评论×0.35 + 分享×0.25 + 点赞×0.25 + 收藏×0.15</p>
         </div>
-        <div className="inline-flex rounded-2xl border border-border/70 bg-muted/45 p-1 backdrop-blur">
+        <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/45 p-0.5 backdrop-blur">
           {([7, 30] as const).map((value) => (
             <Button
               key={value}
               size="sm"
               variant="ghost"
               className={cn(
-                "rounded-xl px-3 text-xs font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]",
+                "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.01] hover:brightness-105 active:scale-[0.98]",
                 range === value && "bg-background text-foreground shadow-sm"
               )}
               onClick={() => setRange(value)}

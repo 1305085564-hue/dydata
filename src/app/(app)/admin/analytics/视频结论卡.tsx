@@ -29,7 +29,7 @@ function VideoConclusionCards(props: 视频结论卡Props) {
           <p className="text-sm leading-relaxed text-slate-400 italic">{EXAMPLE_TEXT}</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <视频结论单卡 card={result.bestTopic} />
           <视频结论单卡 card={result.bestFormat} />
           <视频结论单卡 card={result.bestPublishHour} />
