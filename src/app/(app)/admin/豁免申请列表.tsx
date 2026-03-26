@@ -14,11 +14,13 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { reviewExemptionRequest } from "./actions";
 
 const MODE_LABELS: Record<string, string> = {
-  single: "单日",
-  "3days": "3天",
-  "4days": "4天",
-  "5days": "5天",
-  permanent: "永久",
+  yesterday: "昨日豁免",
+  range: "多日豁免",
+  permanent: "永久豁免",
+  single: "昨日豁免",
+  "3days": "多日豁免",
+  "4days": "多日豁免",
+  "5days": "多日豁免",
 };
 
 export interface ExemptionRequestRow {

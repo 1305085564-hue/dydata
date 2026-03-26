@@ -124,6 +124,8 @@ export async function hasPendingExemptionRequest(): Promise<boolean> {
 export async function submitExemptionRequest(input: {
   mode: GrantMode;
   reason: string;
+  startDate?: string;
+  endDate?: string;
 }): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -151,6 +153,8 @@ export async function submitExemptionRequest(input: {
     mode: input.mode,
     reason: input.reason,
     today,
+    startDate: input.startDate,
+    endDate: input.endDate,
   });
 
   const { error } = await supabase.from("exemption_request").insert(draft);

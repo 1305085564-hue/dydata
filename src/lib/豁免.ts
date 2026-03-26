@@ -1,7 +1,7 @@
 import type { UserStatus } from "@/types";
 
 export type ExemptionType = "permanent" | "temporary";
-export type ExemptionMode = "none" | "permanent" | "temporary-single" | "temporary-range";
+export type ExemptionMode = "none" | "permanent" | "yesterday" | "range";
 
 export interface ExemptionProfileLike {
   id: string;
@@ -34,15 +34,15 @@ function normalizeReason(reason?: string) {
 }
 
 function formatRangeLabel(startDate: string, endDate: string) {
-  return startDate === endDate ? `临时 ${startDate}` : `临时 ${startDate} ~ ${endDate}`;
+  return startDate === endDate ? `昨日豁免 ${startDate}` : `多日豁免 ${startDate} ~ ${endDate}`;
 }
 
 function formatDateDetail(values: ExemptionFormValues) {
-  if (values.mode === "temporary-single") {
+  if (values.mode === "yesterday") {
     return values.date;
   }
 
-  if (values.mode === "temporary-range") {
+  if (values.mode === "range") {
     return `${values.startDate} ~ ${values.endDate}`;
   }
 
@@ -74,15 +74,22 @@ export function buildExemptionFields(values: ExemptionFormValues): ExemptionProf
     };
   }
 
-  const startDate = values.mode === "temporary-single" ? values.date : values.startDate;
-  const endDate = values.mode === "temporary-single" ? values.date : values.endDate;
+  const startDate = values.mode === "yesterday" ? values.date : values.startDate;
+  const endDate = values.mode === "yesterday" ? values.date : values.endDate;
 
   if (!startDate || !endDate) {
-    throw new Error("临时豁免必须填写日期");
+    throw new Error(values.mode === "range" ? "多日豁免必须填写日期" : "昨日豁免必须填写日期");
   }
 
   if (startDate > endDate) {
     throw new Error("开始日期不能晚于结束日期");
+  }
+
+  if (values.mode === "range") {
+    const days = Math.floor((new Date(`${endDate}T00:00:00.000Z`).getTime() - new Date(`${startDate}T00:00:00.000Z`).getTime()) / 86400000) + 1;
+    if (days < 2) {
+      throw new Error("多日豁免至少选择2天");
+    }
   }
 
   return {
@@ -108,7 +115,7 @@ export function deriveExemptionFormValues(profile: ExemptionProfileLike): Exempt
     if (profile.exempt_start_date === profile.exempt_end_date) {
       return {
         userId: profile.id,
-        mode: "temporary-single",
+        mode: "yesterday",
         date: profile.exempt_start_date,
         reason: profile.exempt_reason ?? undefined,
       };
@@ -116,7 +123,7 @@ export function deriveExemptionFormValues(profile: ExemptionProfileLike): Exempt
 
     return {
       userId: profile.id,
-      mode: "temporary-range",
+      mode: "range",
       startDate: profile.exempt_start_date,
       endDate: profile.exempt_end_date,
       reason: profile.exempt_reason ?? undefined,
@@ -142,7 +149,7 @@ export function formatExemptionDetail(values: ExemptionFormValues) {
   }
 
   const dateDetail = formatDateDetail(values);
-  const parts = ["临时豁免"];
+  const parts = [values.mode === "yesterday" ? "昨日豁免" : "多日豁免"];
 
   if (dateDetail) {
     parts.push(`日期：${dateDetail}`);

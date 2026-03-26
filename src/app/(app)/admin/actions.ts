@@ -12,6 +12,8 @@ import {
   buildGrantDraft,
   buildRequestDraft,
   buildReviewPatch,
+  normalizeGrantMode,
+  type AnyGrantMode,
   type GrantMode,
   type ReviewDecision,
 } from "@/lib/豁免流程";
@@ -81,10 +83,12 @@ async function applyGrantToProfile(
   input: {
     userId: string;
     teamId: string | null;
-    mode: GrantMode;
+    mode: AnyGrantMode;
     reason?: string | null;
     requestId: string | null;
     today?: string;
+    startDate?: string | null;
+    endDate?: string | null;
   }
 ) {
   const draft = buildGrantDraft({
@@ -164,31 +168,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
     }
 
     const teamId = await getProfileTeamId(supabase, values.userId);
-    let mode: GrantMode;
-
-    if (values.mode === "permanent") {
-      mode = "permanent";
-    } else if (values.mode === "temporary-single") {
-      mode = "single";
-    } else {
-      const startDate = values.startDate ?? "";
-      const endDate = values.endDate ?? "";
-      const days = Math.floor((new Date(`${endDate}T00:00:00.000Z`).getTime() - new Date(`${startDate}T00:00:00.000Z`).getTime()) / 86400000) + 1;
-
-      if (days === 3 || days === 4 || days === 5) {
-        mode = `${days}days` as GrantMode;
-      } else {
-        const fields = buildExemptionFields(values);
-        const { error } = await syncProfileExemptionProjection(supabase, values.userId, fields);
-        if (error) {
-          return { error: error.message };
-        }
-        await writeAuditLog(supabase, perm.userId, "set_exempt", values.userId, formatExemptionDetail(values));
-        revalidatePath("/admin");
-        revalidatePath("/dashboard");
-        return {};
-      }
-    }
+    const mode: GrantMode = values.mode === "permanent" ? "permanent" : values.mode === "yesterday" ? "yesterday" : "range";
 
     const result = await applyGrantToProfile(supabase, {
       userId: values.userId,
@@ -197,6 +177,8 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       reason: values.reason,
       requestId: null,
       today: new Date().toISOString().slice(0, 10),
+      startDate: values.mode === "range" ? values.startDate ?? null : values.date ?? null,
+      endDate: values.mode === "range" ? values.endDate ?? null : values.date ?? null,
     });
 
     if (result.error) {
@@ -252,6 +234,8 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
 export async function submitExemptionRequest(input: {
   mode: GrantMode;
   reason?: string | null;
+  startDate?: string;
+  endDate?: string;
 }): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
@@ -266,6 +250,8 @@ export async function submitExemptionRequest(input: {
       mode: input.mode,
       reason: input.reason,
       today: new Date().toISOString().slice(0, 10),
+      startDate: input.startDate,
+      endDate: input.endDate,
     });
 
     const { error } = await supabase.from("exemption_request").insert(draft);
@@ -296,7 +282,7 @@ export async function reviewExemptionRequest(input: {
 
   const { data: request, error: fetchError } = await supabase
     .from("exemption_request")
-    .select("id, applicant_user_id, exemption_type, reason, request_status")
+    .select("id, applicant_user_id, exemption_type, start_date, end_date, reason, request_status")
     .eq("id", input.requestId)
     .single();
 
@@ -319,10 +305,12 @@ export async function reviewExemptionRequest(input: {
     const result = await applyGrantToProfile(supabase, {
       userId: request.applicant_user_id,
       teamId,
-      mode: request.exemption_type as GrantMode,
+      mode: normalizeGrantMode(request.exemption_type as AnyGrantMode),
       reason: request.reason,
       requestId: request.id,
       today: new Date().toISOString().slice(0, 10),
+      startDate: request.start_date,
+      endDate: request.end_date,
     });
 
     if (result.error) {

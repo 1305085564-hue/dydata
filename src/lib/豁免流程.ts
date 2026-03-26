@@ -1,15 +1,19 @@
 import type { ExemptionProfileLike } from "./豁免";
 
-export type GrantMode = "single" | "3days" | "4days" | "5days" | "permanent";
+export type LegacyGrantMode = "single" | "3days" | "4days" | "5days";
+export type GrantMode = "yesterday" | "range" | "permanent";
+export type AnyGrantMode = GrantMode | LegacyGrantMode;
 export type ReviewDecision = "approved" | "rejected";
 
 interface BuildGrantDraftInput {
   userId: string;
   teamId: string | null;
-  mode: GrantMode;
+  mode: AnyGrantMode;
   reason?: string | null;
   requestId: string | null;
   today: string;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 interface BuildRequestDraftInput {
@@ -18,6 +22,8 @@ interface BuildRequestDraftInput {
   mode: GrantMode;
   reason?: string | null;
   today: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface BuildReviewPatchInput {
@@ -31,7 +37,7 @@ interface ExemptionGrantDraft {
   team_id: string | null;
   start_date: string;
   end_date: string | null;
-  grant_type: GrantMode;
+  grant_type: AnyGrantMode;
   status: "active";
 }
 
@@ -62,9 +68,16 @@ function addDays(date: string, days: number) {
   return result.toISOString().slice(0, 10);
 }
 
-function resolveDateRange(mode: GrantMode, today: string) {
+export function normalizeGrantMode(mode: AnyGrantMode): GrantMode {
+  if (mode === "single") return "yesterday";
+  if (mode === "3days" || mode === "4days" || mode === "5days") return "range";
+  return mode;
+}
+
+function resolveLegacyRange(mode: LegacyGrantMode, today: string) {
   if (mode === "single") {
-    return { startDate: today, endDate: today };
+    const yesterday = addDays(today, -1);
+    return { startDate: yesterday, endDate: yesterday };
   }
 
   if (mode === "3days") {
@@ -75,11 +88,43 @@ function resolveDateRange(mode: GrantMode, today: string) {
     return { startDate: today, endDate: addDays(today, 3) };
   }
 
-  if (mode === "5days") {
-    return { startDate: today, endDate: addDays(today, 4) };
+  return { startDate: today, endDate: addDays(today, 4) };
+}
+
+function resolveDateRange(input: BuildGrantDraftInput | BuildRequestDraftInput) {
+  const normalizedMode = normalizeGrantMode(input.mode);
+
+  if (normalizedMode === "permanent") {
+    return { mode: normalizedMode, startDate: input.today, endDate: null as string | null };
   }
 
-  return { startDate: today, endDate: null };
+  if (input.mode === "single" || input.mode === "3days" || input.mode === "4days" || input.mode === "5days") {
+    const { startDate, endDate } = resolveLegacyRange(input.mode, input.today);
+    return { mode: normalizedMode, startDate, endDate };
+  }
+
+  if (normalizedMode === "yesterday") {
+    const yesterday = addDays(input.today, -1);
+    return { mode: normalizedMode, startDate: yesterday, endDate: yesterday };
+  }
+
+  const startDate = input.startDate ?? null;
+  const endDate = input.endDate ?? null;
+
+  if (!startDate || !endDate) {
+    throw new Error("多日豁免必须填写开始和结束日期");
+  }
+
+  if (startDate > endDate) {
+    throw new Error("开始日期不能晚于结束日期");
+  }
+
+  const days = Math.floor((new Date(`${endDate}T00:00:00.000Z`).getTime() - new Date(`${startDate}T00:00:00.000Z`).getTime()) / 86400000) + 1;
+  if (days < 2) {
+    throw new Error("多日豁免至少选择2天");
+  }
+
+  return { mode: normalizedMode, startDate, endDate };
 }
 
 export function buildGrantDraft(input: BuildGrantDraftInput): {
@@ -87,9 +132,9 @@ export function buildGrantDraft(input: BuildGrantDraftInput): {
   profile: ExemptionProfileLike;
 } {
   const reason = normalizeReason(input.reason);
-  const { startDate, endDate } = resolveDateRange(input.mode, input.today);
+  const { mode, startDate, endDate } = resolveDateRange(input);
 
-  if (input.mode === "permanent" && !reason) {
+  if (mode === "permanent" && !reason) {
     throw new Error("永久豁免必须填写原因");
   }
 
@@ -105,22 +150,22 @@ export function buildGrantDraft(input: BuildGrantDraftInput): {
     },
     profile: {
       id: input.userId,
-      status: input.mode === "permanent" ? "exempt" : "active",
-      exempt_type: input.mode === "permanent" ? "permanent" : "temporary",
-      exempt_start_date: input.mode === "permanent" ? null : startDate,
-      exempt_end_date: input.mode === "permanent" ? null : endDate,
+      status: mode === "permanent" ? "exempt" : "active",
+      exempt_type: mode === "permanent" ? "permanent" : "temporary",
+      exempt_start_date: mode === "permanent" ? null : startDate,
+      exempt_end_date: mode === "permanent" ? null : endDate,
       exempt_reason: reason,
     },
   };
 }
 
 export function buildRequestDraft(input: BuildRequestDraftInput): ExemptionRequestDraft {
-  const { startDate, endDate } = resolveDateRange(input.mode, input.today);
+  const { mode, startDate, endDate } = resolveDateRange(input);
 
   return {
     applicant_user_id: input.applicantUserId,
     team_id: input.teamId,
-    exemption_type: input.mode,
+    exemption_type: mode,
     start_date: startDate,
     end_date: endDate,
     reason: normalizeReason(input.reason),

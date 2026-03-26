@@ -7,12 +7,12 @@ import {
   formatExemptionDetail,
   getExemptionStateForDate,
   type ExemptionFormValues,
-} from "./豁免";
+} from "./豁免.ts";
 
-test("临时单天豁免在当天生效", () => {
+test("昨日豁免在指定日期生效", () => {
   const profile = buildExemptionFields({
     userId: "u1",
-    mode: "temporary-single",
+    mode: "yesterday",
     date: "2026-03-20",
     reason: "外出",
   });
@@ -20,14 +20,14 @@ test("临时单天豁免在当天生效", () => {
   const result = getExemptionStateForDate(profile, "2026-03-20");
 
   assert.equal(result.isExempt, true);
-  assert.equal(result.label, "临时 2026-03-20");
+  assert.equal(result.label, "昨日豁免 2026-03-20");
   assert.equal(result.reason, "外出");
 });
 
-test("临时日期范围仅在范围内生效", () => {
+test("多日豁免仅在范围内生效", () => {
   const profile = buildExemptionFields({
     userId: "u2",
-    mode: "temporary-range",
+    mode: "range",
     startDate: "2026-03-20",
     endDate: "2026-03-22",
     reason: "出差",
@@ -55,16 +55,29 @@ test("永久豁免会转换为兼容旧 status 的字段", () => {
   });
 });
 
-test("临时豁免开始日期晚于结束日期时抛错", () => {
+test("多日豁免开始日期晚于结束日期时抛错", () => {
   assert.throws(
     () =>
       buildExemptionFields({
         userId: "u4",
-        mode: "temporary-range",
+        mode: "range",
         startDate: "2026-03-22",
         endDate: "2026-03-20",
       }),
-    /开始日期不能晚于结束日期/
+    /开始日期不能晚于结束日期/,
+  );
+});
+
+test("多日豁免少于两天时抛错", () => {
+  assert.throws(
+    () =>
+      buildExemptionFields({
+        userId: "u4",
+        mode: "range",
+        startDate: "2026-03-22",
+        endDate: "2026-03-22",
+      }),
+    /多日豁免至少选择2天/,
   );
 });
 
@@ -98,7 +111,7 @@ test("已有永久豁免可回填到表单", () => {
       userId: "u6",
       mode: "permanent",
       reason: "长期停岗",
-    }
+    },
   );
 });
 
@@ -114,31 +127,31 @@ test("已有单天临时豁免可回填到表单", () => {
     }),
     {
       userId: "u7",
-      mode: "temporary-single",
+      mode: "yesterday",
       date: "2026-03-20",
       reason: "外出",
-    }
+    },
   );
 });
 
-test("审计详情会格式化永久和临时豁免", () => {
+test("审计详情会格式化永久和多日豁免", () => {
   assert.equal(
     formatExemptionDetail({
       userId: "u8",
       mode: "permanent",
       reason: "长期停岗",
     }),
-    "永久豁免｜原因：长期停岗"
+    "永久豁免｜原因：长期停岗",
   );
 
   assert.equal(
     formatExemptionDetail({
       userId: "u9",
-      mode: "temporary-range",
+      mode: "range",
       startDate: "2026-03-20",
       endDate: "2026-03-22",
       reason: "出差",
     }),
-    "临时豁免｜日期：2026-03-20 ~ 2026-03-22｜原因：出差"
+    "多日豁免｜日期：2026-03-20 ~ 2026-03-22｜原因：出差",
   );
 });
