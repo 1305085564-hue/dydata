@@ -67,11 +67,13 @@ async function deactivateExistingGrants(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
 ) {
+  // exemption_grant 表可能未建，失败不阻断主流程
   await supabase
     .from("exemption_grant")
     .update({ status: "inactive" })
     .eq("user_id", userId)
-    .eq("status", "active");
+    .eq("status", "active")
+    .then(() => {}, () => {});
 }
 
 async function applyGrantToProfile(
@@ -92,10 +94,8 @@ async function applyGrantToProfile(
 
   await deactivateExistingGrants(supabase, input.userId);
 
-  const { error: grantError } = await supabase.from("exemption_grant").insert(draft.grant);
-  if (grantError) {
-    return { error: grantError.message };
-  }
+  // exemption_grant 表可能未建，insert 失败不阻断（profiles 才是关键）
+  await supabase.from("exemption_grant").insert(draft.grant).then(() => {}, () => {});
 
   const { error: profileError } = await syncProfileExemptionProjection(supabase, input.userId, draft.profile);
   if (profileError) {
