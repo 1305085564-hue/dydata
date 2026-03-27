@@ -121,6 +121,10 @@ export function ContentDetailDialog({
 
   const credibility = getSampleCredibility(snapshot?.play_count ?? null, video?.anomaly_status ?? null);
 
+  const renderedSegments = useMemo(() => {
+    return reviewResult?.segments ?? [];
+  }, [reviewResult]);
+
   const comparisonSummary = useMemo(() => {
     const comparison = reviewResult?.comparison;
     if (!comparison) return "-";
