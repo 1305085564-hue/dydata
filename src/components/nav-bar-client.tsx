@@ -48,6 +48,18 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
                 管理后台
               </Link>
             )}
+            {showAdmin && (
+              <Link
+                href="/admin/content"
+                className={`rounded-md px-3 py-1.5 transition-colors ${
+                  pathname.startsWith("/admin/content")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                内容管理
+              </Link>
+            )}
           </div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">

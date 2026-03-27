@@ -1,11 +1,63 @@
 import { PERMISSION_KEYS } from "@/types";
-import type { Permissions, UserRole } from "@/types";
+import type { PermissionKey, Permissions, UserRole } from "@/types";
+
+function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
+  if (role === "owner") return true;
+  if (role !== "admin") return false;
+  return permissions[key] === true;
+}
 
 export interface PermissionManagerMember {
   id: string;
   name: string;
   role: UserRole;
   permissions: Permissions;
+}
+
+export interface PermissionManagerCapabilities {
+  canEditPermissions: boolean;
+  canChangeRole: boolean;
+  canRemoveMember: boolean;
+}
+
+export interface RemoveMemberTargetInput {
+  actorRole: UserRole;
+  actorId: string;
+  targetId: string;
+  targetRole: UserRole;
+}
+
+export function getPermissionManagerCapabilities(
+  role: UserRole,
+  permissions: Permissions,
+): PermissionManagerCapabilities {
+  if (role === "owner") {
+    return {
+      canEditPermissions: true,
+      canChangeRole: true,
+      canRemoveMember: true,
+    };
+  }
+
+  const canRemoveMember = hasPermission(role, permissions, "manage_members");
+
+  return {
+    canEditPermissions: false,
+    canChangeRole: false,
+    canRemoveMember,
+  };
+}
+
+export function canRemoveMemberTarget({
+  actorRole,
+  actorId,
+  targetId,
+  targetRole,
+}: RemoveMemberTargetInput) {
+  if (actorId === targetId) return false;
+  if (targetRole === "owner") return false;
+  if (actorRole === "owner") return true;
+  return actorRole === "admin" && targetRole === "member";
 }
 
 function cloneMember(member: PermissionManagerMember): PermissionManagerMember {

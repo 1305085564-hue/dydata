@@ -1,0 +1,488 @@
+"use client";
+
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { feedbackToast } from "@/components/ui/feedback-toast";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getSampleCredibility } from "@/lib/next-day-review";
+import type { NextDayReviewResult, Video, VideoMetricsSnapshot } from "@/types";
+
+type VideoRow = Video & {
+  accounts: { name: string };
+  profiles: { name: string };
+};
+
+interface ContentDetailDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  video: VideoRow | null;
+  snapshot: VideoMetricsSnapshot | null;
+  isReviewed: boolean;
+  onReviewed: (videoId: string) => void;
+}
+
+type SegmentState = Array<{
+  segment_order: number;
+  segment_type: string;
+  segment_text: string;
+  estimated_start_sec: number | null;
+  estimated_end_sec: number | null;
+}>;
+
+const statusClassName: Record<Video["anomaly_status"], string> = {
+  正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  删稿: "border-red-200 bg-red-50 text-red-700",
+  限流: "border-red-200 bg-red-50 text-red-700",
+  投流: "border-amber-200 bg-amber-50 text-amber-700",
+  活动干预: "border-amber-200 bg-amber-50 text-amber-700",
+  "未满24h": "border-slate-200 bg-slate-100 text-slate-600",
+};
+
+const sampleLevelClass = {
+  insufficient: "border-red-200 bg-red-50 text-red-700",
+  partial: "border-amber-200 bg-amber-50 text-amber-700",
+  full: "border-emerald-200 bg-emerald-50 text-emerald-700",
+};
+
+const healthClass = {
+  ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  problem: "border-red-200 bg-red-50 text-red-700",
+};
+
+function formatNumber(v: number | null | undefined) {
+  if (v == null) return "-";
+  return new Intl.NumberFormat("zh-CN").format(v);
+}
+
+function formatRate(v: number | string | null | undefined) {
+  if (v == null) return "-";
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  if (Number.isNaN(n)) return "-";
+  return n.toFixed(1) + "%";
+}
+
+function formatDateTime(v: string | null) {
+  if (!v) return "-";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v;
+  return new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
+
+function InfoCell({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl bg-background/80 p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-sm font-medium text-foreground">{children ?? value ?? "-"}</div>
+    </div>
+  );
+}
+
+function MetricCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-background/80 p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-base font-semibold text-foreground">{value}</div>
+    </div>
+  );
+}
+
+export function ContentDetailDialog({
+  open,
+  onOpenChange,
+  video,
+  snapshot,
+  isReviewed,
+  onReviewed,
+}: ContentDetailDialogProps) {
+  const [segments, setSegments] = useState<SegmentState | null>(null);
+  const [reviewResult, setReviewResult] = useState<NextDayReviewResult | null>(null);
+  const [expandedSegments, setExpandedSegments] = useState<Set<number>>(new Set());
+  const [contentExpanded, setContentExpanded] = useState(false);
+  const [isSegmenting, startSegment] = useTransition();
+  const [isReviewing, startReview] = useTransition();
+  const [reviewed, setReviewed] = useState(isReviewed);
+
+  useEffect(() => {
+    setReviewed(isReviewed);
+  }, [isReviewed, video?.id]);
+
+  const credibility = getSampleCredibility(snapshot?.play_count ?? null, video?.anomaly_status ?? null);
+
+  const comparisonSummary = useMemo(() => {
+    const comparison = reviewResult?.comparison;
+    if (!comparison) return "-";
+
+    const baseline = comparison.account_baseline;
+    if (!baseline || baseline.sample_count === 0) {
+      return "同账号近30天样本不足，暂不做历史基线比较";
+    }
+
+    const lines: string[] = [];
+    const currentPlay = reviewResult.metrics.play_count;
+    const baselinePlay = baseline.play_count;
+    if (currentPlay != null && baselinePlay != null) {
+      if (currentPlay > baselinePlay) lines.push("播放高于同账号近30天均值");
+      if (currentPlay < baselinePlay) lines.push("播放低于同账号近30天均值");
+    }
+
+    const currentBounce = reviewResult.metrics.bounce_rate_2s;
+    const baselineBounce = baseline.bounce_rate_2s;
+    if (currentBounce != null && baselineBounce != null && currentBounce > baselineBounce) {
+      lines.push("开头留人弱于历史均值");
+    }
+
+    const currentCompletion5s = reviewResult.metrics.completion_rate_5s;
+    const baselineCompletion5s = baseline.completion_rate_5s;
+    if (currentCompletion5s != null && baselineCompletion5s != null && currentCompletion5s < baselineCompletion5s) {
+      lines.push("前段承接弱于历史均值");
+    }
+
+    if (!lines.length) return "当前表现与同账号近30天均值接近";
+    return lines.slice(0, 2).join("；");
+  }, [reviewResult]);
+
+  function handleSegment() {
+    if (!video) return;
+    startSegment(async () => {
+      try {
+        const res = await fetch("/api/content-segment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ video_id: video.id }),
+        });
+        const data = (await res.json()) as { ok?: boolean; segments?: SegmentState; error?: string };
+        if (!res.ok || !data.ok) throw new Error(data.error ?? "拆段失败");
+        setSegments(data.segments ?? []);
+        feedbackToast.success("拆段完成");
+      } catch (e) {
+        feedbackToast.error(e instanceof Error ? e.message : "拆段失败");
+      }
+    });
+  }
+
+  function handleReview(forceRefresh = false) {
+    if (!video) return;
+    startReview(async () => {
+      try {
+        const res = await fetch("/api/admin/next-day-review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ video_id: video.id, force_refresh: forceRefresh }),
+        });
+        const data = (await res.json()) as NextDayReviewResult & { error?: string; code?: string };
+        if (!res.ok) throw new Error(data.error ?? "复盘失败");
+
+        setReviewResult(data);
+        const problemIdxs = new Set(data.segments.filter((s) => s.health === "problem").map((s) => s.segment_order));
+        setExpandedSegments(problemIdxs);
+        setReviewed(true);
+        onReviewed(video.id);
+        feedbackToast.success(data.cached ? "已加载缓存复盘结果" : "复盘完成");
+      } catch (e) {
+        feedbackToast.error(e instanceof Error ? e.message : "复盘失败");
+      }
+    });
+  }
+
+  function handleCopy() {
+    const message = reviewResult?.actions?.message_for_member;
+    if (!message) return;
+    navigator.clipboard.writeText(message).then(() => {
+      feedbackToast.success("整改建议已复制");
+    });
+  }
+
+  function toggleSegment(order: number) {
+    setExpandedSegments((prev) => {
+      const next = new Set(prev);
+      if (next.has(order)) next.delete(order);
+      else next.add(order);
+      return next;
+    });
+  }
+
+  function jumpToSegment(order: number) {
+    const el = document.getElementById(`review-segment-${order}`);
+    if (el) {
+      setExpandedSegments((prev) => new Set([...prev, order]));
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">{video?.video_title || "内容详情"}</DialogTitle>
+        </DialogHeader>
+
+        {video && (
+          <div className="space-y-4">
+            <section className="space-y-3 rounded-[24px] bg-muted/35 p-4">
+              <div className="text-sm font-semibold">基础信息</div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <InfoCell label="负责人" value={video.profiles.name} />
+                <InfoCell label="账号" value={video.accounts.name} />
+                <InfoCell label="发布时间" value={formatDateTime(video.published_at)} />
+                <InfoCell label="异常状态">
+                  <Badge variant="outline" className={`text-xs ${statusClassName[video.anomaly_status]}`}>
+                    {video.anomaly_status}
+                  </Badge>
+                </InfoCell>
+                <InfoCell label="视频链接">
+                  {video.video_url ? (
+                    <a
+                      href={video.video_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="break-all text-primary underline underline-offset-2"
+                    >
+                      {video.video_url}
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </InfoCell>
+              </div>
+
+              {video.content && (
+                <div className="rounded-2xl bg-background/80 p-3">
+                  <div className="mb-1 text-xs text-muted-foreground">文案原文</div>
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {contentExpanded ? video.content : video.content.slice(0, 220)}
+                    {video.content.length > 220 && (
+                      <button
+                        type="button"
+                        className="ml-1 text-xs text-primary underline underline-offset-2"
+                        onClick={() => setContentExpanded((v) => !v)}
+                      >
+                        {contentExpanded ? "收起" : "展开全文"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="space-y-3 rounded-[24px] bg-muted/35 p-4">
+              <div className="text-sm font-semibold">结果数据</div>
+              {snapshot ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <MetricCell label="播放量" value={formatNumber(snapshot.play_count)} />
+                  <MetricCell label="2秒跳出率" value={formatRate(snapshot.bounce_rate_2s)} />
+                  <MetricCell label="5秒完播率" value={formatRate(snapshot.completion_rate_5s)} />
+                  <MetricCell label="完播率" value={formatRate(snapshot.completion_rate)} />
+                  <MetricCell label="均播时长" value={snapshot.avg_play_duration != null ? `${snapshot.avg_play_duration}s` : "-"} />
+                  <MetricCell label="涨粉" value={formatNumber(snapshot.follower_gain)} />
+                  <MetricCell label="点赞" value={formatNumber(snapshot.likes)} />
+                  <MetricCell label="评论" value={formatNumber(snapshot.comments)} />
+                  <MetricCell label="分享" value={formatNumber(snapshot.shares)} />
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-background/80 p-3 text-sm text-muted-foreground">暂无24h快照数据</div>
+              )}
+            </section>
+
+            <section className="space-y-3 rounded-[24px] bg-muted/35 p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">次日复盘</div>
+                {reviewed && (
+                  <Badge variant="outline" className="border-violet-200 bg-violet-50 text-xs text-violet-700">
+                    已复盘
+                  </Badge>
+                )}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-background/80 p-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">样本可信度</span>
+                    <Badge variant="outline" className={`text-xs ${sampleLevelClass[credibility.level]}`}>
+                      {credibility.label}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground">播放量：{snapshot ? formatNumber(snapshot.play_count) : "暂无数据"}</div>
+                  <div className="text-xs text-foreground/70">{credibility.guide}</div>
+                </div>
+
+                <div className="rounded-2xl bg-background/80 p-3 space-y-1">
+                  <div className="text-xs text-muted-foreground">综合诊断</div>
+                  <div className="text-sm font-semibold">{reviewResult?.summary.one_line ?? "点击“一键次日复盘”生成诊断"}</div>
+                  {reviewResult?.anomaly_notice && (
+                    <div className="text-xs text-amber-700">{reviewResult.anomaly_notice}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-xl text-xs"
+                  onClick={handleSegment}
+                  disabled={isSegmenting || !video.content}
+                >
+                  {isSegmenting ? "拆段中…" : "一键拆段"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-xl text-xs"
+                  onClick={() => handleReview(false)}
+                  disabled={isReviewing || !snapshot}
+                >
+                  {isReviewing ? "复盘中…" : "一键次日复盘"}
+                </Button>
+              </div>
+
+              {!video.content && <div className="text-xs text-muted-foreground">暂无文案，无法拆段</div>}
+              {!snapshot && <div className="text-xs text-muted-foreground">暂无24h快照，无法触发次日复盘</div>}
+
+              {reviewResult && (
+                <>
+                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">对比结论</div>
+
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">同账号30天基线</div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <MetricCell label="样本数" value={String(reviewResult.comparison.account_baseline.sample_count ?? 0)} />
+                        <MetricCell label="播放量基线" value={formatNumber(reviewResult.comparison.account_baseline.play_count)} />
+                        <MetricCell label="2秒跳出率基线" value={formatRate(reviewResult.comparison.account_baseline.bounce_rate_2s)} />
+                        <MetricCell label="5秒完播率基线" value={formatRate(reviewResult.comparison.account_baseline.completion_rate_5s)} />
+                        <MetricCell label="完播率基线" value={formatRate(reviewResult.comparison.account_baseline.completion_rate)} />
+                        <MetricCell label="均播时长基线" value={reviewResult.comparison.account_baseline.avg_play_duration != null ? `${reviewResult.comparison.account_baseline.avg_play_duration}s` : "-"} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-xs text-muted-foreground">同类基线</div>
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <MetricCell label="available" value={reviewResult.comparison.peer_baseline.available ? "true" : "false"} />
+                        <MetricCell label="sample_count" value={String(reviewResult.comparison.peer_baseline.sample_count ?? 0)} />
+                        <MetricCell
+                          label="summary"
+                          value={
+                            reviewResult.comparison.peer_baseline.available
+                              ? reviewResult.comparison.peer_baseline.summary || "-"
+                              : reviewResult.comparison.peer_baseline.summary || "第一版暂未启用同类比较"
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-muted/30 p-2 text-xs text-foreground/80">{comparisonSummary}</div>
+                  </div>
+
+                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">段落总览</div>
+                    <div className="flex flex-wrap gap-2">
+                      {renderedSegments.map((seg) => (
+                        <button
+                          key={seg.segment_order}
+                          type="button"
+                          className="rounded-lg border border-border px-2 py-1 text-xs"
+                          onClick={() => jumpToSegment(seg.segment_order)}
+                        >
+                          [{seg.segment_order + 1}] {seg.segment_type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">整改指令</div>
+                    <ol className="space-y-1">
+                      {reviewResult.actions.instructions.map((inst, i) => (
+                        <li key={i} className="text-sm flex gap-2">
+                          <span className="shrink-0 font-medium text-primary">{i + 1}.</span>
+                          <span>{inst}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {renderedSegments.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-foreground/70">段落详情</div>
+                      {renderedSegments.map((seg) => {
+                        const expanded = expandedSegments.has(seg.segment_order);
+                        return (
+                          <div
+                            key={seg.segment_order}
+                            id={`review-segment-${seg.segment_order}`}
+                            className="rounded-xl border border-border/40 bg-background/60"
+                          >
+                            <button
+                              type="button"
+                              className="flex w-full items-center gap-2 p-3 text-left"
+                              onClick={() => toggleSegment(seg.segment_order)}
+                            >
+                              <Badge variant="outline" className={`shrink-0 text-xs ${healthClass[seg.health]}`}>
+                                {seg.health === "ok" ? "正常" : seg.health === "warning" ? "注意" : "问题"}
+                              </Badge>
+                              <span className="text-xs font-medium text-primary">[{seg.segment_order + 1}] {seg.segment_type}</span>
+                              <span className="flex-1 truncate text-xs text-muted-foreground">{seg.segment_text.slice(0, 36)}</span>
+                              <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
+                            </button>
+                            {expanded && (
+                              <div className="space-y-2 border-t border-border/30 p-3 text-xs">
+                                <div><span className="text-muted-foreground">时间：</span>{seg.time_range}</div>
+                                <div><span className="text-muted-foreground">原文：</span>{seg.segment_text}</div>
+                                <div><span className="text-muted-foreground">判断：</span>{seg.judgement}</div>
+                                <div><span className="text-muted-foreground">依据：</span>{seg.reason}</div>
+                                <div><span className="text-muted-foreground">建议：</span><span className="font-medium">{seg.suggestion}</span></div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">发给成员的话</div>
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {reviewResult.actions.message_for_member}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="h-8 rounded-xl text-xs" onClick={handleCopy}>
+                      复制整改建议
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {segments && segments.length > 0 && !reviewResult && (
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-foreground/70">文案切段（{segments.length} 段）</div>
+                  {segments.map((seg) => (
+                    <div key={seg.segment_order} className="rounded-xl bg-background/60 p-2 text-xs">
+                      <span className="mr-1 font-medium text-primary">[{seg.segment_order + 1}] {seg.segment_type}</span>
+                      <span className="text-foreground/80">{seg.segment_text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -383,3 +383,78 @@ export interface Group {
   name: string;
   created_at: string;
 }
+
+// === 内容管理 + 次日复盘 v1 ===
+
+export type SampleLevel = "insufficient" | "partial" | "full";
+export type SegmentHealth = "ok" | "warning" | "problem";
+export type SegmentPriority = "primary" | "secondary";
+
+export interface SampleCredibility {
+  level: SampleLevel;
+  label: "缺少24h数据" | "样本不足" | "可初步参考" | "可正式复盘";
+  guide: string;
+}
+
+export interface NextDayReviewSummary {
+  grade: string;
+  one_line: string;
+  problem_tags: string[];
+}
+
+export interface NextDayReviewMetrics {
+  play_count: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
+  avg_play_duration: number | null;
+}
+
+export interface NextDayReviewAccountBaseline extends NextDayReviewMetrics {
+  sample_count: number;
+}
+
+export interface NextDayReviewPeerBaseline {
+  available: boolean;
+  sample_count: number;
+  summary: string;
+}
+
+export interface NextDayReviewComparison {
+  account_baseline: NextDayReviewAccountBaseline;
+  peer_baseline: NextDayReviewPeerBaseline;
+}
+
+export interface NextDayReviewSegment {
+  segment_order: number;
+  segment_type: string;
+  segment_text: string;
+  time_range: string;
+  health: SegmentHealth;
+  judgement: string;
+  reason: string;
+  suggestion: string;
+  priority: SegmentPriority;
+}
+
+export interface NextDayReviewActions {
+  diagnosis: string;
+  instructions: string[];
+  message_for_member: string;
+}
+
+export interface NextDayReviewResult {
+  ok: true;
+  video_id: string;
+  sample_level: SampleLevel;
+  sample_status: "缺少24h数据" | "样本不足" | "可初步参考" | "可正式复盘";
+  sample_message: string;
+  review_status: "success";
+  summary: NextDayReviewSummary;
+  metrics: NextDayReviewMetrics;
+  comparison: NextDayReviewComparison;
+  anomaly_notice: string | null;
+  segments: NextDayReviewSegment[];
+  actions: NextDayReviewActions;
+  cached: boolean;
+}

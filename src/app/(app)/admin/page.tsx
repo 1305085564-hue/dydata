@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, Download, Settings2, ShieldCheck } from "lucide-react";
+import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -24,11 +23,11 @@ import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build团队趋势数据 } from "@/lib/趋势图";
 import { PermissionManager } from "./permission-manager";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { getPermissionManagerCapabilities } from "./权限管理";
 import { loadProfilesWithExemptionFallback } from "./资料加载";
 import { 豁免申请列表 } from "./豁免申请列表";
 import type { ExemptionRequestRow } from "./豁免申请列表";
 import type { UserRole, Permissions } from "@/types";
-import { Users } from "lucide-react";
 
 interface AdminPageProps {
   searchParams: Promise<{ date?: string }>;
@@ -45,7 +44,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const perm = await getUserPermissions();
   if (!perm) redirect("/login");
-  const isOwner = perm.role === "owner";
+  const permissionManagerCapabilities = getPermissionManagerCapabilities(perm.role, perm.permissions);
 
   const params = await searchParams;
   const queryDate = params.date || new Date().toISOString().split("T")[0];
@@ -363,7 +362,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </Card>
           ),
         },
-        ...(isOwner
+        ...(permissionManagerCapabilities.canRemoveMember || permissionManagerCapabilities.canChangeRole || permissionManagerCapabilities.canEditPermissions
           ? [
               {
                 key: "permission-manager",
@@ -381,7 +380,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           permissions: (p.permissions ?? {}) as Permissions,
                         }))}
                         currentUserId={user.id}
-                        isOwner={isOwner}
+                        currentUserRole={perm.role}
+                        currentUserPermissions={perm.permissions}
                       />
                     </CardContent>
                   </Card>

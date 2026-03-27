@@ -56,10 +56,8 @@ export function SubmissionStatus({
 
   const SS_PAGE_SIZE = 10;
   const [profilePage, setProfilePage] = useState(1);
-  const [profileShowAll, setProfileShowAll] = useState(false);
   const [profileSubmittedExpanded, setProfileSubmittedExpanded] = useState(false);
   const [accountPage, setAccountPage] = useState(1);
-  const [accountShowAll, setAccountShowAll] = useState(false);
   const [accountSubmittedExpanded, setAccountSubmittedExpanded] = useState(false);
 
   const submittedProfileSet = useMemo(() => new Set(submittedProfileIds), [submittedProfileIds]);
@@ -214,40 +212,29 @@ export function SubmissionStatus({
   const unsubmittedProfileRows = profileRows.activeRows.filter((r) => !r.isSubmitted);
   const submittedProfileRowsList = profileRows.activeRows.filter((r) => r.isSubmitted);
   const profileTotalPages = Math.ceil(unsubmittedProfileRows.length / SS_PAGE_SIZE);
-  const visibleUnsubmittedProfileRows = profileShowAll
-    ? unsubmittedProfileRows
-    : unsubmittedProfileRows.slice((profilePage - 1) * SS_PAGE_SIZE, profilePage * SS_PAGE_SIZE);
+  const visibleUnsubmittedProfileRows = unsubmittedProfileRows.slice((profilePage - 1) * SS_PAGE_SIZE, profilePage * SS_PAGE_SIZE);
 
   const unsubmittedAccountRows = accountRows.activeRows.filter((r) => !r.isSubmitted);
   const submittedAccountRowsList = accountRows.activeRows.filter((r) => r.isSubmitted);
   const accountTotalPages = Math.ceil(unsubmittedAccountRows.length / SS_PAGE_SIZE);
-  const visibleUnsubmittedAccountRows = accountShowAll
-    ? unsubmittedAccountRows
-    : unsubmittedAccountRows.slice((accountPage - 1) * SS_PAGE_SIZE, accountPage * SS_PAGE_SIZE);
+  const visibleUnsubmittedAccountRows = unsubmittedAccountRows.slice((accountPage - 1) * SS_PAGE_SIZE, accountPage * SS_PAGE_SIZE);
 
   function renderPagination(
     page: number,
     totalPages: number,
-    showAll: boolean,
     total: number,
     onPageChange: (p: number) => void,
-    onToggleShowAll: () => void,
   ) {
-    if (total <= SS_PAGE_SIZE) return null;
+    if (total <= SS_PAGE_SIZE || totalPages <= 1) return null;
     return (
       <div className="flex flex-col items-center gap-2 pt-3">
-        {!showAll && totalPages > 1 && (
-          <div className="flex flex-wrap items-center justify-center gap-1">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="h-8 px-3 text-xs">上一页</Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-xs${p === page ? " bg-[#007AFF] hover:bg-[#0066DD] border-[#007AFF]" : ""}`}>{p}</Button>
-            ))}
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="h-8 px-3 text-xs">下一页</Button>
-          </div>
-        )}
-        <Button variant="ghost" size="sm" className="text-xs text-muted-foreground h-8" onClick={onToggleShowAll}>
-          {showAll ? "收起" : `展开全部（共 ${total} 人）`}
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-1">
+          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="h-8 px-3 text-xs">上一页</Button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-xs${p === page ? " bg-[#007AFF] hover:bg-[#0066DD] border-[#007AFF]" : ""}`}>{p}</Button>
+          ))}
+          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="h-8 px-3 text-xs">下一页</Button>
+        </div>
       </div>
     );
   }
@@ -459,7 +446,7 @@ export function SubmissionStatus({
                     )}
                   </TableBody>
                 </Table>
-                {renderPagination(profilePage, profileTotalPages, profileShowAll, unsubmittedProfileRows.length, setProfilePage, () => { setProfileShowAll((v) => !v); setProfilePage(1); })}
+                {renderPagination(profilePage, profileTotalPages, unsubmittedProfileRows.length, setProfilePage)}
               </div>
 
               <div className="space-y-3 sm:hidden">
@@ -528,7 +515,7 @@ export function SubmissionStatus({
                     ))}
                   </>
                 )}
-                {renderPagination(profilePage, profileTotalPages, profileShowAll, unsubmittedProfileRows.length, setProfilePage, () => { setProfileShowAll((v) => !v); setProfilePage(1); })}
+                {renderPagination(profilePage, profileTotalPages, unsubmittedProfileRows.length, setProfilePage)}
                 {profileRows.exemptRows.length > 0 && (
                   <>
                     <p className="pt-2 text-xs text-muted-foreground">豁免人员</p>
@@ -661,7 +648,7 @@ export function SubmissionStatus({
                     )}
                   </TableBody>
                 </Table>
-                {renderPagination(accountPage, accountTotalPages, accountShowAll, unsubmittedAccountRows.length, setAccountPage, () => { setAccountShowAll((v) => !v); setAccountPage(1); })}
+                {renderPagination(accountPage, accountTotalPages, unsubmittedAccountRows.length, setAccountPage)}
               </div>
 
               <div className="space-y-3 sm:hidden">
@@ -720,7 +707,7 @@ export function SubmissionStatus({
                     ))}
                   </>
                 )}
-                {renderPagination(accountPage, accountTotalPages, accountShowAll, unsubmittedAccountRows.length, setAccountPage, () => { setAccountShowAll((v) => !v); setAccountPage(1); })}
+                {renderPagination(accountPage, accountTotalPages, unsubmittedAccountRows.length, setAccountPage)}
                 {accountRows.exemptRows.length > 0 && (
                   <>
                     <p className="pt-2 text-xs text-muted-foreground">豁免账号</p>

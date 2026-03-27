@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import {
-  buildExemptionFields,
   formatExemptionDetail,
   type ExemptionFormValues,
 } from "@/lib/豁免";
@@ -17,7 +17,8 @@ import {
   type GrantMode,
   type ReviewDecision,
 } from "@/lib/豁免流程";
-import type { Permissions } from "@/types";
+import type { Permissions, UserRole } from "@/types";
+import { canRemoveMemberTarget } from "./权限管理";
 
 async function writeAuditLog(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -114,6 +115,11 @@ export async function generateInviteCode(
   count: number = 1,
   expiresInDays: number | null = null
 ): Promise<{ codes?: string[]; error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (perm.userId !== adminId) return { error: "用户信息不匹配" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_invite")) return { error: "无权限" };
+
   const supabase = await createClient();
 
   const codes: string[] = [];
@@ -135,6 +141,8 @@ export async function generateInviteCode(
   if (error) {
     return { error: error.message };
   }
+
+  await writeAuditLog(supabase, perm.userId, "generate_invite_code", adminId, `count=${rows.length}|expiresInDays=${expiresInDays ?? "permanent"}`);
 
   return { codes };
 }
@@ -413,18 +421,31 @@ export async function updatePermissions(
 export async function removeMember(targetUserId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (perm.role !== "owner") return { error: "仅创始人可操作" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
   if (targetUserId === perm.userId) return { error: "不能移除自己" };
 
   const supabase = await createClient();
 
   const { data: target } = await supabase.from("profiles").select("role, name, team_id").eq("id", targetUserId).single();
   if (!target) return { error: "用户不存在" };
-  if (target.role === "owner") return { error: "不能移除创始人" };
+  if (!canRemoveMemberTarget({
+    actorRole: perm.role,
+    actorId: perm.userId,
+    targetId: targetUserId,
+    targetRole: target.role as UserRole,
+  })) {
+    return { error: perm.role === "admin" ? "管理员只能移除成员" : "不能移除该用户" };
+  }
+
+  const adminSupabase = createAdminClient();
+  const { error: banError } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
+    ban_duration: "876000h",
+  });
+  if (banError) return { error: banError.message };
 
   const { error } = await supabase
     .from("profiles")
-    .update({ role: null, permissions: {} })
+    .update({ role: "member", permissions: {} })
     .eq("id", targetUserId);
 
   if (error) return { error: error.message };
@@ -438,6 +459,42 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
   }).then(() => {}, () => {});
 
   await writeAuditLog(supabase, perm.userId, "remove_member", targetUserId, `移除成员: ${target.name}`);
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function resetMemberPassword(
+  targetUserId: string,
+  newPassword: string
+): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (targetUserId === perm.userId) return { error: "不能重置自己的密码" };
+
+  const normalizedPassword = newPassword.trim();
+  if (normalizedPassword.length < 6) return { error: "密码至少需要 6 位。" };
+
+  const supabase = await createClient();
+  const { data: target } = await supabase.from("profiles").select("role, name").eq("id", targetUserId).single();
+  if (!target) return { error: "用户不存在" };
+  if (!canRemoveMemberTarget({
+    actorRole: perm.role,
+    actorId: perm.userId,
+    targetId: targetUserId,
+    targetRole: target.role as UserRole,
+  })) {
+    return { error: perm.role === "admin" ? "管理员只能重置成员密码" : "不能重置该用户密码" };
+  }
+
+  const adminSupabase = createAdminClient();
+  const { error } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
+    password: normalizedPassword,
+  });
+  if (error) return { error: error.message };
+
+  await writeAuditLog(supabase, perm.userId, "reset_member_password", targetUserId, `重置密码: ${target.name}`);
 
   revalidatePath("/admin");
   return {};
