@@ -8,6 +8,7 @@ import {
   runVideoDiagnosis,
 } from "../route";
 
+import { runTasksWithConcurrency } from "../batch-runner";
 import { buildBatchResponse, resolveBatchRequest } from "./批量诊断";
 
 export async function POST(request: NextRequest) {
@@ -31,20 +32,18 @@ export async function POST(request: NextRequest) {
   try {
     const payload = resolveBatchRequest(normalizeBatchPayload(body));
     const candidates = await listBatchCandidates(payload);
-    const results: Array<{ ok: true; videoId: string } | { ok: false; videoId: string; error: string }> = [];
-
-    for (const candidate of candidates) {
+    const results = await runTasksWithConcurrency(candidates, 3, async (candidate) => {
       try {
         await runVideoDiagnosis(candidate.id);
-        results.push({ ok: true, videoId: candidate.id });
+        return { ok: true as const, videoId: candidate.id };
       } catch (error) {
-        results.push({
-          ok: false,
+        return {
+          ok: false as const,
           videoId: candidate.id,
           error: error instanceof Error ? error.message : "诊断失败",
-        });
+        };
       }
-    }
+    });
 
     return NextResponse.json(
       buildBatchResponse({

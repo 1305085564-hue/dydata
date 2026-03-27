@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
+import { getNavItems } from "@/components/nav-bar-items";
 
 interface NavBarClientProps {
   name: string;
@@ -14,9 +15,9 @@ interface NavBarClientProps {
 export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientProps) {
   const pathname = usePathname();
 
-  const linkClass = (href: string) =>
+  const linkClass = (href: string, active = pathname === href) =>
     `rounded-md px-3 py-1.5 transition-colors ${
-      pathname === href
+      active
         ? "bg-primary/10 text-primary font-medium"
         : "text-muted-foreground hover:bg-muted hover:text-foreground"
     }`;
@@ -32,34 +33,11 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
             <span className="text-sm font-semibold">DYData</span>
           </Link>
           <div className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Link href="/dashboard" className={linkClass("/dashboard")}>
-              数据填报
-            </Link>
-            <Link href="/growth" className={linkClass("/growth")}>
-              成长分析
-            </Link>
-            {showAnalytics && (
-              <Link href="/analytics" className={linkClass("/analytics")}>
-                爆款分析
+            {getNavItems({ showAnalytics, showAdmin }).map((item) => (
+              <Link key={item.href} href={item.href} className={linkClass(item.href, item.match(pathname))}>
+                {item.label}
               </Link>
-            )}
-            {showAdmin && (
-              <Link href="/admin" className={linkClass("/admin")}>
-                管理后台
-              </Link>
-            )}
-            {showAdmin && (
-              <Link
-                href="/admin/content"
-                className={`rounded-md px-3 py-1.5 transition-colors ${
-                  pathname.startsWith("/admin/content")
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                内容管理
-              </Link>
-            )}
+            ))}
           </div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">

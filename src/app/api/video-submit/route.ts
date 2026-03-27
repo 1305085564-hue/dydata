@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
 import type { SubmissionAssetMeta } from "@/types";
+import { validateVideoSubmitPayload } from "./validation";
 
 type VideoSubmitRequestBody = {
   account_id?: string;
@@ -237,6 +238,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "account_id 为必填项" }, { status: 400 });
   }
 
+  const validationResult = validateVideoSubmitPayload(body);
+  if (!validationResult.ok) {
+    return NextResponse.json({ error: validationResult.error }, { status: 400 });
+  }
+
+  const contentKeywords = validationResult.contentKeywords;
   const metrics = body.metrics ?? {};
   const assets = Array.isArray(body.assets) ? body.assets : [];
   const bizDate = normalizeDateOnly(body.biz_date);
@@ -409,18 +416,16 @@ export async function POST(request: NextRequest) {
   }
 
   if (Array.isArray(body.content_keywords)) {
-    for (const kw of body.content_keywords.slice(0, 3)) {
-      if (typeof kw === "string" && kw.trim()) {
-        manualTags.push({
-          video_id: newVideo.id,
-          tag_dimension: "关键词",
-          tag_value: kw.trim(),
-          source: "manual",
-          confidence: null,
-          reason: null,
-          reviewed_by: null,
-        });
-      }
+    for (const kw of contentKeywords) {
+      manualTags.push({
+        video_id: newVideo.id,
+        tag_dimension: "关键词",
+        tag_value: kw,
+        source: "manual",
+        confidence: null,
+        reason: null,
+        reviewed_by: null,
+      });
     }
   }
 

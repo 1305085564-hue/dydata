@@ -5,6 +5,7 @@ import {
   canSubmit,
   createInitialSubmissionState,
   getSubmissionStage,
+  summarizeSubmissionIssues,
   type SubmissionFieldState,
   type SubmissionSlotState,
 } from "./提交状态机";
@@ -82,8 +83,6 @@ test("上传两张必传截图后即可提交", () => {
 });
 
 test("问题汇总只保留截图与话题标签缺项", () => {
-  const { summarizeSubmissionIssues } = require("./提交状态机") as typeof import("./提交状态机");
-
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot(),
@@ -120,9 +119,7 @@ test("问题汇总只保留截图与话题标签缺项", () => {
   assert.equal(summary.canSubmit, false);
 });
 
-test("默认话题标签为空时会被识别为唯一缺项", () => {
-  const { summarizeSubmissionIssues } = require("./提交状态机") as typeof import("./提交状态机");
-
+test("标题、文案、内容标签缺失时仍不能提交", () => {
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
@@ -132,19 +129,20 @@ test("默认话题标签为空时会被识别为唯一缺项", () => {
   });
 
   const summary = summarizeSubmissionIssues(state, {
-    topicTag: "",
+    topicTag: "复盘",
     anomalyStatus: "正常",
+    videoTitle: "",
+    content: "",
+    contentKeywords: [],
   });
 
-  assert.equal(summary.totalIssueCount, 1);
-  assert.equal(summary.firstIssueAnchor, "topicTag");
-  assert.equal(summary.topicTagMissing, true);
+  assert.deepEqual(summary.missingRequiredMeta, ["videoTitle", "content", "contentKeywords"]);
+  assert.equal(summary.firstIssueAnchor, "meta");
+  assert.equal(summary.canSubmit, false);
 });
 
 
 test("限流时留存字段为空不计入缺项", () => {
-  const { summarizeSubmissionIssues } = require("./提交状态机") as typeof import("./提交状态机");
-
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),

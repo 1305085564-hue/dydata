@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getContentFilterLabel } from "./content-filter-labels";
 import type { AnomalyStatus, Profile } from "@/types";
 
 type FilterOption = Pick<Profile, "id" | "name">;
@@ -71,7 +72,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
       <div className="flex flex-wrap gap-3">
         <Select value={filters.profileId} onValueChange={(v) => updateFilter("profileId", v ?? "all")}>
           <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
-            <SelectValue placeholder="人员" />
+            <SelectValue>{getContentFilterLabel({ type: "profile", value: filters.profileId, options: profiles })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部人员</SelectItem>
@@ -83,7 +84,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
 
         <Select value={filters.accountId} onValueChange={(v) => updateFilter("accountId", v ?? "all")}>
           <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
-            <SelectValue placeholder="账号" />
+            <SelectValue>{getContentFilterLabel({ type: "account", value: filters.accountId, options: accounts })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部账号</SelectItem>
@@ -95,7 +96,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
 
         <Select value={filters.status} onValueChange={(v) => updateFilter("status", v as AnomalyStatus | "all")}>
           <SelectTrigger className="h-9 w-32 rounded-xl text-sm">
-            <SelectValue placeholder="状态" />
+            <SelectValue>{getContentFilterLabel({ type: "status", value: filters.status })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((s) => (
@@ -106,7 +107,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
 
         <Select value={filters.hasSnapshot} onValueChange={(v) => updateFilter("hasSnapshot", v as "all" | "yes" | "no")}>
           <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
-            <SelectValue placeholder="快照" />
+            <SelectValue>{getContentFilterLabel({ type: "hasSnapshot", value: filters.hasSnapshot })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部快照</SelectItem>
@@ -117,7 +118,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
 
         <Select value={filters.reviewed} onValueChange={(v) => updateFilter("reviewed", v as "all" | "yes" | "no")}>
           <SelectTrigger className="h-9 w-32 rounded-xl text-sm">
-            <SelectValue placeholder="复盘" />
+            <SelectValue>{getContentFilterLabel({ type: "reviewed", value: filters.reviewed })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全部</SelectItem>

@@ -26,7 +26,8 @@ export type EditableMetricKey =
 
 export type SubmissionFieldSource = "ocr" | "manual";
 export type SubmissionStage = "草稿" | "识别中" | "待确认" | "可提交" | "已提交";
-export type SubmissionIssueAnchor = "slots" | "metrics" | "topicTag" | null;
+export type SubmissionIssueAnchor = "slots" | "metrics" | "topicTag" | "meta" | null;
+export type RequiredMetaKey = "videoTitle" | "content" | "contentKeywords";
 
 export interface SubmissionSlotState {
   role: SubmissionSlotRole;
@@ -58,6 +59,7 @@ export interface SubmissionIssueSummary {
   pendingSlotConfirmations: SubmissionSlotRole[];
   missingRequiredFields: EditableMetricKey[];
   unconfirmedFields: EditableMetricKey[];
+  missingRequiredMeta: RequiredMetaKey[];
   topicTagMissing: boolean;
   totalIssueCount: number;
   firstIssueAnchor: SubmissionIssueAnchor;
@@ -68,6 +70,9 @@ export interface SubmissionIssueSummary {
 interface SubmissionIssueMeta {
   topicTag?: string;
   anomalyStatus?: string;
+  videoTitle?: string;
+  content?: string;
+  contentKeywords?: string[];
 }
 
 function createSlot(role: SubmissionSlotRole, required: boolean): SubmissionSlotState {
@@ -139,19 +144,34 @@ export function summarizeSubmissionIssues(
     )
     .map((slot) => slot.role);
 
-  const topicTagMissing = !meta.topicTag?.trim();
+  const topicTagMissing = meta.topicTag !== undefined ? !meta.topicTag.trim() : false;
+  const missingRequiredMeta: RequiredMetaKey[] = [];
+
+  if (meta.videoTitle !== undefined && !meta.videoTitle.trim()) {
+    missingRequiredMeta.push("videoTitle");
+  }
+  if (meta.content !== undefined && !meta.content.trim()) {
+    missingRequiredMeta.push("content");
+  }
+  if (meta.contentKeywords !== undefined && !meta.contentKeywords.some((item) => item.trim())) {
+    missingRequiredMeta.push("contentKeywords");
+  }
+
   const totalIssueCount =
     missingRequiredSlots.length +
     failedRequiredSlots.length +
     pendingSlotConfirmations.length +
+    missingRequiredMeta.length +
     (topicTagMissing ? 1 : 0);
 
   const firstIssueAnchor: SubmissionIssueAnchor =
     missingRequiredSlots.length > 0 || failedRequiredSlots.length > 0 || pendingSlotConfirmations.length > 0
       ? "slots"
-      : topicTagMissing
-        ? "topicTag"
-        : null;
+      : missingRequiredMeta.length > 0
+        ? "meta"
+        : topicTagMissing
+          ? "topicTag"
+          : null;
 
   let reason: string | null = null;
   if (missingRequiredSlots.length > 0) {
@@ -160,6 +180,8 @@ export function summarizeSubmissionIssues(
     reason = "请先处理识别失败的截图";
   } else if (pendingSlotConfirmations.length > 0) {
     reason = "请先确认必传截图槽位";
+  } else if (missingRequiredMeta.length > 0) {
+    reason = "请补全标题、文案和内容标签";
   } else if (topicTagMissing) {
     reason = "请选择话题标签（干货或复盘）";
   }
@@ -170,6 +192,7 @@ export function summarizeSubmissionIssues(
     pendingSlotConfirmations,
     missingRequiredFields: [],
     unconfirmedFields: [],
+    missingRequiredMeta,
     topicTagMissing,
     totalIssueCount,
     firstIssueAnchor,

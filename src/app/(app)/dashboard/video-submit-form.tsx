@@ -364,6 +364,16 @@ function buildIssueMessages(summary: ReturnType<typeof summarizeSubmissionIssues
     messages.push("必填项未完成：话题标签");
   }
 
+  if (summary.missingRequiredMeta.includes("videoTitle")) {
+    messages.push("必填项未完成：视频标题");
+  }
+  if (summary.missingRequiredMeta.includes("content")) {
+    messages.push("必填项未完成：文案");
+  }
+  if (summary.missingRequiredMeta.includes("contentKeywords")) {
+    messages.push("必填项未完成：内容标签");
+  }
+
   return messages;
 }
 
@@ -390,6 +400,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const [keywordInput, setKeywordInput] = useState("");
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
+  const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
 
@@ -418,8 +429,15 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
   const issueSummary = useMemo(
-    () => summarizeSubmissionIssues(submissionState, { topicTag: meta.topicTag, anomalyStatus: meta.anomalyStatus }),
-    [submissionState, meta.topicTag, meta.anomalyStatus]
+    () =>
+      summarizeSubmissionIssues(submissionState, {
+        topicTag: meta.topicTag,
+        anomalyStatus: meta.anomalyStatus,
+        videoTitle: meta.videoTitle,
+        content: meta.content,
+        contentKeywords: meta.contentKeywords,
+      }),
+    [submissionState, meta.topicTag, meta.anomalyStatus, meta.videoTitle, meta.content, meta.contentKeywords]
   );
   const submitCheck = canSubmit(submissionState);
   const canActuallySubmit = issueSummary.canSubmit;
@@ -441,15 +459,17 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     }));
   }
 
-  function scrollToIssueAnchor(anchor: "slots" | "metrics" | "topicTag" | null) {
+  function scrollToIssueAnchor(anchor: "slots" | "metrics" | "topicTag" | "meta" | null) {
     const target =
       anchor === "slots"
         ? slotsSectionRef.current
         : anchor === "metrics"
           ? metricsSectionRef.current
-          : anchor === "topicTag"
-            ? topicTagSectionRef.current
-            : null;
+          : anchor === "meta"
+            ? metaSectionRef.current
+            : anchor === "topicTag"
+              ? topicTagSectionRef.current
+              : null;
 
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
@@ -844,11 +864,11 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           />
         </motion.div>
 
-        <motion.div variants={itemVariants}>
+        <motion.div ref={metaSectionRef} variants={itemVariants}>
           <MotionCard className="border-none bg-white/70">
             <div className="space-y-4 p-5">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+                <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={issueSummary.missingRequiredMeta.includes("videoTitle")}>
                   <Label htmlFor="video_url">抖音视频链接</Label>
                   <Input
                     id="video_url"
@@ -858,8 +878,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     className="h-11 rounded-[var(--radius-lg)] bg-white"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="video_title">视频标题</Label>
+                <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={issueSummary.missingRequiredMeta.includes("videoTitle")}>
+                  <Label htmlFor="video_title">视频标题 <span className="text-red-500">*</span></Label>
                   <Input
                     id="video_title"
                     value={meta.videoTitle}
@@ -867,18 +887,24 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     placeholder="输入视频标题"
                     className="h-11 rounded-[var(--radius-lg)] bg-white"
                   />
+                  {issueSummary.missingRequiredMeta.includes("videoTitle") ? (
+                    <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写视频标题</p>
+                  ) : null}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="content">文案</Label>
+              <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={issueSummary.missingRequiredMeta.includes("content")}>
+                <Label htmlFor="content">文案 <span className="text-red-500">*</span></Label>
                 <textarea
                   id="content"
                   value={meta.content}
                   onChange={(event) => updateMeta("content", event.target.value)}
-                  placeholder="粘贴视频文案，可选"
+                  placeholder="粘贴视频文案"
                   className="min-h-[120px] w-full rounded-[var(--radius-lg)] border border-black/8 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[color:rgba(0,122,255,0.16)]"
                 />
+                {issueSummary.missingRequiredMeta.includes("content") ? (
+                  <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写文案</p>
+                ) : null}
               </div>
 
               <div ref={topicTagSectionRef} className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={issueSummary.topicTagMissing}>
@@ -905,9 +931,9 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 ) : null}
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={issueSummary.missingRequiredMeta.includes("contentKeywords")}>
                 <Label>
-                  内容标签 <span className="text-xs font-normal text-[var(--color-text-secondary)]">最多3个</span>
+                  内容标签 <span className="text-red-500">*</span> <span className="text-xs font-normal text-[var(--color-text-secondary)]">最多3个</span>
                 </Label>
                 {keywordSuggestions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -988,6 +1014,9 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     添加
                   </Button>
                 </div>
+                {issueSummary.missingRequiredMeta.includes("contentKeywords") ? (
+                  <p className="text-xs font-medium text-[var(--color-danger)]">必填，至少添加 1 个内容标签</p>
+                ) : null}
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -1071,7 +1100,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
                   {canActuallySubmit
-                    ? "截图识别完成后，再补充视频信息即可提交。"
+                    ? "截图识别完成后，必填信息已补全，可以直接提交。"
                     : issueSummary.totalIssueCount > 0
                       ? `当前还有 ${issueSummary.totalIssueCount} 项问题未处理。`
                       : "截图识别完成后，再补充视频信息即可提交。"}

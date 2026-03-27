@@ -82,7 +82,7 @@ export function extractJsonString(content: string) {
   return trimmed.slice(start, end + 1);
 }
 
-export async function callStructuredAi(input: { prompt: string; maxTokens?: number }) {
+export async function callStructuredAi(input: { prompt: string; maxTokens?: number; timeoutMs?: number }) {
   const baseUrl = process.env.AI_BASE_URL;
   const apiKey = process.env.AI_API_KEY;
   const model = process.env.AI_MODEL || "claude-sonnet-4-6";
@@ -91,19 +91,35 @@ export async function callStructuredAi(input: { prompt: string; maxTokens?: numb
     throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）");
   }
 
-  const response = await fetch(buildUpstreamUrl(baseUrl), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content: input.prompt }],
-      max_tokens: input.maxTokens ?? 2000,
-      response_format: { type: "json_object" },
-    }),
-  });
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), input.timeoutMs ?? 20000);
+
+  let response: Response;
+  try {
+    response = await fetch(buildUpstreamUrl(baseUrl), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: input.prompt }],
+        max_tokens: input.maxTokens ?? 2000,
+        response_format: { type: "json_object" },
+      }),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    clearTimeout(timeout);
+    const elapsedMs = Date.now() - startedAt;
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`AI 请求超时（${elapsedMs}ms）`);
+    }
+    throw error;
+  }
+  clearTimeout(timeout);
 
   if (!response.ok) {
     const text = await response.text();
@@ -128,6 +144,7 @@ export async function callStructuredAi(input: { prompt: string; maxTokens?: numb
     model,
     rawContent,
     jsonString,
+    elapsedMs: Date.now() - startedAt,
   };
 }
 
