@@ -62,17 +62,17 @@ function ratingToScore(card: GrowthDimensionCard): number {
 
 // ─── 颜色规则（强/绿=好>=80，黄=警告50-79，弱/红=差<50，灰=无数据） ──
 function scoreToBarColor(score: number, hasData: boolean): string {
-  if (!hasData) return "bg-gray-300";
-  if (score >= 80) return "bg-rose-500";
-  if (score >= 50) return "bg-amber-400";
-  return "bg-emerald-500";
+  if (!hasData) return "bg-[var(--color-border)]";
+  if (score >= 80) return "bg-[var(--color-success)]";
+  if (score >= 50) return "bg-[var(--color-warning)]";
+  return "bg-[var(--color-danger)]";
 }
 
 function scoreToTextColor(score: number, hasData: boolean): string {
-  if (!hasData) return "text-gray-400";
-  if (score >= 80) return "text-rose-600";
-  if (score >= 50) return "text-amber-600";
-  return "text-emerald-600";
+  if (!hasData) return "text-[var(--color-text-tertiary)]";
+  if (score >= 80) return "text-[var(--color-success)]";
+  if (score >= 50) return "text-[var(--color-warning)]";
+  return "text-[var(--color-danger)]";
 }
 
 // ─── P80 基准分 ───────────────────────────────────────────────
@@ -102,9 +102,9 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
 
   if (!capabilityCards.length) {
     return (
-      <div className="rounded-2xl border border-[var(--color-border)] bg-white/85 p-5 shadow backdrop-blur">
-        <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
-        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">数据不足，先连续提交数据后再看能力分布。</p>
+      <div className="rounded-[28px] border border-white/70 bg-white/78 p-5 shadow-[var(--shadow-card)] backdrop-blur-[16px]">
+        <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">数据不足，先连续提交数据后再看能力分布。</p>
       </div>
     );
   }
@@ -123,23 +123,26 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
   const weakCard = weakBenchmarkCards.find((c) => c.dimension === capabilityCards[weakIndex]?.name);
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white/85 p-4 shadow backdrop-blur sm:p-6">
-      {/* 标题行：左=标题，右=图例+选择器 */}
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
-        <div className="flex items-center gap-2.5 text-xs text-[var(--color-text-secondary)]">
+    <div className="rounded-[28px] border border-white/70 bg-white/78 p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Capability Radar</p>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看能力强弱分布，再决定优先补哪一段内容短板。</p>
+        </div>
+        <div className="flex items-center gap-2.5 rounded-2xl border border-white/80 bg-white/88 px-3 py-2 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[var(--color-primary)]" />
             我
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full bg-orange-400" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[var(--color-warning)]" />
             {compareLabel}
           </span>
           <select
             value={comparePersonId}
             onChange={(e) => setComparePersonId(e.target.value)}
-            className="ml-1 rounded border border-[var(--color-border)] bg-white px-2 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-300"
+            className="ml-1 rounded-xl border border-white/80 bg-white px-2.5 py-1 text-[11px] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-primary/30"
           >
             <option value="">团队 P80</option>
             {teamMembers.map((m) => (
@@ -151,8 +154,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         </div>
       </div>
 
-      {/* 主体：左列(进度条+强弱) + 右列(雷达图)，垂直居中对齐 */}
-      <div className="flex flex-col gap-3 lg:grid lg:items-center lg:gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className="flex flex-col gap-4 lg:grid lg:items-center lg:gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
 
         {/* ── 左列 ── */}
         <div>

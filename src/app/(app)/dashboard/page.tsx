@@ -7,7 +7,7 @@ import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Clock } from "lucide-react";
+import { Clock, GalleryVerticalEnd, ListChecks, Sparkles } from "lucide-react";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
 import { hasPendingExemptionRequest } from "./actions";
@@ -113,15 +113,65 @@ export default async function DashboardPage() {
   const hasPending = await hasPendingExemptionRequest();
 
   return (
-    <div className="dashboard-shell mx-auto max-w-5xl space-y-6 px-1 pb-24 md:space-y-8 md:pb-0">
+    <div className="dashboard-shell mx-auto max-w-6xl space-y-6 px-1 pb-24 md:space-y-8 md:pb-0">
       <DashboardAnimatedSection index={0}>
-        <VideoSubmitPanel
-          accounts={accounts ?? []}
-          userId={user.id}
-          today={today}
-          todayReports={todayReports}
-          hasPendingExemption={hasPending}
-        />
+        <div className="space-y-4">
+          <VideoSubmitPanel
+            accounts={accounts ?? []}
+            userId={user.id}
+            today={today}
+            todayReports={todayReports}
+            hasPendingExemption={hasPending}
+          />
+
+          <Card className="dashboard-surface dashboard-surface-panel card-elevated rounded-[1.35rem] border-0">
+            <CardContent className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="dashboard-section-kicker inline-flex items-center gap-2">
+                    <Sparkles className="size-3.5" />
+                    今日操作
+                  </p>
+                  <p className="text-sm text-muted-foreground">按这个顺序操作更快，减少漏填和重复提交。</p>
+                </div>
+                <div className="dashboard-summary-chip text-xs sm:text-sm">
+                  日期
+                  <span className="font-semibold text-foreground">{today}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="dashboard-field-group flex items-start gap-3 rounded-2xl p-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                    <ListChecks className="size-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-foreground">先选账号</p>
+                    <p className="text-xs text-muted-foreground">确认今天要提交的账号</p>
+                  </div>
+                </div>
+                <div className="dashboard-field-group flex items-start gap-3 rounded-2xl p-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                    <GalleryVerticalEnd className="size-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-foreground">导入截图</p>
+                    <p className="text-xs text-muted-foreground">自动回填，减少手动录入</p>
+                  </div>
+                </div>
+                <div className="dashboard-field-group flex items-start gap-3 rounded-2xl p-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                    <Clock className="size-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-foreground">提交并复查</p>
+                    <p className="text-xs text-muted-foreground">提交后看状态卡是否已更新</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </DashboardAnimatedSection>
 
       <DashboardAnimatedSection index={1}>
@@ -177,7 +227,7 @@ export default async function DashboardPage() {
                 description="提交第一条数据后即可在此查看近30天历史"
               />
             ) : (
-              <HistoryList history={history} accounts={(accounts ?? []).map(a => ({ id: a.id, name: a.name }))} today={today} />
+              <HistoryList history={history} accounts={(accounts ?? []).map((a) => ({ id: a.id, name: a.name }))} today={today} />
             )}
           </CardContent>
         </Card>

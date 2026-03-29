@@ -123,125 +123,147 @@ export function RegisterForm({ action }: RegisterFormProps) {
   }, [formControls, state.error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <motion.div
-        animate={{ opacity: 1, y: 0, scale: 1, filter: shouldReduceMotion ? "none" : "blur(0px)" }}
-        initial={{ opacity: 0, y: 20, scale: 0.98, filter: shouldReduceMotion ? "none" : "blur(8px)" }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-md"
-      >
-        <Card className="glass-card-static w-full shadow-[var(--shadow-heavy)]">
-          <CardHeader className="text-center">
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-xl font-bold text-primary-foreground"
-            >
-              DY
-            </motion.div>
-            <CardTitle className="text-center text-2xl font-bold tracking-tight">
-              注册 DYData
-            </CardTitle>
-            <CardDescription>使用邀请码创建团队账号</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <motion.form action={formAction} animate={formControls} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">姓名</Label>
-                <div className="input-focus-line">
-                  <Input
-                    autoComplete="name"
-                    className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
-                    id="name"
-                    name="name"
-                    placeholder="请输入姓名"
-                    required
-                    type="text"
-                  />
-                </div>
+    <div className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-6">
+      <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <section className="hidden rounded-[32px] border border-white/65 bg-white/55 p-8 shadow-[var(--shadow-float)] backdrop-blur-[18px] lg:block">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Invite Registration</p>
+          <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">创建你的 DYData 账号</h1>
+          <p className="mt-3 max-w-md text-sm leading-7 text-[var(--color-text-secondary)]">
+            用邀请码接入团队，完成后直接进入原有后台权限体系。这里只统一视觉模板，不改注册逻辑和账号流转。
+          </p>
+          <div className="mt-8 space-y-3">
+            {[
+              "姓名、邮箱、密码、邀请码仍是原有注册字段",
+              "密码强度提示保留，方便快速判断安全性",
+              "注册完成后仍按原流程进入系统",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
+                <span className="size-2 rounded-full bg-[var(--color-primary)]" />
+                {item}
               </div>
+            ))}
+          </div>
+        </section>
+
+        <motion.div
+          animate={{ opacity: 1, y: 0, scale: 1, filter: shouldReduceMotion ? "none" : "blur(0px)" }}
+          initial={{ opacity: 0, y: 20, scale: 0.98, filter: shouldReduceMotion ? "none" : "blur(8px)" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full max-w-md justify-self-center"
+        >
+          <Card className="glass-card-static w-full border-white/70 bg-white/78 shadow-[var(--shadow-heavy)] backdrop-blur-[18px]">
+            <CardHeader className="space-y-4 text-center">
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/12 text-lg font-semibold text-primary"
+              >
+                DY
+              </motion.div>
               <div className="space-y-2">
-                <Label htmlFor="email">邮箱</Label>
-                <div className="input-focus-line">
-                  <Input
-                    autoComplete="email"
-                    className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
-                    id="email"
-                    name="email"
-                    placeholder="name@example.com"
-                    required
-                    type="email"
-                  />
-                </div>
+                <CardTitle className="text-center text-2xl font-semibold tracking-[-0.03em]">注册 DYData</CardTitle>
+                <CardDescription className="text-sm leading-6">使用邀请码创建团队账号</CardDescription>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">密码</Label>
-                <div className="input-focus-line">
-                  <Input
-                    autoComplete="new-password"
-                    className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
-                    id="password"
-                    name="password"
-                    placeholder="至少 6 位密码"
-                    required
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                  />
+            </CardHeader>
+            <CardContent>
+              <motion.form action={formAction} animate={formControls} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="name">姓名</Label>
+                  <div className="input-focus-line">
+                    <Input
+                      autoComplete="name"
+                      className="h-11 rounded-xl transition-all duration-200 focus-visible:ring-primary/25"
+                      id="name"
+                      name="name"
+                      placeholder="请输入姓名"
+                      required
+                      type="text"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>密码强度</span>
-                    <span>{passwordStrengthLevel ? passwordStrengthConfig[passwordStrengthIndex - 1]?.label : "未输入"}</span>
+                  <Label htmlFor="email">邮箱</Label>
+                  <div className="input-focus-line">
+                    <Input
+                      autoComplete="email"
+                      className="h-11 rounded-xl transition-all duration-200 focus-visible:ring-primary/25"
+                      id="email"
+                      name="email"
+                      placeholder="name@example.com"
+                      required
+                      type="email"
+                    />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {passwordStrengthConfig.map((item, index) => {
-                      const isActive = index < passwordStrengthIndex;
-                      const isCurrent = passwordStrengthLevel === item.level;
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">密码</Label>
+                  <div className="input-focus-line">
+                    <Input
+                      autoComplete="new-password"
+                      className="h-11 rounded-xl transition-all duration-200 focus-visible:ring-primary/25"
+                      id="password"
+                      name="password"
+                      placeholder="至少 6 位密码"
+                      required
+                      type="password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2 rounded-2xl border border-white/70 bg-white/78 p-3">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>密码强度</span>
+                      <span>{passwordStrengthLevel ? passwordStrengthConfig[passwordStrengthIndex - 1]?.label : "未输入"}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {passwordStrengthConfig.map((item, index) => {
+                        const isActive = index < passwordStrengthIndex;
+                        const isCurrent = passwordStrengthLevel === item.level;
 
-                      return (
-                        <motion.div
-                          key={item.level}
-                          animate={{ opacity: isActive ? 1 : 0.35, scaleY: isCurrent ? 1 : 0.92 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="h-2 overflow-hidden rounded-full bg-primary/10"
-                        >
+                        return (
                           <motion.div
-                            className={`h-full rounded-full ${isActive ? item.activeClassName : "bg-transparent"}`}
-                            initial={false}
-                            animate={{ width: isActive ? "100%" : "0%" }}
-                            transition={{ duration: 0.22, ease: "easeOut" }}
-                          />
-                        </motion.div>
-                      );
-                    })}
+                            key={item.level}
+                            animate={{ opacity: isActive ? 1 : 0.35, scaleY: isCurrent ? 1 : 0.92 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="h-2 overflow-hidden rounded-full bg-primary/10"
+                          >
+                            <motion.div
+                              className={`h-full rounded-full ${isActive ? item.activeClassName : "bg-transparent"}`}
+                              initial={false}
+                              animate={{ width: isActive ? "100%" : "0%" }}
+                              transition={{ duration: 0.22, ease: "easeOut" }}
+                            />
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="inviteCode">邀请码</Label>
-                <div className="input-focus-line">
-                  <Input
-                    className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
-                    id="inviteCode"
-                    name="inviteCode"
-                    placeholder="请输入邀请码"
-                    required
-                    type="text"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode">邀请码</Label>
+                  <div className="input-focus-line">
+                    <Input
+                      className="h-11 rounded-xl transition-all duration-200 focus-visible:ring-primary/25"
+                      id="inviteCode"
+                      name="inviteCode"
+                      placeholder="请输入邀请码"
+                      required
+                      type="text"
+                    />
+                  </div>
                 </div>
-              </div>
-              <SubmitButton />
-              <p className="text-center text-sm text-muted-foreground">
-                已有账号？
-                <Link className="ml-1 underline underline-offset-4" href="/login">
-                  去登录
-                </Link>
-              </p>
-            </motion.form>
-          </CardContent>
-        </Card>
-      </motion.div>
+                <SubmitButton />
+                <p className="text-center text-sm text-muted-foreground">
+                  已有账号？
+                  <Link className="ml-1 underline underline-offset-4" href="/login">
+                    去登录
+                  </Link>
+                </p>
+              </motion.form>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 }

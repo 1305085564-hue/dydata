@@ -69,5 +69,17 @@ export default async function GuidancePage() {
     };
   });
 
-  return <CultivationList accounts={normalizedAccounts} reports={normalizedReports} />;
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
+      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Guidance Console</p>
+          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">定向培养</h1>
+          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">按账号和近 30 天表现查看培养优先级，聚焦需要重点干预的人和方向。</p>
+        </div>
+      </section>
+
+      <CultivationList accounts={normalizedAccounts} reports={normalizedReports} />
+    </div>
+  );
 }

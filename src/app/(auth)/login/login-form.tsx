@@ -129,91 +129,113 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   }, [notice]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <motion.div
-        animate={{ opacity: 1, y: 0, scale: 1, filter: shouldReduceMotion ? "none" : "blur(0px)" }}
-        initial={{ opacity: 0, y: 20, scale: 0.98, filter: shouldReduceMotion ? "none" : "blur(8px)" }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-md"
-      >
-        <Card className="glass-card-static w-full shadow-[var(--shadow-heavy)]">
-          <CardHeader className="text-center">
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-xl font-bold text-primary-foreground"
-            >
-              DY
-            </motion.div>
-            <CardTitle className="text-center text-2xl font-bold tracking-tight">
-              登录 DYData
-            </CardTitle>
-            <CardDescription>抖音数据日报平台</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <motion.form action={formAction} animate={formControls} className="space-y-4">
-              {notice ? (
-                <p className="rounded-lg border border-emerald-500/20 bg-emerald-500/8 px-3 py-2 text-sm text-emerald-700">
-                  {notice}
-                </p>
-              ) : null}
-              <div className="space-y-2">
-                <Label htmlFor="email">邮箱</Label>
-                <div className="input-focus-line">
-                  <Input
-                    autoComplete="email"
-                    className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
-                    id="email"
-                    name="email"
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="name@example.com"
-                    required
-                    type="email"
-                    value={email}
-                  />
-                </div>
+    <div className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-6">
+      <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <section className="hidden rounded-[32px] border border-white/65 bg-white/55 p-8 shadow-[var(--shadow-float)] backdrop-blur-[18px] lg:block">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Mac Auth Template</p>
+          <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">回到 DYData 工作台</h1>
+          <p className="mt-3 max-w-md text-sm leading-7 text-[var(--color-text-secondary)]">
+            登录后继续处理日报、经营分析和成长复盘。界面统一了，但登录逻辑、账号权限和数据流程都保持原样。
+          </p>
+          <div className="mt-8 space-y-3">
+            {[
+              "同一账号直接进入原来的后台权限范围",
+              "支持记住邮箱，减少重复输入",
+              "忘记密码可无缝跳到重置流程",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
+                <span className="size-2 rounded-full bg-[var(--color-primary)]" />
+                {item}
               </div>
+            ))}
+          </div>
+        </section>
+
+        <motion.div
+          animate={{ opacity: 1, y: 0, scale: 1, filter: shouldReduceMotion ? "none" : "blur(0px)" }}
+          initial={{ opacity: 0, y: 20, scale: 0.98, filter: shouldReduceMotion ? "none" : "blur(8px)" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full max-w-md justify-self-center"
+        >
+          <Card className="glass-card-static w-full border-white/70 bg-white/78 shadow-[var(--shadow-heavy)] backdrop-blur-[18px]">
+            <CardHeader className="space-y-4 text-center">
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/12 text-lg font-semibold text-primary"
+              >
+                DY
+              </motion.div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <Label htmlFor="password">密码</Label>
-                  <Link className="text-sm text-muted-foreground underline underline-offset-4" href="/forgot-password">
-                    忘记密码？
+                <CardTitle className="text-center text-2xl font-semibold tracking-[-0.03em]">登录 DYData</CardTitle>
+                <CardDescription className="text-sm leading-6">抖音数据日报平台</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <motion.form action={formAction} animate={formControls} className="space-y-5">
+                {notice ? (
+                  <p className="rounded-2xl border border-emerald-500/18 bg-emerald-500/8 px-4 py-3 text-sm text-emerald-700">
+                    {notice}
+                  </p>
+                ) : null}
+                <div className="space-y-2">
+                  <Label htmlFor="email">邮箱</Label>
+                  <div className="input-focus-line">
+                    <Input
+                      autoComplete="email"
+                      className="h-11 rounded-xl transition-all duration-200 focus-visible:ring-primary/25"
+                      id="email"
+                      name="email"
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="name@example.com"
+                      required
+                      type="email"
+                      value={email}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="password">密码</Label>
+                    <Link className="text-sm text-muted-foreground underline underline-offset-4" href="/forgot-password">
+                      忘记密码？
+                    </Link>
+                  </div>
+                  <div className="input-focus-line">
+                    <Input
+                      autoComplete="current-password"
+                      className="h-11 rounded-xl transition-all duration-200 focus-visible:ring-primary/25"
+                      id="password"
+                      name="password"
+                      onChange={(event) => setPassword(event.target.value)}
+                      placeholder="请输入密码"
+                      required
+                      type="password"
+                      value={password}
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-muted-foreground" htmlFor="remember-email">
+                  <Checkbox
+                    checked={rememberEmail}
+                    id="remember-email"
+                    name="rememberEmail"
+                    onCheckedChange={(checked) => setRememberEmail(checked === true)}
+                  />
+                  记住邮箱
+                </label>
+                <SubmitButton />
+                <p className="text-center text-sm text-muted-foreground">
+                  还没有账号？
+                  <Link className="ml-1 underline underline-offset-4" href="/register">
+                    去注册
                   </Link>
-                </div>
-                <div className="input-focus-line">
-                  <Input
-                    autoComplete="current-password"
-                    className="h-10 transition-all duration-200 focus-visible:ring-primary/30"
-                    id="password"
-                    name="password"
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder="请输入密码"
-                    required
-                    type="password"
-                    value={password}
-                  />
-                </div>
-              </div>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground" htmlFor="remember-email">
-                <Checkbox
-                  checked={rememberEmail}
-                  id="remember-email"
-                  name="rememberEmail"
-                  onCheckedChange={(checked) => setRememberEmail(checked === true)}
-                />
-                记住邮箱
-              </label>
-              <SubmitButton />
-              <p className="text-center text-sm text-muted-foreground">
-                还没有账号？
-                <Link className="ml-1 underline underline-offset-4" href="/register">
-                  去注册
-                </Link>
-              </p>
-            </motion.form>
-          </CardContent>
-        </Card>
-      </motion.div>
+                </p>
+              </motion.form>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 }

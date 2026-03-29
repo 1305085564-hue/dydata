@@ -148,14 +148,35 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-2 sm:px-6 lg:px-8">
-      <AnalyticsPageHeader preset={range.preset} from={range.from} to={range.to} />
-      <视频结论卡
-        videos={filteredVideos as AnalyticsVideoRow[]}
-        snapshots={filteredSnapshots as VideoMetricsSnapshot[]}
-        videoTags={filteredVideoTags as VideoTag[]}
-      />
-      <AnalyticsSections sections={sections} />
+    <div className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
+      <div className="space-y-6">
+        <AnalyticsPageHeader preset={range.preset} from={range.from} to={range.to} />
+
+        <section className="rounded-[28px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(246,249,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
+          <div className="mb-6 flex flex-col gap-3 border-b border-white/65 pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-semibold tracking-[0.2em] text-[var(--color-text-tertiary)] uppercase">Core Insight Deck</p>
+              <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">核心结论区</h2>
+              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看结果，再决定深入方向。这里优先展示本周期最值得行动的信号。</p>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
+              <span className="size-1.5 rounded-full bg-[var(--color-primary)]" aria-hidden />
+              <span className="font-medium text-[var(--color-text-primary)]">首屏优先结论</span>
+              <span>{range.from} 至 {range.to}</span>
+            </div>
+          </div>
+
+          <视频结论卡
+            videos={filteredVideos as AnalyticsVideoRow[]}
+            snapshots={filteredSnapshots as VideoMetricsSnapshot[]}
+            videoTags={filteredVideoTags as VideoTag[]}
+          />
+        </section>
+      </div>
+
+      <div className="mt-8">
+        <AnalyticsSections sections={sections} />
+      </div>
     </div>
   );
 }

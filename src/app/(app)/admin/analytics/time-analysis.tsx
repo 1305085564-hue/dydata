@@ -48,9 +48,9 @@ function getTimeSlot(hour: number): string {
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-card-static rounded-2xl px-3 py-2">
-      <p className="text-xs font-semibold tracking-tight">{label}</p>
-      <p className="text-xs tabular-nums text-blue-500">平均播放：{payload[0].value.toFixed(2)}万</p>
+    <div className="glass-card-static rounded-2xl px-3 py-2.5 shadow-[var(--shadow-light)]">
+      <p className="text-xs font-semibold tracking-tight text-[var(--color-text-primary)]">{label}</p>
+      <p className="mt-1 text-xs tabular-nums text-[var(--color-primary)]">平均播放：{payload[0].value.toFixed(2)}万</p>
     </div>
   );
 }
@@ -112,41 +112,51 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
   return (
     <div className="space-y-6">
       {!hasEnoughPublished && (
-        <div className="glass-card-static rounded-2xl p-3">
-          <p className="text-xs text-muted-foreground">
+        <section className="glass-card-static rounded-2xl p-4">
+          <p className="text-xs leading-6 text-muted-foreground">
             {publishedCount === 0
               ? "暂无发布时间数据，按提交日期分析星期分布。填写「发布时间」后可解锁时间段分析。"
               : `发布时间数据积累中（${publishedCount}/5），需要更多数据后才能展示时间段分析。当前按提交日期分析星期分布。`}
           </p>
-        </div>
+        </section>
       )}
 
-      <div className="glass-card-static rounded-2xl p-4">
-        <h4 className="mb-3 text-sm font-semibold tracking-tight text-foreground">按星期分布</h4>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={weekdayData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#6b7280" }} />
-            <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} unit="万" />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="平均播放(万)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {timeSlotData && (
-        <div className="glass-card-static rounded-2xl p-4">
-          <h4 className="mb-3 text-sm font-semibold tracking-tight text-foreground">按时间段分布</h4>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={timeSlotData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#6b7280" }} />
-              <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} unit="万" />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="平均播放(万)" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+      <section className="glass-card-static p-4 sm:p-5">
+        <div className="space-y-1 border-b border-border/60 pb-4">
+          <h4 className="text-[15px] font-semibold tracking-tight text-foreground">按星期分布</h4>
+          <p className="text-xs text-muted-foreground">用星期维度看平均播放，先找哪天更容易出结果。</p>
+        </div>
+        <div className="mt-4">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={weekdayData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} unit="万" axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(15,23,42,0.04)" }} />
+              <Bar dataKey="平均播放(万)" fill="var(--color-primary)" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </section>
+
+      {timeSlotData && (
+        <section className="glass-card-static p-4 sm:p-5">
+          <div className="space-y-1 border-b border-border/60 pb-4">
+            <h4 className="text-[15px] font-semibold tracking-tight text-foreground">按时间段分布</h4>
+            <p className="text-xs text-muted-foreground">用发布时间维度看平均播放，先判断该把内容放在哪个时段。</p>
+          </div>
+          <div className="mt-4">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={timeSlotData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} unit="万" axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(15,23,42,0.04)" }} />
+                <Bar dataKey="平均播放(万)" fill="var(--color-warning)" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
       )}
     </div>
   );

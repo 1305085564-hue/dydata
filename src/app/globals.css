@@ -67,10 +67,10 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.55 0.2 260);
+  --primary: oklch(0.58 0.2 258);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.965 0.005 260);
-  --secondary-foreground: oklch(0.35 0.05 260);
+  --secondary: oklch(0.97 0.004 258);
+  --secondary-foreground: oklch(0.34 0.04 258);
   --muted: oklch(0.965 0 0);
   --muted-foreground: oklch(0.5 0 0);
   --accent: oklch(0.955 0.01 260);
@@ -84,7 +84,7 @@
   --chart-3: oklch(0.45 0.18 260);
   --chart-4: oklch(0.72 0.12 150);
   --chart-5: oklch(0.62 0.2 27);
-  --radius: 0.75rem;
+  --radius: 0.875rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -93,15 +93,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --app-nav-height: 3.5rem;
+  --app-nav-height: 3.25rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
   --radius-card: var(--radius-lg);
   --radius-dialog: var(--radius-2xl);
   --radius-button: var(--radius-md);
-  --shadow-light: 0 1px 3px rgba(15,23,42,0.06);
-  --shadow-medium: 0 8px 24px -8px rgba(15,23,42,0.12);
-  --shadow-heavy: 0 18px 48px -32px rgba(15,23,42,0.28);
+  --shadow-light: 0 1px 2px rgba(15,23,42,0.06), 0 1px 0 rgba(255,255,255,0.65) inset;
+  --shadow-medium: 0 10px 26px -14px rgba(15,23,42,0.18);
+  --shadow-heavy: 0 26px 60px -34px rgba(15,23,42,0.32);
 }
 
 .dark {
@@ -148,8 +148,8 @@
   body {
     @apply bg-background text-foreground;
     background:
-      radial-gradient(circle at top, rgba(255, 255, 255, 0.72), transparent 42%),
-      linear-gradient(180deg, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 92%, white) 100%);
+      radial-gradient(circle at 12% -12%, color-mix(in srgb, var(--primary) 10%, white) 0%, transparent 34%),
+      linear-gradient(180deg, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 95%, white) 100%);
     color: var(--color-text-primary);
   }
   /* Toast 居中主控制点 */
@@ -227,6 +227,63 @@
 }
 
 @layer components {
+  .app-shell {
+    min-height: 100dvh;
+    background: transparent;
+  }
+
+  .app-main {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .app-main::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 12rem;
+    border-radius: 0 0 2rem 2rem;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, white 66%, var(--background)) 0%, transparent 100%);
+    opacity: 0.66;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .app-toolbar {
+    background: transparent;
+  }
+
+  .app-toolbar-inner {
+    border: 1px solid color-mix(in srgb, var(--color-border) 82%, white);
+    border-radius: calc(var(--radius-card) + 2px);
+    background: color-mix(in srgb, var(--nav-bg) 95%, white);
+    box-shadow: var(--shadow-light);
+    backdrop-filter: var(--nav-blur);
+    -webkit-backdrop-filter: var(--nav-blur);
+  }
+
+  .dark .app-main::before {
+    background: linear-gradient(180deg, rgba(15, 17, 21, 0.58) 0%, transparent 100%);
+    opacity: 0.7;
+  }
+
+  .dark .app-toolbar-inner {
+    border-color: color-mix(in srgb, var(--color-border) 84%, transparent);
+    background: color-mix(in srgb, var(--nav-bg) 95%, transparent);
+  }
+
+  @media (max-width: 640px) {
+    .app-main::before {
+      height: 9rem;
+      border-radius: 0 0 1.25rem 1.25rem;
+    }
+
+    .app-toolbar-inner {
+      border-radius: calc(var(--radius-card) - 2px);
+    }
+  }
+
   .dashboard-shell {
     position: relative;
   }

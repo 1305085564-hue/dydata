@@ -187,17 +187,14 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
   ].slice(0, 4);
 
   return (
-    <MotionCard className={`border-[var(--color-border)] bg-[var(--color-surface)] ${className ?? ""}`}>
-      <div className="space-y-4 p-5">
-        {/* 标题 */}
-        <div>
-          <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断建议</h2>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            近7天数据 · 与团队均值对比
-          </p>
+    <MotionCard className={`border-white/70 bg-white/78 backdrop-blur-[16px] ${className ?? ""}`}>
+      <div className="space-y-4 p-5 sm:p-6">
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Diagnosis Brief</p>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断建议</h2>
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">近 7 天数据，对比团队均值后给出当前最该动的优化方向。</p>
         </div>
 
-        {/* 诊断区 */}
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">诊断</div>
           {myReports.length === 0 ? (

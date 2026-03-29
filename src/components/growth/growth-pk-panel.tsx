@@ -12,20 +12,18 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
   const inView = useInView(ref, { once: true, margin: "-40px" });
 
   return (
-    <div ref={ref} className="flex h-3 w-full overflow-hidden rounded-full bg-[rgba(0,0,0,0.07)]">
-      {/* 左侧 */}
+    <div ref={ref} className="flex h-3 w-full overflow-hidden rounded-full bg-[color:var(--color-border)]/45">
       <motion.div
         className="h-full rounded-l-full"
-        style={{ backgroundColor: leftLeads ? "#007AFF" : "#d1d5db" }}
+        style={{ backgroundColor: leftLeads ? "var(--color-primary)" : "rgba(148,163,184,0.55)" }}
         initial={{ width: 0 }}
         animate={inView ? { width: `${leftRatio * 100}%` } : { width: 0 }}
         transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       />
-      {/* 右侧（从右向左展开，用 scaleX + origin-right） */}
       <div className="flex flex-1 justify-end">
         <motion.div
           className="h-full rounded-r-full"
-          style={{ backgroundColor: leftLeads ? "#d1d5db" : "#007AFF" }}
+          style={{ backgroundColor: leftLeads ? "rgba(148,163,184,0.55)" : "var(--color-primary)" }}
           initial={{ width: 0 }}
           animate={inView ? { width: `${rightRatio * 100}%` } : { width: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
@@ -38,9 +36,9 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
 function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
   if (tied) return <span className="text-xs text-[var(--color-text-secondary)]">持平</span>;
   return leftLeads ? (
-    <span className="rounded-full bg-[#007AFF]/10 px-2 py-0.5 text-xs font-medium text-[#007AFF]">领先</span>
+    <span className="rounded-full bg-[var(--color-primary)]/10 px-2 py-0.5 text-xs font-medium text-[var(--color-primary)]">领先</span>
   ) : (
-    <span className="rounded-full bg-[rgba(0,0,0,0.06)] px-2 py-0.5 text-xs font-medium text-[var(--color-text-secondary)]">落后</span>
+    <span className="rounded-full bg-[color:var(--color-border)]/40 px-2 py-0.5 text-xs font-medium text-[var(--color-text-secondary)]">落后</span>
   );
 }
 
@@ -77,26 +75,25 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
   const total = rows.length;
 
   return (
-    <MotionCard className="border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="space-y-4 p-5">
+    <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+      <div className="space-y-4 p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">PK 对比</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              {leftName} vs {rightName}
-            </p>
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">PK Compare</p>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">PK 对比</h2>
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{leftName} vs {rightName}</p>
           </div>
           {total > 0 && (
-            <div className="shrink-0 rounded-[10px] bg-[#007AFF]/10 px-3 py-1.5 text-center">
-              <div className="text-base font-bold tabular-nums text-[#007AFF]">
+            <div className="shrink-0 rounded-2xl border border-white/80 bg-white/88 px-3 py-2 text-center shadow-[var(--shadow-light)]">
+              <div className="text-base font-semibold tabular-nums text-[var(--color-primary)]">
                 {winCount}/{total}
               </div>
-              <div className="text-[10px] text-[#007AFF]/70">项领先</div>
+              <div className="text-[10px] text-[var(--color-text-secondary)]">项领先</div>
             </div>
           )}
         </div>
         {!rows.length ? (
-          <div className="rounded-[12px] border border-dashed border-[var(--color-border)] bg-[rgba(255,255,255,0.68)] p-4 text-sm text-[var(--color-text-secondary)]">
+          <div className="rounded-[14px] border border-dashed border-[var(--color-border)] bg-[rgba(255,255,255,0.68)] p-4 text-sm text-[var(--color-text-secondary)]">
             请先选择对比对象
           </div>
         ) : (

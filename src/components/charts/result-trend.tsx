@@ -197,7 +197,7 @@ export function ResultTrend({
       <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h3 className="text-[15px] font-semibold tracking-tight text-foreground">结果趋势</h3>
-          <p className="text-xs text-muted-foreground">{activeMetric.label}对比团队 P80，保留最近 {range} 天</p>
+          <p className="text-xs text-muted-foreground">{activeMetric.label}对比团队 P80，保留最近 {range} 天，并优先展示趋势方向。</p>
         </div>
         <div className="flex flex-col gap-1.5 sm:items-end">
           <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/50 p-0.5 backdrop-blur">

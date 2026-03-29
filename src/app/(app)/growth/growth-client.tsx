@@ -50,32 +50,46 @@ export function GrowthClientShell({
   const hasEnoughData = reportCount >= 3;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">成长分析</h1>
-        <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-          {profileName} · {accountCount} 个账号 · 近30天 {reportCount} 条数据
-        </p>
-      </div>
+    <div className="mx-auto max-w-7xl px-4 pb-12 pt-3 sm:px-6 lg:px-8">
+      <div className="space-y-7">
+        <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Growth Analysis</p>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">成长分析总览</h1>
+                <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+                  先看能力分布与诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-2 rounded-2xl border border-white/80 bg-white/85 p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[280px]">
+              <div className="font-medium text-[var(--color-text-primary)]">当前样本</div>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">{profileName} · {accountCount} 个账号 · 近30天 {reportCount} 条数据</p>
+              <p>{hasEnoughData ? "已满足成长分析最小样本要求" : `再提交 ${3 - reportCount} 天即可解锁完整分析`}</p>
+            </div>
+          </div>
+        </section>
 
-      {!hasEnoughData ? (
-        <EmptyState
-          icon={BarChart2}
-          title="连续提交 3 天后解锁分析"
-          description={`当前已有 ${reportCount} 条数据，再提交 ${3 - reportCount} 天即可解锁成长分析`}
-          className="py-16"
-        />
-      ) : (
-        <>
-          <StatusCardGrid items={statusCards} />
-          <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
-          {pkPanel ? <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} /> : null}
-          <DiagnosisCard myReports={myReports} teamReports={teamReports} />
-          <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
-          <GrowthInsightPanel />
-          <AdvicePanel data={advice} noData={myReports.length === 0} />
-        </>
-      )}
+        {!hasEnoughData ? (
+          <EmptyState
+            icon={BarChart2}
+            title="连续提交 3 天后解锁分析"
+            description={`当前已有 ${reportCount} 条数据，再提交 ${3 - reportCount} 天即可解锁成长分析`}
+            className="py-16"
+          />
+        ) : (
+          <div className="space-y-5">
+            <StatusCardGrid items={statusCards} />
+            <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
+            {pkPanel ? <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} /> : null}
+            <DiagnosisCard myReports={myReports} teamReports={teamReports} />
+            <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
+            <GrowthInsightPanel />
+            <AdvicePanel data={advice} noData={myReports.length === 0} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

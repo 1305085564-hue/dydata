@@ -93,11 +93,12 @@ export function GrowthInsightPanel() {
 
   return (
     <MotionCard className="border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="space-y-4 p-5">
+      <div className="space-y-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">昨日复盘洞察</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">AI Review</p>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">昨日复盘洞察</h2>
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
               {state.status === "ok" && state.cached ? "已缓存结果" : "AI 自动分析昨日视频数据"}
             </p>
           </div>

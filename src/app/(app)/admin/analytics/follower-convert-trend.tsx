@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
 
 interface Report {
   report_date: string;
@@ -42,9 +43,9 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-card-static rounded-2xl px-3 py-2">
-      <p className="text-xs font-semibold tracking-tight">{label}</p>
-      <p className="text-xs tabular-nums text-blue-500">
+    <div className="glass-card-static rounded-2xl px-3 py-2.5 shadow-[var(--shadow-light)]">
+      <p className="text-xs font-semibold tracking-tight text-[var(--color-text-primary)]">{label}</p>
+      <p className="mt-1 text-xs tabular-nums text-[var(--color-primary)]">
         导粉：{payload[0].value.toLocaleString()}
       </p>
     </div>
@@ -59,7 +60,6 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
     const now = new Date();
     now.setUTCHours(0, 0, 0, 0);
 
-    // build date list
     const dates: string[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(now);
@@ -67,7 +67,6 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
       dates.push(d.toISOString().split("T")[0]);
     }
 
-    // aggregate by date
     const byDate = new Map<string, number>();
     for (const r of reports) {
       if (!dates.includes(r.report_date)) continue;
@@ -75,7 +74,7 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
     }
 
     return dates.map((date) => ({
-      date: date.slice(5), // MM-DD
+      date: date.slice(5),
       导粉量: byDate.get(date) ?? 0,
     }));
   }, [reports, preset]);
@@ -94,16 +93,22 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
   }
 
   return (
-    <div className="glass-card-static rounded-2xl p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h4 className="text-sm font-semibold tracking-tight text-foreground">导粉趋势</h4>
-        <div className="flex gap-1">
+    <section className="glass-card-static p-4 sm:p-5">
+      <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">导粉趋势</h3>
+          <p className="text-xs text-muted-foreground">按最近 {preset === "7d" ? "7" : "30"} 天查看团队导粉变化</p>
+        </div>
+        <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/45 p-0.5 backdrop-blur">
           {(["7d", "30d"] as Preset[]).map((p) => (
             <Button
               key={p}
               size="sm"
-              variant={preset === p ? "default" : "ghost"}
-              className="h-6 px-2 text-xs"
+              variant="ghost"
+              className={cn(
+                "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.01] hover:brightness-105 active:scale-[0.98]",
+                preset === p && "bg-background text-foreground shadow-sm"
+              )}
               onClick={() => setPreset(p)}
             >
               {p === "7d" ? "近7天" : "近30天"}
@@ -111,26 +116,28 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
           ))}
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={240}>
-        <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#6b7280" }} />
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+          <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
+          <XAxis dataKey="date" tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} axisLine={false} tickLine={false} />
           <YAxis
-            tick={{ fontSize: 12, fill: "#6b7280" }}
+            tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
             domain={[0, yUpperBound]}
             allowDecimals={false}
+            axisLine={false}
+            tickLine={false}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(15,23,42,0.1)", strokeWidth: 1 }} />
           <Line
             type="monotone"
             dataKey="导粉量"
-            stroke="#007AFF"
-            strokeWidth={2}
-            dot={{ r: 3, fill: "#007AFF" }}
-            activeDot={{ r: 5 }}
+            stroke="var(--color-primary)"
+            strokeWidth={2.5}
+            dot={false}
+            activeDot={{ r: 5, fill: "var(--color-primary)", stroke: "white", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>
-    </div>
+    </section>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ScanSearch, Sparkles } from "lucide-react";
+import { CheckCircle2, ScanSearch, Sparkles } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,50 +149,66 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
         </div>
       )}
 
-      <form key={formKey} onSubmit={handleSubmit} className="space-y-5 pb-24 sm:pb-0">
+      <form key={formKey} onSubmit={handleSubmit} className="space-y-4 pb-28 sm:space-y-5 sm:pb-0">
         <input type="hidden" name="account_id" value={selectedAccountId} />
 
         <Card className={`${getDashboardSurfaceClass("hero")} card-elevated overflow-hidden rounded-[1.5rem] border-0`}>
-          <CardContent className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="space-y-2">
-              <div className="dashboard-section-kicker inline-flex items-center gap-2">
-                <Sparkles className="size-3.5" />
-                截图导入
-              </div>
-              <div className="space-y-1">
-                <h3 className="dashboard-section-title">先导入截图，再校对回填</h3>
+          <CardContent className="space-y-3 px-5 py-5 sm:px-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1.5">
+                <div className="dashboard-section-kicker inline-flex items-center gap-2">
+                  <Sparkles className="size-3.5" />
+                  表单入口
+                </div>
+                <h3 className="dashboard-section-title">截图导入后，数据会自动回填到这里</h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  上传抖音数据截图，自动提取播放、互动与涨粉指标。确认后再写入主表单，避免你重复输入。
+                  你只要核对关键数据并补齐标题、发布时间和文案即可。
                 </p>
               </div>
+
+              <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+                <DialogTrigger
+                  render={
+                    <Button type="button" className="h-12 w-full rounded-2xl px-5 text-base sm:w-auto" />
+                  }
+                >
+                  <ScanSearch className="size-4" />
+                  截图识别导入
+                </DialogTrigger>
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>截图识别导入</DialogTitle>
+                    <DialogDescription>
+                      支持 jpg、png、webp。识别结果可逐项修改，确认后才会写回主表单。
+                    </DialogDescription>
+                  </DialogHeader>
+                  <ScreenshotImport initialValues={ocrValues} onConfirm={handleImportConfirm} />
+                </DialogContent>
+              </Dialog>
             </div>
-            <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-              <DialogTrigger
-                render={
-                  <Button type="button" className="h-12 w-full rounded-2xl px-5 text-base sm:w-auto" />
-                }
-              >
-                <ScanSearch className="size-4" />
-                截图识别导入
-              </DialogTrigger>
-              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-                <DialogHeader>
-                  <DialogTitle>截图识别导入</DialogTitle>
-                  <DialogDescription>
-                    支持 jpg、png、webp。识别结果可逐项修改，确认后才会写回主表单。
-                  </DialogDescription>
-                </DialogHeader>
-                <ScreenshotImport initialValues={ocrValues} onConfirm={handleImportConfirm} />
-              </DialogContent>
-            </Dialog>
+
+            <div className="dashboard-summary-bar">
+              <div className="dashboard-summary-chip">
+                账号
+                <span className="font-semibold text-foreground">{accounts.find((account) => account.id === selectedAccountId)?.name ?? "--"}</span>
+              </div>
+              <div className="dashboard-summary-chip">
+                日期
+                <span className="font-semibold text-foreground">{existingData?.report_date ?? today}</span>
+              </div>
+              <div className="dashboard-summary-chip">
+                状态
+                <span className={existingData ? "text-emerald-600" : "text-orange-500"}>{existingData ? "今日可修改" : "今日待提交"}</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card className={`${getDashboardSurfaceClass("panel")} card-elevated rounded-[1.5rem] border-0`}>
           <CardContent className="space-y-4 px-5 py-5 sm:px-6">
             <div className="space-y-1">
-              <div className="dashboard-section-kicker">基本信息</div>
-              <h3 className="dashboard-section-title">先把这几项填清楚</h3>
+              <div className="dashboard-section-kicker">基础信息</div>
+              <h3 className="dashboard-section-title">标题和日期先确认</h3>
             </div>
             <div className="dashboard-field-group space-y-4">
               <div className="space-y-1.5">
@@ -228,7 +244,8 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           <CardContent className="space-y-5 px-5 py-5 sm:px-6">
             <div className="space-y-1">
               <div className="dashboard-section-kicker">核心数据</div>
-              <h3 className="dashboard-section-title">先盯播放量和涨粉</h3>
+              <h3 className="dashboard-section-title">第一优先：播放量和涨粉</h3>
+              <p className="text-xs text-muted-foreground">先填这两项，再看完播率和留存指标。</p>
             </div>
             <div className={`${getDashboardMetricGridClass("primary")} rounded-[1.5rem] bg-primary/6 p-3 sm:p-4`}>
               <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
@@ -297,7 +314,8 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           <CardContent className="space-y-5 px-5 py-5 sm:px-6">
             <div className="space-y-1">
               <div className="dashboard-section-kicker">补充信息</div>
-              <h3 className="dashboard-section-title">把互动、发布时间和文案补齐</h3>
+              <h3 className="dashboard-section-title">第二优先：互动、发布时间、文案</h3>
+              <p className="text-xs text-muted-foreground">这些信息用于后续复盘和模型分析，建议一次补齐。</p>
             </div>
             <div className={getDashboardMetricGridClass("secondary")}>
               <div className="dashboard-metric-card space-y-1.5">
@@ -384,15 +402,25 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
         </Card>
 
         <div className="hidden sm:block">
-          <Button type="submit" disabled={isPending} className="h-11 min-w-[168px] rounded-2xl px-6 text-sm">
-            {isPending ? "提交中..." : existingData ? "修改日报" : "提交日报"}
-          </Button>
+          <div className="dashboard-surface dashboard-surface-panel rounded-[1.25rem] border px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="size-4 text-primary" />
+                <span>检查完数据后再提交，提交后可在历史记录继续修改</span>
+              </div>
+              <Button type="submit" disabled={isPending} className="h-11 min-w-[168px] rounded-2xl px-6 text-sm">
+                {isPending ? "提交中..." : existingData ? "修改日报" : "提交日报"}
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="fixed right-0 bottom-0 left-0 z-20 dashboard-mobile-submit-bar p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:hidden">
-          <Button type="submit" disabled={isPending} className="h-12 w-full rounded-2xl text-base font-semibold shadow-[0_18px_40px_-20px_rgba(37,99,235,0.6)]">
-            {isPending ? "提交中..." : existingData ? "修改日报" : "提交日报"}
-          </Button>
+        <div className="fixed right-0 bottom-0 left-0 z-20 dashboard-mobile-submit-bar p-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:hidden">
+          <div className="mx-auto max-w-md rounded-2xl border border-border/60 bg-background/86 p-2 shadow-[0_18px_40px_-20px_rgba(15,23,42,0.38)] backdrop-blur-xl">
+            <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl text-base font-semibold shadow-[0_14px_34px_-18px_rgba(37,99,235,0.62)]">
+              {isPending ? "提交中..." : existingData ? "修改日报" : "提交日报"}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

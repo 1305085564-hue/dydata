@@ -29,11 +29,14 @@ export default async function MarketPage() {
   const rows = (data ?? []) as MarketContextDaily[];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">市场环境管理</h1>
-        <p className="text-sm text-muted-foreground">维护近 30 天市场环境，用于成长分析和策略判断。</p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6">
+      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Market Console</p>
+          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">市场环境管理</h1>
+          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">维护近 30 天市场环境，用于成长分析和策略判断。</p>
+        </div>
+      </section>
 
       <MarketForm />
       <MarketList initialData={rows} />

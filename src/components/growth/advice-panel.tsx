@@ -52,11 +52,12 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
 
   if (noData) {
     return (
-      <MotionCard className="border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="space-y-4 p-5">
-          <div>
-            <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断 / 参考 / 动作</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">暂无数据，以下为示范参考</p>
+      <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+        <div className="space-y-4 p-5 sm:p-6">
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Advice Flow</p>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断 / 参考 / 动作</h2>
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">暂无数据，以下为示范参考</p>
           </div>
           <div className="grid gap-3">
             {DEMO_SECTIONS.map((section) => (
@@ -75,12 +76,13 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
   }
 
   return (
-    <MotionCard className="border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="space-y-4 p-5">
+    <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+      <div className="space-y-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断 / 参考 / 动作</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Advice Flow</p>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断 / 参考 / 动作</h2>
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
               {data.source === "ai" ? "已优先展示 AI 洞察结果。" : "当前无 AI 结果，已切换规则诊断。"}
             </p>
           </div>
@@ -92,7 +94,7 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
             { key: "reference", title: "参考", text: data.reference },
             { key: "action", title: "动作", text: data.action },
           ].map((section) => (
-            <div key={section.key} className={`rounded-[12px] border p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
+            <div key={section.key} className={`rounded-[16px] border p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
               <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">{section.title}</div>
               <TypeLine text={section.text} />
             </div>

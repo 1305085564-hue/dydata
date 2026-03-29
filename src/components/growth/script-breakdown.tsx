@@ -39,11 +39,12 @@ export function ScriptBreakdown({
     isStructured && !expanded ? data.segments.slice(0, maxVisibleSegments) : isStructured ? data.segments : [];
 
   return (
-    <MotionCard className="border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="space-y-4 p-5">
-        <div>
-          <h2 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">{title}</h2>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">按结构拆出重点段落，便于对照后续推流曲线。</p>
+    <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+      <div className="space-y-4 p-5 sm:p-6">
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Script Breakdown</p>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">{title}</h2>
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">按结构拆出重点段落，便于对照后续推流曲线。</p>
         </div>
 
         {isStructured ? (
@@ -55,7 +56,7 @@ export function ScriptBreakdown({
                   type="button"
                   variants={itemVariants}
                   onClick={() => onSegmentSelect?.({ startSec: segment.startSec, endSec: segment.endSec })}
-                  className="rounded-[12px] border border-[var(--color-border)] bg-[rgba(255,255,255,0.78)] p-4 text-left shadow-[var(--shadow-card)] transition-transform duration-[var(--duration-fast)] ease-[var(--ease-spring)] hover:-translate-y-[2px] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.97]"
+                  className="rounded-[16px] border border-white/75 bg-white/82 p-4 text-left shadow-[var(--shadow-light)] transition-transform duration-[var(--duration-fast)] ease-[var(--ease-spring)] hover:-translate-y-[2px] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.97]"
                 >
                   <div className="flex items-center gap-2">
                     <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone as SegmentTone])} variant="outline">
@@ -97,7 +98,7 @@ export function ScriptBreakdown({
             ) : null}
           </>
         ) : (
-          <div className="space-y-3 rounded-[12px] border border-dashed border-[var(--color-border)] bg-[rgba(255,255,255,0.68)] p-4">
+          <div className="space-y-3 rounded-[16px] border border-dashed border-[var(--color-border)] bg-[rgba(255,255,255,0.7)] p-4">
             {data.rawText ? <p className="text-sm leading-7 text-[var(--color-text-primary)]">{data.rawText}</p> : null}
             <div className="text-sm text-[var(--color-text-secondary)]">{data.placeholder}</div>
           </div>

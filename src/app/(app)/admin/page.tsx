@@ -1,5 +1,12 @@
 import { redirect } from "next/navigation";
-import { Users } from "lucide-react";
+import {
+  Activity,
+  ArrowRight,
+  FileClock,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -230,17 +237,169 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     activeUserIds
   );
 
+  const totalProfiles = (allProfiles ?? []).length;
+  const activeProfilesCount = (allProfiles ?? []).filter((p) => (p.status ?? "active") === "active").length;
+  const exemptProfilesCount = (allProfiles ?? []).filter((p) => p.status === "exempt").length;
+  const todayReportCount = (dateReports ?? []).length;
+  const pendingRequestCount = exemptionRequests.length;
+  const inviteCodeCount = (inviteCodes ?? []).length;
+  const latestLog = logsWithNames[0];
+  const topSummaryCards = [
+    {
+      label: "今日提交",
+      value: todayReportCount,
+      hint: `${submittedProfileIds.length} 人已提交`,
+      icon: Activity,
+    },
+    {
+      label: "在岗成员",
+      value: activeProfilesCount,
+      hint: `共 ${totalProfiles} 人，豁免 ${exemptProfilesCount} 人`,
+      icon: Users,
+    },
+    {
+      label: "待处理事项",
+      value: pendingRequestCount,
+      hint: pendingRequestCount > 0 ? "优先处理豁免申请" : "当前没有新增待办",
+      icon: FileClock,
+    },
+    {
+      label: "邀请码存量",
+      value: inviteCodeCount,
+      hint: inviteCodeCount > 0 ? "可直接邀请新成员" : "建议补充邀请码",
+      icon: ShieldCheck,
+    },
+  ];
+
+  const quickActions = [
+    hasPermission(perm.role, perm.permissions, "manage_invite")
+      ? { label: "生成邀请码", description: "补充新成员入口" }
+      : null,
+    hasPermission(perm.role, perm.permissions, "export_data")
+      ? { label: "导出数据", description: "快速发给业务复盘" }
+      : null,
+    hasPermission(perm.role, perm.permissions, "edit_data")
+      ? { label: "处理异常数据", description: "优先检查今日异常值" }
+      : null,
+  ].filter((item): item is { label: string; description: string } => item !== null);
+
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
-      <section className="rounded-[var(--radius-2xl)] border border-white/60 bg-[var(--glass-bg)] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur-[20px]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-text-secondary)]">Admin Console</p>
-            <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">管理员后台</h1>
-            <p className="text-sm text-[var(--color-text-secondary)]">集中管理成员、数据、权限与导出操作。</p>
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-4 sm:px-6 lg:px-8">
+      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Operating Cockpit</p>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">管理员中控台</h1>
+              <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">先看今天的整体状态，再处理趋势、待办和成员工具，避免在长列表里来回找重点。</p>
+            </div>
+          </div>
+          <div className="grid gap-2 rounded-2xl border border-white/80 bg-white/88 p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[320px]">
+            <div className="inline-flex items-center gap-2 font-medium text-[var(--color-text-primary)]">
+              <Sparkles className="size-3.5 text-[var(--color-primary)]" />
+              今日总控摘要
+            </div>
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{queryDate}</p>
+            <p>{latestLog ? `最新日志：${latestLog.action}` : "暂无最新日志，系统运行正常。"}</p>
           </div>
         </div>
       </section>
+
+      <DashboardAnimatedSection index={0}>
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {topSummaryCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Card key={card.label} className="glass-card-static border-white/70 bg-white/78 backdrop-blur-[16px]">
+                <CardContent className="space-y-3 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-tertiary)]">{card.label}</p>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
+                      <Icon className="size-4" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[28px] font-semibold tracking-[-0.04em] text-[var(--color-text-primary)]">{card.value}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{card.hint}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </section>
+      </DashboardAnimatedSection>
+
+      <DashboardAnimatedSection index={1}>
+        <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <Card className="glass-card border-white/60 bg-white/72">
+            <CardHeader>
+              <CardTitle className="font-semibold tracking-tight">团队趋势总览</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <ResultTrend
+                data={trendData.结果趋势}
+                personalLabel="团队总量"
+                teamAverageLabel="团队人均"
+                emptyText="提交 2 天以上数据后可查看趋势图"
+              />
+              <InteractionTrend
+                data={trendData.互动趋势}
+                personalLabel="团队质量分"
+                teamAverageLabel="团队人均"
+                emptyText="提交 2 天以上数据后可查看互动质量分趋势"
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card-static border-white/70 bg-white/78 backdrop-blur-[16px]">
+            <CardHeader>
+              <CardTitle className="font-semibold tracking-tight">今日优先事项</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-2xl border border-white/75 bg-white/80 p-4 shadow-[var(--shadow-light)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">提交状态检查</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">先确认今天谁还没交，再处理异常和豁免。</p>
+                  </div>
+                  <Badge variant="outline" className="rounded-full border-primary/20 bg-primary/10 text-primary">
+                    {todayReportCount} 条
+                  </Badge>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/75 bg-white/80 p-4 shadow-[var(--shadow-light)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">待处理申请</p>
+                    <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">豁免申请和权限相关事项优先处理。</p>
+                  </div>
+                  <Badge variant={pendingRequestCount > 0 ? "destructive" : "outline"} className="rounded-full">
+                    {pendingRequestCount}
+                  </Badge>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/75 bg-white/80 p-4 shadow-[var(--shadow-light)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">快捷动作</p>
+                <div className="mt-3 space-y-2">
+                  {quickActions.length > 0 ? (
+                    quickActions.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-white/78 px-3 py-2.5 text-sm text-[var(--color-text-secondary)]">
+                        <div>
+                          <p className="font-medium text-[var(--color-text-primary)]">{item.label}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
+                        </div>
+                        <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-[var(--color-text-secondary)]">当前权限下暂无快捷操作。</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      </DashboardAnimatedSection>
 
       {[
         {
@@ -256,30 +415,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               submittedAccountIds={submittedAccountIds}
               defaultDate={queryDate}
             />
-          ),
-        },
-        {
-          key: "team-dashboard",
-          content: (
-            <Card className="glass-card border-white/60 bg-white/70">
-              <CardHeader>
-                <CardTitle className="font-semibold tracking-tight">团队仪表盘</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <ResultTrend
-                  data={trendData.结果趋势}
-                  personalLabel="团队总量"
-                  teamAverageLabel="团队人均"
-                  emptyText="提交 2 天以上数据后可查看趋势图"
-                />
-                <InteractionTrend
-                  data={trendData.互动趋势}
-                  personalLabel="团队质量分"
-                  teamAverageLabel="团队人均"
-                  emptyText="提交 2 天以上数据后可查看互动质量分趋势"
-                />
-              </CardContent>
-            </Card>
           ),
         },
         ...(hasPermission(perm.role, perm.permissions, "manage_members")

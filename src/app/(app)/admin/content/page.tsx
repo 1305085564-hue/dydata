@@ -71,13 +71,16 @@ export default async function AdminContentPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">内容管理</h1>
-        <p className="text-sm text-muted-foreground">
-          次日复盘工作台：把昨日文案和今日结果数据放在一起，快速定位问题、输出整改建议。
-        </p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
+      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Content Console</p>
+          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">内容管理</h1>
+          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+            次日复盘工作台：把昨日文案和今日结果数据放在一起，快速定位问题、输出整改建议。
+          </p>
+        </div>
+      </section>
 
       <ContentList
         videos={videos}

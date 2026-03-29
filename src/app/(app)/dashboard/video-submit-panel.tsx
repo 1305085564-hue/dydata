@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, FileClock, FilePenLine, PencilLine } from "lucide-react";
+import { ChevronDown, FileClock, FilePenLine, PencilLine, ScanSearch } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,10 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
 
   const panelMode = resolveSubmitPanelMode({ summary: selectedSummary, requestedMode });
   const isSummaryMode = panelMode === "summary";
+  const submittedCount = useMemo(
+    () => accounts.filter((account) => Boolean(getTodaySubmissionSummary(mergedTodayReports, account.id))).length,
+    [accounts, mergedTodayReports]
+  );
 
   function handleSubmitted(
     video: Video,
@@ -108,26 +112,39 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
       className="space-y-5"
     >
       <Card className={`${getDashboardSurfaceClass("hero")} overflow-hidden rounded-[1.75rem] border-0`}>
-        <CardHeader className="space-y-5 pb-3 px-5 pt-5 sm:px-6 sm:pt-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <CardHeader className="space-y-4 border-b border-border/45 bg-background/20 pb-4 px-5 pt-5 sm:px-6 sm:pt-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
               <div className="dashboard-section-kicker">视频提交</div>
               <div className="space-y-1">
-                <CardTitle className="text-[1.35rem] font-semibold tracking-tight sm:text-2xl">先传截图，再补信息</CardTitle>
+                <CardTitle className="text-[1.35rem] font-semibold tracking-tight sm:text-2xl">第一屏先完成今日提报</CardTitle>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                  先把截图导进来，再补标题、发布时间和文案。今天已经交过的账号，会先显示结果卡，避免你重复点进表单。
+                  先选账号，再导入截图，最后补充信息并提交。状态卡会实时告诉你今天是否已经完成。
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-2">
-              {selectedAccount ? (
-                <div className="dashboard-summary-chip self-start text-xs sm:text-sm">
-                  当前账号
-                  <span className="font-semibold text-foreground">{selectedAccount.name}</span>
-                </div>
-              ) : null}
               <申请豁免弹窗 hasPending={hasPendingExemption} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+              今日账号
+              <span className="font-semibold text-foreground">{accounts.length}</span>
+            </div>
+            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+              已提交
+              <span className="font-semibold text-foreground">{submittedCount}</span>
+            </div>
+            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+              待提交
+              <span className="font-semibold text-foreground">{Math.max(accounts.length - submittedCount, 0)}</span>
+            </div>
+            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+              当前账号
+              <span className="font-semibold text-foreground">{selectedAccount?.name ?? "--"}</span>
             </div>
           </div>
 
@@ -162,8 +179,8 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
           ) : null}
         </CardHeader>
 
-        <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
-          <div className={accounts.length > 1 ? "grid grid-cols-2 gap-2 xl:grid-cols-3" : "grid grid-cols-1 gap-2"}>
+        <CardContent className="space-y-3 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+          <div className={accounts.length > 1 ? "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-2"}>
             {accounts.map((account) => {
               const isSelected = account.id === (selectedAccount?.id ?? "");
               const summary = getTodaySubmissionSummary(mergedTodayReports, account.id);
@@ -180,7 +197,7 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
                     setLastAiTags([]);
                   }}
                   className={[
-                    "rounded-[1.35rem] border p-3 text-left transition-all duration-200 sm:p-4",
+                    "rounded-[1.25rem] border p-3 text-left transition-all duration-200 sm:p-4",
                     isSelected
                       ? "border-primary/35 bg-primary/8 shadow-[0_14px_30px_-20px_rgba(37,99,235,0.42)]"
                       : "border-border/60 bg-background/72 hover:bg-background/92",
@@ -220,6 +237,11 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
                 <span className={selectedSummary ? getDashboardStatusClass("submitted") : getDashboardStatusClass("pending")}>
                   {selectedSummary ? "已提交" : "待提交"}
                 </span>
+              </div>
+              <div className="dashboard-summary-chip">
+                <ScanSearch className="size-3.5" />
+                截图导入
+                <span className="font-semibold text-foreground">优先完成</span>
               </div>
             </div>
           ) : null}

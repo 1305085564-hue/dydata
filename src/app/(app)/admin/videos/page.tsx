@@ -38,13 +38,16 @@ export default async function AdminVideosPage() {
     ]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">视频管理</h1>
-        <p className="text-sm text-muted-foreground">
-          按账号、负责人、日期和状态查看全部视频与 24h 快照。
-        </p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
+      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Video Console</p>
+          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">视频管理</h1>
+          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+            按账号、负责人、日期和状态查看全部视频与 24h 快照。
+          </p>
+        </div>
+      </section>
 
       <VideoList
         videos={(videos ?? []) as VideoRow[]}

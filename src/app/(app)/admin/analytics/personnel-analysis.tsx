@@ -148,7 +148,10 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-base font-semibold tracking-tight text-[var(--color-text-primary)]">{title}</h3>
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">{title}</h3>
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先用关键指标看谁稳定、谁在上升、谁需要辅导，再决定跟进顺序。</p>
+        </div>
         <div className="flex flex-wrap gap-2">
           <span className="self-center text-xs text-[var(--color-text-secondary)]">排序：</span>
           {([
