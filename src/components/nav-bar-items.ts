@@ -34,6 +34,11 @@ export function getNavItems(input: { showAnalytics: boolean; showAdmin: boolean 
         match: (pathname) => pathname.startsWith("/admin/content"),
       },
       {
+        href: "/admin/ai-assistant",
+        label: "AI助手",
+        match: (pathname) => pathname.startsWith("/admin/ai-assistant"),
+      },
+      {
         href: "/admin",
         label: "后台管理",
         match: (pathname) => pathname === "/admin",

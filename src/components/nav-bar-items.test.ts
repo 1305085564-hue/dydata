@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { getNavItems } from "./nav-bar-items.ts";
 
-test("管理员导航顺序为爆款分析、内容管理、后台管理", () => {
+test("管理员导航顺序为爆款分析、内容管理、AI助手、后台管理", () => {
   const items = getNavItems({ showAnalytics: true, showAdmin: true });
 
   assert.deepEqual(
@@ -13,6 +13,7 @@ test("管理员导航顺序为爆款分析、内容管理、后台管理", () =>
       { href: "/growth", label: "成长分析" },
       { href: "/analytics", label: "爆款分析" },
       { href: "/admin/content", label: "内容管理" },
+      { href: "/admin/ai-assistant", label: "AI助手" },
       { href: "/admin", label: "后台管理" },
     ]
   );
