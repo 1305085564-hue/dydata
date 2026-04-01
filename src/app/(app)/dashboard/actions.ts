@@ -164,6 +164,25 @@ export async function submitExemptionRequest(input: {
   return {};
 }
 
+export async function createAccount(name: string, contentDirection?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "请先登录" };
+
+  if (!name?.trim()) return { error: "账号名称不能为空" };
+
+  const { error } = await supabase.from("accounts").insert({
+    profile_id: user.id,
+    name: name.trim(),
+    content_direction: contentDirection?.trim() || null,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 async function notifyFeishu(submitter: string, title: string, playCount: number) {
   const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
   if (!webhookUrl) return;

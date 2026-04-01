@@ -29,6 +29,7 @@ import {
   getDashboardStatusClass,
   getDashboardSurfaceClass,
 } from "./dashboard-visuals";
+import { AddAccountDialog } from "./添加账号弹窗";
 
 interface VideoSubmitPanelProps {
   accounts: { id: string; name: string; content_direction: string | null }[];
@@ -148,35 +149,36 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
             </div>
           </div>
 
-          {accounts.length > 1 ? (
-            <div className="dashboard-field-group space-y-2">
+          <div className="dashboard-field-group space-y-2">
+            <div className="flex items-center justify-between">
               <Label htmlFor="video-account-select" className="text-sm font-medium text-foreground">提交账号</Label>
-              <Select
-                value={selectedAccountId}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  setSelectedAccountId(value);
-                  setRequestedMode(null);
-                  setLastSubmittedVideoId(null);
-                  setLastAiTags([]);
-                }}
-              >
-                <SelectTrigger
-                  id="video-account-select"
-                  className="h-12 w-full rounded-2xl bg-background/90 px-4 text-sm"
-                >
-                  <SelectValue placeholder="请选择账号" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AddAccountDialog />
             </div>
-          ) : null}
+            <Select
+              value={selectedAccountId}
+              onValueChange={(value) => {
+                if (!value) return;
+                setSelectedAccountId(value);
+                setRequestedMode(null);
+                setLastSubmittedVideoId(null);
+                setLastAiTags([]);
+              }}
+            >
+              <SelectTrigger
+                id="video-account-select"
+                className="h-12 w-full rounded-2xl bg-background/90 px-4 text-sm"
+              >
+                <SelectValue placeholder="请选择账号" />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-3 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
