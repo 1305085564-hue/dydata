@@ -32,14 +32,15 @@ import {
 import { AddAccountDialog } from "./添加账号弹窗";
 
 interface VideoSubmitPanelProps {
-  accounts: { id: string; name: string; content_direction: string | null }[];
+  accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
   userId: string;
+  userDisplayName: string;
   today: string;
   todayReports: TodaySubmissionReportLike[];
   hasPendingExemption?: boolean;
 }
 
-export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPendingExemption = false }: VideoSubmitPanelProps) {
+export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, todayReports, hasPendingExemption = false }: VideoSubmitPanelProps) {
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [lastSubmittedVideoId, setLastSubmittedVideoId] = useState<string | null>(null);
@@ -145,7 +146,7 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
             </div>
             <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
               当前账号
-              <span className="font-semibold text-foreground">{selectedAccount?.name ?? "--"}</span>
+              <span className="font-semibold text-foreground">{userDisplayName}</span>
             </div>
           </div>
 
@@ -173,7 +174,7 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
               <SelectContent>
                 {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
-                    {account.name}
+                    {account.display_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -207,7 +208,7 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="text-sm font-medium text-foreground">{account.name}</div>
+                      <div className="text-sm font-medium text-foreground">{account.display_name}</div>
                       <div className="text-xs text-muted-foreground">
                         {account.content_direction?.trim() || "未设置内容方向"}
                       </div>
@@ -228,7 +229,7 @@ export function VideoSubmitPanel({ accounts, userId, today, todayReports, hasPen
             <div className="dashboard-summary-bar">
               <div className="dashboard-summary-chip">
                 当前账号
-                <span className="font-semibold text-foreground">{selectedAccount.name}</span>
+                <span className="font-semibold text-foreground">{selectedAccount.display_name}</span>
               </div>
               <div className="dashboard-summary-chip">
                 日期

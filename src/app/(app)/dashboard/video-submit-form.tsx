@@ -63,7 +63,7 @@ import type {
 } from "./video-submit-panel-state";
 
 interface VideoSubmitFormProps {
-  account: { id: string; name: string; content_direction: string | null } | null;
+  account: { id: string; name: string; display_name: string; content_direction: string | null } | null;
   userId: string;
   today: string;
   mode: SubmitPanelMode;
@@ -821,7 +821,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                   {isBackfillMode ? "补交数据" : "修改数据"}
                 </h3>
                 <p className="text-sm text-[var(--color-text-secondary)]">
-                  当前账号：{account.name} · 内容方向：{account.content_direction?.trim() || "未设置内容方向"}
+                  当前账号：{account.display_name} · 出镜 / 图文方向：{account.content_direction?.trim() || "未设置"}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">

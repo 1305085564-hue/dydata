@@ -38,24 +38,13 @@ type HistoryReport = {
   content: string | null;
   published_at: string | null;
   uploaded_at: string | null;
-  accounts: unknown;
 };
 
 interface HistoryListProps {
   history: HistoryReport[];
   accounts: DashboardAccountOption[];
+  accountDisplayNameMap: Record<string, string>;
   today: string;
-}
-
-function getAccountName(accountRelation: unknown) {
-  if (Array.isArray(accountRelation)) {
-    const first = accountRelation[0] as { name?: string | null } | undefined;
-    return first?.name;
-  }
-  if (accountRelation && typeof accountRelation === "object") {
-    return (accountRelation as { name?: string | null }).name;
-  }
-  return undefined;
 }
 
 function toExistingData(report: HistoryReport): DashboardReportData {
@@ -83,7 +72,7 @@ function toExistingData(report: HistoryReport): DashboardReportData {
 
 const DEFAULT_VISIBLE = 10;
 
-export function HistoryList({ history, accounts, today }: HistoryListProps) {
+export function HistoryList({ history, accounts, accountDisplayNameMap, today }: HistoryListProps) {
   const [expanded, setExpanded] = useState(false);
   const [editingReport, setEditingReport] = useState<HistoryReport | null>(null);
   const visible = expanded ? history : history.slice(0, DEFAULT_VISIBLE);
@@ -117,7 +106,7 @@ export function HistoryList({ history, accounts, today }: HistoryListProps) {
                   {report.report_date?.slice(5)}
                 </TableCell>
                 <TableCell className="max-w-[120px] truncate text-muted-foreground">
-                  {getAccountName(report.accounts) ?? "-"}
+                  {accountDisplayNameMap[report.account_id] ?? "-"}
                 </TableCell>
                 <TableCell className="max-w-[160px] truncate">{report.title}</TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">
@@ -149,7 +138,7 @@ export function HistoryList({ history, accounts, today }: HistoryListProps) {
               <div>
                 <p className="text-xs text-muted-foreground">{report.report_date?.slice(5)}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {getAccountName(report.accounts) ?? "-"}
+                  {accountDisplayNameMap[report.account_id] ?? "-"}
                 </p>
               </div>
               <div className="flex items-center gap-2">

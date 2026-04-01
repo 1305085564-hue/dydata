@@ -51,28 +51,28 @@ export function AddAccountDialog() {
         <DialogHeader>
           <DialogTitle>添加新账号</DialogTitle>
           <DialogDescription>
-            添加你的第二个账号或架构账号，方便分别提交数据
+            一个用户可以管理多个账号，这里填写你自己看得懂的账号备注名，方便切换提交
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="account-name">账号名称</Label>
+            <Label htmlFor="account-name">账号备注名</Label>
             <Input
               id="account-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="例如：主账号、第二账号"
+              placeholder="例如：主账号、矩阵号A、出镜号"
               required
               disabled={isPending}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="content-direction">内容方向（选填）</Label>
+            <Label htmlFor="content-direction">出镜 / 图文方向（选填）</Label>
             <Input
               id="content-direction"
               value={contentDirection}
               onChange={(e) => setContentDirection(e.target.value)}
-              placeholder="例如：财经、生活、教育"
+              placeholder="例如：出镜、图文、财经口播"
               disabled={isPending}
             />
           </div>

@@ -14,6 +14,27 @@ import { hasPendingExemptionRequest } from "./actions";
 import { HistoryList } from "./history-list";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
 
+function isUuidLike(value: string | null | undefined) {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+}
+
+function getSafeAccountDisplayName(input: {
+  rawName: string | null | undefined;
+  userDisplayName: string;
+  contentDirection: string | null | undefined;
+  index: number;
+  total: number;
+}) {
+  const rawName = input.rawName?.trim();
+  if (rawName && !isUuidLike(rawName)) return rawName;
+
+  const direction = input.contentDirection?.trim();
+  if (direction) return `${input.userDisplayName} · ${direction}`;
+  if (input.total > 1) return `${input.userDisplayName} · 账号${input.index + 1}`;
+  return input.userDisplayName;
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -29,11 +50,32 @@ export default async function DashboardPage() {
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true });
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+
+  const userDisplayName = profile?.name?.trim() || "当前用户";
+
+  const displayAccounts = (accounts ?? []).map((account, index, list) => ({
+    ...account,
+    display_name: getSafeAccountDisplayName({
+      rawName: account.name,
+      userDisplayName,
+      contentDirection: account.content_direction,
+      index,
+      total: list.length,
+    }),
+  }));
+
+  const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
+
   const today = new Date().toISOString().split("T")[0];
-  const accountIds = (accounts ?? []).map((account) => account.id);
+  const accountIds = displayAccounts.map((account) => account.id);
   const ownContentDirections = Array.from(
     new Set(
-      (accounts ?? [])
+      displayAccounts
         .map((account) => account.content_direction?.trim())
         .filter((value): value is string => Boolean(value))
     )
@@ -54,7 +96,7 @@ export default async function DashboardPage() {
       ? supabase
           .from("daily_reports")
           .select(
-            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(name)"
+            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
           )
           .in("account_id", accountIds)
           .order("report_date", { ascending: false })
@@ -117,8 +159,9 @@ export default async function DashboardPage() {
       <DashboardAnimatedSection index={0}>
         <div className="space-y-4">
           <VideoSubmitPanel
-            accounts={accounts ?? []}
+            accounts={displayAccounts}
             userId={user.id}
+            userDisplayName={userDisplayName}
             today={today}
             todayReports={todayReports}
             hasPendingExemption={hasPending}
@@ -227,7 +270,12 @@ export default async function DashboardPage() {
                 description="提交第一条数据后即可在此查看近30天历史"
               />
             ) : (
-              <HistoryList history={history} accounts={(accounts ?? []).map((a) => ({ id: a.id, name: a.name }))} today={today} />
+              <HistoryList
+                history={history ?? []}
+                accounts={displayAccounts.map((account) => ({ id: account.id, name: account.display_name }))}
+                accountDisplayNameMap={accountDisplayNameMap}
+                today={today}
+              />
             )}
           </CardContent>
         </Card>

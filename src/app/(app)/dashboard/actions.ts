@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
 import { buildRequestDraft, type GrantMode } from "@/lib/豁免流程";
 
+function isUuidLike(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+}
+
 export async function submitReport(formData: FormData) {
   const supabase = await createClient();
 
@@ -170,6 +174,7 @@ export async function createAccount(name: string, contentDirection?: string) {
   if (!user) return { error: "请先登录" };
 
   if (!name?.trim()) return { error: "账号名称不能为空" };
+  if (isUuidLike(name)) return { error: "账号备注名不能是一串系统编号，请填写主账号、矩阵号、出镜号这类名字" };
 
   const { error } = await supabase.from("accounts").insert({
     profile_id: user.id,
