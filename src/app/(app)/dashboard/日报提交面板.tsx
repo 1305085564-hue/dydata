@@ -10,7 +10,7 @@ interface Props {
 }
 
 function DashboardSubmitPanel({ accounts, today, todayReports }: Props) {
-  const [selectedAccountId] = useState(accounts[0]?.id ?? "");
+  const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
 
   const currentAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? accounts[0] ?? null,
@@ -52,6 +52,27 @@ function DashboardSubmitPanel({ accounts, today, todayReports }: Props) {
 
       <section className="dashboard-surface dashboard-surface-panel rounded-[1.5rem] border-0 p-4 sm:p-5">
         <h2 className="text-lg font-semibold mb-3">提交日报</h2>
+
+        {accounts.length > 1 ? (
+          <div className="mb-4 space-y-2">
+            <label htmlFor="dashboard-account-switch" className="text-sm font-medium text-foreground">
+              选择要提交的账号
+            </label>
+            <select
+              id="dashboard-account-switch"
+              value={currentAccount?.id ?? ""}
+              onChange={(event) => setSelectedAccountId(event.target.value)}
+              className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
         <div className="rounded-xl border px-4 py-3 mb-4 text-sm bg-muted/30 text-muted-foreground">
           {currentReport ? `${accountName} 今日已有记录，可直接修改该账号数据。` : `${accountName} 今日暂无记录，可直接提交该账号数据。`}
         </div>
