@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { callAiText } from "@/lib/ai/client";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -85,35 +86,19 @@ export async function GET(request: NextRequest) {
 
   // AI 洞察（静默失败不阻塞）
   let aiSection = "";
-  const aiBaseUrl = process.env.AI_BASE_URL;
-  const aiApiKey = process.env.AI_API_KEY;
-  const aiModel = process.env.AI_MODEL || "claude-sonnet-4-6";
+  try {
+    const dataStr = reports.map((r) => {
+      const play = r.play_count != null ? (r.play_count / 10000).toFixed(2) + "万" : "无";
+      return `${r.report_date} | ${r.submitter} | 播放${play} | 赞${r.likes} 评${r.comments} 转${r.shares} 藏${r.favorites}`;
+    }).join("\n");
 
-  if (aiBaseUrl && aiApiKey) {
-    try {
-      const dataStr = reports.map((r) => {
-        const play = r.play_count != null ? (r.play_count / 10000).toFixed(2) + "万" : "无";
-        return `${r.report_date} | ${r.submitter} | 播放${play} | 赞${r.likes} 评${r.comments} 转${r.shares} 藏${r.favorites}`;
-      }).join("\n");
-
-      const aiRes = await fetch(`${aiBaseUrl}/chat/completions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiApiKey}` },
-        body: JSON.stringify({
-          model: aiModel,
-          messages: [{ role: "user", content: `你是抖音数据分析师。以下是团队近${days}天数据，请用中文给出3条简短洞察（每条一句话）：\n${dataStr}` }],
-          max_tokens: 500,
-        }),
-      });
-
-      if (aiRes.ok) {
-        const aiData = await aiRes.json();
-        const insight = aiData.choices?.[0]?.message?.content;
-        if (insight) aiSection = `\n\n**🤖 AI 洞察**\n${insight}`;
-      }
-    } catch {
-      // 静默失败
-    }
+    const aiResult = await callAiText(
+      `你是抖音数据分析师。以下是团队近${days}天数据，请用中文给出3条简短洞察（每条一句话）：\n${dataStr}`,
+      { maxTokens: 500 },
+    );
+    aiSection = `\n\n**🤖 AI 洞察**\n${aiResult.content}`;
+  } catch {
+    // 静默失败
   }
 
   const finalContent = content + aiSection;

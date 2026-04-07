@@ -56,3 +56,18 @@
 - cron 接口兼容 CRON_SECRET ?? REMIND_SECRET
 - 中文组件名内部用英文 PascalCase，导出时再用中文别名
 - 表单切换用 key 重建组件，× 用 useEffect 同步 props
+
+## OpenClaw / API 10 备忘
+- OpenClaw 的 API 10 = 官网订阅线，当前正确模型标识是 `openai-codex/gpt-5.4`
+- × 把 API 10 误判成 `api1/gpt-5.4`；两者名字一样但渠道完全不同
+- × 在 `~/.openclaw/openclaw.json` 里新增 `openai-codex-oauth.authProfile` 这种自定义结构；当前版本会直接 config invalid
+- API 10 正确 provider 形态：`provider=openai-codex`、`api=openai-codex-responses`、`baseUrl=https://chatgpt.com/backend-api`
+- OAuth 凭证不写在 provider 里，走 `~/.openclaw/agents/main/agent/auth-profiles.json`
+- API 10 不走中转站，依赖本机代理直连官方；如果报 `fetch failed` / `network connection error`，先查代理，不要先怀疑 api1
+- macOS LaunchAgent 需要显式带：
+- `HTTP_PROXY=http://127.0.0.1:7890`
+- `HTTPS_PROXY=http://127.0.0.1:7890`
+- `ALL_PROXY=http://127.0.0.1:7890`
+- `NO_PROXY=localhost,127.0.0.1,::1`
+- `NODE_USE_ENV_PROXY=1`
+- 只看默认模型不够，旧会话可能保留 `providerOverride`；判断是否真的切过去，要看“新开会话 + gateway 日志 + models status”

@@ -39,11 +39,38 @@ export interface TodaySubmissionSummary {
 export type SubmitPanelRequestedMode = "editToday" | "backfill" | null;
 export type SubmitPanelMode = "summary" | "create" | "editToday" | "backfill";
 
+function toTimestamp(value: string | null | undefined) {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+}
+
+function pickLatestReportForAccount(
+  reports: TodaySubmissionReportLike[],
+  accountId: string,
+): TodaySubmissionReportLike | null {
+  const matched = reports.filter((report) => report.account_id === accountId);
+  if (matched.length === 0) return null;
+
+  return matched.slice(1).reduce<TodaySubmissionReportLike>((latest, current) => {
+    const currentUploadedAt = toTimestamp(current.uploaded_at);
+    const latestUploadedAt = toTimestamp(latest.uploaded_at);
+
+    if (currentUploadedAt !== latestUploadedAt) {
+      return currentUploadedAt > latestUploadedAt ? current : latest;
+    }
+
+    const currentReportDate = toTimestamp(current.report_date);
+    const latestReportDate = toTimestamp(latest.report_date);
+    return currentReportDate > latestReportDate ? current : latest;
+  }, matched[0]);
+}
+
 export function getTodaySubmissionSummary(
   reports: TodaySubmissionReportLike[],
   accountId: string,
 ): TodaySubmissionSummary | null {
-  const matched = reports.find((report) => report.account_id === accountId);
+  const matched = pickLatestReportForAccount(reports, accountId);
   if (!matched) return null;
 
   return {

@@ -1,3 +1,5 @@
+import { callAiJson } from "./client";
+
 export type StructuredAiMessageContent = string | Array<{ type?: unknown; text?: unknown }> | null | undefined;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,10 +38,6 @@ export type PeriodInsightResult = {
   next_period_focus: string;
   sample_warning: string[];
 };
-
-export function buildUpstreamUrl(baseUrl: string) {
-  return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
-}
 
 export function normalizeMessageContent(content: StructuredAiMessageContent): string | null {
   if (typeof content === "string" && content.trim()) {
@@ -83,68 +81,21 @@ export function extractJsonString(content: string) {
 }
 
 export async function callStructuredAi(input: { prompt: string; maxTokens?: number; timeoutMs?: number }) {
-  const baseUrl = process.env.AI_BASE_URL;
-  const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || "claude-sonnet-4-6";
+  const result = await callAiJson(input.prompt, {
+    maxTokens: input.maxTokens,
+    timeoutMs: input.timeoutMs,
+  });
 
-  if (!baseUrl || !apiKey) {
-    throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）");
-  }
-
-  const startedAt = Date.now();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), input.timeoutMs ?? 20000);
-
-  let response: Response;
-  try {
-    response = await fetch(buildUpstreamUrl(baseUrl), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: input.prompt }],
-        max_tokens: input.maxTokens ?? 2000,
-        response_format: { type: "json_object" },
-      }),
-      signal: controller.signal,
-    });
-  } catch (error) {
-    clearTimeout(timeout);
-    const elapsedMs = Date.now() - startedAt;
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`AI 请求超时（${elapsedMs}ms）`);
-    }
-    throw error;
-  }
-  clearTimeout(timeout);
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`AI 请求失败: ${response.status} ${text.slice(0, 200)}`);
-  }
-
-  const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: StructuredAiMessageContent } }>;
-  };
-
-  const rawContent = normalizeMessageContent(data.choices?.[0]?.message?.content);
-  if (!rawContent) {
-    throw new Error("AI 未返回有效内容");
-  }
-
-  const jsonString = extractJsonString(rawContent);
+  const jsonString = extractJsonString(result.content);
   if (!jsonString) {
     throw new Error("AI 返回内容解析失败");
   }
 
   return {
-    model,
-    rawContent,
+    model: result.model,
+    rawContent: result.content,
     jsonString,
-    elapsedMs: Date.now() - startedAt,
+    elapsedMs: result.elapsedMs,
   };
 }
 

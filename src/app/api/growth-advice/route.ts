@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
+import { callAiJson, extractJsonString } from "@/lib/ai/client"
 import { createClient } from "@/lib/supabase/server"
 
 type GrowthAdviceRequestBody = {
@@ -64,33 +65,6 @@ function buildPrompt({ userId, accountId, ...payload }: GrowthAdviceRequestBody)
   ].join("\n")
 }
 
-function extractJsonString(content: string) {
-  const trimmed = content.trim()
-
-  if (!trimmed) return null
-
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-    return trimmed
-  }
-
-  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
-  if (fencedMatch?.[1]) {
-    const candidate = fencedMatch[1].trim()
-    if (candidate.startsWith("{") && candidate.endsWith("}")) {
-      return candidate
-    }
-  }
-
-  const start = trimmed.indexOf("{")
-  const end = trimmed.lastIndexOf("}")
-
-  if (start === -1 || end === -1 || end <= start) {
-    return null
-  }
-
-  return trimmed.slice(start, end + 1)
-}
-
 function parseAdvice(content: string): GrowthAdviceResponse | null {
   const jsonString = extractJsonString(content)
   if (!jsonString) return null
@@ -145,50 +119,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const baseUrl = process.env.AI_BASE_URL
-  const apiKey = process.env.AI_API_KEY
-  const model = process.env.AI_MODEL || "claude-sonnet-4-6"
-
-  if (!baseUrl || !apiKey) {
-    return NextResponse.json(
-      { error: "AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）" },
-      { status: 500 }
-    )
-  }
-
   const prompt = buildPrompt(body)
 
   try {
-    const aiRes = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1200,
-        response_format: { type: "json_object" },
-      }),
-    })
-
-    if (!aiRes.ok) {
-      const text = await aiRes.text()
-      return NextResponse.json(
-        { error: `AI 请求失败: ${aiRes.status} ${text.slice(0, 200)}` },
-        { status: 500 }
-      )
-    }
-
-    const aiData = await aiRes.json()
-    const content = aiData.choices?.[0]?.message?.content
-
-    if (!isNonEmptyString(content)) {
-      return NextResponse.json({ error: "AI 未返回有效内容" }, { status: 500 })
-    }
-
-    const advice = parseAdvice(content)
+    const result = await callAiJson(prompt, { maxTokens: 1200 })
+    const advice = parseAdvice(result.content)
 
     if (!advice) {
       return NextResponse.json({ error: "AI 返回内容解析失败" }, { status: 500 })

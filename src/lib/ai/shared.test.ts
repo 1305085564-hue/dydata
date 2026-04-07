@@ -2,13 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  buildUpstreamUrl,
   extractJsonString,
   normalizeMessageContent,
   renderSingleVideoInsight,
   renderPeriodInsight,
   toAiErrorMessage,
 } from "./shared";
+import { buildUpstreamUrl } from "./client";
 
 test("buildUpstreamUrl 去掉尾部斜杠并补全 chat/completions", () => {
   assert.equal(buildUpstreamUrl("https://ai.example.com/"), "https://ai.example.com/chat/completions");

@@ -15,6 +15,7 @@ import type {
   TemplateCategory,
   TopicSuggestionItem,
 } from "@/app/(app)/content-tools/types";
+import { callAiJson } from "@/lib/ai/client";
 import { breakoutCoefficient, getAccountBaseline } from "@/lib/video-metrics";
 import { createClient } from "@/lib/supabase/server";
 import type { MarketContextDaily, VideoMetricsSnapshot, VideoTag } from "@/types";
@@ -80,7 +81,6 @@ type PublishCandidate = {
   isBreakout: boolean;
 };
 
-const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-6";
 const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
 function createServiceClient() {
@@ -164,39 +164,8 @@ function buildTemplatePrompt(groupedSamples: Array<{ category: string; samples: 
 }
 
 async function generateAiJson(prompt: string) {
-  const baseUrl = process.env.AI_BASE_URL;
-  const apiKey = process.env.AI_API_KEY;
-
-  if (!baseUrl || !apiKey) {
-    throw new Error("AI API 未配置");
-  }
-
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1600,
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`AI 请求失败: ${response.status} ${text.slice(0, 200)}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!isNonEmptyString(content)) {
-    throw new Error("AI 未返回有效内容");
-  }
-
-  return content;
+  const result = await callAiJson(prompt, { maxTokens: 1600 });
+  return result.content;
 }
 
 function normalizeRequest(body: unknown): ContentToolsRequest | null {

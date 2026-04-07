@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { callAi } from "@/lib/ai/client";
+import type { AiMessage } from "@/lib/ai/client";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
@@ -97,29 +99,8 @@ type OpenAICompatibleMessageContentBlock = {
   text?: string;
 };
 
-type UpstreamRequestBody = {
-  model: string;
-  messages: Array<{
-    role: "user";
-    content: Array<
-      | { type: "text"; text: string }
-      | { type: "image_url"; image_url: { url: string } }
-    >;
-  }>;
-  max_tokens: number;
-  response_format: { type: "json_object" };
-};
-
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
-
-type UpstreamSuccessResponse = {
-  choices?: Array<{
-    message?: {
-      content?: unknown;
-    };
-  }>;
-};
 
 type ImagePayloadSuccess = {
   dataUrl: string;
@@ -192,61 +173,31 @@ export async function POST(request: NextRequest) {
     }
 
     const dataUrl = imagePayload.dataUrl;
-    const upstreamUrl = buildUpstreamUrl(baseUrl);
     const forcedScreenshotType = getScreenshotTypeByAssetRole(imagePayload.assetRole);
     const screenshotType =
       forcedScreenshotType ??
       imagePayload.screenshotType ??
-      (await detectScreenshotType(dataUrl, upstreamUrl, apiKey));
+      (await detectScreenshotType(dataUrl));
     const prompt = buildPromptByType(screenshotType);
-    const requestBody: UpstreamRequestBody = {
-      model: OCR_MODEL,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: prompt,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: dataUrl,
-              },
-            },
-          ],
-        },
-      ],
-      max_tokens: 1000,
-      response_format: { type: "json_object" as const },
-    };
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
-      const aiRes = await fetch(upstreamUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
+      const messages: AiMessage[] = [{
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ],
+      }];
+
+      const aiResult = await callAi({
+        messages,
+        maxTokens: 1000,
+        jsonMode: true,
+        model: OCR_MODEL,
+        timeoutMs: 25000,
       });
 
-      const rawText = await aiRes.text();
-
-      if (!aiRes.ok) {
-        return NextResponse.json(
-          { error: extractUpstreamError(rawText) || "截图识别失败，请稍后重试或手动输入数据" },
-          { status: 500 }
-        );
-      }
-
-      const aiData = safeJsonParse(rawText) as UpstreamSuccessResponse | null;
-      const content = aiData?.choices?.[0]?.message?.content;
+      const content = aiResult.content;
 
       if (screenshotType === "curve") {
         const parsed = parseOcrResponse(content, "curve");
@@ -276,16 +227,10 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
     } catch (error) {
-      if ((error as Error).name === "AbortError") {
-        return NextResponse.json({ error: "AI 识别超时，请稍后重试" }, { status: 504 });
-      }
-
       return NextResponse.json(
         { error: (error as Error).message || "截图识别出错，请稍后重试或手动输入" },
         { status: 500 }
       );
-    } finally {
-      clearTimeout(timeout);
     }
   } catch {
     return NextResponse.json({ error: "图片为空、损坏或请求格式不正确" }, { status: 400 });
@@ -354,47 +299,27 @@ async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error:
   };
 }
 
-async function detectScreenshotType(dataUrl: string, upstreamUrl: string, apiKey: string): Promise<ScreenshotType> {
-  const requestBody: UpstreamRequestBody = {
-    model: OCR_MODEL,
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: buildClassificationPrompt() },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      },
-    ],
-    max_tokens: 300,
-    response_format: { type: "json_object" },
-  };
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-
+async function detectScreenshotType(dataUrl: string): Promise<ScreenshotType> {
   try {
-    const response = await fetch(upstreamUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
+    const messages: AiMessage[] = [{
+      role: "user",
+      content: [
+        { type: "text", text: buildClassificationPrompt() },
+        { type: "image_url", image_url: { url: dataUrl } },
+      ],
+    }];
+
+    const result = await callAi({
+      messages,
+      maxTokens: 300,
+      jsonMode: true,
+      model: OCR_MODEL,
+      timeoutMs: 12000,
     });
 
-    if (!response.ok) {
-      return "data";
-    }
-
-    const rawText = await response.text();
-    const parsed = safeJsonParse(rawText) as UpstreamSuccessResponse | null;
-    return parseClassificationContent(parsed?.choices?.[0]?.message?.content) ?? "data";
+    return parseClassificationContent(result.content) ?? "data";
   } catch {
     return "data";
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -510,29 +435,6 @@ function buildRetentionPrompt(): string {
       confidence: 0.78,
     }),
   ].join("\n");
-}
-
-function buildUpstreamUrl(baseUrl: string): string {
-  return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
-}
-
-function extractUpstreamError(rawText: string): string | null {
-  const parsed = safeJsonParse(rawText);
-  const error = parsed?.error;
-  const message =
-    error && typeof error === "object" && "message" in error ? error.message : null;
-  return typeof message === "string" && message.trim() ? message : null;
-}
-
-function safeJsonParse(rawText: string): JsonObject | null {
-  try {
-    const parsed = JSON.parse(rawText);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as JsonObject)
-      : null;
-  } catch {
-    return null;
-  }
 }
 
 export function parseClassificationContent(content: unknown): ScreenshotType | null {

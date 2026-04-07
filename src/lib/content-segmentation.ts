@@ -1,3 +1,5 @@
+import { callAiJson, extractJsonString as extractJson } from "./ai/client";
+
 export const SEGMENT_TYPES = [
   "封面标题",
   "开头钩子",
@@ -172,78 +174,16 @@ export function parseSegmentClassification(content: string): ContentSegment[] {
   }
 }
 
-function buildUpstreamUrl(baseUrl: string) {
-  return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
-}
-
-function normalizeMessageContent(content: unknown): string | null {
-  if (typeof content === "string" && content.trim()) {
-    return content.trim();
-  }
-
-  if (!Array.isArray(content)) {
-    return null;
-  }
-
-  const text = content
-    .filter((item) => item && typeof item === "object")
-    .map((item) => {
-      const block = item as { type?: unknown; text?: unknown };
-      return block.type === "text" && typeof block.text === "string" ? block.text.trim() : "";
-    })
-    .filter(Boolean)
-    .join("\n");
-
-  return text || null;
-}
-
-function extractJsonString(content: string) {
-  const trimmed = content.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-    return trimmed;
-  }
-
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    return null;
-  }
-
-  return trimmed.slice(start, end + 1);
-}
-
 export async function classifyContentSegmentsWithAi(paragraphs: RawContentParagraph[]) {
-  const baseUrl = process.env.AI_BASE_URL;
-  const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || "claude-sonnet-4-6";
-
-  if (!baseUrl || !apiKey || !paragraphs.length) {
+  if (!paragraphs.length) {
     return [];
   }
 
-  const response = await fetch(buildUpstreamUrl(baseUrl), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content: buildSegmentationPrompt(paragraphs) }],
-      max_tokens: 1600,
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`AI 请求失败: ${response.status}`);
+  try {
+    const result = await callAiJson(buildSegmentationPrompt(paragraphs), { maxTokens: 1600 });
+    const jsonString = extractJson(result.content);
+    return jsonString ? parseSegmentClassification(jsonString) : [];
+  } catch {
+    return [];
   }
-
-  const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: unknown } }>;
-  };
-  const rawContent = normalizeMessageContent(data.choices?.[0]?.message?.content);
-  const jsonString = rawContent ? extractJsonString(rawContent) : null;
-
-  return jsonString ? parseSegmentClassification(jsonString) : [];
 }

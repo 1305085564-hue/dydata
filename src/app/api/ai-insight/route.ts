@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callAiText } from "@/lib/ai/client";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
@@ -24,14 +25,6 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const type: "week" | "month" = body.type === "month" ? "month" : "week";
-
-  const baseUrl = process.env.AI_BASE_URL;
-  const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || "claude-sonnet-4-6";
-
-  if (!baseUrl || !apiKey) {
-    return NextResponse.json({ error: "AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）" }, { status: 500 });
-  }
 
   const days = type === "month" ? 30 : 7;
   const since = new Date(Date.now() - days * 86400000).toISOString().split("T")[0];
@@ -83,26 +76,8 @@ ${dataStr}
 保持简洁专业，禁止套话空话。`;
 
   try {
-    const aiRes = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 2000,
-      }),
-    });
-
-    if (!aiRes.ok) {
-      const text = await aiRes.text();
-      return NextResponse.json({ error: `AI 请求失败: ${aiRes.status} ${text.slice(0, 200)}` }, { status: 500 });
-    }
-
-    const aiData = await aiRes.json();
-    const insight = aiData.choices?.[0]?.message?.content ?? "AI 未返回内容";
+    const result = await callAiText(prompt, { maxTokens: 2000 });
+    const insight = result.content;
 
     return NextResponse.json({ insight, type, since, count: reports.length });
   } catch (e) {

@@ -7,6 +7,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -272,6 +273,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   ];
 
   const quickActions = [
+    perm.role === "owner"
+      ? { label: "AI 渠道", description: "管理多渠道与熔断状态", href: "/admin/ai-channels" }
+      : null,
     hasPermission(perm.role, perm.permissions, "manage_invite")
       ? { label: "生成邀请码", description: "补充新成员入口" }
       : null,
@@ -281,7 +285,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     hasPermission(perm.role, perm.permissions, "edit_data")
       ? { label: "处理异常数据", description: "优先检查今日异常值" }
       : null,
-  ].filter((item): item is { label: string; description: string } => item !== null);
+  ].filter(
+    (item): item is { label: string; description: string; href?: string } => item !== null
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-4 sm:px-6 lg:px-8">
@@ -383,13 +389,27 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <div className="mt-3 space-y-2">
                   {quickActions.length > 0 ? (
                     quickActions.map((item) => (
-                      <div key={item.label} className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-white/78 px-3 py-2.5 text-sm text-[var(--color-text-secondary)]">
-                        <div>
-                          <p className="font-medium text-[var(--color-text-primary)]">{item.label}</p>
-                          <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
+                      item.href ? (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-white/78 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]"
+                        >
+                          <div>
+                            <p className="font-medium text-[var(--color-text-primary)]">{item.label}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
+                          </div>
+                          <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
+                        </Link>
+                      ) : (
+                        <div key={item.label} className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-white/78 px-3 py-2.5 text-sm text-[var(--color-text-secondary)]">
+                          <div>
+                            <p className="font-medium text-[var(--color-text-primary)]">{item.label}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
+                          </div>
+                          <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
                         </div>
-                        <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
-                      </div>
+                      )
                     ))
                   ) : (
                     <p className="text-sm text-[var(--color-text-secondary)]">当前权限下暂无快捷操作。</p>

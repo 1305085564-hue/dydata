@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
+import { callAiJson, extractJsonString } from "@/lib/ai/client";
 import { createClient } from "@/lib/supabase/server";
 
 type JsonRecord = Record<string, unknown>;
@@ -91,7 +92,6 @@ function extractAccountName(accounts: VideoCandidate["accounts"]) {
 
 const DEFAULT_DAYS = 7;
 const MAX_BATCH_SIZE = 20;
-const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-6";
 
 function createServiceClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -178,24 +178,6 @@ export function buildDiagnosisPrompt(input: VideoPromptInput) {
   ].join("\n");
 }
 
-function extractJsonString(content: string) {
-  const trimmed = content.trim();
-  if (!trimmed) return null;
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
-
-  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fencedMatch?.[1]) {
-    const candidate = fencedMatch[1].trim();
-    if (candidate.startsWith("{") && candidate.endsWith("}")) return candidate;
-  }
-
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return null;
-
-  return trimmed.slice(start, end + 1);
-}
-
 function parseDiagnosis(content: string): DiagnosisResult | null {
   const jsonString = extractJsonString(content);
   if (!jsonString) return null;
@@ -255,40 +237,9 @@ export function createDiagnosisRecord(input: {
 }
 
 async function generateDiagnosis(prompt: string) {
-  const baseUrl = process.env.AI_BASE_URL;
-  const apiKey = process.env.AI_API_KEY;
+  const result = await callAiJson(prompt, { maxTokens: 1200 });
+  const diagnosis = parseDiagnosis(result.content);
 
-  if (!baseUrl || !apiKey) {
-    throw new Error("AI API 未配置");
-  }
-
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1200,
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`AI 请求失败: ${response.status} ${text.slice(0, 200)}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!isNonEmptyString(content)) {
-    throw new Error("AI 未返回有效内容");
-  }
-
-  const diagnosis = parseDiagnosis(content);
   if (!diagnosis) {
     throw new Error("AI 返回内容解析失败");
   }

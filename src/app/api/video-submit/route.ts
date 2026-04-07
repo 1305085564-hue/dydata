@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { callAiJson } from "@/lib/ai/client";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
 import type { SubmissionAssetMeta } from "@/types";
 import { validateVideoSubmitPayload } from "./validation";
@@ -31,22 +32,6 @@ type VideoSubmitRequestBody = {
     completion_rate_5s?: number;
     completion_rate?: number;
   };
-};
-
-type UpstreamSuccessResponse = {
-  choices?: Array<{
-    message?: {
-      content?: unknown;
-    };
-  }>;
-};
-
-type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
-type JsonObject = { [key: string]: JsonValue };
-
-type OpenAICompatibleMessageContentBlock = {
-  type?: string;
-  text?: string;
 };
 
 function normalizeOptionalText(value: unknown) {
@@ -82,67 +67,6 @@ function getTodayDateString(now: Date = new Date()) {
   return now.toISOString().split("T")[0];
 }
 
-function buildUpstreamUrl(baseUrl: string): string {
-  return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
-}
-
-function safeJsonParse(rawText: string): JsonObject | null {
-  try {
-    const parsed = JSON.parse(rawText);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as JsonObject)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function normalizeMessageContent(content: unknown): string | null {
-  if (typeof content === "string" && content.trim()) {
-    return content;
-  }
-
-  if (Array.isArray(content)) {
-    const text = (content as OpenAICompatibleMessageContentBlock[])
-      .filter((item) => item?.type === "text" && typeof item.text === "string")
-      .map((item) => item.text?.trim() || "")
-      .filter(Boolean)
-      .join("\n");
-
-    return text || null;
-  }
-
-  return null;
-}
-
-function extractJson(content: string): string | null {
-  const start = content.indexOf("{");
-  const end = content.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    return null;
-  }
-  return content.slice(start, end + 1);
-}
-
-function parseAiTagContent(content: unknown): RawAiTagSuggestion[] {
-  const normalizedContent = normalizeMessageContent(content);
-  if (!normalizedContent) {
-    return [];
-  }
-
-  const jsonText = extractJson(normalizedContent);
-  if (!jsonText) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(jsonText) as { tags?: RawAiTagSuggestion[] };
-    return Array.isArray(parsed.tags) ? parsed.tags : [];
-  } catch {
-    return [];
-  }
-}
-
 function buildTagPrompt(content: string) {
   return [
     "你是抖音视频标签助手。",
@@ -171,46 +95,22 @@ function buildTagPrompt(content: string) {
 }
 
 async function generateAiTags(content: string) {
-  const baseUrl = process.env.AI_BASE_URL;
-  const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL || "claude-sonnet-4-6";
-
-  if (!baseUrl || !apiKey) {
-    return [];
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-
   try {
-    const aiRes = await fetch(buildUpstreamUrl(baseUrl), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: buildTagPrompt(content) }],
-        max_tokens: 1200,
-        response_format: { type: "json_object" },
-      }),
-      signal: controller.signal,
-    });
-
-    if (!aiRes.ok) {
-      return [];
-    }
-
-    const rawText = await aiRes.text();
-    const aiData = safeJsonParse(rawText) as UpstreamSuccessResponse | null;
-    const contentBlocks = aiData?.choices?.[0]?.message?.content;
-    return normalizeAiTagSuggestions(parseAiTagContent(contentBlocks));
+    const result = await callAiJson(buildTagPrompt(content), { maxTokens: 1200, timeoutMs: 12000 });
+    const jsonText = extractJsonFromContent(result.content);
+    if (!jsonText) return [];
+    const parsed = JSON.parse(jsonText) as { tags?: RawAiTagSuggestion[] };
+    return normalizeAiTagSuggestions(Array.isArray(parsed.tags) ? parsed.tags : []);
   } catch {
     return [];
-  } finally {
-    clearTimeout(timeout);
   }
+}
+
+function extractJsonFromContent(content: string): string | null {
+  const start = content.indexOf("{");
+  const end = content.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  return content.slice(start, end + 1);
 }
 
 export async function POST(request: NextRequest) {
@@ -236,6 +136,16 @@ export async function POST(request: NextRequest) {
 
   if (!account_id) {
     return NextResponse.json({ error: "account_id 为必填项" }, { status: 400 });
+  }
+
+  const { data: account, error: accountError } = await supabase
+    .from("accounts")
+    .select("id, profile_id")
+    .eq("id", account_id)
+    .single();
+
+  if (accountError || !account || account.profile_id !== user.id) {
+    return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
   }
 
   const validationResult = validateVideoSubmitPayload(body);
