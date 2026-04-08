@@ -95,18 +95,6 @@ export function resolveModel(channelModel: string | null | undefined, fallbackMo
 const OCR_TEST_IMAGE_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFElEQVR42mP4TyJgGNUwqmH4agAAr639H23ooMoAAAAASUVORK5CYII=";
 
-type UpstreamTestResponse = {
-  choices?: Array<{
-    message?: {
-      content?: unknown;
-      text?: unknown;
-      reasoning_content?: unknown;
-    };
-    finish_reason?: unknown;
-    native_finish_reason?: unknown;
-  }>;
-};
-
 export async function parseJsonBody<T extends Record<string, unknown>>(request: NextRequest) {
   let body: T;
   try {
@@ -161,6 +149,7 @@ export async function sendChannelTestRequest(input: {
             ]
           : [{ role: "user", content: "回复 ok" }],
         max_tokens: isOcrMode ? 120 : 16,
+        stream: true,
         ...(isOcrMode ? { response_format: { type: "json_object" } } : {}),
       }),
       signal: controller.signal,
@@ -176,25 +165,15 @@ export async function sendChannelTestRequest(input: {
       };
     }
 
-    const rawText = await response.text().catch(() => "");
-    let data: UpstreamTestResponse | null = null;
-    try {
-      data = rawText ? (JSON.parse(rawText) as UpstreamTestResponse) : null;
-    } catch {
-      return { ok: false, elapsedMs, error: `AI 返回非 JSON：${rawText.slice(0, 300)}` };
-    }
-    const message = data?.choices?.[0]?.message;
-    const responseText =
-      aiClientInternal.normalizeResponseContent(message?.content) ??
-      aiClientInternal.normalizeResponseContent(message?.text) ??
-      aiClientInternal.normalizeResponseContent(message?.reasoning_content);
+    const streamed = await aiClientInternal.parseChatCompletionSse(response);
+    const responseText = streamed.content || streamed.reasoningContent;
 
     if (!responseText) {
-      const diag = data ? aiClientInternal.describeMissingResponseContent(data) : "AI 未返回可解析结果";
+      const diag = aiClientInternal.describeMissingResponseContent(streamed.diagnosticBody);
       return {
         ok: false,
         elapsedMs,
-        error: `${diag}｜raw=${rawText.slice(0, 500)}`,
+        error: `${diag}｜raw=${streamed.rawSnippet}`,
       };
     }
 

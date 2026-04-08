@@ -87,9 +87,23 @@ type UpstreamResponseBody = {
       reasoning_content?: unknown;
       refusal?: unknown;
     };
+    delta?: {
+      content?: unknown;
+      reasoning_content?: unknown;
+      refusal?: unknown;
+    };
     finish_reason?: unknown;
     native_finish_reason?: unknown;
   }>;
+  model?: unknown;
+};
+
+type StreamedChatCompletionResult = {
+  content: string;
+  reasoningContent: string;
+  model: string | null;
+  rawSnippet: string;
+  diagnosticBody: UpstreamResponseBody;
 };
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -305,9 +319,19 @@ function normalizeResponseContent(content: unknown): string | null {
   return null;
 }
 
+function normalizeStreamDeltaText(content: unknown): string | null {
+  if (typeof content === "string") {
+    return content;
+  }
+  if (Array.isArray(content)) {
+    return normalizeResponseContent(content);
+  }
+  return null;
+}
+
 function describeMissingResponseContent(data: UpstreamResponseBody): string {
   const choice = data.choices?.[0];
-  const message = choice?.message;
+  const message = choice?.message ?? choice?.delta;
   const details: string[] = [];
 
   if (choice?.finish_reason != null) {
@@ -366,11 +390,103 @@ function buildRequestBody(options: AiRequestOptions, model: string) {
       content: msg.content,
     })),
     max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
+    stream: true,
   };
   if (options.jsonMode) {
     body.response_format = { type: "json_object" };
   }
   return body;
+}
+
+async function parseChatCompletionSse(response: Response): Promise<StreamedChatCompletionResult> {
+  if (!response.body) {
+    throw new AiChannelError("AI 返回空响应流", "empty_stream", true);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let content = "";
+  let reasoningContent = "";
+  let upstreamModel: string | null = null;
+  let lastChunk: UpstreamResponseBody | null = null;
+  const rawParts: string[] = [];
+
+  const processEvent = (eventText: string) => {
+    const trimmed = eventText.trim();
+    if (!trimmed) return;
+
+    const dataLines = trimmed
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.slice(5).trim());
+
+    if (!dataLines.length) return;
+
+    const payload = dataLines.join("\n");
+    if (!payload || payload === "[DONE]") return;
+
+    if (rawParts.length < 5) {
+      rawParts.push(payload);
+    }
+
+    let chunk: UpstreamResponseBody;
+    try {
+      chunk = JSON.parse(payload) as UpstreamResponseBody;
+    } catch {
+      throw new AiChannelError(`AI 返回非 JSON：${payload.slice(0, 300)}`, "invalid_json", false);
+    }
+
+    lastChunk = chunk;
+    if (typeof chunk.model === "string" && chunk.model.trim()) {
+      upstreamModel = chunk.model.trim();
+    }
+
+    const delta = chunk.choices?.[0]?.delta;
+    const chunkContent = normalizeStreamDeltaText(delta?.content);
+    if (chunkContent) {
+      content += chunkContent;
+    }
+    const chunkReasoning = normalizeStreamDeltaText(delta?.reasoning_content);
+    if (chunkReasoning) {
+      reasoningContent += chunkReasoning;
+    }
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    buffer = buffer.replace(/\r\n/g, "\n");
+
+    let separatorIndex = buffer.indexOf("\n\n");
+    while (separatorIndex !== -1) {
+      const eventText = buffer.slice(0, separatorIndex);
+      buffer = buffer.slice(separatorIndex + 2);
+      processEvent(eventText);
+      separatorIndex = buffer.indexOf("\n\n");
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  const rest = buffer.trim();
+  if (rest) {
+    processEvent(rest);
+  }
+
+  return {
+    content,
+    reasoningContent,
+    model: upstreamModel,
+    rawSnippet: rawParts.join("\n").slice(0, 500),
+    diagnosticBody:
+      lastChunk ??
+      ({
+        choices: [],
+      } satisfies UpstreamResponseBody),
+  };
 }
 
 function isRetryableStatus(status: number): boolean {
@@ -425,26 +541,11 @@ async function sendToChannel(
     );
   }
 
-  const rawText = await response.text();
-  let data: UpstreamResponseBody;
-  try {
-    data = JSON.parse(rawText) as UpstreamResponseBody;
-  } catch {
-    throw new AiChannelError(
-      `AI 返回非 JSON：${rawText.slice(0, 300)}`,
-      "invalid_json",
-      false,
-    );
-  }
-  const message = data.choices?.[0]?.message;
-  const content =
-    normalizeResponseContent(message?.content) ??
-    normalizeResponseContent(message?.text) ??
-    normalizeResponseContent(message?.reasoning_content);
+  const streamed = await parseChatCompletionSse(response);
+  const content = streamed.content || streamed.reasoningContent;
   if (!content) {
-    const rawSnippet = rawText.slice(0, 500);
     throw new AiChannelError(
-      `${describeMissingResponseContent(data)}｜raw=${rawSnippet}`,
+      `${describeMissingResponseContent(streamed.diagnosticBody)}｜raw=${streamed.rawSnippet}`,
       "empty_response",
       true,
     );
@@ -452,7 +553,7 @@ async function sendToChannel(
 
   return {
     content,
-    model,
+    model: streamed.model || model,
     channelName: channel.name,
     elapsedMs: Date.now() - startedAt,
   };
@@ -678,6 +779,7 @@ export const __internal = {
   resolveModel,
   normalizeResponseContent,
   describeMissingResponseContent,
+  parseChatCompletionSse,
   resetCache() {
     cachedChannels = null;
     channelsPromise = null;
