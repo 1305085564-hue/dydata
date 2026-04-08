@@ -59,3 +59,33 @@ test("普通模式下 resolveModel 仍可回落到环境变量模型", () => {
     }
   }
 });
+
+test("normalizeResponseContent 支持 output_text block", () => {
+  const text = __internal.normalizeResponseContent([
+    { type: "output_text", text: "第一行" },
+    { type: "text", text: "第二行" },
+  ]);
+
+  assert.equal(text, "第一行\n第二行");
+});
+
+test("describeMissingResponseContent 会带出 finish_reason 和 message 结构", () => {
+  const message = __internal.describeMissingResponseContent({
+    choices: [
+      {
+        finish_reason: "stop",
+        native_finish_reason: "stop",
+        message: {
+          content: null,
+          reasoning_content: null,
+          tool_calls: null,
+        },
+      },
+    ],
+  });
+
+  assert.match(message, /AI 未返回有效内容/);
+  assert.match(message, /finish_reason=stop/);
+  assert.match(message, /content_type=null/);
+  assert.match(message, /message_keys=content,reasoning_content,tool_calls/);
+});

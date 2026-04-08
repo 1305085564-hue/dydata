@@ -136,6 +136,11 @@ const SCREENSHOT_TYPES: ScreenshotType[] = ["data", "curve", "retention"];
 const CURVE_PATTERNS: CurvePattern[] = ["前高后低", "平稳增长", "二次起量", "低开高走", "断崖式"];
 const QUALITATIVE_LEVELS: Array<"high" | "medium" | "low"> = ["high", "medium", "low"];
 
+function buildOcrParseErrorMessage(content: string) {
+  const preview = content.replace(/\s+/g, " ").trim().slice(0, 120);
+  return preview ? `AI 返回格式无法识别：${preview}` : "AI 返回格式无法识别";
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
@@ -192,7 +197,7 @@ export async function POST(request: NextRequest) {
       if (screenshotType === "curve") {
         const parsed = parseOcrResponse(content, "curve");
         if (!parsed) {
-          return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
+          return NextResponse.json({ error: buildOcrParseErrorMessage(content) }, { status: 500 });
         }
         return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type });
       }
@@ -200,7 +205,7 @@ export async function POST(request: NextRequest) {
       if (screenshotType === "retention") {
         const parsed = parseOcrResponse(content, "retention");
         if (!parsed) {
-          return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
+          return NextResponse.json({ error: buildOcrParseErrorMessage(content) }, { status: 500 });
         }
         return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type });
       }
@@ -208,7 +213,7 @@ export async function POST(request: NextRequest) {
       const parsed = parseOcrResponse(content, "data");
 
       if (!parsed) {
-        return NextResponse.json({ error: "识别失败，请换清晰截图重试" }, { status: 500 });
+        return NextResponse.json({ error: buildOcrParseErrorMessage(content) }, { status: 500 });
       }
 
       if (parsed.slot_status === "failed") {

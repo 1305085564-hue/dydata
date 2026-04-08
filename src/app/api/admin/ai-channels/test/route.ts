@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   const channelId = toTrimmedString(body.channel_id);
+  const testKind = toTrimmedString(body.test_kind) === "ocr" ? "ocr" : "text";
   if (!channelId) {
     return NextResponse.json({ error: "缺少 channel_id" }, { status: 400 });
   }
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error?.message ?? "渠道不存在" }, { status: 404 });
   }
 
-  const result = await sendChannelTestRequest({ channel });
+  const result = await sendChannelTestRequest({ channel, mode: testKind });
 
   if (!result.ok) {
     return NextResponse.json(
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
         ok: false,
         channel_id: channelId,
         channel_name: channel.name,
+        test_kind: testKind,
         elapsed_ms: result.elapsedMs,
         error: result.error,
       },
@@ -51,6 +53,7 @@ export async function POST(request: NextRequest) {
     ok: true,
     channel_id: channelId,
     channel_name: channel.name,
+    test_kind: testKind,
     elapsed_ms: result.elapsedMs,
     text: result.text,
   });

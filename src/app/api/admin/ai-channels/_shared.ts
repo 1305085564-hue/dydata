@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { __internal as aiClientInternal } from "@/lib/ai/client";
 import { requireAdminActor } from "../ai-assistant/_shared";
 
 export type AiChannelRow = {
@@ -91,6 +92,20 @@ export function resolveModel(channelModel: string | null | undefined, fallbackMo
   return channelModel?.trim() || fallbackModel?.trim() || process.env.AI_MODEL || "claude-sonnet-4-6";
 }
 
+const OCR_TEST_IMAGE_DATA_URL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9sWwaP8AAAAASUVORK5CYII=";
+
+type UpstreamTestResponse = {
+  choices?: Array<{
+    message?: {
+      content?: unknown;
+      text?: unknown;
+    };
+    finish_reason?: unknown;
+    native_finish_reason?: unknown;
+  }>;
+};
+
 export async function parseJsonBody<T extends Record<string, unknown>>(request: NextRequest) {
   let body: T;
   try {
@@ -104,14 +119,17 @@ export async function parseJsonBody<T extends Record<string, unknown>>(request: 
 export async function sendChannelTestRequest(input: {
   channel: Pick<AiChannelRow, "base_url" | "api_key" | "model" | "name">;
   timeoutMs?: number;
+  mode?: "text" | "ocr";
+  modelOverride?: string | null;
 }) {
   const timeoutMs = input.timeoutMs ?? 15_000;
-  const model = resolveModel(input.channel.model);
+  const model = resolveModel(input.modelOverride ?? input.channel.model);
   const startedAt = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    const isOcrMode = input.mode === "ocr";
     const response = await fetch(buildUpstreamUrl(input.channel.base_url), {
       method: "POST",
       headers: {
@@ -120,8 +138,29 @@ export async function sendChannelTestRequest(input: {
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: "回复 ok" }],
-        max_tokens: 16,
+        messages: isOcrMode
+          ? [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: [
+                      "这是 OCR 能力测试。",
+                      "忽略图片内容，只返回 JSON：{\"ok\":true,\"mode\":\"ocr\"}",
+                      "不要输出其他内容。",
+                    ].join("\n"),
+                  },
+                  {
+                    type: "image_url",
+                    image_url: { url: OCR_TEST_IMAGE_DATA_URL },
+                  },
+                ],
+              },
+            ]
+          : [{ role: "user", content: "回复 ok" }],
+        max_tokens: isOcrMode ? 120 : 16,
+        ...(isOcrMode ? { response_format: { type: "json_object" } } : {}),
       }),
       signal: controller.signal,
     });
@@ -136,27 +175,24 @@ export async function sendChannelTestRequest(input: {
       };
     }
 
-    const data = (await response.json().catch(() => null)) as {
-      choices?: Array<{ message?: { content?: unknown } }>;
-    } | null;
-    const content = data?.choices?.[0]?.message?.content;
+    const data = (await response.json().catch(() => null)) as UpstreamTestResponse | null;
+    const message = data?.choices?.[0]?.message;
     const responseText =
-      typeof content === "string"
-        ? content.trim()
-        : Array.isArray(content)
-          ? content
-              .filter(
-                (item) => item && typeof item === "object" && (item as { type?: unknown }).type === "text",
-              )
-              .map((item) => String((item as { text?: unknown }).text ?? "").trim())
-              .filter(Boolean)
-              .join("\n")
-          : "";
+      aiClientInternal.normalizeResponseContent(message?.content) ??
+      aiClientInternal.normalizeResponseContent(message?.text);
+
+    if (!responseText) {
+      return {
+        ok: false,
+        elapsedMs,
+        error: data ? aiClientInternal.describeMissingResponseContent(data) : "AI 未返回可解析结果",
+      };
+    }
 
     return {
       ok: true,
       elapsedMs,
-      text: responseText || null,
+      text: responseText,
     };
   } catch (error) {
     const elapsedMs = Date.now() - startedAt;

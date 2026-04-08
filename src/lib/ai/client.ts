@@ -83,7 +83,12 @@ type UpstreamResponseBody = {
   choices?: Array<{
     message?: {
       content?: unknown;
+      text?: unknown;
+      reasoning_content?: unknown;
+      refusal?: unknown;
     };
+    finish_reason?: unknown;
+    native_finish_reason?: unknown;
   }>;
 };
 
@@ -280,13 +285,51 @@ function normalizeResponseContent(content: unknown): string | null {
   }
   if (Array.isArray(content)) {
     const text = content
-      .filter((item) => item && typeof item === "object" && item.type === "text" && typeof item.text === "string")
-      .map((item) => (item as { text: string }).text.trim())
+      .filter((item) => item && typeof item === "object")
+      .map((item) => {
+        const record = item as { type?: unknown; text?: unknown; value?: unknown };
+        if ((record.type === "text" || record.type === "output_text") && typeof record.text === "string") {
+          return record.text.trim();
+        }
+        if (typeof record.value === "string") {
+          return record.value.trim();
+        }
+        return "";
+      })
       .filter(Boolean)
       .join("\n");
     return text || null;
   }
   return null;
+}
+
+function describeMissingResponseContent(data: UpstreamResponseBody): string {
+  const choice = data.choices?.[0];
+  const message = choice?.message;
+  const details: string[] = [];
+
+  if (choice?.finish_reason != null) {
+    details.push(`finish_reason=${String(choice.finish_reason)}`);
+  }
+  if (choice?.native_finish_reason != null) {
+    details.push(`native_finish_reason=${String(choice.native_finish_reason)}`);
+  }
+
+  if (message && typeof message === "object") {
+    const keys = Object.keys(message);
+    if (keys.length) {
+      details.push(`message_keys=${keys.join(",")}`);
+    }
+    if ("content" in message) {
+      details.push(`content_type=${message.content === null ? "null" : Array.isArray(message.content) ? "array" : typeof message.content}`);
+    }
+    if (typeof message.refusal === "string" && message.refusal.trim()) {
+      details.push(`refusal=${message.refusal.trim().slice(0, 80)}`);
+    }
+  }
+
+  const suffix = details.length ? `（${details.join("，")}）` : "";
+  return `AI 未返回有效内容${suffix}`;
 }
 
 export function buildUpstreamUrl(baseUrl: string): string {
@@ -368,9 +411,12 @@ async function sendToChannel(
   }
 
   const data = (await response.json()) as UpstreamResponseBody;
-  const content = normalizeResponseContent(data.choices?.[0]?.message?.content);
+  const message = data.choices?.[0]?.message;
+  const content =
+    normalizeResponseContent(message?.content) ??
+    normalizeResponseContent(message?.text);
   if (!content) {
-    throw new AiChannelError("AI 未返回有效内容", "empty_response", false);
+    throw new AiChannelError(describeMissingResponseContent(data), "empty_response", false);
   }
 
   return {
@@ -599,6 +645,8 @@ export const __internal = {
   isRetryableStatus,
   isChannelHealthy,
   resolveModel,
+  normalizeResponseContent,
+  describeMissingResponseContent,
   resetCache() {
     cachedChannels = null;
     channelsPromise = null;

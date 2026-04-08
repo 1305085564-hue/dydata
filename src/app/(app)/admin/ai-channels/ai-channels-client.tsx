@@ -242,15 +242,18 @@ export default function AIChannelsClient() {
     }
   }
 
-  async function runChannelAction(channel: AiChannelRow, action: "test" | "toggle" | "recover" | "delete") {
+  async function runChannelAction(channel: AiChannelRow, action: "test" | "ocr_test" | "toggle" | "recover" | "delete") {
     setLoadingActionId(`${action}:${channel.id}`);
     try {
       let res: Response;
-      if (action === "test") {
+      if (action === "test" || action === "ocr_test") {
         res = await fetch("/api/admin/ai-channels/test", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ channel_id: channel.id }),
+          body: JSON.stringify({
+            channel_id: channel.id,
+            test_kind: action === "ocr_test" ? "ocr" : "text",
+          }),
         });
       } else if (action === "recover") {
         res = await fetch("/api/admin/ai-channels/recover", {
@@ -278,9 +281,9 @@ export default function AIChannelsClient() {
         throw new Error(data.error || "操作失败");
       }
 
-      if (action === "test") {
+      if (action === "test" || action === "ocr_test") {
         const elapsed = typeof data.elapsed_ms === "number" ? `，耗时 ${data.elapsed_ms}ms` : "";
-        feedbackToast.success(`连通测试成功${elapsed}`);
+        feedbackToast.success(`${action === "ocr_test" ? "截图 OCR 测试成功" : "文本连通测试成功"}${elapsed}`);
       } else if (action === "toggle") {
         feedbackToast.success(channel.is_enabled ? "已禁用渠道" : "已启用渠道");
       } else if (action === "recover") {
@@ -431,11 +434,10 @@ export default function AIChannelsClient() {
                   const meta = getStatusMeta(channel);
                   const busy =
                     loadingActionId === `test:${channel.id}` ||
+                    loadingActionId === `ocr_test:${channel.id}` ||
                     loadingActionId === `toggle:${channel.id}` ||
                     loadingActionId === `recover:${channel.id}` ||
                     loadingActionId === `delete:${channel.id}`;
-                  const status = getStatus(channel);
-
                   return (
                     <TableRow key={channel.id}>
                       <TableCell className="font-medium text-[var(--color-text-primary)]">{channel.name}</TableCell>
@@ -477,7 +479,15 @@ export default function AIChannelsClient() {
                             ) : (
                               <CheckCircle2 className="size-4" />
                             )}
-                            测试连通
+                            测文本
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "ocr_test")} disabled={busy}>
+                            {loadingActionId === `ocr_test:${channel.id}` ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="size-4" />
+                            )}
+                            测 OCR
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "toggle")} disabled={busy}>
                             {channel.is_enabled ? "禁用" : "启用"}
