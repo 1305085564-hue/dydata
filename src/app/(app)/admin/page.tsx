@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
+import { AdminSecondaryNav, AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { DashboardAnimatedSection } from "../dashboard/dashboard-animated-section";
 import { InviteCodeManager } from "./generate-invite-button";
 import { SubmissionStatus } from "./submission-status";
@@ -85,6 +85,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         }
       >
+        <AdminSecondaryNav pathname="/admin" canManageAdmin />
+
         <AppShellMetricStrip
           items={topSummaryCards.map((card) => ({
             label: card.label,

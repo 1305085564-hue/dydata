@@ -20,6 +20,7 @@ import { shiftDateOnly } from "./shared";
 type GrowthSupabase = SupabaseClient<any, "public", any>;
 type ProfileRow = { id: string; name: string | null };
 type DailyReportRow = MetricsReport & { content?: string | null };
+type GrowthReport = MetricsReport & { content?: string | null; submitter?: string };
 type ContentItemRow = { id: string; account_id: string | null; biz_date: string; owner_user_id: string };
 type ScriptDocumentRow = { id: string; content_item_id: string; raw_text: string | null; estimated_duration_sec: number | null };
 type ScriptSegmentRow = {
@@ -128,14 +129,19 @@ export async function loadGrowthPageData({
   const scriptSegments = (scriptSegmentsResult.data ?? []) as ScriptSegmentRow[];
   const aiInsight = ((aiInsightResult.data ?? [])[0] ?? null) as AiInsightRow | null;
 
+  const teamReportsWithSubmitter: GrowthReport[] = teamReports.map((report) => ({
+    ...report,
+    submitter: profileNameMap.get(report.user_id) ?? "未知",
+  }));
+
   const myAccountIds = myAccounts.map((account) => account.id);
-  const myAllReports = teamReports.filter((report) => myAccountIds.includes(report.account_id));
+  const myAllReports = teamReportsWithSubmitter.filter((report) => myAccountIds.includes(report.account_id));
   const myReports7d = myAllReports.filter((report) => report.report_date >= weekAgo);
   const myReportsPrev7d = myAllReports.filter((report) => report.report_date >= twoWeeksAgo && report.report_date < weekAgo);
 
   const statusCards = buildStatusCards(myReports7d, myReportsPrev7d);
-  const capabilityCards = buildGrowthDimensionCards({ myReports: myAllReports, teamReports });
-  const weakestDimensions = getWeakestDimensions(myAllReports, teamReports);
+  const capabilityCards = buildGrowthDimensionCards({ myReports: myAllReports, teamReports: teamReportsWithSubmitter });
+  const weakestDimensions = getWeakestDimensions(myAllReports, teamReportsWithSubmitter);
 
   const contentItemByAccountAndDate = new Map(contentItems.map((item) => [`${item.account_id ?? ""}-${item.biz_date}`, item]));
   const latestReport = [...myAllReports].sort((left, right) => right.report_date.localeCompare(left.report_date))[0] ?? null;
@@ -174,7 +180,7 @@ export async function loadGrowthPageData({
     myAccountId: myAccountIds[0] ?? "",
     myProfileId: userId,
     myReports: myAllReports,
-    teamReports,
+    teamReports: teamReportsWithSubmitter,
     accounts: allAccounts,
     scriptSegmentsByAccountId,
   });
@@ -188,7 +194,7 @@ export async function loadGrowthPageData({
         leftName: profile?.name ?? userEmail ?? "我",
         rightName: profileNameMap.get(pkOpponentAccount.profile_id) ?? pkOpponentAccount.name,
         leftReports: myAllReports,
-        rightReports: teamReports.filter((report) => report.account_id === pkOpponentAccount.id),
+        rightReports: teamReportsWithSubmitter.filter((report) => report.account_id === pkOpponentAccount.id),
       })
     : null;
 
@@ -212,9 +218,9 @@ export async function loadGrowthPageData({
     .filter((profileId) => profileId !== userId)
     .map((profileId) => {
       const memberAccountIds = allAccounts.filter((account) => account.profile_id === profileId).map((account) => account.id);
-      const memberReports = teamReports.filter((report) => memberAccountIds.includes(report.account_id));
+      const memberReports = teamReportsWithSubmitter.filter((report) => memberAccountIds.includes(report.account_id));
       if (memberReports.length < 3) return null;
-      const memberCards = buildGrowthDimensionCards({ myReports: memberReports, teamReports });
+      const memberCards = buildGrowthDimensionCards({ myReports: memberReports, teamReports: teamReportsWithSubmitter });
       return {
         id: profileId,
         name: profileNameMap.get(profileId) ?? "未知",
@@ -234,7 +240,7 @@ export async function loadGrowthPageData({
     scriptBreakdown,
     advice,
     myReports: myAllReports,
-    teamReports,
+    teamReports: teamReportsWithSubmitter,
     teamMembers,
     summary: {
       hasEnoughData: myAllReports.length >= 3,

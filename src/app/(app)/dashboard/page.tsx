@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Clock, GalleryVerticalEnd, ListChecks, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, Clock, GalleryVerticalEnd, ListChecks, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
@@ -68,56 +68,57 @@ export default async function DashboardPage() {
             ]}
           />
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.15fr_0.85fr]">
-            <VideoSubmitPanel
-              accounts={data.accounts}
-              userId={data.userId}
-              userDisplayName={data.userDisplayName}
-              today={data.today}
-              todayReports={data.todayReports}
-              hasPendingExemption={data.hasPendingExemption}
-            />
+          <VideoSubmitPanel
+            accounts={data.accounts}
+            userId={data.userId}
+            userDisplayName={data.userDisplayName}
+            today={data.today}
+            todayReports={data.todayReports}
+            hasPendingExemption={data.hasPendingExemption}
+          />
 
-            <div className="glass-card-static space-y-3 p-4 sm:p-5">
-              <div className="space-y-1">
-                <p className="dashboard-section-kicker inline-flex items-center gap-2">
-                  <Sparkles className="size-3.5" />
-                  今日操作
-                </p>
-                <p className="text-sm text-muted-foreground">按这个顺序做，最快，也最不容易出错。</p>
-              </div>
+          <div className="glass-card-static grid gap-2.5 p-3 sm:grid-cols-[auto_1fr] sm:items-center sm:p-4">
+            <div className="dashboard-summary-chip w-fit">
+              今日操作
+              <span className="font-semibold text-foreground">轻量流程</span>
+            </div>
+            <div className="grid gap-2 lg:grid-cols-3">
+              {[
+                {
+                  title: "先选账号",
+                  description: "确认今天要提交哪个账号",
+                  icon: ListChecks,
+                },
+                {
+                  title: "优先导截图",
+                  description: "先回填关键数据，减少手输",
+                  icon: GalleryVerticalEnd,
+                },
+                {
+                  title: "提交后看状态",
+                  description: "确认状态已更新成已提交",
+                  icon: Clock,
+                },
+              ].map((item) => {
+                const Icon = item.icon;
 
-              <div className="grid gap-2">
-                {[
-                  {
-                    title: "先选账号",
-                    description: "先确认今天要提交的是哪个账号。",
-                    icon: ListChecks,
-                  },
-                  {
-                    title: "再导入截图",
-                    description: "优先用截图回填，减少手动录入。",
-                    icon: GalleryVerticalEnd,
-                  },
-                  {
-                    title: "最后提交复查",
-                    description: "提交后确认状态卡已更新为已提交。",
-                    icon: Clock,
-                  },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.title} className="dashboard-field-group flex items-start gap-3 rounded-2xl p-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                        <Icon className="size-4" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                        <p className="text-xs leading-5 text-muted-foreground">{item.description}</p>
-                      </div>
+                return (
+                  <div key={item.title} className="dashboard-field-group flex items-center gap-3 rounded-2xl px-3 py-2.5">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                      <Icon className="size-4" />
                     </div>
-                  );
-                })}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="hidden lg:flex lg:justify-end">
+              <div className="dashboard-summary-chip">
+                趋势图在下方
+                <ArrowRight className="size-3.5" />
               </div>
             </div>
           </div>
@@ -136,7 +137,7 @@ export default async function DashboardPage() {
             </div>
           }
         >
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <ResultTrend
               data={data.trendData.结果趋势}
               personalLabel="我的数据"

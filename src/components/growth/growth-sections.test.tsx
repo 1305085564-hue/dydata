@@ -3,88 +3,130 @@ import assert from "node:assert/strict";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { GrowthClientShell } from "../../app/(app)/growth/growth-client";
-import { AdvicePanel } from "./advice-panel";
-import { CapabilityGrid } from "./capability-grid";
-import { GrowthPkPanel } from "./growth-pk-panel";
+import { DiagnosisCard } from "./diagnosis-card";
+import { GrowthActionPlanPanelBody } from "./growth-action-plan-panel";
 import { ScriptBreakdown } from "./script-breakdown";
-import { WeaknessBenchmarkGrid } from "./weakness-benchmark-grid";
 
-test("CapabilityGrid 渲染六维能力卡并显示样本不足提示", () => {
-  const html = renderToStaticMarkup(
-    <CapabilityGrid
-      items={[
-        {
-          key: "hook",
-          name: "开头留人",
-          metricLabel: "5秒完播率",
-          metricValue: 52.3,
-          metricText: "52.3%",
-          rating: { label: "弱", tone: "danger" },
-          sample: { count: 8, label: "样本 8", signal: "red", hint: "样本不足，结论仅供参考" },
-        },
-      ]}
-    />,
-  );
-
-  assert.match(html, /开头留人/);
-  assert.match(html, /5秒完播率/);
-  assert.match(html, /样本不足/);
-  assert.match(html, /弱/);
-});
-
-test("ScriptBreakdown 在回退模式下显示原始文案与 AI拆解中", () => {
+test("ScriptBreakdown 空态显示原因和示例拆解", () => {
   const html = renderToStaticMarkup(
     <ScriptBreakdown
       title="文案拆解"
       data={{
-        state: "fallback",
-        rawText: "先抛结论，再给方法。",
-        placeholder: "AI拆解中",
+        state: "empty",
+        rawText: "",
+        placeholder: "暂无文案数据",
         segments: [],
       }}
     />,
   );
 
-  assert.match(html, /先抛结论/);
-  assert.match(html, /AI拆解中/);
+  assert.match(html, /为什么这里没有真实内容/);
+  assert.match(html, /示例拆解参考/);
+  assert.match(html, /示例内容/);
+  assert.match(html, /开头钩子/);
+  assert.match(html, /结尾 CTA/);
 });
 
-test("CapabilityGrid 无数据时显示六维占位", () => {
-  const html = renderToStaticMarkup(<CapabilityGrid items={[]} />);
-  assert.match(html, /数据不足/);
-  assert.match(html, /--/);
-});
-
-test("WeaknessBenchmarkGrid 无数据时显示对标空态", () => {
-  const html = renderToStaticMarkup(<WeaknessBenchmarkGrid items={[]} />);
-  assert.match(html, /暂无可用对标数据/);
-});
-
-test("GrowthPkPanel 无对比对象时显示引导文案", () => {
-  const html = renderToStaticMarkup(<GrowthPkPanel leftName="我" rightName="对手" rows={[]} />);
-  assert.match(html, /请先选择对比对象/);
-});
-
-test("AdvicePanel 在 AI 失败时显示不可用文案", () => {
+test("GrowthActionPlanPanelBody 统一成一套行动方案", () => {
   const html = renderToStaticMarkup(
-    <AdvicePanel
-      data={{
-        source: "error",
-        diagnosis: "",
-        reference: "",
-        action: "",
+    <GrowthActionPlanPanelBody
+      insightState={{ status: "ok", cached: false, insight: { diagnosis: "开头留人偏弱", scene: "2秒跳出率 38%", cause: "第一句太慢", rewrite: "先说结论再给方法" } }}
+      advice={{
+        source: "ai",
+        diagnosis: "这条视频最大问题在开头",
+        reference: "参考同题材高表现账号的开头结构",
+        action: "下一批先只改钩子",
       }}
+      noData={false}
     />,
   );
-  assert.match(html, /AI 分析暂时不可用/);
+
+  assert.match(html, /一句话结论/);
+  assert.match(html, /问题证据/);
+  assert.match(html, /参考示例/);
+  assert.match(html, /改写建议/);
+  assert.match(html, /下一步动作/);
+  assert.doesNotMatch(html, /昨日复盘洞察/);
+  assert.doesNotMatch(html, /诊断 \/ 参考 \/ 动作/);
 });
 
-test("GrowthClientShell 无数据时仍渲染模块级空态", () => {
+test("DiagnosisCard 渲染分块结构而不是长段列表", () => {
+  const html = renderToStaticMarkup(
+    <DiagnosisCard
+      myReports={[]}
+      teamReports={[]}
+    />,
+  );
+
+  assert.match(html, /问题名：/);
+  assert.match(html, /数据证据/);
+  assert.match(html, /该学谁 \/ 为什么：/);
+  assert.match(html, /下一步动作/);
+  assert.match(html, /示例内容/);
+});
+
+test("DiagnosisCard 有 submitter 样本时显示真实对标人名字", () => {
+  const html = renderToStaticMarkup(
+    <DiagnosisCard
+      myReports={Array.from({ length: 6 }, (_, index) => ({
+        user_id: "self-user",
+        account_id: "self-account",
+        report_date: `2026-04-${String(index + 1).padStart(2, "0")}`,
+        play_count: 1000,
+        likes: 10,
+        comments: 5,
+        shares: 2,
+        favorites: 2,
+        follower_gain: 5,
+        completion_rate: "25",
+        completion_rate_5s: "30",
+        content: "self",
+        submitter: "我",
+      }))}
+      teamReports={[
+        ...Array.from({ length: 6 }, (_, index) => ({
+          user_id: "self-user",
+          account_id: "self-account",
+          report_date: `2026-04-${String(index + 1).padStart(2, "0")}`,
+          play_count: 1000,
+          likes: 10,
+          comments: 5,
+          shares: 2,
+          favorites: 2,
+          follower_gain: 5,
+          completion_rate: "25",
+          completion_rate_5s: "30",
+          content: "self",
+          submitter: "我",
+        })),
+        ...Array.from({ length: 6 }, (_, index) => ({
+          user_id: "peer-user",
+          account_id: "peer-account",
+          report_date: `2026-04-${String(index + 1).padStart(2, "0")}`,
+          play_count: 5000,
+          likes: 500,
+          comments: 80,
+          shares: 40,
+          favorites: 30,
+          follower_gain: 30,
+          completion_rate: "55",
+          completion_rate_5s: "70",
+          content: "peer",
+          submitter: "小王",
+        })),
+      ]}
+    />,
+  );
+
+  assert.match(html, /参考 小王/);
+});
+
+test("GrowthClientShell 使用统一行动面板替代旧双卡", () => {
   const html = renderToStaticMarkup(
     <GrowthClientShell
       profileName="测试用户"
       accountCount={1}
-      reportCount={0}
+      reportCount={3}
       statusCards={[]}
       capabilityCards={[]}
       weakBenchmarkCards={[]}
@@ -103,12 +145,16 @@ test("GrowthClientShell 无数据时仍渲染模块级空态", () => {
       }}
       myReports={[]}
       teamReports={[]}
+      teamMembers={[]}
+      summary={{
+        hasEnoughData: true,
+        weakestDimension: null,
+      }}
     />,
   );
 
-  assert.match(html, /六维能力/);
-  assert.match(html, /暂无可用对标数据/);
-  assert.match(html, /暂无文案数据/);
-  assert.match(html, /诊断 \/ 参考 \/ 动作/);
-  assert.doesNotMatch(html, /提交 2 天以上数据后即可查看成长分析/);
+  assert.match(html, /AI 洞察与行动建议/);
+  assert.match(html, /下一轮先怎么改/);
+  assert.doesNotMatch(html, /昨日复盘洞察/);
+  assert.doesNotMatch(html, /诊断 \/ 参考 \/ 动作/);
 });

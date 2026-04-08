@@ -5,8 +5,7 @@ import { 六维雷达面板 } from "@/components/growth/六维雷达面板";
 import { DiagnosisCard } from "@/components/growth/diagnosis-card";
 import { StatusCardGrid } from "@/components/growth/status-card-grid";
 import { ScriptBreakdown } from "@/components/growth/script-breakdown";
-import { AdvicePanel } from "@/components/growth/advice-panel";
-import { GrowthInsightPanel } from "@/components/growth/growth-insight-panel";
+import { GrowthActionPlanPanel } from "@/components/growth/growth-action-plan-panel";
 import { GrowthPkPanel } from "@/components/growth/growth-pk-panel";
 import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -138,16 +137,15 @@ export function GrowthClientShell({
             <DiagnosisCard myReports={myReports} teamReports={teamReports} />
           </AppShellSection>
 
-          <AppShellSection eyebrow="Script Review" title="文案拆解" description="把最近作品拆开看，判断问题是在开头、中段还是结尾。">
-            <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
-          </AppShellSection>
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+            <AppShellSection eyebrow="Script Review" title="文案拆解" description="先定位问题发生在开头、中段还是结尾。">
+              <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
+            </AppShellSection>
 
-          <AppShellSection eyebrow="AI Insight" title="AI 洞察与行动建议" description="先看 AI 总结，再决定下一轮怎么改。">
-            <div className="space-y-5">
-              <GrowthInsightPanel />
-              <AdvicePanel data={advice} noData={myReports.length === 0} />
-            </div>
-          </AppShellSection>
+            <AppShellSection eyebrow="Action Plan" title="AI 洞察与行动建议" description="把结论、证据、示例和动作收成一套。">
+              <GrowthActionPlanPanel advice={advice} noData={myReports.length === 0} />
+            </AppShellSection>
+          </div>
         </div>
       )}
     </AppShell>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { VideoMetricsSnapshot, VideoTag } from "@/types";
 import { createClient } from "@/lib/supabase/server";
+import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
 import { AnalyticsPageHeader } from "@/components/analytics/分析页顶部";
 import { type AnalyticsRangePreset } from "@/lib/analytics-access";
 import { AnalyticsSections } from "./analytics-sections";
@@ -73,35 +74,38 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-      <div className="space-y-6">
-        <AnalyticsPageHeader preset={data.range.preset} from={data.range.from} to={data.range.to} />
-
-        <section className="rounded-[28px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(246,249,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
-          <div className="mb-6 flex flex-col gap-3 border-b border-white/65 pb-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-semibold tracking-[0.2em] text-[var(--color-text-tertiary)] uppercase">Core Insight Deck</p>
-              <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">核心结论区</h2>
-              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看结果，再决定深入方向。这里优先展示本周期最值得行动的信号。</p>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
-              <span className="size-1.5 rounded-full bg-[var(--color-primary)]" aria-hidden />
-              <span className="font-medium text-[var(--color-text-primary)]">首屏优先结论</span>
-              <span>{data.range.from} 至 {data.range.to}</span>
-            </div>
+    <AppShell width="wide" className="pb-10">
+      <AppShellHero
+        eyebrow="Business Analytics"
+        title="经营分析"
+        description="先看结果，再决定深入方向。这里优先展示本周期最值得行动的经营信号。"
+        meta={
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
+            <span className="size-1.5 rounded-full bg-[var(--color-primary)]" aria-hidden />
+            <span className="font-medium text-[var(--color-text-primary)]">分析周期</span>
+            <span>{data.range.from} 至 {data.range.to}</span>
           </div>
+        }
+      >
+        <AdminSecondaryNav pathname="/admin/analytics" canManageAdmin={data.isPrivilegedUser} />
+        <AnalyticsPageHeader preset={data.range.preset} from={data.range.from} to={data.range.to} />
+      </AppShellHero>
 
-          <视频结论卡
-            videos={data.filteredVideos as AnalyticsVideoRow[]}
-            snapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
-            videoTags={data.filteredVideoTags as VideoTag[]}
-          />
-        </section>
-      </div>
+      <AppShellSection
+        eyebrow="Core Insight Deck"
+        title="核心结论区"
+        description="首屏优先展示本周期最值得处理的核心结论。"
+      >
+        <视频结论卡
+          videos={data.filteredVideos as AnalyticsVideoRow[]}
+          snapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
+          videoTags={data.filteredVideoTags as VideoTag[]}
+        />
+      </AppShellSection>
 
       <div className="mt-8">
         <AnalyticsSections sections={sections} />
       </div>
-    </div>
+    </AppShell>
   );
 }

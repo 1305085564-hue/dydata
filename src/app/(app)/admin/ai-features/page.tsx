@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
+import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
 import AIFeaturesClient from "./ai-features-client";
 
 export default async function AIFeaturesPage() {
@@ -29,7 +29,9 @@ export default async function AIFeaturesPage() {
         eyebrow="AI Feature Console"
         title="AI 功能管理"
         description="统一管理 AI 功能的开关、模型、渠道和提示词配置。"
-      />
+      >
+        <AdminSecondaryNav pathname="/admin/ai-features" canManageAdmin />
+      </AppShellHero>
       <AppShellSection
         eyebrow="Feature Settings"
         title="功能配置面板"

@@ -2,15 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { callStructuredAi, extractJsonString } from "@/lib/ai/shared";
-
-const PROMPT_VERSION = "growth-daily-v1";
+import { callStructuredAi } from "@/lib/ai/shared";
+import { buildGrowthInsightPrompt, GROWTH_INSIGHT_PROMPT_VERSION } from "@/lib/ai/growth-prompts";
 
 type GrowthInsightResult = {
   diagnosis: string;
   scene: string;
   cause: string;
   rewrite: string;
+};
+
+type GrowthInsightCacheRow = {
+  prompt_version?: string | null;
+  result_json?: unknown;
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -38,22 +42,15 @@ function parseInsight(jsonString: string): GrowthInsightResult | null {
   }
 }
 
-function buildPrompt(bundle: Record<string, unknown>): string {
-  return [
-    "你是抖音增长教练。根据以下昨日视频数据，输出单视频复盘洞察。",
-    "说话直接、短句、基于证据，不要安慰，不要鸡汤，不要正确的废话。",
-    "",
-    "硬性要求：",
-    "1. 只输出 JSON 对象，不要 Markdown，不要代码块，不要额外说明。",
-    '2. JSON 格式固定为 {"diagnosis":"...","scene":"...","cause":"...","rewrite":"..."}',
-    "3. diagnosis：一句话定位核心问题，20字以内，必须点名最差指标。",
-    "4. scene：案发现场，说明数据异常的具体位置和表现，引用具体数字。",
-    "5. cause：归因，结合文案内容和曲线描述分析为什么会这样。",
-    "6. rewrite：针对文案给出具体段落的改写示例，要有前后对比，直接可用。",
-    "",
-    "昨日视频数据：",
-    JSON.stringify(bundle, null, 2),
-  ].join("\n");
+export function canReuseGrowthInsightCache(
+  row: GrowthInsightCacheRow | null | undefined,
+  promptVersion: string = GROWTH_INSIGHT_PROMPT_VERSION,
+) {
+  if (!row || row.prompt_version !== promptVersion || !isRecord(row.result_json)) {
+    return null;
+  }
+
+  return parseInsight(JSON.stringify(row.result_json));
 }
 
 export async function POST(request: NextRequest) {
@@ -84,16 +81,16 @@ export async function POST(request: NextRequest) {
   // 缓存检查：同用户同日期已有成功结果则直接返回
   const { data: cached } = await serviceClient
     .from("ai_insight_result")
-    .select("result_json, rendered_text")
+    .select("prompt_version, result_json, rendered_text")
     .eq("insight_type", "growth_edit")
     .eq("result_status", "success")
+    .eq("prompt_version", GROWTH_INSIGHT_PROMPT_VERSION)
     .contains("result_json", { meta_user_id: userId, meta_date: targetDate })
     .order("created_at", { ascending: false })
     .limit(1);
 
-  if (cached && cached.length > 0 && cached[0].result_json) {
-    const r = cached[0].result_json as Record<string, unknown>;
-    const insight = parseInsight(JSON.stringify(r));
+  if (cached && cached.length > 0) {
+    const insight = canReuseGrowthInsightCache(cached[0]);
     if (insight) return NextResponse.json({ insight, cached: true });
   }
 
@@ -190,7 +187,7 @@ export async function POST(request: NextRequest) {
   const inputBundleId: string = bundleRow.id;
 
   try {
-    const prompt = buildPrompt(inputBundle);
+    const prompt = buildGrowthInsightPrompt(inputBundle);
     const aiResult = await callStructuredAi({ prompt, maxTokens: 1200, featureKey: "growth_insight" });
     const insight = parseInsight(aiResult.jsonString);
 
@@ -199,7 +196,7 @@ export async function POST(request: NextRequest) {
         input_bundle_id: inputBundleId,
         insight_type: "growth_edit",
         model_name: aiResult.model,
-        prompt_version: PROMPT_VERSION,
+        prompt_version: GROWTH_INSIGHT_PROMPT_VERSION,
         result_status: "failed",
         result_json: { error: "解析失败", raw: aiResult.rawContent },
         rendered_text: "AI 返回内容解析失败",
@@ -213,7 +210,7 @@ export async function POST(request: NextRequest) {
       input_bundle_id: inputBundleId,
       insight_type: "growth_edit",
       model_name: aiResult.model,
-      prompt_version: PROMPT_VERSION,
+      prompt_version: GROWTH_INSIGHT_PROMPT_VERSION,
       result_status: "success",
       result_json: resultJson,
       rendered_text: Object.values(insight).join(" | "),
@@ -226,7 +223,7 @@ export async function POST(request: NextRequest) {
       input_bundle_id: inputBundleId,
       insight_type: "growth_edit",
       model_name: process.env.AI_MODEL || "claude-sonnet-4-6",
-      prompt_version: PROMPT_VERSION,
+      prompt_version: GROWTH_INSIGHT_PROMPT_VERSION,
       result_status: "failed",
       result_json: { error: message },
       rendered_text: message,

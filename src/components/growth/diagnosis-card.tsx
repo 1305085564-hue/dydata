@@ -1,138 +1,22 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { AlertTriangle, ArrowRight, LineChart, ShieldCheck, Users } from "lucide-react";
 
 import { MotionCard } from "@/components/ui/motion-card";
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { calcRates, parsePercentText, type MetricsReport } from "@/lib/metrics";
 
-// ── 维度计算 ────────────────────────────────────────────────
 type DimKey = "播放量" | "涨粉" | "点赞" | "完播率" | "5s完播率" | "2s跳出率";
 
-const DIM_LABELS: Record<DimKey, string> = {
-  播放量: "播放量",
-  涨粉: "涨粉数",
-  点赞: "点赞率",
-  完播率: "完播率",
-  "5s完播率": "5秒完播率",
-  "2s跳出率": "2秒跳出率",
-};
-
-function avgDim(reports: MetricsReport[], dim: DimKey): number {
-  if (!reports.length) return 0;
-  const vals = reports.map((r) => {
-    switch (dim) {
-      case "播放量": return r.play_count ?? 0;
-      case "涨粉": return r.follower_gain ?? 0;
-      case "点赞": {
-        const rates = calcRates(r);
-        return rates.likeRate;
-      }
-      case "完播率": return parsePercentText(r.completion_rate);
-      case "5s完播率": return parsePercentText(r.completion_rate_5s);
-      case "2s跳出率": return parsePercentText((r as MetricsReport & { bounce_rate_2s?: string | null }).bounce_rate_2s);
-    }
-  });
-  return vals.reduce((s, v) => s + v, 0) / vals.length;
-}
-
-// 按 submitter 分组，返回 Map<name, avg>（至少5篇）
-function buildPersonAvgMap(
-  dim: DimKey,
-  teamReports: MetricsReport[],
-  myName: string | undefined,
-): Map<string, number> {
-  const byPerson = new Map<string, MetricsReport[]>();
-  for (const r of teamReports) {
-    const name = (r as MetricsReport & { submitter?: string }).submitter;
-    if (!name || name === myName) continue;
-    const arr = byPerson.get(name) ?? [];
-    arr.push(r);
-    byPerson.set(name, arr);
-  }
-  const result = new Map<string, number>();
-  for (const [name, reps] of byPerson) {
-    if (reps.length < 5) continue;
-    result.set(name, avgDim(reps, dim));
-  }
-  return result;
-}
-
-// 找该维度比 selfAvg 更好的人，返回最好的那个
-function findBenchmark(
-  dim: DimKey,
-  selfAvg: number,
-  teamReports: MetricsReport[],
-  myName: string | undefined,
-): { name: string; avg: number } | null {
-  const personMap = buildPersonAvgMap(dim, teamReports, myName);
-  let best: { name: string; avg: number } | null = null;
-  for (const [name, avg] of personMap) {
-    const isBetter = dim === "2s跳出率" ? avg < selfAvg : avg > selfAvg;
-    if (isBetter && (!best || (dim === "2s跳出率" ? avg < best.avg : avg > best.avg))) {
-      best = { name, avg };
-    }
-  }
-  return best;
-}
-
-// 找该维度第二名（比自己差一点的最强者，用于领先时展示差距）
-function findSecondPlace(
-  dim: DimKey,
-  selfAvg: number,
-  teamReports: MetricsReport[],
-  myName: string | undefined,
-): { name: string; avg: number } | null {
-  const personMap = buildPersonAvgMap(dim, teamReports, myName);
-  // 找所有比自己弱的人中最强的那个（即第二名）
-  let second: { name: string; avg: number } | null = null;
-  for (const [name, avg] of personMap) {
-    const isWeaker = dim === "2s跳出率" ? avg >= selfAvg : avg <= selfAvg;
-    if (isWeaker) {
-      if (!second || (dim === "2s跳出率" ? avg < second.avg : avg > second.avg)) {
-        second = { name, avg };
-      }
-    }
-  }
-  return second;
-}
-
-// ── 建议模板 ────────────────────────────────────────────────
-// 未达标时的学习建议
-const WEAK_ADVICE: Record<DimKey, string> = {
-  播放量: "发布时间选在 18:00–21:00 黄金时段，标题前 5 字加强关键词密度，扩大初始推流池",
-  涨粉: "结尾明确引导关注（口播+字幕双重提示），主页简介突出账号定位，让新访客 3 秒内看懂价值",
-  点赞: "内容高潮处加引导字幕「双击支持一下」，结尾设置争议性话题引发评论，间接带动点赞",
-  完播率: "精简视频时长至核心信息，中段加入反转/悬念维持观看动力，前 10 秒节奏加快",
-  "5s完播率": "开头前 3 秒加强悬念钩子（提问/反常识/冲突画面），首帧直接呈现视觉冲击点",
-  "2s跳出率": "首帧换成高对比度有人脸/动作的画面，封面文字放大至 80%+ 屏幕宽度，开头从核心结论开始说",
-};
-
-// 未达标时学习对标人的重点方向
-const WEAK_FOCUS: Record<DimKey, string> = {
-  播放量: "选题策略和发布时间",
-  涨粉: "结尾CTA引导话术",
-  点赞: "情绪共鸣和互动引导",
-  完播率: "内容节奏和时长控制",
-  "5s完播率": "开头钩子设计",
-  "2s跳出率": "封面和首帧吸引力",
-};
-
-// 已达标时的进阶建议
-const STRONG_ADVICE: Record<DimKey, string> = {
-  播放量: "尝试更多垂类话题测试，找到下一个爆款选题方向，进一步扩大播放天花板",
-  涨粉: "优化主页内容矩阵，提升老粉复访率，同时测试不同 CTA 话术提升转化",
-  点赞: "分析高点赞内容的共同特征，复制情绪共鸣点，持续强化内容风格",
-  完播率: "在完播率高的内容基础上加长时长测试，探索更深度内容的可能性",
-  "5s完播率": "测试不同开头钩子类型（悬念/干货/反转），找到最适合你账号的开头公式",
-  "2s跳出率": "在低跳出率封面基础上 A/B 测试文案，进一步提升点击转化率",
-};
-
-// ── 主组件 ────────────────────────────────────────────────
-export type DiagnosisCardProps = {
-  myReports: MetricsReport[];
-  teamReports: MetricsReport[];
-  className?: string;
+type DiagnosisItem = {
+  key: string;
+  title: string;
+  tone: "weak" | "strong";
+  evidence: string;
+  benchmarkLabel: string;
+  benchmarkReason: string;
+  action: string;
 };
 
 type DimItem = {
@@ -144,8 +28,107 @@ type DimItem = {
   isWeak: boolean;
 };
 
+const DIM_LABELS: Record<DimKey, string> = {
+  播放量: "播放量",
+  涨粉: "涨粉数",
+  点赞: "点赞率",
+  完播率: "完播率",
+  "5s完播率": "5秒完播率",
+  "2s跳出率": "2秒跳出率",
+};
+
+const WEAK_ADVICE: Record<DimKey, string> = {
+  播放量: "发布时间优先压到 18:00-21:00，再把标题前 5 个字改成更直给的关键词。",
+  涨粉: "结尾固定一条关注理由，口播和字幕同步出现，不要只留空泛 CTA。",
+  点赞: "在情绪最高点插一句互动提问，逼用户做“同意 / 不同意”的选择。",
+  完播率: "砍掉铺垫句，把结论前置到前 10 秒，中段只留一个核心转折。",
+  "5s完播率": "开头 3 秒先给冲突或反常识，不要先讲背景。",
+  "2s跳出率": "首帧直接上人物动作或结果画面，第一句从结论说起。",
+};
+
+const WEAK_FOCUS: Record<DimKey, string> = {
+  播放量: "选题抓法和发布时间",
+  涨粉: "结尾 CTA 和主页承接",
+  点赞: "互动提问和情绪点",
+  完播率: "结构节奏和信息密度",
+  "5s完播率": "开头钩子设计",
+  "2s跳出率": "首帧和第一句吸引力",
+};
+
+const STRONG_ADVICE: Record<DimKey, string> = {
+  播放量: "沿着现有高播放题材继续做 2 个变体，确认是不是稳定选题。",
+  涨粉: "复用当前 CTA 框架，再测试一句更明确的主页引导。",
+  点赞: "保留现有情绪点，在中段多补一个互动问题，继续拉开差距。",
+  完播率: "在当前节奏不变的前提下，试一次更短版本，确认极限完播能不能更高。",
+  "5s完播率": "把高留存开头沉淀成固定模板，下轮继续复用。",
+  "2s跳出率": "保持现在的首帧打法，再试一版更短标题做 A/B 对比。",
+};
+
 const DIMS: DimKey[] = ["播放量", "涨粉", "点赞", "完播率", "5s完播率", "2s跳出率"];
-const WEAK_THRESHOLD = 0.2; // 低于团队均值 20% 算弱项
+const WEAK_THRESHOLD = 0.2;
+
+function avgDim(reports: MetricsReport[], dim: DimKey): number {
+  if (!reports.length) return 0;
+  const vals = reports.map((r) => {
+    switch (dim) {
+      case "播放量":
+        return r.play_count ?? 0;
+      case "涨粉":
+        return r.follower_gain ?? 0;
+      case "点赞":
+        return calcRates(r).likeRate;
+      case "完播率":
+        return parsePercentText(r.completion_rate);
+      case "5s完播率":
+        return parsePercentText(r.completion_rate_5s);
+      case "2s跳出率":
+        return parsePercentText((r as MetricsReport & { bounce_rate_2s?: string | null }).bounce_rate_2s);
+    }
+  });
+  return vals.reduce((sum, value) => sum + value, 0) / vals.length;
+}
+
+function buildPersonAvgMap(dim: DimKey, teamReports: MetricsReport[], myName: string | undefined): Map<string, number> {
+  const byPerson = new Map<string, MetricsReport[]>();
+  for (const report of teamReports) {
+    const name = (report as MetricsReport & { submitter?: string }).submitter;
+    if (!name || name === myName) continue;
+    const reports = byPerson.get(name) ?? [];
+    reports.push(report);
+    byPerson.set(name, reports);
+  }
+
+  const result = new Map<string, number>();
+  for (const [name, reports] of byPerson) {
+    if (reports.length < 5) continue;
+    result.set(name, avgDim(reports, dim));
+  }
+  return result;
+}
+
+function findBenchmark(dim: DimKey, selfAvg: number, teamReports: MetricsReport[], myName: string | undefined) {
+  const personMap = buildPersonAvgMap(dim, teamReports, myName);
+  let best: { name: string; avg: number } | null = null;
+  for (const [name, avg] of personMap) {
+    const isBetter = dim === "2s跳出率" ? avg < selfAvg : avg > selfAvg;
+    if (isBetter && (!best || (dim === "2s跳出率" ? avg < best.avg : avg > best.avg))) {
+      best = { name, avg };
+    }
+  }
+  return best;
+}
+
+function findSecondPlace(dim: DimKey, selfAvg: number, teamReports: MetricsReport[], myName: string | undefined) {
+  const personMap = buildPersonAvgMap(dim, teamReports, myName);
+  let second: { name: string; avg: number } | null = null;
+  for (const [name, avg] of personMap) {
+    const isWeaker = dim === "2s跳出率" ? avg >= selfAvg : avg <= selfAvg;
+    if (isWeaker && (!second || (dim === "2s跳出率" ? avg < second.avg : avg > second.avg))) {
+      second = { name, avg };
+    }
+  }
+  return second;
+}
 
 function fmt(dim: DimKey, value: number): string {
   if (dim === "播放量" || dim === "涨粉") {
@@ -155,36 +138,107 @@ function fmt(dim: DimKey, value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
-// 从 teamReports 推断当前用户名（myReports 中的 submitter）
 function getMyName(myReports: MetricsReport[]): string | undefined {
   return (myReports[0] as MetricsReport & { submitter?: string })?.submitter;
 }
 
-export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCardProps) {
+function buildExampleItems(): DiagnosisItem[] {
+  return [
+    {
+      key: "demo-hook",
+      title: "开头留人偏弱",
+      tone: "weak",
+      evidence: "示范数据：5秒完播率 28%，团队均值 41%，前3秒留人偏弱。",
+      benchmarkLabel: "该学谁 / 为什么：参考 小林",
+      benchmarkReason: "示例内容：同题材账号首句直接抛冲突，5秒完播率稳定在 46% 左右。",
+      action: "下一步动作：先把第一句改成结论前置 + 悬念问句，再连续验证 3 条。",
+    },
+    {
+      key: "demo-growth",
+      title: "增长转化偏弱",
+      tone: "weak",
+      evidence: "示范数据：单条涨粉 9，团队均值 16，结尾转化动作不够明确。",
+      benchmarkLabel: "该学谁 / 为什么：参考 阿周",
+      benchmarkReason: "示例内容：对方结尾会重复一句“主页看完整版”，转粉路径更清楚。",
+      action: "下一步动作：把结尾 CTA 固定成 1 句口播 + 1 句字幕，不要临场发挥。",
+    },
+    {
+      key: "demo-like",
+      title: "互动吸引暂时领先",
+      tone: "strong",
+      evidence: "示范数据：点赞率 8.2%，高于团队均值 6.1%，第二名已追到 7.8%。",
+      benchmarkLabel: "该盯谁 / 为什么：盯住 第二名账号",
+      benchmarkReason: "示例内容：对方评论区提问更密，互动链路已经很接近你。",
+      action: "下一步动作：保留现有情绪点，在第 15 秒补一个互动提问，继续拉开差距。",
+    },
+  ];
+}
+
+function buildDiagnosisItems(myReports: MetricsReport[], teamReports: MetricsReport[]): DiagnosisItem[] {
+  if (myReports.length === 0) return buildExampleItems();
+
   const week = myReports.slice(-7);
   const myName = getMyName(myReports);
-
   const dimItems: DimItem[] = DIMS.map((dim) => {
-    const self = avgDim(week, dim);
-    const team = avgDim(teamReports, dim);
-    const gap = team > 0 ? (team - self) / team : 0;
-    return { dim, selfAvg: self, teamAvg: team, gapPct: gap, label: DIM_LABELS[dim], isWeak: team > 0 && gap > WEAK_THRESHOLD };
+    const selfAvg = avgDim(week, dim);
+    const teamAvg = avgDim(teamReports, dim);
+    const gapPct = teamAvg > 0 ? (teamAvg - selfAvg) / teamAvg : 0;
+    return {
+      dim,
+      selfAvg,
+      teamAvg,
+      gapPct,
+      label: DIM_LABELS[dim],
+      isWeak: teamAvg > 0 && gapPct > WEAK_THRESHOLD,
+    };
   }).filter((item) => item.teamAvg > 0);
 
-  const weakItems = dimItems.filter((i) => i.isWeak);
-  const strongItems = dimItems.filter((i) => !i.isWeak);
+  const weakItems = dimItems.filter((item) => item.isWeak);
+  const strongItems = dimItems.filter((item) => !item.isWeak);
 
-  // 动作建议：弱项找对标人学习，强项展示第二名差距
-  const adviceItems: { dim: DimKey; label: string; tip: string; isWeak: boolean; benchmark?: { name: string; avg: number }; second?: { name: string; avg: number } }[] = [
-    ...weakItems.slice(0, 3).map((item) => {
+  return [
+    ...weakItems.slice(0, 4).map((item) => {
       const benchmark = findBenchmark(item.dim, item.selfAvg, teamReports, myName);
-      return { dim: item.dim, label: item.label, tip: WEAK_ADVICE[item.dim], isWeak: true, benchmark: benchmark ?? undefined };
+      return {
+        key: `weak-${item.dim}`,
+        title: `${item.label}偏弱`,
+        tone: "weak" as const,
+        evidence: `你的 ${item.label} ${fmt(item.dim, item.selfAvg)}，团队均值 ${fmt(item.dim, item.teamAvg)}，差距 ${(item.gapPct * 100).toFixed(0)}%。`,
+        benchmarkLabel: benchmark ? `该学谁 / 为什么：参考 ${benchmark.name}` : "该学谁 / 为什么：先看团队均值以上样本",
+        benchmarkReason: benchmark
+          ? `${benchmark.name} 这项做到 ${fmt(item.dim, benchmark.avg)}，更值得直接抄他的${WEAK_FOCUS[item.dim]}。`
+          : `当前没找到足够稳定的对标人，先复盘团队里 ${item.label} 高于均值的作品。`,
+        action: WEAK_ADVICE[item.dim],
+      };
     }),
-    ...strongItems.slice(0, 2).map((item) => {
+    ...strongItems.slice(0, Math.max(0, 4 - weakItems.length)).map((item) => {
       const second = findSecondPlace(item.dim, item.selfAvg, teamReports, myName);
-      return { dim: item.dim, label: item.label, tip: STRONG_ADVICE[item.dim], isWeak: false, second: second ?? undefined };
+      const gap = second ? Math.abs(item.selfAvg - second.avg) : null;
+      return {
+        key: `strong-${item.dim}`,
+        title: `${item.label}暂时领先`,
+        tone: "strong" as const,
+        evidence: second && gap !== null
+          ? `你当前 ${fmt(item.dim, item.selfAvg)}，${second.name} 是 ${fmt(item.dim, second.avg)}，领先 ${fmt(item.dim, gap)}。`
+          : `你当前 ${fmt(item.dim, item.selfAvg)}，高于团队均值 ${fmt(item.dim, item.teamAvg)}。`,
+        benchmarkLabel: second ? `该盯谁 / 为什么：盯住 ${second.name}` : "该盯谁 / 为什么：继续对照团队均值",
+        benchmarkReason: second
+          ? `${second.name} 已经很接近你，这项一松就会被追平。`
+          : "当前没有明显追赶者，先把稳定表现继续守住。",
+        action: STRONG_ADVICE[item.dim],
+      };
     }),
   ].slice(0, 4);
+}
+
+export type DiagnosisCardProps = {
+  myReports: MetricsReport[];
+  teamReports: MetricsReport[];
+  className?: string;
+};
+
+export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCardProps) {
+  const diagnosisItems = buildDiagnosisItems(myReports, teamReports);
 
   return (
     <MotionCard className={`border-white/70 bg-white/78 backdrop-blur-[16px] ${className ?? ""}`}>
@@ -192,136 +246,73 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Diagnosis Brief</p>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断建议</h2>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">近 7 天数据，对比团队均值后给出当前最该动的优化方向。</p>
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看问题，再找对标，再决定下一步先改哪一个动作。</p>
         </div>
 
-        <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">诊断</div>
-          {myReports.length === 0 ? (
-            <div className="space-y-2">
-              <div className="rounded-[12px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-3">
-                <span className="text-xs text-[var(--color-text-secondary)]">暂无数据，以下为示范参考</span>
-              </div>
-              <div className="rounded-[12px] border border-dashed border-orange-200/60 bg-orange-50/60 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-orange-800">2秒跳出率</span>
-                  <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">低 35% <span className="font-normal text-orange-500">示范数据</span></span>
-                </div>
-                <p className="mt-1 text-xs text-orange-700/80">你的2秒跳出率（38%）比团队均值（25%）高 35%，开头钩子需要优化</p>
-              </div>
-              <div className="rounded-[12px] border border-dashed border-orange-200/60 bg-orange-50/60 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-orange-800">涨粉数</span>
-                  <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">低 40% <span className="font-normal text-orange-500">示范数据</span></span>
-                </div>
-                <p className="mt-1 text-xs text-orange-700/80">你的涨粉数（12）比团队均值（20）低 40%，结尾CTA引导需加强</p>
-              </div>
-            </div>
-          ) : (
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-2">
-              {/* 未达标维度：向团队中谁学习 */}
-              {weakItems.map((item) => {
-                const benchmark = findBenchmark(item.dim, item.selfAvg, teamReports, myName);
-                return (
-                  <motion.div key={`weak-${item.dim}`} variants={itemVariants} className="rounded-[12px] border border-orange-200/60 bg-orange-50/60 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-orange-800">{item.label}</span>
-                      <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
-                        团队中游 · {fmt(item.dim, item.selfAvg)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-orange-700/80">
-                      {benchmark
-                        ? `${item.label}处于团队中游（得分 ${fmt(item.dim, item.selfAvg)}），建议参考 ${benchmark.name} 的做法（得分 ${fmt(item.dim, benchmark.avg)}），重点学习其${WEAK_FOCUS[item.dim]}`
-                        : `${item.label}（${fmt(item.dim, item.selfAvg)}）比团队均值（${fmt(item.dim, item.teamAvg)}）低 ${(item.gapPct * 100).toFixed(0)}%，${WEAK_ADVICE[item.dim]}`}
-                    </p>
-                  </motion.div>
-                );
-              })}
-              {/* 已达标维度：第二名距离你有多近 */}
-              {strongItems.map((item) => {
-                const second = findSecondPlace(item.dim, item.selfAvg, teamReports, myName);
-                const gap = second
-                  ? Math.abs(item.selfAvg - second.avg)
-                  : null;
-                return (
-                  <motion.div key={`strong-${item.dim}`} variants={itemVariants} className="rounded-[12px] border border-emerald-200/60 bg-emerald-50/60 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-emerald-800">{item.label}</span>
-                      <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">团队领先</span>
-                    </div>
-                    <p className="mt-1 text-xs text-emerald-700/80">
-                      {second && gap !== null
-                        ? `${item.label}你是团队领先（得分 ${fmt(item.dim, item.selfAvg)}），第二名 ${second.name}（得分 ${fmt(item.dim, second.avg)}）距你仅差 ${fmt(item.dim, gap)}，保持优势`
-                        : `${item.label}你是团队最强（得分 ${fmt(item.dim, item.selfAvg)}），继续保持领先优势`}
-                    </p>
-                  </motion.div>
-                );
-              })}
-              {dimItems.length === 0 && (
-                <div className="rounded-[12px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-3">
-                  <span className="text-xs text-[var(--color-text-secondary)]">团队数据不足，暂无对比</span>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </div>
-
-        {/* 动作建议区 */}
-        {myReports.length === 0 && (
-          <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">动作建议</div>
-            <div className="space-y-2 relative">
-              {/* Demo 水印覆盖 */}
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px]">
-                <div className="rounded-lg bg-slate-800/80 px-4 py-1.5 text-sm font-bold tracking-widest text-white shadow-xl rotate-[-5deg]">
-                  DEMO / 示例数据
-                </div>
-              </div>
-              {[
-                { label: "2秒跳出率", tip: "开头留人：前3秒加入悬念问句，降低跳出率" },
-                { label: "互动引导", tip: "在第15秒插入互动提问，提升评论率" },
-                { label: "转化优化", tip: "结尾用「点击主页看更多」替代通用CTA" },
-              ].map((item, i) => (
-                <div key={i} className="rounded-[12px] border border-dashed border-slate-300 bg-slate-50 p-3 opacity-60">
-                  <div className="mb-1 text-xs font-medium text-slate-500">{item.label}</div>
-                  <p className="text-sm leading-5 text-slate-400">{item.tip}</p>
-                </div>
-              ))}
-            </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">重点项</div>
+          <div className="text-xs text-[var(--color-text-secondary)]">
+            {myReports.length === 0 ? "示例内容 / 示范数据" : `最多展示 ${diagnosisItems.length} 项`}
           </div>
-        )}
-        {myReports.length > 0 && adviceItems.length > 0 && (
-          <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">动作建议</div>
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-40px" }}
-              className="space-y-2"
-            >
-              {adviceItems.map((item, i) => (
-                <motion.div
-                  key={`${item.dim}-${i}`}
-                  variants={itemVariants}
-                  className="rounded-[12px] border border-[#007AFF]/20 bg-[#007AFF]/5 p-3"
-                >
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#007AFF]/70">{item.label}</span>
-                    {item.isWeak && item.benchmark && (
-                      <span className="rounded-full bg-[#007AFF]/10 px-1.5 py-0.5 text-[10px] text-[#007AFF]/60">参考 {item.benchmark.name}</span>
-                    )}
-                    {!item.isWeak && item.second && (
-                      <span className="rounded-full bg-[#007AFF]/10 px-1.5 py-0.5 text-[10px] text-[#007AFF]/60">第二名 {item.second.name}</span>
-                    )}
+        </div>
+
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-3 lg:grid-cols-2">
+          {diagnosisItems.map((item) => {
+            const toneClass = item.tone === "weak" ? "border-orange-200/70 bg-orange-50/70" : "border-emerald-200/70 bg-emerald-50/70";
+            const badgeClass = item.tone === "weak" ? "bg-orange-100 text-orange-700" : "bg-emerald-100 text-emerald-700";
+
+            return (
+              <motion.article key={item.key} variants={itemVariants} className={`rounded-[18px] border p-4 ${toneClass}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                      {item.tone === "weak" ? <AlertTriangle className="size-4 text-orange-600" /> : <ShieldCheck className="size-4 text-emerald-600" />}
+                      <span>问题名：{item.title}</span>
+                    </div>
+                    {myReports.length === 0 ? (
+                      <div className="text-[11px] font-medium text-[var(--color-text-secondary)]">示例内容</div>
+                    ) : null}
                   </div>
-                  <p className="text-sm leading-5 text-[var(--color-text-primary)]">{item.tip}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        )}
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClass}`}>
+                    {item.tone === "weak" ? "优先处理" : "继续放大"}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-3 text-sm text-[var(--color-text-primary)]">
+                  <div className="rounded-[14px] border border-white/60 bg-white/75 p-3">
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                      <LineChart className="size-3.5" />
+                      数据证据
+                    </div>
+                    <p className="leading-6">{item.evidence}</p>
+                  </div>
+
+                  <div className="rounded-[14px] border border-white/60 bg-white/75 p-3">
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                      <Users className="size-3.5" />
+                      {item.benchmarkLabel}
+                    </div>
+                    <p className="leading-6">{item.benchmarkReason}</p>
+                  </div>
+
+                  <div className="rounded-[14px] border border-white/60 bg-white/75 p-3">
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                      <ArrowRight className="size-3.5" />
+                      下一步动作
+                    </div>
+                    <p className="leading-6">{item.action}</p>
+                  </div>
+                </div>
+              </motion.article>
+            );
+          })}
+
+          {diagnosisItems.length === 0 ? (
+            <div className="rounded-[16px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-4 text-sm text-[var(--color-text-secondary)]">
+              团队数据不足，暂时还不能给出有效对标。
+            </div>
+          ) : null}
+        </motion.div>
       </div>
     </MotionCard>
   );

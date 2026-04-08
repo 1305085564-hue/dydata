@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
+import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
 import AIChannelsClient from "./ai-channels-client";
 
 export default async function AIChannelsPage() {
@@ -29,7 +29,9 @@ export default async function AIChannelsPage() {
         eyebrow="AI Channel Console"
         title="AI 渠道管理"
         description="维护渠道优先级、健康状态和熔断恢复，保证 AI 调用稳定。"
-      />
+      >
+        <AdminSecondaryNav pathname="/admin/ai-channels" canManageAdmin />
+      </AppShellHero>
       <AppShellSection
         eyebrow="Channel Settings"
         title="渠道配置面板"
