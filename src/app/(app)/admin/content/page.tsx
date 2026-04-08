@@ -1,17 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
+import { loadAdminContentPageData } from "@/lib/loaders/admin-content-page";
 import { ContentList } from "./content-list";
-import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
-
-type VideoRow = Video & {
-  accounts: { name: string };
-  profiles: { name: string };
-};
-
-type FilterOption = Pick<Profile, "id" | "name">;
-type AccountOption = { id: string; name: string };
 
 export default async function AdminContentPage() {
   const perm = await getUserPermissions();
@@ -25,70 +17,39 @@ export default async function AdminContentPage() {
   }
 
   const supabase = await createClient();
-  const serviceClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const [
-    { data: videosRaw },
-    { data: snapshots },
-    { data: profiles },
-    { data: accounts },
-    { data: reviewedResults },
-  ] = await Promise.all([
-    supabase
-      .from("videos")
-      .select("*, accounts!inner(name), profiles!inner(name)"),
-    supabase
-      .from("video_metrics_snapshots")
-      .select("video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares")
-      .eq("snapshot_type", "24h")
-      .order("captured_at", { ascending: false }),
-    supabase.from("profiles").select("id, name").order("name", { ascending: true }),
-    supabase.from("accounts").select("id, name").order("name", { ascending: true }),
-    serviceClient
-      .from("ai_insight_result")
-      .select("result_json")
-      .eq("insight_type", "next_day_review")
-      .eq("result_status", "success"),
-  ]);
-
-  const videos = ((videosRaw ?? []) as VideoRow[]).sort((a, b) => {
-    const aTs = a.published_at ? new Date(a.published_at).getTime() : new Date(a.created_at).getTime();
-    const bTs = b.published_at ? new Date(b.published_at).getTime() : new Date(b.created_at).getTime();
-    return bTs - aTs;
-  });
-
-  // 已复盘 video_id 集合
-  const reviewedVideoIds = new Set<string>(
-    (reviewedResults ?? [])
-      .map((r) => {
-        const j = r.result_json as Record<string, unknown> | null;
-        return typeof j?.video_id === "string" ? j.video_id : null;
-      })
-      .filter((id): id is string => id !== null)
-  );
+  const data = await loadAdminContentPageData({ supabase });
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
-      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Content Console</p>
-          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">内容管理</h1>
-          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-            次日复盘工作台：把昨日文案和今日结果数据放在一起，快速定位问题、输出整改建议。
-          </p>
-        </div>
-      </section>
+    <AppShell width="wide" className="pb-8">
+      <AppShellHero
+        eyebrow="Content Console"
+        title="内容管理"
+        description="次日复盘工作台：把昨日文案和今日结果数据放在一起，快速定位问题、输出整改建议。"
+      >
+        <AppShellMetricStrip
+          columns={4}
+          items={[
+            { label: "内容总量", value: data.summary.totalVideos, hint: "当前纳入复盘的视频", tone: "primary" },
+            { label: "已复盘", value: data.summary.reviewedCount, hint: "已有次日复盘结果", tone: "success" },
+            { label: "24h 样本", value: data.summary.snapshotCount, hint: "可用于复盘的快照", tone: "neutral" },
+            { label: "待复盘", value: data.summary.pendingReviewCount, hint: "还没处理的内容", tone: data.summary.pendingReviewCount > 0 ? "warning" : "neutral" },
+          ]}
+        />
+      </AppShellHero>
 
-      <ContentList
-        videos={videos}
-        snapshots={(snapshots ?? []) as VideoMetricsSnapshot[]}
-        profiles={(profiles ?? []) as FilterOption[]}
-        accounts={(accounts ?? []) as AccountOption[]}
-        reviewedVideoIds={Array.from(reviewedVideoIds)}
-      />
-    </div>
+      <AppShellSection
+        eyebrow="Review Queue"
+        title="复盘列表"
+        description="按人、账号、样本状态和复盘状态筛选待处理内容。"
+      >
+        <ContentList
+          videos={data.videos}
+          snapshots={data.snapshots}
+          profiles={data.profiles}
+          accounts={data.accounts}
+          reviewedVideoIds={data.reviewedVideoIds}
+        />
+      </AppShellSection>
+    </AppShell>
   );
 }

@@ -149,6 +149,7 @@
     @apply bg-background text-foreground;
     background:
       radial-gradient(circle at 12% -12%, color-mix(in srgb, var(--primary) 10%, white) 0%, transparent 34%),
+      radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--color-success) 8%, white) 0%, transparent 28%),
       linear-gradient(180deg, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 95%, white) 100%);
     color: var(--color-text-primary);
   }
@@ -241,11 +242,11 @@
     content: "";
     position: absolute;
     inset: 0 0 auto;
-    height: 12rem;
-    border-radius: 0 0 2rem 2rem;
+    height: 13rem;
+    border-radius: 0 0 2.25rem 2.25rem;
     background:
-      linear-gradient(180deg, color-mix(in srgb, white 66%, var(--background)) 0%, transparent 100%);
-    opacity: 0.66;
+      linear-gradient(180deg, color-mix(in srgb, white 74%, var(--background)) 0%, transparent 100%);
+    opacity: 0.72;
     pointer-events: none;
     z-index: -1;
   }
@@ -256,9 +257,12 @@
 
   .app-toolbar-inner {
     border: 1px solid color-mix(in srgb, var(--color-border) 82%, white);
-    border-radius: calc(var(--radius-card) + 2px);
-    background: color-mix(in srgb, var(--nav-bg) 95%, white);
-    box-shadow: var(--shadow-light);
+    border-radius: calc(var(--radius-card) + 4px);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--nav-bg) 96%, white) 0%, color-mix(in srgb, var(--nav-bg) 88%, white) 100%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.48) inset,
+      0 12px 28px -22px rgba(15, 23, 42, 0.28);
     backdrop-filter: var(--nav-blur);
     -webkit-backdrop-filter: var(--nav-blur);
   }
@@ -292,8 +296,8 @@
     content: "";
     position: absolute;
     inset: 0 0 auto;
-    height: 14rem;
-    border-radius: 0 0 2rem 2rem;
+    height: 15rem;
+    border-radius: 0 0 2.25rem 2.25rem;
     background:
       radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 8%, white) 0%, transparent 38%),
       linear-gradient(180deg, color-mix(in srgb, white 88%, var(--background)) 0%, transparent 78%);
@@ -327,6 +331,251 @@
     font-size: clamp(1rem, 0.95rem + 0.3vw, 1.2rem);
     font-weight: 700;
     letter-spacing: -0.02em;
+  }
+
+  .app-shell {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .app-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 18rem;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      radial-gradient(circle at 14% 12%, color-mix(in srgb, var(--primary) 10%, white) 0%, transparent 34%),
+      radial-gradient(circle at 86% 4%, color-mix(in srgb, var(--color-success) 7%, white) 0%, transparent 30%),
+      linear-gradient(180deg, color-mix(in srgb, white 92%, var(--background)) 0%, transparent 100%);
+    opacity: 0.78;
+  }
+
+  .app-shell-frame {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .app-shell-surface,
+  .app-shell-hero,
+  .app-shell-section,
+  .app-shell-metric-strip,
+  .app-shell-panel {
+    border: 1px solid color-mix(in srgb, var(--color-border) 76%, white);
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .app-shell-surface {
+    border-radius: 1.5rem;
+    background: color-mix(in srgb, var(--glass-bg) 94%, white);
+  }
+
+  .app-shell-hero {
+    border-radius: 1.75rem;
+    background:
+      linear-gradient(145deg, color-mix(in srgb, white 84%, var(--primary)) 0%, color-mix(in srgb, white 96%, var(--background)) 100%);
+  }
+
+  .app-shell-section {
+    border-radius: 1.5rem;
+    background: color-mix(in srgb, var(--glass-bg) 94%, white);
+  }
+
+  .app-shell-panel {
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, white 88%, var(--background));
+  }
+
+  .app-shell-heading {
+    letter-spacing: -0.03em;
+  }
+
+  .app-shell-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--primary) 64%, var(--color-text-secondary));
+  }
+
+  .app-shell-title {
+    font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.25rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    color: var(--color-text-primary);
+  }
+
+  .app-shell-subtitle {
+    max-width: 42rem;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--color-text-secondary);
+  }
+
+  .app-shell-header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .app-shell-metric-strip {
+    display: grid;
+    gap: 0.75rem;
+    border-radius: 1.25rem;
+    background: color-mix(in srgb, white 82%, var(--background));
+    padding: 0.75rem;
+  }
+
+  .app-shell-metric-strip[data-columns="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-shell-metric-strip[data-columns="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .app-shell-metric-strip[data-columns="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .app-shell-metric-strip[data-columns="5"] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .app-shell-metric {
+    display: flex;
+    min-height: 4.5rem;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-radius: 1.1rem;
+    border: 1px solid color-mix(in srgb, var(--color-border) 72%, white);
+    background: color-mix(in srgb, white 90%, var(--background));
+    padding: 0.9rem 1rem;
+  }
+
+  .app-shell-metric[data-tone="primary"] {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 9%, white) 0%, color-mix(in srgb, white 92%, var(--background)) 100%);
+  }
+
+  .app-shell-metric[data-tone="success"] {
+    background: linear-gradient(180deg, rgba(236, 253, 245, 0.98) 0%, rgba(255, 255, 255, 0.96) 100%);
+  }
+
+  .app-shell-metric[data-tone="warning"] {
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.98) 0%, rgba(255, 255, 255, 0.96) 100%);
+  }
+
+  .app-shell-metric[data-tone="danger"] {
+    background: linear-gradient(180deg, rgba(254, 242, 242, 0.98) 0%, rgba(255, 255, 255, 0.96) 100%);
+  }
+
+  .app-shell-metric-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  .app-shell-metric-value {
+    font-size: clamp(1.15rem, 1rem + 0.8vw, 1.6rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
+  }
+
+  .app-shell-metric-hint {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+  }
+
+  .app-shell-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.15rem 0 0.9rem;
+  }
+
+  .app-shell-section-title {
+    font-size: clamp(1rem, 0.95rem + 0.35vw, 1.2rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  .app-shell-section-description {
+    max-width: 42rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+  }
+
+  .app-shell-section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--color-border) 92%, white) 50%, transparent 100%);
+  }
+
+  .dark .app-shell::before {
+    background:
+      radial-gradient(circle at 14% 12%, color-mix(in srgb, var(--primary) 14%, transparent) 0%, transparent 36%),
+      radial-gradient(circle at 86% 4%, color-mix(in srgb, var(--color-success) 10%, transparent) 0%, transparent 32%),
+      linear-gradient(180deg, rgba(15, 17, 21, 0.88) 0%, transparent 100%);
+  }
+
+  .dark .app-shell-surface,
+  .dark .app-shell-hero,
+  .dark .app-shell-section,
+  .dark .app-shell-metric-strip,
+  .dark .app-shell-panel {
+    border-color: color-mix(in srgb, var(--color-border) 84%, transparent);
+    background: color-mix(in srgb, var(--glass-bg) 92%, transparent);
+  }
+
+  .dark .app-shell-hero {
+    background: linear-gradient(145deg, rgba(20, 24, 31, 0.92) 0%, rgba(20, 24, 31, 0.74) 100%);
+  }
+
+  .dark .app-shell-section,
+  .dark .app-shell-panel {
+    background: color-mix(in srgb, var(--glass-bg) 92%, transparent);
+  }
+
+  .dark .app-shell-metric {
+    border-color: color-mix(in srgb, var(--color-border) 84%, transparent);
+    background: color-mix(in srgb, var(--glass-bg) 92%, transparent);
+  }
+
+  .dark .app-shell-metric[data-tone="primary"] {
+    background: linear-gradient(180deg, rgba(10, 132, 255, 0.18) 0%, rgba(20, 24, 31, 0.92) 100%);
+  }
+
+  .dark .app-shell-metric[data-tone="success"] {
+    background: linear-gradient(180deg, rgba(6, 78, 59, 0.58) 0%, rgba(20, 24, 31, 0.92) 100%);
+  }
+
+  .dark .app-shell-metric[data-tone="warning"] {
+    background: linear-gradient(180deg, rgba(120, 53, 15, 0.58) 0%, rgba(20, 24, 31, 0.92) 100%);
+  }
+
+  .dark .app-shell-metric[data-tone="danger"] {
+    background: linear-gradient(180deg, rgba(127, 29, 29, 0.58) 0%, rgba(20, 24, 31, 0.92) 100%);
+  }
+
+  .dark .app-shell-section-divider {
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--color-border) 88%, transparent) 50%, transparent 100%);
   }
 
   .dashboard-section-kicker {

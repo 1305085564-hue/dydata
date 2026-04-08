@@ -1,3 +1,56 @@
+import type { SubmissionAssetMeta } from "@/types";
+import {
+  normalizeDateOnly,
+  normalizeInteger,
+  normalizeNumber,
+  normalizeOptionalDate,
+  normalizeOptionalText,
+  normalizeSubmissionAssets,
+  normalizeVideoIdLike,
+} from "./stability";
+
+export interface VideoSubmitValidationMetrics {
+  play_count: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  favorites: number;
+  follower_gain: number;
+  follower_loss: number;
+  follower_convert: number;
+  avg_play_duration: number;
+  bounce_rate_2s: number;
+  completion_rate_5s: number;
+  completion_rate: number;
+}
+
+export interface VideoSubmitValidationResult {
+  ok: true;
+  normalized: {
+    account_id: string;
+    video_id: string | null;
+    video_url: string | null;
+    video_title: string;
+    content: string;
+    published_at: string | null;
+    published_at_text: string | null;
+    biz_date: string;
+    anomaly_status: string;
+    topic_tag: string | null;
+    content_keywords: string[];
+    assets: SubmissionAssetMeta[];
+    metrics: VideoSubmitValidationMetrics;
+  };
+  contentKeywords: string[];
+}
+
+export interface VideoSubmitValidationErrorResult {
+  ok: false;
+  error: string;
+}
+
+export type VideoSubmitValidationOutcome = VideoSubmitValidationResult | VideoSubmitValidationErrorResult;
+
 export function normalizeContentKeywords(value: unknown) {
   if (!Array.isArray(value)) return [];
 
@@ -9,23 +62,61 @@ export function normalizeContentKeywords(value: unknown) {
   return Array.from(new Set(normalized)).slice(0, 3);
 }
 
-export function validateVideoSubmitPayload(body: {
-  account_id?: string;
-  video_title?: string | null;
-  content?: string | null;
-  content_keywords?: unknown;
-}) {
-  if (!body.account_id) {
-    return { ok: false as const, error: "account_id 为必填项" };
+function normalizeMetrics(value: unknown): VideoSubmitValidationMetrics {
+  const metrics = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+
+  return {
+    play_count: normalizeNumber(metrics.play_count),
+    likes: normalizeInteger(metrics.likes),
+    comments: normalizeInteger(metrics.comments),
+    shares: normalizeInteger(metrics.shares),
+    favorites: normalizeInteger(metrics.favorites),
+    follower_gain: normalizeInteger(metrics.follower_gain),
+    follower_loss: normalizeInteger(metrics.follower_loss),
+    follower_convert: normalizeInteger(metrics.follower_convert),
+    avg_play_duration: normalizeNumber(metrics.avg_play_duration),
+    bounce_rate_2s: normalizeNumber(metrics.bounce_rate_2s),
+    completion_rate_5s: normalizeNumber(metrics.completion_rate_5s),
+    completion_rate: normalizeNumber(metrics.completion_rate),
+  };
+}
+
+export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidationOutcome {
+  if (!body || typeof body !== "object") {
+    return { ok: false, error: "请求体格式不正确" };
   }
 
-  const title = typeof body.video_title === "string" ? body.video_title.trim() : "";
-  const content = typeof body.content === "string" ? body.content.trim() : "";
-  const keywords = normalizeContentKeywords(body.content_keywords);
+  const payload = body as Record<string, unknown>;
+  const accountId = typeof payload.account_id === "string" ? payload.account_id.trim() : "";
+  if (!accountId) {
+    return { ok: false, error: "account_id 为必填项" };
+  }
+
+  const title = normalizeOptionalText(payload.video_title);
+  const content = normalizeOptionalText(payload.content);
+  const keywords = normalizeContentKeywords(payload.content_keywords);
 
   if (!title || !content || keywords.length === 0) {
-    return { ok: false as const, error: "标题、文案、内容标签为必填项" };
+    return { ok: false, error: "标题、文案、内容标签为必填项" };
   }
 
-  return { ok: true as const, contentKeywords: keywords };
+  return {
+    ok: true,
+    contentKeywords: keywords,
+    normalized: {
+      account_id: accountId,
+      video_id: normalizeVideoIdLike(payload.video_id),
+      video_url: normalizeOptionalText(payload.video_url),
+      video_title: title,
+      content,
+      published_at: normalizeOptionalDate(payload.published_at),
+      published_at_text: normalizeOptionalText(payload.published_at_text),
+      biz_date: normalizeDateOnly(payload.biz_date),
+      anomaly_status: normalizeOptionalText(payload.anomaly_status) ?? "正常",
+      topic_tag: normalizeOptionalText(payload.topic_tag),
+      content_keywords: keywords,
+      assets: normalizeSubmissionAssets(payload.assets),
+      metrics: normalizeMetrics(payload.metrics),
+    },
+  };
 }

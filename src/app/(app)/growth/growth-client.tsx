@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart2 } from "lucide-react";
+import { BarChart2, Sparkles, Target, TrendingUp } from "lucide-react";
 import { 六维雷达面板 } from "@/components/growth/六维雷达面板";
 import { DiagnosisCard } from "@/components/growth/diagnosis-card";
 import { StatusCardGrid } from "@/components/growth/status-card-grid";
@@ -8,6 +8,7 @@ import { ScriptBreakdown } from "@/components/growth/script-breakdown";
 import { AdvicePanel } from "@/components/growth/advice-panel";
 import { GrowthInsightPanel } from "@/components/growth/growth-insight-panel";
 import { GrowthPkPanel } from "@/components/growth/growth-pk-panel";
+import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { AdviceSections, GrowthDimensionCard, GrowthPkRow, ScriptBreakdownData, StatusCardItem, WeakBenchmarkCard } from "@/lib/growth-page";
 import type { MetricsReport } from "@/lib/metrics";
@@ -31,6 +32,10 @@ interface GrowthClientShellProps {
   myReports: MetricsReport[];
   teamReports: MetricsReport[];
   teamMembers?: TeamMember[];
+  summary: {
+    hasEnoughData: boolean;
+    weakestDimension: string | null;
+  };
 }
 
 export function GrowthClientShell({
@@ -46,50 +51,105 @@ export function GrowthClientShell({
   myReports,
   teamReports,
   teamMembers = [],
+  summary,
 }: GrowthClientShellProps) {
-  const hasEnoughData = reportCount >= 3;
+  const hasEnoughData = summary.hasEnoughData;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-12 pt-3 sm:px-6 lg:px-8">
-      <div className="space-y-7">
-        <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Growth Analysis</p>
-              <div className="space-y-2">
-                <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">成长分析总览</h1>
-                <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-                  先看能力分布与诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。
-                </p>
-              </div>
-            </div>
-            <div className="grid gap-2 rounded-2xl border border-white/80 bg-white/85 p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[280px]">
-              <div className="font-medium text-[var(--color-text-primary)]">当前样本</div>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">{profileName} · {accountCount} 个账号 · 近30天 {reportCount} 条数据</p>
-              <p>{hasEnoughData ? "已满足成长分析最小样本要求" : `再提交 ${3 - reportCount} 天即可解锁完整分析`}</p>
-            </div>
+    <AppShell width="wide" className="pb-12">
+      <AppShellHero
+        eyebrow="Growth Analysis"
+        title="成长分析总览"
+        description="先看能力分布和诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。"
+        meta={
+          <div className="dashboard-summary-chip text-xs sm:text-sm">
+            <Sparkles className="size-3.5" />
+            {hasEnoughData ? "已满足最小样本要求" : `再提交 ${3 - reportCount} 天即可解锁完整分析`}
           </div>
-        </section>
+        }
+      >
+        <AppShellMetricStrip
+          columns={4}
+          items={[
+            {
+              label: "分析主体",
+              value: profileName || "当前账号",
+              hint: "当前成长视角",
+              tone: "primary",
+            },
+            {
+              label: "账号数量",
+              value: `${accountCount} 个`,
+              hint: "参与分析的账号",
+              tone: "neutral",
+            },
+            {
+              label: "近 30 天样本",
+              value: `${reportCount} 条`,
+              hint: hasEnoughData ? "可生成完整分析" : "样本还在累积",
+              tone: hasEnoughData ? "success" : "warning",
+            },
+            {
+              label: "当前最弱项",
+              value: summary.weakestDimension ?? "待积累",
+              hint: "优先优化这个维度",
+              tone: summary.weakestDimension ? "warning" : "neutral",
+            },
+          ]}
+        />
+      </AppShellHero>
 
-        {!hasEnoughData ? (
+      {!hasEnoughData ? (
+        <AppShellSection eyebrow="Activation" title="先完成连续提交" description="成长分析需要连续样本，样本够了再看诊断会更准。">
           <EmptyState
             icon={BarChart2}
             title="连续提交 3 天后解锁分析"
             description={`当前已有 ${reportCount} 条数据，再提交 ${3 - reportCount} 天即可解锁成长分析`}
             className="py-16"
           />
-        ) : (
-          <div className="space-y-5">
+        </AppShellSection>
+      ) : (
+        <div className="space-y-6">
+          <AppShellSection
+            eyebrow="Performance Snapshot"
+            title="先看结果变化"
+            description="这组数字先回答最近 7 天是变好还是变差。"
+            meta={<div className="dashboard-summary-chip"><TrendingUp className="size-3.5" /> 最近 7 天 vs 上一个 7 天</div>}
+          >
             <StatusCardGrid items={statusCards} />
+          </AppShellSection>
+
+          <AppShellSection
+            eyebrow="Capability Map"
+            title="再看能力分布"
+            description="六维能力和弱项对标放在一起，看清差距来自哪里。"
+            meta={<div className="dashboard-summary-chip"><Target className="size-3.5" /> 当前最弱项：{summary.weakestDimension ?? "待积累"}</div>}
+          >
             <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
-            {pkPanel ? <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} /> : null}
+          </AppShellSection>
+
+          {pkPanel ? (
+            <AppShellSection eyebrow="Peer Battle" title="同标签对比" description="和最接近你的对手对比，优先找能直接复制的差距。">
+              <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} />
+            </AppShellSection>
+          ) : null}
+
+          <AppShellSection eyebrow="Diagnosis" title="诊断建议" description="结合团队均值，先明确当前最该动的地方。">
             <DiagnosisCard myReports={myReports} teamReports={teamReports} />
+          </AppShellSection>
+
+          <AppShellSection eyebrow="Script Review" title="文案拆解" description="把最近作品拆开看，判断问题是在开头、中段还是结尾。">
             <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
-            <GrowthInsightPanel />
-            <AdvicePanel data={advice} noData={myReports.length === 0} />
-          </div>
-        )}
-      </div>
-    </div>
+          </AppShellSection>
+
+          <AppShellSection eyebrow="AI Insight" title="AI 洞察与行动建议" description="先看 AI 总结，再决定下一轮怎么改。">
+            <div className="space-y-5">
+              <GrowthInsightPanel />
+              <AdvicePanel data={advice} noData={myReports.length === 0} />
+            </div>
+          </AppShellSection>
+        </div>
+      )}
+    </AppShell>
   );
 }

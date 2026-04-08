@@ -1,16 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
+import { loadAdminVideosPageData } from "@/lib/loaders/admin-videos-page";
 import { VideoList } from "./video-list";
-import type { Profile, Video, VideoMetricsSnapshot, VideoTag } from "@/types";
-
-type VideoRow = Video & {
-  accounts: { name: string };
-  profiles: { name: string };
-};
-
-type FilterOption = Pick<Profile, "id" | "name">;
-type AccountOption = { id: string; name: string };
 
 export default async function AdminVideosPage() {
   const perm = await getUserPermissions();
@@ -24,38 +17,39 @@ export default async function AdminVideosPage() {
   }
 
   const supabase = await createClient();
-
-  const [{ data: videos }, { data: snapshots }, { data: profiles }, { data: accounts }, { data: videoTags }] =
-    await Promise.all([
-      supabase
-        .from("videos")
-        .select("*, accounts!inner(name), profiles!inner(name)")
-        .order("published_at", { ascending: false }),
-      supabase.from("video_metrics_snapshots").select("*"),
-      supabase.from("profiles").select("id, name").order("name", { ascending: true }),
-      supabase.from("accounts").select("id, name").order("name", { ascending: true }),
-      supabase.from("video_tags").select("*"),
-    ]);
+  const data = await loadAdminVideosPageData({ supabase });
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
-      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:p-6">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Video Console</p>
-          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">视频管理</h1>
-          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-            按账号、负责人、日期和状态查看全部视频与 24h 快照。
-          </p>
-        </div>
-      </section>
+    <AppShell width="wide" className="pb-8">
+      <AppShellHero
+        eyebrow="Video Console"
+        title="视频管理"
+        description="按账号、负责人、日期和状态查看全部视频与 24h 快照。"
+      >
+        <AppShellMetricStrip
+          columns={4}
+          items={[
+            { label: "视频总量", value: data.summary.totalVideos, hint: "当前已录入视频", tone: "primary" },
+            { label: "已打标签", value: data.summary.taggedVideos, hint: "已有标签结果", tone: "success" },
+            { label: "24h 快照", value: data.summary.snapshotCount, hint: "已生成的快照数", tone: "neutral" },
+            { label: "异常视频", value: data.summary.abnormalCount, hint: "需要优先排查", tone: data.summary.abnormalCount > 0 ? "warning" : "neutral" },
+          ]}
+        />
+      </AppShellHero>
 
-      <VideoList
-        videos={(videos ?? []) as VideoRow[]}
-        snapshots={(snapshots ?? []) as VideoMetricsSnapshot[]}
-        profiles={(profiles ?? []) as FilterOption[]}
-        accounts={(accounts ?? []) as AccountOption[]}
-        videoTags={(videoTags ?? []) as VideoTag[]}
-      />
-    </div>
+      <AppShellSection
+        eyebrow="Video Table"
+        title="视频列表"
+        description="筛选、补齐 24h 数据、查看详情都集中在这一块。"
+      >
+        <VideoList
+          videos={data.videos}
+          snapshots={data.snapshots}
+          profiles={data.profiles}
+          accounts={data.accounts}
+          videoTags={data.videoTags}
+        />
+      </AppShellSection>
+    </AppShell>
   );
 }

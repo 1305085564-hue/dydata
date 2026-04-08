@@ -336,6 +336,7 @@ function createSummaryOverride(
     shares: parseMetric(fields.shares.value),
     favorites: parseMetric(fields.favorites.value),
     follower_gain: parseMetric(fields.follower_gain.value),
+    follower_convert: parseMetric(fields.follower_convert.value),
     completion_rate: stringifyMetric(fields.completion_rate.value),
     avg_play_duration: stringifyMetric(fields.avg_play_duration.value),
     bounce_rate_2s: stringifyMetric(fields.bounce_rate_2s.value),

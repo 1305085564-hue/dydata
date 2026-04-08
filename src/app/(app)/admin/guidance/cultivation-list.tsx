@@ -119,19 +119,7 @@ export function CultivationList(props: GuidanceInput) {
   const result = useMemo(() => buildGuidanceResult(props), [props]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-2 sm:px-6 lg:px-8">
-      <div className="space-y-3">
-        <div className="inline-flex items-center rounded-full border border-white/70 bg-white/75 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-xl">
-          Admin Guidance
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">个性化指导</h1>
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            基于近 30 天账号表现，识别值得重点培养、需要下滑干预、以及目标模式和实际表现存在错配的账号。
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="纳入账号" value={result.accountCount} tone="" />
         <SummaryCard label="重点培养" value={result.cultivation.length} tone="" />

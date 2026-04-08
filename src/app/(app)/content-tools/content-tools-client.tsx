@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Lightbulb, LibraryBig, Clock3 } from "lucide-react";
-
+import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { cn } from "@/lib/utils";
-
 import { TopicSuggest } from "./topic-suggest";
 import { TemplateLibrary } from "./template-library";
 import { PublishRecommend } from "./publish-recommend";
@@ -20,28 +19,23 @@ const TABS: Array<{ key: TabKey; label: string; icon: typeof Lightbulb; descript
 
 interface ContentToolsClientProps {
   accounts: ContentToolAccount[];
+  summary: {
+    accountCount: number;
+    directionCount: number;
+  };
 }
 
-export function ContentToolsClient({ accounts }: ContentToolsClientProps) {
+export function ContentToolsClient({ accounts, summary }: ContentToolsClientProps) {
   const [tab, setTab] = useState<TabKey>("topic");
-
   const currentTab = useMemo(() => TABS.find((item) => item.key === tab) ?? TABS[0], [tab]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-2 sm:px-6 lg:px-8">
-      <section className="glass-card-static overflow-hidden p-5 sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <div className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-              3F 内容生产辅助
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">内容工具台</h1>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                基于近期爆款、标签分布、热点板块和发布时间数据，给出更直接的内容生产建议。
-              </p>
-            </div>
-          </div>
+    <AppShell width="wide" className="pb-8">
+      <AppShellHero
+        eyebrow="3F 内容生产辅助"
+        title="内容工具台"
+        description="基于近期爆款、标签分布、热点板块和发布时间数据，给出更直接的内容生产建议。"
+        actions={
           <div className="rounded-3xl border border-border/60 bg-background/70 p-1 ring-1 ring-foreground/8 backdrop-blur">
             <div className="grid grid-cols-3 gap-1">
               {TABS.map((item) => {
@@ -66,26 +60,30 @@ export function ContentToolsClient({ accounts }: ContentToolsClientProps) {
               })}
             </div>
           </div>
-        </div>
-      </section>
+        }
+      >
+        <AppShellMetricStrip
+          columns={3}
+          items={[
+            { label: "接入账号", value: `${summary.accountCount} 个`, hint: "当前可分析账号", tone: "primary" },
+            { label: "内容方向", value: `${summary.directionCount} 类`, hint: "已识别方向数", tone: "neutral" },
+            { label: "当前工具", value: currentTab.label, hint: currentTab.description, tone: "success" },
+          ]}
+        />
+      </AppShellHero>
 
-      <section className="rounded-[28px] border border-border/60 bg-background/80 p-5 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl sm:p-6">
-        <div className="mb-5 flex items-start justify-between gap-4 border-b border-border/60 pb-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">{currentTab.label}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{currentTab.description}</p>
-          </div>
-          <div className="hidden rounded-2xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground md:block">
-            账号数 {accounts.length}
-          </div>
-        </div>
-
+      <AppShellSection
+        eyebrow="Tool Workspace"
+        title={currentTab.label}
+        description={currentTab.description}
+        meta={<div className="dashboard-summary-chip hidden md:inline-flex">账号数 {accounts.length}</div>}
+      >
         <div className="space-y-4">
           {tab === "topic" ? <TopicSuggest accounts={accounts} /> : null}
           {tab === "template" ? <TemplateLibrary accounts={accounts} /> : null}
           {tab === "publish" ? <PublishRecommend accounts={accounts} /> : null}
         </div>
-      </section>
-    </div>
+      </AppShellSection>
+    </AppShell>
   );
 }

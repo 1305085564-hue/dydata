@@ -9,6 +9,7 @@ export interface TodaySubmissionReportLike {
   shares: number | null;
   favorites: number | null;
   follower_gain: number | null;
+  follower_convert: number | null;
   completion_rate: string | null;
   avg_play_duration: string | null;
   bounce_rate_2s: string | null;
@@ -28,6 +29,7 @@ export interface TodaySubmissionSummary {
   shares: number | null;
   favorites: number | null;
   followerGain: number | null;
+  followerConvert: number | null;
   completionRate: string | null;
   avgPlayDuration: string | null;
   bounceRate2s: string | null;
@@ -84,6 +86,7 @@ export function getTodaySubmissionSummary(
     shares: matched.shares,
     favorites: matched.favorites,
     followerGain: matched.follower_gain,
+    followerConvert: matched.follower_convert ?? null,
     completionRate: matched.completion_rate,
     avgPlayDuration: matched.avg_play_duration,
     bounceRate2s: matched.bounce_rate_2s,

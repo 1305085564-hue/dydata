@@ -2,69 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { callAiJson } from "@/lib/ai/client";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
-import type { SubmissionAssetMeta } from "@/types";
 import { validateVideoSubmitPayload } from "./validation";
+import { buildSubmissionRecordId } from "./stability";
 
-type VideoSubmitRequestBody = {
-  account_id?: string;
-  video_id?: string;
-  video_url?: string | null;
-  video_title?: string | null;
-  content?: string | null;
-  published_at?: string | null;
-  published_at_text?: string | null;
-  biz_date?: string | null;
-  anomaly_status?: string | null;
-  topic_tag?: string | null;
-  content_keywords?: string[];
-  assets?: SubmissionAssetMeta[];
-  metrics?: {
-    play_count?: number;
-    likes?: number;
-    comments?: number;
-    shares?: number;
-    favorites?: number;
-    follower_gain?: number;
-    follower_loss?: number;
-    follower_convert?: number;
-    avg_play_duration?: number;
-    bounce_rate_2s?: number;
-    completion_rate_5s?: number;
-    completion_rate?: number;
-  };
-};
+type RollbackAction = () => Promise<void>;
 
-function normalizeOptionalText(value: unknown) {
-  return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-function normalizeOptionalDate(value: unknown) {
-  if (typeof value !== "string" || !value.trim()) {
-    return null;
-  }
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
-function normalizeDateOnly(value: unknown, fallback = getTodayDateString()) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return fallback;
-  }
-
-  return value;
-}
-
-function normalizeNumber(value: unknown, fallback = 0) {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function normalizeInteger(value: unknown, fallback = 0) {
-  return Math.round(normalizeNumber(value, fallback));
-}
-
-function getTodayDateString(now: Date = new Date()) {
-  return now.toISOString().split("T")[0];
+function stripId<T extends Record<string, unknown>>(row: T) {
+  const { id: _id, ...rest } = row;
+  return rest;
 }
 
 function buildTagPrompt(content: string) {
@@ -113,6 +58,16 @@ function extractJsonFromContent(content: string): string | null {
   return content.slice(start, end + 1);
 }
 
+async function rollbackSafely(actions: RollbackAction[]) {
+  for (const action of [...actions].reverse()) {
+    try {
+      await action();
+    } catch {
+      // 回滚失败不覆盖主错误，尽量回收剩余已知状态。
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
@@ -124,28 +79,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  let body: VideoSubmitRequestBody;
+  let body: unknown;
 
   try {
-    body = (await request.json()) as VideoSubmitRequestBody;
+    body = await request.json();
   } catch {
     return NextResponse.json({ error: "请求体格式不正确" }, { status: 400 });
-  }
-
-  const account_id = typeof body.account_id === "string" ? body.account_id : "";
-
-  if (!account_id) {
-    return NextResponse.json({ error: "account_id 为必填项" }, { status: 400 });
-  }
-
-  const { data: account, error: accountError } = await supabase
-    .from("accounts")
-    .select("id, profile_id")
-    .eq("id", account_id)
-    .single();
-
-  if (accountError || !account || account.profile_id !== user.id) {
-    return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
   }
 
   const validationResult = validateVideoSubmitPayload(body);
@@ -153,10 +92,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: validationResult.error }, { status: 400 });
   }
 
-  const contentKeywords = validationResult.contentKeywords;
-  const metrics = body.metrics ?? {};
-  const assets = Array.isArray(body.assets) ? body.assets : [];
-  const bizDate = normalizeDateOnly(body.biz_date);
+  const normalized = validationResult.normalized;
+
+  const { data: account, error: accountError } = await supabase
+    .from("accounts")
+    .select("id, profile_id")
+    .eq("id", normalized.account_id)
+    .single();
+
+  if (accountError || !account || account.profile_id !== user.id) {
+    return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
+  }
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -169,74 +115,87 @@ export async function POST(request: NextRequest) {
   }
 
   const submitter = profile?.name ?? "未知";
-  const anomaly_status = normalizeOptionalText(body.anomaly_status) ?? "正常";
-
-  const roundedPlayCount = normalizeNumber(metrics.play_count);
-  const roundedLikes = normalizeInteger(metrics.likes);
-  const roundedComments = normalizeInteger(metrics.comments);
-  const roundedShares = normalizeInteger(metrics.shares);
-  const roundedFavorites = normalizeInteger(metrics.favorites);
-  const roundedFollowerGain = normalizeInteger(metrics.follower_gain);
-  const roundedFollowerLoss = normalizeInteger(metrics.follower_loss);
-  const roundedFollowerConvert = normalizeInteger(metrics.follower_convert);
-  const roundedAvgPlayDuration = normalizeNumber(metrics.avg_play_duration);
-  const roundedCompletionRate = normalizeNumber(metrics.completion_rate);
-  const roundedBounceRate2s = normalizeNumber(metrics.bounce_rate_2s);
-  const roundedCompletionRate5s = normalizeNumber(metrics.completion_rate_5s);
+  const submissionVideoId = buildSubmissionRecordId(normalized);
+  const nowIso = new Date().toISOString();
+  const rollbackActions: RollbackAction[] = [];
 
   const videoPayload = {
-    account_id,
+    id: submissionVideoId,
+    account_id: normalized.account_id,
     user_id: user.id,
-    video_url: normalizeOptionalText(body.video_url),
-    video_title: normalizeOptionalText(body.video_title),
-    content: normalizeOptionalText(body.content),
-    published_at: normalizeOptionalDate(body.published_at),
-    anomaly_status,
+    video_url: normalized.video_url,
+    video_title: normalized.video_title,
+    content: normalized.content,
+    published_at: normalized.published_at,
+    uploaded_at: nowIso,
+    anomaly_status: normalized.anomaly_status,
   };
 
-  const { data: newVideo, error: videoError } = await supabase
+  const { data: existingVideo, error: existingVideoError } = await supabase
     .from("videos")
-    .insert(videoPayload)
-    .select("*")
-    .single();
+    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at")
+    .eq("id", submissionVideoId)
+    .maybeSingle();
 
-  if (videoError || !newVideo) {
+  if (existingVideoError) {
+    return NextResponse.json({ error: existingVideoError.message }, { status: 500 });
+  }
+
+  if (existingVideo) {
+    rollbackActions.push(async () => {
+      const { error } = await supabase.from("videos").update(stripId(existingVideo)).eq("id", existingVideo.id);
+      if (error) throw error;
+    });
+  } else {
+    rollbackActions.push(async () => {
+      const { error } = await supabase.from("videos").delete().eq("id", submissionVideoId);
+      if (error) throw error;
+    });
+  }
+
+  const { data: persistedVideo, error: videoError } = existingVideo
+    ? await supabase.from("videos").update(stripId(videoPayload)).eq("id", submissionVideoId).select("*").single()
+    : await supabase.from("videos").insert(videoPayload).select("*").single();
+
+  if (videoError || !persistedVideo) {
+    await rollbackSafely(rollbackActions);
     return NextResponse.json({ error: videoError?.message || "视频记录创建失败" }, { status: 500 });
   }
 
-  const screenshotUrls = assets.map((asset) => asset.url);
-  const ocrSummary = assets.reduce<Record<string, unknown>>((acc, asset) => {
-    const fields = (asset as SubmissionAssetMeta & { recognized_fields?: Record<string, unknown> | null }).recognized_fields;
+  const screenshotUrls = normalized.assets.map((asset) => asset.url);
+  const ocrSummary = normalized.assets.reduce<Record<string, unknown>>((acc, asset) => {
+    const fields = asset.recognized_fields;
     if (fields) {
       acc[asset.role] = fields;
     }
     return acc;
   }, {});
-  const curveScreenshotUrl = assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
-  const retentionScreenshotUrl = assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
+
+  const curveScreenshotUrl = normalized.assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
+  const retentionScreenshotUrl = normalized.assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
 
   const snapshotPayload = {
-    video_id: newVideo.id,
+    video_id: persistedVideo.id,
     snapshot_type: "24h",
-    play_count: roundedPlayCount,
-    likes: roundedLikes,
-    comments: roundedComments,
-    shares: roundedShares,
-    favorites: roundedFavorites,
-    follower_gain: roundedFollowerGain,
-    follower_loss: roundedFollowerLoss,
-    follower_convert: roundedFollowerConvert,
+    play_count: normalized.metrics.play_count,
+    likes: normalized.metrics.likes,
+    comments: normalized.metrics.comments,
+    shares: normalized.metrics.shares,
+    favorites: normalized.metrics.favorites,
+    follower_gain: normalized.metrics.follower_gain,
+    follower_loss: normalized.metrics.follower_loss,
+    follower_convert: normalized.metrics.follower_convert,
     homepage_visits: 0,
     fan_play_ratio: null,
     cover_click_rate: null,
-    avg_play_duration: roundedAvgPlayDuration,
-    completion_rate: roundedCompletionRate,
-    bounce_rate_2s: roundedBounceRate2s,
-    completion_rate_5s: roundedCompletionRate5s,
+    avg_play_duration: normalized.metrics.avg_play_duration,
+    completion_rate: normalized.metrics.completion_rate,
+    bounce_rate_2s: normalized.metrics.bounce_rate_2s,
+    completion_rate_5s: normalized.metrics.completion_rate_5s,
     avg_play_ratio: null,
-    vs_previous: body.published_at_text || Object.keys(ocrSummary).length
+    vs_previous: normalized.published_at_text || Object.keys(ocrSummary).length
       ? {
-          published_at_text: body.published_at_text ?? null,
+          published_at_text: normalized.published_at_text ?? null,
           ocr_summary: Object.keys(ocrSummary).length ? ocrSummary : null,
         }
       : null,
@@ -245,61 +204,135 @@ export async function POST(request: NextRequest) {
     retention_screenshot_url: retentionScreenshotUrl,
   };
 
-  const { error: snapshotError } = await supabase
+  const { data: existingSnapshot, error: existingSnapshotError } = await supabase
     .from("video_metrics_snapshots")
-    .insert(snapshotPayload);
+    .select(
+      "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, fan_play_ratio, homepage_visits, follower_convert, cover_click_rate, avg_play_duration, completion_rate, bounce_rate_2s, completion_rate_5s, avg_play_ratio, vs_previous, screenshot_urls, curve_screenshot_url, retention_screenshot_url, captured_at"
+    )
+    .eq("video_id", persistedVideo.id)
+    .eq("snapshot_type", "24h")
+    .maybeSingle();
 
-  if (snapshotError) {
-    return NextResponse.json({ error: snapshotError.message }, { status: 500 });
+  if (existingSnapshotError) {
+    await rollbackSafely(rollbackActions);
+    return NextResponse.json({ error: existingSnapshotError.message }, { status: 500 });
+  }
+
+  if (existingSnapshot) {
+    rollbackActions.push(async () => {
+      const { error } = await supabase.from("video_metrics_snapshots").update(stripId(existingSnapshot)).eq("id", existingSnapshot.id);
+      if (error) throw error;
+    });
+  } else {
+    rollbackActions.push(async () => {
+      const { error } = await supabase
+        .from("video_metrics_snapshots")
+        .delete()
+        .eq("video_id", persistedVideo.id)
+        .eq("snapshot_type", "24h");
+      if (error) throw error;
+    });
+  }
+
+  const { data: persistedSnapshot, error: snapshotError } = existingSnapshot
+    ? await supabase.from("video_metrics_snapshots").update(snapshotPayload).eq("id", existingSnapshot.id).select("*").single()
+    : await supabase.from("video_metrics_snapshots").insert(snapshotPayload).select("*").single();
+
+  if (snapshotError || !persistedSnapshot) {
+    await rollbackSafely(rollbackActions);
+    return NextResponse.json({ error: snapshotError?.message || "视频快照创建失败" }, { status: 500 });
   }
 
   const dailyReportPayload = {
     user_id: user.id,
-    report_date: bizDate,
-    title: videoPayload.video_title || "视频提交",
+    report_date: normalized.biz_date,
+    title: normalized.video_title || "视频提交",
     submitter,
-    play_count: roundedPlayCount,
-    likes: roundedLikes,
-    comments: roundedComments,
-    shares: roundedShares,
-    favorites: roundedFavorites,
-    follower_gain: roundedFollowerGain,
-    follower_convert: roundedFollowerConvert,
-    completion_rate: metrics.completion_rate == null ? null : `${roundedCompletionRate}%`,
-    avg_play_duration:
-      metrics.avg_play_duration == null ? null : `${roundedAvgPlayDuration}秒`,
-    bounce_rate_2s:
-      metrics.bounce_rate_2s == null ? null : `${roundedBounceRate2s}%`,
-    completion_rate_5s:
-      metrics.completion_rate_5s == null ? null : `${roundedCompletionRate5s}%`,
-    content: videoPayload.content,
-    published_at: videoPayload.published_at,
-    uploaded_at: new Date().toISOString(),
-    account_id,
+    play_count: normalized.metrics.play_count,
+    likes: normalized.metrics.likes,
+    comments: normalized.metrics.comments,
+    shares: normalized.metrics.shares,
+    favorites: normalized.metrics.favorites,
+    follower_gain: normalized.metrics.follower_gain,
+    follower_convert: normalized.metrics.follower_convert,
+    completion_rate: `${normalized.metrics.completion_rate}%`,
+    avg_play_duration: `${normalized.metrics.avg_play_duration}秒`,
+    bounce_rate_2s: `${normalized.metrics.bounce_rate_2s}%`,
+    completion_rate_5s: `${normalized.metrics.completion_rate_5s}%`,
+    content: normalized.content,
+    published_at: normalized.published_at,
+    uploaded_at: nowIso,
+    account_id: normalized.account_id,
   };
 
-  // 补交/修改：同一账号同一日期 → 更新已有记录
-  const { data: existingReport } = await supabase
+  const { data: existingReport, error: existingReportError } = await supabase
     .from("daily_reports")
-    .select("id")
-    .eq("account_id", account_id)
-    .eq("report_date", bizDate)
+    .select(
+      "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+    )
+    .eq("account_id", normalized.account_id)
+    .eq("report_date", normalized.biz_date)
     .maybeSingle();
 
-  const { error: dailyReportError } = existingReport
-    ? await supabase.from("daily_reports").update(dailyReportPayload).eq("id", existingReport.id)
-    : await supabase.from("daily_reports").insert(dailyReportPayload);
-
-  if (dailyReportError) {
-    return NextResponse.json({ error: dailyReportError.message }, { status: 500 });
+  if (existingReportError) {
+    await rollbackSafely(rollbackActions);
+    return NextResponse.json({ error: existingReportError.message }, { status: 500 });
   }
 
-  const aiTags = videoPayload.content ? await generateAiTags(videoPayload.content) : [];
+  if (existingReport) {
+    rollbackActions.push(async () => {
+      const { error } = await supabase.from("daily_reports").update(stripId(existingReport)).eq("id", existingReport.id);
+      if (error) throw error;
+    });
+  } else {
+    rollbackActions.push(async () => {
+      const { error } = await supabase
+        .from("daily_reports")
+        .delete()
+        .eq("account_id", normalized.account_id)
+        .eq("report_date", normalized.biz_date);
+      if (error) throw error;
+    });
+  }
+
+  const { data: persistedReport, error: dailyReportError } = existingReport
+    ? await supabase.from("daily_reports").update(dailyReportPayload).eq("id", existingReport.id).select("*").single()
+    : await supabase.from("daily_reports").insert(dailyReportPayload).select("*").single();
+
+  if (dailyReportError || !persistedReport) {
+    await rollbackSafely(rollbackActions);
+    return NextResponse.json({ error: dailyReportError?.message || "日报记录创建失败" }, { status: 500 });
+  }
+
+  const previousTagsResult = await supabase
+    .from("video_tags")
+    .select("id, video_id, tag_dimension, tag_value, source, confidence, reason, reviewed_by, created_at")
+    .eq("video_id", persistedVideo.id);
+
+  if (previousTagsResult.error) {
+    await rollbackSafely(rollbackActions);
+    return NextResponse.json({ error: previousTagsResult.error.message }, { status: 500 });
+  }
+
+  const previousTags = previousTagsResult.data ?? [];
+  rollbackActions.push(async () => {
+    const { error: deleteError } = await supabase.from("video_tags").delete().eq("video_id", persistedVideo.id);
+    if (deleteError) throw deleteError;
+
+    if (!previousTags.length) {
+      return;
+    }
+
+    const { error: insertError } = await supabase.from("video_tags").insert(previousTags);
+    if (insertError) throw insertError;
+  });
+
+  const aiTags = await generateAiTags(normalized.content);
 
   if (aiTags.length) {
-    await supabase.from("video_tags").upsert(
+    const { error } = await supabase.from("video_tags").upsert(
       aiTags.map((tag) => ({
-        video_id: newVideo.id,
+        video_id: persistedVideo.id,
         tag_dimension: tag.tag_dimension,
         tag_value: tag.tag_value,
         source: "ai" as const,
@@ -309,15 +342,28 @@ export async function POST(request: NextRequest) {
       })),
       { onConflict: "video_id,tag_dimension" }
     );
+
+    if (error) {
+      await rollbackSafely(rollbackActions);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
   }
 
-  const manualTags: Array<{ video_id: string; tag_dimension: string; tag_value: string; source: string; confidence: null; reason: null; reviewed_by: null }> = [];
+  const manualTags: Array<{
+    video_id: string;
+    tag_dimension: string;
+    tag_value: string;
+    source: string;
+    confidence: null;
+    reason: null;
+    reviewed_by: null;
+  }> = [];
 
-  if (body.topic_tag) {
+  if (normalized.topic_tag) {
     manualTags.push({
-      video_id: newVideo.id,
+      video_id: persistedVideo.id,
       tag_dimension: "话题",
-      tag_value: body.topic_tag,
+      tag_value: normalized.topic_tag,
       source: "manual",
       confidence: null,
       reason: null,
@@ -325,23 +371,30 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  if (Array.isArray(body.content_keywords)) {
-    for (const kw of contentKeywords) {
-      manualTags.push({
-        video_id: newVideo.id,
-        tag_dimension: "关键词",
-        tag_value: kw,
-        source: "manual",
-        confidence: null,
-        reason: null,
-        reviewed_by: null,
-      });
-    }
+  for (const kw of normalized.content_keywords) {
+    manualTags.push({
+      video_id: persistedVideo.id,
+      tag_dimension: "关键词",
+      tag_value: kw,
+      source: "manual",
+      confidence: null,
+      reason: null,
+      reviewed_by: null,
+    });
   }
 
   if (manualTags.length) {
-    await supabase.from("video_tags").upsert(manualTags, { onConflict: "video_id,tag_dimension" });
+    const { error } = await supabase.from("video_tags").upsert(manualTags, { onConflict: "video_id,tag_dimension" });
+    if (error) {
+      await rollbackSafely(rollbackActions);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
   }
 
-  return NextResponse.json({ ok: true, video: newVideo, ai_tags: aiTags });
+  return NextResponse.json({
+    ok: true,
+    video: persistedVideo,
+    ai_tags: aiTags,
+    idempotent_video_id: submissionVideoId,
+  });
 }
