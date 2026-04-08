@@ -84,7 +84,7 @@ test("describeMissingResponseContent 会带出 finish_reason 和 message 结构"
     ],
   });
 
-  assert.match(message, /AI 未返回有效内容/);
+  assert.match(message, /AI 返回空正文/);
   assert.match(message, /finish_reason=stop/);
   assert.match(message, /content_type=null/);
   assert.match(message, /message_keys=content,reasoning_content,tool_calls/);
