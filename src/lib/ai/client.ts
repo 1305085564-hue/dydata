@@ -23,6 +23,7 @@ export type AiRequestOptions = {
   jsonMode?: boolean;
   model?: string;
   featureKey?: string;
+  databaseOnly?: boolean;
 };
 
 export type AiResponse = {
@@ -90,7 +91,6 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_TOKENS = 2000;
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 const CHANNEL_CACHE_TTL_MS = 60_000;
-const CIRCUIT_BREAK_HOURS = 12;
 
 let cachedChannels: { expiresAt: number; channels: ChannelConfig[] } | null = null;
 let channelsPromise: Promise<ChannelConfig[]> | null = null;
@@ -228,13 +228,7 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
   return configs.get(featureKey) ?? null;
 }
 
-async function getAvailableChannels(): Promise<ChannelConfig[]> {
-  const envChannel = getChannelFromEnv();
-
-  if (!isDbChannelModeEnabled()) {
-    return envChannel ? [envChannel] : [];
-  }
-
+async function getDatabaseChannels(): Promise<ChannelConfig[]> {
   const now = Date.now();
   if (cachedChannels && cachedChannels.expiresAt > now) {
     return cachedChannels.channels;
@@ -266,6 +260,20 @@ async function getAvailableChannels(): Promise<ChannelConfig[]> {
   return channelsPromise;
 }
 
+async function getAvailableChannels(options?: Pick<AiRequestOptions, "databaseOnly">): Promise<ChannelConfig[]> {
+  const databaseChannels = await getDatabaseChannels();
+  if (options?.databaseOnly) {
+    return databaseChannels;
+  }
+
+  const envChannel = getChannelFromEnv();
+  if (!isDbChannelModeEnabled()) {
+    return envChannel ? [envChannel] : [];
+  }
+
+  return databaseChannels.length > 0 ? databaseChannels : envChannel ? [envChannel] : [];
+}
+
 function normalizeResponseContent(content: unknown): string | null {
   if (typeof content === "string" && content.trim()) {
     return content.trim();
@@ -286,6 +294,9 @@ export function buildUpstreamUrl(baseUrl: string): string {
 }
 
 function resolveModel(channel: ChannelConfig, options: AiRequestOptions) {
+  if (options.databaseOnly) {
+    return channel.model || options.model || DEFAULT_MODEL;
+  }
   return channel.model || options.model || process.env.AI_MODEL || DEFAULT_MODEL;
 }
 
@@ -481,7 +492,7 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
     }
   }
 
-  let configuredChannels = await getAvailableChannels();
+  let configuredChannels = await getAvailableChannels(options);
   if (preferredChannelId) {
     const preferredChannel = configuredChannels.find((channel) => channel.id === preferredChannelId);
     if (preferredChannel) {
@@ -493,6 +504,9 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   }
 
   if (configuredChannels.length === 0) {
+    if (options.databaseOnly) {
+      throw new Error("AI 渠道未配置，请先在后台完成 AI 渠道与功能配置");
+    }
     throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY，或配置 ai_channels）");
   }
 

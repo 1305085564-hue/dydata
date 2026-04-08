@@ -124,7 +124,6 @@ export type ParsedScreenshotResponse = {
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const OCR_MODEL = process.env.OCR_MODEL || process.env.AI_MODEL || "claude-sonnet-4-6";
 const OCR_FIELDS: OcrFieldKey[] = [
   "play_count",
   "likes",
@@ -146,16 +145,6 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
-
-  const baseUrl = process.env.AI_BASE_URL;
-  const apiKey = process.env.AI_API_KEY;
-
-  if (!baseUrl || !apiKey) {
-    return NextResponse.json(
-      { error: "截图识别功能暂不可用，请手动输入数据" },
-      { status: 500 }
-    );
   }
 
   try {
@@ -193,8 +182,9 @@ export async function POST(request: NextRequest) {
         messages,
         maxTokens: 1000,
         jsonMode: true,
-        model: OCR_MODEL,
         timeoutMs: 25000,
+        featureKey: "ocr_screenshot",
+        databaseOnly: true,
       });
 
       const content = aiResult.content;
@@ -227,8 +217,14 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "截图识别出错，请稍后重试或手动输入";
       return NextResponse.json(
-        { error: (error as Error).message || "截图识别出错，请稍后重试或手动输入" },
+        {
+          error:
+            message === "该 AI 功能已禁用"
+              ? "截图识别功能已禁用，请先在后台启用"
+              : message,
+        },
         { status: 500 }
       );
     }
@@ -313,8 +309,9 @@ async function detectScreenshotType(dataUrl: string): Promise<ScreenshotType> {
       messages,
       maxTokens: 300,
       jsonMode: true,
-      model: OCR_MODEL,
       timeoutMs: 12000,
+      featureKey: "ocr_screenshot",
+      databaseOnly: true,
     });
 
     return parseClassificationContent(result.content) ?? "data";
