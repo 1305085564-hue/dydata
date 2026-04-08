@@ -250,7 +250,7 @@ export async function runPeriodInsight(
 
   try {
     const prompt = buildPeriodPrompt(bundle);
-    const aiResult = await callStructuredAi({ prompt, maxTokens: 1800 });
+    const aiResult = await callStructuredAi({ prompt, maxTokens: 1800, featureKey: "period_insight" });
     const normalized = normalizePeriodInsight(JSON.parse(aiResult.jsonString));
 
     if (!normalized) {

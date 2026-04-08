@@ -319,7 +319,7 @@ export async function runSingleVideoInsight(supabase: MinimalSupabaseClient, vid
 
   try {
     const prompt = buildSingleVideoPrompt(context.inputBundle);
-    const aiResult = await callStructuredAi({ prompt, maxTokens: 1800 });
+    const aiResult = await callStructuredAi({ prompt, maxTokens: 1800, featureKey: "single_video" });
     const normalized = normalizeSingleVideoInsight(JSON.parse(aiResult.jsonString));
 
     if (!normalized) {

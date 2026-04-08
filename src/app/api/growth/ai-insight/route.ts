@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const prompt = buildPrompt(inputBundle);
-    const aiResult = await callStructuredAi({ prompt, maxTokens: 1200 });
+    const aiResult = await callStructuredAi({ prompt, maxTokens: 1200, featureKey: "growth_insight" });
     const insight = parseInsight(aiResult.jsonString);
 
     if (!insight) {

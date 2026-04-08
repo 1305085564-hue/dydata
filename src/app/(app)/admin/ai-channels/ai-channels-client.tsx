@@ -9,6 +9,7 @@ import {
   Loader2,
   Pencil,
   RefreshCw,
+  Settings2,
   ShieldAlert,
   Trash2,
 } from "lucide-react";
@@ -306,10 +307,17 @@ export default function AIChannelsClient() {
       label: "返回总控台",
     },
     {
-      title: "AI 渠道",
+      title: "AI 渠道管理",
       description: "按优先级管理模型地址、密钥和熔断状态。",
       href: null,
       label: "当前页面",
+    },
+    {
+      title: "AI 功能配置",
+      description: "按功能指定渠道、模型和提示词。",
+      href: "/admin/ai-features",
+      label: "去看功能",
+      icon: Settings2,
     },
   ];
 
@@ -339,9 +347,16 @@ export default function AIChannelsClient() {
                     href={item.href}
                     className="flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]"
                   >
-                    <div>
-                      <p className="font-medium text-[var(--color-text-primary)]">{item.title}</p>
-                      <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
+                    <div className="flex items-start gap-3">
+                      {"icon" in item && item.icon ? (
+                        <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                          <item.icon className="size-4" />
+                        </div>
+                      ) : null}
+                      <div>
+                        <p className="font-medium text-[var(--color-text-primary)]">{item.title}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
+                      </div>
                     </div>
                     <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
                   </Link>

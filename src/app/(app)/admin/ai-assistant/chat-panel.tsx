@@ -5,9 +5,9 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2, PanelRightOpen, RotateCcw, Send } from "lucide-react";
 import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
@@ -137,10 +137,19 @@ export default function ChatPanel({ onHistoryRefresh, onOpenHistory }: ChatPanel
   const [confirmingActionId, setConfirmingActionId] = useState<string | null>(null);
   const [conversationId] = useState(() => createId());
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "48px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+  }, [input]);
 
   const hasMessages = messages.length > 0;
   const canSend = input.trim().length > 0 && !loading;
@@ -358,24 +367,40 @@ export default function ChatPanel({ onHistoryRefresh, onOpenHistory }: ChatPanel
         )}
       </div>
 
-      <div className="border-t bg-background/95 px-5 py-4">
-        <div className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void sendMessage(input);
-              }
-            }}
-            placeholder="输入指令，比如：查一下最近三天谁没填报"
-            disabled={loading}
-            className="h-11 rounded-xl"
-          />
-          <Button onClick={() => void sendMessage(input)} disabled={!canSend} className="h-11 px-4">
-            <Send className="h-4 w-4" />
-          </Button>
+      <div className="bg-background/95 px-5 pb-6 pt-4">
+        <div className="mx-auto mb-4 h-px max-w-3xl bg-gradient-to-r from-transparent via-border/70 to-transparent" />
+        <div className="mx-auto max-w-3xl">
+          <div className="relative rounded-2xl border border-border/70 bg-background shadow-lg shadow-black/5 transition-all focus-within:border-primary/30 focus-within:shadow-xl focus-within:shadow-primary/10">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onInput={(e) => {
+                e.currentTarget.style.height = "48px";
+                e.currentTarget.style.height = `${Math.min(e.currentTarget.scrollHeight, 160)}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  void sendMessage(input);
+                }
+              }}
+              placeholder="输入指令，比如：查一下最近三天谁没填报"
+              disabled={loading}
+              className="min-h-[48px] max-h-[160px] resize-none rounded-2xl border border-border/60 bg-background px-4 py-3 pr-16 text-sm shadow-sm focus-visible:border-primary/40 focus-visible:ring-4 focus-visible:ring-primary/10"
+            />
+            <Button
+              onClick={() => void sendMessage(input)}
+              disabled={!canSend}
+              className={`absolute bottom-3 right-3 h-10 w-10 rounded-full p-0 transition-all ${
+                input.trim()
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
+                  : "bg-muted text-muted-foreground shadow-none hover:bg-muted"
+              }`}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

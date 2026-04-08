@@ -186,7 +186,12 @@ export async function POST(request: NextRequest) {
 
   let decision: ReturnType<typeof parseAiDecision>;
   try {
-    const aiResult = await callStructuredAi({ prompt: buildAiPrompt(message), maxTokens: 800, timeoutMs: 20000 });
+    const aiResult = await callStructuredAi({
+      prompt: buildAiPrompt(message),
+      maxTokens: 800,
+      timeoutMs: 20000,
+      featureKey: "admin_assistant",
+    });
     decision = parseAiDecision(aiResult.jsonString);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "AI 解析失败";
@@ -195,36 +200,99 @@ export async function POST(request: NextRequest) {
 
   const { toolName, params, reply, reasoning } = decision;
 
-  if (!toolName) {
-    return NextResponse.json({
-      conversationId,
-      response: {
-        type: "text",
-        content: reply || "请补充更具体的指令（对象、时间、目标）",
-      },
-    });
-  }
+  try {
+    if (!toolName) {
+      return NextResponse.json({
+        conversationId,
+        response: {
+          type: "text",
+          content: reply || "请补充更具体的指令（对象、时间、目标）",
+        },
+      });
+    }
 
-  const meta = TOOL_META[toolName];
-  const needsConfirmation = shouldRequireConfirmation(toolName, buildRiskContext(params));
+    const meta = TOOL_META[toolName];
+    const needsConfirmation = shouldRequireConfirmation(toolName, buildRiskContext(params));
 
-  const actionInsert = {
-    conversation_id: conversationId,
-    admin_id: actor.userId,
-    action_type: meta.actionType,
-    action_category: meta.actionCategory,
-    target_type: meta.targetType,
-    target_id: buildTargetId(params),
-    description: `${meta.description}｜${reply}`,
-    ai_reasoning: reasoning || null,
-    tool_name: toolName,
-    tool_params: params,
-    requires_confirmation: needsConfirmation,
-    result: needsConfirmation ? "pending_confirm" : "success",
-  };
+    const actionInsert = {
+      conversation_id: conversationId,
+      admin_id: actor.userId,
+      action_type: meta.actionType,
+      action_category: meta.actionCategory,
+      target_type: meta.targetType,
+      target_id: buildTargetId(params),
+      description: `${meta.description}｜${reply}`,
+      ai_reasoning: reasoning || null,
+      tool_name: toolName,
+      tool_params: params,
+      requires_confirmation: needsConfirmation,
+      result: needsConfirmation ? "pending_confirm" : "success",
+    };
 
-  if (needsConfirmation) {
-    const dryRunResult = await executeAdminTool({
+    if (needsConfirmation) {
+      const dryRunResult = await executeAdminTool({
+        toolName,
+        params,
+        context: {
+          actorId: actor.userId,
+          actorRole: actor.role,
+          actorPermissions: actor.permissions,
+        },
+        dryRun: true,
+      });
+
+      if (!dryRunResult.success) {
+        return NextResponse.json(
+          {
+            conversationId,
+            response: {
+              type: "text",
+              content: dryRunResult.error ?? "预检查失败，未进入确认流程",
+              result: {
+                success: false,
+                data: null,
+                error: dryRunResult.error ?? "dryRun 失败",
+              },
+            },
+          },
+          { status: 400 },
+        );
+      }
+
+      const { data: row, error } = await supabase
+        .from("admin_actions")
+        .insert({
+          ...actionInsert,
+          backup_sql: dryRunResult.backupSql ?? null,
+          before_snapshot: dryRunResult.beforeSnapshot ?? null,
+          error_message: dryRunResult.success ? null : dryRunResult.error ?? "dryRun 失败",
+        })
+        .select("id")
+        .single();
+
+      if (error || !row) {
+        return NextResponse.json({ error: error?.message ?? "写入 admin_actions 失败" }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        conversationId,
+        response: {
+          type: "confirmation",
+          content: reply,
+          toolCall: {
+            toolName,
+            params,
+            needsConfirmation: true,
+            confirmationMessage: "这是高危操作，请确认后执行",
+            affectedData: dryRunResult.affectedData ?? null,
+            backupSql: dryRunResult.backupSql ?? null,
+          },
+        },
+        actionId: row.id,
+      });
+    }
+
+    const runResult = await executeAdminTool({
       toolName,
       params,
       context: {
@@ -232,34 +300,18 @@ export async function POST(request: NextRequest) {
         actorRole: actor.role,
         actorPermissions: actor.permissions,
       },
-      dryRun: true,
     });
-
-    if (!dryRunResult.success) {
-      return NextResponse.json(
-        {
-          conversationId,
-          response: {
-            type: "text",
-            content: dryRunResult.error ?? "预检查失败，未进入确认流程",
-            result: {
-              success: false,
-              data: null,
-              error: dryRunResult.error ?? "dryRun 失败",
-            },
-          },
-        },
-        { status: 400 },
-      );
-    }
 
     const { data: row, error } = await supabase
       .from("admin_actions")
       .insert({
         ...actionInsert,
-        backup_sql: dryRunResult.backupSql ?? null,
-        before_snapshot: dryRunResult.beforeSnapshot ?? null,
-        error_message: dryRunResult.success ? null : dryRunResult.error ?? "dryRun 失败",
+        result: runResult.success ? "success" : "failed",
+        backup_sql: runResult.backupSql ?? null,
+        before_snapshot: runResult.beforeSnapshot ?? null,
+        after_snapshot: runResult.afterSnapshot ?? null,
+        error_message: runResult.success ? null : runResult.error ?? "执行失败",
+        executed_at: new Date().toISOString(),
       })
       .select("id")
       .single();
@@ -268,97 +320,56 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error?.message ?? "写入 admin_actions 失败" }, { status: 500 });
     }
 
+    if (toolName === "diagnoseIssue") {
+      const issueType = toTrimmedString(runResult.data?.issueType);
+      if (issueType === "code_bug") {
+        await supabase.from("system_issues").insert({
+          reported_by: actor.userId,
+          issue_type: "code_bug",
+          description: message,
+          ai_diagnosis: toTrimmedString(runResult.data?.diagnosis) || "AI 诊断为代码问题",
+          related_action_id: row.id,
+        });
+
+        const webhook = process.env.FEISHU_WEBHOOK_URL;
+        if (webhook) {
+          try {
+            const response = await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                msg_type: "text",
+                content: {
+                  text: `🚨 站内AI发现代码问题\n报告人: ${actor.name ?? actor.userId}\n描述: ${message}`,
+                },
+              }),
+            });
+            if (!response.ok) {
+              console.error("[飞书通知失败]", response.status, await response.text());
+            }
+          } catch (error) {
+            console.error("[飞书通知异常]", error);
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       conversationId,
       response: {
-        type: "confirmation",
-        content: reply,
-        toolCall: {
-          toolName,
-          params,
-          needsConfirmation: true,
-          confirmationMessage: "这是高危操作，请确认后执行",
-          affectedData: dryRunResult.affectedData ?? null,
-          backupSql: dryRunResult.backupSql ?? null,
+        type: runResult.success ? "result" : "text",
+        content: runResult.success ? reply : runResult.error ?? "执行失败",
+        result: {
+          success: runResult.success,
+          data: runResult.data ?? null,
+          error: runResult.success ? null : runResult.error ?? "执行失败",
         },
       },
       actionId: row.id,
     });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "执行失败";
+    console.error("[admin/ai-assistant][POST] 执行异常", error);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  const runResult = await executeAdminTool({
-    toolName,
-    params,
-    context: {
-      actorId: actor.userId,
-      actorRole: actor.role,
-      actorPermissions: actor.permissions,
-    },
-  });
-
-  const { data: row, error } = await supabase
-    .from("admin_actions")
-    .insert({
-      ...actionInsert,
-      result: runResult.success ? "success" : "failed",
-      backup_sql: runResult.backupSql ?? null,
-      before_snapshot: runResult.beforeSnapshot ?? null,
-      after_snapshot: runResult.afterSnapshot ?? null,
-      error_message: runResult.success ? null : runResult.error ?? "执行失败",
-      executed_at: new Date().toISOString(),
-    })
-    .select("id")
-    .single();
-
-  if (error || !row) {
-    return NextResponse.json({ error: error?.message ?? "写入 admin_actions 失败" }, { status: 500 });
-  }
-
-  if (toolName === "diagnoseIssue") {
-    const issueType = toTrimmedString(runResult.data?.issueType);
-    if (issueType === "code_bug") {
-      await supabase.from("system_issues").insert({
-        reported_by: actor.userId,
-        issue_type: "code_bug",
-        description: message,
-        ai_diagnosis: toTrimmedString(runResult.data?.diagnosis) || "AI 诊断为代码问题",
-        related_action_id: row.id,
-      });
-
-      const webhook = process.env.FEISHU_WEBHOOK_URL;
-      if (webhook) {
-        try {
-          const response = await fetch(webhook, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              msg_type: "text",
-              content: {
-                text: `🚨 站内AI发现代码问题\n报告人: ${actor.name ?? actor.userId}\n描述: ${message}`,
-              },
-            }),
-          });
-          if (!response.ok) {
-            console.error("[飞书通知失败]", response.status, await response.text());
-          }
-        } catch (error) {
-          console.error("[飞书通知异常]", error);
-        }
-      }
-    }
-  }
-
-  return NextResponse.json({
-    conversationId,
-    response: {
-      type: runResult.success ? "result" : "text",
-      content: runResult.success ? reply : runResult.error ?? "执行失败",
-      result: {
-        success: runResult.success,
-        data: runResult.data ?? null,
-        error: runResult.success ? null : runResult.error ?? "执行失败",
-      },
-    },
-    actionId: row.id,
-  });
 }

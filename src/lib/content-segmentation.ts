@@ -180,7 +180,10 @@ export async function classifyContentSegmentsWithAi(paragraphs: RawContentParagr
   }
 
   try {
-    const result = await callAiJson(buildSegmentationPrompt(paragraphs), { maxTokens: 1600 });
+    const result = await callAiJson(buildSegmentationPrompt(paragraphs), {
+      maxTokens: 1600,
+      featureKey: "content_segment",
+    });
     const jsonString = extractJson(result.content);
     return jsonString ? parseSegmentClassification(jsonString) : [];
   } catch {

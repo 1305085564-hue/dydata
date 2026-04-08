@@ -80,10 +80,16 @@ export function extractJsonString(content: string) {
   return trimmed.slice(start, end + 1);
 }
 
-export async function callStructuredAi(input: { prompt: string; maxTokens?: number; timeoutMs?: number }) {
+export async function callStructuredAi(input: {
+  prompt: string;
+  maxTokens?: number;
+  timeoutMs?: number;
+  featureKey?: string;
+}) {
   const result = await callAiJson(input.prompt, {
     maxTokens: input.maxTokens,
     timeoutMs: input.timeoutMs,
+    featureKey: input.featureKey,
   });
 
   const jsonString = extractJsonString(result.content);

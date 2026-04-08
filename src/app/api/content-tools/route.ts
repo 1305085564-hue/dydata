@@ -164,7 +164,7 @@ function buildTemplatePrompt(groupedSamples: Array<{ category: string; samples: 
 }
 
 async function generateAiJson(prompt: string) {
-  const result = await callAiJson(prompt, { maxTokens: 1600 });
+  const result = await callAiJson(prompt, { maxTokens: 1600, featureKey: "content_tools" });
   return result.content;
 }
 

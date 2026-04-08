@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
   const inputBundleId: string = bundleRow.id;
 
   try {
-    const aiResult = await callStructuredAi({ prompt });
+    const aiResult = await callStructuredAi({ prompt, featureKey: "next_day_review" });
     const rawJson = aiResult.jsonString;
     if (!rawJson) throw new Error("AI 返回内容无法解析为 JSON");
 

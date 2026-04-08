@@ -237,7 +237,7 @@ export function createDiagnosisRecord(input: {
 }
 
 async function generateDiagnosis(prompt: string) {
-  const result = await callAiJson(prompt, { maxTokens: 1200 });
+  const result = await callAiJson(prompt, { maxTokens: 1200, featureKey: "video_diagnose" });
   const diagnosis = parseDiagnosis(result.content);
 
   if (!diagnosis) {

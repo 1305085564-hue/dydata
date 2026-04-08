@@ -22,6 +22,7 @@ export type AiRequestOptions = {
   timeoutMs?: number;
   jsonMode?: boolean;
   model?: string;
+  featureKey?: string;
 };
 
 export type AiResponse = {
@@ -61,6 +62,22 @@ type AiChannelRow = {
   last_error_message: string | null;
 };
 
+type FeatureConfig = {
+  featureKey: string;
+  channelId: string | null;
+  model: string | null;
+  systemPrompt: string | null;
+  isEnabled: boolean;
+};
+
+type AiFeatureConfigRow = {
+  feature_key: string;
+  channel_id: string | null;
+  model: string | null;
+  system_prompt: string | null;
+  is_enabled: boolean;
+};
+
 type UpstreamResponseBody = {
   choices?: Array<{
     message?: {
@@ -77,6 +94,7 @@ const CIRCUIT_BREAK_HOURS = 12;
 
 let cachedChannels: { expiresAt: number; channels: ChannelConfig[] } | null = null;
 let channelsPromise: Promise<ChannelConfig[]> | null = null;
+let cachedFeatureConfigs: { expiresAt: number; configs: Map<string, FeatureConfig> } | null = null;
 
 function getEnvFlag(name: string) {
   return process.env[name]?.trim().toLowerCase();
@@ -144,6 +162,16 @@ function mapDbChannel(row: AiChannelRow): ChannelConfig {
   };
 }
 
+function mapFeatureConfig(row: AiFeatureConfigRow): FeatureConfig {
+  return {
+    featureKey: row.feature_key,
+    channelId: row.channel_id,
+    model: row.model,
+    systemPrompt: row.system_prompt,
+    isEnabled: row.is_enabled,
+  };
+}
+
 async function fetchDatabaseChannels(): Promise<ChannelConfig[]> {
   const supabase = createServiceSupabaseClient();
   if (!supabase) {
@@ -163,6 +191,41 @@ async function fetchDatabaseChannels(): Promise<ChannelConfig[]> {
   }
 
   return (data as AiChannelRow[]).map(mapDbChannel);
+}
+
+async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | null> {
+  const now = Date.now();
+  if (cachedFeatureConfigs && cachedFeatureConfigs.expiresAt > now) {
+    return cachedFeatureConfigs.configs.get(featureKey) ?? null;
+  }
+
+  const supabase = createServiceSupabaseClient();
+  if (!supabase) {
+    cachedFeatureConfigs = {
+      expiresAt: now + CHANNEL_CACHE_TTL_MS,
+      configs: new Map(),
+    };
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("ai_feature_config")
+    .select("feature_key, channel_id, model, system_prompt, is_enabled");
+
+  const configs = new Map<string, FeatureConfig>();
+  if (!error && data?.length) {
+    for (const row of data as AiFeatureConfigRow[]) {
+      const config = mapFeatureConfig(row);
+      configs.set(config.featureKey, config);
+    }
+  }
+
+  cachedFeatureConfigs = {
+    expiresAt: now + CHANNEL_CACHE_TTL_MS,
+    configs,
+  };
+
+  return configs.get(featureKey) ?? null;
 }
 
 async function getAvailableChannels(): Promise<ChannelConfig[]> {
@@ -390,7 +453,45 @@ export class AiChannelError extends Error {
 }
 
 export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
-  const configuredChannels = await getAvailableChannels();
+  const effectiveOptions: AiRequestOptions = {
+    ...options,
+    messages: [...options.messages],
+  };
+
+  let preferredChannelId: string | null = null;
+  if (options.featureKey) {
+    const featureConfig = await getFeatureConfig(options.featureKey);
+    if (featureConfig && !featureConfig.isEnabled) {
+      throw new Error("该 AI 功能已禁用");
+    }
+
+    if (featureConfig?.channelId) {
+      preferredChannelId = featureConfig.channelId;
+    }
+
+    if (featureConfig?.model) {
+      effectiveOptions.model = featureConfig.model;
+    }
+
+    if (featureConfig?.systemPrompt) {
+      effectiveOptions.messages = [
+        { role: "system", content: featureConfig.systemPrompt },
+        ...effectiveOptions.messages,
+      ];
+    }
+  }
+
+  let configuredChannels = await getAvailableChannels();
+  if (preferredChannelId) {
+    const preferredChannel = configuredChannels.find((channel) => channel.id === preferredChannelId);
+    if (preferredChannel) {
+      configuredChannels = [
+        preferredChannel,
+        ...configuredChannels.filter((channel) => channel.id !== preferredChannelId),
+      ];
+    }
+  }
+
   if (configuredChannels.length === 0) {
     throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY，或配置 ai_channels）");
   }
@@ -406,7 +507,7 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   let lastRetryableError: Error | null = null;
   for (const channel of channels) {
     try {
-      const result = await sendToChannel(channel, options);
+      const result = await sendToChannel(channel, effectiveOptions);
       await markChannelSuccess(channel);
       return result;
     } catch (error) {
@@ -436,30 +537,24 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   throw new Error("所有 AI 渠道不可用");
 }
 
-export async function callAiJson(prompt: string, opts?: {
-  maxTokens?: number;
-  timeoutMs?: number;
-  model?: string;
-}): Promise<AiResponse> {
+export async function callAiJson(prompt: string, opts?: Omit<AiRequestOptions, "messages">): Promise<AiResponse> {
   return callAi({
     messages: [{ role: "user", content: prompt }],
     maxTokens: opts?.maxTokens,
     timeoutMs: opts?.timeoutMs,
     model: opts?.model,
+    featureKey: opts?.featureKey,
     jsonMode: true,
   });
 }
 
-export async function callAiText(prompt: string, opts?: {
-  maxTokens?: number;
-  timeoutMs?: number;
-  model?: string;
-}): Promise<AiResponse> {
+export async function callAiText(prompt: string, opts?: Omit<AiRequestOptions, "messages">): Promise<AiResponse> {
   return callAi({
     messages: [{ role: "user", content: prompt }],
     maxTokens: opts?.maxTokens,
     timeoutMs: opts?.timeoutMs,
     model: opts?.model,
+    featureKey: opts?.featureKey,
     jsonMode: false,
   });
 }
@@ -493,5 +588,6 @@ export const __internal = {
   resetCache() {
     cachedChannels = null;
     channelsPromise = null;
+    cachedFeatureConfigs = null;
   },
 };

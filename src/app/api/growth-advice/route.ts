@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
   const prompt = buildPrompt(body)
 
   try {
-    const result = await callAiJson(prompt, { maxTokens: 1200 })
+    const result = await callAiJson(prompt, { maxTokens: 1200, featureKey: "growth_advice" })
     const advice = parseAdvice(result.content)
 
     if (!advice) {
