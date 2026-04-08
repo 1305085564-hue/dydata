@@ -100,6 +100,7 @@ type UpstreamTestResponse = {
     message?: {
       content?: unknown;
       text?: unknown;
+      reasoning_content?: unknown;
     };
     finish_reason?: unknown;
     native_finish_reason?: unknown;
@@ -175,17 +176,25 @@ export async function sendChannelTestRequest(input: {
       };
     }
 
-    const data = (await response.json().catch(() => null)) as UpstreamTestResponse | null;
+    const rawText = await response.text().catch(() => "");
+    let data: UpstreamTestResponse | null = null;
+    try {
+      data = rawText ? (JSON.parse(rawText) as UpstreamTestResponse) : null;
+    } catch {
+      return { ok: false, elapsedMs, error: `AI 返回非 JSON：${rawText.slice(0, 300)}` };
+    }
     const message = data?.choices?.[0]?.message;
     const responseText =
       aiClientInternal.normalizeResponseContent(message?.content) ??
-      aiClientInternal.normalizeResponseContent(message?.text);
+      aiClientInternal.normalizeResponseContent(message?.text) ??
+      aiClientInternal.normalizeResponseContent(message?.reasoning_content);
 
     if (!responseText) {
+      const diag = data ? aiClientInternal.describeMissingResponseContent(data) : "AI 未返回可解析结果";
       return {
         ok: false,
         elapsedMs,
-        error: data ? aiClientInternal.describeMissingResponseContent(data) : "AI 未返回可解析结果",
+        error: `${diag}｜raw=${rawText.slice(0, 500)}`,
       };
     }
 

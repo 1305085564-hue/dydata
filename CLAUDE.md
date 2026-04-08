@@ -4,7 +4,9 @@
 - 名称：抖音数据日报平台
 - 域名：dydata.cc / dydata.vercel.app
 - Supabase：mkkvnogkqcupvxmnoefy.supabase.co（印度孟买区）
-- 技术栈：Next.js App Router + Tailwind CSS + shadcn/ui + Supabase + Vercel + Cloudflare
+- 技术栈：Next.js App Router + Tailwind CSS + shadcn/ui + Supabase + Vercel
+- 部署平台：Vercel（push main 自动部署），× Cloudflare Workers
+- 域名 DNS 在 Cloudflare，但部署 × 走 Cloudflare Workers
 
 ## 角色权限
 - owner：创始人，唯一，所有权限

@@ -326,9 +326,22 @@ function describeMissingResponseContent(data: UpstreamResponseBody): string {
     if (typeof message.refusal === "string" && message.refusal.trim()) {
       details.push(`refusal=${message.refusal.trim().slice(0, 80)}`);
     }
+    if (typeof message.reasoning_content === "string" && message.reasoning_content.trim()) {
+      details.push("has_reasoning_content=true");
+    }
   }
 
   const suffix = details.length ? `（${details.join("，")}）` : "";
+
+  // content=null + finish_reason=stop 通常意味着模型不支持该请求类型（如不支持 vision）
+  const contentIsNull =
+    message && "content" in message && message.content === null;
+  const finishedNormally =
+    choice?.finish_reason === "stop" || choice?.finish_reason === "end_turn";
+  if (contentIsNull && finishedNormally) {
+    return `AI 返回空正文（200 + content=null），可能该渠道模型不支持图片/多模态输入${suffix}`;
+  }
+
   return `AI 未返回有效内容${suffix}`;
 }
 
@@ -410,13 +423,29 @@ async function sendToChannel(
     );
   }
 
-  const data = (await response.json()) as UpstreamResponseBody;
+  const rawText = await response.text();
+  let data: UpstreamResponseBody;
+  try {
+    data = JSON.parse(rawText) as UpstreamResponseBody;
+  } catch {
+    throw new AiChannelError(
+      `AI 返回非 JSON：${rawText.slice(0, 300)}`,
+      "invalid_json",
+      false,
+    );
+  }
   const message = data.choices?.[0]?.message;
   const content =
     normalizeResponseContent(message?.content) ??
-    normalizeResponseContent(message?.text);
+    normalizeResponseContent(message?.text) ??
+    normalizeResponseContent(message?.reasoning_content);
   if (!content) {
-    throw new AiChannelError(describeMissingResponseContent(data), "empty_response", false);
+    const rawSnippet = rawText.slice(0, 500);
+    throw new AiChannelError(
+      `${describeMissingResponseContent(data)}｜raw=${rawSnippet}`,
+      "empty_response",
+      true,
+    );
   }
 
   return {
