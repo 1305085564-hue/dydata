@@ -242,7 +242,8 @@ async function getDatabaseChannels(): Promise<ChannelConfig[]> {
   if (!channelsPromise) {
     channelsPromise = fetchDatabaseChannels()
       .then((channels) => {
-        const effectiveChannels = channels.length > 0 ? channels : envChannel ? [envChannel] : [];
+        const envFallback = getChannelFromEnv();
+        const effectiveChannels = channels.length > 0 ? channels : envFallback ? [envFallback] : [];
         cachedChannels = {
           expiresAt: Date.now() + CHANNEL_CACHE_TTL_MS,
           channels: effectiveChannels,
@@ -250,7 +251,8 @@ async function getDatabaseChannels(): Promise<ChannelConfig[]> {
         return effectiveChannels;
       })
       .catch(() => {
-        const fallbackChannels = envChannel ? [envChannel] : [];
+        const envFallback = getChannelFromEnv();
+        const fallbackChannels = envFallback ? [envFallback] : [];
         cachedChannels = {
           expiresAt: Date.now() + CHANNEL_CACHE_TTL_MS,
           channels: fallbackChannels,
