@@ -1,4 +1,5 @@
 import { AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
+import { DemoGrowthDeepDive } from "@/components/demo/demo-growth-deep-dive";
 import { DemoModeChip } from "@/components/demo/demo-nav";
 import { CapabilityGrid } from "@/components/growth/capability-grid";
 import { GrowthPkPanel } from "@/components/growth/growth-pk-panel";
@@ -29,6 +30,18 @@ export default function DemoGrowthPage() {
         description="演示数据按 30 天样本生成，让评分分布和强弱提示更像真实环境。"
       >
         <CapabilityGrid items={data.capabilityCards} />
+      </AppShellSection>
+
+      <AppShellSection
+        eyebrow="Performance"
+        title="最近 7 天表现拆开看"
+        description="补上更具体的指标、样本和优先动作，让成长分析不只是抽象结论。"
+      >
+        <DemoGrowthDeepDive
+          overview={data.overview}
+          recentSamples={data.recentSamples}
+          priorityActions={data.priorityActions}
+        />
       </AppShellSection>
 
       <AppShellSection

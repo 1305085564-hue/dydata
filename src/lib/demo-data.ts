@@ -523,6 +523,7 @@ export function getDemoDashboardPageData() {
   const todayReports = myReports.filter((report) => report.report_date === DEMO_CURRENT_DATE);
   const trendData = build个人趋势数据(myReports, monthReports, activeUserIds);
   const history = [...myReports].sort((left, right) => right.uploaded_at.localeCompare(left.uploaded_at)).slice(0, 12);
+  const reportsByAccountId = Object.fromEntries(todayReports.map((report) => [report.account_id, report]));
 
   return {
     today: DEMO_CURRENT_DATE,
@@ -535,6 +536,7 @@ export function getDemoDashboardPageData() {
     accountIds: myAccountIds,
     ownContentDirections: demoAccounts.filter((account) => myAccountIds.includes(account.id)).map((account) => account.content_direction ?? "").filter(Boolean),
     todayReports,
+    reportsByAccountId,
     history,
     leaderboardData: demoLeaderboardRows,
     trendData,
@@ -636,6 +638,71 @@ export function getDemoGrowthPageData() {
     action: "下一条先改前 2 句：一句结论 + 一句冲突，再把 CTA 缩到最后 1 句。",
   };
 
+  const recentSamples = [...myRecentReports]
+    .sort((left, right) => (right.play_count ?? 0) - (left.play_count ?? 0))
+    .slice(0, 3)
+    .map((report, index) => ({
+      id: report.id,
+      title: report.title,
+      playCountText: report.play_count ? `${(report.play_count / 10000).toFixed(1)}万` : "-",
+      completionRateText: report.completion_rate ?? "-",
+      followerGainText: `${report.follower_gain}`,
+      insight:
+        index === 0
+          ? "这条样本说明“先结论后展开”在演示数据里最稳，用户能更快知道看完能拿到什么。"
+          : index === 1
+            ? "中段用了两组数字对比，完播并不差，但结尾转化动作偏弱，涨粉效率还有空间。"
+            : "标题和主题是对的，问题主要出在第一句过慢，前 5 秒还没把反差感打出来。",
+    }));
+
+  const overview = [
+    {
+      label: "7天平均播放",
+      value: `${Math.round(myRecentReports.reduce((sum, report) => sum + (report.play_count ?? 0), 0) / myRecentReports.length / 1000) / 10}万`,
+      hint: "相比前 7 天上升 8.6%，说明选题方向没有偏。",
+      tone: "success" as const,
+    },
+    {
+      label: "7天平均完播",
+      value: myRecentReports[0]?.completion_rate ?? "34.8%",
+      hint: "完播改善慢于播放，说明前段留人依然是主要短板。",
+      tone: "warning" as const,
+    },
+    {
+      label: "高质量样本",
+      value: `${recentSamples.length}条`,
+      hint: "演示页保留最近表现最好的样本，方便理解从数据到拆解的链路。",
+      tone: "neutral" as const,
+    },
+    {
+      label: "优先优化位",
+      value: "开头 5 秒",
+      hint: "建议先改开场承诺，再处理 CTA，不然转化很难真正放大。",
+      tone: "warning" as const,
+    },
+  ];
+
+  const priorityActions = [
+    {
+      id: "demo-priority-1",
+      title: "先把第一句改成收益承诺",
+      description: "把“今天聊什么”换成“看完你能避开什么坑”，先保住前 3 到 5 秒留人。",
+      priority: "P1" as const,
+    },
+    {
+      id: "demo-priority-2",
+      title: "中段补一组对比数字",
+      description: "只讲观点不够，最好插入一组盘面或案例对比，让结论更像证据链。",
+      priority: "P2" as const,
+    },
+    {
+      id: "demo-priority-3",
+      title: "结尾 CTA 收短到一句",
+      description: "演示里保留了 CTA 位置，建议真实站里也尽量单句完成，别把转化拖成长结尾。",
+      priority: "P3" as const,
+    },
+  ];
+
   return {
     profileName: demoProfiles[0]?.name ?? "赵安",
     statusCards: buildStatusCards(myRecentReports, myPreviousReports) as StatusCardItem[],
@@ -648,6 +715,9 @@ export function getDemoGrowthPageData() {
     },
     scriptBreakdown,
     advice,
+    overview,
+    recentSamples,
+    priorityActions,
     summary: {
       hasEnoughData: true,
       weakestDimension: "开头留人",

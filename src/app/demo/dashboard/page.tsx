@@ -1,5 +1,6 @@
 import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { DemoModeChip } from "@/components/demo/demo-nav";
+import { DemoTodayReportPanel } from "@/components/demo/demo-today-report-panel";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
@@ -47,24 +48,14 @@ export default function DemoDashboardPage() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">账号选择</p>
-                  <p className="mt-1 text-xs text-[var(--color-text-secondary)]">演示中默认展示 2 个账号入口。</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-secondary)]">演示中默认展示 2 个账号入口，支持展开查看今日提报明细。</p>
                 </div>
                 <Button type="button" variant="outline" size="sm" disabled>
                   切换账号
                 </Button>
               </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {data.accounts.map((account) => (
-                  <div key={account.id} className="rounded-2xl border border-white/70 bg-[rgba(255,255,255,0.82)] p-4 shadow-[var(--shadow-light)]">
-                    <div className="text-sm font-semibold text-[var(--color-text-primary)]">{account.display_name}</div>
-                    <div className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                      {account.content_direction} / {account.presentation_format}
-                    </div>
-                    <div className="mt-3 inline-flex rounded-full border border-emerald-500/15 bg-emerald-500/8 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                      今日演示数据已预置
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-3">
+                <DemoTodayReportPanel accounts={data.accounts} reportsByAccountId={data.reportsByAccountId} />
               </div>
             </div>
 
