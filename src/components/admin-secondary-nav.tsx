@@ -42,9 +42,10 @@ interface AdminSecondaryNavProps {
   pathname: string;
   canManageAdmin: boolean;
   className?: string;
+  hrefPrefix?: string;
 }
 
-export function AdminSecondaryNav({ pathname, canManageAdmin, className }: AdminSecondaryNavProps) {
+export function AdminSecondaryNav({ pathname, canManageAdmin, className, hrefPrefix = "" }: AdminSecondaryNavProps) {
   const items = getAdminSecondaryNavItems({ canManageAdmin });
 
   return (
@@ -55,7 +56,7 @@ export function AdminSecondaryNav({ pathname, canManageAdmin, className }: Admin
         return (
           <Link
             key={item.href}
-            href={item.href}
+            href={`${hrefPrefix}${item.href}`}
             aria-current={active ? "page" : undefined}
             className={cn("admin-subnav-link", active && "admin-subnav-link-active")}
           >
