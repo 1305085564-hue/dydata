@@ -89,6 +89,10 @@ function percent(value: number, digits = 1) {
   return `${value.toFixed(digits)}%`;
 }
 
+function twoDigits(value: number) {
+  return String(value).padStart(2, "0");
+}
+
 function pick<T>(items: T[], index: number) {
   return items[index % items.length];
 }
@@ -176,8 +180,10 @@ export const demoReports: DemoDailyReport[] = Array.from({ length: 30 }).flatMap
     const followerRate = 0.06 + (accountIndex % 5) * 0.01;
     const completionRate5s = clamp(48 + (accountIndex % 6) * 4 - dayIndex * 0.2, 34, 78);
     const completionRate = clamp(28 + (accountIndex % 5) * 3.3 - dayIndex * 0.12, 18, 52);
-    const publishedAt = new Date(`${reportDate}T0${(accountIndex % 8) + 8}:30:00.000Z`);
-    const uploadedAt = new Date(`${reportDate}T1${(accountIndex % 7) + 2}:10:00.000Z`);
+    const publishedHour = twoDigits((accountIndex % 8) + 8);
+    const uploadedHour = twoDigits((accountIndex % 7) + 12);
+    const publishedAt = new Date(`${reportDate}T${publishedHour}:30:00.000Z`);
+    const uploadedAt = new Date(`${reportDate}T${uploadedHour}:10:00.000Z`);
     const title = `${pick(topics, dayIndex + accountIndex)} ${String(dayIndex + 1).padStart(2, "0")}`;
 
     return {
