@@ -153,7 +153,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
             href="/demo"
             className="mt-6 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/14"
           >
-            不登录，直接查看演示站
+            不登录，进入演示站（右上角可退出）
           </Link>
         </section>
 
@@ -235,7 +235,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
                   className="flex w-full items-center justify-center rounded-xl border border-primary/20 bg-primary/8 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/12"
                   href="/demo"
                 >
-                  先看演示站
+                  先看演示站（右上角可退出）
                 </Link>
                 <p className="text-center text-sm text-muted-foreground">
                   还没有账号？

@@ -1,9 +1,10 @@
 export const FORGOT_PASSWORD_SUCCESS_MESSAGE = "如果该邮箱已注册，我们已发送重置邮件，请去邮箱查看";
 
-export function getLoginNotice(params: { registered?: string; reset?: string }) {
+export function getLoginNotice(params: { registered?: string; reset?: string; from?: string }) {
   if (params.registered === "1") return "注册成功，请登录";
   if (params.reset === "success") return "密码已重置，请重新登录";
   if (params.reset === "expired") return "重置链接已失效，请重新发送";
+  if (params.from === "demo") return "你已退出演示模式，当前回到正式登录入口";
   return null;
 }
 

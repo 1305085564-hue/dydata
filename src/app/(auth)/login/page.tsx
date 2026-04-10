@@ -14,6 +14,7 @@ interface LoginPageProps {
   searchParams: Promise<{
     registered?: string;
     reset?: string;
+    from?: string;
   }>;
 }
 
