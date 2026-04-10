@@ -387,10 +387,10 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-sm font-medium tabular-nums",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "text-emerald-600"
-          : "text-muted-foreground"
+          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
+          : "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400"
       )}
     >
       <TrendingUp className="size-3.5" />

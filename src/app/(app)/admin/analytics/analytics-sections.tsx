@@ -18,7 +18,7 @@ export function AnalyticsSections({ sections }: { sections: AnalyticsSection[] }
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}
-      className="space-y-6"
+      className="space-y-8"
     >
       {sections.map((section, index) => (
         <motion.div key={section.title} variants={itemVariants}>

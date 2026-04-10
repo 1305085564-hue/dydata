@@ -133,7 +133,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} unit="万" axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(15,23,42,0.04)" }} />
-              <Bar dataKey="平均播放(万)" fill="var(--color-primary)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="平均播放(万)" fill="#3B82F6" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -152,7 +152,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} unit="万" axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(15,23,42,0.04)" }} />
-                <Bar dataKey="平均播放(万)" fill="var(--color-warning)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="平均播放(万)" fill="#F97316" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

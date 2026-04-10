@@ -526,7 +526,7 @@ export default function AIChannelsClient() {
                                 禁用
                               </Button>
                             ) : null}
-                            <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(channel)} disabled={busy}>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => setDeleteTarget(channel)} disabled={busy}>
                               <Trash2 className="size-4" />
                               删除
                             </Button>

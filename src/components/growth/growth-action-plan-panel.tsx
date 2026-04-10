@@ -177,7 +177,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
             {blocks.map((block) => {
               const Icon = block.icon;
               return (
-                <div key={block.key} className={`rounded-[16px] border p-4 ${block.toneClass}`}>
+                <div key={block.key} className={`rounded-[16px] border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-4 border-l-blue-500 rounded-l-none dark:border-l-blue-400" : ""}`}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
                       <Icon className="size-4" />

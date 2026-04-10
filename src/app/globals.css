@@ -308,8 +308,8 @@
   .dashboard-surface {
     border: 1px solid color-mix(in srgb, var(--color-border) 78%, white);
     box-shadow: var(--shadow-card);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
   }
 
   .dashboard-surface-hero {
@@ -364,8 +364,8 @@
   .app-shell-panel {
     border: 1px solid color-mix(in srgb, var(--color-border) 76%, white);
     box-shadow: var(--shadow-card);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
   }
 
   .app-shell-surface {
@@ -488,7 +488,7 @@
   }
 
   .app-shell-metric-value {
-    font-size: clamp(1.15rem, 1rem + 0.8vw, 1.6rem);
+    font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.03em;
@@ -865,8 +865,8 @@
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
     background: var(--glass-bg);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: var(--shadow-card);
     transition:
       transform var(--duration-fast) var(--ease-out),
@@ -884,8 +884,8 @@
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
     background: var(--glass-bg);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: var(--shadow-card);
   }
 

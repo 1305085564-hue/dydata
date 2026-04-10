@@ -198,7 +198,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
               </div>
               <div className="dashboard-summary-chip">
                 状态
-                <span className={existingData ? "text-emerald-600" : "text-orange-500"}>{existingData ? "今日可修改" : "今日待提交"}</span>
+                <span className={existingData ? "rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400" : "rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"}>{existingData ? "今日可修改" : "今日待提交"}</span>
               </div>
             </div>
           </CardContent>

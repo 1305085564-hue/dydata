@@ -326,7 +326,7 @@ export function SubmissionStatus({
                         <TableCell className="tabular-nums">{row.accountCount}</TableCell>
                         <TableCell>
                           <Badge
-                            variant={row.isSubmitted ? "default" : row.isPartial ? "secondary" : "destructive"}
+                            variant={row.exemption.isExempt ? "neutral" : row.isSubmitted ? "success" : row.isPartial ? "warning" : "danger"}
                             className="text-xs"
                           >
                             {row.exemption.isExempt ? "豁免中" : row.statusText}
@@ -339,7 +339,7 @@ export function SubmissionStatus({
                                 <div key={account.id} className="flex items-center gap-2">
                                   <span>{account.name}</span>
                                   {submittedAccountSet.has(account.id) ? (
-                                    <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                    <Badge variant="success" className="text-[10px] px-1 py-0">
                                       已交
                                     </Badge>
                                   ) : null}
@@ -380,14 +380,14 @@ export function SubmissionStatus({
                               <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">{renderRole(row.role)}</Badge>
                             </TableCell>
                             <TableCell className="tabular-nums">{row.accountCount}</TableCell>
-                            <TableCell><Badge variant="default" className="text-xs">{row.statusText}</Badge></TableCell>
+                            <TableCell><Badge variant="success" className="text-xs">{row.statusText}</Badge></TableCell>
                             <TableCell>
                               {row.ownAccounts.length ? (
                                 <div className="space-y-1 text-xs text-muted-foreground">
                                   {row.ownAccounts.map((account) => (
                                     <div key={account.id} className="flex items-center gap-2">
                                       <span>{account.name}</span>
-                                      {submittedAccountSet.has(account.id) ? <Badge variant="outline" className="text-[10px] px-1 py-0">已交</Badge> : null}
+                                      {submittedAccountSet.has(account.id) ? <Badge variant="success" className="text-[10px] px-1 py-0">已交</Badge> : null}
                                     </div>
                                   ))}
                                 </div>
@@ -418,7 +418,7 @@ export function SubmissionStatus({
                             </TableCell>
                             <TableCell className="tabular-nums">{row.accountCount}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="neutral" className="text-xs">
                                 {row.statusText}
                               </Badge>
                             </TableCell>
@@ -461,7 +461,7 @@ export function SubmissionStatus({
                         <p className="text-xs text-muted-foreground">{renderRole(row.role)} · {row.accountCount} 个账号</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <Badge variant={row.isSubmitted ? "default" : row.isPartial ? "secondary" : "destructive"} className="text-xs">
+                        <Badge variant={row.isSubmitted ? "success" : row.isPartial ? "warning" : "danger"} className="text-xs">
                           {row.statusText}
                         </Badge>
                         <Button
@@ -479,7 +479,7 @@ export function SubmissionStatus({
                         row.ownAccounts.map((account) => (
                           <div key={account.id} className="flex items-center justify-between gap-2">
                             <span>{account.name}</span>
-                            <Badge variant={submittedAccountSet.has(account.id) ? "outline" : "secondary"} className="text-[10px] px-1 py-0">
+                            <Badge variant={submittedAccountSet.has(account.id) ? "success" : "danger"} className="text-[10px] px-1 py-0">
                               {submittedAccountSet.has(account.id) ? "已交" : "未交"}
                             </Badge>
                           </div>
@@ -507,7 +507,7 @@ export function SubmissionStatus({
                             <p className="text-xs text-muted-foreground">{renderRole(row.role)} · {row.accountCount} 个账号</p>
                           </div>
                           <div className="flex flex-col items-end gap-2">
-                            <Badge variant="default" className="text-xs">{row.statusText}</Badge>
+                            <Badge variant="success" className="text-xs">{row.statusText}</Badge>
                             <Button variant="ghost" size="sm" onClick={() => openDialog(row)} className="h-7 px-2 text-xs text-muted-foreground">豁免</Button>
                           </div>
                         </div>
@@ -535,7 +535,7 @@ export function SubmissionStatus({
                             编辑
                           </Button>
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="neutral" className="text-xs">
                           {row.statusText}
                         </Badge>
                         {renderExemptionHint(row.exemption.label, row.exemption.reason)}
@@ -571,7 +571,7 @@ export function SubmissionStatus({
                         </TableCell>
                         <TableCell>{renderAccountMeta(row)}</TableCell>
                         <TableCell>
-                          <Badge variant={row.isSubmitted ? "default" : "destructive"} className="text-xs">
+                          <Badge variant={row.isSubmitted ? "success" : "danger"} className="text-xs">
                             {row.isSubmitted ? "已提交" : "未提交"}
                           </Badge>
                         </TableCell>
@@ -605,7 +605,7 @@ export function SubmissionStatus({
                               <div className="space-y-1"><p>{row.profile_name}</p><p className="text-xs text-muted-foreground">{renderRole(row.profile.role)}</p></div>
                             </TableCell>
                             <TableCell>{renderAccountMeta(row)}</TableCell>
-                            <TableCell><Badge variant="default" className="text-xs">已提交</Badge></TableCell>
+                            <TableCell><Badge variant="success" className="text-xs">已提交</Badge></TableCell>
                             <TableCell>{renderExemptionHint(row.exemption.label, row.exemption.reason)}</TableCell>
                             <TableCell className="text-right">
                               <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="text-xs text-muted-foreground">设置豁免</Button>
@@ -627,7 +627,7 @@ export function SubmissionStatus({
                             <TableCell>{row.profile_name}</TableCell>
                             <TableCell>{renderAccountMeta(row)}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="neutral" className="text-xs">
                                 {row.isSubmitted ? "已提交" : "未提交"}
                               </Badge>
                             </TableCell>
@@ -663,7 +663,7 @@ export function SubmissionStatus({
                         <p className="text-xs text-muted-foreground">{row.profile_name} · {renderRole(row.profile.role)}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <Badge variant="destructive" className="text-xs">未交</Badge>
+                        <Badge variant="danger" className="text-xs">未交</Badge>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -696,7 +696,7 @@ export function SubmissionStatus({
                             <p className="text-xs text-muted-foreground">{row.profile_name} · {renderRole(row.profile.role)}</p>
                           </div>
                           <div className="flex flex-col items-end gap-2">
-                            <Badge variant="default" className="text-xs">已交</Badge>
+                            <Badge variant="success" className="text-xs">已交</Badge>
                             <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="h-7 px-2 text-xs text-muted-foreground">豁免</Button>
                           </div>
                         </div>
@@ -727,7 +727,7 @@ export function SubmissionStatus({
                             编辑
                           </Button>
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="neutral" className="text-xs">
                           {row.isSubmitted ? "已交" : "未交"}
                         </Badge>
                         {renderAccountMeta(row)}

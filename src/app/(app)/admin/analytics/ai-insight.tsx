@@ -103,8 +103,8 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
       {insight && !loading && (
         <MotionCard hover={false} className="bg-white/80">
-          <div className="p-4">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-text-primary)]">
+          <div className="space-y-4 p-5">
+            <p className="whitespace-pre-wrap text-sm leading-7 text-[var(--color-text-primary)]">
               {displayText}
               {!isComplete && <span className="ml-0.5 inline-block animate-pulse text-[var(--color-primary)]">|</span>}
             </p>

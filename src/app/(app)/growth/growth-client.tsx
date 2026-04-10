@@ -108,7 +108,7 @@ export function GrowthClientShell({
           />
         </AppShellSection>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <AppShellSection
             eyebrow="Performance Snapshot"
             title="先看结果变化"

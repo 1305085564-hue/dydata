@@ -29,8 +29,8 @@ function formatSignedPercent(value: number) {
 }
 
 function getNumberClassName(value: number) {
-  if (value > 0) return "text-emerald-600";
-  if (value < 0) return "text-rose-600";
+  if (value > 0) return "inline-flex rounded-full bg-red-50 px-2 py-0.5 text-red-600 dark:bg-red-500/15 dark:text-red-400";
+  if (value < 0) return "inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400";
   return "text-foreground";
 }
 

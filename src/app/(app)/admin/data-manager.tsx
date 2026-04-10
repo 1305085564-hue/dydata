@@ -464,7 +464,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => handleDelete(report.id, report.submitter)}
-                className="h-7 text-xs text-red-500 hover:text-red-600"
+                className="h-7 text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
               >
                 删除
               </Button>

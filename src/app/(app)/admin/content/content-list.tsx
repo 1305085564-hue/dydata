@@ -166,18 +166,18 @@ export function ContentList({
                 const isReviewed = localReviewedIds.has(video.id);
                 return (
                   <TableRow key={video.id} className="border-b border-border/30 hover:bg-muted/20">
-                    <TableCell className="max-w-[240px] py-3">
-                      <div className="line-clamp-2 text-sm font-medium">
+                    <TableCell className="max-w-md py-3">
+                      <div className="line-clamp-2 text-sm font-medium text-foreground" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                         {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-[var(--color-text-tertiary)]">
                       {video.profiles.name}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-[var(--color-text-tertiary)]">
                       {video.accounts.name}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-[var(--color-text-tertiary)]">
                       {formatDateTime(video.published_at ?? video.created_at)}
                     </TableCell>
                     <TableCell className="text-right text-sm">

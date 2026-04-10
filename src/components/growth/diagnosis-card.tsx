@@ -259,7 +259,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-3 lg:grid-cols-2">
           {diagnosisItems.map((item) => {
             const toneClass = item.tone === "weak" ? "border-orange-200/70 bg-orange-50/70" : "border-emerald-200/70 bg-emerald-50/70";
-            const badgeClass = item.tone === "weak" ? "bg-orange-100 text-orange-700" : "bg-emerald-100 text-emerald-700";
+            const badgeClass = item.tone === "weak" ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400";
 
             return (
               <motion.article key={item.key} variants={itemVariants} className={`rounded-[18px] border p-4 ${toneClass}`}>
@@ -295,7 +295,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                     <p className="leading-6">{item.benchmarkReason}</p>
                   </div>
 
-                  <div className="rounded-[14px] border border-white/60 bg-white/75 p-3">
+                  <div className="rounded-r-[14px] border-l-4 border-blue-500 bg-blue-50/50 p-3 dark:border-blue-400 dark:bg-blue-500/10">
                     <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
                       <ArrowRight className="size-3.5" />
                       下一步动作

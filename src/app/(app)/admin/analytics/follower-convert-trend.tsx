@@ -131,10 +131,10 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
           <Line
             type="monotone"
             dataKey="导粉量"
-            stroke="var(--color-primary)"
+            stroke="#3B82F6"
             strokeWidth={2.5}
             dot={false}
-            activeDot={{ r: 5, fill: "var(--color-primary)", stroke: "white", strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: "#3B82F6", stroke: "white", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

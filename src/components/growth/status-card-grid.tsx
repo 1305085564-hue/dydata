@@ -19,7 +19,7 @@ function Delta({ item }: { item: StatusCardItem }) {
   if (item.delta === undefined || !item.deltaText || Math.abs(item.delta) < 0.01) return null;
   const up = item.delta >= 0;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${up ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${up ? "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400" : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"}`}>
       {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
       {item.deltaText}
     </span>
@@ -41,7 +41,7 @@ export function StatusCardGrid({ items }: { items: StatusCardItem[] }) {
             <div className="flex h-full flex-col justify-between gap-3 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">{item.label}</p>
               <div className="flex items-end justify-between gap-2">
-                <div className="whitespace-nowrap text-[20px] font-semibold leading-none tabular-nums tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[22px]">
+                <div className="whitespace-nowrap text-2xl font-bold leading-none tabular-nums tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-3xl">
                   <StatusValue item={item} />
                 </div>
                 <Delta item={item} />
