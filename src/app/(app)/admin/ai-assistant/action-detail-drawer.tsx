@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ type ActionDetail = {
 };
 
 type Props = {
+  actorRole: "admin" | "owner";
   actionId: string | null;
   open: boolean;
   onClose: () => void;
@@ -61,7 +63,7 @@ function resultBadge(result?: string) {
   }
 }
 
-export default function ActionDetailDrawer({ actionId, open, onClose }: Props) {
+export default function ActionDetailDrawer({ actorRole, actionId, open, onClose }: Props) {
   const [detail, setDetail] = useState<ActionDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,32 +157,10 @@ export default function ActionDetailDrawer({ actionId, open, onClose }: Props) {
                   <div className="text-sm text-muted-foreground">{detail.actionCategory || "-"}</div>
                 </div>
                 <div className="space-y-1">
-                  <div className="text-sm font-medium">工具名</div>
-                  <div className="text-sm text-muted-foreground">{detail.toolName || "-"}</div>
-                </div>
-                <div className="space-y-1">
                   <div className="text-sm font-medium">结果</div>
                   <div>{resultBadge(detail.result)}</div>
                 </div>
               </section>
-
-              {detail.aiReasoning ? (
-                <section className="space-y-2">
-                  <div className="text-sm font-medium">AI 推理</div>
-                  <div className="rounded-lg bg-muted p-3 text-sm whitespace-pre-wrap">
-                    {detail.aiReasoning}
-                  </div>
-                </section>
-              ) : null}
-
-              {detail.toolParams ? (
-                <section className="space-y-2">
-                  <div className="text-sm font-medium">工具参数</div>
-                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">
-                    {formatJson(detail.toolParams)}
-                  </pre>
-                </section>
-              ) : null}
 
               {detail.errorMessage ? (
                 <section className="space-y-2">
@@ -191,46 +171,80 @@ export default function ActionDetailDrawer({ actionId, open, onClose }: Props) {
                 </section>
               ) : null}
 
-              {detail.backupSql ? (
-                <section className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-medium">备份 SQL</div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(detail.backupSql || "");
-                        toast.success("已复制备份 SQL");
-                      }}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                      复制
-                    </Button>
-                  </div>
-                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">
-                    {detail.backupSql}
-                  </pre>
-                </section>
-              ) : null}
+              {actorRole === "owner" && (detail.aiReasoning || detail.toolName || detail.toolParams || detail.backupSql || detail.beforeSnapshot || detail.afterSnapshot) ? (
+                <Collapsible className="rounded-lg border border-border/60 bg-muted/20">
+                  <CollapsibleTrigger className="w-full px-3 py-2 text-left text-sm font-medium">
+                    调试信息
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 px-3 pb-3">
+                    {detail.toolName ? (
+                      <section className="space-y-1">
+                        <div className="text-sm font-medium">工具名</div>
+                        <div className="text-sm text-muted-foreground">{detail.toolName}</div>
+                      </section>
+                    ) : null}
 
-              {detail.beforeSnapshot || detail.afterSnapshot ? (
-                <section className="space-y-2">
-                  <div className="text-sm font-medium">数据快照</div>
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="space-y-1">
-                      <div className="text-xs text-muted-foreground">操作前</div>
-                      <pre className="max-h-72 overflow-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">
-                        {formatJson(detail.beforeSnapshot) || "-"}
-                      </pre>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-xs text-muted-foreground">操作后</div>
-                      <pre className="max-h-72 overflow-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap">
-                        {formatJson(detail.afterSnapshot) || "-"}
-                      </pre>
-                    </div>
-                  </div>
-                </section>
+                    {detail.aiReasoning ? (
+                      <section className="space-y-2">
+                        <div className="text-sm font-medium">AI 推理</div>
+                        <div className="rounded-lg bg-background p-3 text-sm whitespace-pre-wrap">
+                          {detail.aiReasoning}
+                        </div>
+                      </section>
+                    ) : null}
+
+                    {detail.toolParams ? (
+                      <section className="space-y-2">
+                        <div className="text-sm font-medium">工具参数</div>
+                        <pre className="overflow-x-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
+                          {formatJson(detail.toolParams)}
+                        </pre>
+                      </section>
+                    ) : null}
+
+                    {detail.backupSql ? (
+                      <section className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-medium">备份 SQL</div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              navigator.clipboard.writeText(detail.backupSql || "");
+                              toast.success("已复制备份 SQL");
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            复制
+                          </Button>
+                        </div>
+                        <pre className="overflow-x-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
+                          {detail.backupSql}
+                        </pre>
+                      </section>
+                    ) : null}
+
+                    {detail.beforeSnapshot || detail.afterSnapshot ? (
+                      <section className="space-y-2">
+                        <div className="text-sm font-medium">数据快照</div>
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          <div className="space-y-1">
+                            <div className="text-xs text-muted-foreground">操作前</div>
+                            <pre className="max-h-72 overflow-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
+                              {formatJson(detail.beforeSnapshot) || "-"}
+                            </pre>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-xs text-muted-foreground">操作后</div>
+                            <pre className="max-h-72 overflow-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
+                              {formatJson(detail.afterSnapshot) || "-"}
+                            </pre>
+                          </div>
+                        </div>
+                      </section>
+                    ) : null}
+                  </CollapsibleContent>
+                </Collapsible>
               ) : null}
             </div>
           ) : null}

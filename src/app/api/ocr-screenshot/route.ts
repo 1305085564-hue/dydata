@@ -271,6 +271,10 @@ async function parseJsonPayload(request: NextRequest): Promise<ImagePayloadSucce
     if (!ACCEPTED_TYPES.has(mimeType)) {
       return { error: "仅支持 jpg、png、webp 图片" };
     }
+    const estimatedBytes = image.length * 0.75;
+    if (estimatedBytes > MAX_FILE_SIZE) {
+      return { error: "图片不能超过 8MB" };
+    }
     return {
       dataUrl: image,
       screenshotType: normalizeScreenshotType(body?.screenshot_type),
@@ -510,6 +514,7 @@ export function parseOcrResponse(
       screenshot_type: normalizedType,
       confidence_score: confidenceScore,
       requires_manual_confirmation: confidenceScore < 0.7,
+      // CurveRecognitionResult is JSON-compatible but uses discriminated unions, so direct cast fails
       recognized_fields: parsed as unknown as JsonObject,
     };
   }
@@ -537,6 +542,7 @@ export function parseOcrResponse(
       screenshot_type: normalizedType,
       confidence_score: confidenceScore,
       requires_manual_confirmation: confidenceScore < 0.7,
+      // RetentionRecognitionResult is JSON-compatible but uses discriminated unions, so direct cast fails
       recognized_fields: parsed as unknown as JsonObject,
     };
   }
@@ -551,9 +557,11 @@ export function parseOcrResponse(
   ) as JsonObject;
 
   if (parsed.curve_info) {
+    // Nested recognition result — JSON-compatible but structurally incompatible with JsonObject
     (recognizedFields as Record<string, JsonValue>).curve_info = parsed.curve_info as unknown as JsonObject;
   }
   if (parsed.retention_info) {
+    // Nested recognition result — JSON-compatible but structurally incompatible with JsonObject
     (recognizedFields as Record<string, JsonValue>).retention_info = parsed.retention_info as unknown as JsonObject;
   }
 
@@ -778,14 +786,16 @@ function normalizeNumber(value: unknown, allowDecimal = false): number | null {
   }
 
   if (typeof value === "string") {
+    const hasWan = /万$/.test(value);
     const normalized = value.replace(/[,%\s]/g, "").replace(/万$/, "");
     if (!normalized) {
       return null;
     }
-    const parsed = Number(normalized);
+    let parsed = Number(normalized);
     if (!Number.isFinite(parsed)) {
       return null;
     }
+    if (hasWan) parsed *= 10000;
     return allowDecimal ? Math.round(parsed * 100) / 100 : Math.round(parsed);
   }
 

@@ -137,20 +137,18 @@ function getChannelFromEnv(): ChannelConfig | null {
   };
 }
 
-function createServiceSupabaseClient() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _serviceClient: any = null;
+
+function getServiceSupabaseClient() {
+  if (_serviceClient) return _serviceClient;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return null;
-  }
-
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+  if (!supabaseUrl || !serviceRoleKey) return null;
+  _serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
+  return _serviceClient;
 }
 
 function updateCachedChannel(channelId: string, updater: (channel: ChannelConfig) => ChannelConfig) {
@@ -192,7 +190,7 @@ function mapFeatureConfig(row: AiFeatureConfigRow): FeatureConfig {
 }
 
 async function fetchDatabaseChannels(): Promise<ChannelConfig[]> {
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServiceSupabaseClient();
   if (!supabase) {
     return [];
   }
@@ -218,7 +216,7 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
     return cachedFeatureConfigs.configs.get(featureKey) ?? null;
   }
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServiceSupabaseClient();
   if (!supabase) {
     cachedFeatureConfigs = {
       expiresAt: now + CHANNEL_CACHE_TTL_MS,
@@ -264,7 +262,8 @@ async function getDatabaseChannels(): Promise<ChannelConfig[]> {
         };
         return effectiveChannels;
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[ai-client] 数据库渠道查询失败，降级到环境变量渠道", err);
         const envFallback = getChannelFromEnv();
         const fallbackChannels = envFallback ? [envFallback] : [];
         cachedChannels = {
@@ -572,7 +571,7 @@ async function markChannelSuccess(channel: ChannelConfig) {
     return;
   }
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServiceSupabaseClient();
   if (!supabase) return;
 
   await supabase
@@ -598,7 +597,7 @@ async function markChannelSuccess(channel: ChannelConfig) {
 async function markChannelFailure(channel: ChannelConfig, message: string) {
   if (channel.source !== "database" || !channel.id) return;
 
-  const supabase = createServiceSupabaseClient();
+  const supabase = getServiceSupabaseClient();
   if (!supabase) return;
 
   const { data } = await supabase.rpc("bump_ai_channel_failure", {
@@ -715,6 +714,7 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
       await markChannelFailure(channel, aiError.message);
 
       if (!aiError.retryable) {
+        aiError.message = `[${channel.name}] ${aiError.message}`;
         throw aiError;
       }
 
@@ -723,32 +723,18 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   }
 
   if (lastRetryableError) {
-    throw new Error("所有 AI 渠道不可用");
+    throw new Error(`所有 AI 渠道不可用（最后错误：${lastRetryableError.message}）`);
   }
 
-  throw new Error("所有 AI 渠道不可用");
+  throw new Error("所有 AI 渠道不可用（无可用渠道）");
 }
 
 export async function callAiJson(prompt: string, opts?: Omit<AiRequestOptions, "messages">): Promise<AiResponse> {
-  return callAi({
-    messages: [{ role: "user", content: prompt }],
-    maxTokens: opts?.maxTokens,
-    timeoutMs: opts?.timeoutMs,
-    model: opts?.model,
-    featureKey: opts?.featureKey,
-    jsonMode: true,
-  });
+  return callAi({ messages: [{ role: "user", content: prompt }], ...opts, jsonMode: true });
 }
 
 export async function callAiText(prompt: string, opts?: Omit<AiRequestOptions, "messages">): Promise<AiResponse> {
-  return callAi({
-    messages: [{ role: "user", content: prompt }],
-    maxTokens: opts?.maxTokens,
-    timeoutMs: opts?.timeoutMs,
-    model: opts?.model,
-    featureKey: opts?.featureKey,
-    jsonMode: false,
-  });
+  return callAi({ messages: [{ role: "user", content: prompt }], ...opts, jsonMode: false });
 }
 
 export function extractJsonString(content: string): string | null {

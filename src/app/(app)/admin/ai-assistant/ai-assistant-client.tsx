@@ -6,7 +6,11 @@ import { PanelRightOpen } from "lucide-react";
 import ChatPanel from "./chat-panel";
 import HistorySidebar from "./history-sidebar";
 
-export default function AIAssistantClient() {
+type Props = {
+  actorRole: "admin" | "owner";
+};
+
+export default function AIAssistantClient({ actorRole }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
 
@@ -16,12 +20,13 @@ export default function AIAssistantClient() {
     <div className="grid h-[calc(100vh-4rem)] gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="min-w-0 overflow-hidden">
         <ChatPanel
+          actorRole={actorRole}
           onHistoryRefresh={refreshHistory}
           onOpenHistory={() => setMobileHistoryOpen(true)}
         />
       </div>
       <div className="hidden overflow-hidden rounded-3xl border border-border/60 bg-background/85 shadow-sm backdrop-blur lg:block">
-        <HistorySidebar refreshKey={refreshKey} />
+        <HistorySidebar actorRole={actorRole} refreshKey={refreshKey} />
       </div>
       <div className="fixed right-4 top-20 z-20 lg:hidden">
         <Button size="sm" variant="outline" onClick={() => setMobileHistoryOpen(true)}>
@@ -30,6 +35,7 @@ export default function AIAssistantClient() {
         </Button>
       </div>
       <HistorySidebar
+        actorRole={actorRole}
         mobile
         mobileOpen={mobileHistoryOpen}
         onMobileOpenChange={setMobileHistoryOpen}

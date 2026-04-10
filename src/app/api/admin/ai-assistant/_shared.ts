@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
 import type { Permissions, UserRole } from "@/types";
+
+export { toBoolean, toObject, toTrimmedString };
 
 export type AdminActor = {
   userId: string;
@@ -44,18 +47,6 @@ export async function requireAdminActor() {
   };
 }
 
-export function toObject(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return value as Record<string, unknown>;
-}
-
-export function toTrimmedString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-export function toBoolean(value: unknown) {
-  return value === true;
-}
 
 export function parseDate(value: string | null) {
   if (!value) return null;

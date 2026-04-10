@@ -96,6 +96,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // 防越权：忽略前端传的 userId，强制用服务端认证的 user.id
+  body.userId = user.id
+
   const prompt = buildGrowthAdvicePrompt(body)
 
   try {
@@ -108,8 +111,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(advice)
   } catch (error) {
+    console.error("[growth-advice] AI 请求异常", error);
     return NextResponse.json(
-      { error: `AI 请求异常: ${(error as Error).message}` },
+      { error: "AI 建议生成失败，请稍后重试" },
       { status: 500 }
     )
   }

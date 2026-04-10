@@ -9,30 +9,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, PanelRightOpen, RotateCcw, Send } from "lucide-react";
+import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
 import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
+import AssistantDetailSections from "./assistant-detail-sections";
 
 type ToolCall = {
   toolName: string;
   params?: Record<string, unknown>;
   needsConfirmation?: boolean;
   confirmationMessage?: string;
-  affectedData?: unknown;
-  backupSql?: string | null;
-};
-
-type ApiResult = {
-  success?: boolean;
-  data?: unknown;
-  error?: string | null;
-  cancelled?: boolean;
+  confirmationReason?: string;
+  details?: AssistantDetails;
+  debug?: AssistantDebug;
 };
 
 type ApiAssistantResponse = {
   type: "text" | "confirmation" | "result";
-  content: string;
+  answer: string;
+  details?: AssistantDetails;
   toolCall?: ToolCall;
-  result?: ApiResult;
 };
 
 type Message = {
@@ -40,15 +36,16 @@ type Message = {
   role: "user" | "assistant";
   type: "text" | "confirmation" | "result" | "error";
   content: string;
+  details?: AssistantDetails;
   actionId?: string;
   conversationId?: string;
   toolCall?: ToolCall;
-  result?: ApiResult;
   requestText?: string;
   retryable?: boolean;
 };
 
 type ChatPanelProps = {
+  actorRole: "admin" | "owner";
   onHistoryRefresh: () => void;
   onOpenHistory: () => void;
 };
@@ -77,11 +74,11 @@ function normalizeAssistantMessage(payload: {
     id: createId(),
     role: "assistant",
     type: responseType === "confirmation" ? "confirmation" : responseType === "result" ? "result" : "text",
-    content: response?.content ?? "",
+    content: response?.answer ?? "",
+    details: response?.details,
     actionId: payload.actionId,
     conversationId: payload.conversationId,
     toolCall: response?.toolCall,
-    result: response?.result,
   };
 }
 
@@ -89,37 +86,22 @@ function buildConfirmResultMessage(options: {
   actionId: string;
   conversationId: string;
   confirmed: boolean;
-  data: { success?: boolean; result?: ApiResult };
+  data: { success?: boolean; response?: ApiAssistantResponse };
 }): Message {
   const { actionId, conversationId, confirmed, data } = options;
-  const cancelled = data.result?.cancelled;
-  const isSuccess = confirmed ? data.success !== false && !data.result?.error : cancelled;
-
-  let content = "操作已取消。";
-  if (confirmed) {
-    content = isSuccess ? "操作执行成功。" : `操作执行失败：${data.result?.error ?? "未知错误"}`;
-  }
+  const response = data.response;
+  const isSuccess = confirmed ? data.success !== false : true;
+  const content = response?.answer ?? (confirmed ? "操作执行成功。" : "操作已取消。");
 
   return {
     id: createId(),
     role: "assistant",
     type: confirmed && isSuccess ? "result" : confirmed ? "error" : "text",
     content,
+    details: response?.details,
     actionId,
     conversationId,
-    result: data.result,
   };
-}
-
-function renderJson(value: unknown) {
-  if (value == null) return "";
-  if (typeof value === "string") return value;
-
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
 }
 
 function MarkdownContent({ content }: { content: string }) {
@@ -130,7 +112,7 @@ function MarkdownContent({ content }: { content: string }) {
   );
 }
 
-export default function ChatPanel({ onHistoryRefresh, onOpenHistory }: ChatPanelProps) {
+export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -324,11 +306,7 @@ export default function ChatPanel({ onHistoryRefresh, onOpenHistory }: ChatPanel
                     ) : (
                       <MarkdownContent content={msg.content} />
                     )}
-                    {msg.result?.data ? (
-                      <pre className="mt-3 overflow-x-auto rounded-md bg-muted p-3 text-xs text-foreground">
-                        {renderJson(msg.result.data)}
-                      </pre>
-                    ) : null}
+                    {!isUser ? <AssistantDetailSections details={msg.details} /> : null}
                     {msg.retryable ? (
                       <div className="mt-3 flex justify-end">
                         <Button size="sm" variant="outline" onClick={() => handleRetry(msg.requestText)} disabled={loading}>
@@ -341,6 +319,7 @@ export default function ChatPanel({ onHistoryRefresh, onOpenHistory }: ChatPanel
                   {msg.type === "confirmation" && msg.toolCall ? (
                     <div className="mt-2 inline-block w-full max-w-[92%] sm:max-w-[80%]">
                       <ConfirmCard
+                        actorRole={actorRole}
                         data={msg.toolCall}
                         submitting={isConfirming}
                         onConfirm={() => handleConfirm(msg, true)}

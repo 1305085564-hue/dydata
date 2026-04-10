@@ -94,9 +94,9 @@ values
         'https://www.aiapikey.net'
       )
     ),
-    'PLACEHOLDER_KEY_1',
+    '',
     1
   ),
-  ('api1', 'https://ai.ltcraft.cn', 'PLACEHOLDER_KEY_2', 2),
-  ('api8', 'https://www.openclaudecode.cn', 'PLACEHOLDER_KEY_3', 3)
+  ('api1', 'https://ai.ltcraft.cn', '', 2),
+  ('api8', 'https://www.openclaudecode.cn', '', 3)
 on conflict (name) do nothing;

@@ -33,23 +33,21 @@ export async function GET(_request: NextRequest, context: Params) {
   }
 
   const { data: profile } = await supabase.from("profiles").select("id, name").eq("id", action.admin_id).single();
+  const canViewDebug = actor.role === "owner";
 
   return NextResponse.json({
     action: {
       id: action.id,
-      adminId: action.admin_id,
       adminName: profile?.name ?? "未知管理员",
       actionType: action.action_type,
       actionCategory: action.action_category,
-      targetType: action.target_type,
-      targetId: action.target_id,
       description: action.description,
-      aiReasoning: action.ai_reasoning,
-      toolName: action.tool_name,
-      toolParams: action.tool_params,
-      backupSql: action.backup_sql,
-      beforeSnapshot: action.before_snapshot,
-      afterSnapshot: action.after_snapshot,
+      aiReasoning: canViewDebug ? action.ai_reasoning : undefined,
+      toolName: canViewDebug ? action.tool_name : undefined,
+      toolParams: canViewDebug ? action.tool_params : undefined,
+      backupSql: canViewDebug ? action.backup_sql : undefined,
+      beforeSnapshot: canViewDebug ? action.before_snapshot : undefined,
+      afterSnapshot: canViewDebug ? action.after_snapshot : undefined,
       result: action.result,
       errorMessage: action.error_message,
       createdAt: action.created_at,

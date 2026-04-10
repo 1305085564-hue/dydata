@@ -25,6 +25,7 @@ type ActionRecord = {
 };
 
 type HistorySidebarProps = {
+  actorRole: "admin" | "owner";
   refreshKey: number;
   mobile?: boolean;
   mobileOpen?: boolean;
@@ -163,6 +164,7 @@ function SidebarContent({
 }
 
 export default function HistorySidebar({
+  actorRole,
   refreshKey,
   mobile = false,
   mobileOpen = false,
@@ -261,6 +263,7 @@ export default function HistorySidebar({
         </Dialog>
 
         <ActionDetailDrawer
+          actorRole={actorRole}
           actionId={selectedId}
           open={!!selectedId}
           onClose={() => setSelectedId(null)}
@@ -288,6 +291,7 @@ export default function HistorySidebar({
       </div>
 
       <ActionDetailDrawer
+        actorRole={actorRole}
         actionId={selectedId}
         open={!!selectedId}
         onClose={() => setSelectedId(null)}

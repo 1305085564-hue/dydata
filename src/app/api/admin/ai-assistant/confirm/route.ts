@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { buildCancelledPresentation, buildSuccessPresentation } from "@/lib/admin-ai/presentation";
+import { assertToolIsWhitelisted } from "@/lib/admin-ai/core";
 import { executeAdminTool } from "@/lib/admin-tools";
+import type { AdminAiToolName } from "@/lib/admin-ai/core";
 
 import { requireAdminActor, toBoolean, toTrimmedString } from "../_shared";
 
@@ -64,9 +67,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       actionId,
-      result: { cancelled: true },
+      response: {
+        type: "text",
+        answer: buildCancelledPresentation(action.tool_name as AdminAiToolName).answer,
+      },
     });
   }
+
+  assertToolIsWhitelisted(action.tool_name);
 
   const runResult = await executeAdminTool({
     toolName: action.tool_name,
@@ -78,9 +86,21 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  const presentation = runResult.success
+    ? buildSuccessPresentation({
+        toolName: action.tool_name as AdminAiToolName,
+        params: (action.tool_params ?? {}) as Record<string, unknown>,
+        result: runResult,
+      })
+    : {
+        answer: runResult.error ?? "执行失败",
+        historyTitle: action.tool_name as string,
+      };
+
   const { error: updateError } = await supabase
     .from("admin_actions")
     .update({
+      description: presentation.historyTitle,
       result: runResult.success ? "success" : "failed",
       confirmed_by: actor.userId,
       confirmed_at: new Date().toISOString(),
@@ -97,10 +117,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     success: runResult.success,
     actionId,
-    result: {
-      success: runResult.success,
-      data: runResult.data ?? null,
-      error: runResult.success ? null : runResult.error ?? "执行失败",
+    response: {
+      type: runResult.success ? "result" : "text",
+      answer: presentation.answer,
+      details: runResult.success ? presentation.details : undefined,
     },
   });
 }

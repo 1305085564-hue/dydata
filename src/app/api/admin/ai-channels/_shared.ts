@@ -1,7 +1,10 @@
 import type { NextRequest } from "next/server";
 
-import { __internal as aiClientInternal } from "@/lib/ai/client";
+import { __internal as aiClientInternal, buildUpstreamUrl } from "@/lib/ai/client";
+import { toBoolean, toTrimmedString } from "@/lib/type-guards";
 import { requireAdminActor } from "../ai-assistant/_shared";
+
+export { toBoolean, toTrimmedString };
 
 export type AiChannelRow = {
   id: string;
@@ -35,19 +38,12 @@ export async function requireOwnerActor() {
   return auth;
 }
 
-export function toTrimmedString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
 
 export function toNullableString(value: unknown) {
   const text = toTrimmedString(value);
   return text ? text : null;
 }
 
-export function toBoolean(value: unknown, defaultValue = false) {
-  if (typeof value === "boolean") return value;
-  return defaultValue;
-}
 
 export function toPriority(value: unknown, fallback = 100) {
   if (typeof value === "number" && Number.isFinite(value)) return Math.trunc(value);
@@ -84,9 +80,6 @@ export function normalizeChannelRow(row: AiChannelRow) {
   };
 }
 
-export function buildUpstreamUrl(baseUrl: string) {
-  return `${baseUrl.trim().replace(/\/+$/, "")}/chat/completions`;
-}
 
 export function resolveModel(channelModel: string | null | undefined, fallbackModel?: string) {
   return channelModel?.trim() || fallbackModel?.trim() || process.env.AI_MODEL || "claude-sonnet-4-6";

@@ -73,10 +73,12 @@ export async function POST(request: NextRequest) {
   const userId = user.id;
 
   // 使用 service role 绕过 RLS 读写 AI 表
-  const serviceClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json({ error: "服务端配置缺失" }, { status: 500 });
+  }
+  const serviceClient = createServiceClient(supabaseUrl, serviceRoleKey);
 
   // 缓存检查：同用户同日期已有成功结果则直接返回
   const { data: cached } = await serviceClient
@@ -131,22 +133,7 @@ export async function POST(request: NextRequest) {
 
     rawText = scriptDocs?.[0]?.raw_text ?? null;
 
-    // 尝试从 ocr_result 表获取曲线图描述（若表存在）
-    // 如不存在则跳过，不影响主流程
-    try {
-      const { data: ocrAssets } = await serviceClient
-        .from("content_asset")
-        .select("asset_role, ocr_result_json")
-        .eq("content_item_id", contentItemId)
-        .in("asset_role", ["traffic_curve", "retention_curve"]);
-
-      if (ocrAssets) {
-        trafficCurveDesc = ocrAssets.find((a: { asset_role: string }) => a.asset_role === "traffic_curve")?.ocr_result_json?.text ?? null;
-        retentionCurveDesc = ocrAssets.find((a: { asset_role: string }) => a.asset_role === "retention_curve")?.ocr_result_json?.text ?? null;
-      }
-    } catch {
-      // content_asset 查询失败，跳过
-    }
+    // TODO: content_asset 表尚未包含 asset_role/ocr_result_json 列，等 migration 补上后再启用 OCR 曲线描述
   }
 
   const inputBundle: Record<string, unknown> = {

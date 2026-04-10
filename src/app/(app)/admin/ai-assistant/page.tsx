@@ -33,7 +33,7 @@ export default async function AIAssistantPage() {
         title="对话工作区"
         description="左侧对话，右侧历史；移动端可随时拉起历史。"
       >
-        <AIAssistantClient />
+        <AIAssistantClient actorRole={profile.role} />
       </AppShellSection>
     </AppShell>
   );

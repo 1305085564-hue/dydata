@@ -10,6 +10,11 @@ import {
   shouldRequireConfirmation,
   type AdminAiToolName,
 } from "@/lib/admin-ai/core";
+import {
+  buildConfirmationRequiredPresentation,
+  buildSuccessPresentation,
+  type AssistantDebug,
+} from "@/lib/admin-ai/presentation";
 import { executeAdminTool } from "@/lib/admin-tools";
 
 import { requireAdminActor, toObject, toTrimmedString } from "./_shared";
@@ -143,7 +148,12 @@ function parseAiDecision(raw: string): {
   params: Record<string, unknown>;
   reasoning: string;
 } {
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    throw new Error(`AI 返回非 JSON 格式：${raw.slice(0, 100)}`);
+  }
   const reply = toTrimmedString(parsed.reply) || "收到，开始处理";
   const rawToolName = toTrimmedString(parsed.toolName);
   let toolName: AdminAiToolName | null = null;
@@ -206,13 +216,18 @@ export async function POST(request: NextRequest) {
         conversationId,
         response: {
           type: "text",
-          content: reply || "请补充更具体的指令（对象、时间、目标）",
+          answer: reply || "请补充更具体的指令（对象、时间、目标）",
         },
       });
     }
 
     const meta = TOOL_META[toolName];
     const needsConfirmation = shouldRequireConfirmation(toolName, buildRiskContext(params));
+    const successPresentationPreview = buildSuccessPresentation({
+      toolName,
+      params,
+      result: { success: true, data: {} },
+    });
 
     const actionInsert = {
       conversation_id: conversationId,
@@ -221,7 +236,7 @@ export async function POST(request: NextRequest) {
       action_category: meta.actionCategory,
       target_type: meta.targetType,
       target_id: buildTargetId(params),
-      description: `${meta.description}｜${reply}`,
+      description: successPresentationPreview.historyTitle,
       ai_reasoning: reasoning || null,
       tool_name: toolName,
       tool_params: params,
@@ -247,22 +262,33 @@ export async function POST(request: NextRequest) {
             conversationId,
             response: {
               type: "text",
-              content: dryRunResult.error ?? "预检查失败，未进入确认流程",
-              result: {
-                success: false,
-                data: null,
-                error: dryRunResult.error ?? "dryRun 失败",
-              },
+              answer: dryRunResult.error ?? "预检查失败，未进入确认流程",
             },
           },
           { status: 400 },
         );
       }
 
+      const presentation = buildConfirmationRequiredPresentation({
+        toolName,
+        params,
+        result: dryRunResult,
+      });
+      const debug: AssistantDebug | undefined =
+        actor.role === "owner"
+          ? {
+              toolName,
+              toolParams: params,
+              backupSql: dryRunResult.backupSql ?? null,
+              beforeSnapshot: dryRunResult.beforeSnapshot ?? null,
+            }
+          : undefined;
+
       const { data: row, error } = await supabase
         .from("admin_actions")
         .insert({
           ...actionInsert,
+          description: presentation.historyTitle,
           backup_sql: dryRunResult.backupSql ?? null,
           before_snapshot: dryRunResult.beforeSnapshot ?? null,
           error_message: dryRunResult.success ? null : dryRunResult.error ?? "dryRun 失败",
@@ -278,14 +304,16 @@ export async function POST(request: NextRequest) {
         conversationId,
         response: {
           type: "confirmation",
-          content: reply,
+          answer: presentation.answer,
+          details: presentation.details,
           toolCall: {
             toolName,
             params,
             needsConfirmation: true,
-            confirmationMessage: "这是高危操作，请确认后执行",
-            affectedData: dryRunResult.affectedData ?? null,
-            backupSql: dryRunResult.backupSql ?? null,
+            confirmationMessage: "这是高风险操作，确认后才会执行。",
+            confirmationReason: "会直接影响后台数据或权限，所以需要你先确认。",
+            details: presentation.details,
+            debug,
           },
         },
         actionId: row.id,
@@ -302,10 +330,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const presentation = runResult.success
+      ? buildSuccessPresentation({
+          toolName,
+          params,
+          result: runResult,
+        })
+      : {
+          answer: runResult.error ?? "执行失败",
+          historyTitle: successPresentationPreview.historyTitle,
+        };
+
     const { data: row, error } = await supabase
       .from("admin_actions")
       .insert({
         ...actionInsert,
+        description: presentation.historyTitle,
         result: runResult.success ? "success" : "failed",
         backup_sql: runResult.backupSql ?? null,
         before_snapshot: runResult.beforeSnapshot ?? null,
@@ -340,7 +380,7 @@ export async function POST(request: NextRequest) {
               body: JSON.stringify({
                 msg_type: "text",
                 content: {
-                  text: `🚨 站内AI发现代码问题\n报告人: ${actor.name ?? actor.userId}\n描述: ${message}`,
+                  text: `🚨 站内AI发现代码问题\n报告人: ${actor.name ?? actor.userId}\n描述: ${message.slice(0, 200)}`,
                 },
               }),
             });
@@ -358,12 +398,8 @@ export async function POST(request: NextRequest) {
       conversationId,
       response: {
         type: runResult.success ? "result" : "text",
-        content: runResult.success ? reply : runResult.error ?? "执行失败",
-        result: {
-          success: runResult.success,
-          data: runResult.data ?? null,
-          error: runResult.success ? null : runResult.error ?? "执行失败",
-        },
+        answer: presentation.answer,
+        details: runResult.success ? presentation.details : undefined,
       },
       actionId: row.id,
     });

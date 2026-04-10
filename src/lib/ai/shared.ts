@@ -1,9 +1,12 @@
-import { callAiJson } from "./client";
+import { callAiJson, extractJsonString } from "./client";
+
+export { extractJsonString };
+import type { createClient } from "@supabase/supabase-js";
 
 export type StructuredAiMessageContent = string | Array<{ type?: unknown; text?: unknown }> | null | undefined;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type MinimalSupabaseClient = any;
+export type MinimalSupabaseClient = ReturnType<typeof createClient<any>>;
 
 export type SingleVideoSuggestion = {
   target: "hook" | "mid" | "cta";
@@ -60,25 +63,6 @@ export function normalizeMessageContent(content: StructuredAiMessageContent): st
   return text || null;
 }
 
-export function extractJsonString(content: string) {
-  const trimmed = content.trim();
-  if (!trimmed) return null;
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
-
-  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fencedMatch?.[1]) {
-    const candidate = fencedMatch[1].trim();
-    if (candidate.startsWith("{") && candidate.endsWith("}")) {
-      return candidate;
-    }
-  }
-
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return null;
-
-  return trimmed.slice(start, end + 1);
-}
 
 export async function callStructuredAi(input: {
   prompt: string;

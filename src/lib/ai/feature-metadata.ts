@@ -126,6 +126,9 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
   },
 };
 
+export type AiFeatureKey = keyof typeof AI_FEATURE_METADATA;
+export const AI_FEATURE_KEYS = Object.keys(AI_FEATURE_METADATA) as AiFeatureKey[];
+
 export function getAiFeatureMetadata(featureKey: string, fallbackLabel?: string): AiFeatureMetadata {
   const metadata = AI_FEATURE_METADATA[featureKey];
   if (metadata) return metadata;
