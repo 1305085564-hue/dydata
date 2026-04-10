@@ -7,6 +7,7 @@ import {
   BadgeInfo,
   CheckCircle2,
   Loader2,
+  MoreHorizontal,
   Pencil,
   RefreshCw,
   Settings2,
@@ -134,6 +135,7 @@ export default function AIChannelsClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AiChannelRow | null>(null);
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
+  const [expandedActionRowId, setExpandedActionRowId] = useState<string | null>(null);
 
   const orderedChannels = useMemo(
     () => [...channels].sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name, "zh-CN")),
@@ -299,6 +301,7 @@ export default function AIChannelsClient() {
     } finally {
       setLoadingActionId(null);
       setDeleteTarget(null);
+      setExpandedActionRowId(null);
     }
   }
 
@@ -431,6 +434,7 @@ export default function AIChannelsClient() {
               </TableHeader>
               <TableBody>
                 {orderedChannels.map((channel) => {
+                  const status = getStatus(channel);
                   const meta = getStatusMeta(channel);
                   const busy =
                     loadingActionId === `test:${channel.id}` ||
@@ -438,6 +442,8 @@ export default function AIChannelsClient() {
                     loadingActionId === `toggle:${channel.id}` ||
                     loadingActionId === `recover:${channel.id}` ||
                     loadingActionId === `delete:${channel.id}`;
+                  const showRecovery = status === "circuit" && isRecoverable(channel);
+                  const isMoreOpen = expandedActionRowId === channel.id;
                   return (
                     <TableRow key={channel.id}>
                       <TableCell className="font-medium text-[var(--color-text-primary)]">{channel.name}</TableCell>
@@ -469,39 +475,63 @@ export default function AIChannelsClient() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap justify-end gap-2">
+                          {showRecovery ? (
+                            <Button size="sm" onClick={() => void runChannelAction(channel, "recover")} disabled={busy}>
+                              {loadingActionId === `recover:${channel.id}` ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="size-4" />
+                              )}
+                              恢复
+                            </Button>
+                          ) : (
+                            <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "toggle")} disabled={busy}>
+                              {channel.is_enabled ? "禁用" : "启用"}
+                            </Button>
+                          )}
                           <Button variant="outline" size="sm" onClick={() => openEditDialog(channel)} disabled={busy}>
                             <Pencil className="size-4" />
                             编辑
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "test")} disabled={busy}>
-                            {loadingActionId === `test:${channel.id}` ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <CheckCircle2 className="size-4" />
-                            )}
-                            测文本
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "ocr_test")} disabled={busy}>
-                            {loadingActionId === `ocr_test:${channel.id}` ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <CheckCircle2 className="size-4" />
-                            )}
-                            测 OCR
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "toggle")} disabled={busy}>
-                            {channel.is_enabled ? "禁用" : "启用"}
-                          </Button>
-                          {isRecoverable(channel) ? (
-                            <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "recover")} disabled={busy}>
-                              恢复
-                            </Button>
-                          ) : null}
-                          <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(channel)} disabled={busy}>
-                            <Trash2 className="size-4" />
-                            删除
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setExpandedActionRowId((current) => (current === channel.id ? null : channel.id))}
+                            disabled={busy}
+                          >
+                            <MoreHorizontal className="size-4" />
+                            更多
                           </Button>
                         </div>
+                        {isMoreOpen ? (
+                          <div className="mt-2 flex flex-wrap justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "test")} disabled={busy}>
+                              {loadingActionId === `test:${channel.id}` ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="size-4" />
+                              )}
+                              文本测试
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "ocr_test")} disabled={busy}>
+                              {loadingActionId === `ocr_test:${channel.id}` ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="size-4" />
+                              )}
+                              OCR 测试
+                            </Button>
+                            {showRecovery ? (
+                              <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "toggle")} disabled={busy}>
+                                禁用
+                              </Button>
+                            ) : null}
+                            <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(channel)} disabled={busy}>
+                              <Trash2 className="size-4" />
+                              删除
+                            </Button>
+                          </div>
+                        ) : null}
                         {channel.last_error_message ? (
                           <p className="mt-2 max-w-[320px] truncate text-left text-xs text-destructive">
                             最近错误：{channel.last_error_message}
