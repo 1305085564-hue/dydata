@@ -134,7 +134,7 @@ function InteractionTooltip({
 export function InteractionTrend({
   data,
   personalLabel = "个人",
-  teamAverageLabel = "团队 P80",
+  teamAverageLabel = "团队 P70",
   emptyText = "提交 2 天以上数据后可查看趋势图",
   isLoading = false,
 }: InteractionTrendProps) {
@@ -175,7 +175,7 @@ export function InteractionTrend({
               variant="ghost"
               className={cn(
                 "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.01] hover:brightness-105 active:scale-[0.98]",
-                range === value && "bg-background text-foreground shadow-sm"
+                range === value && "glass-panel text-foreground shadow-sm"
               )}
               onClick={() => setRange(value)}
             >

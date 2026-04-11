@@ -136,7 +136,7 @@ function 样本卡({
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-border/70 bg-white/65 px-3.5 py-3 text-sm leading-6 text-muted-foreground shadow-[0_1px_2px_rgba(15,23,42,0.03)] dark:bg-white/5">
+        <div className="rounded-2xl border border-border/70 glass-panel px-3.5 py-3 text-sm leading-6 text-muted-foreground shadow-[0_1px_2px_rgba(15,23,42,0.03)] dark:glass-panel">
           <span className="font-semibold text-foreground">推荐理由：</span>
           {sample.推荐理由}
         </div>

@@ -75,7 +75,7 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
   const total = rows.length;
 
   return (
-    <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+    <MotionCard className="border-white/70 glass-panel backdrop-blur-[16px]">
       <div className="space-y-4 p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1.5">
@@ -84,7 +84,7 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
             <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{leftName} vs {rightName}</p>
           </div>
           {total > 0 && (
-            <div className="shrink-0 rounded-2xl border border-white/80 bg-white/88 px-3 py-2 text-center shadow-[var(--shadow-light)]">
+            <div className="shrink-0 rounded-2xl border border-white/80 glass-panel px-3 py-2 text-center shadow-[var(--shadow-light)]">
               <div className="text-base font-semibold tabular-nums text-[var(--color-primary)]">
                 {winCount}/{total}
               </div>

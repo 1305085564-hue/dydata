@@ -37,7 +37,7 @@ export function StatusCardGrid({ items }: { items: StatusCardItem[] }) {
     >
       {items.map((item, index) => (
         <motion.div key={item.label} variants={itemVariants} className="h-full">
-          <MotionCard index={index} className="h-full border-white/70 bg-white/78 backdrop-blur-[14px]">
+          <MotionCard index={index} className="h-full border-white/70 glass-panel backdrop-blur-[14px]">
             <div className="flex h-full flex-col justify-between gap-3 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">{item.label}</p>
               <div className="flex items-end justify-between gap-2">

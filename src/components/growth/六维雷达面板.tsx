@@ -102,7 +102,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
 
   if (!capabilityCards.length) {
     return (
-      <div className="rounded-[28px] border border-white/70 bg-white/78 p-5 shadow-[var(--shadow-card)] backdrop-blur-[16px]">
+      <div className="rounded-[28px] border border-white/70 glass-panel p-5 shadow-[var(--shadow-card)] backdrop-blur-[16px]">
         <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">数据不足，先连续提交数据后再看能力分布。</p>
       </div>
@@ -123,14 +123,14 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
   const weakCard = weakBenchmarkCards.find((c) => c.dimension === capabilityCards[weakIndex]?.name);
 
   return (
-    <div className="rounded-[28px] border border-white/70 bg-white/78 p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
+    <div className="rounded-[28px] border border-white/70 glass-panel p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Capability Radar</p>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
           <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看能力强弱分布，再决定优先补哪一段内容短板。</p>
         </div>
-        <div className="flex items-center gap-2.5 rounded-2xl border border-white/80 bg-white/88 px-3 py-2 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-white/80 glass-panel px-3 py-2 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2 w-2 rounded-full bg-[var(--color-primary)]" />
             我

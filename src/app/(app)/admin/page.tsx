@@ -75,7 +75,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         title="管理员中控台"
         description="先看今天的整体状态，再处理趋势、待办和成员工具，避免在长列表里来回找重点。"
         meta={
-          <div className="grid gap-2 rounded-2xl border border-white/80 bg-white/88 p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[320px]">
+          <div className="glass-panel grid gap-2 rounded-2xl p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[320px]">
             <div className="inline-flex items-center gap-2 font-medium text-[var(--color-text-primary)]">
               <Sparkles className="size-3.5 text-[var(--color-primary)]" />
               今日总控摘要
@@ -110,7 +110,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           description="把总览、待办和快捷动作放在同一屏，管理动作更集中。"
         >
           <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <Card className="glass-card border-white/60 bg-white/72">
+            <Card className="glass-panel">
               <CardHeader>
                 <CardTitle className="font-semibold tracking-tight">团队趋势总览</CardTitle>
               </CardHeader>
@@ -130,12 +130,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </CardContent>
             </Card>
 
-            <Card className="glass-card-static border-white/70 bg-white/78 backdrop-blur-[16px]">
+            <Card className="glass-card-static border-white/70 glass-panel backdrop-blur-[16px]">
               <CardHeader>
                 <CardTitle className="font-semibold tracking-tight">今日优先事项</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="rounded-2xl border border-white/75 bg-white/80 p-4 shadow-[var(--shadow-light)]">
+                <div className="rounded-2xl border border-white/75 glass-panel p-4 shadow-[var(--shadow-light)]">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-[var(--color-text-primary)]">提交状态检查</p>
@@ -146,7 +146,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </Badge>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/75 bg-white/80 p-4 shadow-[var(--shadow-light)]">
+                <div className="rounded-2xl border border-white/75 glass-panel p-4 shadow-[var(--shadow-light)]">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-[var(--color-text-primary)]">待处理申请</p>
@@ -157,7 +157,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </Badge>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/75 bg-white/80 p-4 shadow-[var(--shadow-light)]">
+                <div className="rounded-2xl border border-white/75 glass-panel p-4 shadow-[var(--shadow-light)]">
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">快捷动作</p>
                   <div className="mt-3 space-y-2">
                     {data.quickActions.length > 0 ? (
@@ -166,7 +166,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           <Link
                             key={item.label}
                             href={item.href}
-                            className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-white/78 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]"
+                            className="flex items-center justify-between rounded-xl border border-[var(--color-border)] glass-panel px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]"
                           >
                             <div>
                               <p className="font-medium text-[var(--color-text-primary)]">{item.label}</p>
@@ -175,7 +175,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
                           </Link>
                         ) : (
-                          <div key={item.label} className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-white/78 px-3 py-2.5 text-sm text-[var(--color-text-secondary)]">
+                          <div key={item.label} className="flex items-center justify-between rounded-xl border border-[var(--color-border)] glass-panel px-3 py-2.5 text-sm text-[var(--color-text-secondary)]">
                             <div>
                               <p className="font-medium text-[var(--color-text-primary)]">{item.label}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
@@ -348,7 +348,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       ].map((section, index) => (
         <DashboardAnimatedSection key={section.key} index={index + 1}>
           <AppShellSection eyebrow="Management Module" title={section.title} description={section.description}>
-            <Card className="glass-card-static border-white/60 bg-white/70">
+            <Card className="glass-card-static border-white/60 glass-panel">
               <CardContent className="p-0">
                 {section.content}
               </CardContent>

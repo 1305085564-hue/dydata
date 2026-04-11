@@ -204,7 +204,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </CardContent>
         </Card>
 
-        <Card className={`${getDashboardSurfaceClass("panel")} card-elevated rounded-[1.5rem] border-0`}>
+        <Card className={`${getDashboardSurfaceClass("panel")} glass-card card-elevated rounded-[1.5rem] border-0 mt-4`}>
           <CardContent className="space-y-4 px-5 py-5 sm:px-6">
             <div className="space-y-1">
               <div className="dashboard-section-kicker">基础信息</div>
@@ -240,14 +240,14 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </CardContent>
         </Card>
 
-        <Card className={`${getDashboardSurfaceClass("panel")} card-elevated rounded-[1.5rem] border-0`}>
+        <Card className={`${getDashboardSurfaceClass("panel")} glass-card card-elevated rounded-[1.5rem] border-0 mt-4`}>
           <CardContent className="space-y-5 px-5 py-5 sm:px-6">
             <div className="space-y-1">
               <div className="dashboard-section-kicker">核心数据</div>
               <h3 className="dashboard-section-title">第一优先：播放量和涨粉</h3>
               <p className="text-xs text-muted-foreground">先填这两项，再看完播率和留存指标。</p>
             </div>
-            <div className={`${getDashboardMetricGridClass("primary")} rounded-[1.5rem] bg-primary/6 p-3 sm:p-4`}>
+            <div className={`${getDashboardMetricGridClass("primary")} rounded-[1.5rem] bg-primary/6 p-4 sm:p-5 shadow-sm border border-primary/10 backdrop-blur-xl`}>
               <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                 <Label htmlFor="play_count">播放量</Label>
                 <Input
@@ -277,7 +277,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
                 />
               </div>
             </div>
-            <div className={`${getDashboardMetricGridClass("primary")} mt-1`}>
+            <div className={`${getDashboardMetricGridClass("primary")} mt-4`}>
               <div className="dashboard-metric-card space-y-1.5">
                 <Label htmlFor="completion_rate">完播率</Label>
                 <div className="relative">
@@ -310,7 +310,7 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
           </CardContent>
         </Card>
 
-        <Card className={`${getDashboardSurfaceClass("panel")} card-elevated rounded-[1.5rem] border-0`}>
+        <Card className={`${getDashboardSurfaceClass("panel")} glass-card card-elevated rounded-[1.5rem] border-0 mt-4`}>
           <CardContent className="space-y-5 px-5 py-5 sm:px-6">
             <div className="space-y-1">
               <div className="dashboard-section-kicker">补充信息</div>

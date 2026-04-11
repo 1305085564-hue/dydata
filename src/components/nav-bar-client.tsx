@@ -25,7 +25,7 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
     );
 
   return (
-    <nav className="app-toolbar fixed inset-x-0 top-0 z-40 pt-[max(env(safe-area-inset-top),0px)]">
+    <nav className="app-toolbar glass-nav fixed inset-x-0 top-0 z-40 pt-[max(env(safe-area-inset-top),0px)]">
       <div className="mx-auto px-3 sm:px-6">
         <div className="app-toolbar-inner flex min-h-[var(--app-nav-height)] items-center gap-3 px-3 py-2 sm:gap-4 sm:px-3.5">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">

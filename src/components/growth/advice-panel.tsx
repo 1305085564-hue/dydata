@@ -52,7 +52,7 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
 
   if (noData) {
     return (
-      <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+      <MotionCard className="border-white/70 glass-panel backdrop-blur-[16px]">
         <div className="space-y-4 p-5 sm:p-6">
           <div className="space-y-1.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Advice Flow</p>
@@ -76,7 +76,7 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
   }
 
   return (
-    <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+    <MotionCard className="border-white/70 glass-panel backdrop-blur-[16px]">
       <div className="space-y-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-1.5">

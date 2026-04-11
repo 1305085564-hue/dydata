@@ -61,7 +61,7 @@ export function GrowthClientShell({
         title="成长分析总览"
         description="先看能力分布和诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。"
         meta={
-          <div className="dashboard-summary-chip text-xs sm:text-sm">
+          <div className="dashboard-summary-chip glass-panel text-xs sm:text-sm text-primary">
             <Sparkles className="size-3.5" />
             {hasEnoughData ? "已满足最小样本要求" : `再提交 ${3 - reportCount} 天即可解锁完整分析`}
           </div>
@@ -113,7 +113,7 @@ export function GrowthClientShell({
             eyebrow="Performance Snapshot"
             title="先看结果变化"
             description="这组数字先回答最近 7 天是变好还是变差。"
-            meta={<div className="dashboard-summary-chip"><TrendingUp className="size-3.5" /> 最近 7 天 vs 上一个 7 天</div>}
+            meta={<div className="dashboard-summary-chip glass-panel"><TrendingUp className="size-3.5" /> 最近 7 天 vs 上一个 7 天</div>}
           >
             <StatusCardGrid items={statusCards} />
           </AppShellSection>
@@ -122,7 +122,7 @@ export function GrowthClientShell({
             eyebrow="Capability Map"
             title="再看能力分布"
             description="六维能力和弱项对标放在一起，看清差距来自哪里。"
-            meta={<div className="dashboard-summary-chip"><Target className="size-3.5" /> 当前最弱项：{summary.weakestDimension ?? "待积累"}</div>}
+            meta={<div className="dashboard-summary-chip glass-panel"><Target className="size-3.5 text-warning" /> 当前最弱项：{summary.weakestDimension ?? "待积累"}</div>}
           >
             <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
           </AppShellSection>

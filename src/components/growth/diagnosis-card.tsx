@@ -241,7 +241,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
   const diagnosisItems = buildDiagnosisItems(myReports, teamReports);
 
   return (
-    <MotionCard className={`border-white/70 bg-white/78 backdrop-blur-[16px] ${className ?? ""}`}>
+    <MotionCard className={`border-white/70 glass-panel backdrop-blur-[16px] ${className ?? ""}`}>
       <div className="space-y-4 p-5 sm:p-6">
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Diagnosis Brief</p>
@@ -279,7 +279,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                 </div>
 
                 <div className="mt-4 grid gap-3 text-sm text-[var(--color-text-primary)]">
-                  <div className="rounded-[14px] border border-white/60 bg-white/75 p-3">
+                  <div className="rounded-[14px] border border-white/60 glass-panel p-3">
                     <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
                       <LineChart className="size-3.5" />
                       数据证据
@@ -287,7 +287,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                     <p className="leading-6">{item.evidence}</p>
                   </div>
 
-                  <div className="rounded-[14px] border border-white/60 bg-white/75 p-3">
+                  <div className="rounded-[14px] border border-white/60 glass-panel p-3">
                     <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
                       <Users className="size-3.5" />
                       {item.benchmarkLabel}

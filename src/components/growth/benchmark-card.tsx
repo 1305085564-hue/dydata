@@ -77,7 +77,7 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
   const 标杆占比 = Math.max((item.标杆值 / 最大值) * 100, 8)
 
   return (
-    <div className="space-y-2.5 rounded-2xl border border-white/70 bg-white/75 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur dark:border-white/10 dark:bg-white/5">
+    <div className="space-y-2.5 rounded-2xl border border-white/70 glass-panel p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] backdrop-blur dark:border-white/10 dark:glass-panel">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-medium text-foreground">{item.指标名}</span>
         <span className="text-xs text-muted-foreground">
@@ -198,7 +198,7 @@ export function BenchmarkCard({
         </div>
       </CardContent>
 
-      <CardFooter className="relative justify-between border-t border-white/60 bg-white/55 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+      <CardFooter className="relative justify-between border-t border-white/60 glass-panel px-4 py-3 dark:border-white/10 dark:glass-panel">
         <span className="text-sm text-muted-foreground">
           从代表样本里拆你最需要补的动作细节
         </span>

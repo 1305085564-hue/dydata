@@ -156,7 +156,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
   const blocks = buildBlocks({ insightState, advice, noData });
 
   return (
-    <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+    <MotionCard className="border-white/70 glass-panel backdrop-blur-[16px]">
       <div className="space-y-4 p-5 sm:p-6">
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Action Plan</p>
@@ -184,7 +184,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
                       {block.title}
                     </div>
                     {block.badge ? (
-                      <span className="rounded-full border border-white/60 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--color-text-secondary)]">
+                      <span className="rounded-full border border-white/60 glass-panel px-2.5 py-1 text-[11px] font-semibold text-[var(--color-text-secondary)]">
                         {block.badge}
                       </span>
                     ) : null}

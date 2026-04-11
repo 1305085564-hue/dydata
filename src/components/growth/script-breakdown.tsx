@@ -53,7 +53,7 @@ function EmptyReasonBlock({ data }: { data: ScriptBreakdownData }) {
       </div>
       <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">{reasonText}</p>
       {data.rawText ? (
-        <div className="mt-3 rounded-[14px] border border-white/70 bg-white/80 p-3">
+        <div className="mt-3 rounded-[14px] border border-white/70 glass-panel p-3">
           <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">当前拿到的原始文案</div>
           <p className="text-sm leading-6 text-[var(--color-text-primary)]">{data.rawText}</p>
         </div>
@@ -70,14 +70,14 @@ function DemoReferenceBlock() {
           <Lightbulb className="size-4 text-[var(--color-primary)]" />
           示例拆解参考
         </div>
-        <span className="rounded-full border border-[color:var(--color-primary)]/20 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[var(--color-primary)]">
+        <span className="rounded-full border border-[color:var(--color-primary)]/20 glass-panel px-2.5 py-1 text-[11px] font-semibold text-[var(--color-primary)]">
           示例内容
         </span>
       </div>
 
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {DEMO_SEGMENTS.map((segment) => (
-          <div key={segment.id} className="rounded-[14px] border border-white/70 bg-white/82 p-3">
+          <div key={segment.id} className="rounded-[14px] border border-white/70 glass-panel p-3">
             <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone])} variant="outline">
               {segment.label}
             </Badge>
@@ -107,7 +107,7 @@ export function ScriptBreakdown({
     isStructured && !expanded ? data.segments.slice(0, maxVisibleSegments) : isStructured ? data.segments : [];
 
   return (
-    <MotionCard className="border-white/70 bg-white/78 backdrop-blur-[16px]">
+    <MotionCard className="border-white/70 glass-panel backdrop-blur-[16px]">
       <div className="space-y-4 p-5 sm:p-6">
         <div className="space-y-1.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Script Breakdown</p>
@@ -124,7 +124,7 @@ export function ScriptBreakdown({
                   type="button"
                   variants={itemVariants}
                   onClick={() => onSegmentSelect?.({ startSec: segment.startSec, endSec: segment.endSec })}
-                  className="rounded-[16px] border border-white/75 bg-white/82 p-4 text-left shadow-[var(--shadow-light)] transition-transform duration-[var(--duration-fast)] ease-[var(--ease-spring)] hover:-translate-y-[2px] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.97]"
+                  className="rounded-[16px] border border-white/75 glass-panel p-4 text-left shadow-[var(--shadow-light)] transition-transform duration-[var(--duration-fast)] ease-[var(--ease-spring)] hover:-translate-y-[2px] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.97]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone as SegmentTone])} variant="outline">
