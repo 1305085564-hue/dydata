@@ -133,7 +133,7 @@ export default async function DashboardPage() {
           meta={
             <div className="glass-chip glass-panel">
               <TrendingUp className="size-3.5" />
-              团队对比口径：P80
+              团队对比口径：P70
             </div>
           }
         >
