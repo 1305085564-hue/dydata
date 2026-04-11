@@ -132,19 +132,19 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
               今日账号
               <span className="font-semibold text-foreground">{accounts.length}</span>
             </div>
-            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
               已提交
               <span className="font-semibold text-foreground">{submittedCount}</span>
             </div>
-            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
               待提交
               <span className="font-semibold text-foreground">{Math.max(accounts.length - submittedCount, 0)}</span>
             </div>
-            <div className="dashboard-summary-chip h-11 justify-center text-xs sm:text-sm">
+            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
               当前账号
               <span className="font-semibold text-foreground">{userDisplayName}</span>
             </div>
@@ -227,21 +227,21 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
 
           {selectedAccount ? (
             <div className="dashboard-summary-bar">
-              <div className="dashboard-summary-chip">
+              <div className="glass-chip">
                 当前账号
                 <span className="font-semibold text-foreground">{selectedAccount.display_name}</span>
               </div>
-              <div className="dashboard-summary-chip">
+              <div className="glass-chip">
                 日期
                 <span className="font-semibold text-foreground">{today}</span>
               </div>
-              <div className="dashboard-summary-chip">
+              <div className="glass-chip">
                 状态
                 <span className={selectedSummary ? getDashboardStatusClass("submitted") : getDashboardStatusClass("pending")}>
                   {selectedSummary ? "已提交" : "待提交"}
                 </span>
               </div>
-              <div className="dashboard-summary-chip">
+              <div className="glass-chip">
                 <ScanSearch className="size-3.5" />
                 截图导入
                 <span className="font-semibold text-foreground">优先完成</span>

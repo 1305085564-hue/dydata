@@ -76,7 +76,7 @@ export function ContentToolsClient({ accounts, summary }: ContentToolsClientProp
         eyebrow="Tool Workspace"
         title={currentTab.label}
         description={currentTab.description}
-        meta={<div className="dashboard-summary-chip hidden md:inline-flex">账号数 {accounts.length}</div>}
+        meta={<div className="glass-chip hidden md:inline-flex">账号数 {accounts.length}</div>}
       >
         <div className="space-y-4">
           {tab === "topic" ? <TopicSuggest accounts={accounts} /> : null}

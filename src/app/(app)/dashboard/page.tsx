@@ -32,7 +32,7 @@ export default async function DashboardPage() {
           title="先完成今日提报，再看趋势和排行"
           description="第一屏只保留最重要的状态和操作入口，减少漏填、重复提交和来回查找。"
           meta={
-            <div className="dashboard-summary-chip glass-panel text-xs sm:text-sm">
+            <div className="glass-chip glass-panel text-xs sm:text-sm">
               日期
               <span className="font-semibold text-foreground">{data.today}</span>
             </div>
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
           />
 
           <div className="glass-panel grid gap-2.5 p-3 sm:grid-cols-[auto_1fr] sm:items-center sm:p-4">
-            <div className="dashboard-summary-chip glass-panel w-fit">
+            <div className="glass-chip glass-panel w-fit">
               今日操作
               <span className="font-semibold text-foreground">轻量流程</span>
             </div>
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
                 const Icon = item.icon;
 
                 return (
-                  <div key={item.title} className="dashboard-field-group glass-panel flex items-center gap-3 rounded-2xl px-3 py-2.5">
+                  <div key={item.title} className="glass-field glass-panel flex items-center gap-3 rounded-2xl px-3 py-2.5">
                     <div className="flex size-8 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
                       <Icon className="size-4" />
                     </div>
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
               })}
             </div>
             <div className="hidden lg:flex lg:justify-end">
-              <div className="dashboard-summary-chip glass-panel">
+              <div className="glass-chip glass-panel">
                 趋势图在下方
                 <ArrowRight className="size-3.5" />
               </div>
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
           title="先看趋势，再判断今天要不要调整"
           description="结果趋势和互动质量分放在一起，避免只看播放量做判断。"
           meta={
-            <div className="dashboard-summary-chip glass-panel">
+            <div className="glass-chip glass-panel">
               <TrendingUp className="size-3.5" />
               团队对比口径：P80
             </div>

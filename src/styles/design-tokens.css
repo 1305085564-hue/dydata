@@ -15,7 +15,6 @@
   --radius-lg: 14px;
   --radius-xl: 18px;
   --radius-2xl: 22px;
-  --radius-card: var(--radius-xl);
 
   --shadow-card: 0 8px 24px -18px rgba(15, 23, 42, 0.22), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
   --shadow-card-hover: 0 14px 30px -18px rgba(15, 23, 42, 0.3);
