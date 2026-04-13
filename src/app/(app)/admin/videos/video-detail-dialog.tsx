@@ -131,9 +131,21 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
         };
       });
 
+      const dimensions = payload.map((item) => item.tag_dimension);
+
+      const { error: deleteError } = await supabase
+        .from("video_tags")
+        .delete()
+        .eq("video_id", video.id)
+        .in("tag_dimension", dimensions);
+
+      if (deleteError) {
+        throw new Error(deleteError.message || "标签保存失败");
+      }
+
       const { data, error } = await supabase
         .from("video_tags")
-        .upsert(payload, { onConflict: "video_id,tag_dimension" })
+        .insert(payload)
         .select("*");
 
       if (error) {

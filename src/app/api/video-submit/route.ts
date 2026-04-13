@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { callAiJson } from "@/lib/ai/client";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
+import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 import { validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
 
 type RollbackAction = () => Promise<void>;
 
 function stripId<T extends Record<string, unknown>>(row: T) {
-  const { id: _id, ...rest } = row;
+  const rest = { ...row };
+  delete rest.id;
   return rest;
 }
 
@@ -330,7 +332,7 @@ export async function POST(request: NextRequest) {
   const aiTags = await generateAiTags(normalized.content);
 
   if (aiTags.length) {
-    const { error } = await supabase.from("video_tags").upsert(
+    const aiTagPayload = dedupeTagPayloads(
       aiTags.map((tag) => ({
         video_id: persistedVideo.id,
         tag_dimension: tag.tag_dimension,
@@ -339,55 +341,51 @@ export async function POST(request: NextRequest) {
         confidence: tag.confidence,
         reason: tag.reason,
         reviewed_by: null,
-      })),
-      { onConflict: "video_id,tag_dimension" }
+      }))
     );
 
-    if (error) {
+    const aiDimensions = [...new Set(aiTagPayload.map((tag) => tag.tag_dimension))];
+    const { error: deleteAiTagError } = await supabase
+      .from("video_tags")
+      .delete()
+      .eq("video_id", persistedVideo.id)
+      .in("tag_dimension", aiDimensions);
+
+    if (deleteAiTagError) {
       await rollbackSafely(rollbackActions);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: deleteAiTagError.message }, { status: 500 });
+    }
+
+    const { error: insertAiTagError } = await supabase.from("video_tags").insert(aiTagPayload);
+
+    if (insertAiTagError) {
+      await rollbackSafely(rollbackActions);
+      return NextResponse.json({ error: insertAiTagError.message }, { status: 500 });
     }
   }
 
-  const manualTags: Array<{
-    video_id: string;
-    tag_dimension: string;
-    tag_value: string;
-    source: string;
-    confidence: null;
-    reason: null;
-    reviewed_by: null;
-  }> = [];
-
-  if (normalized.topic_tag) {
-    manualTags.push({
-      video_id: persistedVideo.id,
-      tag_dimension: "话题",
-      tag_value: normalized.topic_tag,
-      source: "manual",
-      confidence: null,
-      reason: null,
-      reviewed_by: null,
-    });
-  }
-
-  for (const kw of normalized.content_keywords) {
-    manualTags.push({
-      video_id: persistedVideo.id,
-      tag_dimension: "关键词",
-      tag_value: kw,
-      source: "manual",
-      confidence: null,
-      reason: null,
-      reviewed_by: null,
-    });
-  }
+  const manualTags = buildManualTagPayload({
+    videoId: persistedVideo.id,
+    topicTag: normalized.topic_tag,
+    contentKeywords: normalized.content_keywords,
+  });
 
   if (manualTags.length) {
-    const { error } = await supabase.from("video_tags").upsert(manualTags, { onConflict: "video_id,tag_dimension" });
-    if (error) {
+    const { error: deleteManualTagError } = await supabase
+      .from("video_tags")
+      .delete()
+      .eq("video_id", persistedVideo.id)
+      .in("tag_dimension", ["话题", "关键词"]);
+
+    if (deleteManualTagError) {
       await rollbackSafely(rollbackActions);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: deleteManualTagError.message }, { status: 500 });
+    }
+
+    const { error: insertManualTagError } = await supabase.from("video_tags").insert(manualTags);
+    if (insertManualTagError) {
+      await rollbackSafely(rollbackActions);
+      return NextResponse.json({ error: insertManualTagError.message }, { status: 500 });
     }
   }
 

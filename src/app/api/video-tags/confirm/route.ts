@@ -57,9 +57,21 @@ export async function POST(request: NextRequest) {
     reviewed_by: user.id,
   }));
 
+  const dimensions = [...new Set(payload.map((tag) => tag.tag_dimension))];
+
+  const { error: deleteError } = await supabase
+    .from("video_tags")
+    .delete()
+    .eq("video_id", body.video_id)
+    .in("tag_dimension", dimensions);
+
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message || "标签确认失败" }, { status: 500 });
+  }
+
   const { data, error } = await supabase
     .from("video_tags")
-    .upsert(payload, { onConflict: "video_id,tag_dimension" })
+    .insert(payload)
     .select("*");
 
   if (error) {
