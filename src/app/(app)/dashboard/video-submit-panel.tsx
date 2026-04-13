@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, FileClock, FilePenLine, PencilLine, ScanSearch } from "lucide-react";
+import { ChevronDown, FilePenLine, History, PencilLine, ScanSearch } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,7 +121,7 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
               <div className="space-y-1">
                 <CardTitle className="text-[1.35rem] font-semibold tracking-tight sm:text-2xl">第一屏先完成今日提报</CardTitle>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                  先选账号，再导入截图，最后补充信息并提交。状态卡会实时告诉你今天是否已经完成。
+                  先选账号，再导截图或直接补录，最后提交。历史补交入口也放在这里，不用先提今天这条。
                 </p>
               </div>
             </div>
@@ -249,6 +249,35 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
             </div>
           ) : null}
 
+          {selectedAccount ? (
+            <div className="grid gap-3 rounded-[1.25rem] border border-border/60 bg-background/68 p-3 md:grid-cols-[1fr_auto_auto] md:items-center md:p-4">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">快捷入口</p>
+                <p className="text-xs text-muted-foreground">
+                  历史补交现在可直接进入，不需要先提交今天数据。
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant={panelMode === "backfill" ? "default" : "outline"}
+                className="h-11 rounded-2xl"
+                onClick={() => setRequestedMode("backfill")}
+              >
+                <History className="size-4" />
+                历史补交
+              </Button>
+              <Button
+                type="button"
+                variant={panelMode === "backfill" ? "outline" : "default"}
+                className="h-11 rounded-2xl"
+                onClick={() => setRequestedMode(selectedSummary ? "editToday" : null)}
+              >
+                <PencilLine className="size-4" />
+                {selectedSummary ? "修改今日数据" : "填写今日数据"}
+              </Button>
+            </div>
+          ) : null}
+
           {selectedSummary && isSummaryMode ? (
             <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-emerald-950 sm:p-5`}>
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -298,10 +327,6 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
                 </div>
 
                 <div className="flex shrink-0 flex-col gap-2 lg:w-[190px]">
-                  <Button type="button" className="h-12 rounded-2xl" onClick={() => setRequestedMode("backfill")}>
-                    <FileClock className="size-4" />
-                    补交数据
-                  </Button>
                   <Button type="button" variant="outline" className="h-12 rounded-2xl bg-white/70" onClick={() => setRequestedMode("editToday")}>
                     <PencilLine className="size-4" />
                     修改今日数据
@@ -316,7 +341,7 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
               <div className="flex items-center gap-2">
                 <span className={getDashboardStatusClass("editing")}>
                   <ChevronDown className="size-4" />
-                  {panelMode === "backfill" ? "正在补交历史数据" : "正在修改今日数据"}
+                  {panelMode === "backfill" ? "正在补交历史数据" : "正在处理今日数据"}
                 </span>
               </div>
               <Button type="button" variant="ghost" className="h-8 rounded-xl px-3 text-xs" onClick={() => setRequestedMode(null)}>
@@ -343,9 +368,9 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
               userId={userId}
               today={today}
               mode={panelMode}
-              initialSummary={selectedSummary}
+              initialSummary={panelMode === "backfill" ? null : selectedSummary}
               onSubmitted={handleSubmitted}
-              onCancel={() => setRequestedMode(selectedSummary ? null : requestedMode)}
+              onCancel={() => setRequestedMode(null)}
             />
           ) : null}
         </CardContent>

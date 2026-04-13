@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  areSubmissionScreenshotsRequired,
   canSubmit,
   createInitialSubmissionState,
   getSubmissionStage,
@@ -141,6 +142,27 @@ test("标题、文案、内容标签缺失时仍不能提交", () => {
   assert.equal(summary.canSubmit, false);
 });
 
+test("异常状态下截图改为可选", () => {
+  const state = createInitialSubmissionState();
+
+  const summary = summarizeSubmissionIssues(state, {
+    topicTag: "复盘",
+    anomalyStatus: "限流",
+    videoTitle: "标题",
+    content: "文案",
+    contentKeywords: ["热点"],
+  });
+
+  assert.equal(areSubmissionScreenshotsRequired("正常"), true);
+  assert.equal(areSubmissionScreenshotsRequired("限流"), false);
+  assert.deepEqual(summary.missingRequiredSlots, []);
+  assert.equal(summary.canSubmit, true);
+  assert.deepEqual(canSubmit(state, { anomalyStatus: "限流" }), {
+    ok: true,
+    reason: null,
+  });
+});
+
 
 test("限流时留存字段为空不计入缺项", () => {
   const state = createInitialSubmissionState({
@@ -173,4 +195,3 @@ test("限流时留存字段为空不计入缺项", () => {
   assert.equal(summary.totalIssueCount, 0);
   assert.equal(summary.canSubmit, true);
 });
-

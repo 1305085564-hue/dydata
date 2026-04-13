@@ -35,6 +35,7 @@ import { 提交成功卡 } from "@/components/submission/提交成功卡";
 import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import {
+  areSubmissionScreenshotsRequired,
   canSubmit,
   createInitialSubmissionState,
   summarizeSubmissionIssues,
@@ -146,6 +147,15 @@ const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
   screenshot_1: "截图1",
   screenshot_2: "截图2",
   screenshot_3: "截图3",
+};
+
+const VIDEO_STATUS_LABELS: Record<AnomalyStatus, string> = {
+  正常: "正常发布",
+  删稿: "删稿",
+  限流: "限流",
+  投流: "投流",
+  活动干预: "活动干预",
+  未满24h: "未满24小时",
 };
 
 function createInitialMeta(today: string): FormMetaState {
@@ -429,6 +439,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
   const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
+  const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
   const issueSummary = useMemo(
     () =>
       summarizeSubmissionIssues(submissionState, {
@@ -440,11 +451,26 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       }),
     [submissionState, meta.topicTag, meta.anomalyStatus, meta.videoTitle, meta.content, meta.contentKeywords]
   );
-  const submitCheck = canSubmit(submissionState);
+  const submitCheck = canSubmit(submissionState, {
+    anomalyStatus: meta.anomalyStatus,
+  });
   const canActuallySubmit = issueSummary.canSubmit;
   const issueMessages = useMemo(() => buildIssueMessages(issueSummary), [issueSummary]);
   const issueHintText = useMemo(() => buildIssueHintText(issueMessages), [issueMessages]);
   const bizDateHelper = getBizDateHelperText(meta.bizDate);
+  const formModeTitle = isBackfillMode ? "补交历史数据" : initialSummary ? "修改今日数据" : "今日提报";
+  const formModeDescription = isBackfillMode
+    ? "可直接补交历史日期，不需要先提交今天数据。"
+    : initialSummary
+      ? "更新今天这条数据，提交后会覆盖当前账号今天的最新记录。"
+      : "先传截图或直接手填数据，完成后提交今天这条记录。";
+  const submitButtonLabel = isSubmitting
+    ? "提交中..."
+    : isBackfillMode
+      ? "提交补交数据"
+      : initialSummary
+        ? "保存修改"
+        : "提交今日数据";
 
   function updateMeta<Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) {
     setMeta((current) => ({ ...current, [key]: value }));
@@ -819,10 +845,10 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             <div className="space-y-3 p-5">
               <div className="space-y-1">
                 <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
-                  {isBackfillMode ? "补交数据" : "修改数据"}
+                  {formModeTitle}
                 </h3>
                 <p className="text-sm text-[var(--color-text-secondary)]">
-                  当前账号：{account.display_name} · 出镜 / 图文方向：{account.content_direction?.trim() || "未设置"}
+                  当前账号：{account.display_name} · 出镜 / 图文方向：{account.content_direction?.trim() || "未设置"} · {formModeDescription}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
@@ -849,6 +875,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             onSelectFile={handleSlotUpload}
             onDelete={(role) => setDeleteTargetRole(role)}
             onRetry={handleSlotRetry}
+            screenshotsRequired={screenshotsRequired}
             issueCount={
               issueSummary.missingRequiredSlots.length +
               issueSummary.failedRequiredSlots.length +
@@ -1042,24 +1069,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     <p className="text-xs text-blue-600">补交 {meta.bizDate} 的数据</p>
                   ) : null}
                 </div>
-                <div className="space-y-2">
-                  <Label>异常状态</Label>
-                  <Select
-                    value={meta.anomalyStatus}
-                    onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-                  >
-                    <SelectTrigger className="h-11 rounded-[var(--radius-lg)] bg-white">
-                      <SelectValue placeholder="请选择异常状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ANOMALY_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -1094,18 +1103,43 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
         <motion.div variants={itemVariants} className="hidden md:block">
           <MotionCard className="border-none bg-white/70">
-            <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
+            <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-1 lg:flex-1">
                 <p className="text-sm font-medium text-[var(--color-text-primary)]">
                   {canActuallySubmit ? "已满足最低提交条件" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
                   {canActuallySubmit
-                    ? "截图识别完成后，必填信息已补全，可以直接提交。"
+                    ? screenshotsRequired
+                      ? "截图识别完成后，必填信息已补全，可以直接提交。"
+                      : "当前视频状态下截图可选，必填信息已补全，可以直接提交。"
                     : issueSummary.totalIssueCount > 0
                       ? `当前还有 ${issueSummary.totalIssueCount} 项问题未处理。`
-                      : "截图识别完成后，再补充视频信息即可提交。"}
+                      : screenshotsRequired
+                        ? "截图识别完成后，再补充视频信息即可提交。"
+                        : "补充视频信息后即可提交，截图仅作补充。"}
                 </p>
+              </div>
+              <div className="grid gap-2 lg:min-w-[220px]">
+                <Label className="text-xs font-medium text-[var(--color-text-secondary)]">视频状态</Label>
+                <Select
+                  value={meta.anomalyStatus}
+                  onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
+                >
+                  <SelectTrigger className="h-11 rounded-[var(--radius-lg)] bg-white">
+                    <SelectValue placeholder="请选择视频状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ANOMALY_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {VIDEO_STATUS_LABELS[option]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!screenshotsRequired ? (
+                  <p className="text-xs text-amber-600">当前状态下截图可选，可直接提交文字和数据。</p>
+                ) : null}
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 {onCancel ? (
@@ -1119,7 +1153,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                   title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
                   className="h-11 rounded-[10px] px-6"
                 >
-                  {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交数据" : "保存修改"}
+                  {submitButtonLabel}
                 </Button>
               </div>
             </div>
@@ -1134,6 +1168,27 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               ? "已满足最低提交条件"
               : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
           </p>
+          <div className="grid gap-1.5">
+            <Label className="text-xs font-medium text-[var(--color-text-secondary)]">视频状态</Label>
+            <Select
+              value={meta.anomalyStatus}
+              onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
+            >
+              <SelectTrigger className="h-10 rounded-[var(--radius-lg)] bg-white text-sm">
+                <SelectValue placeholder="请选择视频状态" />
+              </SelectTrigger>
+              <SelectContent>
+                {ANOMALY_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {VIDEO_STATUS_LABELS[option]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!screenshotsRequired ? (
+              <p className="text-[11px] text-amber-600">当前状态下截图可选。</p>
+            ) : null}
+          </div>
           <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>
             {onCancel ? (
               <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={onCancel}>
@@ -1147,7 +1202,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               title={canActuallySubmit ? undefined : issueSummary.reason || submitCheck.reason || undefined}
               className="h-11 rounded-[10px] px-2 text-xs"
             >
-              {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : "保存修改"}
+              {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : initialSummary ? "保存修改" : "提交今日"}
             </Button>
           </div>
         </div>

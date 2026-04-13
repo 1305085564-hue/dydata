@@ -12,6 +12,7 @@ interface SubmissionSlotsProps {
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
   issueCount?: number;
+  screenshotsRequired?: boolean;
 }
 
 const SLOT_META: Array<{
@@ -25,7 +26,14 @@ const SLOT_META: Array<{
   { role: "screenshot_3", title: "截图 3（可选）", description: "补充截图", required: false },
 ];
 
-export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry, issueCount = 0 }: SubmissionSlotsProps) {
+export function 截图槽位区({
+  slots,
+  onSelectFile,
+  onDelete,
+  onRetry,
+  issueCount = 0,
+  screenshotsRequired = true,
+}: SubmissionSlotsProps) {
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -34,7 +42,9 @@ export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry, issueC
             截图上传
           </h3>
           <p className="text-sm text-[var(--color-text-secondary)]">
-            上传 2 张截图（必传），AI 自动识别图片类型。可选上传第 3 张补充截图。
+            {screenshotsRequired
+              ? "上传 2 张截图（必传），AI 自动识别图片类型。可选上传第 3 张补充截图。"
+              : "当前视频状态下截图改为可选。若能补传截图，系统仍会自动识别并回填数据。"}
           </p>
         </div>
         {issueCount > 0 ? (
@@ -54,7 +64,7 @@ export function 截图槽位区({ slots, onSelectFile, onDelete, onRetry, issueC
                 role={item.role}
                 title={item.title}
                 description={item.description}
-                required={item.required}
+                required={screenshotsRequired && item.required}
                 status={slot.status}
                 fileName={slot.fileName}
                 error={slot.error}

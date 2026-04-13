@@ -75,6 +75,11 @@ interface SubmissionIssueMeta {
   contentKeywords?: string[];
 }
 
+export function areSubmissionScreenshotsRequired(anomalyStatus?: string) {
+  const normalized = anomalyStatus?.trim();
+  return !normalized || normalized === "正常";
+}
+
 function createSlot(role: SubmissionSlotRole, required: boolean): SubmissionSlotState {
   return {
     role,
@@ -129,7 +134,10 @@ export function summarizeSubmissionIssues(
   state: SubmissionState,
   meta: SubmissionIssueMeta = {}
 ): SubmissionIssueSummary {
-  const requiredSlots = Object.values(state.slots).filter((slot) => slot.required);
+  const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
+  const requiredSlots = screenshotsRequired
+    ? Object.values(state.slots).filter((slot) => slot.required)
+    : [];
   const missingRequiredSlots = requiredSlots
     .filter((slot) => slot.status === "empty")
     .map((slot) => slot.role);
@@ -201,8 +209,11 @@ export function summarizeSubmissionIssues(
   };
 }
 
-export function canSubmit(state: SubmissionState): { ok: boolean; reason: string | null } {
-  const summary = summarizeSubmissionIssues(state);
+export function canSubmit(
+  state: SubmissionState,
+  meta: SubmissionIssueMeta = {}
+): { ok: boolean; reason: string | null } {
+  const summary = summarizeSubmissionIssues(state, meta);
 
   if (summary.missingRequiredSlots.length > 0 || summary.failedRequiredSlots.length > 0 || summary.pendingSlotConfirmations.length > 0) {
     return { ok: false, reason: "请先确认必传截图槽位" };

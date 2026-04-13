@@ -181,7 +181,7 @@ export default async function DashboardPage() {
             <EmptyState
               icon={Clock}
               title="暂无历史记录"
-              description="提交第一条数据后即可在此查看近 30 天历史"
+              description="历史补交入口在上方视频提交卡，可直接补交最近数据"
             />
           ) : (
             <HistoryList
