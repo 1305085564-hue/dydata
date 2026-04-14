@@ -60,6 +60,35 @@ test("普通模式下 resolveModel 仍可回落到环境变量模型", () => {
   }
 });
 
+test("显式传入 model 时优先于渠道和环境变量", () => {
+  const prevAiModel = process.env.AI_MODEL;
+  process.env.AI_MODEL = "env-model";
+
+  try {
+    const model = __internal.resolveModel(
+      {
+        name: "default-channel",
+        baseUrl: "https://example.com",
+        apiKey: "secret",
+        model: "channel-model",
+        source: "database",
+      },
+      {
+        messages: [{ role: "user", content: "hello" }],
+        model: "explicit-model",
+      }
+    );
+
+    assert.equal(model, "explicit-model");
+  } finally {
+    if (prevAiModel === undefined) {
+      delete process.env.AI_MODEL;
+    } else {
+      process.env.AI_MODEL = prevAiModel;
+    }
+  }
+});
+
 test("normalizeResponseContent 支持 output_text block", () => {
   const text = __internal.normalizeResponseContent([
     { type: "output_text", text: "第一行" },
@@ -79,6 +108,11 @@ test("describeMissingResponseContent 会带出 finish_reason 和 message 结构"
           content: null,
           reasoning_content: null,
           tool_calls: null,
+        } as unknown as {
+          content?: unknown;
+          text?: unknown;
+          reasoning_content?: unknown;
+          refusal?: unknown;
         },
       },
     ],

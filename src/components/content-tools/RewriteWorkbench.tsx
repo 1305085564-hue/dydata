@@ -172,18 +172,24 @@ export default function RewriteWorkbench() {
 
   const handleSelectConversation = (conv: Conversation) => {
     setCurrentConversationId(conv.id);
-    fetchMessages(conv.id);
     if (conv.selected) {
       setAutoMode(conv.selected.autoModeEnabled ?? true);
       setSelectedModelViewId(conv.selected.modelViewId || '');
       setSelectedModeId(conv.selected.modeId || null);
       setSelectedLengthId(conv.selected.lengthPresetId || '');
     }
+    fetchMessages(conv.id);
   };
 
   const handleNewConversation = () => {
     setCurrentConversationId(null);
     setMessages([]);
+    if (bootstrap) {
+      setAutoMode(bootstrap.defaults.autoModeEnabled ?? true);
+      setSelectedModelViewId(bootstrap.defaults.modelViewId || '');
+      setSelectedModeId(bootstrap.defaults.modeId || null);
+      setSelectedLengthId(bootstrap.defaults.lengthPresetId || '');
+    }
   };
 
   const handleSend = async () => {
