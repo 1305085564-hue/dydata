@@ -12,7 +12,7 @@ type MultimodalBlock =
 type MessageContent = TextContent | MultimodalBlock[];
 
 export type AiMessage = {
-  role: "user" | "system";
+  role: "user" | "system" | "assistant";
   content: MessageContent;
 };
 
@@ -22,6 +22,7 @@ export type AiRequestOptions = {
   timeoutMs?: number;
   jsonMode?: boolean;
   model?: string;
+  channelId?: string;
   featureKey?: string;
   databaseOnly?: boolean;
 };
@@ -30,6 +31,7 @@ export type AiResponse = {
   content: string;
   model: string;
   channelName: string;
+  channelId?: string | null;
   elapsedMs: number;
 };
 
@@ -375,10 +377,16 @@ export function buildUpstreamUrl(baseUrl: string): string {
 }
 
 function resolveModel(channel: ChannelConfig, options: AiRequestOptions) {
-  if (options.databaseOnly) {
-    return channel.model || options.model || DEFAULT_MODEL;
+  if (options.model?.trim()) {
+    return options.model.trim();
   }
-  return channel.model || options.model || process.env.AI_MODEL || DEFAULT_MODEL;
+  if (channel.model?.trim()) {
+    return channel.model.trim();
+  }
+  if (options.databaseOnly) {
+    return DEFAULT_MODEL;
+  }
+  return process.env.AI_MODEL || DEFAULT_MODEL;
 }
 
 function buildRequestBody(options: AiRequestOptions, model: string) {
@@ -554,6 +562,7 @@ async function sendToChannel(
     content,
     model: streamed.model || model,
     channelName: channel.name,
+    channelId: channel.id ?? null,
     elapsedMs: Date.now() - startedAt,
   };
 }
@@ -646,18 +655,18 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
     messages: [...options.messages],
   };
 
-  let preferredChannelId: string | null = null;
+  let preferredChannelId: string | null = options.channelId?.trim() || null;
   if (options.featureKey) {
     const featureConfig = await getFeatureConfig(options.featureKey);
     if (featureConfig && !featureConfig.isEnabled) {
       throw new Error("该 AI 功能已禁用");
     }
 
-    if (featureConfig?.channelId) {
+    if (!preferredChannelId && featureConfig?.channelId) {
       preferredChannelId = featureConfig.channelId;
     }
 
-    if (featureConfig?.model) {
+    if (!effectiveOptions.model && featureConfig?.model) {
       effectiveOptions.model = featureConfig.model;
     }
 
@@ -670,7 +679,9 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   }
 
   let configuredChannels = await getAvailableChannels(options);
-  if (preferredChannelId) {
+  if (options.channelId?.trim()) {
+    configuredChannels = configuredChannels.filter((channel) => channel.id === options.channelId?.trim());
+  } else if (preferredChannelId) {
     const preferredChannel = configuredChannels.find((channel) => channel.id === preferredChannelId);
     if (preferredChannel) {
       configuredChannels = [
@@ -681,6 +692,9 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   }
 
   if (configuredChannels.length === 0) {
+    if (options.channelId?.trim()) {
+      throw new Error("指定 AI 渠道不存在或未启用");
+    }
     if (options.databaseOnly) {
       throw new Error("AI 渠道未配置，请先在后台完成 AI 渠道与功能配置");
     }
