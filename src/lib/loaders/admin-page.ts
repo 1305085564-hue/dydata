@@ -236,6 +236,9 @@ export async function loadAdminPageData({
     topSummaryCards: [],
     quickActions: [
       perm.role === "owner" ? { label: "AI 渠道", description: "管理多渠道与熔断状态", href: "/admin/ai-channels" } : null,
+      perm.role === "admin" || perm.role === "owner"
+        ? { label: "后台 AI 助手", description: "进入高权限 AI 操作与诊断入口", href: "/admin/ai-assistant" }
+        : null,
       hasPermission(perm.role, perm.permissions, "manage_invite") ? { label: "生成邀请码", description: "补充新成员入口" } : null,
       hasPermission(perm.role, perm.permissions, "export_data") ? { label: "导出数据", description: "快速发给业务复盘" } : null,
       hasPermission(perm.role, perm.permissions, "edit_data") ? { label: "处理异常数据", description: "优先检查今日异常值" } : null,
