@@ -1500,9 +1500,22 @@ async function loadRoutesForStep(
 
   const stepRoutes = input.workflowStepId ? await load(input.workflowStepId) : [];
   const genericRoutes = await load(null);
+  const fallbackRoutes =
+    !input.workflowStepId && genericRoutes.length === 0
+      ? ((await service
+          .from("rewrite_model_routes")
+          .select(
+            "id, model_view_id, workflow_step_id, channel_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
+          )
+          .eq("model_view_id", input.modelViewId)
+          .eq("is_enabled", true)
+          .order("priority", { ascending: true })
+          .order("weight", { ascending: false })
+          .order("created_at", { ascending: true })) as { data?: RewriteModelRouteRow[] }).data ?? []
+      : [];
   const unique = new Map<string, RewriteModelRouteRow>();
 
-  for (const route of [...stepRoutes, ...genericRoutes]) {
+  for (const route of [...stepRoutes, ...genericRoutes, ...fallbackRoutes]) {
     if (!unique.has(route.id)) {
       unique.set(route.id, route);
     }
@@ -1854,6 +1867,17 @@ export async function handleRewriteChat(input: {
       conversation: latestConversation,
       userId: input.actor.userId,
       message: userMessage,
+    });
+  }
+
+  if (selections.autoModeEnabled) {
+    await updateConversationSelections(input.service, {
+      conversationId: conversation.id,
+      userId: input.actor.userId,
+      autoModeEnabled: false,
+      modelViewId: selections.modelView.id,
+      modeId: selections.mode?.id ?? null,
+      lengthPresetId: selections.lengthPreset.id,
     });
   }
 
