@@ -145,12 +145,13 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: { message: string
 
     if (this.table === "rewrite_messages") {
       for (const message of inserted) {
+        const messageRow = message as Row;
         const conversation = (this.db.rewrite_conversations ?? []).find(
-          (row) => row.id === message["conversation_id"],
+          (row) => row.id === messageRow["conversation_id"],
         );
         if (conversation) {
-          conversation.last_message_at = message["created_at"];
-          conversation.updated_at = message["created_at"];
+          conversation.last_message_at = messageRow["created_at"];
+          conversation.updated_at = messageRow["created_at"];
         }
       }
     }
@@ -564,12 +565,17 @@ test("chat 在 auto 模式下返回 structuredResult，第二步失败会回退�
     lengthPresetId: "length-default",
   });
 
-  assert.equal(payload.conversation.selected.autoModeEnabled, true);
+  assert.equal(payload.conversation.selected.autoModeEnabled, false);
   assert.equal(payload.message.structuredResult?.generationMode, "auto");
+  assert.equal(payload.message.structuredResult?.selected.autoModeEnabled, true);
   assert.equal(payload.message.structuredResult?.status, "partial_success");
   assert.equal(payload.message.structuredResult?.steps.length, 2);
   assert.equal(payload.message.structuredResult?.steps[1]?.status, "failed");
   assert.equal(payload.message.structuredResult?.final.recommendedText, "先稳住结构版");
+  assert.equal(payload.message.requestSnapshot?.autoModeEnabled, true);
+
+  const savedConversation = db.rewrite_conversations[0];
+  assert.equal(savedConversation?.auto_mode_enabled, false);
 });
 
 test("chat 在 single 模式下返回 structuredResult", async () => {
@@ -593,6 +599,38 @@ test("chat 在 single 模式下返回 structuredResult", async () => {
   assert.equal(payload.message.structuredResult?.status, "success");
   assert.equal(payload.message.structuredResult?.steps.length, 1);
   assert.equal(payload.message.requestSnapshot?.modeId, null);
+});
+
+test("single 模式在没有通用路线时，会回退到同展示模型下的步骤路线", async () => {
+  const db = buildBaseDb();
+  db.rewrite_model_routes = [
+    {
+      id: "route-step-1",
+      model_view_id: "model-alt",
+      workflow_step_id: "step-structure",
+      channel_id: "channel-1",
+      actual_model: "claude-sonnet-4-6",
+      priority: 1,
+      weight: 100,
+      is_enabled: true,
+    },
+  ];
+  const service = createFakeService(db);
+  pushAiSuccess("没有通用路线也能单步改写", "单步兜底");
+
+  const payload = await rewrite.handleRewriteChat({
+    service: service as never,
+    actor: buildActor(),
+    message: "关掉自动模式后继续聊",
+    autoModeEnabled: false,
+    modelViewId: "model-alt",
+    modeId: null,
+    lengthPresetId: "length-default",
+  });
+
+  assert.equal(payload.message.generationMode, "single");
+  assert.equal(payload.message.structuredResult?.final.recommendedText, "没有通用路线也能单步改写");
+  assert.equal(payload.message.structuredResult?.steps[0]?.routeId, "route-step-1");
 });
 
 test("messages 查询不存在会话时返回会话不存在", async () => {

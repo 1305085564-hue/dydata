@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   MessageSquare, Plus, Sparkles, Send,
-  Wand2, Copy, Check, Edit3, Type,
+  Wand2, Copy, Check, Type,
   ChevronDown
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -40,6 +40,28 @@ const THEME = {
     ai: "bg-white border border-slate-100 shadow-sm text-slate-700"
   }
 };
+
+function sortConversations(items: Conversation[]) {
+  return [...items].sort(
+    (left, right) =>
+      new Date(right.lastMessageAt || right.updatedAt).getTime() -
+      new Date(left.lastMessageAt || left.updatedAt).getTime()
+  );
+}
+
+function upsertConversation(items: Conversation[], next: Conversation) {
+  const filtered = items.filter((item) => item.id !== next.id);
+  return sortConversations([next, ...filtered]);
+}
+
+function pickAutoStepText(message: Message['structuredResult'], stepIndex: number) {
+  const step = message?.steps?.[stepIndex];
+  return (
+    step?.normalizedResult?.recommendedText?.trim() ||
+    step?.normalizedResult?.versions?.[0]?.content?.trim() ||
+    ''
+  );
+}
 
 export default function RewriteWorkbench() {
   const [bootstrap, setBootstrap] = useState<BootstrapPayload | null>(null);
@@ -120,24 +142,25 @@ export default function RewriteWorkbench() {
 
   const fetchConversations = async () => {
     try {
-      const res = await fetch('/api/content-tools/rewrite/conversations?limit=30');
+      const res = await fetch('/api/content-tools/rewrite/conversations?limit=30', { cache: 'no-store' });
       if (!res.ok) {
         throw new Error(await readApiError(res, '会话列表加载失败'));
       }
       const data = await res.json();
       if (data?.conversations) {
-        setConversations(data.conversations);
+        setConversations(sortConversations(data.conversations));
       }
     } catch (error) {
       console.warn('⚠️ 获取会话列表失败', error);
-      setConversations([]);
     }
   };
 
   const fetchMessages = async (conversationId: string) => {
     setMessagesLoading(true);
     try {
-      const res = await fetch(`/api/content-tools/rewrite/conversations/${conversationId}/messages`);
+      const res = await fetch(`/api/content-tools/rewrite/conversations/${conversationId}/messages`, {
+        cache: 'no-store'
+      });
       if (!res.ok) {
         const error = new Error(await readApiError(res, '消息加载失败'));
         (error as Error & { status?: number }).status = res.status;
@@ -184,6 +207,7 @@ export default function RewriteWorkbench() {
   const handleNewConversation = () => {
     setCurrentConversationId(null);
     setMessages([]);
+    setInputText('');
     if (bootstrap) {
       setAutoMode(bootstrap.defaults.autoModeEnabled ?? true);
       setSelectedModelViewId(bootstrap.defaults.modelViewId || '');
@@ -236,9 +260,11 @@ export default function RewriteWorkbench() {
       const data = await res.json();
 
       const returnedConversationId = data.conversation?.id || data.conversationId;
+      if (data.conversation) {
+        setConversations(prev => upsertConversation(prev, data.conversation));
+      }
       if (returnedConversationId && returnedConversationId !== currentConversationId) {
         setCurrentConversationId(returnedConversationId);
-        fetchConversations();
 
         // 如果返回了完整 conversation，可以同步回顶部状态
         if (data.conversation?.selected) {
@@ -247,6 +273,15 @@ export default function RewriteWorkbench() {
           setSelectedModeId(data.conversation.selected.modeId || selectedModeId);
           setSelectedLengthId(data.conversation.selected.lengthPresetId || selectedLengthId);
         }
+      } else if (data.conversation?.selected) {
+        setAutoMode(data.conversation.selected.autoModeEnabled ?? autoMode);
+        setSelectedModelViewId(data.conversation.selected.modelViewId || selectedModelViewId);
+        setSelectedModeId(data.conversation.selected.modeId || selectedModeId);
+        setSelectedLengthId(data.conversation.selected.lengthPresetId || selectedLengthId);
+      }
+
+      if (!data.conversation) {
+        fetchConversations();
       }
 
       if (data.message) {
@@ -337,10 +372,10 @@ export default function RewriteWorkbench() {
     : '基础改写';
 
   return (
-    <div className="flex h-full overflow-hidden bg-slate-50/50 selection:bg-blue-100 selection:text-blue-900 text-slate-800 antialiased">
+    <div className="flex h-full min-h-0 overflow-hidden bg-slate-50/50 selection:bg-blue-100 selection:text-blue-900 text-slate-800 antialiased">
       
       {/* 左侧：历史会话 */}
-      <aside className="w-[280px] bg-white border-r border-slate-200 flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300">
+      <aside className="z-20 flex w-[280px] min-h-0 flex-col border-r border-slate-200 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300">
         <div className="p-5 border-b border-slate-100">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-inner shadow-white/20">
@@ -359,12 +394,13 @@ export default function RewriteWorkbench() {
 
         <div className="flex-1 overflow-y-auto p-3 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {conversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
-                <MessageSquare className="w-5 h-5 text-slate-300" />
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full">
+              <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 border-dashed flex items-center justify-center mb-4 relative">
+                <div className="absolute inset-0 bg-blue-50/50 rounded-2xl animate-pulse delay-75"></div>
+                <MessageSquare className="w-6 h-6 text-slate-300 relative z-10" />
               </div>
-              <p className="text-sm font-medium text-slate-500 mb-1">暂无历史会话</p>
-              <p className="text-xs text-slate-400">在右侧发送消息即可开始</p>
+              <p className="text-sm font-semibold text-slate-600 mb-1">暂无历史会话</p>
+              <p className="text-[13px] text-slate-400">在右侧发送消息即可开始</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -373,22 +409,24 @@ export default function RewriteWorkbench() {
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv)}
                   className={cn(
-                    "group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors relative overflow-hidden",
-                    currentConversationId === conv.id 
-                      ? "bg-blue-50/80 text-blue-700 border border-blue-100/50 shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100"
+                    "group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 relative overflow-hidden",
+                    currentConversationId === conv.id
+                      ? "bg-white text-blue-700 shadow-[0_2px_12px_rgba(0,0,0,0.04)] ring-1 ring-slate-200/50"
+                      : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
                   )}
                 >
                   {currentConversationId === conv.id && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-600 rounded-r-full"></div>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-full shadow-[0_0_8px_rgba(37,99,235,0.4)]"></div>
                   )}
-                  <MessageSquare className={cn(
-                    "w-4 h-4 shrink-0 transition-opacity",
-                    currentConversationId === conv.id ? "" : "opacity-50 group-hover:opacity-100"
-                  )} />
+                  <div className={cn(
+                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                    currentConversationId === conv.id ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-400 group-hover:bg-white group-hover:shadow-sm"
+                  )}>
+                    <MessageSquare className="w-3.5 h-3.5" />
+                  </div>
                   <span className={cn(
-                    "text-[13px] truncate",
-                    currentConversationId === conv.id ? "font-semibold" : "font-medium"
+                    "text-[13.5px] truncate",
+                    currentConversationId === conv.id ? "font-bold tracking-tight" : "font-medium"
                   )}>{conv.title || '新对话'}</span>
                 </div>
               ))}
@@ -398,10 +436,10 @@ export default function RewriteWorkbench() {
       </aside>
 
       {/* 主工作区 */}
-      <main className="flex-1 flex flex-col h-full relative min-w-0 bg-[#f8fafc]">
+      <main className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-[#f8fafc]">
         
         {/* 顶部控制条 (动态渲染) */}
-        <header className="h-[68px] border-b border-slate-200/80 flex items-center justify-between px-6 z-10 sticky top-0 bg-white/85 backdrop-blur-[12px]">
+        <header className="sticky top-0 z-10 flex h-[68px] shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/85 px-6 backdrop-blur-[12px]">
           <div className="flex items-center gap-4">
             {/* 自动模式开关 */}
             <div className="flex items-center p-1 bg-slate-100/80 rounded-lg border border-slate-200/50 shadow-inner">
@@ -421,10 +459,18 @@ export default function RewriteWorkbench() {
             
             {/* 状态指示: 仅在自动模式开启且存在工作流配置时显示 */}
             {autoMode && bootstrap.workflow && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100 animate-in fade-in slide-in-from-left-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                <span className="text-[11px] font-semibold text-indigo-700 tracking-wide">
-                  {workflowStepsText}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50/80 border border-indigo-100/80 animate-in fade-in slide-in-from-left-2 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                <span className="text-[12px] font-semibold text-indigo-700 tracking-wide flex items-center gap-1.5">
+                  {bootstrap.workflow.steps.sort((a, b) => a.sortOrder - b.sortOrder).map((s, i, arr) => (
+                    <React.Fragment key={s.id || i}>
+                      <span>{s.name}</span>
+                      {i < arr.length - 1 && <ChevronDown className="w-3 h-3 -rotate-90 text-indigo-300" />}
+                    </React.Fragment>
+                  ))}
                 </span>
               </div>
             )}
@@ -492,24 +538,44 @@ export default function RewriteWorkbench() {
         </header>
 
         {/* 对话区 */}
-        <div className="flex-1 overflow-y-auto px-6 py-8 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="max-w-[800px] mx-auto space-y-8 pb-32">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-8 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="mx-auto max-w-[800px] space-y-8 pb-10">
             
             {messagesLoading ? (
-              <div className="flex justify-center py-10">
-                <div className="w-6 h-6 rounded-full border-2 border-blue-600 border-t-transparent animate-spin"></div>
+              <div className="flex justify-center py-20">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 rounded-full border-[3px] border-blue-600/30 border-t-blue-600 animate-spin"></div>
+                  <span className="text-[13px] text-slate-500 font-medium">正在加载对话内容...</span>
+                </div>
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center shrink-0 shadow-sm mt-1">
-                  <Sparkles className="w-4 h-4 text-blue-600" />
+              <div className="flex flex-col items-center justify-center py-24 animate-in fade-in zoom-in-95 duration-500 fill-mode-both">
+                <div className="w-20 h-20 mb-6 rounded-3xl bg-gradient-to-b from-blue-50 to-indigo-50/30 border border-blue-100/50 flex items-center justify-center shadow-sm relative">
+                  <div className="absolute inset-0 bg-blue-400/10 rounded-3xl animate-pulse blur-xl"></div>
+                  <Sparkles className="w-8 h-8 text-blue-600 relative z-10" />
                 </div>
-                <div className={cn("px-5 py-3.5 rounded-2xl rounded-tl-sm text-[15px] max-w-[85%] leading-relaxed shadow-[0_2px_10px_rgba(0,0,0,0.03)]", THEME.bubble.ai)}>
-                  把你的原文贴给我，我会按
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-red-50 text-red-600 border border-red-100 mx-1">
+                <h3 className="text-xl font-bold text-slate-800 mb-3 tracking-tight">准备好开始了吗？</h3>
+                {autoMode && bootstrap.workflow && (
+                  <div className="mb-4 max-w-xl rounded-2xl border border-indigo-100 bg-indigo-50/80 px-4 py-3 text-center text-[13px] leading-6 text-indigo-700 shadow-sm">
+                    自动模式下会先按
+                    <span className="mx-1 font-semibold">{workflowStepsText}</span>
+                    执行一次双阶段改写，完成后会自动切回标准聊天，你可以继续追问微调。
+                  </div>
+                )}
+                <p className="text-[15px] text-slate-500 max-w-md text-center leading-relaxed mb-6">
+                  把你的原文贴在下方，我会按
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[13px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 mx-1.5 shadow-sm">
                     {currentModeName}
                   </span>
-                  模式为你输出改写文案。
+                  风格为你生成高质量的改写版本。
+                </p>
+                <div className="flex gap-3">
+                  <button onClick={() => setInputText('帮我润色一下这段话，让语气更专业一些：\n')} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-[13px] font-medium text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm transition-all active:scale-95">
+                    ✨ 优化专业度
+                  </button>
+                  <button onClick={() => setInputText('把这段内容改写得更通俗易懂，适合发朋友圈：\n')} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-[13px] font-medium text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm transition-all active:scale-95">
+                    📱 朋友圈文案
+                  </button>
                 </div>
               </div>
             ) : (
@@ -520,14 +586,23 @@ export default function RewriteWorkbench() {
                       <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center shrink-0 shadow-sm mt-1 text-white text-[13px] font-bold">
                         我
                       </div>
-                      <div className={cn("px-5 py-4 rounded-2xl rounded-tr-sm max-w-[85%] text-[15px] leading-relaxed", THEME.bubble.user)}>
-                        <p className="text-white/90 whitespace-pre-wrap">{msg.content}</p>
+                      <div className={cn("px-5 py-4 rounded-2xl rounded-tr-sm max-w-[85%] text-[15px] leading-[1.7] selection:bg-white/20", THEME.bubble.user)}>
+                        <p className="text-white/95 whitespace-pre-wrap font-medium">{msg.content}</p>
                       </div>
                     </div>
                   );
                 } else {
                   // AI message
                   const sr = msg.structuredResult;
+                  const autoStepResults = msg.generationMode === 'auto'
+                    ? (sr?.steps ?? [])
+                        .map((step, stepIndex) => ({
+                          step,
+                          stepIndex,
+                          text: pickAutoStepText(sr, stepIndex)
+                        }))
+                        .filter(item => item.step.status === 'success' && item.text)
+                    : [];
                   
                   if (sr && (sr.steps || sr.final?.versions)) {
                     return (
@@ -555,19 +630,33 @@ export default function RewriteWorkbench() {
                             {msg.generationMode === 'auto' && sr.steps && sr.steps.length > 0 && (
                               <div className="px-5 py-3 bg-indigo-50/50 border-b border-slate-100">
                                 <p className="text-xs font-semibold text-indigo-700 mb-2">处理步骤：</p>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                   {sr.steps.map((step, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 text-[12px]">
+                                    <div key={idx} className="flex items-center gap-3 text-[13px]">
                                       {step.status === 'success' ? (
-                                        <Check className="w-3.5 h-3.5 text-green-500" />
+                                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                                          <Check className="w-3.5 h-3.5 text-green-600 font-bold" />
+                                        </div>
                                       ) : step.status === 'failed' ? (
-                                        <span className="text-red-500 font-bold">×</span>
+                                        <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                          <span className="text-red-600 font-bold text-xs">✕</span>
+                                        </div>
                                       ) : (
-                                        <span className="w-3.5 h-3.5 rounded-full border-2 border-indigo-300 border-t-indigo-600 animate-spin"></span>
+                                        <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                                          <span className="w-3.5 h-3.5 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin"></span>
+                                        </div>
                                       )}
-                                      <span className={step.status === 'failed' ? 'text-red-600' : 'text-slate-600'}>
-                                        {step.stepKey} {step.errorMessage ? ` - ${step.errorMessage}` : ''}
+                                      <span className={cn(
+                                        "font-medium",
+                                        step.status === 'failed' ? 'text-red-600' : 'text-slate-600'
+                                      )}>
+                                        {step.stepName}
                                       </span>
+                                      {step.errorMessage && (
+                                        <span className="text-red-500/80 text-[12px] bg-red-50 px-2 py-0.5 rounded ml-auto">
+                                          {step.errorMessage}
+                                        </span>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
@@ -576,32 +665,97 @@ export default function RewriteWorkbench() {
                             
                             {/* partial success */}
                             {sr.steps?.some(s => s.status === 'failed') && sr.steps?.some(s => s.status === 'success') && (
-                              <div className="px-5 py-2.5 bg-yellow-50 text-yellow-800 text-[13px] font-medium border-b border-yellow-200 flex items-center gap-2">
-                                <span className="text-yellow-600">⚠️</span>
-                                <span>部分步骤处理失败，已为您显示成功完成的中间结果</span>
+                              <div className="px-5 py-3 bg-amber-50/80 text-amber-800 text-[13px] font-medium border-b border-amber-200/60 flex items-center gap-2.5">
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-xs shadow-sm">⚠️</span>
+                                <span>部分中间步骤处理异常，已为您展示已完成的可用结果</span>
                               </div>
                             )}
             
-                            {/* 版本列表 */}
-                            {sr.final?.versions && sr.final.versions.length > 0 && (
+                            {/* 自动模式首轮结果 */}
+                            {msg.generationMode === 'auto' && autoStepResults.length > 0 && (
                               <div className="p-5 space-y-4">
-                                {sr.final.versions.map((ver, vIndex) => (
-                                  <div key={vIndex} className="relative group p-5 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:ring-2 hover:ring-blue-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                                    <div className="flex items-center justify-between mb-3">
-                                      <h3 className="font-bold text-slate-900 flex items-center gap-2 text-[15px]">
-                                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-black">
-                                          {String.fromCharCode(65 + vIndex)}
-                                        </span>
-                                        {ver.title || `版本 ${vIndex + 1}`}
-                                      </h3>
-                                      <button 
-                                        onClick={() => handleCopy(`${msg.id}-${vIndex}`, ver.content)}
-                                        className="w-7 h-7 rounded-md bg-white border border-slate-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm text-slate-400 hover:text-blue-600 hover:border-blue-200"
+                                {autoStepResults.map(({ step, stepIndex, text }) => (
+                                  <div key={`${msg.id}-${step.stepKey}-${stepIndex}`} className="relative group rounded-2xl border border-slate-200/80 bg-slate-50/40 p-6 transition-all duration-300 hover:border-blue-300 hover:bg-white hover:shadow-[0_8px_24px_-8px_rgba(37,99,235,0.15)]">
+                                    <div className="mb-4 flex items-center justify-between gap-3">
+                                      <div>
+                                        <h3 className="flex items-center gap-2.5 text-[15px] font-bold text-slate-900">
+                                          <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-indigo-100 px-2 text-[11px] font-black tracking-tight text-indigo-700 ring-1 ring-indigo-200/60">
+                                            {stepIndex + 1}
+                                          </span>
+                                          {step.stepName}
+                                        </h3>
+                                        {step.description && (
+                                          <p className="mt-1 text-[12px] text-slate-500">{step.description}</p>
+                                        )}
+                                      </div>
+                                      <button
+                                        onClick={() => handleCopy(`${msg.id}-step-${stepIndex}`, text)}
+                                        className={cn(
+                                          "flex h-8 items-center gap-1.5 rounded-lg border px-3 text-[12px] font-semibold shadow-sm transition-all",
+                                          copiedIndex === `${msg.id}-step-${stepIndex}`
+                                            ? "border-green-200 bg-green-50 text-green-700"
+                                            : "border-slate-200 bg-white text-slate-500 opacity-0 group-hover:opacity-100 hover:border-blue-200 hover:text-blue-600 hover:shadow-md"
+                                        )}
                                       >
-                                        {copiedIndex === `${msg.id}-${vIndex}` ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                        {copiedIndex === `${msg.id}-step-${stepIndex}` ? (
+                                          <>
+                                            <Check className="w-3.5 h-3.5" />
+                                            <span>已复制</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Copy className="w-3.5 h-3.5" />
+                                            <span>复制本步</span>
+                                          </>
+                                        )}
                                       </button>
                                     </div>
-                                    <p className="text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                    <p className="whitespace-pre-wrap text-[15px] leading-[1.8] text-slate-700 selection:bg-blue-100 selection:text-blue-900">
+                                      {text}
+                                    </p>
+                                  </div>
+                                ))}
+                                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 px-4 py-3 text-[13px] text-slate-500">
+                                  自动改写已完成，本会话已切回标准聊天。现在可以直接说“把第二步再口语一点”这类修改要求。
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 单步/兜底版本列表 */}
+                            {(!(msg.generationMode === 'auto' && autoStepResults.length > 0) && sr.final?.versions && sr.final.versions.length > 0) && (
+                              <div className="p-5 space-y-4">
+                                {sr.final.versions.map((ver, vIndex) => (
+                                  <div key={vIndex} className="relative group p-6 rounded-2xl border border-slate-200/80 bg-slate-50/30 hover:bg-white hover:border-blue-300 hover:shadow-[0_8px_24px_-8px_rgba(37,99,235,0.15)] transition-all duration-300 cursor-pointer">
+                                    <div className="flex items-center justify-between mb-4">
+                                      <h3 className="font-bold text-slate-900 flex items-center gap-2.5 text-[15px]">
+                                        <span className="w-6 h-6 rounded-full bg-blue-100/50 text-blue-700 flex items-center justify-center text-[11px] font-black tracking-tighter ring-1 ring-blue-200/50">
+                                          V{vIndex + 1}
+                                        </span>
+                                        {ver.title || `改写版本 ${vIndex + 1}`}
+                                      </h3>
+                                      <button
+                                        onClick={() => handleCopy(`${msg.id}-${vIndex}`, ver.content)}
+                                        className={cn(
+                                          "h-8 px-3 rounded-lg flex items-center gap-1.5 transition-all shadow-sm text-[12px] font-semibold border",
+                                          copiedIndex === `${msg.id}-${vIndex}`
+                                            ? "bg-green-50 text-green-700 border-green-200 opacity-100"
+                                            : "bg-white text-slate-500 border-slate-200 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:border-blue-200 hover:shadow-md"
+                                        )}
+                                      >
+                                        {copiedIndex === `${msg.id}-${vIndex}` ? (
+                                          <>
+                                            <Check className="w-3.5 h-3.5" />
+                                            <span>已复制</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Copy className="w-3.5 h-3.5" />
+                                            <span>一键复制</span>
+                                          </>
+                                        )}
+                                      </button>
+                                    </div>
+                                    <p className="text-[15px] text-slate-700 leading-[1.8] whitespace-pre-wrap selection:bg-blue-100 selection:text-blue-900">
                                       {ver.content}
                                     </p>
                                   </div>
@@ -631,7 +785,7 @@ export default function RewriteWorkbench() {
         </div>
         
         {/* 底部输入区 */}
-        <div className="absolute bottom-0 left-0 right-0 pt-10 pb-6 px-6 z-20 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc] to-transparent">
+        <div className="shrink-0 px-6 pb-6 pt-4">
           <div className="max-w-[800px] mx-auto">
             <div className="relative bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-200 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-400 transition-all overflow-hidden group">
               
@@ -639,14 +793,28 @@ export default function RewriteWorkbench() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 className="w-full bg-transparent p-4 pr-16 resize-none h-[120px] focus:outline-none text-[15px] text-slate-900 placeholder:text-slate-400 leading-relaxed [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
-                placeholder="粘贴复盘原文，或输入修改要求（例如：把版本A改得更接地气一点）..."
+                placeholder={autoMode
+                  ? "请直接粘贴原文。自动模式会先跑双阶段改写，完成后自动切到标准聊天..."
+                  : "输入修改要求（例如：把第二步再接地气一点）..."
+                }
               ></textarea>
               
               {isSending && <div className="absolute top-0 left-0 right-0 h-1 bg-blue-100 overflow-hidden rounded-t-2xl"><div className="w-1/3 h-full bg-blue-600 animate-pulse rounded-full"></div></div>}
               {/* 工具栏 */}
               <div className="absolute bottom-3 left-4 flex items-center gap-1">
-                <button className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="清除格式">
-                  <Type className="w-4 h-4" />
+                <button
+                  onClick={() => setInputText('')}
+                  className={cn(
+                    "h-8 px-2.5 flex items-center justify-center text-[13px] font-medium rounded-lg transition-colors duration-200",
+                    inputText.length > 0
+                      ? "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                      : "text-slate-300 cursor-not-allowed"
+                  )}
+                  title="清空输入"
+                  disabled={inputText.length === 0}
+                >
+                  <Type className="w-4 h-4 mr-1.5" />
+                  清空
                 </button>
               </div>
 
@@ -654,14 +822,23 @@ export default function RewriteWorkbench() {
                 onClick={handleSend}
                 disabled={!inputText.trim() || isSending}
                 className={cn(
-                  "absolute bottom-3 right-3 px-5 py-2.5 rounded-xl text-[14px] font-bold flex items-center gap-2 transition-all shadow-sm group",
+                  "absolute bottom-3 right-3 px-5 py-2 rounded-xl text-[14px] font-bold flex items-center gap-2 transition-all duration-300 shadow-sm group",
                   !inputText.trim() || isSending
                     ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-[0_4px_12px_rgba(37,99,235,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
                 )}
               >
-                {isSending ? '发送中...' : '发送'}
-                {!isSending && <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />}
+                {isSending ? (
+                  <>
+                    <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+                    <span>处理中...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{autoMode ? '执行首轮改写' : '发送'}</span>
+                    <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </>
+                )}
               </button>
             </div>
             <div className="text-center mt-3">
