@@ -54,6 +54,21 @@ function upsertConversation(items: Conversation[], next: Conversation) {
   return sortConversations([next, ...filtered]);
 }
 
+function isTransientFetchError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('failed to fetch') ||
+    message.includes('load failed') ||
+    message.includes('networkerror') ||
+    message.includes('network request failed')
+  );
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function pickAutoStepText(message: Message['structuredResult'], stepIndex: number) {
   const step = message?.steps?.[stepIndex];
   return (
@@ -238,18 +253,37 @@ export default function RewriteWorkbench() {
     setMessages(prev => [...prev, tempMessage]);
 
     try {
-      const res = await fetch('/api/content-tools/rewrite/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: currentConversationId,
-          message: textToSend,
-          autoModeEnabled: autoMode,
-          modelViewId: selectedModelViewId,
-          modeId: selectedModeId,
-          lengthPresetId: selectedLengthId
-        })
-      });
+      let res: Response | null = null;
+      let lastNetworkError: unknown = null;
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          res = await fetch('/api/content-tools/rewrite/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              conversationId: currentConversationId,
+              message: textToSend,
+              autoModeEnabled: autoMode,
+              modelViewId: selectedModelViewId,
+              modeId: selectedModeId,
+              lengthPresetId: selectedLengthId
+            })
+          });
+          lastNetworkError = null;
+          break;
+        } catch (error) {
+          lastNetworkError = error;
+          if (!isTransientFetchError(error) || attempt === 1) {
+            throw error;
+          }
+          await sleep(700);
+        }
+      }
+
+      if (!res) {
+        throw (lastNetworkError instanceof Error ? lastNetworkError : new Error('发送失败，请稍后重试'));
+      }
 
       if (!res.ok) {
         const error = new Error(await readApiError(res, '发送失败，请稍后重试'));
