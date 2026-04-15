@@ -9,13 +9,14 @@ import {
   toOptionalNullableString,
 } from "../_shared";
 
-// 自动模式两步 AI 串行调用，需要足够的执行时间
+// 单步 AI 调用，留足余量
 export const maxDuration = 60;
 
 type RewriteChatBody = {
   conversationId?: string | null;
   message?: string;
   autoModeEnabled?: boolean;
+  autoStep?: number | null;
   modelViewId?: string | null;
   modelViewKey?: string | null;
   modeId?: string | null;
@@ -32,12 +33,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await parseJsonBody<RewriteChatBody>(request);
+    const autoStep = typeof body.autoStep === "number" ? body.autoStep : undefined;
     const payload = await handleRewriteChat({
       service: auth.serviceClient,
       actor: auth.actor,
       conversationId: toNullableString(body.conversationId),
       message: body.message ?? "",
       autoModeEnabled: body.autoModeEnabled,
+      autoStep,
       modelViewId: toOptionalNullableString(body.modelViewId),
       modelViewKey: toOptionalNullableString(body.modelViewKey),
       modeId: toOptionalNullableString(body.modeId),

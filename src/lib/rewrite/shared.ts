@@ -1610,7 +1610,7 @@ async function executeRewriteStep(input: {
         databaseOnly: true,
         jsonMode: useJsonMode,
         maxTokens: 2200,
-        timeoutMs: 25_000,
+        timeoutMs: 50_000,
         messages: baseMessages,
       });
 
@@ -1725,6 +1725,7 @@ export async function handleRewriteChat(input: {
   actor: RewriteActor;
   conversationId?: string | null;
   message: string;
+  autoStep?: number;
 } & RewriteSelectionInput) {
   const userMessage = trimOrNull(input.message);
   if (!userMessage) {
@@ -1796,10 +1797,14 @@ export async function handleRewriteChat(input: {
   let steps: RewriteStepExecution[] = [];
   let finalResult: NormalizedRewriteResult | null = null;
   let finalStatus: "success" | "partial_success" | "failed" = "failed";
-  if (selections.autoModeEnabled && isFirstMessage) {
+
+  // autoStep: 1 = 只跑第一步, 2 = 只跑第二步（前端分两次请求）
+  const requestedAutoStep = input.autoStep;
+
+  if (selections.autoModeEnabled && isFirstMessage && requestedAutoStep !== 2) {
+    // 自动模式第一步
     const orderedSteps = selections.workflowSteps;
     const firstStep = orderedSteps[0] ?? null;
-    const secondStep = orderedSteps[1] ?? null;
 
     if (!firstStep) {
       throw new Error("自动改写流程未配置步骤");
@@ -1820,29 +1825,64 @@ export async function handleRewriteChat(input: {
       throw new Error(firstResult.errorMessage ?? "第一步改写失败");
     }
 
-    if (!secondStep) {
+    // 只有一步或前端要求分步 → 返回第一步结果，不跑第二步
+    const hasSecondStep = (orderedSteps[1] ?? null) !== null;
+    if (!hasSecondStep) {
       finalResult = firstResult.normalizedResult;
       finalStatus = "success";
     } else {
-      const secondResult = await executeRewriteStep({
-        service: input.service,
-        feature: config.feature,
-        config,
-        selections,
-        history,
-        userMessage,
-        workflowStep: secondStep,
-        previousStepResult: firstResult.normalizedResult,
-      });
-      steps.push(secondResult);
+      // 有第二步但前端分步请求 → 返回第一步，标记 partial，不切 autoMode
+      finalResult = firstResult.normalizedResult;
+      finalStatus = "partial_success";
+    }
+  } else if (selections.autoModeEnabled && requestedAutoStep === 2) {
+    // 自动模式第二步：从历史消息中取第一步结果
+    const orderedSteps = selections.workflowSteps;
+    const secondStep = orderedSteps[1] ?? null;
 
-      if (secondResult.status === "success" && secondResult.normalizedResult) {
-        finalResult = secondResult.normalizedResult;
-        finalStatus = "success";
+    if (!secondStep) {
+      throw new Error("自动改写流程未配置第二步");
+    }
+
+    // 从最近的 assistant 消息中提取第一步结果
+    const lastAssistant = [...history].reverse().find(m => m.role === "assistant");
+    let previousStepResult: NormalizedRewriteResult | null = null;
+    if (lastAssistant?.structured_result) {
+      const sr = lastAssistant.structured_result as Record<string, unknown>;
+      const srSteps = Array.isArray(sr.steps) ? sr.steps : [];
+      const step1 = srSteps[0] as Record<string, unknown> | undefined;
+      if (step1?.normalizedResult) {
+        previousStepResult = normalizeStoredRewriteResult(step1.normalizedResult, lastAssistant.content);
       } else {
-        finalResult = firstResult.normalizedResult;
-        finalStatus = "partial_success";
+        previousStepResult = normalizeStoredRewriteResult(sr.final ?? sr, lastAssistant.content);
       }
+    }
+
+    if (!previousStepResult) {
+      previousStepResult = normalizeRewriteResult(
+        lastAssistant?.content ?? userMessage,
+      );
+    }
+
+    const secondResult = await executeRewriteStep({
+      service: input.service,
+      feature: config.feature,
+      config,
+      selections,
+      history,
+      userMessage,
+      workflowStep: secondStep,
+      previousStepResult,
+    });
+    steps.push(secondResult);
+
+    if (secondResult.status === "success" && secondResult.normalizedResult) {
+      finalResult = secondResult.normalizedResult;
+      finalStatus = "success";
+    } else {
+      // 第二步失败，回退到第一步结果
+      finalResult = previousStepResult;
+      finalStatus = "partial_success";
     }
   } else {
     // 后续追问（非首轮）走自然对话模式
@@ -1902,7 +1942,12 @@ export async function handleRewriteChat(input: {
     });
   }
 
-  if (selections.autoModeEnabled && isFirstMessage) {
+  // 只在自动模式第二步完成后（或只有一步的情况）才切 autoMode=false
+  const isAutoStepComplete = selections.autoModeEnabled && (
+    requestedAutoStep === 2 ||
+    (isFirstMessage && selections.workflowSteps.length <= 1)
+  );
+  if (isAutoStepComplete) {
     await updateConversationSelections(input.service, {
       conversationId: conversation.id,
       userId: input.actor.userId,

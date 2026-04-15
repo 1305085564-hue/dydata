@@ -244,6 +244,80 @@ export default function RewriteWorkbench() {
     }
   };
 
+  // 封装单次 chat 请求（含重试）
+  const sendChatRequest = async (body: Record<string, unknown>): Promise<Response> => {
+    let res: Response | null = null;
+    let lastNetworkError: unknown = null;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        res = await fetch('/api/content-tools/rewrite/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        lastNetworkError = null;
+        break;
+      } catch (error) {
+        lastNetworkError = error;
+        if (!isTransientFetchError(error) || attempt === 1) throw error;
+        await sleep(700);
+      }
+    }
+
+    if (!res) {
+      throw (lastNetworkError instanceof Error ? lastNetworkError : new Error('发送失败，请稍后重试'));
+    }
+
+    if (!res.ok) {
+      const error = new Error(await readApiError(res, '发送失败，请稍后重试'));
+      (error as Error & { status?: number }).status = res.status;
+      throw error;
+    }
+
+    return res;
+  };
+
+  // 处理 chat 响应中的会话和消息同步
+  const applyChatResponse = (data: Record<string, unknown>, tempMessageId: string) => {
+    const returnedConversationId = (data.conversation as Record<string, unknown>)?.id || data.conversationId;
+    if (data.conversation) {
+      setConversations(prev => upsertConversation(prev, data.conversation as Conversation));
+    }
+
+    if ((data.conversation as Record<string, unknown>)?.selected) {
+      const sel = (data.conversation as Record<string, unknown>).selected as Record<string, unknown>;
+      setAutoMode((sel.autoModeEnabled as boolean) ?? false);
+      setSelectedModelViewId((sel.modelViewId as string) || selectedModelViewId);
+      setSelectedModeId((sel.modeId as string) ?? selectedModeId);
+      setSelectedLengthId((sel.lengthPresetId as string) || selectedLengthId);
+    }
+
+    if (returnedConversationId && returnedConversationId !== currentConversationId) {
+      setCurrentConversationId(returnedConversationId as string);
+    }
+
+    if (!data.conversation) {
+      fetchConversations();
+    }
+
+    if (data.message) {
+      setMessages(prev => {
+        const tempUserMsg = prev.find(m => m.id === tempMessageId);
+        const filtered = prev.filter(m => m.id !== tempMessageId);
+
+        if (tempUserMsg) {
+          const resolvedUserMsg = { ...tempUserMsg, conversationId: (returnedConversationId as string) || tempUserMsg.conversationId };
+          return [...filtered, resolvedUserMsg, data.message as Message];
+        }
+
+        return [...filtered, data.message as Message];
+      });
+    }
+
+    return returnedConversationId as string | undefined;
+  };
+
   const handleSend = async () => {
     if (!inputText.trim() || isSending) return;
 
@@ -267,89 +341,70 @@ export default function RewriteWorkbench() {
     };
     setMessages(prev => [...prev, tempMessage]);
 
-    // 自动模式下模拟阶段进度（后端串行两步，前端用定时器模拟阶段切换）
-    let phaseTimer: ReturnType<typeof setTimeout> | null = null;
-    if (isAutoFirstRound) {
-      phaseTimer = setTimeout(() => {
-        setSendingPhase('第 1 步完成，正在执行第 2 步：情绪润色...');
-      }, 12000);
-    }
-
     try {
-      let res: Response | null = null;
-      let lastNetworkError: unknown = null;
+      const baseBody = {
+        conversationId: currentConversationId,
+        message: textToSend,
+        autoModeEnabled: autoMode,
+        modelViewId: selectedModelViewId,
+        modeId: selectedModeId,
+        lengthPresetId: selectedLengthId,
+      };
 
-      for (let attempt = 0; attempt < 2; attempt += 1) {
+      if (isAutoFirstRound) {
+        // 自动模式分两步请求，每步独立，不会超时
+
+        // 第一步
+        const res1 = await sendChatRequest({ ...baseBody, autoStep: 1 });
+        const data1 = await res1.json();
+        const convId = applyChatResponse(data1, tempMessage.id);
+
+        // 第一步结果已展示，开始第二步
+        setSendingPhase('第 1 步完成，正在执行第 2 步：情绪润色...');
+
         try {
-          res = await fetch('/api/content-tools/rewrite/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              conversationId: currentConversationId,
-              message: textToSend,
-              autoModeEnabled: autoMode,
-              modelViewId: selectedModelViewId,
-              modeId: selectedModeId,
-              lengthPresetId: selectedLengthId
-            })
+          const res2 = await sendChatRequest({
+            ...baseBody,
+            conversationId: convId || currentConversationId,
+            autoStep: 2,
           });
-          lastNetworkError = null;
-          break;
-        } catch (error) {
-          lastNetworkError = error;
-          if (!isTransientFetchError(error) || attempt === 1) {
-            throw error;
+          const data2 = await res2.json();
+
+          // 第二步结果追加到消息列表
+          if (data2.message) {
+            setMessages(prev => [...prev, data2.message as Message]);
           }
-          await sleep(700);
+          // 同步会话状态（第二步完成后 autoMode 会被切为 false）
+          if (data2.conversation) {
+            setConversations(prev => upsertConversation(prev, data2.conversation as Conversation));
+            const sel = (data2.conversation as Record<string, unknown>)?.selected as Record<string, unknown> | undefined;
+            if (sel) {
+              setAutoMode((sel.autoModeEnabled as boolean) ?? false);
+            }
+          }
+        } catch (step2Error) {
+          // 第二步失败不影响第一步结果，只追加一条提示
+          console.warn('自动模式第二步失败', step2Error);
+          setMessages(prev => [...prev, {
+            id: `note-${Date.now()}`,
+            conversationId: convId || currentConversationId || '',
+            role: 'system_note' as const,
+            content: '⚠️ 第二步润色失败，已展示第一步框架稿。你可以继续追问来手动润色。',
+            createdAt: new Date().toISOString(),
+            generationMode: null,
+            status: 'failed' as const,
+            requestSnapshot: null,
+            errorMessage: step2Error instanceof Error ? step2Error.message : '第二步失败',
+            structuredResult: null,
+          }]);
+          // 手动切回非自动模式
+          setAutoMode(false);
         }
-      }
-
-      if (!res) {
-        throw (lastNetworkError instanceof Error ? lastNetworkError : new Error('发送失败，请稍后重试'));
-      }
-
-      if (!res.ok) {
-        const error = new Error(await readApiError(res, '发送失败，请稍后重试'));
-        (error as Error & { status?: number }).status = res.status;
-        throw error;
-      }
-
-      const data = await res.json();
-
-      const returnedConversationId = data.conversation?.id || data.conversationId;
-      if (data.conversation) {
-        setConversations(prev => upsertConversation(prev, data.conversation));
-      }
-
-      // 同步会话状态（包括 autoMode）
-      if (data.conversation?.selected) {
-        const sel = data.conversation.selected;
-        setAutoMode(sel.autoModeEnabled ?? false);
-        setSelectedModelViewId(sel.modelViewId || selectedModelViewId);
-        setSelectedModeId(sel.modeId ?? selectedModeId);
-        setSelectedLengthId(sel.lengthPresetId || selectedLengthId);
-      }
-
-      if (returnedConversationId && returnedConversationId !== currentConversationId) {
-        setCurrentConversationId(returnedConversationId);
-      }
-
-      if (!data.conversation) {
-        fetchConversations();
-      }
-
-      if (data.message) {
-        setMessages(prev => {
-          const tempUserMsg = prev.find(m => m.id === tempMessage.id);
-          const filtered = prev.filter(m => m.id !== tempMessage.id);
-
-          if (tempUserMsg) {
-            const resolvedUserMsg = { ...tempUserMsg, conversationId: returnedConversationId || tempUserMsg.conversationId };
-            return [...filtered, resolvedUserMsg, data.message];
-          }
-
-          return [...filtered, data.message];
-        });
+      } else {
+        // 普通单步请求
+        const res = await sendChatRequest(baseBody);
+        const data = await res.json();
+        applyChatResponse(data, tempMessage.id);
       }
     } catch (error: unknown) {
       console.error('发送消息失败', error);
@@ -363,11 +418,11 @@ export default function RewriteWorkbench() {
         return [...filtered, {
           id: `error-${Date.now()}`,
           conversationId: currentConversationId || '',
-          role: 'system_note',
+          role: 'system_note' as const,
           content: `⚠️ ${title}：${errorMessage}。已为您恢复输入内容。`,
           createdAt: new Date().toISOString(),
           generationMode: null,
-          status: 'failed',
+          status: 'failed' as const,
           requestSnapshot: null,
           errorMessage: errorMessage,
           structuredResult: null
@@ -375,7 +430,6 @@ export default function RewriteWorkbench() {
       });
       setInputText(textToSend);
     } finally {
-      if (phaseTimer) clearTimeout(phaseTimer);
       setIsSending(false);
       setSendingPhase('');
     }
