@@ -7,25 +7,46 @@ export const mockBootstrapData: BootstrapPayload = {
     enabled: true
   },
   defaults: {
-    autoModeEnabled: true,
+    autoModeEnabled: false,
+    fixedModeId: null,
     modelViewId: "mv-gemini",
-    modeId: "mode-baokuan",
-    lengthPresetId: "len-short",
+    modeId: null,
+    lengthPresetId: "len-normal",
     workflowId: "wf-standard"
   },
+  fixedModes: [
+    {
+      id: "fixed-framework",
+      key: "strong_framework",
+      name: "强框架模式",
+      description: "优先调整结构、信息顺序和开头抓力",
+      isEnabled: true,
+      modelViewId: "mv-opus",
+      lengthPresetId: "len-normal"
+    },
+    {
+      id: "fixed-tone",
+      key: "strong_tone",
+      name: "强语感模式",
+      description: "优先提升口播顺滑度和真人表达感",
+      isEnabled: true,
+      modelViewId: "mv-gemini",
+      lengthPresetId: "len-normal"
+    }
+  ],
   modelViews: [
     {
       id: "mv-gemini",
       key: "gemini-family",
-      label: "强语感系列 (默认)",
-      description: "适合情绪拉满的口语化表达",
+      label: "Gemini",
+      description: "适合强语感改写",
       isDefault: true
     },
     {
       id: "mv-opus",
       key: "opus-family",
-      label: "强逻辑系列",
-      description: "适合结构化拆解和初步起稿",
+      label: "Opus",
+      description: "适合结构化重组和起稿",
       isDefault: false
     }
   ],
