@@ -10,7 +10,11 @@ function normalizeRewriteApiErrorMessage(message: string) {
     message.includes('relation "public.rewrite_') ||
     (message.includes("Could not find the '") && message.includes("' column of 'rewrite_"))
   ) {
-    return "文案改写数据表未就绪，请先执行 044 / 045 migration";
+    return "文案改写数据表未就绪，请先执行 044 / 045 / 046 migration";
+  }
+
+  if (message.includes("invalid input syntax for type uuid")) {
+    return "会话 ID 格式不正确";
   }
 
   return message;
@@ -19,6 +23,12 @@ function normalizeRewriteApiErrorMessage(message: string) {
 export function toNullableString(value: unknown) {
   const text = toTrimmedString(value);
   return text || null;
+}
+
+export function toOptionalNullableString(value: unknown) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return toNullableString(value);
 }
 
 export async function parseJsonBody<T extends Record<string, unknown>>(request: NextRequest) {

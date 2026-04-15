@@ -35,6 +35,18 @@ type RewriteModeRow = {
   is_default: boolean;
 };
 
+type RewriteFixedModeRow = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  fixed_prompt: string;
+  model_view_id: string;
+  length_preset_id: string | null;
+  sort_order: number;
+  is_enabled: boolean;
+};
+
 type RewriteLengthPresetRow = {
   id: string;
   key: string;
@@ -91,6 +103,7 @@ type RewriteConversationRow = {
   user_id: string;
   title: string;
   auto_mode_enabled: boolean;
+  selected_fixed_mode_id: string | null;
   selected_model_view_id: string | null;
   selected_mode_id: string | null;
   selected_length_preset_id: string | null;
@@ -135,6 +148,16 @@ export type RewriteModeOption = {
   isDefault: boolean;
 };
 
+export type RewriteFixedModeOption = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  isEnabled: boolean;
+  modelViewId: string;
+  lengthPresetId: string | null;
+};
+
 export type RewriteLengthPresetOption = {
   id: string;
   key: string;
@@ -168,11 +191,13 @@ export type RewriteBootstrapPayload = {
   };
   defaults: {
     autoModeEnabled: boolean;
+    fixedModeId: string | null;
     modelViewId: string | null;
     modeId: string | null;
     lengthPresetId: string | null;
     workflowId: string | null;
   };
+  fixedModes: RewriteFixedModeOption[];
   modelViews: RewriteModelOption[];
   modes: RewriteModeOption[];
   lengthPresets: RewriteLengthPresetOption[];
@@ -182,6 +207,7 @@ export type RewriteBootstrapPayload = {
 type RewriteConfigBundle = {
   feature: RewriteFeatureRow | null;
   modelViews: RewriteModelViewRow[];
+  fixedModes: RewriteFixedModeRow[];
   modes: RewriteModeRow[];
   lengthPresets: RewriteLengthPresetRow[];
   workflow: RewriteWorkflowRow | null;
@@ -190,6 +216,8 @@ type RewriteConfigBundle = {
 
 type RewriteSelectionInput = {
   autoModeEnabled?: boolean;
+  fixedModeId?: string | null;
+  fixedModeKey?: string | null;
   modelViewId?: string | null;
   modelViewKey?: string | null;
   modeId?: string | null;
@@ -199,6 +227,7 @@ type RewriteSelectionInput = {
 };
 
 type RewriteResolvedSelections = {
+  fixedMode: RewriteFixedModeRow | null;
   modelView: RewriteModelViewRow;
   mode: RewriteModeRow | null;
   lengthPreset: RewriteLengthPresetRow;
@@ -212,8 +241,11 @@ type RewriteVersion = {
   content: string;
 };
 
+export type RewriteResponseMode = "chat" | "versions";
+
 export type RewriteRequestSnapshot = {
   autoModeEnabled: boolean | null;
+  fixedModeId: string | null;
   modelViewId: string | null;
   modeId: string | null;
   lengthPresetId: string | null;
@@ -221,6 +253,7 @@ export type RewriteRequestSnapshot = {
 };
 
 export type NormalizedRewriteResult = {
+  responseMode: RewriteResponseMode;
   title: string | null;
   summary: string | null;
   versions: RewriteVersion[];
@@ -249,10 +282,12 @@ type RewriteStepExecution = {
 
 export type RewriteStructuredSelection = {
   autoModeEnabled: boolean;
+  fixedModeId: string | null;
   modelViewId: string | null;
   modeId: string | null;
   lengthPresetId: string | null;
   workflowId: string | null;
+  fixedMode: Pick<RewriteFixedModeOption, "id" | "key" | "name" | "description" | "isEnabled"> | null;
   modelView: Pick<RewriteModelOption, "id" | "key" | "label" | "description" | "isDefault"> | null;
   mode: Pick<RewriteModeOption, "id" | "key" | "name" | "description" | "isDefault"> | null;
   lengthPreset:
@@ -271,6 +306,7 @@ export type RewriteAssistantPayload = {
   selected: RewriteStructuredSelection;
   snapshots: {
     featureSystemPrompt: string | null;
+    fixedModePrompt: string | null;
     modePrompt: string | null;
     lengthPrompt: string | null;
   };
@@ -316,7 +352,7 @@ export type RewriteMessageItem = {
 };
 
 const REWRITE_CONVERSATION_SELECT =
-  "id, user_id, title, auto_mode_enabled, selected_model_view_id, selected_mode_id, selected_length_preset_id, last_message_at, created_at, updated_at";
+  "id, user_id, title, auto_mode_enabled, selected_fixed_mode_id, selected_model_view_id, selected_mode_id, selected_length_preset_id, last_message_at, created_at, updated_at";
 const REWRITE_MESSAGE_SELECT =
   "id, conversation_id, user_id, role, generation_mode, message_status, content, structured_result, request_snapshot, error_message, created_at";
 
@@ -371,6 +407,40 @@ function pickRecommendedText(versions: RewriteVersion[]) {
   return versions[0]?.content ?? "";
 }
 
+function createChatResult(rawContent: string): NormalizedRewriteResult {
+  const trimmed = rawContent.trim();
+  return {
+    responseMode: "chat",
+    title: null,
+    summary: null,
+    versions: [],
+    notes: [],
+    followUpSuggestions: [],
+    recommendedText: trimmed,
+  };
+}
+
+function inferStoredResponseMode(value: Record<string, unknown>, versionsLength: number): RewriteResponseMode {
+  if (value.responseMode === "chat" || value.responseMode === "versions") {
+    return value.responseMode;
+  }
+  if (value.response_mode === "chat" || value.response_mode === "versions") {
+    return value.response_mode;
+  }
+  return versionsLength > 0 ? "versions" : "chat";
+}
+
+function inferFollowUpResponseMode(userMessage: string): RewriteResponseMode {
+  const normalized = userMessage.replace(/\s+/g, "").toLowerCase();
+  const versionRequestPatterns = [
+    /(重写|改写|重来|重新写|再写|另写).{0,8}(一版|两版|三版|\d+版|多个版本|几版)/,
+    /(给我|给出|出|再出|重新出).{0,8}(一版|两版|三版|\d+版|多个版本|几版)/,
+    /(多个版本|两个版本|三个版本|3个版本|2个版本|ab版|a\/b版|版本a|版本b)/,
+  ];
+
+  return versionRequestPatterns.some((pattern) => pattern.test(normalized)) ? "versions" : "chat";
+}
+
 function toModelOption(row: RewriteModelViewRow): RewriteModelOption {
   return {
     id: row.id,
@@ -391,6 +461,18 @@ function toModeOption(row: RewriteModeRow): RewriteModeOption {
   };
 }
 
+function toFixedModeOption(row: RewriteFixedModeRow): RewriteFixedModeOption {
+  return {
+    id: row.id,
+    key: row.key,
+    name: row.name,
+    description: row.description,
+    isEnabled: row.is_enabled,
+    modelViewId: row.model_view_id,
+    lengthPresetId: row.length_preset_id,
+  };
+}
+
 function toLengthPresetOption(row: RewriteLengthPresetRow): RewriteLengthPresetOption {
   return {
     id: row.id,
@@ -398,6 +480,26 @@ function toLengthPresetOption(row: RewriteLengthPresetRow): RewriteLengthPresetO
     name: row.name,
     description: row.description,
     isDefault: row.is_default,
+  };
+}
+
+function normalizeFixedModeOption(value: unknown): RewriteFixedModeOption | null {
+  if (!isRecord(value)) return null;
+
+  const id = trimOrNull(value.id);
+  const key = trimOrNull(value.key);
+  const name = trimOrNull(value.name);
+  const modelViewId = trimOrNull(value.modelViewId);
+  if (!id || !key || !name || !modelViewId) return null;
+
+  return {
+    id,
+    key,
+    name,
+    description: trimOrNull(value.description),
+    isEnabled: toBoolean(value.isEnabled, true),
+    modelViewId,
+    lengthPresetId: trimOrNull(value.lengthPresetId),
   };
 }
 
@@ -475,6 +577,7 @@ function normalizeRequestSnapshot(value: unknown): RewriteRequestSnapshot | null
   const snapshot: RewriteRequestSnapshot = {
     autoModeEnabled:
       typeof value.autoModeEnabled === "boolean" ? value.autoModeEnabled : null,
+    fixedModeId: trimOrNull(value.fixedModeId),
     modelViewId: trimOrNull(value.modelViewId),
     modeId: trimOrNull(value.modeId),
     lengthPresetId: trimOrNull(value.lengthPresetId),
@@ -520,14 +623,18 @@ export function normalizeStoredRewriteResult(
     trimOrNull(value.content) ??
     fallbackContent.trim();
 
+  const responseMode = inferStoredResponseMode(value, versions.length);
   const safeVersions =
-    versions.length > 0
-      ? versions
-      : fallbackText
-        ? [{ title: fallbackTitle, content: fallbackText }]
-        : [];
+    responseMode === "versions"
+      ? versions.length > 0
+        ? versions
+        : fallbackText
+          ? [{ title: fallbackTitle, content: fallbackText }]
+          : []
+      : [];
 
   return {
+    responseMode,
     title: trimOrNull(value.title),
     summary: trimOrNull(value.summary),
     versions: safeVersions,
@@ -535,16 +642,26 @@ export function normalizeStoredRewriteResult(
     followUpSuggestions: pickFirstNonEmptyStrings(
       value.followUpSuggestions ?? value.follow_up_suggestions,
     ),
-    recommendedText: pickRecommendedText(safeVersions) || fallbackText || "",
+    recommendedText:
+      responseMode === "versions" ? pickRecommendedText(safeVersions) || fallbackText || "" : fallbackText || "",
   };
 }
 
-export function normalizeRewriteResult(rawContent: string, fallbackTitle = "版本A"): NormalizedRewriteResult {
+export function normalizeRewriteResult(
+  rawContent: string,
+  fallbackTitle = "版本A",
+  responseMode: RewriteResponseMode = "versions",
+): NormalizedRewriteResult {
   const trimmed = rawContent.trim();
+  if (responseMode === "chat") {
+    return createChatResult(trimmed);
+  }
+
   const jsonString = extractJsonString(trimmed);
 
   if (!jsonString) {
     return {
+      responseMode: "versions",
       title: null,
       summary: null,
       versions: trimmed ? [{ title: fallbackTitle, content: trimmed }] : [],
@@ -585,6 +702,7 @@ export function normalizeRewriteResult(rawContent: string, fallbackTitle = "版�
 
     return normalizeStoredRewriteResult(
       {
+        responseMode: responseMode,
         title: trimOrNull(parsed.title),
         summary: trimOrNull(parsed.summary),
         versions: safeVersions,
@@ -599,6 +717,7 @@ export function normalizeRewriteResult(rawContent: string, fallbackTitle = "版�
     );
   } catch {
     return {
+      responseMode: "versions",
       title: null,
       summary: null,
       versions: trimmed ? [{ title: fallbackTitle, content: trimmed }] : [],
@@ -610,6 +729,10 @@ export function normalizeRewriteResult(rawContent: string, fallbackTitle = "版�
 }
 
 export function renderAssistantMessageContent(result: NormalizedRewriteResult) {
+  if (result.responseMode === "chat") {
+    return result.recommendedText.trim();
+  }
+
   const lines: string[] = [];
 
   for (const version of result.versions) {
@@ -631,8 +754,8 @@ export function renderAssistantMessageContent(result: NormalizedRewriteResult) {
 function buildJsonOutputInstruction() {
   return [
     "你必须只输出 JSON，不要 Markdown，不要代码块，不要额外解释。",
-    '格式：{"title":"一句话标题","summary":"一句话改写说明","versions":[{"title":"版本A","content":"..."},{"title":"版本B","content":"..."},{"title":"版本C","content":"..."}],"notes":["..."],"follow_up_suggestions":["..."]}',
-    "要求：versions 至少返回 2 个，最好 3 个；每个版本都必须可直接复制使用。",
+    '格式：{"responseMode":"versions","title":"一句话标题","summary":"一句话改写说明","versions":[{"title":"版本A","content":"..."}],"notes":["..."],"follow_up_suggestions":["..."]}',
+    "要求：versions 至少返回 1 个；如果用户明确要多个版本，就返回对应数量或 2-3 个可直接复制的版本。",
   ].join("\n");
 }
 
@@ -662,9 +785,11 @@ function buildHistoryMessages(history: RewriteMessageRow[]): AiMessage[] {
 
 export function buildCombinedRewriteSystemMessage(input: {
   featureSystemPrompt?: string | null;
+  fixedMode: RewriteFixedModeRow | null;
   mode: RewriteModeRow | null;
   lengthPreset: RewriteLengthPresetRow;
   workflowStepPrompt?: string | null;
+  responseMode: RewriteResponseMode;
   autoModeEnabled: boolean;
   isFollowUp?: boolean;
 }) {
@@ -678,11 +803,12 @@ export function buildCombinedRewriteSystemMessage(input: {
       input.featureSystemPrompt
         ? ["功能级系统要求（必须优先遵守）：", input.featureSystemPrompt].join("\n")
         : null,
+      input.fixedMode ? `当前固定能力要求：${input.fixedMode.fixed_prompt}` : null,
       input.mode ? `当前模式要求：${input.mode.mode_prompt}` : null,
       `当前长度要求：${input.lengthPreset.length_prompt}`,
-      "如果用户要求修改某个版本或某段内容，直接给出修改后的结果即可，不需要强制输出多版本 JSON。",
-      "如果用户明确要求重新改写或给出多个版本，再按 JSON 格式输出。",
-      "普通回答直接用自然语言，不要包裹在 JSON 里。",
+      input.responseMode === "versions"
+        ? "这次用户明确要求重写/重出版本，请返回 JSON 结构化版本结果。"
+        : "这次是继续追问或微调，请直接自然回复，不要包装成 A/B/C 版本，不要输出 JSON。",
     ];
     return systemLines.filter(Boolean).join("\n");
   }
@@ -694,20 +820,39 @@ export function buildCombinedRewriteSystemMessage(input: {
     input.featureSystemPrompt
       ? ["功能级系统要求（必须优先遵守）：", input.featureSystemPrompt].join("\n")
       : null,
-    input.mode ? `当前模式要求：${input.mode.mode_prompt}` : "当前模式要求：无额外模式，按基础改写执行。",
+    input.fixedMode
+      ? `当前固定能力要求：${input.fixedMode.fixed_prompt}`
+      : input.mode
+        ? `当前模式要求：${input.mode.mode_prompt}`
+        : "当前模式要求：无额外模式，按基础改写执行。",
     `当前长度要求：${input.lengthPreset.length_prompt}`,
-    input.autoModeEnabled ? "当前是自动模式，会按阶段目标执行。" : "当前是单步对话模式。",
+    input.fixedMode ? `当前固定套餐：${input.fixedMode.name}` : null,
+    "当前是单步对话模式。",
     input.workflowStepPrompt ? `本步目标：${input.workflowStepPrompt}` : null,
-    buildJsonOutputInstruction(),
+    input.responseMode === "versions" ? buildJsonOutputInstruction() : null,
   ];
 
   return systemLines.filter(Boolean).join("\n");
 }
 
-function buildSingleUserPrompt(userMessage: string, isFollowUp?: boolean) {
-  if (isFollowUp) {
+function buildSingleUserPrompt(
+  userMessage: string,
+  isFollowUp?: boolean,
+  responseMode: RewriteResponseMode = "versions",
+) {
+  if (isFollowUp && responseMode === "chat") {
     return userMessage.trim();
   }
+
+  if (isFollowUp && responseMode === "versions") {
+    return [
+      "用户在继续追问，但这次明确要求重新出版本。",
+      "请按当前要求重新生成可直接复制的版本结果。",
+      "",
+      `用户输入：${userMessage.trim()}`,
+    ].join("\n");
+  }
+
   return [
     "请直接按要求改写下面这段内容。",
     "如果用户没有明确补充要求，就默认给出多版可选结果。",
@@ -797,6 +942,7 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
   const [
     featureResult,
     modelViewsResult,
+    fixedModesResult,
     modesResult,
     lengthPresetsResult,
     workflowResult,
@@ -810,6 +956,14 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
     service
       .from("rewrite_model_views")
       .select("id, key, label, description, sort_order, is_enabled, is_default")
+      .eq("is_enabled", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    service
+      .from("rewrite_fixed_modes")
+      .select(
+        "id, key, name, description, fixed_prompt, model_view_id, length_preset_id, sort_order, is_enabled",
+      )
       .eq("is_enabled", true)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
@@ -842,6 +996,7 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
   return {
     feature: (featureResult.data ?? null) as RewriteFeatureRow | null,
     modelViews: (modelViewsResult.data ?? []) as RewriteModelViewRow[],
+    fixedModes: (fixedModesResult.data ?? []) as RewriteFixedModeRow[],
     modes: (modesResult.data ?? []) as RewriteModeRow[],
     lengthPresets: (lengthPresetsResult.data ?? []) as RewriteLengthPresetRow[],
     workflow: (workflowResult.data ?? null) as RewriteWorkflowRow | null,
@@ -875,6 +1030,8 @@ export function mergeRewriteSelectionInput(
   conversation: RewriteConversationRow | null,
   input: RewriteSelectionInput,
 ): RewriteSelectionInput {
+  const hasFixedModeOverride =
+    hasExplicitSelectionValue(input.fixedModeId) || hasExplicitSelectionValue(input.fixedModeKey);
   const hasModelOverride =
     hasExplicitSelectionValue(input.modelViewId) || hasExplicitSelectionValue(input.modelViewKey);
   const hasModeOverride =
@@ -883,10 +1040,9 @@ export function mergeRewriteSelectionInput(
     hasExplicitSelectionValue(input.lengthPresetId) || hasExplicitSelectionValue(input.lengthPresetKey);
 
   return {
-    autoModeEnabled:
-      input.autoModeEnabled !== undefined
-        ? input.autoModeEnabled
-        : conversation?.auto_mode_enabled,
+    autoModeEnabled: false,
+    fixedModeId: hasFixedModeOverride ? input.fixedModeId : conversation?.selected_fixed_mode_id,
+    fixedModeKey: hasFixedModeOverride ? input.fixedModeKey : undefined,
     modelViewId: hasModelOverride ? input.modelViewId : conversation?.selected_model_view_id,
     modelViewKey: hasModelOverride ? input.modelViewKey : undefined,
     modeId: hasModeOverride ? input.modeId : conversation?.selected_mode_id,
@@ -912,9 +1068,6 @@ export function resolveWorkflowStepModelView(
 
 export async function getRewriteBootstrapPayload(service: MinimalClient): Promise<RewriteBootstrapPayload> {
   const config = await loadRewriteConfig(service);
-  const workflowSteps = config.workflow
-    ? config.workflowSteps.filter((step) => step.workflow_id === config.workflow?.id)
-    : [];
 
   return {
     feature: {
@@ -923,31 +1076,18 @@ export async function getRewriteBootstrapPayload(service: MinimalClient): Promis
       enabled: config.feature?.is_enabled ?? true,
     },
     defaults: {
-      autoModeEnabled: true,
+      autoModeEnabled: false,
+      fixedModeId: null,
       modelViewId: pickDefaultRow(config.modelViews)?.id ?? null,
       modeId: null,
       lengthPresetId: pickDefaultRow(config.lengthPresets)?.id ?? null,
-      workflowId: config.workflow?.id ?? null,
+      workflowId: null,
     },
+    fixedModes: config.fixedModes.map(toFixedModeOption),
     modelViews: config.modelViews.map(toModelOption),
     modes: config.modes.map(toModeOption),
     lengthPresets: config.lengthPresets.map(toLengthPresetOption),
-    workflow: config.workflow
-      ? {
-          id: config.workflow.id,
-          key: config.workflow.key,
-          name: config.workflow.name,
-          description: config.workflow.description,
-          steps: workflowSteps.map((step) => ({
-            id: step.id,
-            key: step.step_key,
-            name: step.name,
-            description: step.description,
-            sortOrder: step.sort_order,
-            modelViewId: step.model_view_id,
-          })),
-        }
-      : null,
+    workflow: null,
   };
 }
 
@@ -973,10 +1113,19 @@ export async function resolveRewriteSelections(
 
   const requestedModelViewId = trimOrNull(input.modelViewId);
   const requestedModelViewKey = trimOrNull(input.modelViewKey);
+  const requestedFixedModeId = trimOrNull(input.fixedModeId);
+  const requestedFixedModeKey = trimOrNull(input.fixedModeKey);
   const requestedModeId = trimOrNull(input.modeId);
   const requestedModeKey = trimOrNull(input.modeKey);
   const requestedLengthPresetId = trimOrNull(input.lengthPresetId);
   const requestedLengthPresetKey = trimOrNull(input.lengthPresetKey);
+  const fixedMode =
+    requestedFixedModeId || requestedFixedModeKey
+      ? findByIdOrKey(config.fixedModes, requestedFixedModeId, requestedFixedModeKey)
+      : null;
+  if ((requestedFixedModeId || requestedFixedModeKey) && !fixedMode) {
+    throw new Error("固定模式不存在");
+  }
 
   const explicitModelView =
     requestedModelViewId || requestedModelViewKey
@@ -986,13 +1135,21 @@ export async function resolveRewriteSelections(
     throw new Error("展示模型不存在");
   }
 
-  const modelView = explicitModelView ?? pickDefaultRow(config.modelViews);
+  const fixedModeModelView = fixedMode
+    ? config.modelViews.find((row) => row.id === fixedMode.model_view_id) ?? null
+    : null;
+  if (fixedMode && !fixedModeModelView) {
+    throw new Error("固定模式绑定的展示模型不存在");
+  }
+  const modelView = fixedModeModelView ?? explicitModelView ?? pickDefaultRow(config.modelViews);
   if (!modelView) {
     throw new Error("展示模型不存在");
   }
 
   let mode: RewriteModeRow | null = null;
-  if (input.modeId === null || input.modeKey === null) {
+  if (fixedMode) {
+    mode = null;
+  } else if (input.modeId === null || input.modeKey === null) {
     mode = null;
   } else if (requestedModeId || requestedModeKey) {
     mode = findByIdOrKey(config.modes, requestedModeId, requestedModeKey);
@@ -1009,21 +1166,23 @@ export async function resolveRewriteSelections(
     throw new Error("输出长度预设不存在");
   }
 
-  const lengthPreset = explicitLengthPreset ?? pickDefaultRow(config.lengthPresets);
+  const fixedModeLengthPreset =
+    fixedMode?.length_preset_id
+      ? config.lengthPresets.find((row) => row.id === fixedMode.length_preset_id) ?? null
+      : null;
+  const lengthPreset = fixedModeLengthPreset ?? explicitLengthPreset ?? pickDefaultRow(config.lengthPresets);
   if (!lengthPreset) {
     throw new Error("输出长度预设不存在");
   }
 
-  const autoModeEnabled = input.autoModeEnabled === undefined ? true : toBoolean(input.autoModeEnabled, true);
-  const workflow = autoModeEnabled ? config.workflow : null;
-  const workflowSteps =
-    autoModeEnabled && workflow
-      ? config.workflowSteps.filter((step) => step.workflow_id === workflow.id)
-      : [];
+  const autoModeEnabled = false;
+  const workflow = null;
+  const workflowSteps: RewriteWorkflowStepRow[] = [];
 
   return {
     config,
     selections: {
+      fixedMode,
       modelView,
       mode,
       lengthPreset,
@@ -1056,12 +1215,19 @@ export async function getConversationById(
 async function loadOptionMaps(
   service: MinimalClient,
   input: {
+    fixedModeIds: string[];
     modelViewIds: string[];
     modeIds: string[];
     lengthPresetIds: string[];
   },
 ) {
-  const [modelViewsResult, modesResult, lengthPresetsResult] = await Promise.all([
+  const [fixedModesResult, modelViewsResult, modesResult, lengthPresetsResult] = await Promise.all([
+    input.fixedModeIds.length
+      ? service
+          .from("rewrite_fixed_modes")
+          .select("id, key, name, description, fixed_prompt, model_view_id, length_preset_id, sort_order, is_enabled")
+          .in("id", input.fixedModeIds)
+      : Promise.resolve({ data: [] as RewriteFixedModeRow[] }),
     input.modelViewIds.length
       ? service
           .from("rewrite_model_views")
@@ -1083,6 +1249,12 @@ async function loadOptionMaps(
   ]);
 
   return {
+    fixedModeMap: new Map(
+      (((fixedModesResult as { data?: RewriteFixedModeRow[] }).data ?? []) as RewriteFixedModeRow[]).map((row) => [
+        row.id,
+        toFixedModeOption(row),
+      ]),
+    ),
     modelViewMap: new Map(
       (((modelViewsResult as { data?: RewriteModelViewRow[] }).data ?? []) as RewriteModelViewRow[]).map((row) => [
         row.id,
@@ -1107,6 +1279,9 @@ function serializeConversationRow(
   row: RewriteConversationRow,
   optionMaps: Awaited<ReturnType<typeof loadOptionMaps>>,
 ): RewriteConversationItem {
+  const fixedMode = row.selected_fixed_mode_id
+    ? optionMaps.fixedModeMap.get(row.selected_fixed_mode_id) ?? null
+    : null;
   const modelView = row.selected_model_view_id
     ? optionMaps.modelViewMap.get(row.selected_model_view_id) ?? null
     : null;
@@ -1120,6 +1295,8 @@ function serializeConversationRow(
     title: row.title,
     selected: {
       autoModeEnabled: row.auto_mode_enabled,
+      fixedModeId: fixedMode?.id ?? row.selected_fixed_mode_id,
+      fixedMode,
       modelViewId: modelView?.id ?? row.selected_model_view_id,
       modeId: mode?.id ?? row.selected_mode_id,
       lengthPresetId: lengthPreset?.id ?? row.selected_length_preset_id,
@@ -1149,6 +1326,7 @@ export function normalizeAssistantStructuredResult(input: {
 }): RewriteAssistantPayload {
   const raw = isRecord(input.value) ? input.value : {};
   const rawSelected = isRecord(raw.selected) ? raw.selected : {};
+  const selectedFixedMode = normalizeFixedModeOption(rawSelected.fixedMode);
   const selectedModelView = normalizeModelOption(rawSelected.modelView);
   const selectedMode = normalizeModeOption(rawSelected.mode);
   const selectedLengthPreset = normalizeLengthPresetOption(rawSelected.lengthPreset);
@@ -1226,6 +1404,11 @@ export function normalizeAssistantStructuredResult(input: {
     status,
     selected: {
       autoModeEnabled: selectedAutoMode,
+      fixedModeId:
+        trimOrNull(rawSelected.fixedModeId) ??
+        selectedFixedMode?.id ??
+        input.requestSnapshot?.fixedModeId ??
+        null,
       modelViewId:
         trimOrNull(rawSelected.modelViewId) ??
         selectedModelView?.id ??
@@ -1242,6 +1425,7 @@ export function normalizeAssistantStructuredResult(input: {
         selectedWorkflow?.id ??
         input.requestSnapshot?.workflowId ??
         null,
+      fixedMode: selectedFixedMode,
       modelView: selectedModelView,
       mode: selectedMode,
       lengthPreset: selectedLengthPreset,
@@ -1249,6 +1433,7 @@ export function normalizeAssistantStructuredResult(input: {
     },
     snapshots: {
       featureSystemPrompt: isRecord(raw.snapshots) ? trimOrNull(raw.snapshots.featureSystemPrompt) : null,
+      fixedModePrompt: isRecord(raw.snapshots) ? trimOrNull(raw.snapshots.fixedModePrompt) : null,
       modePrompt: isRecord(raw.snapshots) ? trimOrNull(raw.snapshots.modePrompt) : null,
       lengthPrompt: isRecord(raw.snapshots) ? trimOrNull(raw.snapshots.lengthPrompt) : null,
     },
@@ -1297,6 +1482,7 @@ export async function listUserConversations(service: MinimalClient, input: { use
 
   const rows = (data ?? []) as RewriteConversationRow[];
   const optionMaps = await loadOptionMaps(service, {
+    fixedModeIds: Array.from(new Set(rows.map((row) => row.selected_fixed_mode_id).filter(Boolean))) as string[],
     modelViewIds: Array.from(new Set(rows.map((row) => row.selected_model_view_id).filter(Boolean))) as string[],
     modeIds: Array.from(new Set(rows.map((row) => row.selected_mode_id).filter(Boolean))) as string[],
     lengthPresetIds: Array.from(
@@ -1328,6 +1514,7 @@ export async function listConversationMessages(
   }
 
   const optionMaps = await loadOptionMaps(service, {
+    fixedModeIds: conversation.selected_fixed_mode_id ? [conversation.selected_fixed_mode_id] : [],
     modelViewIds: conversation.selected_model_view_id ? [conversation.selected_model_view_id] : [],
     modeIds: conversation.selected_mode_id ? [conversation.selected_mode_id] : [],
     lengthPresetIds: conversation.selected_length_preset_id ? [conversation.selected_length_preset_id] : [],
@@ -1345,6 +1532,7 @@ export async function createRewriteConversation(
     userId: string;
     title?: string | null;
     autoModeEnabled: boolean;
+    fixedModeId?: string | null;
     modelViewId: string;
     modeId?: string | null;
     lengthPresetId: string;
@@ -1358,6 +1546,7 @@ export async function createRewriteConversation(
       user_id: input.userId,
       title: trimOrNull(input.title) ?? "新会话",
       auto_mode_enabled: input.autoModeEnabled,
+      selected_fixed_mode_id: input.fixedModeId ?? null,
       selected_model_view_id: input.modelViewId,
       selected_mode_id: input.modeId ?? null,
       selected_length_preset_id: input.lengthPresetId,
@@ -1371,6 +1560,7 @@ export async function createRewriteConversation(
 
   const row = data as RewriteConversationRow;
   const optionMaps = await loadOptionMaps(service, {
+    fixedModeIds: row.selected_fixed_mode_id ? [row.selected_fixed_mode_id] : [],
     modelViewIds: row.selected_model_view_id ? [row.selected_model_view_id] : [],
     modeIds: row.selected_mode_id ? [row.selected_mode_id] : [],
     lengthPresetIds: row.selected_length_preset_id ? [row.selected_length_preset_id] : [],
@@ -1406,6 +1596,7 @@ async function updateConversationSelections(
     userId: string;
     title?: string | null;
     autoModeEnabled: boolean;
+    fixedModeId?: string | null;
     modelViewId: string;
     modeId?: string | null;
     lengthPresetId: string;
@@ -1415,6 +1606,7 @@ async function updateConversationSelections(
   const conversationsTable = service.from("rewrite_conversations") as any;
   const patch: Record<string, unknown> = {
     auto_mode_enabled: input.autoModeEnabled,
+    selected_fixed_mode_id: input.fixedModeId ?? null,
     selected_model_view_id: input.modelViewId,
     selected_mode_id: input.modeId ?? null,
     selected_length_preset_id: input.lengthPresetId,
@@ -1489,6 +1681,7 @@ async function maybeUpdateConversationTitle(
     userId: input.userId,
     title: buildConversationTitle(input.message),
     autoModeEnabled: input.conversation.auto_mode_enabled,
+    fixedModeId: input.conversation.selected_fixed_mode_id,
     modelViewId: input.conversation.selected_model_view_id ?? "",
     modeId: input.conversation.selected_mode_id,
     lengthPresetId: input.conversation.selected_length_preset_id ?? "",
@@ -1556,6 +1749,7 @@ async function executeRewriteStep(input: {
   userMessage: string;
   workflowStep?: RewriteWorkflowStepRow | null;
   previousStepResult?: NormalizedRewriteResult | null;
+  responseMode: RewriteResponseMode;
   isFollowUp?: boolean;
 }) {
   const stepModelView = resolveWorkflowStepModelView(
@@ -1574,9 +1768,11 @@ async function executeRewriteStep(input: {
 
   const systemMessage = buildCombinedRewriteSystemMessage({
     featureSystemPrompt: input.feature?.system_prompt ?? null,
+    fixedMode: input.selections.fixedMode,
     mode: input.selections.mode,
     lengthPreset: input.selections.lengthPreset,
     workflowStepPrompt: input.workflowStep?.step_prompt ?? null,
+    responseMode: input.responseMode,
     autoModeEnabled: input.selections.autoModeEnabled,
     isFollowUp: input.isFollowUp,
   });
@@ -1587,7 +1783,7 @@ async function executeRewriteStep(input: {
         previousStepResult: input.previousStepResult,
         stepKey: input.workflowStep.step_key,
       })
-    : buildSingleUserPrompt(input.userMessage, input.isFollowUp);
+    : buildSingleUserPrompt(input.userMessage, input.isFollowUp, input.responseMode);
 
   const baseMessages: AiMessage[] = [
     { role: "system", content: systemMessage },
@@ -1596,7 +1792,7 @@ async function executeRewriteStep(input: {
   ];
 
   // 后续追问不强制 JSON mode，让 AI 自然回答
-  const useJsonMode = !input.isFollowUp;
+  const useJsonMode = input.responseMode === "versions";
 
   let lastError: string | null = null;
   for (const route of routes) {
@@ -1631,6 +1827,7 @@ async function executeRewriteStep(input: {
         normalizedResult: normalizeRewriteResult(
           aiResult.content,
           input.workflowStep?.step_key === "structure" ? "结构稿" : "版本A",
+          input.responseMode,
         ),
         errorMessage: null,
       } satisfies RewriteStepExecution;
@@ -1670,10 +1867,12 @@ function buildAssistantPayload(input: {
     status: input.status,
     selected: {
       autoModeEnabled: input.selections.autoModeEnabled,
+      fixedModeId: input.selections.fixedMode?.id ?? null,
       modelViewId: input.selections.modelView.id,
       modeId: input.selections.mode?.id ?? null,
       lengthPresetId: input.selections.lengthPreset.id,
       workflowId: input.selections.workflow?.id ?? null,
+      fixedMode: input.selections.fixedMode ? toFixedModeOption(input.selections.fixedMode) : null,
       modelView: toModelOption(input.selections.modelView),
       mode: input.selections.mode ? toModeOption(input.selections.mode) : null,
       lengthPreset: toLengthPresetOption(input.selections.lengthPreset),
@@ -1687,6 +1886,7 @@ function buildAssistantPayload(input: {
     },
     snapshots: {
       featureSystemPrompt: input.config.feature?.system_prompt ?? null,
+      fixedModePrompt: input.selections.fixedMode?.fixed_prompt ?? null,
       modePrompt: input.selections.mode?.mode_prompt ?? null,
       lengthPrompt: input.selections.lengthPreset.length_prompt,
     },
@@ -1713,6 +1913,7 @@ function buildAssistantPayload(input: {
 function buildRequestSnapshot(selections: RewriteResolvedSelections): RewriteRequestSnapshot {
   return {
     autoModeEnabled: selections.autoModeEnabled,
+    fixedModeId: selections.fixedMode?.id ?? null,
     modelViewId: selections.modelView.id,
     modeId: selections.mode?.id ?? null,
     lengthPresetId: selections.lengthPreset.id,
@@ -1742,6 +1943,8 @@ export async function handleRewriteChat(input: {
 
   const mergedSelectionInput = mergeRewriteSelectionInput(conversation, {
     autoModeEnabled: input.autoModeEnabled,
+    fixedModeId: input.fixedModeId,
+    fixedModeKey: input.fixedModeKey,
     modelViewId: input.modelViewId,
     modelViewKey: input.modelViewKey,
     modeId: input.modeId,
@@ -1757,6 +1960,7 @@ export async function handleRewriteChat(input: {
       userId: input.actor.userId,
       title: buildConversationTitle(userMessage),
       autoModeEnabled: selections.autoModeEnabled,
+      fixedModeId: selections.fixedMode?.id ?? null,
       modelViewId: selections.modelView.id,
       modeId: selections.mode?.id ?? null,
       lengthPresetId: selections.lengthPreset.id,
@@ -1774,6 +1978,7 @@ export async function handleRewriteChat(input: {
     userId: input.actor.userId,
     title: conversation.title === "新会话" ? buildConversationTitle(userMessage) : null,
     autoModeEnabled: selections.autoModeEnabled,
+    fixedModeId: selections.fixedMode?.id ?? null,
     modelViewId: selections.modelView.id,
     modeId: selections.mode?.id ?? null,
     lengthPresetId: selections.lengthPreset.id,
@@ -1785,129 +1990,39 @@ export async function handleRewriteChat(input: {
   });
 
   const isFirstMessage = history.length === 0;
+  const responseMode = isFirstMessage ? "versions" : inferFollowUpResponseMode(userMessage);
 
-  // autoStep=2 时不再插入用户消息（第一步已经插过了）
-  if (input.autoStep !== 2) {
-    await insertRewriteMessage(input.service, {
-      conversationId: conversation.id,
-      userId: input.actor.userId,
-      role: "user",
-      content: userMessage,
-      generationMode: selections.autoModeEnabled && isFirstMessage ? "auto" : "single",
-    });
-  }
+  await insertRewriteMessage(input.service, {
+    conversationId: conversation.id,
+    userId: input.actor.userId,
+    role: "user",
+    content: userMessage,
+    generationMode: "single",
+  });
 
   let steps: RewriteStepExecution[] = [];
   let finalResult: NormalizedRewriteResult | null = null;
   let finalStatus: "success" | "partial_success" | "failed" = "failed";
 
-  // autoStep: 1 = 只跑第一步, 2 = 只跑第二步（前端分两次请求）
-  const requestedAutoStep = input.autoStep;
+  // 员工端主链路已降级为稳定的单次生成；旧 autoStep 仅保留接口兼容，不再参与本页行为。
+  const singleResult = await executeRewriteStep({
+    service: input.service,
+    feature: config.feature,
+    config,
+    selections,
+    history,
+    userMessage,
+    responseMode,
+    isFollowUp: !isFirstMessage,
+  });
+  steps = [singleResult];
 
-  if (selections.autoModeEnabled && isFirstMessage && requestedAutoStep !== 2) {
-    // 自动模式第一步
-    const orderedSteps = selections.workflowSteps;
-    const firstStep = orderedSteps[0] ?? null;
-
-    if (!firstStep) {
-      throw new Error("自动改写流程未配置步骤");
-    }
-
-    const firstResult = await executeRewriteStep({
-      service: input.service,
-      feature: config.feature,
-      config,
-      selections,
-      history,
-      userMessage,
-      workflowStep: firstStep,
-    });
-    steps.push(firstResult);
-
-    if (firstResult.status !== "success" || !firstResult.normalizedResult) {
-      throw new Error(firstResult.errorMessage ?? "第一步改写失败");
-    }
-
-    // 只有一步或前端要求分步 → 返回第一步结果，不跑第二步
-    const hasSecondStep = (orderedSteps[1] ?? null) !== null;
-    if (!hasSecondStep) {
-      finalResult = firstResult.normalizedResult;
-      finalStatus = "success";
-    } else {
-      // 有第二步但前端分步请求 → 返回第一步，标记 partial，不切 autoMode
-      finalResult = firstResult.normalizedResult;
-      finalStatus = "partial_success";
-    }
-  } else if (selections.autoModeEnabled && requestedAutoStep === 2) {
-    // 自动模式第二步：从历史消息中取第一步结果
-    const orderedSteps = selections.workflowSteps;
-    const secondStep = orderedSteps[1] ?? null;
-
-    if (!secondStep) {
-      throw new Error("自动改写流程未配置第二步");
-    }
-
-    // 从最近的 assistant 消息中提取第一步结果
-    const lastAssistant = [...history].reverse().find(m => m.role === "assistant");
-    let previousStepResult: NormalizedRewriteResult | null = null;
-    if (lastAssistant?.structured_result) {
-      const sr = lastAssistant.structured_result as Record<string, unknown>;
-      const srSteps = Array.isArray(sr.steps) ? sr.steps : [];
-      const step1 = srSteps[0] as Record<string, unknown> | undefined;
-      if (step1?.normalizedResult) {
-        previousStepResult = normalizeStoredRewriteResult(step1.normalizedResult, lastAssistant.content);
-      } else {
-        previousStepResult = normalizeStoredRewriteResult(sr.final ?? sr, lastAssistant.content);
-      }
-    }
-
-    if (!previousStepResult) {
-      previousStepResult = normalizeRewriteResult(
-        lastAssistant?.content ?? userMessage,
-      );
-    }
-
-    const secondResult = await executeRewriteStep({
-      service: input.service,
-      feature: config.feature,
-      config,
-      selections,
-      history,
-      userMessage,
-      workflowStep: secondStep,
-      previousStepResult,
-    });
-    steps.push(secondResult);
-
-    if (secondResult.status === "success" && secondResult.normalizedResult) {
-      finalResult = secondResult.normalizedResult;
-      finalStatus = "success";
-    } else {
-      // 第二步失败，回退到第一步结果
-      finalResult = previousStepResult;
-      finalStatus = "partial_success";
-    }
-  } else {
-    // 后续追问（非首轮）走自然对话模式
-    const isFollowUp = !isFirstMessage;
-    const singleResult = await executeRewriteStep({
-      service: input.service,
-      feature: config.feature,
-      config,
-      selections,
-      history,
-      userMessage,
-      isFollowUp,
-    });
-    steps = [singleResult];
-
-    if (singleResult.status !== "success" || !singleResult.normalizedResult) {
-      throw new Error(singleResult.errorMessage ?? "改写失败");
-    }
-
-    finalResult = singleResult.normalizedResult;
-    finalStatus = "success";
+  if (singleResult.status !== "success" || !singleResult.normalizedResult) {
+    throw new Error(singleResult.errorMessage ?? "改写失败");
   }
+
+  finalResult = singleResult.normalizedResult;
+  finalStatus = "success";
 
   if (!finalResult) {
     throw new Error("未生成有效改写结果");
@@ -1928,7 +2043,7 @@ export async function handleRewriteChat(input: {
     userId: input.actor.userId,
     role: "assistant",
     content: assistantContent,
-    generationMode: (selections.autoModeEnabled && isFirstMessage) || input.autoStep === 2 ? "auto" : "single",
+    generationMode: "single",
     messageStatus: finalStatus,
     structuredResult: assistantPayload as unknown as Record<string, unknown>,
     requestSnapshot,
@@ -1945,24 +2060,9 @@ export async function handleRewriteChat(input: {
     });
   }
 
-  // 只在自动模式第二步完成后（或只有一步的情况）才切 autoMode=false
-  const isAutoStepComplete = selections.autoModeEnabled && (
-    requestedAutoStep === 2 ||
-    (isFirstMessage && selections.workflowSteps.length <= 1)
-  );
-  if (isAutoStepComplete) {
-    await updateConversationSelections(input.service, {
-      conversationId: conversation.id,
-      userId: input.actor.userId,
-      autoModeEnabled: false,
-      modelViewId: selections.modelView.id,
-      modeId: selections.mode?.id ?? null,
-      lengthPresetId: selections.lengthPreset.id,
-    });
-  }
-
   const finalConversation = (await getConversationById(input.service, conversation.id, input.actor.userId)) ?? conversation;
   const optionMaps = await loadOptionMaps(input.service, {
+    fixedModeIds: finalConversation.selected_fixed_mode_id ? [finalConversation.selected_fixed_mode_id] : [],
     modelViewIds: finalConversation.selected_model_view_id ? [finalConversation.selected_model_view_id] : [],
     modeIds: finalConversation.selected_mode_id ? [finalConversation.selected_mode_id] : [],
     lengthPresetIds: finalConversation.selected_length_preset_id ? [finalConversation.selected_length_preset_id] : [],

@@ -17,6 +17,8 @@ type RewriteChatBody = {
   message?: string;
   autoModeEnabled?: boolean;
   autoStep?: number | null;
+  fixedModeId?: string | null;
+  fixedModeKey?: string | null;
   modelViewId?: string | null;
   modelViewKey?: string | null;
   modeId?: string | null;
@@ -41,6 +43,8 @@ export async function POST(request: NextRequest) {
       message: body.message ?? "",
       autoModeEnabled: body.autoModeEnabled,
       autoStep,
+      fixedModeId: toOptionalNullableString(body.fixedModeId),
+      fixedModeKey: toOptionalNullableString(body.fixedModeKey),
       modelViewId: toOptionalNullableString(body.modelViewId),
       modelViewKey: toOptionalNullableString(body.modelViewKey),
       modeId: toOptionalNullableString(body.modeId),

@@ -6,11 +6,21 @@ export type BootstrapPayload = {
   };
   defaults: {
     autoModeEnabled: boolean;
+    fixedModeId: string | null;
     modelViewId: string | null;
     modeId: string | null;
     lengthPresetId: string | null;
     workflowId: string | null;
   };
+  fixedModes: Array<{
+    id: string;
+    key: string;
+    name: string;
+    description: string | null;
+    isEnabled: boolean;
+    modelViewId: string;
+    lengthPresetId: string | null;
+  }>;
   modelViews: Array<{
     id: string;
     key: string;
@@ -53,9 +63,19 @@ export interface Conversation {
   title: string;
   selected: {
     autoModeEnabled: boolean;
+    fixedModeId: string | null;
     modelViewId: string | null;
     modeId: string | null;
     lengthPresetId: string | null;
+    fixedMode: {
+      id: string;
+      key: string;
+      name: string;
+      description: string | null;
+      isEnabled: boolean;
+      modelViewId: string;
+      lengthPresetId: string | null;
+    } | null;
     modelView: {
       id: string;
       key: string;
@@ -93,6 +113,7 @@ export interface Message {
   status: 'success' | 'partial_success' | 'failed' | null;
   requestSnapshot: {
     autoModeEnabled: boolean | null;
+    fixedModeId: string | null;
     modelViewId: string | null;
     modeId: string | null;
     lengthPresetId: string | null;
@@ -104,10 +125,12 @@ export interface Message {
     status: 'success' | 'partial_success' | 'failed';
     selected: {
       autoModeEnabled: boolean;
+      fixedModeId: string | null;
       modelViewId: string | null;
       modeId: string | null;
       lengthPresetId: string | null;
       workflowId: string | null;
+      fixedMode: Conversation['selected']['fixedMode'];
       modelView: Conversation['selected']['modelView'];
       mode: Conversation['selected']['mode'];
       lengthPreset: Conversation['selected']['lengthPreset'];
@@ -119,6 +142,7 @@ export interface Message {
     };
     snapshots: {
       featureSystemPrompt: string | null;
+      fixedModePrompt: string | null;
       modePrompt: string | null;
       lengthPrompt: string | null;
     };
@@ -149,6 +173,7 @@ export interface Message {
       } | null;
     }>;
     final: {
+      responseMode: 'chat' | 'versions';
       title: string | null;
       summary: string | null;
       versions: Array<{
