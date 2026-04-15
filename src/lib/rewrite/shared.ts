@@ -1786,13 +1786,16 @@ export async function handleRewriteChat(input: {
 
   const isFirstMessage = history.length === 0;
 
-  await insertRewriteMessage(input.service, {
-    conversationId: conversation.id,
-    userId: input.actor.userId,
-    role: "user",
-    content: userMessage,
-    generationMode: selections.autoModeEnabled && isFirstMessage ? "auto" : "single",
-  });
+  // autoStep=2 时不再插入用户消息（第一步已经插过了）
+  if (input.autoStep !== 2) {
+    await insertRewriteMessage(input.service, {
+      conversationId: conversation.id,
+      userId: input.actor.userId,
+      role: "user",
+      content: userMessage,
+      generationMode: selections.autoModeEnabled && isFirstMessage ? "auto" : "single",
+    });
+  }
 
   let steps: RewriteStepExecution[] = [];
   let finalResult: NormalizedRewriteResult | null = null;
@@ -1925,7 +1928,7 @@ export async function handleRewriteChat(input: {
     userId: input.actor.userId,
     role: "assistant",
     content: assistantContent,
-    generationMode: selections.autoModeEnabled && isFirstMessage ? "auto" : "single",
+    generationMode: (selections.autoModeEnabled && isFirstMessage) || input.autoStep === 2 ? "auto" : "single",
     messageStatus: finalStatus,
     structuredResult: assistantPayload as unknown as Record<string, unknown>,
     requestSnapshot,
