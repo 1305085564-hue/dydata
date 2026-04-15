@@ -16,6 +16,11 @@ export function getNavItems(input: { showAnalytics: boolean; showAdmin: boolean 
       label: "成长分析",
       match: (pathname) => pathname === "/growth",
     },
+    {
+      href: "/content-tools/rewrite",
+      label: "AI助手",
+      match: (pathname) => pathname === "/content-tools/rewrite",
+    },
   ];
 
   if (input.showAnalytics) {
@@ -32,11 +37,6 @@ export function getNavItems(input: { showAnalytics: boolean; showAdmin: boolean 
         href: "/admin/content",
         label: "内容管理",
         match: (pathname) => pathname.startsWith("/admin/content"),
-      },
-      {
-        href: "/admin/ai-assistant",
-        label: "AI助手",
-        match: (pathname) => pathname.startsWith("/admin/ai-assistant"),
       },
       {
         href: "/admin",
