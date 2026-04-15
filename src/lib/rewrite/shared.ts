@@ -1610,7 +1610,7 @@ async function executeRewriteStep(input: {
         databaseOnly: true,
         jsonMode: useJsonMode,
         maxTokens: 2200,
-        timeoutMs: 30_000,
+        timeoutMs: 25_000,
         messages: baseMessages,
       });
 

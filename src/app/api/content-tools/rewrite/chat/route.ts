@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { handleRewriteChat, requireRewriteActor } from "@/lib/rewrite/shared";
 
-import { parseJsonBody, toApiErrorResponse, toNullableString } from "../_shared";
+import {
+  parseJsonBody,
+  toApiErrorResponse,
+  toNullableString,
+  toOptionalNullableString,
+} from "../_shared";
+
+// 自动模式两步 AI 串行调用，需要足够的执行时间
+export const maxDuration = 60;
 
 type RewriteChatBody = {
   conversationId?: string | null;
@@ -30,12 +38,12 @@ export async function POST(request: NextRequest) {
       conversationId: toNullableString(body.conversationId),
       message: body.message ?? "",
       autoModeEnabled: body.autoModeEnabled,
-      modelViewId: toNullableString(body.modelViewId),
-      modelViewKey: toNullableString(body.modelViewKey),
-      modeId: body.modeId === null ? null : toNullableString(body.modeId),
-      modeKey: body.modeKey === null ? null : toNullableString(body.modeKey),
-      lengthPresetId: toNullableString(body.lengthPresetId),
-      lengthPresetKey: toNullableString(body.lengthPresetKey),
+      modelViewId: toOptionalNullableString(body.modelViewId),
+      modelViewKey: toOptionalNullableString(body.modelViewKey),
+      modeId: toOptionalNullableString(body.modeId),
+      modeKey: toOptionalNullableString(body.modeKey),
+      lengthPresetId: toOptionalNullableString(body.lengthPresetId),
+      lengthPresetKey: toOptionalNullableString(body.lengthPresetKey),
     });
 
     return NextResponse.json(payload);
