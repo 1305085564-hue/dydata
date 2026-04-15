@@ -2047,7 +2047,7 @@ export async function handleRewriteChat(input: {
     messageStatus: finalStatus,
     structuredResult: assistantPayload as unknown as Record<string, unknown>,
     requestSnapshot,
-    errorMessage: finalStatus === "partial_success" ? steps[steps.length - 1]?.errorMessage ?? null : null,
+    errorMessage: null,
     returnRow: true,
   });
 
@@ -2072,7 +2072,7 @@ export async function handleRewriteChat(input: {
     conversation: serializeConversationRow(finalConversation, optionMaps),
     message: assistantRow
       ? serializeMessageRow(assistantRow)
-      : {
+        : {
           id: "",
           conversationId: conversation.id,
           role: "assistant",
@@ -2081,7 +2081,7 @@ export async function handleRewriteChat(input: {
           content: assistantContent,
           structuredResult: assistantPayload,
           requestSnapshot,
-          errorMessage: finalStatus === "partial_success" ? steps[steps.length - 1]?.errorMessage ?? null : null,
+          errorMessage: null,
           createdAt: new Date().toISOString(),
         },
   };
