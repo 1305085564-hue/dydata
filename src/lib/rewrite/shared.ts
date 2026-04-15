@@ -666,7 +666,27 @@ export function buildCombinedRewriteSystemMessage(input: {
   lengthPreset: RewriteLengthPresetRow;
   workflowStepPrompt?: string | null;
   autoModeEnabled: boolean;
+  isFollowUp?: boolean;
 }) {
+  // 后续追问：走自然对话模式，不强制 JSON 输出
+  if (input.isFollowUp) {
+    const systemLines = [
+      "你是财经短视频文案改写助手。",
+      "用户之前已经完成了一轮文案改写，现在在继续追问或要求微调。",
+      "请像正常 AI 助手一样理解上下文、回答问题、继续修改。",
+      "保持事实边界，不编造数据。",
+      input.featureSystemPrompt
+        ? ["功能级系统要求（必须优先遵守）：", input.featureSystemPrompt].join("\n")
+        : null,
+      input.mode ? `当前模式要求：${input.mode.mode_prompt}` : null,
+      `当前长度要求：${input.lengthPreset.length_prompt}`,
+      "如果用户要求修改某个版本或某段内容，直接给出修改后的结果即可，不需要强制输出多版本 JSON。",
+      "如果用户明确要求重新改写或给出多个版本，再按 JSON 格式输出。",
+      "普通回答直接用自然语言，不要包裹在 JSON 里。",
+    ];
+    return systemLines.filter(Boolean).join("\n");
+  }
+
   const systemLines = [
     "你是财经短视频文案改写助手。",
     "你的唯一任务是把用户给的原文改写成更适合发布的版本。",
@@ -684,7 +704,10 @@ export function buildCombinedRewriteSystemMessage(input: {
   return systemLines.filter(Boolean).join("\n");
 }
 
-function buildSingleUserPrompt(userMessage: string) {
+function buildSingleUserPrompt(userMessage: string, isFollowUp?: boolean) {
+  if (isFollowUp) {
+    return userMessage.trim();
+  }
   return [
     "请直接按要求改写下面这段内容。",
     "如果用户没有明确补充要求，就默认给出多版可选结果。",
@@ -1533,6 +1556,7 @@ async function executeRewriteStep(input: {
   userMessage: string;
   workflowStep?: RewriteWorkflowStepRow | null;
   previousStepResult?: NormalizedRewriteResult | null;
+  isFollowUp?: boolean;
 }) {
   const stepModelView = resolveWorkflowStepModelView(
     input.config,
@@ -1554,6 +1578,7 @@ async function executeRewriteStep(input: {
     lengthPreset: input.selections.lengthPreset,
     workflowStepPrompt: input.workflowStep?.step_prompt ?? null,
     autoModeEnabled: input.selections.autoModeEnabled,
+    isFollowUp: input.isFollowUp,
   });
 
   const userPrompt = input.workflowStep
@@ -1562,13 +1587,16 @@ async function executeRewriteStep(input: {
         previousStepResult: input.previousStepResult,
         stepKey: input.workflowStep.step_key,
       })
-    : buildSingleUserPrompt(input.userMessage);
+    : buildSingleUserPrompt(input.userMessage, input.isFollowUp);
 
   const baseMessages: AiMessage[] = [
     { role: "system", content: systemMessage },
     ...buildHistoryMessages(input.history),
     { role: "user", content: userPrompt },
   ];
+
+  // 后续追问不强制 JSON mode，让 AI 自然回答
+  const useJsonMode = !input.isFollowUp;
 
   let lastError: string | null = null;
   for (const route of routes) {
@@ -1580,7 +1608,7 @@ async function executeRewriteStep(input: {
         channelId: route.channel_id,
         model: route.actual_model,
         databaseOnly: true,
-        jsonMode: true,
+        jsonMode: useJsonMode,
         maxTokens: 2200,
         timeoutMs: 30_000,
         messages: baseMessages,
@@ -1755,19 +1783,20 @@ export async function handleRewriteChat(input: {
     conversationId: conversation.id,
   });
 
+  const isFirstMessage = history.length === 0;
+
   await insertRewriteMessage(input.service, {
     conversationId: conversation.id,
     userId: input.actor.userId,
     role: "user",
     content: userMessage,
-    generationMode: selections.autoModeEnabled ? "auto" : "single",
+    generationMode: selections.autoModeEnabled && isFirstMessage ? "auto" : "single",
   });
 
   let steps: RewriteStepExecution[] = [];
   let finalResult: NormalizedRewriteResult | null = null;
   let finalStatus: "success" | "partial_success" | "failed" = "failed";
-
-  if (selections.autoModeEnabled) {
+  if (selections.autoModeEnabled && isFirstMessage) {
     const orderedSteps = selections.workflowSteps;
     const firstStep = orderedSteps[0] ?? null;
     const secondStep = orderedSteps[1] ?? null;
@@ -1816,6 +1845,8 @@ export async function handleRewriteChat(input: {
       }
     }
   } else {
+    // 后续追问（非首轮）走自然对话模式
+    const isFollowUp = !isFirstMessage;
     const singleResult = await executeRewriteStep({
       service: input.service,
       feature: config.feature,
@@ -1823,6 +1854,7 @@ export async function handleRewriteChat(input: {
       selections,
       history,
       userMessage,
+      isFollowUp,
     });
     steps = [singleResult];
 
@@ -1853,7 +1885,7 @@ export async function handleRewriteChat(input: {
     userId: input.actor.userId,
     role: "assistant",
     content: assistantContent,
-    generationMode: selections.autoModeEnabled ? "auto" : "single",
+    generationMode: selections.autoModeEnabled && isFirstMessage ? "auto" : "single",
     messageStatus: finalStatus,
     structuredResult: assistantPayload as unknown as Record<string, unknown>,
     requestSnapshot,
@@ -1870,7 +1902,7 @@ export async function handleRewriteChat(input: {
     });
   }
 
-  if (selections.autoModeEnabled) {
+  if (selections.autoModeEnabled && isFirstMessage) {
     await updateConversationSelections(input.service, {
       conversationId: conversation.id,
       userId: input.actor.userId,

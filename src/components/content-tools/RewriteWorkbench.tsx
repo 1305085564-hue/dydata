@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare, Plus, Sparkles, Send,
   Wand2, Copy, Check, Type,
-  ChevronDown
+  ChevronDown, Loader2
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -98,6 +98,19 @@ export default function RewriteWorkbench() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  // 发送中阶段提示（自动模式下显示当前步骤）
+  const [sendingPhase, setSendingPhase] = useState<string>('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (messages.length > 0 || isSending) {
+      scrollToBottom();
+    }
+  }, [messages, isSending, sendingPhase]);
 
 
   useEffect(() => {
@@ -233,10 +246,12 @@ export default function RewriteWorkbench() {
 
   const handleSend = async () => {
     if (!inputText.trim() || isSending) return;
-    
+
     const textToSend = inputText.trim();
+    const isAutoFirstRound = autoMode && messages.length === 0;
     setInputText('');
     setIsSending(true);
+    setSendingPhase(isAutoFirstRound ? '正在执行第 1 步：框架改写...' : '正在生成...');
 
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
@@ -244,13 +259,21 @@ export default function RewriteWorkbench() {
       role: 'user',
       content: textToSend,
       createdAt: new Date().toISOString(),
-      generationMode: autoMode ? 'auto' : 'single',
+      generationMode: isAutoFirstRound ? 'auto' : 'single',
       status: 'success',
       requestSnapshot: null,
       errorMessage: null,
       structuredResult: null,
     };
     setMessages(prev => [...prev, tempMessage]);
+
+    // 自动模式下模拟阶段进度（后端串行两步，前端用定时器模拟阶段切换）
+    let phaseTimer: ReturnType<typeof setTimeout> | null = null;
+    if (isAutoFirstRound) {
+      phaseTimer = setTimeout(() => {
+        setSendingPhase('第 1 步完成，正在执行第 2 步：情绪润色...');
+      }, 12000);
+    }
 
     try {
       let res: Response | null = null;
@@ -297,21 +320,18 @@ export default function RewriteWorkbench() {
       if (data.conversation) {
         setConversations(prev => upsertConversation(prev, data.conversation));
       }
+
+      // 同步会话状态（包括 autoMode）
+      if (data.conversation?.selected) {
+        const sel = data.conversation.selected;
+        setAutoMode(sel.autoModeEnabled ?? false);
+        setSelectedModelViewId(sel.modelViewId || selectedModelViewId);
+        setSelectedModeId(sel.modeId ?? selectedModeId);
+        setSelectedLengthId(sel.lengthPresetId || selectedLengthId);
+      }
+
       if (returnedConversationId && returnedConversationId !== currentConversationId) {
         setCurrentConversationId(returnedConversationId);
-
-        // 如果返回了完整 conversation，可以同步回顶部状态
-        if (data.conversation?.selected) {
-          setAutoMode(data.conversation.selected.autoModeEnabled ?? autoMode);
-          setSelectedModelViewId(data.conversation.selected.modelViewId || selectedModelViewId);
-          setSelectedModeId(data.conversation.selected.modeId || selectedModeId);
-          setSelectedLengthId(data.conversation.selected.lengthPresetId || selectedLengthId);
-        }
-      } else if (data.conversation?.selected) {
-        setAutoMode(data.conversation.selected.autoModeEnabled ?? autoMode);
-        setSelectedModelViewId(data.conversation.selected.modelViewId || selectedModelViewId);
-        setSelectedModeId(data.conversation.selected.modeId || selectedModeId);
-        setSelectedLengthId(data.conversation.selected.lengthPresetId || selectedLengthId);
       }
 
       if (!data.conversation) {
@@ -319,14 +339,11 @@ export default function RewriteWorkbench() {
       }
 
       if (data.message) {
-        // 保留用户的临时消息，只把新的 assistant message append 进去
         setMessages(prev => {
-          // 找一下有没有 tempUserMessage
           const tempUserMsg = prev.find(m => m.id === tempMessage.id);
           const filtered = prev.filter(m => m.id !== tempMessage.id);
 
           if (tempUserMsg) {
-            // 给它一个真实的 conversationId (如果有的话)
             const resolvedUserMsg = { ...tempUserMsg, conversationId: returnedConversationId || tempUserMsg.conversationId };
             return [...filtered, resolvedUserMsg, data.message];
           }
@@ -356,9 +373,11 @@ export default function RewriteWorkbench() {
           structuredResult: null
         }];
       });
-      setInputText(textToSend); // 恢复输入体验
+      setInputText(textToSend);
     } finally {
+      if (phaseTimer) clearTimeout(phaseTimer);
       setIsSending(false);
+      setSendingPhase('');
     }
   };
 
@@ -573,7 +592,7 @@ export default function RewriteWorkbench() {
 
         {/* 对话区 */}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-8 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="mx-auto max-w-[800px] space-y-8 pb-10">
+          <div className="mx-auto max-w-[800px] space-y-8 pb-32">
             
             {messagesLoading ? (
               <div className="flex justify-center py-20">
@@ -815,6 +834,52 @@ export default function RewriteWorkbench() {
                 }
               })
             )}
+
+            {/* 发送中占位消息 */}
+            {isSending && (
+              <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/30 mt-1">
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                </div>
+                <div className="w-full max-w-[85%]">
+                  <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 flex items-center gap-3">
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce [animation-delay:0ms]"></span>
+                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce [animation-delay:150ms]"></span>
+                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-bounce [animation-delay:300ms]"></span>
+                      </div>
+                      <span className="text-[13px] font-medium text-slate-500">{sendingPhase || '正在生成...'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 最后一条消息的快捷追问按钮 */}
+            {!isSending && messages.length > 0 && (() => {
+              const lastMsg = messages[messages.length - 1];
+              const suggestions = lastMsg?.role === 'assistant' && lastMsg.structuredResult?.final?.followUpSuggestions;
+              if (!suggestions || suggestions.length === 0) return null;
+              return (
+                <div className="flex gap-4 animate-in fade-in duration-500">
+                  <div className="w-8 shrink-0" />
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.slice(0, 4).map((text, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setInputText(text)}
+                        className="text-[13px] font-medium text-slate-600 bg-white border border-slate-200 px-4 py-1.5 rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all shadow-sm active:scale-95"
+                      >
+                        {text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div ref={messagesEndRef} />
           </div>
         </div>
         
@@ -823,13 +888,25 @@ export default function RewriteWorkbench() {
           <div className="max-w-[800px] mx-auto">
             <div className="relative bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-slate-200 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-400 transition-all overflow-hidden group">
               
-              <textarea 
+              <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                className="w-full bg-transparent p-4 pr-16 resize-none h-[120px] focus:outline-none text-[15px] text-slate-900 placeholder:text-slate-400 leading-relaxed [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
-                placeholder={autoMode
-                  ? "请直接粘贴原文。自动模式会先跑双阶段改写，完成后自动切到标准聊天..."
-                  : "输入修改要求（例如：把第二步再接地气一点）..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                disabled={isSending}
+                className={cn(
+                  "w-full bg-transparent p-4 pr-16 resize-none h-[120px] focus:outline-none text-[15px] text-slate-900 placeholder:text-slate-400 leading-relaxed [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+                  isSending && "opacity-50 cursor-not-allowed"
+                )}
+                placeholder={isSending
+                  ? "正在处理中，请稍候..."
+                  : autoMode && messages.length === 0
+                    ? "请直接粘贴原文。自动模式会先跑双阶段改写，完成后自动切到标准聊天..."
+                    : "输入修改要求（例如：把第二步再接地气一点）..."
                 }
               ></textarea>
               
@@ -869,7 +946,7 @@ export default function RewriteWorkbench() {
                   </>
                 ) : (
                   <>
-                    <span>{autoMode ? '执行首轮改写' : '发送'}</span>
+                    <span>{autoMode && messages.length === 0 ? '执行首轮改写' : '发送'}</span>
                     <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </>
                 )}
