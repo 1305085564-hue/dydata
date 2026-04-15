@@ -165,7 +165,18 @@ type WorkflowRow = {
   updated_at: string;
 };
 
+type FeatureConfigRow = {
+  id: string;
+  feature_key: string;
+  label: string;
+  system_prompt: string | null;
+  is_enabled: boolean;
+  output_token_limit: number | null;
+  context_message_limit: number | null;
+};
+
 type RewriteBundle = {
+  featureConfig: FeatureConfigRow | null;
   modelViews: ModelViewRow[];
   fixedModes: FixedModeRow[];
   modelRoutes: ModelRouteRow[];
@@ -191,10 +202,16 @@ type EditorState = {
 };
 
 type FormState = Record<string, string | boolean>;
+type RuntimeFormState = {
+  is_enabled: boolean;
+  output_token_limit: string;
+  context_message_limit: string;
+};
 
 const NONE_VALUE = "__none__";
 
 const EMPTY_BUNDLE: RewriteBundle = {
+  featureConfig: null,
   modelViews: [],
   fixedModes: [],
   modelRoutes: [],
@@ -203,6 +220,12 @@ const EMPTY_BUNDLE: RewriteBundle = {
   workflows: [],
   workflowSteps: [],
   channels: [],
+};
+
+const EMPTY_RUNTIME_FORM: RuntimeFormState = {
+  is_enabled: true,
+  output_token_limit: "3600",
+  context_message_limit: "30",
 };
 
 function formatDateTime(value: string) {
@@ -217,6 +240,10 @@ function formatDateTime(value: string) {
 function nextSortOrder(rows: Array<{ sort_order: number }>) {
   const max = rows.reduce((current, row) => Math.max(current, row.sort_order), 0);
   return String(max + 10 || 10);
+}
+
+function estimateChars(tokenLimit: number) {
+  return Math.max(600, Math.round(tokenLimit / 1.2));
 }
 
 function getStatusBadge(enabled: boolean, isDefault?: boolean) {
@@ -292,9 +319,11 @@ function SummaryCard({
 
 export default function AIRewriteClient() {
   const [bundle, setBundle] = useState<RewriteBundle>(EMPTY_BUNDLE);
+  const [runtimeForm, setRuntimeForm] = useState<RuntimeFormState>(EMPTY_RUNTIME_FORM);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingRuntime, setIsSavingRuntime] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [form, setForm] = useState<FormState>({});
@@ -348,6 +377,11 @@ export default function AIRewriteClient() {
       }
 
       setBundle(data);
+      setRuntimeForm({
+        is_enabled: data.featureConfig?.is_enabled ?? true,
+        output_token_limit: String(data.featureConfig?.output_token_limit ?? 3600),
+        context_message_limit: String(data.featureConfig?.context_message_limit ?? 30),
+      });
     } catch (nextError) {
       const message = nextError instanceof Error ? nextError.message : "加载文案改写配置失败";
       setError(message);
@@ -355,6 +389,60 @@ export default function AIRewriteClient() {
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
+    }
+  }
+
+  async function saveRuntimeSettings() {
+    if (!bundle.featureConfig) {
+      feedbackToast.error("缺少 content_rewrite 功能配置，暂时不能保存");
+      return;
+    }
+
+    const outputTokenLimit = Number.parseInt(runtimeForm.output_token_limit, 10);
+    const contextMessageLimit = Number.parseInt(runtimeForm.context_message_limit, 10);
+
+    if (!Number.isFinite(outputTokenLimit) || outputTokenLimit < 1200) {
+      feedbackToast.error("输出上限至少填 1200 tokens");
+      return;
+    }
+
+    if (!Number.isFinite(contextMessageLimit) || contextMessageLimit < 1) {
+      feedbackToast.error("上下文条数至少填 1");
+      return;
+    }
+
+    setIsSavingRuntime(true);
+    try {
+      const res = await fetch("/api/admin/ai-rewrite", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entity: "feature_config",
+          id: bundle.featureConfig.id,
+          is_enabled: runtimeForm.is_enabled,
+          output_token_limit: outputTokenLimit,
+          context_message_limit: contextMessageLimit,
+        }),
+      });
+      const data = (await res.json()) as { bundle?: RewriteBundle; error?: string };
+      if (!res.ok || data.error || !data.bundle) {
+        throw new Error(data.error || "保存运行规则失败");
+      }
+
+      setBundle(data.bundle);
+      setRuntimeForm({
+        is_enabled: data.bundle.featureConfig?.is_enabled ?? true,
+        output_token_limit: String(data.bundle.featureConfig?.output_token_limit ?? outputTokenLimit),
+        context_message_limit: String(
+          data.bundle.featureConfig?.context_message_limit ?? contextMessageLimit,
+        ),
+      });
+      feedbackToast.success("运行规则已更新");
+    } catch (nextError) {
+      const message = nextError instanceof Error ? nextError.message : "保存运行规则失败";
+      feedbackToast.error(message);
+    } finally {
+      setIsSavingRuntime(false);
     }
   }
 
@@ -717,8 +805,63 @@ export default function AIRewriteClient() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-          <p>这一版先以“固定套餐 + 普通自定义”三态为准，自动流程只保留后台配置，不再作为员工端主入口。</p>
-          <p>最关键的是先把“固定套餐 → 展示模型 → 真实路线”配对好，再去调普通模式和字数预设。</p>
+          <p>首条消息固定走结果模式，默认只出 1 个主版本；第二轮开始固定进入正常聊天，不再回版本卡。</p>
+          <p>最关键的是先把“固定套餐 → 展示模型 → 真实路线”配对好，再确认输出上限和上下文条数是否符合线上体验。</p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-white/70 bg-white/82">
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
+                <Ruler className="size-4 text-primary" />
+                运行规则
+              </CardTitle>
+              <CardDescription className="mt-1">
+                这两项会直接影响 rewrite 页的返回长度和带入多少历史。其他首条/后续规则先按产品要求写死，不做开关。
+              </CardDescription>
+            </div>
+            <Button onClick={() => void saveRuntimeSettings()} disabled={isSavingRuntime || !bundle.featureConfig}>
+              {isSavingRuntime ? <Loader2 className="size-4 animate-spin" /> : null}
+              保存运行规则
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-4 lg:grid-cols-[1.3fr,1fr,1fr]">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-6 text-[var(--color-text-secondary)]">
+            <p className="font-medium text-[var(--color-text-primary)]">当前固定规则</p>
+            <p className="mt-2">1. 首条默认结果模式，只出 1 个主版本。</p>
+            <p>2. 第二轮开始固定聊天模式，不再返回版本卡。</p>
+            <p>3. 顶部强框架 / 强语感 / 展示模型 / 普通模式会自动清空并锁定。</p>
+          </div>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">输出上限</span>
+            <Input
+              value={runtimeForm.output_token_limit}
+              onChange={(event) => setRuntimeForm((prev) => ({ ...prev, output_token_limit: event.target.value }))}
+              inputMode="numeric"
+            />
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              现在填的是 {runtimeForm.output_token_limit || "0"} tokens，约等于{" "}
+              {estimateChars(Number.parseInt(runtimeForm.output_token_limit || "0", 10) || 0)} 个汉字。
+            </p>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">上下文条数</span>
+            <Input
+              value={runtimeForm.context_message_limit}
+              onChange={(event) =>
+                setRuntimeForm((prev) => ({ ...prev, context_message_limit: event.target.value }))
+              }
+              inputMode="numeric"
+            />
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              最近保留多少条历史消息。系统内部仍会额外做总长度安全截断，避免请求被拖死。
+            </p>
+          </label>
         </CardContent>
       </Card>
 

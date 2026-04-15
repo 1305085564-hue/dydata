@@ -4,10 +4,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { AdminSecondaryNav, getAdminSecondaryNavItems } from "./admin-secondary-nav";
 
-test("后台二级导航为管理员输出四个并列入口", () => {
+test("后台二级导航为管理员输出 owner 配置入口", () => {
   assert.deepEqual(
     getAdminSecondaryNavItems({ canManageAdmin: true }).map((item) => item.label),
-    ["中控总览", "经营分析", "AI 渠道", "AI 功能区"],
+    ["中控总览", "经营分析", "AI 渠道", "AI 功能区", "文案改写配置"],
   );
 });
 

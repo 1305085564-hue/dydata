@@ -29,6 +29,13 @@ const NAV_CARDS: NavCardItem[] = [
     label: "当前页面",
     icon: Settings2,
   },
+  {
+    title: "文案改写配置",
+    description: "集中维护展示模型、真实路线和自动流程。",
+    href: "/admin/ai-rewrite",
+    label: "去看改写配置",
+    icon: Sparkles,
+  },
 ];
 
 export function AIFeaturesHero() {

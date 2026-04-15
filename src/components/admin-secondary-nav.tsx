@@ -6,6 +6,7 @@ export interface AdminSecondaryNavItem {
   label: string;
   match: (pathname: string) => boolean;
   requiresAdmin?: boolean;
+  hideWhenPrefixed?: boolean;
 }
 
 export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
@@ -32,6 +33,13 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     match: (pathname) => pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/"),
     requiresAdmin: true,
   },
+  {
+    href: "/admin/ai-rewrite",
+    label: "文案改写配置",
+    match: (pathname) => pathname === "/admin/ai-rewrite" || pathname.startsWith("/admin/ai-rewrite/"),
+    requiresAdmin: true,
+    hideWhenPrefixed: true,
+  },
 ];
 
 export function getAdminSecondaryNavItems(options: { canManageAdmin: boolean }) {
@@ -46,7 +54,9 @@ interface AdminSecondaryNavProps {
 }
 
 export function AdminSecondaryNav({ pathname, canManageAdmin, className, hrefPrefix = "" }: AdminSecondaryNavProps) {
-  const items = getAdminSecondaryNavItems({ canManageAdmin });
+  const items = getAdminSecondaryNavItems({ canManageAdmin }).filter(
+    (item) => !(hrefPrefix && item.hideWhenPrefixed),
+  );
 
   return (
     <nav className={cn("admin-subnav", className)} aria-label="后台二级导航">

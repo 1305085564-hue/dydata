@@ -325,6 +325,13 @@ export default function AIChannelsClient() {
       label: "去看功能",
       icon: Settings2,
     },
+    {
+      title: "文案改写配置",
+      description: "维护展示模型、真实路线和自动流程。",
+      href: "/admin/ai-rewrite",
+      label: "去看改写配置",
+      icon: Settings2,
+    },
   ];
 
   return (

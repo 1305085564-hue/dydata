@@ -2,9 +2,15 @@ import { BootstrapPayload } from './types';
 
 export const mockBootstrapData: BootstrapPayload = {
   feature: {
+    id: "feature-rewrite-mock",
     key: "rewrite",
     label: "AI 文案改写",
     enabled: true
+  },
+  runtime: {
+    outputTokenLimit: 3600,
+    outputApproxChars: 3000,
+    contextMessageLimit: 30,
   },
   defaults: {
     autoModeEnabled: false,

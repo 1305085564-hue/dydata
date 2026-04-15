@@ -9,6 +9,7 @@ import {
 } from "../ai-channels/_shared";
 
 type RewriteEntity =
+  | "feature_config"
   | "fixed_mode"
   | "model_view"
   | "model_route"
@@ -51,6 +52,16 @@ type ChannelJoin = {
   is_enabled: boolean;
 };
 
+type FeatureConfigRow = {
+  id: string;
+  feature_key: string;
+  label: string;
+  system_prompt: string | null;
+  is_enabled: boolean;
+  output_token_limit: number | null;
+  context_message_limit: number | null;
+};
+
 const DEFAULTABLE_TABLES = new Map<
   Exclude<RewriteEntity, "model_route" | "workflow_step">,
   string
@@ -73,6 +84,7 @@ function parseEntity(value: unknown): RewriteEntity | null {
   const entity = toTrimmedString(value);
 
   if (
+    entity === "feature_config" ||
     entity === "model_view" ||
     entity === "fixed_mode" ||
     entity === "model_route" ||
@@ -118,6 +130,7 @@ async function loadBundle(
     : never,
 ) {
   const [
+    featureConfigResult,
     modelViewsResult,
     fixedModesResult,
     modelRoutesResult,
@@ -127,6 +140,13 @@ async function loadBundle(
     workflowStepsResult,
     channelsResult,
   ] = await Promise.all([
+    supabase
+      .from("ai_feature_config")
+      .select(
+        "id, feature_key, label, system_prompt, is_enabled, output_token_limit, context_message_limit",
+      )
+      .eq("feature_key", "content_rewrite")
+      .maybeSingle(),
     supabase
       .from("rewrite_model_views")
       .select("id, key, label, description, sort_order, is_enabled, is_default, created_at, updated_at")
@@ -178,6 +198,7 @@ async function loadBundle(
       .order("created_at", { ascending: true }),
   ]);
 
+  if (featureConfigResult.error) throw new Error(featureConfigResult.error.message);
   if (modelViewsResult.error) throw new Error(modelViewsResult.error.message);
   if (fixedModesResult.error) throw new Error(fixedModesResult.error.message);
   if (modelRoutesResult.error) throw new Error(modelRoutesResult.error.message);
@@ -188,6 +209,7 @@ async function loadBundle(
   if (channelsResult.error) throw new Error(channelsResult.error.message);
 
   return {
+    featureConfig: (featureConfigResult.data ?? null) as FeatureConfigRow | null,
     modelViews: (modelViewsResult.data ?? []) as Array<Record<string, unknown>>,
     fixedModes: ((fixedModesResult.data ?? []) as Array<Record<string, unknown>>).map((row) => ({
       ...row,
@@ -525,6 +547,21 @@ export async function PUT(request: NextRequest) {
   const { supabase } = auth;
 
   try {
+    if (entity === "feature_config") {
+      const patch: Record<string, unknown> = {};
+
+      if (body.is_enabled !== undefined) patch.is_enabled = toBoolean(body.is_enabled, true);
+      if (body.output_token_limit !== undefined) patch.output_token_limit = toPriority(body.output_token_limit, 3600);
+      if (body.context_message_limit !== undefined) {
+        patch.context_message_limit = toPriority(body.context_message_limit, 30);
+      }
+
+      if (Object.keys(patch).length === 0) return badRequest("没有可更新字段");
+
+      const { error } = await supabase.from("ai_feature_config").update(patch).eq("id", id);
+      if (error) throw new Error(error.message);
+    }
+
     if (entity === "model_view") {
       const patch: Record<string, unknown> = {};
 

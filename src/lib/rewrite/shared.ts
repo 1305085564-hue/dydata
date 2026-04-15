@@ -8,10 +8,13 @@ import type { UserRole } from "@/types";
 type MinimalClient = ReturnType<typeof createServiceRoleClient>;
 
 type RewriteFeatureRow = {
+  id: string;
   feature_key: string;
   label: string;
   system_prompt: string | null;
   is_enabled: boolean;
+  output_token_limit: number | null;
+  context_message_limit: number | null;
 };
 
 type RewriteModelViewRow = {
@@ -185,9 +188,15 @@ export type RewriteWorkflowOption = {
 
 export type RewriteBootstrapPayload = {
   feature: {
+    id: string | null;
     key: string;
     label: string;
     enabled: boolean;
+  };
+  runtime: {
+    outputTokenLimit: number;
+    outputApproxChars: number;
+    contextMessageLimit: number;
   };
   defaults: {
     autoModeEnabled: boolean;
@@ -356,6 +365,15 @@ const REWRITE_CONVERSATION_SELECT =
 const REWRITE_MESSAGE_SELECT =
   "id, conversation_id, user_id, role, generation_mode, message_status, content, structured_result, request_snapshot, error_message, created_at";
 
+const DEFAULT_REWRITE_OUTPUT_TOKEN_LIMIT = 3600;
+const MIN_REWRITE_OUTPUT_TOKEN_LIMIT = 1200;
+const MAX_REWRITE_OUTPUT_TOKEN_LIMIT = 8000;
+const DEFAULT_REWRITE_CONTEXT_MESSAGE_LIMIT = 30;
+const MIN_REWRITE_CONTEXT_MESSAGE_LIMIT = 1;
+const MAX_REWRITE_CONTEXT_MESSAGE_LIMIT = 50;
+const REWRITE_CONTEXT_SAFE_CHAR_LIMIT = 15_000;
+const REWRITE_HISTORY_QUERY_LIMIT = 60;
+
 let serviceClient: MinimalClient | null = null;
 let rewriteAiCaller = callAi;
 
@@ -394,13 +412,91 @@ function truncateText(value: string, maxLength: number) {
   return `${normalized.slice(0, Math.max(1, maxLength - 1))}…`;
 }
 
-function buildConversationTitle(seed: string) {
-  const firstLine = seed
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .find(Boolean);
+function clampRewriteOutputTokenLimit(value: unknown) {
+  const numeric = typeof value === "number" ? Math.trunc(value) : Number.parseInt(String(value ?? ""), 10);
+  if (!Number.isFinite(numeric)) {
+    return DEFAULT_REWRITE_OUTPUT_TOKEN_LIMIT;
+  }
 
-  return truncateText(firstLine || "新会话", 18);
+  return Math.min(MAX_REWRITE_OUTPUT_TOKEN_LIMIT, Math.max(MIN_REWRITE_OUTPUT_TOKEN_LIMIT, numeric));
+}
+
+function clampRewriteContextMessageLimit(value: unknown) {
+  const numeric = typeof value === "number" ? Math.trunc(value) : Number.parseInt(String(value ?? ""), 10);
+  if (!Number.isFinite(numeric)) {
+    return DEFAULT_REWRITE_CONTEXT_MESSAGE_LIMIT;
+  }
+
+  return Math.min(MAX_REWRITE_CONTEXT_MESSAGE_LIMIT, Math.max(MIN_REWRITE_CONTEXT_MESSAGE_LIMIT, numeric));
+}
+
+function estimateChineseCharsFromTokens(tokenLimit: number) {
+  return Math.max(600, Math.round(tokenLimit / 1.2));
+}
+
+function detectConversationIntent(value: string) {
+  const normalized = value.replace(/\s+/g, "");
+  if (!normalized) return "文案改写";
+  if (/(标题|题目|标题党)/.test(normalized)) return "标题优化";
+  if (/(开头|起手|开场|首句)/.test(normalized)) return "开头改写";
+  if (/(结构|框架|顺序|逻辑|重组|整理)/.test(normalized)) return "结构重写";
+  if (/(语感|顺口|口播|人话|自然|润色)/.test(normalized)) return "语感润色";
+  if (/(压缩|精简|更短|短一点)/.test(normalized)) return "精简改写";
+  if (/(扩写|展开|更长|详细)/.test(normalized)) return "扩写改写";
+  if (/(爆款|抓人|吸睛|高点击)/.test(normalized)) return "抓人改写";
+  return "文案改写";
+}
+
+function stripPromptBoilerplate(value: string) {
+  return value
+    .replace(/^(把|将|请把|帮我把|帮我|请|麻烦你)?这段/g, "")
+    .replace(/^(内容|文案|口播|稿子|原文)/g, "")
+    .replace(/(改得|改成|改写成|重写成|写得|弄得).{0,12}$/g, "")
+    .replace(/^(更|再|给我|直接|重新|另外|顺便)/g, "")
+    .replace(/[：:，,。.!！？?]+$/g, "")
+    .trim();
+}
+
+function extractSemanticTopic(seed: string) {
+  const candidates = seed
+    .split(/\r?\n|[:：]/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map(stripPromptBoilerplate)
+    .filter(Boolean)
+    .sort((left, right) => right.length - left.length);
+
+  const topic = candidates.find((line) => line.length >= 4) ?? candidates[0] ?? "";
+  return truncateText(topic, 10);
+}
+
+function cleanConversationTitle(value: string | null | undefined) {
+  const trimmed = trimOrNull(value);
+  if (!trimmed) return null;
+  if (/^(改写结果|主版本|版本[A-Z0-9一二三四五六七八九十]+)$/u.test(trimmed)) {
+    return null;
+  }
+  return truncateText(trimmed.replace(/[：:]+$/g, ""), 18);
+}
+
+function buildConversationTitle(seed: string, preferredTitle?: string | null) {
+  const semanticTitle = cleanConversationTitle(preferredTitle);
+  if (semanticTitle) {
+    return semanticTitle;
+  }
+
+  const intent = detectConversationIntent(seed);
+  const topic = extractSemanticTopic(seed);
+
+  if (topic && intent && !topic.includes(intent)) {
+    return truncateText(`${topic} · ${intent}`, 18);
+  }
+
+  if (topic) {
+    return truncateText(topic, 18);
+  }
+
+  return truncateText(intent || "新会话", 18);
 }
 
 function pickRecommendedText(versions: RewriteVersion[]) {
@@ -428,17 +524,6 @@ function inferStoredResponseMode(value: Record<string, unknown>, versionsLength:
     return value.response_mode;
   }
   return versionsLength > 0 ? "versions" : "chat";
-}
-
-function inferFollowUpResponseMode(userMessage: string): RewriteResponseMode {
-  const normalized = userMessage.replace(/\s+/g, "").toLowerCase();
-  const versionRequestPatterns = [
-    /(重写|改写|重来|重新写|再写|另写).{0,8}(一版|两版|三版|\d+版|多个版本|几版)/,
-    /(给我|给出|出|再出|重新出).{0,8}(一版|两版|三版|\d+版|多个版本|几版)/,
-    /(多个版本|两个版本|三个版本|3个版本|2个版本|ab版|a\/b版|版本a|版本b)/,
-  ];
-
-  return versionRequestPatterns.some((pattern) => pattern.test(normalized)) ? "versions" : "chat";
 }
 
 function toModelOption(row: RewriteModelViewRow): RewriteModelOption {
@@ -754,33 +839,52 @@ export function renderAssistantMessageContent(result: NormalizedRewriteResult) {
 function buildJsonOutputInstruction() {
   return [
     "你必须只输出 JSON，不要 Markdown，不要代码块，不要额外解释。",
-    '格式：{"responseMode":"versions","title":"一句话标题","summary":"一句话改写说明","versions":[{"title":"版本A","content":"..."}],"notes":["..."],"follow_up_suggestions":["..."]}',
-    "要求：versions 至少返回 1 个；如果用户明确要多个版本，就返回对应数量或 2-3 个可直接复制的版本。",
+    '格式：{"responseMode":"versions","title":"一句话标题","summary":"一句话改写说明","versions":[{"title":"主版本","content":"..."}],"notes":["..."],"follow_up_suggestions":["..."]}',
+    "要求：只返回 1 个主版本，title 和 versions[0].title 都尽量语义化，用户没有明确要求时不要额外给 A/B/C 多版本。",
   ].join("\n");
 }
 
-function buildHistoryMessages(history: RewriteMessageRow[]): AiMessage[] {
-  const recent = history.slice(-8);
+function buildHistoryMessages(
+  history: RewriteMessageRow[],
+  options?: { maxMessages?: number; maxTotalChars?: number },
+): AiMessage[] {
+  const maxMessages = clampRewriteContextMessageLimit(options?.maxMessages);
+  const maxTotalChars = options?.maxTotalChars ?? REWRITE_CONTEXT_SAFE_CHAR_LIMIT;
+  const recent = history.slice(-maxMessages);
   const messages: AiMessage[] = [];
+  let totalChars = 0;
 
-  for (const message of recent) {
+  for (let index = recent.length - 1; index >= 0; index -= 1) {
+    const message = recent[index]!;
     if (message.role === "user") {
+      const content = truncateText(message.content, 1200);
+      if (totalChars + content.length > maxTotalChars) {
+        break;
+      }
+
       messages.push({
         role: "user",
-        content: message.content,
+        content,
       });
+      totalChars += content.length;
       continue;
     }
 
     if (message.role === "assistant") {
+      const content = truncateText(message.content, 1600);
+      if (totalChars + content.length > maxTotalChars) {
+        break;
+      }
+
       messages.push({
         role: "assistant",
-        content: truncateText(message.content, 1800),
+        content,
       });
+      totalChars += content.length;
     }
   }
 
-  return messages;
+  return messages.reverse();
 }
 
 export function buildCombinedRewriteSystemMessage(input: {
@@ -855,7 +959,7 @@ function buildSingleUserPrompt(
 
   return [
     "请直接按要求改写下面这段内容。",
-    "如果用户没有明确补充要求，就默认给出多版可选结果。",
+    "首轮只给 1 个最稳的主版本，不要默认展开成多版本卡片。",
     "",
     `用户输入：${userMessage.trim()}`,
   ].join("\n");
@@ -889,6 +993,50 @@ function buildAutoStepUserPrompt(input: {
     "",
     `结构稿：${previousText}`,
   ].join("\n");
+}
+
+function decodeJsonStringFragment(value: string) {
+  return value
+    .replace(/\\\\/g, "\\")
+    .replace(/\\"/g, '"')
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "")
+    .replace(/\\t/g, "\t")
+    .trim();
+}
+
+function buildStreamPreviewFromRaw(rawContent: string, responseMode: RewriteResponseMode) {
+  const normalized = rawContent.trim();
+  if (!normalized) {
+    return responseMode === "versions" ? "正在生成主版本..." : "";
+  }
+
+  if (responseMode === "chat") {
+    return normalized;
+  }
+
+  const contentMatches = Array.from(
+    normalized.matchAll(/"content"\s*:\s*"((?:\\.|[^"\\])*)"?/g),
+  )
+    .map((match) => decodeJsonStringFragment(match[1] ?? ""))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  if (contentMatches.length > 0) {
+    return contentMatches
+      .map((content, index) => `${index === 0 ? "主版本" : `版本${index + 1}`}\n${content}`)
+      .join("\n\n")
+      .trim();
+  }
+
+  const recommendedMatch = normalized.match(
+    /"recommended(?:Text|_text)"\s*:\s*"((?:\\.|[^"\\])*)"?/,
+  );
+  if (recommendedMatch?.[1]) {
+    return `主版本\n${decodeJsonStringFragment(recommendedMatch[1])}`.trim();
+  }
+
+  return "正在生成主版本...";
 }
 
 function getServiceClient() {
@@ -950,7 +1098,7 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
   ] = await Promise.all([
     service
       .from("ai_feature_config")
-      .select("feature_key, label, system_prompt, is_enabled")
+      .select("id, feature_key, label, system_prompt, is_enabled, output_token_limit, context_message_limit")
       .eq("feature_key", "content_rewrite")
       .maybeSingle(),
     service
@@ -1068,12 +1216,20 @@ export function resolveWorkflowStepModelView(
 
 export async function getRewriteBootstrapPayload(service: MinimalClient): Promise<RewriteBootstrapPayload> {
   const config = await loadRewriteConfig(service);
+  const outputTokenLimit = clampRewriteOutputTokenLimit(config.feature?.output_token_limit);
+  const contextMessageLimit = clampRewriteContextMessageLimit(config.feature?.context_message_limit);
 
   return {
     feature: {
+      id: config.feature?.id ?? null,
       key: config.feature?.feature_key ?? "content_rewrite",
       label: config.feature?.label ?? "员工文案改写",
       enabled: config.feature?.is_enabled ?? true,
+    },
+    runtime: {
+      outputTokenLimit,
+      outputApproxChars: estimateChineseCharsFromTokens(outputTokenLimit),
+      contextMessageLimit,
     },
     defaults: {
       autoModeEnabled: false,
@@ -1573,7 +1729,7 @@ async function loadConversationHistory(
   service: MinimalClient,
   input: { userId: string; conversationId: string; limit?: number },
 ) {
-  const limit = input.limit ?? 12;
+  const limit = input.limit ?? REWRITE_HISTORY_QUERY_LIMIT;
   const { data, error } = await service
     .from("rewrite_messages")
     .select(REWRITE_MESSAGE_SELECT)
@@ -1670,16 +1826,22 @@ async function insertRewriteMessage(
 
 async function maybeUpdateConversationTitle(
   service: MinimalClient,
-  input: { conversation: RewriteConversationRow; userId: string; message: string },
+  input: {
+    conversation: RewriteConversationRow;
+    userId: string;
+    message: string;
+    assistantTitle?: string | null;
+  },
 ) {
-  if (input.conversation.title && input.conversation.title !== "新会话") {
+  const nextTitle = buildConversationTitle(input.message, input.assistantTitle);
+  if (!nextTitle || input.conversation.title === nextTitle) {
     return;
   }
 
   await updateConversationSelections(service, {
     conversationId: input.conversation.id,
     userId: input.userId,
-    title: buildConversationTitle(input.message),
+    title: nextTitle,
     autoModeEnabled: input.conversation.auto_mode_enabled,
     fixedModeId: input.conversation.selected_fixed_mode_id,
     modelViewId: input.conversation.selected_model_view_id ?? "",
@@ -1751,6 +1913,7 @@ async function executeRewriteStep(input: {
   previousStepResult?: NormalizedRewriteResult | null;
   responseMode: RewriteResponseMode;
   isFollowUp?: boolean;
+  onPreview?: (preview: string) => void;
 }) {
   const stepModelView = resolveWorkflowStepModelView(
     input.config,
@@ -1784,10 +1947,15 @@ async function executeRewriteStep(input: {
         stepKey: input.workflowStep.step_key,
       })
     : buildSingleUserPrompt(input.userMessage, input.isFollowUp, input.responseMode);
+  const contextMessageLimit = clampRewriteContextMessageLimit(input.feature?.context_message_limit);
+  const outputTokenLimit = clampRewriteOutputTokenLimit(input.feature?.output_token_limit);
 
   const baseMessages: AiMessage[] = [
     { role: "system", content: systemMessage },
-    ...buildHistoryMessages(input.history),
+    ...buildHistoryMessages(input.history, {
+      maxMessages: contextMessageLimit,
+      maxTotalChars: REWRITE_CONTEXT_SAFE_CHAR_LIMIT,
+    }),
     { role: "user", content: userPrompt },
   ];
 
@@ -1798,6 +1966,8 @@ async function executeRewriteStep(input: {
   for (const route of routes) {
     const channel = normalizeJoinedRow(route.channel);
     const channelName = channel?.name ?? null;
+    let previewRaw = "";
+    let lastPreview = "";
 
     try {
       const aiResult = await rewriteAiCaller({
@@ -1805,9 +1975,20 @@ async function executeRewriteStep(input: {
         model: route.actual_model,
         databaseOnly: true,
         jsonMode: useJsonMode,
-        maxTokens: 2200,
+        maxTokens: outputTokenLimit,
         timeoutMs: 50_000,
         messages: baseMessages,
+        onChunk:
+          input.onPreview
+            ? (chunk) => {
+                previewRaw += chunk;
+                const nextPreview = buildStreamPreviewFromRaw(previewRaw, input.responseMode);
+                if (nextPreview && nextPreview !== lastPreview) {
+                  lastPreview = nextPreview;
+                  input.onPreview?.(nextPreview);
+                }
+              }
+            : undefined,
       });
 
       return {
@@ -1826,7 +2007,7 @@ async function executeRewriteStep(input: {
         rawContent: aiResult.content,
         normalizedResult: normalizeRewriteResult(
           aiResult.content,
-          input.workflowStep?.step_key === "structure" ? "结构稿" : "版本A",
+          input.workflowStep?.step_key === "structure" ? "结构稿" : "主版本",
           input.responseMode,
         ),
         errorMessage: null,
@@ -1921,12 +2102,13 @@ function buildRequestSnapshot(selections: RewriteResolvedSelections): RewriteReq
   };
 }
 
-export async function handleRewriteChat(input: {
+async function runRewriteChatCore(input: {
   service: MinimalClient;
   actor: RewriteActor;
   conversationId?: string | null;
   message: string;
   autoStep?: number;
+  onPreview?: (preview: string) => void;
 } & RewriteSelectionInput) {
   const userMessage = trimOrNull(input.message);
   if (!userMessage) {
@@ -1941,8 +2123,14 @@ export async function handleRewriteChat(input: {
     throw new Error("会话不存在");
   }
 
+  const existingHistory = conversation
+    ? await loadConversationHistory(input.service, {
+        userId: input.actor.userId,
+        conversationId: conversation.id,
+      })
+    : [];
   const mergedSelectionInput = mergeRewriteSelectionInput(conversation, {
-    autoModeEnabled: input.autoModeEnabled,
+    autoModeEnabled: false,
     fixedModeId: input.fixedModeId,
     fixedModeKey: input.fixedModeKey,
     modelViewId: input.modelViewId,
@@ -1984,13 +2172,9 @@ export async function handleRewriteChat(input: {
     lengthPresetId: selections.lengthPreset.id,
   });
 
-  const history = await loadConversationHistory(input.service, {
-    userId: input.actor.userId,
-    conversationId: conversation.id,
-  });
-
+  const history = conversation.id === input.conversationId ? existingHistory : [];
   const isFirstMessage = history.length === 0;
-  const responseMode = isFirstMessage ? "versions" : inferFollowUpResponseMode(userMessage);
+  const responseMode: RewriteResponseMode = isFirstMessage ? "versions" : "chat";
 
   await insertRewriteMessage(input.service, {
     conversationId: conversation.id,
@@ -2014,6 +2198,7 @@ export async function handleRewriteChat(input: {
     userMessage,
     responseMode,
     isFollowUp: !isFirstMessage,
+    onPreview: input.onPreview,
   });
   steps = [singleResult];
 
@@ -2022,6 +2207,14 @@ export async function handleRewriteChat(input: {
   }
 
   finalResult = singleResult.normalizedResult;
+  if (isFirstMessage && finalResult.responseMode === "versions") {
+    const mainVersion = finalResult.versions[0] ?? null;
+    finalResult = {
+      ...finalResult,
+      versions: mainVersion ? [mainVersion] : [],
+      recommendedText: mainVersion?.content ?? finalResult.recommendedText,
+    };
+  }
   finalStatus = "success";
 
   if (!finalResult) {
@@ -2057,6 +2250,7 @@ export async function handleRewriteChat(input: {
       conversation: latestConversation,
       userId: input.actor.userId,
       message: userMessage,
+      assistantTitle: finalResult.title,
     });
   }
 
@@ -2072,7 +2266,7 @@ export async function handleRewriteChat(input: {
     conversation: serializeConversationRow(finalConversation, optionMaps),
     message: assistantRow
       ? serializeMessageRow(assistantRow)
-        : {
+      : {
           id: "",
           conversationId: conversation.id,
           role: "assistant",
@@ -2084,7 +2278,84 @@ export async function handleRewriteChat(input: {
           errorMessage: null,
           createdAt: new Date().toISOString(),
         },
+    responseMode,
+    isFirstMessage,
   };
+}
+
+export async function handleRewriteChat(input: {
+  service: MinimalClient;
+  actor: RewriteActor;
+  conversationId?: string | null;
+  message: string;
+  autoStep?: number;
+} & RewriteSelectionInput) {
+  const result = await runRewriteChatCore(input);
+  return {
+    conversation: result.conversation,
+    message: result.message,
+  };
+}
+
+export type RewriteStreamEvent =
+  | { type: "meta"; responseMode: RewriteResponseMode; conversationId: string | null }
+  | { type: "preview"; preview: string; responseMode: RewriteResponseMode }
+  | {
+      type: "final";
+      payload: Awaited<ReturnType<typeof handleRewriteChat>>;
+      responseMode: RewriteResponseMode;
+      conversationId: string | null;
+    };
+
+export async function streamRewriteChat(
+  input: {
+    service: MinimalClient;
+    actor: RewriteActor;
+    conversationId?: string | null;
+    message: string;
+    autoStep?: number;
+  } & RewriteSelectionInput,
+  callbacks: {
+    emit: (event: RewriteStreamEvent) => Promise<void> | void;
+  },
+) {
+  let metaSent = false;
+  const result = await runRewriteChatCore({
+    ...input,
+    onPreview(preview) {
+      if (!metaSent) {
+        metaSent = true;
+        void callbacks.emit({
+          type: "meta",
+          responseMode: input.conversationId ? "chat" : "versions",
+          conversationId: input.conversationId ?? null,
+        });
+      }
+      void callbacks.emit({
+        type: "preview",
+        preview,
+        responseMode: input.conversationId ? "chat" : "versions",
+      });
+    },
+  });
+
+  if (!metaSent) {
+    await callbacks.emit({
+      type: "meta",
+      responseMode: result.responseMode,
+      conversationId: result.conversation.id,
+    });
+  }
+
+  await callbacks.emit({
+    type: "final",
+    payload: {
+      conversation: result.conversation,
+      message: result.message,
+    },
+    responseMode: result.responseMode,
+    conversationId: result.conversation.id,
+  });
 }
 
 export const __internal = {

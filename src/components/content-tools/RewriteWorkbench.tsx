@@ -106,6 +106,91 @@ function getMessageDisplayMeta(message: Message, bootstrap: BootstrapPayload) {
   };
 }
 
+type RewriteStreamEvent =
+  | { type: 'meta'; responseMode: 'chat' | 'versions'; conversationId: string | null }
+  | { type: 'preview'; preview: string; responseMode: 'chat' | 'versions' }
+  | {
+      type: 'final';
+      payload: { conversation: Conversation; message: Message };
+      responseMode: 'chat' | 'versions';
+      conversationId: string | null;
+    }
+  | { type: 'error'; error: string };
+
+function buildRequestSnapshot(input: {
+  fixedModeId: string | null;
+  modelViewId: string | null;
+  modeId: string | null;
+  lengthPresetId: string | null;
+}) {
+  return {
+    autoModeEnabled: false,
+    fixedModeId: input.fixedModeId,
+    modelViewId: input.modelViewId,
+    modeId: input.modeId,
+    lengthPresetId: input.lengthPresetId,
+    workflowId: null,
+  };
+}
+
+function buildStreamingStructuredResult(
+  preview: string,
+  responseMode: 'chat' | 'versions',
+  requestSnapshot: Message['requestSnapshot'],
+) {
+  return {
+    generationMode: 'single' as const,
+    status: 'success' as const,
+    selected: {
+      autoModeEnabled: false,
+      fixedModeId: requestSnapshot?.fixedModeId ?? null,
+      modelViewId: requestSnapshot?.modelViewId ?? null,
+      modeId: requestSnapshot?.modeId ?? null,
+      lengthPresetId: requestSnapshot?.lengthPresetId ?? null,
+      workflowId: null,
+      fixedMode: null,
+      modelView: null,
+      mode: null,
+      lengthPreset: null,
+      workflow: null,
+    },
+    snapshots: {
+      featureSystemPrompt: null,
+      fixedModePrompt: null,
+      modePrompt: null,
+      lengthPrompt: null,
+    },
+    steps: [],
+    final:
+      responseMode === 'versions'
+        ? {
+            responseMode: 'versions' as const,
+            title: null,
+            summary: null,
+            versions: preview
+              ? [
+                  {
+                    title: '主版本',
+                    content: preview.replace(/^主版本\s*/u, '').trim() || preview.trim(),
+                  },
+                ]
+              : [],
+            notes: [],
+            followUpSuggestions: [],
+            recommendedText: preview.replace(/^主版本\s*/u, '').trim() || preview.trim(),
+          }
+        : {
+            responseMode: 'chat' as const,
+            title: null,
+            summary: null,
+            versions: [],
+            notes: [],
+            followUpSuggestions: [],
+            recommendedText: preview.trim(),
+          },
+  };
+}
+
 export default function RewriteWorkbench() {
   const [bootstrap, setBootstrap] = useState<BootstrapPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,16 +210,21 @@ export default function RewriteWorkbench() {
   const [messagesLoading, setMessagesLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasAssistantMessages = messages.some(
+    (item) => item.role === 'assistant' && !item.id.startsWith('stream-'),
+  );
+  const isChatStage = hasAssistantMessages;
+  const interactionControlsDisabled = isSending;
 
   const activeFixedMode =
     bootstrap?.fixedModes.find((item) => item.id === selectedFixedModeId) ?? null;
-  const customControlsLocked = Boolean(activeFixedMode);
+  const customControlsLocked = Boolean(activeFixedMode) || isSending;
   const selectedModelLabel =
-    bootstrap?.modelViews.find((item) => item.id === selectedModelViewId)?.label ?? '未设置';
+    bootstrap?.modelViews.find((item) => item.id === selectedModelViewId)?.label ?? '未附加';
   const selectedModeLabel =
     bootstrap?.modes.find((item) => item.id === selectedModeId)?.name ?? '无附加模式';
   const selectedLengthLabel =
-    bootstrap?.lengthPresets.find((item) => item.id === selectedLengthId)?.name ?? '未设置';
+    bootstrap?.lengthPresets.find((item) => item.id === selectedLengthId)?.name ?? '默认字数';
 
   function applySelections(selected?: Conversation['selected'] | null) {
     if (!selected) return;
@@ -149,6 +239,13 @@ export default function RewriteWorkbench() {
     setSelectedFixedModeId(nextBootstrap.defaults.fixedModeId);
     setSelectedModelViewId(nextBootstrap.defaults.modelViewId || '');
     setSelectedModeId(nextBootstrap.defaults.modeId);
+    setSelectedLengthId(nextBootstrap.defaults.lengthPresetId || '');
+  }
+
+  function resetToChatStageDefaults(nextBootstrap: BootstrapPayload) {
+    setSelectedFixedModeId(null);
+    setSelectedModelViewId('');
+    setSelectedModeId(null);
     setSelectedLengthId(nextBootstrap.defaults.lengthPresetId || '');
   }
 
@@ -264,6 +361,7 @@ export default function RewriteWorkbench() {
 
   function handleSelectConversation(conversation: Conversation) {
     setCurrentConversationId(conversation.id);
+    setMessages([]);
     applySelections(conversation.selected);
     void fetchMessages(conversation.id);
   }
@@ -297,13 +395,13 @@ export default function RewriteWorkbench() {
     setSelectedLengthId(fixedMode.lengthPresetId || bootstrap.defaults.lengthPresetId || '');
   }
 
-  async function sendChatRequest(body: Record<string, unknown>): Promise<Response> {
+  async function sendStreamingChatRequest(body: Record<string, unknown>): Promise<Response> {
     let res: Response | null = null;
     let lastNetworkError: unknown = null;
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        res = await fetch('/api/content-tools/rewrite/chat', {
+        res = await fetch('/api/content-tools/rewrite/chat/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -330,16 +428,16 @@ export default function RewriteWorkbench() {
     return res;
   }
 
-  function applyChatResponse(data: Record<string, unknown>, tempMessageId: string) {
-    const returnedConversationId = (data.conversation as Record<string, unknown>)?.id || data.conversationId;
+  function applyChatResponse(data: { conversation?: Conversation; message?: Message }, tempMessageId: string, tempAssistantId: string) {
+    const returnedConversationId = data.conversation?.id || data.message?.conversationId || null;
     if (data.conversation) {
-      const nextConversation = data.conversation as Conversation;
+      const nextConversation = data.conversation;
       setConversations((prev) => upsertConversation(prev, nextConversation));
       applySelections(nextConversation.selected);
     }
 
     if (returnedConversationId && returnedConversationId !== currentConversationId) {
-      setCurrentConversationId(returnedConversationId as string);
+      setCurrentConversationId(returnedConversationId);
     }
 
     if (!data.conversation) {
@@ -349,12 +447,12 @@ export default function RewriteWorkbench() {
     if (data.message) {
       setMessages((prev) => {
         const tempUserMsg = prev.find((item) => item.id === tempMessageId);
-        const filtered = prev.filter((item) => item.id !== tempMessageId);
+        const filtered = prev.filter((item) => item.id !== tempMessageId && item.id !== tempAssistantId);
 
         if (tempUserMsg) {
           const resolvedUserMsg = {
             ...tempUserMsg,
-            conversationId: (returnedConversationId as string) || tempUserMsg.conversationId,
+            conversationId: returnedConversationId || tempUserMsg.conversationId,
           };
           return [...filtered, resolvedUserMsg, data.message as Message];
         }
@@ -365,14 +463,24 @@ export default function RewriteWorkbench() {
   }
 
   async function handleSend() {
-    if (!inputText.trim() || isSending) return;
+    if (!inputText.trim() || isSending || !bootstrap) return;
 
     const textToSend = inputText.trim();
+    const wasChatStage = isChatStage;
+    const responseMode: 'chat' | 'versions' = isChatStage ? 'chat' : 'versions';
+    const requestSnapshot = buildRequestSnapshot({
+      fixedModeId: selectedFixedModeId,
+      modelViewId: selectedModelViewId || null,
+      modeId: selectedFixedModeId ? null : selectedModeId,
+      lengthPresetId: selectedLengthId || bootstrap.defaults.lengthPresetId,
+    });
     setInputText('');
     setIsSending(true);
 
+    const tempMessageId = `temp-${Date.now()}`;
+    const tempAssistantId = `stream-${Date.now()}`;
     const tempMessage: Message = {
-      id: `temp-${Date.now()}`,
+      id: tempMessageId,
       conversationId: currentConversationId || '',
       role: 'user',
       content: textToSend,
@@ -383,20 +491,99 @@ export default function RewriteWorkbench() {
       errorMessage: null,
       structuredResult: null,
     };
-    setMessages((prev) => [...prev, tempMessage]);
+    const tempAssistantMessage: Message = {
+      id: tempAssistantId,
+      conversationId: currentConversationId || '',
+      role: 'assistant',
+      content: responseMode === 'versions' ? '正在生成主版本...' : '',
+      createdAt: new Date().toISOString(),
+      generationMode: 'single',
+      status: 'success',
+      requestSnapshot,
+      errorMessage: null,
+      structuredResult: buildStreamingStructuredResult(
+        responseMode === 'versions' ? '正在生成主版本...' : '',
+        responseMode,
+        requestSnapshot,
+      ),
+    };
+    setMessages((prev) => [...prev, tempMessage, tempAssistantMessage]);
 
     try {
-      const res = await sendChatRequest({
+      const res = await sendStreamingChatRequest({
         conversationId: currentConversationId,
         message: textToSend,
         autoModeEnabled: false,
-        fixedModeId: selectedFixedModeId,
-        modelViewId: selectedModelViewId,
-        modeId: selectedFixedModeId ? null : selectedModeId,
-        lengthPresetId: selectedLengthId,
+        fixedModeId: requestSnapshot.fixedModeId,
+        modelViewId: requestSnapshot.modelViewId,
+        modeId: requestSnapshot.modeId,
+        lengthPresetId: requestSnapshot.lengthPresetId,
       });
-      const data = await res.json();
-      applyChatResponse(data, tempMessage.id);
+      if (!res.body) {
+        throw new Error('流式响应为空');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalPayload: { conversation: Conversation; message: Message } | null = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (value) {
+          buffer += decoder.decode(value, { stream: !done });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+
+            const event = JSON.parse(line) as RewriteStreamEvent;
+
+            if (event.type === 'preview') {
+              setMessages((prev) =>
+                prev.map((item) =>
+                  item.id === tempAssistantId
+                    ? {
+                        ...item,
+                        content: event.preview,
+                        structuredResult: buildStreamingStructuredResult(
+                          event.preview,
+                          event.responseMode,
+                          requestSnapshot,
+                        ),
+                      }
+                    : item,
+                ),
+              );
+              continue;
+            }
+
+            if (event.type === 'final') {
+              finalPayload = event.payload;
+              continue;
+            }
+
+            if (event.type === 'error') {
+              throw new Error(event.error);
+            }
+          }
+        }
+
+        if (done) {
+          break;
+        }
+      }
+
+      if (!finalPayload) {
+        throw new Error('未收到最终结果');
+      }
+
+      applyChatResponse(finalPayload, tempMessageId, tempAssistantId);
+      if (!wasChatStage) {
+        resetToChatStageDefaults(bootstrap);
+      }
     } catch (error) {
       console.error('发送消息失败', error);
       const title =
@@ -405,7 +592,7 @@ export default function RewriteWorkbench() {
           : '发送失败';
       const errorMessage = error instanceof Error ? error.message : '发送失败，请稍后重试';
       setMessages((prev) => {
-        const filtered = prev.filter((item) => item.id !== tempMessage.id);
+        const filtered = prev.filter((item) => item.id !== tempMessageId && item.id !== tempAssistantId);
         return [
           ...filtered,
           {
@@ -546,14 +733,22 @@ export default function RewriteWorkbench() {
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-slate-400">Rewrite Modes</p>
-                <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">固定能力按钮替代旧自动模式</h2>
+                <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+                  {isChatStage ? '当前已进入正常聊天阶段' : '首条默认走结果模式'}
+                </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  选中固定套餐时，会锁定后台绑定的模型、提示词和字数；取消后回到普通自定义模式。
+                  {isChatStage
+                    ? '从第二轮开始固定是聊天回复，但你仍然可以重新点强框架、强语感、模型、普通模式和字数，再继续聊。'
+                    : '首条消息默认只出 1 个主版本。选中固定套餐时，会锁定后台绑定的模型、提示词和字数。'}
                 </p>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] text-slate-500">
+              <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] text-slate-500">
                 <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-                {activeFixedMode ? `${activeFixedMode.name} 已生效` : '当前是普通自定义模式'}
+                <span>{isChatStage ? '正常聊天模式' : activeFixedMode ? `${activeFixedMode.name} 已生效` : '普通自定义模式'}</span>
+                <span className="text-slate-300">/</span>
+                <span>上限 {bootstrap.runtime.outputTokenLimit} tokens</span>
+                <span className="text-slate-300">/</span>
+                <span>约 {bootstrap.runtime.outputApproxChars} 汉字</span>
               </div>
             </div>
 
@@ -578,9 +773,14 @@ export default function RewriteWorkbench() {
                     key={fixedMode.id}
                     type="button"
                     onClick={() => handleToggleFixedMode(fixedMode.id)}
+                    disabled={interactionControlsDisabled}
                     className={cn(
                       'rounded-3xl border px-5 py-4 text-left transition',
-                      active ? palette.active : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white',
+                      interactionControlsDisabled
+                        ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                        : active
+                          ? palette.active
+                          : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white',
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -617,7 +817,12 @@ export default function RewriteWorkbench() {
                 <SlidersHorizontal className="h-4 w-4" />
                 普通自定义区
               </div>
-              {customControlsLocked ? (
+              {isChatStage ? (
+                <div className="mb-3 flex items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-3 py-2 text-[13px] text-sky-900">
+                  <Lock className="h-4 w-4" />
+                  第二轮起固定进入正常聊天模式：当前已重置为聊天默认值，但你仍可重新指定强框架 / 强语感 / 模型 / 普通模式 / 字数。
+                </div>
+              ) : customControlsLocked ? (
                 <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
                   <Lock className="h-4 w-4" />
                   {activeFixedMode?.name} 已锁定普通模型、普通模式和字数配置。取消按钮选择后恢复自定义。
@@ -642,6 +847,7 @@ export default function RewriteWorkbench() {
                         : 'border-slate-200 text-slate-700 focus:border-slate-400',
                     )}
                   >
+                    <option value="">无附加模型</option>
                     {bootstrap.modelViews.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.label}
@@ -712,12 +918,12 @@ export default function RewriteWorkbench() {
                   <Sparkles className="h-8 w-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold tracking-tight text-slate-900">
-                  {activeFixedMode ? `${activeFixedMode.name} 已准备好` : '普通自定义模式已准备好'}
+                  {activeFixedMode ? `${activeFixedMode.name} 已准备好` : '首条主版本已准备好'}
                 </h3>
                 <p className="mt-3 max-w-2xl text-[15px] leading-7 text-slate-500">
                   {activeFixedMode
-                    ? `现在直接贴原文即可，我会按“${activeFixedMode.name}”的固定套餐来改写。`
-                    : '现在可以自由选择展示模型、普通模式和字数，然后直接开始改写。'}
+                    ? `现在直接贴原文即可，我会按“${activeFixedMode.name}”的固定套餐先给你 1 个主版本。`
+                    : '现在可以先选模式和字数，首条默认只给 1 个主版本；从第二轮开始自动进入正常聊天。'}
                 </p>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                   <button
@@ -865,24 +1071,6 @@ export default function RewriteWorkbench() {
                   );
                 })}
 
-                {isSending ? (
-                  <div className="flex gap-4">
-                    <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 via-blue-700 to-cyan-500 shadow-lg shadow-blue-500/10">
-                      <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    </div>
-                    <div className="flex-1 rounded-[30px] border border-slate-200 bg-white px-5 py-5 shadow-sm">
-                      <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <div className="flex gap-1">
-                          <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:0ms]" />
-                          <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:150ms]" />
-                          <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:300ms]" />
-                        </div>
-                        正在生成改写结果...
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
                 {!isSending && followUpSuggestions.length > 0 ? (
                   <div className="flex flex-wrap gap-2 pl-[52px]">
                     {followUpSuggestions.slice(0, 4).map((suggestion, index) => (
@@ -909,13 +1097,15 @@ export default function RewriteWorkbench() {
             <div className="rounded-[30px] border border-slate-200 bg-white shadow-sm">
               <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3 text-[12px] text-slate-500">
                 <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
-                  {activeFixedMode ? activeFixedMode.name : '普通自定义'}
+                  {activeFixedMode ? activeFixedMode.name : isChatStage ? '正常聊天模式' : '普通自定义'}
                 </span>
                 <span>{selectedModelLabel}</span>
                 <span>/</span>
                 <span>{activeFixedMode ? '固定提示词' : selectedModeLabel}</span>
                 <span>/</span>
                 <span>{selectedLengthLabel}</span>
+                <span>/</span>
+                <span>最近上下文 {bootstrap.runtime.contextMessageLimit} 条</span>
               </div>
 
               <div className="relative">
@@ -934,9 +1124,11 @@ export default function RewriteWorkbench() {
                     isSending && 'cursor-not-allowed opacity-60',
                   )}
                   placeholder={
-                    activeFixedMode
-                      ? `请直接粘贴原文，我会按“${activeFixedMode.name}”固定套餐改写。`
-                      : '请输入原文或继续追问，例如：保留专业感，但开头更抓人。'
+                    isChatStage
+                      ? '现在已经进入正常聊天阶段，继续追问、补充要求或微调都可以。'
+                      : activeFixedMode
+                        ? `请直接粘贴原文，我会按“${activeFixedMode.name}”固定套餐先给你 1 个主版本。`
+                        : '请输入原文。首条默认只出 1 个主版本，例如：保留专业感，但开头更抓人。'
                   }
                 />
 

@@ -259,10 +259,13 @@ function buildBaseDb(): FakeDb {
   return {
     ai_feature_config: [
       {
+        id: "feature-rewrite",
         feature_key: "content_rewrite",
         label: "员工文案改写",
         system_prompt: "只改写，不编造。",
         is_enabled: true,
+        output_token_limit: 3600,
+        context_message_limit: 30,
       },
     ],
     rewrite_model_views: [
@@ -445,6 +448,10 @@ test("bootstrap 返回动态配置和默认值", async () => {
   const payload = await rewrite.getRewriteBootstrapPayload(service as never);
 
   assert.equal(payload.feature.enabled, true);
+  assert.equal(payload.feature.id, "feature-rewrite");
+  assert.equal(payload.runtime.outputTokenLimit, 3600);
+  assert.equal(payload.runtime.outputApproxChars, 3000);
+  assert.equal(payload.runtime.contextMessageLimit, 30);
   assert.equal(payload.defaults.autoModeEnabled, false);
   assert.equal(payload.defaults.fixedModeId, null);
   assert.equal(payload.defaults.modelViewId, "model-default");
@@ -463,6 +470,32 @@ test("bootstrap 在功能关闭时仍返回配置，但 enabled=false 供前端�
 
   assert.equal(payload.feature.enabled, false);
   assert.equal(payload.modelViews.length, 2);
+});
+
+test("首条会话标题优先用语义化标题，不再直接截首句", async () => {
+  const db = buildBaseDb();
+  const service = createFakeService(db);
+  aiQueue.push({
+    content: JSON.stringify({
+      title: "美股下跌结构重写",
+      summary: "先稳结构再保留专业边界",
+      versions: [{ title: "主版本", content: "今晚美股为什么跌，我先把逻辑顺一遍。" }],
+      notes: ["保留事实"],
+      follow_up_suggestions: [],
+    }),
+    model: "claude-sonnet-4-6",
+    channelName: "主渠道",
+    elapsedMs: 210,
+  });
+
+  const payload = await rewrite.handleRewriteChat({
+    service: service as never,
+    actor: buildActor(),
+    message: "保留专业边界，但把结构重新整理清楚：\n今晚美股为什么跌？",
+  });
+
+  assert.equal(payload.conversation.title, "美股下跌结构重写");
+  assert.notEqual(payload.conversation.title, "保留专业边界，但把结构重新整理清楚");
 });
 
 test("conversations 只返回当前用户自己的会话，且 selected 结构统一", async () => {
@@ -606,6 +639,7 @@ test("chat 在固定模式下会锁定套餐配置并返回 structuredResult", a
   assert.equal(payload.message.structuredResult?.selected.modeId, null);
   assert.equal(payload.message.structuredResult?.status, "success");
   assert.equal(payload.message.structuredResult?.final.recommendedText, "先稳住结构版");
+  assert.equal(payload.message.structuredResult?.final.versions.length, 1);
   assert.equal(payload.message.requestSnapshot?.autoModeEnabled, false);
   assert.equal(payload.message.requestSnapshot?.fixedModeId, "fixed-framework");
   assert.equal(payload.message.requestSnapshot?.modeId, null);
@@ -666,6 +700,7 @@ test("chat 在 single 模式下返回 structuredResult", async () => {
   assert.equal(payload.message.structuredResult?.status, "success");
   assert.equal(payload.message.structuredResult?.steps.length, 1);
   assert.equal(payload.message.structuredResult?.final.responseMode, "versions");
+  assert.equal(payload.message.structuredResult?.final.versions.length, 1);
   assert.equal(payload.message.requestSnapshot?.modeId, null);
 });
 
@@ -762,7 +797,7 @@ test("继续追问默认走正常聊天，不再包装成版本A", async () => {
   assert.match(payload.message.content, /直接改成这样/);
 });
 
-test("继续追问明确要求重出版本时，仍返回版本卡结构", async () => {
+test("继续追问即使要求多版本，也固定回到聊天模式", async () => {
   const db = buildBaseDb();
   db.rewrite_conversations.push({
     id: "conv-rewrite",
@@ -804,7 +839,12 @@ test("继续追问明确要求重出版本时，仍返回版本卡结构", async
     created_at: "2026-04-14T11:59:00.000Z",
   });
   const service = createFakeService(db);
-  pushAiSuccess("按你的新要求重写一版", "重出一版");
+  aiQueue.push({
+    content: "第二轮起固定走聊天模式，我先给你一句最稳的建议：先保留原结构，再把开头压成一句更抓人的口播。",
+    model: "claude-sonnet-4-6",
+    channelName: "主渠道",
+    elapsedMs: 260,
+  });
 
   const payload = await rewrite.handleRewriteChat({
     service: service as never,
@@ -813,8 +853,8 @@ test("继续追问明确要求重出版本时，仍返回版本卡结构", async
     message: "基于刚才内容，重新出3版给我选",
   });
 
-  assert.equal(payload.message.structuredResult?.final.responseMode, "versions");
-  assert.equal(payload.message.structuredResult?.final.versions[0]?.content, "按你的新要求重写一版");
+  assert.equal(payload.message.structuredResult?.final.responseMode, "chat");
+  assert.match(payload.message.content, /固定走聊天模式/);
 });
 
 test("messages 查询不存在会话时返回会话不存在", async () => {
@@ -866,7 +906,7 @@ test("chat 在功能关闭时直接阻断，不创建会话", async () => {
   assert.equal(db.rewrite_messages.length, 0);
 });
 
-test("老会话继续聊天会继承已有选择，mode 清空后仍可用，auto/single 切换不串", async () => {
+test("第二轮开始仍固定聊天模式，但允许重新指定强框架参数", async () => {
   const db = buildBaseDb();
   db.rewrite_conversations.push({
     id: "conv-keep",
@@ -881,29 +921,196 @@ test("老会话继续聊天会继承已有选择，mode 清空后仍可用，aut
     created_at: "2026-04-14T11:00:00.000Z",
     updated_at: "2026-04-14T11:59:00.000Z",
   });
+  db.rewrite_messages.push({
+    id: "msg-keep-1",
+    conversation_id: "conv-keep",
+    user_id: "user-1",
+    role: "assistant",
+    generation_mode: "single",
+    message_status: "success",
+    content: "上一轮主版本",
+    structured_result: {
+      final: {
+        responseMode: "versions",
+        versions: [{ title: "主版本", content: "上一轮主版本" }],
+        recommendedText: "上一轮主版本",
+      },
+    },
+    request_snapshot: {
+      autoModeEnabled: false,
+      fixedModeId: null,
+      modelViewId: "model-alt",
+      modeId: "mode-sharp",
+      lengthPresetId: "length-long",
+      workflowId: null,
+    },
+    error_message: null,
+    created_at: "2026-04-14T11:59:00.000Z",
+  });
   const service = createFakeService(db);
-  pushAiSuccess("继承旧配置后的单步结果", "切到 single");
+  aiQueue.push({
+    content: "已经进入聊天模式，但这轮我按你重新点的强框架继续帮你细调。",
+    model: "claude-sonnet-4-6",
+    channelName: "主渠道",
+    elapsedMs: 240,
+  });
 
   const payload = await rewrite.handleRewriteChat({
     service: service as never,
     actor: buildActor(),
     conversationId: "conv-keep",
-    message: "继续改，但把附加模式清掉",
+    message: "继续改，但这轮切成强框架",
     autoModeEnabled: false,
-    modeId: null,
+    fixedModeId: "fixed-framework",
   });
 
   assert.equal(payload.conversation.selected.autoModeEnabled, false);
+  assert.equal(payload.conversation.selected.fixedModeId, "fixed-framework");
   assert.equal(payload.conversation.selected.modelViewId, "model-alt");
-  assert.equal(payload.conversation.selected.lengthPresetId, "length-long");
+  assert.equal(payload.conversation.selected.lengthPresetId, "length-default");
   assert.equal(payload.conversation.selected.modeId, null);
+  assert.equal(payload.message.structuredResult?.final.responseMode, "chat");
+  assert.equal(payload.message.requestSnapshot?.fixedModeId, "fixed-framework");
   assert.equal(payload.message.requestSnapshot?.modelViewId, "model-alt");
-  assert.equal(payload.message.requestSnapshot?.lengthPresetId, "length-long");
+  assert.equal(payload.message.requestSnapshot?.lengthPresetId, "length-default");
   assert.equal(payload.message.requestSnapshot?.modeId, null);
 
   const savedConversation = db.rewrite_conversations.find((row) => row.id === "conv-keep");
   assert.equal(savedConversation?.auto_mode_enabled, false);
+  assert.equal(savedConversation?.selected_fixed_mode_id, "fixed-framework");
   assert.equal(savedConversation?.selected_model_view_id, "model-alt");
-  assert.equal(savedConversation?.selected_length_preset_id, "length-long");
+  assert.equal(savedConversation?.selected_length_preset_id, "length-default");
   assert.equal(savedConversation?.selected_mode_id, null);
+});
+
+test("第二轮重新点普通模式后，请求会带上对应 mode 参数，返回仍是聊天模式", async () => {
+  const db = buildBaseDb();
+  db.rewrite_conversations.push({
+    id: "conv-mode",
+    user_id: "user-1",
+    title: "旧会话",
+    auto_mode_enabled: false,
+    selected_fixed_mode_id: null,
+    selected_model_view_id: "model-default",
+    selected_mode_id: null,
+    selected_length_preset_id: "length-default",
+    last_message_at: "2026-04-14T11:59:00.000Z",
+    created_at: "2026-04-14T11:00:00.000Z",
+    updated_at: "2026-04-14T11:59:00.000Z",
+  });
+  db.rewrite_messages.push({
+    id: "msg-mode-1",
+    conversation_id: "conv-mode",
+    user_id: "user-1",
+    role: "assistant",
+    generation_mode: "single",
+    message_status: "success",
+    content: "上一轮主版本",
+    structured_result: {
+      final: {
+        responseMode: "versions",
+        versions: [{ title: "主版本", content: "上一轮主版本" }],
+        recommendedText: "上一轮主版本",
+      },
+    },
+    request_snapshot: {
+      autoModeEnabled: false,
+      fixedModeId: null,
+      modelViewId: "model-default",
+      modeId: null,
+      lengthPresetId: "length-default",
+      workflowId: null,
+    },
+    error_message: null,
+    created_at: "2026-04-14T11:59:00.000Z",
+  });
+  const service = createFakeService(db);
+  aiQueue.push({
+    content: "这轮我按你新选的犀利模式继续聊，先把表达收得更利落。",
+    model: "claude-sonnet-4-6",
+    channelName: "主渠道",
+    elapsedMs: 220,
+  });
+
+  const payload = await rewrite.handleRewriteChat({
+    service: service as never,
+    actor: buildActor(),
+    conversationId: "conv-mode",
+    message: "继续聊，这轮切成犀利模式",
+    modeId: "mode-sharp",
+    modelViewId: "model-default",
+    lengthPresetId: "length-long",
+  });
+
+  assert.equal(payload.message.structuredResult?.final.responseMode, "chat");
+  assert.equal(payload.message.requestSnapshot?.modeId, "mode-sharp");
+  assert.equal(payload.message.requestSnapshot?.modelViewId, "model-default");
+  assert.equal(payload.message.requestSnapshot?.lengthPresetId, "length-long");
+  assert.equal(payload.conversation.selected.modeId, "mode-sharp");
+  assert.equal(payload.conversation.selected.lengthPresetId, "length-long");
+});
+
+test("第二轮重新切模型后，请求会带上对应 model 参数，返回仍是聊天模式", async () => {
+  const db = buildBaseDb();
+  db.rewrite_conversations.push({
+    id: "conv-model",
+    user_id: "user-1",
+    title: "旧会话",
+    auto_mode_enabled: false,
+    selected_fixed_mode_id: null,
+    selected_model_view_id: "model-default",
+    selected_mode_id: null,
+    selected_length_preset_id: "length-default",
+    last_message_at: "2026-04-14T11:59:00.000Z",
+    created_at: "2026-04-14T11:00:00.000Z",
+    updated_at: "2026-04-14T11:59:00.000Z",
+  });
+  db.rewrite_messages.push({
+    id: "msg-model-1",
+    conversation_id: "conv-model",
+    user_id: "user-1",
+    role: "assistant",
+    generation_mode: "single",
+    message_status: "success",
+    content: "上一轮主版本",
+    structured_result: {
+      final: {
+        responseMode: "versions",
+        versions: [{ title: "主版本", content: "上一轮主版本" }],
+        recommendedText: "上一轮主版本",
+      },
+    },
+    request_snapshot: {
+      autoModeEnabled: false,
+      fixedModeId: null,
+      modelViewId: "model-default",
+      modeId: null,
+      lengthPresetId: "length-default",
+      workflowId: null,
+    },
+    error_message: null,
+    created_at: "2026-04-14T11:59:00.000Z",
+  });
+  const service = createFakeService(db);
+  aiQueue.push({
+    content: "这轮我改用增强模型继续聊，先把逻辑骨架再提纯一遍。",
+    model: "claude-sonnet-4-6",
+    channelName: "主渠道",
+    elapsedMs: 210,
+  });
+
+  const payload = await rewrite.handleRewriteChat({
+    service: service as never,
+    actor: buildActor(),
+    conversationId: "conv-model",
+    message: "继续聊，这轮切增强模型",
+    modelViewId: "model-alt",
+    modeId: null,
+    lengthPresetId: "length-default",
+  });
+
+  assert.equal(payload.message.structuredResult?.final.responseMode, "chat");
+  assert.equal(payload.message.requestSnapshot?.modelViewId, "model-alt");
+  assert.equal(payload.message.structuredResult?.steps[0]?.routeId, "route-alt");
+  assert.equal(payload.conversation.selected.modelViewId, "model-alt");
 });

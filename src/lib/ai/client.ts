@@ -17,6 +17,7 @@ export type AiMessage = {
 };
 
 export type AiRequestOptions = {
+  onChunk?: (text: string) => void;
   messages: AiMessage[];
   maxTokens?: number;
   timeoutMs?: number;
@@ -405,7 +406,7 @@ function buildRequestBody(options: AiRequestOptions, model: string) {
   return body;
 }
 
-async function parseChatCompletionSse(response: Response): Promise<StreamedChatCompletionResult> {
+async function parseChatCompletionSse(response: Response, options?: AiRequestOptions): Promise<StreamedChatCompletionResult> {
   if (!response.body) {
     throw new AiChannelError("AI 返回空响应流", "empty_stream", true);
   }
@@ -453,6 +454,7 @@ async function parseChatCompletionSse(response: Response): Promise<StreamedChatC
     const chunkContent = normalizeStreamDeltaText(delta?.content);
     if (chunkContent) {
       content += chunkContent;
+      options?.onChunk?.(chunkContent);
     }
     const chunkReasoning = normalizeStreamDeltaText(delta?.reasoning_content);
     if (chunkReasoning) {
@@ -548,7 +550,7 @@ async function sendToChannel(
     );
   }
 
-  const streamed = await parseChatCompletionSse(response);
+  const streamed = await parseChatCompletionSse(response, options);
   const content = streamed.content || streamed.reasoningContent;
   if (!content) {
     throw new AiChannelError(

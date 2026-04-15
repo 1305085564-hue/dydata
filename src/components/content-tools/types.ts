@@ -1,8 +1,14 @@
 export type BootstrapPayload = {
   feature: {
+    id: string | null;
     key: string;
     label: string;
     enabled: boolean;
+  };
+  runtime: {
+    outputTokenLimit: number;
+    outputApproxChars: number;
+    contextMessageLimit: number;
   };
   defaults: {
     autoModeEnabled: boolean;
