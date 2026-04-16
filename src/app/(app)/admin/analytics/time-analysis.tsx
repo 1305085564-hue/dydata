@@ -109,7 +109,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
   const getIntensityClass = (value: number | null, max: number) => {
     if (value === null || value === 0) return "bg-slate-50 border-slate-100";
     const ratio = value / max;
-    if (ratio > 0.8) return "bg-[linear-gradient(135deg,#f43f5e_0%,#e11d48_100%)] text-white border-transparent shadow-sm";
+    if (ratio > 0.8) return "bg-[linear-gradient(135deg,var(--color-rose-500,#f43f5e)_0%,var(--color-rose-600,#e11d48)_100%)] text-white border-transparent shadow-sm";
     if (ratio > 0.6) return "bg-rose-400 text-white border-transparent shadow-sm";
     if (ratio > 0.4) return "bg-rose-300 text-white border-transparent";
     if (ratio > 0.2) return "bg-rose-200 text-rose-900 border-transparent";

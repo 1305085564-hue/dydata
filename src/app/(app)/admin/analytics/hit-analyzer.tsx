@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
 import {
   ScatterChart,
   Scatter,
@@ -104,7 +103,7 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
     }).filter(d => d.cr > 0 && d.play > 0);
   }, [filtered]);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -237,14 +236,14 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
                 content={<CustomTooltip />} 
                 cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }}
               />
-              <ReferenceLine 
-                y={HIT_THRESHOLD} 
-                stroke="#f43f5e" 
-                strokeDasharray="4 4" 
-                label={{ 
-                  position: 'insideTopLeft', 
-                  value: '爆款阈值线 (10w+)', 
-                  fill: '#f43f5e',
+              <ReferenceLine
+                y={HIT_THRESHOLD}
+                stroke="var(--color-rose-500, #f43f5e)"
+                strokeDasharray="4 4"
+                label={{
+                  position: 'insideTopLeft',
+                  value: '爆款阈值线 (10w+)',
+                  fill: 'var(--color-rose-500, #f43f5e)',
                   fontSize: 12,
                   fontWeight: 600,
                   offset: 10
@@ -254,9 +253,9 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
                 {scatterData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={entry.isHit ? "#f43f5e" : "#60a5fa"} 
+                    fill={entry.isHit ? "var(--color-rose-500, #f43f5e)" : "var(--color-primary-light, #60a5fa)"}
                     fillOpacity={entry.isHit ? 0.8 : 0.6}
-                    stroke={entry.isHit ? "#e11d48" : "#3b82f6"}
+                    stroke={entry.isHit ? "var(--color-rose-600, #e11d48)" : "var(--color-primary, #3b82f6)"}
                     strokeWidth={1}
                   />
                 ))}

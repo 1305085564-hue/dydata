@@ -1,8 +1,7 @@
 "use client";
 
-import { AlertCircle, ArrowUpRight, Sparkles, TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Sparkles, TrendingDown, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { 获取可信度文案 } from "./视频结论卡-计算";
 import type { 干预结论卡数据, 结论卡数据 } from "./视频结论卡-类型";
@@ -44,7 +43,7 @@ export function 视频结论单卡({ card, className }: { card: 结论卡数据;
 
         <div className="flex-1 space-y-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--color-primary)_0%,rgba(47,94,220,0.8)_100%)] shadow-md">
+            <div className="relative flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--color-primary)_0%,var(--color-primary-light,var(--color-primary))_100%)] shadow-md">
               {card.insufficient ? (
                 <AlertCircle className="size-6 text-white" />
               ) : card.eyebrow === "Publish Window" ? (
@@ -116,7 +115,7 @@ export function 干预结论单卡({ card, className }: { card: 干预结论卡�
           <div className="flex items-center gap-4">
             <div className={cn(
               "relative flex size-14 shrink-0 items-center justify-center rounded-2xl shadow-md",
-              needsIntervention ? "bg-[linear-gradient(135deg,#f43f5e_0%,#be123c_100%)]" : "bg-[linear-gradient(135deg,#10b981_0%,#047857_100%)]"
+              needsIntervention ? "bg-[linear-gradient(135deg,var(--color-rose-500,#f43f5e)_0%,var(--color-rose-700,#be123c)_100%)]" : "bg-[linear-gradient(135deg,var(--color-emerald-500,#10b981)_0%,var(--color-emerald-700,#047857)_100%)]"
             )}>
               {needsIntervention ? (
                 <ArrowUpRight className="size-6 text-white" />

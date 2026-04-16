@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Users, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MotionCard } from "@/components/ui/motion-card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { containerVariants, itemVariants } from "@/lib/animations";
+import { containerVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 interface Report {
@@ -169,6 +167,7 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
   const maxHitRate = Math.max(...stats.map(s => s.hitRate));
   const maxAvgPlay = Math.max(...stats.map(s => Math.max(s.recentAvgPlay, s.prevAvgPlay, s.avgPlay)));
   const maxEngagement = Math.max(...stats.map(s => s.engagementRate));
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <div className="space-y-6">
@@ -200,7 +199,12 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
         </div>
       </div>
 
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-4"
+      >
         {/* Table Header */}
         <div className="hidden grid-cols-12 gap-4 px-6 text-[11px] font-semibold uppercase tracking-wider text-slate-400 lg:grid">
           <div className="col-span-3">人员标签</div>
@@ -211,13 +215,13 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
 
         <AnimatePresence mode="popLayout">
           {sorted.map((person, index) => (
-            <motion.div 
-              key={person.name} 
-              layout
-              initial={{ opacity: 0, y: 20 }}
+            <motion.div
+              key={person.name}
+              layout={!shouldReduceMotion}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, delay: shouldReduceMotion ? 0 : index * 0.05 }}
             >
               <PersonRankRow 
                 person={person} 
@@ -318,7 +322,7 @@ function PersonRankRow({
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div 
-              className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-primary)_0%,#60a5fa_100%)] transition-all duration-1000" 
+              className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-primary)_0%,var(--color-primary-light,var(--color-primary))_100%)] transition-all duration-1000" 
               style={{ width: `${hitRateWidth}%` }} 
             />
           </div>

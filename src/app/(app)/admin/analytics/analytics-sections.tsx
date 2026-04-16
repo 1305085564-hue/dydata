@@ -2,9 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, type Variants } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export interface AnalyticsSection {
@@ -25,24 +24,25 @@ export function AnalyticsSections({ sections }: { sections: AnalyticsSection[] }
     }));
   };
 
+  const shouldReduceMotion = useReducedMotion();
+
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
+        staggerChildren: shouldReduceMotion ? 0 : 0.1,
+        delayChildren: shouldReduceMotion ? 0 : 0.2
       }
     }
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 30, scale: 0.98 },
+    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 30, scale: 0.98 },
     visible: {
       opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
+      ...(shouldReduceMotion ? {} : { y: 0, scale: 1 }),
+      transition: shouldReduceMotion ? { duration: 0.2 } : {
         type: "spring",
         stiffness: 100,
         damping: 20

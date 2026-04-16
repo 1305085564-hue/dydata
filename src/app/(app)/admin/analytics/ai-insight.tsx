@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, Sparkles, TrendingUp, TrendingDown, Target, AlertTriangle, ArrowRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { PeriodInsightResult } from "@/lib/ai/shared";
 
@@ -48,6 +48,8 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
     }
   }
 
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -56,7 +58,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <p className="text-sm text-[var(--color-text-secondary)]">基于业务数据自动生成的分析结论与建议行动。</p>
         </div>
         
-        <div className="flex items-center gap-2 rounded-full border border-slate-200/60 bg-white/60 p-1 shadow-sm backdrop-blur-md">
+        <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200/60 bg-white/60 p-1 shadow-sm backdrop-blur-md">
           <button
             className={cn(
               "rounded-full px-4 py-1.5 text-xs font-semibold transition-all",
@@ -78,7 +80,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <div className="h-4 w-px bg-slate-200 mx-1"></div>
           <Button
             size="sm"
-            className="rounded-full bg-[linear-gradient(135deg,var(--color-primary)_0%,#3b82f6_100%)] px-5 transition-all hover:opacity-90 shadow-sm shadow-blue-500/20"
+            className="rounded-full bg-[linear-gradient(135deg,var(--color-primary)_0%,var(--color-primary-light,var(--color-primary))_100%)] px-5 transition-all hover:opacity-90 shadow-sm shadow-blue-500/20"
             onClick={generate}
             disabled={loading}
           >
@@ -98,9 +100,9 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
         {error && (
           <motion.div
             key="error"
-            initial={{ opacity: 0, y: 10 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
             className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-600 shadow-sm backdrop-blur-sm"
           >
             <div className="flex items-center gap-2">
@@ -140,7 +142,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
         {insight && !loading && (
           <motion.div
             key="insight"
-            initial={{ opacity: 0, y: 20 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
@@ -208,7 +210,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
             {/* 下期重点 */}
             {insight.next_period_focus && (
-              <div className="md:col-span-2 rounded-[24px] border border-transparent bg-[linear-gradient(135deg,var(--color-primary)_0%,#3b82f6_100%)] p-6 shadow-md relative overflow-hidden">
+              <div className="md:col-span-2 rounded-[24px] border border-transparent bg-[linear-gradient(135deg,var(--color-primary)_0%,var(--color-primary-light,var(--color-primary))_100%)] p-6 shadow-md relative overflow-hidden">
                 <div className="absolute -right-12 -top-12 size-48 rounded-full bg-white opacity-10 blur-2xl"></div>
                 
                 <div className="relative flex flex-col md:flex-row gap-6 items-start md:items-center justify-between z-10">
