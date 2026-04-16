@@ -13,6 +13,8 @@ import { AiInsight } from "./ai-insight";
 import { 视频结论卡 } from "./视频结论卡";
 import type { AnalyticsVideoRow } from "./视频结论卡-类型";
 import { FollowerConvertTrend } from "./follower-convert-trend";
+import { AnalyticsHero } from "./analytics-hero";
+import { AnalyticsTable } from "./analytics-table";
 import { loadAnalyticsPageData } from "@/lib/loaders/analytics-page";
 
 interface AnalyticsPageProps {
@@ -90,7 +92,11 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         <AdminSecondaryNav pathname="/admin/analytics" canManageAdmin={data.isPrivilegedUser} />
         <AnalyticsPageHeader preset={data.range.preset} from={data.range.from} to={data.range.to} />
       </AppShellHero>
+      
+      {/* 顶层：Hero 指标区 */}
+      <AnalyticsHero reports={data.filteredReports} />
 
+      {/* 中层：视频结论卡 + 各类分析组件 */}
       <AppShellSection
         eyebrow="Core Insight Deck"
         title="核心结论区"
@@ -106,6 +112,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       <div className="mt-8">
         <AnalyticsSections sections={sections} />
       </div>
+      
+      {/* 底层：明细表格 */}
+      <AnalyticsTable videos={data.filteredVideos} />
     </AppShell>
   );
 }

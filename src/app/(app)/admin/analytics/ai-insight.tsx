@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Loader2, Sparkles, TrendingUp, TrendingDown, Target, AlertTriangle, ArrowRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -224,7 +225,10 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     </div>
                   </div>
                   
-                  <Button className="shrink-0 rounded-full bg-white text-blue-600 hover:bg-slate-50 px-6 py-5 shadow-lg border-0 group whitespace-nowrap">
+                  <Button
+                    className="shrink-0 rounded-full bg-white text-blue-600 hover:bg-slate-50 px-6 py-5 shadow-lg border-0 group whitespace-nowrap"
+                    onClick={() => toast.info("功能开发中")}
+                  >
                     将其设为下期目标
                     <ArrowRight className="size-4 ml-2 transition-transform group-hover:translate-x-1" />
                   </Button>
