@@ -286,7 +286,6 @@ export default function HistorySidebar({
           <ActionDetailDrawer
             id={selectedId}
             actorRole={actorRole}
-            actorRole={actorRole}
           onClose={() => setSelectedId(null)}
           />
         )}

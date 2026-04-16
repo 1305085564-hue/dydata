@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
-import { Copy, AlertTriangle, CheckCircle2, XCircle, Terminal } from "lucide-react";
+import { Copy, AlertTriangle, CheckCircle2, XCircle, Terminal, Loader2 } from "lucide-react";
 import AssistantDetailSections from "./assistant-detail-sections";
 import { cn } from "@/lib/utils";
 
