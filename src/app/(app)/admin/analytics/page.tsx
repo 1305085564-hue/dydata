@@ -94,7 +94,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       </AppShellHero>
       
       {/* 顶层：Hero 指标区 */}
-      <AnalyticsHero reports={data.filteredReports} />
+      <AnalyticsHero reports={data.filteredReports} rangeFrom={data.range.from} rangeTo={data.range.to} />
 
       {/* 中层：视频结论卡 + 各类分析组件 */}
       <AppShellSection

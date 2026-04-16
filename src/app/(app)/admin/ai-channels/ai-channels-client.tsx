@@ -313,11 +313,12 @@ export default function AIChannelsClient() {
         </div>
       ) : (
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
-          <ChannelSidebar 
+          <ChannelSidebar
             channels={channels}
             selectedChannelId={selectedChannelId}
             onSelect={setSelectedChannelId}
             onAddClick={() => setSelectedChannelId(null)}
+            onToggleEnabled={(id, enabled) => handleChannelAction(id, "toggle", enabled)}
           />
           
           <div className="flex-1 min-w-0">
