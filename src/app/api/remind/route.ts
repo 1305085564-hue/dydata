@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { buildReminderContent } from "@/lib/飞书提醒";
+import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -8,6 +10,19 @@ export async function GET(request: NextRequest) {
 
   if (!expectedSecret || secret !== expectedSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const shanghaiYear = getShanghaiYear();
+  if (!hasChinaHolidayPlan(shanghaiYear)) {
+    console.warn(`[api/remind] ${shanghaiYear} 节假日清单未更新，当前按周末规则兜底，请补充 src/lib/工作日.ts`);
+  }
+
+  if (!isChinaWorkingDay()) {
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: getChinaWorkingDayReason(),
+    });
   }
 
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -60,12 +75,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const nameList = unsubmitted.map((u) => {
-    const streak = streakMap.get(u.user_id);
-    return streak ? `- ${u.name}（⚠️ 连续 ${streak} 天未交）` : `- ${u.name}`;
-  }).join("\n");
-
-  const content = `以下同事今日尚未提交数据：\n\n**未提交：**\n${nameList}\n\n**已提交：** ${submittedCount}/${all.length} 人\n\n请尽快提交 👉 https://dydata.cc`;
+  const { content, escalatedMembers, escalationManager } = buildReminderContent({
+    unsubmitted,
+    streakMap,
+    submittedCount,
+    totalCount: all.length,
+  });
 
   const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
   if (!webhookUrl) {
@@ -103,6 +118,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     unsubmitted: unsubmitted.map((u) => u.name),
+    escalated: escalatedMembers.map((member) => member.name),
+    escalationManager: escalationManager?.name ?? null,
     total: all.length,
     submitted: submittedCount,
   });
