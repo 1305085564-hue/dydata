@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Activity, FileClock, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
@@ -47,28 +47,28 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       label: "今日提交",
       value: data.summary.todayReportCount,
       hint: `${data.submittedProfileIds.length} 人已提交`,
-      icon: Activity,
+      icon: "Activity",
       tone: "primary" as const,
     },
     {
       label: "在岗成员",
       value: data.summary.activeProfilesCount,
       hint: `共 ${data.summary.totalProfiles} 人，豁免 ${data.summary.exemptProfilesCount} 人`,
-      icon: Users,
+      icon: "Users",
       tone: "neutral" as const,
     },
     {
       label: "待处理事项",
       value: data.summary.pendingRequestCount,
       hint: data.summary.pendingRequestCount > 0 ? "优先处理豁免申请" : "当前没有新增待办",
-      icon: FileClock,
+      icon: "FileClock",
       tone: data.summary.pendingRequestCount > 0 ? "warning" as const : "neutral" as const,
     },
     {
       label: "邀请码存量",
       value: data.summary.inviteCodeCount,
       hint: data.summary.inviteCodeCount > 0 ? "可直接邀请新成员" : "建议补充邀请码",
-      icon: ShieldCheck,
+      icon: "ShieldCheck",
       tone: "neutral" as const,
     },
   ];

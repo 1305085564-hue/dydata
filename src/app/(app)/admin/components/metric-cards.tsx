@@ -1,13 +1,20 @@
 "use client";
 
-import { LucideIcon } from "lucide-react";
+import { Activity, Users, FileClock, ShieldCheck, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface MetricCardProps {
+const iconMap: Record<string, LucideIcon> = {
+  Activity,
+  Users,
+  FileClock,
+  ShieldCheck,
+};
+
+export interface MetricCardProps {
   label: string;
   value: number | string;
   hint: string;
-  icon: LucideIcon;
+  icon: string;
   trend?: {
     value: number;
     label: string;
@@ -17,7 +24,8 @@ interface MetricCardProps {
   tone?: "primary" | "warning" | "success" | "neutral" | "danger";
 }
 
-export function MetricCard({ label, value, hint, icon: Icon, trend, onClick, tone = "neutral" }: MetricCardProps) {
+export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "neutral" }: MetricCardProps) {
+  const Icon = iconMap[icon] ?? Activity;
   const toneClasses = {
     primary: "text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20",
     warning: "text-[var(--color-warning)] bg-[var(--color-warning)]/10 border-[var(--color-warning)]/20",
