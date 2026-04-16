@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
@@ -10,13 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Copy, Loader2 } from "lucide-react";
+import { Copy, Loader2, Terminal, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type ActionDetail = {
   id: string;
   adminName: string;
-  actionType: string;
+  action操作类型: string;
   actionCategory?: string;
   description: string;
   aiReasoning?: string;
@@ -30,17 +29,16 @@ type ActionDetail = {
   createdAt: string;
 };
 
+// ... existing Props but notice we only need id and onClose now based on history-sidebar usage
 type Props = {
-  actorRole: "admin" | "owner";
-  actionId: string | null;
-  open: boolean;
+  id: string;
+  actorRole?: "admin" | "owner";
   onClose: () => void;
 };
 
 function formatJson(value: unknown) {
-  if (value == null) return "";
+  if (value == null) return "null";
   if (typeof value === "string") return value;
-
   try {
     return JSON.stringify(value, null, 2);
   } catch {
@@ -48,53 +46,47 @@ function formatJson(value: unknown) {
   }
 }
 
-function resultBadge(result?: string) {
+function resultStatus(result?: string) {
   switch (result) {
     case "success":
-      return <Badge>成功</Badge>;
+      return { icon: <CheckCircle2 className="h-4 w-4" />, text: "SUCCESS", classes: "text-primary bg-primary/10 border-primary/30" };
     case "failed":
-      return <Badge variant="destructive">失败</Badge>;
+      return { icon: <XCircle className="h-4 w-4" />, text: "FAILED", classes: "text-destructive bg-destructive/10 border-destructive/30" };
     case "cancelled":
-      return <Badge variant="outline">已取消</Badge>;
+      return { icon: <AlertTriangle className="h-4 w-4" />, text: "ABORTED", classes: "text-muted-foreground bg-muted/50 border-border" };
     case "pending_confirm":
-      return <Badge variant="secondary">待确认</Badge>;
+      return { icon: <Loader2 className="h-4 w-4 animate-spin" />, text: "PENDING_AUTH", classes: "text-amber-500 bg-amber-950/30 border-amber-900" };
     default:
-      return result ? <Badge variant="outline">{result}</Badge> : null;
+      return { icon: <Terminal className="h-4 w-4" />, text: result?.toUpperCase() || "UNKNOWN", classes: "text-muted-foreground bg-muted/50 border-border" };
   }
 }
 
-export default function ActionDetailDrawer({ actorRole, actionId, open, onClose }: Props) {
+export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
   const [detail, setDetail] = useState<ActionDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || !actionId) {
-      setDetail(null);
-      setError(null);
-      return;
-    }
+    if (!id) return;
 
     let cancelled = false;
     const loadDetail = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/admin/ai-assistant/history/${actionId}`);
+        const res = await fetch(`/api/admin/ai-assistant/history/${id}`);
         const data = await res.json();
         if (!res.ok || data.error) {
-          throw new Error(data.error || "详情加载失败");
+          throw new Error(data.error || "Failed to load payload");
         }
         if (!cancelled) {
           setDetail(data.action);
         }
       } catch (loadError) {
-        const message = loadError instanceof Error ? loadError.message : "详情加载失败";
+        const message = loadError instanceof Error ? loadError.message : "Load failed";
         if (!cancelled) {
           setError(message);
-          setDetail(null);
         }
-        toast.error("详情加载失败");
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -102,151 +94,132 @@ export default function ActionDetailDrawer({ actorRole, actionId, open, onClose 
       }
     };
 
-    void loadDetail();
+    loadDetail();
     return () => {
       cancelled = true;
     };
-  }, [actionId, open]);
+  }, [id]);
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent
-        className="left-auto right-0 top-0 flex h-full w-full max-w-2xl translate-x-0 translate-y-0 flex-col rounded-none border-l p-0 data-open:slide-in-from-right-[24px] data-closed:slide-out-to-right-[24px]"
-      >
-        <DialogHeader className="border-b px-6 py-4">
-          <div className="flex items-center justify-between gap-3 pr-10">
-            <div>
-              <DialogTitle>操作详情</DialogTitle>
-              {detail ? (
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  {resultBadge(detail.result)}
-                  <span>{detail.adminName}</span>
-                  <span>·</span>
-                  <span>{new Date(detail.createdAt).toLocaleString("zh-CN")}</span>
-                </div>
-              ) : null}
-            </div>
-          </div>
+    <Dialog open={!!id} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border text-foreground  p-0 overflow-hidden shadow-2xl">
+        <DialogHeader className="px-5 py-4 border-b border-border bg-background/80">
+          <DialogTitle className="flex items-center justify-between text-sm uppercase tracking-wider text-foreground">
+            <span className="flex items-center gap-2">
+              <Terminal className="h-4 w-4 text-primary" />
+              操作详情
+            </span>
+            {detail?.id && <span className="text-[10px] text-muted-foreground">ID: {detail.id.substring(0,8)}</span>}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="p-5 overflow-y-auto max-h-[80vh] custom-scrollbar space-y-6">
           {loading ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              正在加载详情...
+            <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div className="text-xs tracking-widest uppercase">加载数据中...</div>
             </div>
           ) : error ? (
-            <div className="space-y-3 text-center">
-              <div className="text-sm text-muted-foreground">{error}</div>
-              <Button variant="outline" onClick={onClose}>关闭</Button>
+            <div className="text-center py-12">
+              <div className="text-destructive text-sm mb-2">{error}</div>
             </div>
           ) : detail ? (
-            <div className="space-y-6">
-              <section className="space-y-2">
-                <div className="text-sm font-medium">操作说明</div>
-                <div className="rounded-lg bg-muted p-3 text-sm">{detail.description}</div>
-              </section>
-
-              <section className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <div className="text-sm font-medium">操作类型</div>
-                  <div className="text-sm text-muted-foreground">{detail.actionType}</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm font-medium">分类</div>
-                  <div className="text-sm text-muted-foreground">{detail.actionCategory || "-"}</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm font-medium">结果</div>
-                  <div>{resultBadge(detail.result)}</div>
-                </div>
-              </section>
-
-              {detail.errorMessage ? (
-                <section className="space-y-2">
-                  <div className="text-sm font-medium text-destructive">错误信息</div>
-                  <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
-                    {detail.errorMessage}
+            <>
+              {/* Header Info */}
+              <div className="flex flex-col gap-4 border border-border bg-muted/20 rounded-sm p-4">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="space-y-1">
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest">操作描述</div>
+                    <div className="text-sm text-foreground">{detail.description}</div>
                   </div>
-                </section>
-              ) : null}
+                  {detail.result && (() => {
+                    const status = resultStatus(detail.result);
+                    return (
+                      <div className={cn("flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold tracking-widest rounded-sm border", status.classes)}>
+                        {status.icon}
+                        {status.text}
+                      </div>
+                    );
+                  })()}
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-border/50">
+                  <div>
+                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">操作人</div>
+                     <div className="text-xs text-foreground">{detail.adminName}</div>
+                  </div>
+                  <div>
+                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">操作类型</div>
+                     <div className="text-xs text-foreground">{detail.action操作类型?.toUpperCase()}</div>
+                  </div>
+                  <div>
+                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">操作模块</div>
+                     <div className="text-xs text-foreground">{detail.toolName || "N/A"}</div>
+                  </div>
+                  <div>
+                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">操作时间</div>
+                     <div className="text-xs text-foreground">{new Date(detail.createdAt).toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
 
-              {actorRole === "owner" && (detail.aiReasoning || detail.toolName || detail.toolParams || detail.backupSql || detail.beforeSnapshot || detail.afterSnapshot) ? (
-                <Collapsible className="rounded-lg border border-border/60 bg-muted/20">
-                  <CollapsibleTrigger className="w-full px-3 py-2 text-left text-sm font-medium">
-                    调试信息
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-4 px-3 pb-3">
-                    {detail.toolName ? (
-                      <section className="space-y-1">
-                        <div className="text-sm font-medium">工具名</div>
-                        <div className="text-sm text-muted-foreground">{detail.toolName}</div>
-                      </section>
-                    ) : null}
+              {detail.errorMessage && (
+                <div className="bg-destructive/5 border-l-2 border-destructive/50 p-3 rounded-r-sm">
+                   <div className="text-xs text-destructive font-medium mb-1">系统报错</div>
+                   <div className="text-sm text-foreground whitespace-pre-wrap">{detail.errorMessage}</div>
+                </div>
+              )}
 
-                    {detail.aiReasoning ? (
-                      <section className="space-y-2">
-                        <div className="text-sm font-medium">AI 推理</div>
-                        <div className="rounded-lg bg-background p-3 text-sm whitespace-pre-wrap">
-                          {detail.aiReasoning}
-                        </div>
-                      </section>
-                    ) : null}
+              {detail.aiReasoning && (
+                <div className="space-y-2">
+                   <div className="text-[10px] text-primary uppercase tracking-widest font-bold">AI 推理过程</div>
+                   <div className="bg-background border border-border rounded-sm p-3 text-sm text-muted-foreground leading-relaxed">
+                      {detail.aiReasoning}
+                   </div>
+                </div>
+              )}
 
-                    {detail.toolParams ? (
-                      <section className="space-y-2">
-                        <div className="text-sm font-medium">工具参数</div>
-                        <pre className="overflow-x-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
+              {/* Data payload collapsible */}
+              {(detail.toolParams || detail.backupSql) && actorRole === "owner" && (
+                <div className="space-y-3">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">参数及语句 (仅 Owner 可见)</div>
+                  
+                  {detail.toolParams !== undefined && detail.toolParams !== null && (
+                    <Collapsible className="border border-border rounded-sm overflow-hidden bg-background" defaultOpen>
+                      <CollapsibleTrigger className="flex w-full justify-between items-center bg-muted/50 px-3 py-2 text-xs hover:bg-muted transition-colors">
+                        <span className="text-muted-foreground">调用参数</span>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <pre className="p-3 text-[11px] text-primary overflow-x-auto">
                           {formatJson(detail.toolParams)}
                         </pre>
-                      </section>
-                    ) : null}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
 
-                    {detail.backupSql ? (
-                      <section className="space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-medium">备份 SQL</div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              navigator.clipboard.writeText(detail.backupSql || "");
-                              toast.success("已复制备份 SQL");
-                            }}
+                  {detail.backupSql && (
+                    <Collapsible className="border border-border rounded-sm overflow-hidden bg-background">
+                      <CollapsibleTrigger className="flex w-full justify-between items-center bg-muted/50 px-3 py-2 text-xs hover:bg-muted transition-colors">
+                        <span className="text-muted-foreground">回滚 SQL</span>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="flex justify-end p-2 border-b border-border/50">
+                          <button
+                            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                            onClick={() => navigator.clipboard.writeText(detail.backupSql || "")}
                           >
-                            <Copy className="h-3.5 w-3.5" />
-                            复制
-                          </Button>
+                            <Copy className="h-3 w-3" /> 复制
+                          </button>
                         </div>
-                        <pre className="overflow-x-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
+                        <pre className="p-3 text-[11px] text-amber-500/80 overflow-x-auto whitespace-pre-wrap">
                           {detail.backupSql}
                         </pre>
-                      </section>
-                    ) : null}
-
-                    {detail.beforeSnapshot || detail.afterSnapshot ? (
-                      <section className="space-y-2">
-                        <div className="text-sm font-medium">数据快照</div>
-                        <div className="grid gap-4 lg:grid-cols-2">
-                          <div className="space-y-1">
-                            <div className="text-xs text-muted-foreground">操作前</div>
-                            <pre className="max-h-72 overflow-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
-                              {formatJson(detail.beforeSnapshot) || "-"}
-                            </pre>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-xs text-muted-foreground">操作后</div>
-                            <pre className="max-h-72 overflow-auto rounded-lg bg-background p-3 text-xs whitespace-pre-wrap">
-                              {formatJson(detail.afterSnapshot) || "-"}
-                            </pre>
-                          </div>
-                        </div>
-                      </section>
-                    ) : null}
-                  </CollapsibleContent>
-                </Collapsible>
-              ) : null}
-            </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+                </div>
+              )}
+            </>
           ) : null}
         </div>
       </DialogContent>

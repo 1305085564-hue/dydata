@@ -4,15 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, PanelRightOpen, RotateCcw, Send } from "lucide-react";
+import { Loader2, Terminal, TerminalSquare, RefreshCw, Send, ChevronRight, Zap } from "lucide-react";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
 import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
 import AssistantDetailSections from "./assistant-detail-sections";
+import { cn } from "@/lib/utils";
 
 type ToolCall = {
   toolName: string;
@@ -51,11 +48,10 @@ type ChatPanelProps = {
 };
 
 const EXAMPLES = [
-  "查一下最近三天谁没填报",
-  "把张三改成管理员",
-  "重跑昨天李四的次日复盘",
-  "看看王五为什么没有权限进内容管理",
-  "这个报错是数据问题还是代码问题",
+  "/query 最近三天未填报人员",
+  "/modify 将张三权限修改为管理员",
+  "/retry 重跑昨天李四的次日复盘任务",
+  "/diagnose 为什么王五没有内容管理权限",
 ];
 
 function createId() {
@@ -91,7 +87,7 @@ function buildConfirmResultMessage(options: {
   const { actionId, conversationId, confirmed, data } = options;
   const response = data.response;
   const isSuccess = confirmed ? data.success !== false : true;
-  const content = response?.answer ?? (confirmed ? "操作执行成功。" : "操作已取消。");
+  const content = response?.answer ?? (confirmed ? "Execution completed successfully." : "Execution aborted by user.");
 
   return {
     id: createId(),
@@ -106,7 +102,7 @@ function buildConfirmResultMessage(options: {
 
 function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-sm max-w-none text-current prose-p:my-2 prose-pre:my-2 prose-pre:overflow-x-auto prose-pre:rounded-md prose-pre:bg-background/80 prose-pre:p-3 prose-code:rounded prose-code:bg-background/70 prose-code:px-1 prose-code:py-0.5 prose-table:block prose-table:w-full prose-table:overflow-x-auto prose-th:border prose-th:px-2 prose-th:py-1 prose-td:border prose-td:px-2 prose-td:py-1 prose-ul:my-2 prose-ol:my-2">
+    <div className="prose prose-sm prose-invert max-w-none text-foreground prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-sm prose-pre:bg-background prose-pre:border prose-pre:border-border prose-pre:p-3 prose-code:rounded-sm prose-code:bg-muted prose-code:text-primary prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/50 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-blue-400 prose-strong:text-foreground">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );
@@ -129,8 +125,8 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    textarea.style.height = "48px";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+    textarea.style.height = "24px";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
   }, [input]);
 
   const hasMessages = messages.length > 0;
@@ -177,15 +173,15 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        throw new Error(data.error || "请求失败，请稍后重试");
+        throw new Error(data.error || "Request failed");
       }
 
       setMessages((prev) => [...prev, normalizeAssistantMessage(data)]);
       onHistoryRefresh();
     } catch (error) {
-      const rawMessage = error instanceof Error ? error.message : "请求失败，请重试";
+      const rawMessage = error instanceof Error ? error.message : "Request failed";
       const message = getAiAssistantErrorMessage(rawMessage);
-      appendErrorMessage(`请求失败：${message}`, text);
+      appendErrorMessage(`ERR: ${message}`, text);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -214,7 +210,7 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        throw new Error(data.error || "确认请求失败");
+        throw new Error(data.error || "Confirmation failed");
       }
 
       setMessages((prev) => [
@@ -227,159 +223,158 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
         }),
       ]);
       onHistoryRefresh();
-      toast.success(confirmed ? "操作已执行" : "操作已取消");
+      if (confirmed) toast.success("Execution completed");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "确认请求失败";
-      appendErrorMessage(`${confirmed ? "确认执行失败" : "取消失败"}：${errorMessage}`);
-      toast.error(confirmed ? "确认执行失败" : "取消失败");
+      const errorMessage = error instanceof Error ? error.message : "Confirmation failed";
+      appendErrorMessage(`EXEC_ERR: ${errorMessage}`);
+      toast.error(confirmed ? "Execution failed" : "Abort failed");
     } finally {
       setConfirmingActionId(null);
     }
   };
 
-  return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-3xl border border-border/60 bg-background/90 shadow-sm backdrop-blur">
-      <div className="border-b bg-muted/30 px-5 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">站内 AI 助手</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              可查数据、改权限、重跑任务，也能先做诊断。
-            </p>
-          </div>
-          <Button variant="outline" size="sm" className="lg:hidden" onClick={onOpenHistory}>
-            <PanelRightOpen className="h-4 w-4" />
-            历史
-          </Button>
-        </div>
-      </div>
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  };
 
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-background to-muted/20 px-5 py-5">
+  return (
+    <div className="flex h-full flex-col  text-sm">
+      <div className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar">
         {!hasMessages ? (
-          <div className="flex h-full items-start justify-center pt-10 sm:pt-14">
-            <div className="w-full max-w-2xl rounded-3xl border border-dashed border-border/70 bg-background/80 px-6 py-8 text-center shadow-sm">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-semibold tracking-tight">你好，我是站内 AI 助手</h2>
-                <p className="text-muted-foreground">
-                  我可以帮你查数据、改权限、补数据、重跑任务，也能先判断问题是代码还是数据。
-                </p>
-              </div>
-              <div className="mt-6 space-y-2">
-                <p className="text-sm text-muted-foreground">试试这些示例：</p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {EXAMPLES.map((ex) => (
-                    <Button key={ex} variant="outline" size="sm" className="border-gray-200 bg-white text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400" onClick={() => sendMessage(ex)}>
-                      {ex}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col h-full justify-center max-w-2xl mx-auto opacity-80 animate-in fade-in duration-700">
+             <div className="mb-8 border-l-2 border-primary pl-4 py-1">
+               <h2 className="text-xl font-bold text-foreground tracking-wide uppercase mb-2">AI 分析工作台</h2>
+               <p className="text-muted-foreground text-sm">
+                 已连接系统数据库，随时可以进行查询、配置修改和异常诊断。
+               </p>
+             </div>
+             
+             <div className="space-y-3">
+               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-widest border-b border-border pb-2 mb-4">建议指令</div>
+               {EXAMPLES.map((ex, i) => (
+                 <div 
+                   key={ex} 
+                   className="group flex items-center gap-3 cursor-pointer p-2 hover:bg-muted/50 rounded-sm transition-colors animate-in slide-in-from-bottom-2"
+                   style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+                   onClick={() => sendMessage(ex)}
+                 >
+                   <ChevronRight className="h-4 w-4 text-primary/80 group-hover:text-primary" />
+                   <span className="text-foreground group-hover:text-foreground">{ex}</span>
+                 </div>
+               ))}
+             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {messageList.map((msg) => {
+          <div className="space-y-6 max-w-4xl mx-auto w-full pb-4">
+            {messageList.map((msg, index) => {
               const isUser = msg.role === "user";
               const isConfirming = confirmingActionId === msg.actionId;
 
               return (
-                <div key={msg.id} className={isUser ? "text-right" : ""}>
-                  <div
-                    className={`inline-block max-w-[92%] rounded-2xl px-4 py-3 text-left align-top shadow-sm sm:max-w-[80%] ${
-                      isUser
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border/60 bg-background/95"
-                    }`}
-                  >
-                    {msg.type === "result" && !isUser ? (
-                      <div className="mb-2 flex items-center gap-2">
-                        <Badge>执行结果</Badge>
-                      </div>
-                    ) : null}
-                    {msg.type === "error" && !isUser ? (
-                      <div className="mb-2 flex items-center gap-2">
-                        <Badge variant="destructive">失败</Badge>
-                      </div>
-                    ) : null}
-                    {isUser ? (
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
-                    ) : (
-                      <MarkdownContent content={msg.content} />
-                    )}
-                    {!isUser ? <AssistantDetailSections details={msg.details} /> : null}
-                    {msg.retryable ? (
-                      <div className="mt-3 flex justify-end">
-                        <Button size="sm" variant="outline" onClick={() => handleRetry(msg.requestText)} disabled={loading}>
-                          <RotateCcw className="h-3.5 w-3.5" />
-                          重试
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                  {msg.type === "confirmation" && msg.toolCall ? (
-                    <div className="mt-2 inline-block w-full max-w-[92%] sm:max-w-[80%]">
-                      <ConfirmCard
-                        actorRole={actorRole}
-                        data={msg.toolCall}
-                        submitting={isConfirming}
-                        onConfirm={() => handleConfirm(msg, true)}
-                        onCancel={() => handleConfirm(msg, false)}
-                      />
+                <div 
+                  key={msg.id} 
+                  className={cn(
+                    "flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                    isUser ? "items-start" : "items-start"
+                  )}
+                >
+                  {isUser ? (
+                    <div className="flex items-start gap-2 w-full">
+                       <span className="text-primary mt-1 flex-shrink-0">{`> [USER]`}</span>
+                       <div className="text-foreground mt-1 whitespace-pre-wrap">{msg.content}</div>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="flex flex-col w-full pl-6 border-l border-border/80 mt-2 py-1">
+                       <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground mb-2 uppercase">
+                          <TerminalSquare className="h-3.5 w-3.5" />
+                          <span>系统回复</span>
+                          {msg.type === "result" && <span className="text-blue-400 border border-blue-900/50 bg-blue-950/30 px-1.5 py-0.5 rounded-sm">执行结果</span>}
+                          {msg.type === "error" && <span className="text-destructive border border-red-900/50 bg-red-950/30 px-1.5 py-0.5 rounded-sm">执行异常</span>}
+                       </div>
+                       
+                       <div className="text-foreground">
+                         {msg.content && <MarkdownContent content={msg.content} />}
+                         {msg.details && <div className="mt-3 bg-background/40 border border-border/80 rounded-sm p-3"><AssistantDetailSections details={msg.details} /></div>}
+                       </div>
+                       
+                       {msg.retryable && (
+                         <div className="mt-4">
+                            <button 
+                              onClick={() => handleRetry(msg.requestText)} 
+                              disabled={loading}
+                              className="text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground border border-border hover:border-border px-3 py-1.5 rounded-sm transition-colors"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                              重试请求
+                            </button>
+                         </div>
+                       )}
+
+                       {msg.type === "confirmation" && msg.toolCall && (
+                         <div className="mt-2">
+                           <ConfirmCard
+                             actorRole={actorRole}
+                             data={msg.toolCall}
+                             submitting={isConfirming}
+                             onConfirm={() => handleConfirm(msg, true)}
+                             onCancel={() => handleConfirm(msg, false)}
+                           />
+                         </div>
+                       )}
+                    </div>
+                  )}
                 </div>
               );
             })}
-            {loading ? (
-              <Card className="max-w-sm rounded-2xl border border-border/60 bg-background/95 shadow-sm">
-                <CardContent className="flex items-center gap-3 pt-4">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium">AI 正在思考</div>
-                    <div className="text-xs text-muted-foreground">正在分析你的指令和可执行工具</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
-            <div ref={bottomRef} />
+            
+            {loading && (
+              <div className="flex flex-col w-full pl-6 border-l border-border/80 py-2 animate-pulse">
+                <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                  <Zap className="h-3.5 w-3.5 text-primary" />
+                  <span>处理请求中</span>
+                </div>
+                <div className="flex items-center gap-2 mt-2 text-muted-foreground text-sm">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span className="typewriter-effect">分析意图并调用所需模块...</span>
+                </div>
+              </div>
+            )}
+            
+            <div ref={bottomRef} className="h-4" />
           </div>
         )}
       </div>
 
-      <div className="bg-background/95 px-5 pb-6 pt-4">
-        <div className="mx-auto mb-4 h-px max-w-3xl bg-gradient-to-r from-transparent via-border/70 to-transparent" />
-        <div className="mx-auto max-w-3xl">
-          <div className="relative rounded-2xl border border-blue-200 bg-background shadow-lg transition-all focus-within:border-blue-400 focus-within:shadow-xl focus-within:shadow-blue-500/10 dark:border-blue-500/30 dark:focus-within:border-blue-400/50">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onInput={(e) => {
-                e.currentTarget.style.height = "48px";
-                e.currentTarget.style.height = `${Math.min(e.currentTarget.scrollHeight, 160)}px`;
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  void sendMessage(input);
-                }
-              }}
-              placeholder="输入指令，比如：查一下最近三天谁没填报"
-              disabled={loading}
-              className="min-h-[48px] max-h-[160px] resize-none rounded-2xl border border-blue-200 bg-background px-4 py-3 pr-16 text-sm shadow-md focus-visible:border-blue-400 focus-visible:ring-4 focus-visible:ring-blue-100 dark:border-blue-500/30 dark:focus-visible:border-blue-400/50 dark:focus-visible:ring-blue-500/20"
-            />
-            <Button
-              onClick={() => void sendMessage(input)}
-              disabled={!canSend}
-              className={`absolute bottom-3 right-3 h-10 w-10 rounded-full p-0 transition-all ${
-                input.trim()
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 hover:bg-blue-700"
-                  : "bg-muted text-muted-foreground shadow-none hover:bg-muted"
-              }`}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+      {/* Input Area */}
+      <div className="p-4 bg-background border-t border-border">
+        <div className="max-w-4xl mx-auto relative flex items-end gap-2 bg-background border border-border rounded-sm focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all">
+          <div className="absolute left-3 bottom-2.5 text-primary font-bold">
+            {`>`}
           </div>
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="输入指令或自然语言查询（例如：查询最近三天未填报人员）..."
+            className="flex-1 max-h-32 min-h-[44px] w-full resize-none bg-transparent py-3 pl-8 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none custom-scrollbar"
+            rows={1}
+            disabled={loading}
+          />
+          <button
+            onClick={() => sendMessage(input)}
+            disabled={!canSend}
+            className="mb-2 mr-2 p-1.5 rounded-sm text-muted-foreground hover:text-primary hover:bg-muted disabled:opacity-50 disabled:hover:text-muted-foreground disabled:hover:bg-transparent transition-colors"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-w-4xl mx-auto mt-2 text-[10px] text-muted-foreground flex justify-between uppercase tracking-widest">
+           <span>Enter 发送，Shift+Enter 换行</span>
+           <span>连接状态: 正常</span>
         </div>
       </div>
     </div>
