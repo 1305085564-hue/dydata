@@ -14,6 +14,8 @@ import {
   Sparkles,
   Workflow,
 } from "lucide-react";
+import { RewriteSandbox } from "./components/rewrite-sandbox";
+import { RewriteConfigPanel, ConfigSection } from "./components/rewrite-config-panel";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -761,8 +763,12 @@ export default function AIRewriteClient() {
   const activeEditorMeta = editor ? editorTitleMap[editor.kind] : null;
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 lg:grid-cols-4">
+    <>
+    <div className="grid grid-cols-1 xl:grid-cols-[60%_1fr] gap-8">
+      <RewriteConfigPanel>
+        <div className="space-y-6 pr-2 xl:h-[calc(100vh-140px)] xl:overflow-y-auto">
+      <ConfigSection title="运行规则" icon={<Settings2 className="size-5" />} defaultOpen>
+          <section className="grid gap-4 lg:grid-cols-4">
         <SummaryCard
           icon={Bot}
           label="固定套餐"
@@ -1414,7 +1420,16 @@ export default function AIRewriteClient() {
         </>
       )}
 
-      <Dialog open={Boolean(editor)} onOpenChange={(open) => (!open ? closeEditor() : null)}>
+              </ConfigSection>
+
+        </div>
+      </RewriteConfigPanel>
+
+      <RewriteSandbox />
+    </div>
+    
+    {/* Modals outside */}
+    <Dialog open={Boolean(editor)} onOpenChange={(open) => (!open ? closeEditor() : null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{activeEditorMeta ? activeEditorMeta[editor?.mode ?? "create"] : "编辑配置"}</DialogTitle>
@@ -1763,6 +1778,6 @@ export default function AIRewriteClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
