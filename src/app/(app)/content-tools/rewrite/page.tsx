@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
-import RewriteWorkbench from "@/components/content-tools/RewriteWorkbench";
+import { RewriteWorkbench } from "@/components/content-tools/rewrite";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
