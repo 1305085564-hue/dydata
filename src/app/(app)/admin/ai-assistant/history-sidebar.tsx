@@ -2,16 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import ActionDetailDrawer from "./action-detail-drawer";
+import { cn } from "@/lib/utils";
 
 type ActionType = "all" | "query" | "modify" | "delete" | "retry_task" | "config_change" | "diagnosis";
 
@@ -45,7 +44,7 @@ const FILTERS: Array<{ value: ActionType; label: string }> = [
 
 export function getHistoryErrorMessage(errorMessage: string) {
   if (errorMessage.includes("public.admin_actions") && errorMessage.includes("schema cache")) {
-    return "操作历史暂不可用，后台审计表还没初始化";
+    return "Audit logs unavailable (schema missing)";
   }
   return errorMessage;
 }
@@ -53,15 +52,15 @@ export function getHistoryErrorMessage(errorMessage: string) {
 function resultLabel(result: string) {
   switch (result) {
     case "success":
-      return { label: "成功", variant: "default" as const };
+      return { label: "成功", color: "text-primary", border: "border-primary/30", bg: "bg-primary/10" };
     case "failed":
-      return { label: "失败", variant: "destructive" as const };
+      return { label: "失败", color: "text-destructive", border: "border-destructive/30", bg: "bg-destructive/10" };
     case "cancelled":
-      return { label: "已取消", variant: "outline" as const };
+      return { label: "中止", color: "text-muted-foreground", border: "border-border", bg: "bg-muted/50" };
     case "pending_confirm":
-      return { label: "待确认", variant: "secondary" as const };
+      return { label: "待确认", color: "text-amber-500", border: "border-amber-900", bg: "bg-amber-950/30" };
     default:
-      return { label: result, variant: "outline" as const };
+      return { label: result.substring(0,4).toUpperCase(), color: "text-muted-foreground", border: "border-border", bg: "bg-muted/50" };
   }
 }
 
@@ -93,69 +92,100 @@ function SidebarContent({
   const canLoadMore = records.length < total;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b p-4">
-        <h2 className="mb-3 font-semibold">操作历史</h2>
-        <div className="flex flex-wrap gap-2 text-xs">
+    <div className="flex h-full flex-col  text-sm antialiased">
+      <div className="border-b border-border p-3 space-y-3 shrink-0">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="搜索记录..." 
+            className="w-full w-full bg-background/50 border border-border rounded-md py-1.5 pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
           {FILTERS.map((item) => (
-            <Button
+            <button
               key={item.value}
-              size="sm"
-              variant={filter === item.value ? "default" : "outline"}
               onClick={() => onChangeFilter(item.value)}
+              className={cn(
+                "px-2 py-0.5 text-[10px] font-semibold tracking-wider rounded-sm transition-all border",
+                filter === item.value 
+                  ? "bg-primary text-primary-foreground border-primary" 
+                  : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+              )}
             >
               {item.label}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 custom-scrollbar relative">
         {loading ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            正在加载历史...
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-xs text-muted-foreground gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span>同步记录中...</span>
           </div>
         ) : error ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
-            <div className="text-sm text-muted-foreground">{error}</div>
-            <Button size="sm" variant="outline" onClick={onRetry}>
-              重试
-            </Button>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
+            <div className="text-xs text-destructive">{error}</div>
+            <button 
+              onClick={onRetry}
+              className="px-3 py-1 text-xs border border-border text-foreground hover:bg-muted rounded-sm transition-colors"
+            >
+              重新同步
+            </button>
           </div>
         ) : records.length === 0 ? (
-          <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-            还没有操作历史。先发一条指令，执行记录会出现在这里。
+          <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-xs text-muted-foreground uppercase tracking-widest">
+            暂无记录
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {records.map((record) => {
               const badge = resultLabel(record.result);
               return (
                 <button
                   key={record.id}
                   onClick={() => onSelect(record.id)}
-                  className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted ${
-                    selectedId === record.id ? "border-primary bg-muted" : "border-transparent"
-                  }`}
+                  className={cn(
+                    "w-full text-left p-2 transition-all border-l-2 relative group",
+                    selectedId === record.id 
+                      ? "bg-muted border-primary" 
+                      : "bg-transparent border-transparent hover:bg-muted/50 hover:border-border"
+                  )}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{record.description}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {record.adminName} · {new Date(record.createdAt).toLocaleString("zh-CN")}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs text-foreground font-medium group-hover:text-primary transition-colors">{record.description}</div>
+                      <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                        <span className="text-muted-foreground">{record.adminName.substring(0, 8)}</span>
+                        <span>{new Date(record.createdAt).toLocaleTimeString("en-GB", { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' })}</span>
                       </div>
                     </div>
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                    <div className={cn(
+                      "px-1.5 py-0.5 text-[9px] font-bold rounded-sm border shrink-0 uppercase tracking-wider",
+                      badge.color, badge.border, badge.bg
+                    )}>
+                      {badge.label}
+                    </div>
                   </div>
                 </button>
               );
             })}
-            {canLoadMore ? (
-              <Button variant="outline" className="w-full" onClick={onLoadMore} disabled={loadingMore}>
-                {loadingMore ? "加载中..." : `加载更多（已显示 ${records.length}/${total}）`}
-              </Button>
-            ) : null}
+            {canLoadMore && (
+              <button 
+                onClick={onLoadMore} 
+                disabled={loadingMore}
+                className="w-full mt-2 py-2 text-xs border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors rounded-sm uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                {loadingMore ? (
+                  <><Loader2 className="h-3 w-3 animate-spin" /> 加载中...</>
+                ) : (
+                  `加载更多 [${records.length}/${total}]`
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -202,19 +232,19 @@ export default function HistorySidebar({
 
         const res = await fetch(`/api/admin/ai-assistant/history?${params.toString()}`);
         const data = await res.json();
+
         if (!res.ok || data.error) {
-          throw new Error(data.error || "历史加载失败");
+          throw new Error(data.error || "Failed to fetch logs");
         }
 
         setRecords((prev) => (append ? [...prev, ...(data.actions || [])] : data.actions || []));
         setTotal(data.total || 0);
-        setHasShownErrorToast(false);
-      } catch (fetchError) {
-        const rawMessage = fetchError instanceof Error ? fetchError.message : "历史加载失败";
-        const errorMessage = getHistoryErrorMessage(rawMessage);
-        setError(errorMessage);
+      } catch (err) {
+        const rawMessage = err instanceof Error ? err.message : "Fetch error";
+        const message = getHistoryErrorMessage(rawMessage);
+        setError(message);
         if (!hasShownErrorToast) {
-          toast.error(errorMessage);
+          toast.error(`LOG_SYS_ERR: ${message}`);
           setHasShownErrorToast(true);
         }
       } finally {
@@ -222,80 +252,69 @@ export default function HistorySidebar({
         setLoadingMore(false);
       }
     },
-    [filter, hasShownErrorToast, records.length]
+    [filter, records.length, hasShownErrorToast]
   );
 
   useEffect(() => {
-    void fetchHistory();
-  }, [fetchHistory, refreshKey]);
-
-  useEffect(() => {
-    setSelectedId(null);
-  }, [filter]);
+    fetchHistory();
+  }, [filter, refreshKey]);
 
   if (mobile) {
     return (
-      <>
-        <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-          <DialogContent
-            showCloseButton={false}
-            className="left-auto right-0 top-0 flex h-full w-full max-w-sm translate-x-0 translate-y-0 flex-col rounded-none border-l p-0 data-open:slide-in-from-right-[20px] data-closed:slide-out-to-right-[20px]"
-          >
-            <DialogHeader className="border-b px-4 py-3">
-              <DialogTitle>操作历史</DialogTitle>
-            </DialogHeader>
-            <div className="min-h-0 flex-1">
-              <SidebarContent
-                loading={loading}
-                records={records}
-                filter={filter}
-                total={total}
-                selectedId={selectedId}
-                loadingMore={loadingMore}
-                error={error}
-                onChangeFilter={(value) => setFilter(value)}
-                onSelect={setSelectedId}
-                onRetry={() => void fetchHistory()}
-                onLoadMore={() => void fetchHistory({ append: true })}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <ActionDetailDrawer
-          actorRole={actorRole}
-          actionId={selectedId}
-          open={!!selectedId}
+      <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
+        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-background/95 backdrop-blur-xl border-border rounded-md overflow-hidden text-foreground ">
+          <DialogHeader className="px-4 py-3 border-b border-border bg-background/80 shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="text-sm font-semibold uppercase tracking-wider text-foreground">历史记录</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <SidebarContent
+              loading={loading}
+              records={records}
+              filter={filter}
+              total={total}
+              selectedId={selectedId}
+              loadingMore={loadingMore}
+              error={error}
+              onChangeFilter={setFilter}
+              onSelect={setSelectedId}
+              onRetry={() => fetchHistory()}
+              onLoadMore={() => fetchHistory({ append: true })}
+            />
+          </div>
+        </DialogContent>
+        {selectedId && (
+          <ActionDetailDrawer
+            id={selectedId}
+            actorRole={actorRole}
           onClose={() => setSelectedId(null)}
-        />
-      </>
+          />
+        )}
+      </Dialog>
     );
   }
 
   return (
     <>
-      <div className="h-full">
-        <SidebarContent
-          loading={loading}
-          records={records}
-          filter={filter}
-          total={total}
-          selectedId={selectedId}
-          loadingMore={loadingMore}
-          error={error}
-          onChangeFilter={(value) => setFilter(value)}
-          onSelect={setSelectedId}
-          onRetry={() => void fetchHistory()}
-          onLoadMore={() => void fetchHistory({ append: true })}
-        />
-      </div>
-
-      <ActionDetailDrawer
-        actorRole={actorRole}
-        actionId={selectedId}
-        open={!!selectedId}
-        onClose={() => setSelectedId(null)}
+      <SidebarContent
+        loading={loading}
+        records={records}
+        filter={filter}
+        total={total}
+        selectedId={selectedId}
+        loadingMore={loadingMore}
+        error={error}
+        onChangeFilter={setFilter}
+        onSelect={setSelectedId}
+        onRetry={() => fetchHistory()}
+        onLoadMore={() => fetchHistory({ append: true })}
       />
+      {selectedId && (
+        <ActionDetailDrawer
+          id={selectedId}
+          actorRole={actorRole}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </>
   );
 }

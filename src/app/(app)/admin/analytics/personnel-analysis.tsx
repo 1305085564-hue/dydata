@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Users, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { MotionCard } from "@/components/ui/motion-card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { containerVariants, itemVariants, useCountUp } from "@/lib/animations";
+import { containerVariants } from "@/lib/animations";
+import { cn } from "@/lib/utils";
 
 interface Report {
   id: string;
@@ -29,7 +28,7 @@ interface PersonnelAnalysisProps {
   title?: string;
 }
 
-type SortKey = "hitRate" | "stability" | "trend" | "engagementRate";
+type SortKey = "hitRate" | "stability" | "trend" | "engagementRate" | "avgPlay";
 
 interface PersonStats {
   name: string;
@@ -38,24 +37,19 @@ interface PersonStats {
   stability: number;
   trend: number;
   engagementRate: number;
-  totalPlay: number;
-  suggestion: { label: string; color: string };
+  avgPlay: number;
+  recentAvgPlay: number;
+  prevAvgPlay: number;
+  suggestion: { label: string; color: string; bgColor: string; borderColor: string };
 }
 
-function getSuggestion(p: { hitRate: number; stability: number; trend: number; engagementRate: number }): { label: string; color: string } {
-  // 波动异常：稳定性极差 → 黄色
-  if (p.stability >= 15) return { label: "波动异常", color: "bg-yellow-100 text-yellow-700 border-yellow-300" };
-  // 需要辅导：爆款率低 + 趋势下滑或互动差 → 绿色（差）
-  if (p.hitRate < 20 && (p.trend < -10 || p.engagementRate < 2)) return { label: "需要辅导", color: "bg-green-100 text-green-700 border-green-300" };
-  // 重点关注：趋势明显下滑 → 绿色（差）
-  if (p.trend < -10) return { label: "重点关注", color: "bg-green-100 text-green-700 border-green-300" };
-  // 继续放量：爆款率高 + 趋势上升或稳定 → 红色（优秀）
-  if (p.hitRate >= 30 && p.trend >= 0) return { label: "继续放量", color: "bg-rose-100 text-rose-700 border-rose-300" };
-  // 默认：保持观察 → 蓝色
-  return { label: "保持观察", color: "bg-gray-100 text-gray-600 border-gray-300" };
+function getSuggestion(p: { hitRate: number; stability: number; trend: number; engagementRate: number }) {
+  if (p.trend < -10) return { label: "重点关注", color: "text-rose-700", bgColor: "bg-rose-100/80", borderColor: "border-rose-200" };
+  if (p.hitRate >= 30 && p.trend >= 0) return { label: "继续放量", color: "text-emerald-700", bgColor: "bg-emerald-100/80", borderColor: "border-emerald-200" };
+  if (p.stability >= 15) return { label: "波动异常", color: "text-amber-700", bgColor: "bg-amber-100/80", borderColor: "border-amber-200" };
+  return { label: "保持观察", color: "text-blue-700", bgColor: "bg-blue-100/80", borderColor: "border-blue-200" };
 }
 
-/* Compute team P70 per date */
 function computeP70Map(reports: Report[]): Map<string, number> {
   const byDate = new Map<string, number[]>();
   for (const r of reports) {
@@ -79,8 +73,13 @@ function stdDev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
+function formatPlayCountCompact(value: number) {
+  if (value >= 10000) return `${(value / 10000).toFixed(1)}w`;
+  return value.toLocaleString("zh-CN");
+}
+
 export function PersonnelAnalysis({ reports, title = "人员深度分析" }: PersonnelAnalysisProps) {
-  const [sortBy, setSortBy] = useState<SortKey>("hitRate");
+  const [sortBy, setSortBy] = useState<SortKey>("avgPlay");
 
   const stats = useMemo(() => {
     const p70Map = computeP70Map(reports);
@@ -111,16 +110,34 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
         const p70 = p70Map.get(r.report_date) ?? 0;
         if ((r.play_count ?? 0) > p70) hitCount++;
       }
+      
       const hitRate = personReports.length > 0 ? (hitCount / personReports.length) * 100 : 0;
       const stability = stdDev(plays.map((p) => p / 10000));
+      
       const recent = personReports.filter((r) => r.report_date >= sevenAgo && r.report_date <= today);
       const prev = personReports.filter((r) => r.report_date >= fourteenAgo && r.report_date < sevenAgo);
+      
       const recentAvg = recent.length > 0 ? recent.reduce((s, r) => s + (r.play_count ?? 0), 0) / recent.length : 0;
       const prevAvg = prev.length > 0 ? prev.reduce((s, r) => s + (r.play_count ?? 0), 0) / prev.length : 0;
+      const avgPlay = totalPlay / personReports.length;
+      
       const trend = prevAvg > 0 ? ((recentAvg - prevAvg) / prevAvg) * 100 : 0;
       const engagementRate = totalPlay > 0 ? (totalEng / totalPlay) * 100 : 0;
+      
       const suggestion = getSuggestion({ hitRate, stability, trend, engagementRate });
-      result.push({ name, count: personReports.length, hitRate, stability, trend, engagementRate, totalPlay, suggestion });
+      
+      result.push({ 
+        name, 
+        count: personReports.length, 
+        hitRate, 
+        stability, 
+        trend, 
+        engagementRate, 
+        avgPlay,
+        recentAvgPlay: recentAvg,
+        prevAvgPlay: prevAvg,
+        suggestion 
+      });
     }
 
     return result;
@@ -131,6 +148,7 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
       if (sortBy === "hitRate") return b.hitRate - a.hitRate;
       if (sortBy === "stability") return a.stability - b.stability;
       if (sortBy === "trend") return b.trend - a.trend;
+      if (sortBy === "avgPlay") return b.avgPlay - a.avgPlay;
       return b.engagementRate - a.engagementRate;
     });
   }, [stats, sortBy]);
@@ -145,129 +163,195 @@ export function PersonnelAnalysis({ reports, title = "人员深度分析" }: Per
     );
   }
 
+  // Find max values for relative bars
+  const maxHitRate = Math.max(...stats.map(s => s.hitRate));
+  const maxAvgPlay = Math.max(...stats.map(s => Math.max(s.recentAvgPlay, s.prevAvgPlay, s.avgPlay)));
+  const maxEngagement = Math.max(...stats.map(s => s.engagementRate));
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">{title}</h3>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先用关键指标看谁稳定、谁在上升、谁需要辅导，再决定跟进顺序。</p>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1.5">
+          <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">{title}</h3>
+          <p className="text-sm text-[var(--color-text-secondary)]">可视化对比团队表现，快速发现本周异动人员。</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="self-center text-xs text-[var(--color-text-secondary)]">排序：</span>
+        <div className="flex flex-wrap items-center gap-1.5 rounded-full border border-slate-200/60 bg-slate-50/50 p-1">
           {([
-            ["hitRate", "爆款率"],
-            ["stability", "稳定性"],
-            ["trend", "趋势"],
-            ["engagementRate", "互动效率"],
+            ["avgPlay", "均播表现"],
+            ["hitRate", "爆款能力"],
+            ["trend", "近期趋势"],
+            ["engagementRate", "粉丝粘性"],
           ] as const).map(([key, label]) => (
-            <Button
+            <button
               key={key}
-              size="sm"
-              variant={sortBy === key ? "default" : "outline"}
-              className="transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]"
               onClick={() => setSortBy(key)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
+                sortBy === key 
+                  ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200/50" 
+                  : "text-slate-500 hover:text-slate-700"
+              )}
             >
               {label}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {sorted.map((person, index) => (
-          <motion.div key={person.name} variants={itemVariants}>
-            <PersonCard person={person} index={index} />
-          </motion.div>
-        ))}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-4"
+      >
+        {/* Table Header */}
+        <div className="hidden grid-cols-12 gap-4 px-6 text-[11px] font-semibold uppercase tracking-wider text-slate-400 lg:grid">
+          <div className="col-span-3">人员标签</div>
+          <div className="col-span-4">本周均播 vs 上周均播</div>
+          <div className="col-span-2">综合爆款率</div>
+          <div className="col-span-3">互动粘性</div>
+        </div>
+
+        <AnimatePresence mode="popLayout">
+          {sorted.map((person, index) => (
+            <motion.div
+              key={person.name}
+              layout={!shouldReduceMotion}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, delay: shouldReduceMotion ? 0 : index * 0.05 }}
+            >
+              <PersonRankRow 
+                person={person} 
+                rank={index + 1} 
+                maxVals={{ maxHitRate, maxAvgPlay, maxEngagement }} 
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
 }
 
-function MetricValue({ value, suffix = "", maximumFractionDigits = 1 }: { value: number; suffix?: string; maximumFractionDigits?: number }) {
-  const { formattedValue } = useCountUp(value, undefined, true, { maximumFractionDigits });
-  return <span className="tabular-nums">{formattedValue}{suffix}</span>;
-}
-
-function PersonCard({ person, index }: { person: PersonStats; index: number }) {
+function PersonRankRow({ 
+  person, 
+  rank, 
+  maxVals 
+}: { 
+  person: PersonStats; 
+  rank: number;
+  maxVals: { maxHitRate: number, maxAvgPlay: number, maxEngagement: number }
+}) {
   const isInsufficient = person.count < 10;
-
-  const borderColor = isInsufficient
-    ? "border-l-4 border-l-gray-300 bg-gray-50/50"
-    : person.suggestion.label === "继续放量"
-    ? "border-l-4 border-l-rose-400 bg-rose-50/50"
-    : person.suggestion.label === "保持观察"
-    ? "border-l-4 border-l-blue-400 bg-blue-50/50"
-    : person.suggestion.label === "波动异常"
-    ? "border-l-4 border-l-yellow-400 bg-yellow-50/50"
-    : "border-l-4 border-l-green-400 bg-green-50/50";
+  
+  // Calculate bar widths (percentage)
+  const recentPlayWidth = person.recentAvgPlay > 0 ? Math.max(2, (person.recentAvgPlay / maxVals.maxAvgPlay) * 100) : 0;
+  const prevPlayWidth = person.prevAvgPlay > 0 ? Math.max(2, (person.prevAvgPlay / maxVals.maxAvgPlay) * 100) : 0;
+  const hitRateWidth = person.hitRate > 0 ? Math.max(2, (person.hitRate / maxVals.maxHitRate) * 100) : 0;
+  const engWidth = person.engagementRate > 0 ? Math.max(2, (person.engagementRate / maxVals.maxEngagement) * 100) : 0;
 
   return (
-    <MotionCard index={index} className={`space-y-3 p-4 ${borderColor}`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-semibold tracking-tight text-[var(--color-text-primary)]">{person.name}</p>
-          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${person.suggestion.color}`}>
-            {person.suggestion.label}
-          </span>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {isInsufficient && (
-            <span className="rounded-full border border-gray-300 bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">数据不足</span>
-          )}
-          <span className="text-xs text-[var(--color-text-secondary)] tabular-nums">{person.count} 条数据</span>
-        </div>
+    <div className={cn(
+      "group relative overflow-hidden rounded-[20px] border bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-0.5",
+      person.suggestion.borderColor
+    )}>
+      {/* Absolute Ranking Number background */}
+      <div className="absolute -left-3 -top-6 text-[80px] font-black leading-none text-slate-50 opacity-50 select-none pointer-events-none group-hover:text-blue-50/50 transition-colors">
+        {rank}
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-0.5">
-          <p className="text-xs text-[var(--color-text-secondary)]">爆款率</p>
-          {person.count === 0 ? (
-            <Badge variant="outline" className="text-slate-400">暂无数据</Badge>
-          ) : (
-            <Badge
-              variant={person.hitRate >= 40 ? "default" : person.hitRate >= 20 ? "secondary" : "outline"}
-              className={person.hitRate >= 40 ? "bg-rose-400" : person.hitRate < 20 ? "border-green-300 text-green-600" : ""}
-            >
-              <MetricValue value={person.hitRate} suffix="%" />
-            </Badge>
-          )}
+
+      <div className="relative z-10 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-center">
+        {/* User Info (col 3) */}
+        <div className="flex items-center gap-4 lg:col-span-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-600 shadow-inner">
+            {rank}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h4 className="truncate text-base font-bold text-slate-800">{person.name}</h4>
+              <Badge variant="outline" className={cn("shrink-0 border-transparent", person.suggestion.bgColor, person.suggestion.color)}>
+                {person.suggestion.label}
+              </Badge>
+            </div>
+            <p className="mt-0.5 text-[11px] font-medium text-slate-400">
+              {isInsufficient ? "样本不足 · " : ""}已收集 {person.count} 条视频
+            </p>
+          </div>
         </div>
-        <div className="space-y-0.5">
-          <p className="text-xs text-[var(--color-text-secondary)]">稳定性</p>
-          <Badge
-            variant={person.stability < 5 ? "default" : person.stability < 15 ? "secondary" : "outline"}
-            className={person.stability < 5 ? "bg-rose-400" : person.stability >= 15 ? "border-green-300 text-green-600" : ""}
-          >
-            {person.stability < 5 ? "稳定" : person.stability < 15 ? "一般" : "波动大"}
-          </Badge>
+
+        {/* Avg Play Comparison (col 4) */}
+        <div className="lg:col-span-4 space-y-3 lg:border-l lg:border-slate-100 lg:pl-6">
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[11px] font-semibold text-slate-500">
+              <span>本周 (近7天)</span>
+              <span className="text-slate-800">{formatPlayCountCompact(person.recentAvgPlay)}</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div 
+                className={cn("h-full rounded-full transition-all duration-1000", person.trend >= 0 ? "bg-emerald-400" : "bg-rose-400")} 
+                style={{ width: `${recentPlayWidth}%` }} 
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[11px] font-semibold text-slate-400">
+              <span>上周 (8-14天前)</span>
+              <span className="text-slate-600">{formatPlayCountCompact(person.prevAvgPlay)}</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div 
+                className="h-full rounded-full bg-slate-300 transition-all duration-1000" 
+                style={{ width: `${prevPlayWidth}%` }} 
+              />
+            </div>
+          </div>
         </div>
-        <div className="space-y-0.5">
-          <p className="text-xs text-[var(--color-text-secondary)]">趋势</p>
-          {person.count === 0 ? (
-            <Badge variant="outline" className="text-slate-400">暂无数据</Badge>
-          ) : (
-            <Badge
-              variant={person.trend > 10 ? "default" : person.trend < -10 ? "outline" : "secondary"}
-              className={person.trend > 10 ? "bg-rose-400" : person.trend < -10 ? "border-green-300 text-green-600" : ""}
-            >
-              <span className="tabular-nums">{person.trend > 0 ? "+" : ""}<MetricValue value={person.trend} suffix="%" /></span>
-            </Badge>
-          )}
+
+        {/* Hit Rate (col 2) */}
+        <div className="lg:col-span-2 space-y-2 lg:border-l lg:border-slate-100 lg:pl-6">
+          <div className="flex justify-between lg:hidden text-[11px] font-semibold text-slate-500">
+            <span>综合爆款率</span>
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="text-2xl font-black tracking-tight text-slate-800">
+              {person.hitRate.toFixed(1)}<span className="text-sm font-semibold text-slate-400">%</span>
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div 
+              className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-primary)_0%,var(--color-primary-light,var(--color-primary))_100%)] transition-all duration-1000" 
+              style={{ width: `${hitRateWidth}%` }} 
+            />
+          </div>
         </div>
-        <div className="space-y-0.5">
-          <p className="text-xs text-[var(--color-text-secondary)]">互动效率</p>
-          {person.totalPlay === 0 ? (
-            <Badge variant="outline" className="text-slate-400">暂无数据</Badge>
-          ) : (
-            <Badge
-              variant={person.engagementRate >= 5 ? "default" : person.engagementRate >= 2 ? "secondary" : "outline"}
-              className={person.engagementRate >= 5 ? "bg-rose-400" : person.engagementRate < 2 ? "border-green-300 text-green-600" : ""}
-            >
-              <MetricValue value={person.engagementRate} suffix="%" maximumFractionDigits={2} />
-            </Badge>
-          )}
+
+        {/* Engagement (col 3) */}
+        <div className="lg:col-span-3 space-y-2 lg:border-l lg:border-slate-100 lg:pl-6">
+          <div className="flex justify-between lg:hidden text-[11px] font-semibold text-slate-500">
+            <span>互动粘性 (点赞评转/播放)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <div className="flex justify-between items-baseline mb-1">
+                <span className="text-lg font-bold text-slate-700">{person.engagementRate.toFixed(2)}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div 
+                  className="h-full rounded-full bg-amber-400 transition-all duration-1000" 
+                  style={{ width: `${engWidth}%` }} 
+                />
+              </div>
+            </div>
+            <div className="shrink-0 flex items-center justify-center size-8 rounded-full bg-slate-50 text-slate-400">
+               {person.trend > 0 ? <TrendingUp className="size-4 text-emerald-500" /> : person.trend < 0 ? <TrendingDown className="size-4 text-rose-500" /> : <Minus className="size-4 text-slate-400" />}
+            </div>
+          </div>
         </div>
+        
       </div>
-    </MotionCard>
+    </div>
   );
 }
