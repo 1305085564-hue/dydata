@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
+
+# 含密钥的搭环境指南，不推到 GitHub
+docs/Win电脑搭环境.md
 
 # playwright mcp logs
 .playwright-mcp/

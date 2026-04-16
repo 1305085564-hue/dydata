@@ -63,7 +63,7 @@ export async function loadAnalyticsPageData({
       .order("report_date", { ascending: false }),
     adminSupabase
       .from("videos")
-      .select("*, accounts(name)")
+      .select("*, accounts(name), cover_url")
       .in("user_id", teamUserIds)
       .order("published_at", { ascending: false })
       .then((result) => {

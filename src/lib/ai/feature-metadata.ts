@@ -124,6 +124,24 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
     outputSummary: "summary / reasons / actions，用于沉淀建议记录。",
     recommendedWhen: "需要把问题转成待执行建议时用它。",
   },
+  smart_alert: {
+    group: "其他已有 AI 能力",
+    title: "智能预警",
+    location: "预警通知链路",
+    purpose: "监测异常指标波动，自动触发预警通知给相关人员。",
+    inputSummary: "近期指标趋势、阈值配置、历史基线。",
+    outputSummary: "预警等级、异常描述、建议动作。",
+    recommendedWhen: "需要自动监控数据异常并及时通知时用它。",
+  },
+  content_rewrite: {
+    group: "内容工具",
+    title: "员工文案改写",
+    location: "/content-tools/rewrite",
+    purpose: "根据配置的模式和提示词，对员工提交的文案进行改写优化。",
+    inputSummary: "原始文案、选定的改写模式、字数预设、上下文。",
+    outputSummary: "改写后的文案文本。",
+    recommendedWhen: "员工需要优化视频文案时用它。",
+  },
 };
 
 export type AiFeatureKey = keyof typeof AI_FEATURE_METADATA;
