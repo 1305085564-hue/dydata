@@ -1,10 +1,20 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  ZAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  Cell
+} from "recharts";
+import { cn } from "@/lib/utils";
 
 interface Report {
   id: string;
@@ -25,6 +35,7 @@ interface Report {
   content?: string | null;
   published_at?: string | null;
   uploaded_at?: string;
+  cover_url?: string | null;
 }
 
 interface HitAnalyzerProps {
@@ -45,17 +56,12 @@ function parseSeconds(val: string | null): number | null {
 }
 
 function formatPlayCount(value: number) {
+  if (value >= 10000) return `${(value / 10000).toFixed(1)}w`;
   return value.toLocaleString("zh-CN");
 }
 
 export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
-  const [mode, setMode] = useState<"hit" | "low">("hit");
-  const [playMin, setPlayMin] = useState("");
-  const [playMax, setPlayMax] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [crMin, setCrMin] = useState("");
-  const [crMax, setCrMax] = useState("");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [selectedSubmitters, setSelectedSubmitters] = useState<string[]>([]);
 
   function toggleSubmitter(name: string) {
@@ -64,204 +70,113 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
     );
   }
 
-  function applyPreset(min: string, max: string) {
-    setPlayMin(min);
-    setPlayMax(max);
-  }
+  const HIT_THRESHOLD = 100000;
+
+  const filters = [
+    { id: "all", label: "全部", filter: () => true },
+    { id: "hit", label: "爆款 (>10w播放)", filter: (r: Report) => (r.play_count || 0) >= 100000 },
+    { id: "potential", label: "高潜 (>5w播放 & >30%完播)", filter: (r: Report) => (r.play_count || 0) >= 50000 && (parsePercent(r.completion_rate) || 0) >= 30 },
+    { id: "low", label: "低迷 (<1w播放)", filter: (r: Report) => (r.play_count || 0) < 10000 },
+    { id: "high_interaction", label: "高互动", filter: (r: Report) => ((r.likes || 0) + (r.comments || 0) + (r.shares || 0) + (r.favorites || 0)) > 1000 },
+  ];
+
+  const activeFilterFn = filters.find((f) => f.id === activeFilter)?.filter || (() => true);
 
   const filtered = useMemo(() => {
     return reports.filter((r) => {
-      const play = r.play_count ?? 0;
-      if (playMin && play < Number(playMin)) return false;
-      if (playMax && play > Number(playMax)) return false;
-      if (dateFrom && r.report_date < dateFrom) return false;
-      if (dateTo && r.report_date > dateTo) return false;
-      const cr = parsePercent(r.completion_rate);
-      if (crMin && (cr === null || cr < Number(crMin))) return false;
-      if (crMax && (cr !== null && cr > Number(crMax))) return false;
       if (selectedSubmitters.length > 0 && !selectedSubmitters.includes(r.submitter)) return false;
-      return true;
+      return activeFilterFn(r);
     });
-  }, [reports, playMin, playMax, dateFrom, dateTo, crMin, crMax, selectedSubmitters]);
+  }, [reports, selectedSubmitters, activeFilterFn]);
 
-  const stats = useMemo(() => {
-    if (filtered.length === 0) return null;
-    let totalPlay = 0, totalCr = 0, crCount = 0, totalDur = 0, durCount = 0;
-    let totalLikes = 0, totalComments = 0, totalShares = 0, totalFavorites = 0;
-    const contents: string[] = [];
-
-    // 规律总结用的原始数据
-    const crValues: number[] = [];
-    const titleLengths: number[] = [];
-    const contentLengths: number[] = [];
-    const hourBuckets: Record<string, number> = {};
-    const weekdayBuckets: Record<string, number> = {};
-    const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-
-    for (const r of filtered) {
-      totalPlay += r.play_count ?? 0;
-      const cr = parsePercent(r.completion_rate);
-      if (cr !== null) { totalCr += cr; crCount++; crValues.push(cr); }
-      const dur = parseSeconds(r.avg_play_duration);
-      if (dur !== null) { totalDur += dur; durCount++; }
-      totalLikes += r.likes ?? 0;
-      totalComments += r.comments ?? 0;
-      totalShares += r.shares ?? 0;
-      totalFavorites += r.favorites ?? 0;
-      if (r.content) { contents.push(r.content); contentLengths.push(r.content.length); }
-      const safeTitle = r.title?.trim() ?? "";
-      titleLengths.push(safeTitle.length);
-
-      if (r.published_at) {
-        const d = new Date(r.published_at);
-        const h = d.getHours();
-        const slot = h >= 6 && h < 12 ? "早间(6-12)" : h >= 12 && h < 14 ? "午间(12-14)" : h >= 14 && h < 18 ? "下午(14-18)" : h >= 18 && h < 22 ? "晚间(18-22)" : "深夜(22-6)";
-        hourBuckets[slot] = (hourBuckets[slot] ?? 0) + 1;
-        weekdayBuckets[WEEKDAYS[d.getDay()]] = (weekdayBuckets[WEEKDAYS[d.getDay()]] ?? 0) + 1;
-      }
-    }
-
-    const totalEngagement = totalLikes + totalComments + totalShares + totalFavorites;
-    const n = filtered.length;
-
-    // 完播率区间分布
-    const crRanges = [
-      { label: "<20%", min: 0, max: 20 },
-      { label: "20-35%", min: 20, max: 35 },
-      { label: "35-50%", min: 35, max: 50 },
-      { label: ">50%", min: 50, max: 999 },
-    ];
-    const crDistribution = crValues.length > 0
-      ? crRanges.map((range) => ({
-          label: range.label,
-          count: crValues.filter((v) => v >= range.min && v < range.max).length,
-          pct: +(crValues.filter((v) => v >= range.min && v < range.max).length / crValues.length * 100).toFixed(1),
-        }))
-      : null;
-
-    // 标题长度分布
-    const titleRanges = [
-      { label: "<10字", min: 0, max: 10 },
-      { label: "10-20字", min: 10, max: 20 },
-      { label: "20-30字", min: 20, max: 30 },
-      { label: ">30字", min: 30, max: 999 },
-    ];
-    const titleLenDist = titleRanges.map((range) => ({
-      label: range.label,
-      count: titleLengths.filter((v) => v >= range.min && v < range.max).length,
-      pct: +(titleLengths.filter((v) => v >= range.min && v < range.max).length / n * 100).toFixed(1),
-    }));
-
-    // 文案长度分布
-    const contentLenDist = contentLengths.length > 0
-      ? [
-          { label: "<50字", min: 0, max: 50 },
-          { label: "50-100字", min: 50, max: 100 },
-          { label: "100-200字", min: 100, max: 200 },
-          { label: ">200字", min: 200, max: 99999 },
-        ].map((range) => ({
-          label: range.label,
-          count: contentLengths.filter((v) => v >= range.min && v < range.max).length,
-          pct: +(contentLengths.filter((v) => v >= range.min && v < range.max).length / contentLengths.length * 100).toFixed(1),
-        }))
-      : null;
-
-    // 发布时间段 top
-    const timeSlotTop = Object.entries(hourBuckets).length > 0
-      ? Object.entries(hourBuckets).sort((a, b) => b[1] - a[1]).map(([slot, count]) => ({ slot, count, pct: +(count / Object.values(hourBuckets).reduce((a, b) => a + b, 0) * 100).toFixed(1) }))
-      : null;
-
-    // 星期分布 top
-    const weekdayTop = Object.entries(weekdayBuckets).length > 0
-      ? Object.entries(weekdayBuckets).sort((a, b) => b[1] - a[1]).map(([day, count]) => ({ day, count, pct: +(count / Object.values(weekdayBuckets).reduce((a, b) => a + b, 0) * 100).toFixed(1) }))
-      : null;
-
-    return {
-      count: n,
-      avgPlay: Math.round(totalPlay / n),
-      avgCr: crCount > 0 ? (totalCr / crCount).toFixed(2) : null,
-      avgDur: durCount > 0 ? (totalDur / durCount).toFixed(1) : null,
-      engagementRate: totalPlay > 0 ? (totalEngagement / totalPlay * 100).toFixed(2) : null,
-      avgLikes: Math.round(totalLikes / n),
-      avgComments: Math.round(totalComments / n),
-      avgShares: Math.round(totalShares / n),
-      avgFavorites: Math.round(totalFavorites / n),
-      contents,
-      // 规律总结
-      crDistribution,
-      titleLenDist,
-      contentLenDist,
-      timeSlotTop,
-      weekdayTop,
-    };
+  const scatterData = useMemo(() => {
+    return filtered.map(r => {
+      const cr = parsePercent(r.completion_rate) || 0;
+      const play = r.play_count || 0;
+      const engagement = (r.likes || 0) + (r.comments || 0) + (r.shares || 0) + (r.favorites || 0);
+      return {
+        ...r,
+        cr,
+        play,
+        engagement,
+        isHit: play >= HIT_THRESHOLD
+      };
+    }).filter(d => d.cr > 0 && d.play > 0);
   }, [filtered]);
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="rounded-xl border border-white/60 bg-white/95 p-4 shadow-xl backdrop-blur-md w-64">
+          <div className="flex flex-col gap-3">
+            {data.cover_url && (
+              <div className="h-32 w-full rounded-lg bg-slate-100 overflow-hidden relative">
+                <img src={data.cover_url} alt="Cover" className="object-cover w-full h-full" />
+              </div>
+            )}
+            <div>
+              <p className="font-semibold text-[var(--color-text-primary)] line-clamp-2 leading-tight text-sm">
+                {data.title || "无标题视频"}
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">{data.submitter} · {data.published_at ? new Date(data.published_at).toLocaleDateString() : data.report_date}</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mt-1 pt-3 border-t border-slate-100">
+               <div>
+                  <p className="text-[10px] text-[var(--color-text-tertiary)] font-medium">播放量</p>
+                  <p className={cn("text-sm font-bold", data.isHit ? "text-rose-600" : "text-slate-700")}>{formatPlayCount(data.play)}</p>
+               </div>
+               <div>
+                  <p className="text-[10px] text-[var(--color-text-tertiary)] font-medium">完播率</p>
+                  <p className="text-sm font-bold text-slate-700">{data.cr}%</p>
+               </div>
+               <div>
+                  <p className="text-[10px] text-[var(--color-text-tertiary)] font-medium">总互动</p>
+                  <p className="text-sm font-bold text-slate-700">{data.engagement}</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
-      {/* 模式切换 */}
-      <div className="flex gap-2">
-        <Button size="sm" variant={mode === "hit" ? "default" : "outline"} onClick={() => { setMode("hit"); applyPreset("50000", ""); }}>
-          爆款分析
-        </Button>
-        <Button size="sm" variant={mode === "low" ? "default" : "outline"} onClick={() => { setMode("low"); applyPreset("", "5000"); }}>
-          低表现分析
-        </Button>
-      </div>
-
-      {/* 筛选面板 */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs">播放量最低</Label>
-          <div>
-            <Input type="number" step="1" value={playMin} onChange={(e) => setPlayMin(e.target.value)} placeholder="0" className="h-8" />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">播放量最高</Label>
-          <div>
-            <Input type="number" step="1" value={playMax} onChange={(e) => setPlayMax(e.target.value)} placeholder="不限" className="h-8" />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">日期起</Label>
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">日期止</Label>
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">完播率最低（%）</Label>
-          <Input type="number" step="0.01" value={crMin} onChange={(e) => setCrMin(e.target.value)} placeholder="0" className="h-8" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">完播率最高（%）</Label>
-          <Input type="number" step="0.01" value={crMax} onChange={(e) => setCrMax(e.target.value)} placeholder="不限" className="h-8" />
-        </div>
-      </div>
-
-      {/* 快捷按钮 */}
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => applyPreset("10000", "")}>{">"} 10,000</Button>
-        <Button size="sm" variant="outline" onClick={() => applyPreset("100000", "")}>{">"} 100,000</Button>
-        <Button size="sm" variant="outline" onClick={() => applyPreset("500000", "")}>{">"} 500,000</Button>
-        <Button size="sm" variant="outline" onClick={() => applyPreset("", "10000")}>{"<"} 10,000</Button>
-        <Button size="sm" variant="outline" onClick={() => { setPlayMin(""); setPlayMax(""); setCrMin(""); setCrMax(""); setDateFrom(""); setDateTo(""); setSelectedSubmitters([]); }}>重置</Button>
+      {/* 快捷筛选器 */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-[var(--color-text-secondary)] mr-2 uppercase tracking-wider">Quick Filters</span>
+        {filters.map((filter) => (
+          <button
+            key={filter.id}
+            onClick={() => setActiveFilter(filter.id)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-300",
+              activeFilter === filter.id
+                ? "bg-[var(--color-primary)] text-white shadow-md shadow-blue-500/20"
+                : "bg-white/60 text-slate-600 border border-slate-200/60 hover:bg-white hover:border-slate-300"
+            )}
+          >
+            {filter.label}
+          </button>
+        ))}
       </div>
 
       {/* 提交人筛选 */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">提交人</Label>
-        <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
+        <div className="flex flex-wrap gap-2">
           {submitters.map((name) => (
             <button
               key={name}
               onClick={() => toggleSubmitter(name)}
-              className={`rounded-xl border px-2.5 py-1.5 text-sm font-medium transition-colors truncate ${
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors border",
                 selectedSubmitters.includes(name)
-                  ? "border-blue-500 bg-blue-500 text-white"
-                  : "border-slate-200 bg-white/80 text-slate-700 hover:border-slate-400"
-              }`}
+                  ? "border-slate-800 bg-slate-800 text-white"
+                  : "border-slate-200 bg-transparent text-slate-600 hover:border-slate-300 hover:bg-white/50"
+              )}
             >
               {name}
             </button>
@@ -269,140 +184,87 @@ export function HitAnalyzer({ reports, submitters }: HitAnalyzerProps) {
         </div>
       </div>
 
-      {/* 共性面板 */}
-      {stats ? (
-        <div className="rounded-2xl bg-white/85 backdrop-blur-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-white/70 p-4 space-y-3">
-          <p className="text-sm font-semibold tracking-[-0.02em]">筛选结果：<span className="tabular-nums">{stats.count}</span> 条</p>
-
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-2.5 py-2">
-              <p className="text-[11px] text-muted-foreground">平均播放量</p>
-              <p className="mt-1 font-semibold tabular-nums text-slate-900">{formatPlayCount(stats.avgPlay)}</p>
-            </div>
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-2.5 py-2">
-              <p className="text-[11px] text-muted-foreground">平均完播率</p>
-              <p className="mt-1 font-semibold tabular-nums text-slate-900">{stats.avgCr ? `${stats.avgCr}%` : "—"}</p>
-            </div>
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 px-2.5 py-2">
-              <p className="text-[11px] text-muted-foreground">平均互动率</p>
-              <p className="mt-1 font-semibold tabular-nums text-slate-900">{stats.engagementRate ? `${stats.engagementRate}%` : "—"}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-            <div>
-              <p className="text-muted-foreground text-[11px]">平均播放时长</p>
-              <p className="font-medium tabular-nums">{stats.avgDur ? `${stats.avgDur}秒` : "—"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-[11px]">平均点赞</p>
-              <p className="font-medium tabular-nums">{stats.avgLikes}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-[11px]">平均评论</p>
-              <p className="font-medium tabular-nums">{stats.avgComments}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-[11px]">平均分享</p>
-              <p className="font-medium tabular-nums">{stats.avgShares}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-[11px]">平均收藏</p>
-              <p className="font-medium tabular-nums">{stats.avgFavorites}</p>
-            </div>
-          </div>
-
-          {stats.contents.length > 0 && (
-            <div className="space-y-2 border-t pt-2">
-              <p className="text-xs font-semibold tracking-tight text-muted-foreground">文案列表（<span className="tabular-nums">{stats.contents.length}</span> 条）</p>
-              <div className="max-h-[200px] space-y-2 overflow-y-auto">
-                {stats.contents.map((c, i) => (
-                  <div key={i} className="glass-card-static rounded-xl p-2">
-                    <p className="whitespace-pre-wrap text-xs">{c}</p>
-                  </div>
-                ))}
+      {/* 散点图可视化 */}
+      <div className="rounded-3xl border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.8)_0%,rgba(248,250,252,0.6)_100%)] p-6 shadow-sm backdrop-blur-xl">
+        <div className="mb-6 flex items-center justify-between">
+           <div>
+              <h3 className="text-lg font-bold text-[var(--color-text-primary)]">爆款特征散点图</h3>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">横轴：完播率 | 纵轴：播放量 | 气泡大小：互动量</p>
+           </div>
+           <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                 <span className="size-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
+                 <span className="font-medium text-slate-600">爆款 (&gt;{formatPlayCount(HIT_THRESHOLD)})</span>
               </div>
-            </div>
-          )}
-
-          {/* 规律总结 */}
-          <div className="space-y-3 border-t pt-3">
-            <p className="text-sm font-semibold tracking-[-0.02em]">规律总结</p>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {stats.crDistribution && (
-                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-                  <p className="text-xs font-medium text-slate-500">完播率区间分布</p>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {stats.crDistribution.map((d) => (
-                      <div key={d.label} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
-                        <span className="font-semibold tracking-tight">{d.label}</span>
-                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-                <p className="text-xs font-medium text-slate-500">标题长度分布</p>
-                <div className="flex gap-1.5 flex-wrap">
-                  {stats.titleLenDist.map((d) => (
-                    <div key={d.label} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
-                      <span className="font-semibold tracking-tight">{d.label}</span>
-                      <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="flex items-center gap-1.5">
+                 <span className="size-2.5 rounded-full bg-blue-400"></span>
+                 <span className="font-medium text-slate-600">常规视频</span>
               </div>
-
-              {stats.contentLenDist && (
-                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-                  <p className="text-xs font-medium text-slate-500">文案长度分布</p>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {stats.contentLenDist.map((d) => (
-                      <div key={d.label} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
-                        <span className="font-semibold tracking-tight">{d.label}</span>
-                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {stats.timeSlotTop && (
-                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-                  <p className="text-xs font-medium text-slate-500">发布时间段分布</p>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {stats.timeSlotTop.map((d) => (
-                      <div key={d.slot} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
-                        <span className="font-semibold tracking-tight">{d.slot}</span>
-                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {stats.weekdayTop && (
-                <div className="rounded-xl bg-slate-50/80 p-3 space-y-2">
-                  <p className="text-xs font-medium text-slate-500">发布星期分布</p>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {stats.weekdayTop.map((d) => (
-                      <div key={d.day} className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-1 text-xs">
-                        <span className="font-semibold tracking-tight">{d.day}</span>
-                        <span className="ml-1 tabular-nums text-slate-400">{d.count}条 ({d.pct}%)</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+           </div>
         </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">无匹配数据</p>
-      )}
+        
+        <div className="h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis 
+                type="number" 
+                dataKey="cr" 
+                name="完播率" 
+                unit="%" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                domain={['auto', 'auto']}
+              />
+              <YAxis 
+                type="number" 
+                dataKey="play" 
+                name="播放量" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                tickFormatter={(val) => formatPlayCount(val)}
+                domain={['auto', 'auto']}
+              />
+              <ZAxis 
+                type="number" 
+                dataKey="engagement" 
+                range={[60, 400]} 
+                name="互动量" 
+              />
+              <Tooltip 
+                content={<CustomTooltip />} 
+                cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8' }}
+              />
+              <ReferenceLine 
+                y={HIT_THRESHOLD} 
+                stroke="#f43f5e" 
+                strokeDasharray="4 4" 
+                label={{ 
+                  position: 'insideTopLeft', 
+                  value: '爆款阈值线 (10w+)', 
+                  fill: '#f43f5e',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  offset: 10
+                }} 
+              />
+              <Scatter data={scatterData} shape="circle">
+                {scatterData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.isHit ? "#f43f5e" : "#60a5fa"} 
+                    fillOpacity={entry.isHit ? 0.8 : 0.6}
+                    stroke={entry.isHit ? "#e11d48" : "#3b82f6"}
+                    strokeWidth={1}
+                  />
+                ))}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }

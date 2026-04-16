@@ -13,37 +13,39 @@ function VideoConclusionCards(props: 视频结论卡Props) {
   const insufficient = props.videos.length < 10;
 
   return (
-    <section className="space-y-5">
-      <div className="flex flex-col gap-3 border-b border-white/65 pb-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="relative space-y-6">
+      <div className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold tracking-[0.2em] text-[var(--color-text-tertiary)] uppercase">Video Signals</p>
-          <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">本周关键结论</h2>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看最值得执行的信号，再深入到话题、形式、发布时间和干预对象。</p>
+          <p className="text-[11px] font-semibold tracking-[0.2em] text-[var(--color-primary)] uppercase">Video Signals</p>
+          <h2 className="text-3xl font-black tracking-tight text-[var(--color-text-primary)]">本周经营洞察</h2>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">快速定位最值得执行的增长信号与需干预风险。</p>
         </div>
         {!insufficient ? (
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/88 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
-            <span className="size-1.5 rounded-full bg-[var(--color-primary)]" aria-hidden />
-            <span className="font-medium text-[var(--color-text-primary)]">样本满足结论条件</span>
-            <span>{props.videos.length} 条视频</span>
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-white/60 bg-white/80 px-4 py-2 text-sm shadow-[var(--shadow-light)] backdrop-blur-md">
+            <div className="relative flex size-2.5 items-center justify-center">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-primary)] opacity-40"></span>
+              <span className="relative inline-flex size-1.5 rounded-full bg-[var(--color-primary)]"></span>
+            </div>
+            <span className="font-semibold text-[var(--color-text-primary)]">基于 {props.videos.length} 条视频生成</span>
           </div>
         ) : null}
       </div>
 
       {insufficient ? (
-        <div className="space-y-3 rounded-[22px] border border-dashed border-slate-200 bg-[linear-gradient(145deg,rgba(248,250,252,0.9),rgba(241,245,249,0.7))] p-6">
-          <div className="flex items-center gap-2">
-            <span className="rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+        <div className="relative overflow-hidden rounded-[24px] border border-dashed border-slate-300/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.9),rgba(248,250,252,0.7))] p-8 shadow-sm">
+          <div className="relative z-10 flex items-center gap-3 mb-4">
+            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 shadow-sm">
               数据不足（未满10篇）
             </span>
           </div>
-          <p className="text-sm leading-relaxed text-[var(--color-text-secondary)] italic">{EXAMPLE_TEXT}</p>
+          <p className="relative z-10 text-base leading-relaxed text-[var(--color-text-secondary)] italic">{EXAMPLE_TEXT}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <视频结论单卡 card={result.bestTopic} />
-          <视频结论单卡 card={result.bestFormat} />
-          <视频结论单卡 card={result.bestPublishHour} />
-          <干预结论单卡 card={result.intervention} />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4 md:grid-rows-2 xl:grid-rows-1">
+          <视频结论单卡 card={result.bestTopic} className="md:col-span-1 xl:col-span-1" />
+          <视频结论单卡 card={result.bestFormat} className="md:col-span-1 xl:col-span-1" />
+          <视频结论单卡 card={result.bestPublishHour} className="md:col-span-1 xl:col-span-1" />
+          <干预结论单卡 card={result.intervention} className="md:col-span-1 xl:col-span-1" />
         </div>
       )}
     </section>
