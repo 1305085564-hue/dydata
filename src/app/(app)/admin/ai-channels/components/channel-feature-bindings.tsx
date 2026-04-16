@@ -67,7 +67,7 @@ export function ChannelFeatureBindings({
                   {group.features.length}
                 </span>
               </h3>
-              
+
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
                 {group.features.map((feature) => (
                   <ChannelFeatureCard

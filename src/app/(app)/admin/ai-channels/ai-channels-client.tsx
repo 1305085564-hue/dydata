@@ -349,9 +349,9 @@ export default function AIChannelsClient() {
         cancelText="取消"
         destructive
         loading={busyActions[`delete:${deleteTarget?.id ?? ""}`]}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (deleteTarget) {
-            await handleChannelAction(deleteTarget.id, "delete");
+            void handleChannelAction(deleteTarget.id, "delete");
           }
         }}
         onOpenChange={(open) => {
