@@ -1,13 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, FilePenLine, History, PencilLine, ScanSearch } from "lucide-react";
+import { Eye, FilePenLine, History, PencilLine, ScanSearch, TrendingUp, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
+import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ResultTrend } from "@/components/charts/result-trend";
+import { InteractionTrend } from "@/components/charts/interaction-trend";
+import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { Label } from "@/components/ui/label";
-import { 申请豁免弹窗 } from "./申请豁免弹窗";
 import {
   Select,
   SelectContent,
@@ -16,20 +26,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Video, VideoTagReviewDimension } from "@/types";
-import { VideoSubmitForm } from "./video-submit-form";
-import { VideoTagReviewCard } from "./video-tag-review-card";
-import {
-  getTodaySubmissionSummary,
-  resolveSubmitPanelMode,
-  type SubmitPanelRequestedMode,
-  type TodaySubmissionReportLike,
-} from "./video-submit-panel-state";
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
+import { DashboardForm, type DashboardReportData } from "./dashboard-form";
 import {
   getDashboardMetricGridClass,
   getDashboardStatusClass,
   getDashboardSurfaceClass,
 } from "./dashboard-visuals";
 import { AddAccountDialog } from "./添加账号弹窗";
+import { 申请豁免弹窗 } from "./申请豁免弹窗";
+import { HistoryList } from "./history-list";
+import { VideoSubmitForm } from "./video-submit-form";
+import {
+  getTodaySubmissionSummary,
+  resolveSubmitPanelMode,
+  type SubmitPanelRequestedMode,
+  type TodaySubmissionReportLike,
+} from "./video-submit-panel-state";
+import { VideoTagReviewCard } from "./video-tag-review-card";
+
+type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
+  id: string;
+  account_id: string;
+};
 
 interface VideoSubmitPanelProps {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
@@ -37,12 +56,87 @@ interface VideoSubmitPanelProps {
   userDisplayName: string;
   today: string;
   todayReports: TodaySubmissionReportLike[];
+  monthReports: MonthReport[];
+  history: MonthReport[];
+  trendData: DashboardPageData["trendData"];
+  leaderboardData: Parameters<typeof Leaderboard>[0]["data"];
+  accountIds: string[];
+  ownContentDirections: string[];
+  accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
 }
 
-export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, todayReports, hasPendingExemption = false }: VideoSubmitPanelProps) {
+function toDashboardReportData(report: MonthReport): DashboardReportData {
+  return {
+    id: report.id,
+    account_id: report.account_id,
+    title: report.title ?? "",
+    report_date: report.report_date,
+    play_count: report.play_count,
+    completion_rate: report.completion_rate,
+    avg_play_duration: report.avg_play_duration,
+    bounce_rate_2s: report.bounce_rate_2s,
+    completion_rate_5s: report.completion_rate_5s,
+    likes: report.likes ?? 0,
+    comments: report.comments ?? 0,
+    shares: report.shares ?? 0,
+    favorites: report.favorites ?? 0,
+    follower_gain: report.follower_gain ?? 0,
+    follower_convert: report.follower_convert ?? null,
+    content: report.content ?? null,
+    published_at: report.published_at,
+    uploaded_at: report.uploaded_at ?? "",
+  };
+}
+
+function toOverrideReport(summaryOverride: TodaySubmissionReportLike): MonthReport | null {
+  if (!summaryOverride.account_id) return null;
+
+  return {
+    id: `override-${summaryOverride.account_id}-${summaryOverride.report_date}`,
+    account_id: summaryOverride.account_id,
+    title: summaryOverride.title,
+    content: summaryOverride.content ?? null,
+    report_date: summaryOverride.report_date,
+    play_count: summaryOverride.play_count,
+    likes: summaryOverride.likes,
+    comments: summaryOverride.comments,
+    shares: summaryOverride.shares,
+    favorites: summaryOverride.favorites,
+    follower_gain: summaryOverride.follower_gain,
+    follower_convert: summaryOverride.follower_convert,
+    completion_rate: summaryOverride.completion_rate,
+    avg_play_duration: summaryOverride.avg_play_duration,
+    bounce_rate_2s: summaryOverride.bounce_rate_2s,
+    completion_rate_5s: summaryOverride.completion_rate_5s,
+    published_at: summaryOverride.published_at,
+    uploaded_at: summaryOverride.uploaded_at,
+  };
+}
+
+export function VideoSubmitPanel({
+  accounts,
+  userId,
+  userDisplayName,
+  today,
+  todayReports,
+  monthReports,
+  history,
+  trendData,
+  leaderboardData,
+  accountIds,
+  ownContentDirections,
+  accountDisplayNameMap,
+  hasPendingExemption = false,
+}: VideoSubmitPanelProps) {
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
+  const [activeBizDate, setActiveBizDate] = useState(today);
+  const [isDataViewOpen, setIsDataViewOpen] = useState(false);
+  const [isTrendViewOpen, setIsTrendViewOpen] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState<MonthReport | null>(null);
   const [lastSubmittedVideoId, setLastSubmittedVideoId] = useState<string | null>(null);
   const [lastAiTags, setLastAiTags] = useState<Array<{
     tag_dimension: VideoTagReviewDimension;
@@ -52,28 +146,73 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
   }>>([]);
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
 
-  const mergedTodayReports = useMemo(() => {
-    const overrideEntries = Object.values(reportOverrides);
-    const filteredBase = todayReports.filter((report) => !overrideEntries.some((override) => override.account_id === report.account_id));
-    return [...overrideEntries, ...filteredBase];
-  }, [reportOverrides, todayReports]);
-
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? accounts[0] ?? null,
-    [accounts, selectedAccountId]
+    [accounts, selectedAccountId],
   );
+
+  const mergedTodayReports = useMemo(() => {
+    const overrideEntries = Object.values(reportOverrides).filter((report) => report.report_date === today);
+    const filteredBase = todayReports.filter(
+      (report) =>
+        !overrideEntries.some(
+          (override) => override.account_id === report.account_id && override.report_date === report.report_date,
+        ),
+    );
+    return [...overrideEntries, ...filteredBase];
+  }, [reportOverrides, today, todayReports]);
+
+  const mergedMonthReports = useMemo(() => {
+    const overrideReports = Object.values(reportOverrides)
+      .map((report) => toOverrideReport(report))
+      .filter((report): report is MonthReport => Boolean(report));
+    const overrideKeys = new Set(overrideReports.map((report) => `${report.account_id}-${report.report_date}`));
+
+    return [
+      ...overrideReports,
+      ...monthReports.filter((report) => !overrideKeys.has(`${report.account_id}-${report.report_date}`)),
+    ];
+  }, [monthReports, reportOverrides]);
 
   const selectedSummary = useMemo(
     () => (selectedAccount ? getTodaySubmissionSummary(mergedTodayReports, selectedAccount.id) : null),
-    [mergedTodayReports, selectedAccount]
+    [mergedTodayReports, selectedAccount],
   );
 
-  const panelMode = resolveSubmitPanelMode({ summary: selectedSummary, requestedMode });
-  const isSummaryMode = panelMode === "summary";
+  const activeDateReport = useMemo(
+    () =>
+      mergedMonthReports
+        .filter((report) => report.report_date === activeBizDate)
+        .sort((left, right) => (right.uploaded_at ?? "").localeCompare(left.uploaded_at ?? ""))[0] ?? null,
+    [activeBizDate, mergedMonthReports],
+  );
+
+  const submittedDates = useMemo(
+    () => Array.from(new Set(mergedMonthReports.map((report) => report.report_date).filter(Boolean))),
+    [mergedMonthReports],
+  );
+
   const submittedCount = useMemo(
     () => accounts.filter((account) => Boolean(getTodaySubmissionSummary(mergedTodayReports, account.id))).length,
-    [accounts, mergedTodayReports]
+    [accounts, mergedTodayReports],
   );
+
+  const isTodayFlow = activeBizDate === today;
+  const primarySummary = isTodayFlow ? selectedSummary : null;
+  const primaryRequestedMode = isTodayFlow ? requestedMode : "backfill";
+  const primaryMode = resolveSubmitPanelMode({
+    summary: primarySummary,
+    requestedMode: primaryRequestedMode,
+  });
+  const isPrimarySummaryMode = primaryMode === "summary";
+
+  function resetPanelForAccount(accountId: string) {
+    setSelectedAccountId(accountId);
+    setRequestedMode(null);
+    setActiveBizDate(today);
+    setLastSubmittedVideoId(null);
+    setLastAiTags([]);
+  }
 
   function handleSubmitted(
     video: Video,
@@ -88,293 +227,504 @@ export function VideoSubmitPanel({ accounts, userId, userDisplayName, today, tod
     if (summaryOverride?.account_id) {
       setReportOverrides((current) => ({
         ...current,
-        [summaryOverride.account_id!]: summaryOverride,
+        [`${summaryOverride.account_id}-${summaryOverride.report_date}`]: summaryOverride,
       }));
+      setActiveBizDate(summaryOverride.report_date);
     }
+
     setRequestedMode(null);
     setLastSubmittedVideoId(video.id);
     setLastAiTags(aiTags);
+    setIsDataViewOpen(false);
+  }
+
+  function openBackfillForDate(date: string) {
+    setActiveBizDate(date);
+    setRequestedMode(null);
+    setIsDataViewOpen(false);
   }
 
   if (!accounts.length) {
     return (
       <Card className="overflow-hidden rounded-3xl border-orange-200 bg-orange-50/80 shadow-sm backdrop-blur-sm">
         <CardContent className="px-6 py-5 text-sm text-orange-700">
-          当前暂无可提交的视频账号，请联系管理员分配账号后再提交。
+          当前没有可提交的数据账号，请联系管理员为你分配账号后再继续操作。
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="space-y-5"
-    >
-      <Card className={`${getDashboardSurfaceClass("hero")} overflow-hidden rounded-[1.75rem] border-0`}>
-        <CardHeader className="space-y-4 border-b border-border/45 bg-background/20 pb-4 px-5 pt-5 sm:px-6 sm:pt-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-2">
-              <div className="dashboard-section-kicker">视频提交</div>
-              <div className="space-y-1">
-                <CardTitle className="text-[1.35rem] font-semibold tracking-tight sm:text-2xl">第一屏先完成今日提报</CardTitle>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                  先选账号，再导截图或直接补录，最后提交。历史补交入口也放在这里，不用先提今天这条。
-                </p>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="space-y-5"
+      >
+        <Card className={`${getDashboardSurfaceClass("hero")} overflow-hidden rounded-[1.75rem] border-0`}>
+          <CardHeader className="space-y-4 border-b border-border/45 bg-background/20 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-2">
+                <div className="dashboard-section-kicker">数据提交</div>
+                <div className="space-y-1">
+                  <CardTitle className="text-[1.35rem] font-semibold tracking-tight sm:text-2xl">
+                    先完成当前日期的数据填报
+                  </CardTitle>
+                  <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                    默认显示今天的提交流程；如果从历史日历进入，主表单会自动切换到对应日期的补交模式。
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2">
+                <申请豁免弹窗 hasPending={hasPendingExemption} />
               </div>
             </div>
 
-            <div className="flex items-start gap-2">
-              <申请豁免弹窗 hasPending={hasPendingExemption} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
-              今日账号
-              <span className="font-semibold text-foreground">{accounts.length}</span>
-            </div>
-            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
-              已提交
-              <span className="font-semibold text-foreground">{submittedCount}</span>
-            </div>
-            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
-              待提交
-              <span className="font-semibold text-foreground">{Math.max(accounts.length - submittedCount, 0)}</span>
-            </div>
-            <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
-              当前账号
-              <span className="font-semibold text-foreground">{userDisplayName}</span>
-            </div>
-          </div>
-
-          <div className="dashboard-field-group space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="video-account-select" className="text-sm font-medium text-foreground">提交账号</Label>
-              <AddAccountDialog />
-            </div>
-            <Select
-              value={selectedAccountId}
-              onValueChange={(value) => {
-                if (!value) return;
-                setSelectedAccountId(value);
-                setRequestedMode(null);
-                setLastSubmittedVideoId(null);
-                setLastAiTags([]);
-              }}
-            >
-              <SelectTrigger
-                id="video-account-select"
-                className="h-12 w-full rounded-2xl bg-background/90 px-4 text-sm"
-              >
-                <SelectValue placeholder="请选择账号" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-3 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
-          <div className={accounts.length > 1 ? "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-2"}>
-            {accounts.map((account) => {
-              const isSelected = account.id === (selectedAccount?.id ?? "");
-              const summary = getTodaySubmissionSummary(mergedTodayReports, account.id);
-              const isSubmitted = Boolean(summary);
-
-              return (
-                <button
-                  key={account.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAccountId(account.id);
-                    setRequestedMode(null);
-                    setLastSubmittedVideoId(null);
-                    setLastAiTags([]);
-                  }}
-                  className={[
-                    "rounded-[1.25rem] border p-3 text-left transition-all duration-200 sm:p-4",
-                    isSelected
-                      ? "border-primary/35 bg-primary/8 shadow-[0_14px_30px_-20px_rgba(37,99,235,0.42)]"
-                      : "border-border/60 bg-background/72 hover:bg-background/92",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-foreground">{account.display_name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {account.content_direction?.trim() || "未设置内容方向"}
-                      </div>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={isSubmitted ? getDashboardStatusClass("submitted") : getDashboardStatusClass("pending")}
-                    >
-                      {isSubmitted ? "今日已提交" : "今日未提交"}
-                    </Badge>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedAccount ? (
-            <div className="dashboard-summary-bar">
-              <div className="glass-chip">
-                当前账号
-                <span className="font-semibold text-foreground">{selectedAccount.display_name}</span>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
+                今日账号
+                <span className="font-semibold text-foreground">{accounts.length}</span>
               </div>
-              <div className="glass-chip">
-                日期
-                <span className="font-semibold text-foreground">{today}</span>
+              <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
+                已提交
+                <span className="font-semibold text-foreground">{submittedCount}</span>
               </div>
-              <div className="glass-chip">
-                状态
-                <span className={selectedSummary ? getDashboardStatusClass("submitted") : getDashboardStatusClass("pending")}>
-                  {selectedSummary ? "已提交" : "待提交"}
-                </span>
+              <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
+                待提交
+                <span className="font-semibold text-foreground">{Math.max(accounts.length - submittedCount, 0)}</span>
               </div>
-              <div className="glass-chip">
-                <ScanSearch className="size-3.5" />
-                截图导入
-                <span className="font-semibold text-foreground">优先完成</span>
+              <div className="glass-chip h-11 justify-center text-xs sm:text-sm">
+                当前用户
+                <span className="font-semibold text-foreground">{userDisplayName}</span>
               </div>
             </div>
-          ) : null}
 
-          {selectedAccount ? (
-            <div className="grid gap-3 rounded-[1.25rem] border border-border/60 bg-background/68 p-3 md:grid-cols-[1fr_auto_auto] md:items-center md:p-4">
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">快捷入口</p>
-                <p className="text-xs text-muted-foreground">
-                  历史补交现在可直接进入，不需要先提交今天数据。
-                </p>
-              </div>
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                variant={panelMode === "backfill" ? "default" : "outline"}
-                className="h-11 rounded-2xl"
-                onClick={() => setRequestedMode("backfill")}
+                variant="outline"
+                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
+                onClick={() => setIsDataViewOpen(true)}
+              >
+                <Eye className="size-4" />
+                数据查看
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
+                onClick={() => setIsTrendViewOpen(true)}
+              >
+                <TrendingUp className="size-4" />
+                趋势查看
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
+                onClick={() => setIsLeaderboardOpen(true)}
+              >
+                <Trophy className="size-4" />
+                排行榜
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
+                onClick={() => setIsHistoryOpen(true)}
               >
                 <History className="size-4" />
-                历史补交
-              </Button>
-              <Button
-                type="button"
-                variant={panelMode === "backfill" ? "outline" : "default"}
-                className="h-11 rounded-2xl"
-                onClick={() => setRequestedMode(selectedSummary ? "editToday" : null)}
-              >
-                <PencilLine className="size-4" />
-                {selectedSummary ? "修改今日数据" : "填写今日数据"}
+                历史记录
               </Button>
             </div>
-          ) : null}
 
-          {selectedSummary && isSummaryMode ? (
-            <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-emerald-950 sm:p-5`}>
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                    <span className={getDashboardStatusClass("submitted")}>
-                      <FilePenLine className="size-4" />
-                      今日数据已提交
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="text-lg font-semibold text-foreground sm:text-xl">
-                      {selectedSummary.title?.trim() || "未填写视频标题"}
+            <div className="dashboard-field-group space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="video-account-select" className="text-sm font-medium text-foreground">
+                  提交账号
+                </Label>
+                <AddAccountDialog />
+              </div>
+              <Select
+                value={selectedAccountId}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  resetPanelForAccount(value);
+                }}
+              >
+                <SelectTrigger
+                  id="video-account-select"
+                  className="h-12 w-full rounded-2xl bg-background/90 px-4 text-sm"
+                >
+                  <SelectValue placeholder="请选择账号" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+            <div
+              className={
+                accounts.length > 1
+                  ? "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3"
+                  : "grid grid-cols-1 gap-2"
+              }
+            >
+              {accounts.map((account) => {
+                const isSelected = account.id === (selectedAccount?.id ?? "");
+                const summary = getTodaySubmissionSummary(mergedTodayReports, account.id);
+                const isSubmitted = Boolean(summary);
+
+                return (
+                  <button
+                    key={account.id}
+                    type="button"
+                    onClick={() => resetPanelForAccount(account.id)}
+                    className={[
+                      "rounded-[1.25rem] border p-3 text-left transition-all duration-200 sm:p-4",
+                      isSelected
+                        ? "border-primary/35 bg-primary/8 shadow-[0_14px_30px_-20px_rgba(37,99,235,0.42)]"
+                        : "border-border/60 bg-background/72 hover:bg-background/92",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-foreground">{account.display_name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {account.content_direction?.trim() || "未设置内容方向"}
+                        </div>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className={isSubmitted ? getDashboardStatusClass("submitted") : getDashboardStatusClass("pending")}
+                      >
+                        {isSubmitted ? "今日已提交" : "今日未提交"}
+                      </Badge>
                     </div>
-                    <div className="text-xs leading-5 text-emerald-800/80">
-                      提交时间：{selectedSummary.uploadedAt || "暂无"}
-                      <span className="mx-2">×</span>
-                      发布时间：{selectedSummary.publishedAt || "暂无"}
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedAccount ? (
+              <div className="dashboard-summary-bar">
+                <div className="glass-chip">
+                  当前账号
+                  <span className="font-semibold text-foreground">{selectedAccount.display_name}</span>
+                </div>
+                <div className="glass-chip">
+                  当前日期
+                  <span className="font-semibold text-foreground">{activeBizDate}</span>
+                </div>
+                <div className="glass-chip">
+                  当前模式
+                  <span className={activeBizDate === today ? getDashboardStatusClass("submitted") : getDashboardStatusClass("editing")}>
+                    {activeBizDate === today ? "今日填报" : "历史补交"}
+                  </span>
+                </div>
+                <div className="glass-chip">
+                  <ScanSearch className="size-3.5" />
+                  截图导入
+                  <span className="font-semibold text-foreground">优先完成</span>
+                </div>
+              </div>
+            ) : null}
+
+            {primarySummary && isPrimarySummaryMode ? (
+              <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-emerald-950 sm:p-5`}>
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                      <span className={getDashboardStatusClass("submitted")}>
+                        <FilePenLine className="size-4" />
+                        今日数据已提交
+                      </span>
                     </div>
-                  </div>
-                  <div className={getDashboardMetricGridClass("secondary")}>
-                    <div className="dashboard-metric-card">
-                      <div className="text-xs text-muted-foreground">播放量</div>
-                      <div className="text-sm font-semibold text-foreground">{selectedSummary.playCount ?? "--"}</div>
-                    </div>
-                    <div className="dashboard-metric-card">
-                      <div className="text-xs text-muted-foreground">互动</div>
-                      <div className="text-sm font-semibold text-foreground">
-                        {(selectedSummary.likes ?? 0) + (selectedSummary.comments ?? 0) + (selectedSummary.shares ?? 0) + (selectedSummary.favorites ?? 0)}
+                    <div className="space-y-1.5">
+                      <div className="text-lg font-semibold text-foreground sm:text-xl">
+                        {primarySummary.title?.trim() || "未填写视频标题"}
+                      </div>
+                      <div className="text-xs leading-5 text-emerald-800/80">
+                        提交时间：{primarySummary.uploadedAt || "暂无"}
+                        <span className="mx-2">·</span>
+                        发布时间：{primarySummary.publishedAt || "暂无"}
                       </div>
                     </div>
-                    <div className="dashboard-metric-card">
-                      <div className="text-xs text-muted-foreground">涨粉</div>
-                      <div className="text-sm font-semibold text-foreground">{selectedSummary.followerGain ?? "--"}</div>
-                    </div>
-                    <div className="dashboard-metric-card">
-                      <div className="text-xs text-muted-foreground">完播率</div>
-                      <div className="text-sm font-semibold text-foreground">{selectedSummary.completionRate ? `${selectedSummary.completionRate}%` : "--"}</div>
+                    <div className={getDashboardMetricGridClass("secondary")}>
+                      <div className="dashboard-metric-card">
+                        <div className="text-xs text-muted-foreground">播放量</div>
+                        <div className="text-sm font-semibold text-foreground">{primarySummary.playCount ?? "--"}</div>
+                      </div>
+                      <div className="dashboard-metric-card">
+                        <div className="text-xs text-muted-foreground">互动总量</div>
+                        <div className="text-sm font-semibold text-foreground">
+                          {(primarySummary.likes ?? 0) +
+                            (primarySummary.comments ?? 0) +
+                            (primarySummary.shares ?? 0) +
+                            (primarySummary.favorites ?? 0)}
+                        </div>
+                      </div>
+                      <div className="dashboard-metric-card">
+                        <div className="text-xs text-muted-foreground">涨粉</div>
+                        <div className="text-sm font-semibold text-foreground">{primarySummary.followerGain ?? "--"}</div>
+                      </div>
+                      <div className="dashboard-metric-card">
+                        <div className="text-xs text-muted-foreground">完播率</div>
+                        <div className="text-sm font-semibold text-foreground">{primarySummary.completionRate ?? "--"}</div>
+                      </div>
                     </div>
                   </div>
-                  {selectedSummary.content ? (
-                    <div className="dashboard-field-group text-xs leading-6 text-muted-foreground">
-                      <div className="mb-1 font-medium text-foreground">已提交文案</div>
-                      {selectedSummary.content}
-                    </div>
-                  ) : null}
-                </div>
 
-                <div className="flex shrink-0 flex-col gap-2 lg:w-[190px]">
-                  <Button type="button" variant="outline" className="h-12 rounded-2xl bg-white/70" onClick={() => setRequestedMode("editToday")}>
-                    <PencilLine className="size-4" />
-                    修改今日数据
-                  </Button>
+                  <div className="flex shrink-0 flex-col gap-2 lg:w-[190px]">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 rounded-2xl bg-white/70"
+                      onClick={() => setRequestedMode("editToday")}
+                    >
+                      <PencilLine className="size-4" />
+                      修改今日数据
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {selectedSummary && !isSummaryMode ? (
-            <div className="dashboard-field-group flex items-center justify-between gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <span className={getDashboardStatusClass("editing")}>
-                  <ChevronDown className="size-4" />
-                  {panelMode === "backfill" ? "正在补交历史数据" : "正在处理今日数据"}
-                </span>
-              </div>
-              <Button type="button" variant="ghost" className="h-8 rounded-xl px-3 text-xs" onClick={() => setRequestedMode(null)}>
-                收起
-              </Button>
-            </div>
-          ) : null}
+            {lastSubmittedVideoId && lastAiTags.length ? (
+              <VideoTagReviewCard
+                videoId={lastSubmittedVideoId}
+                tags={lastAiTags}
+                onConfirmed={(tags) => setLastAiTags(tags)}
+                onSkipped={() => {
+                  setLastSubmittedVideoId(null);
+                  setLastAiTags([]);
+                }}
+              />
+            ) : null}
 
-          {lastSubmittedVideoId && lastAiTags.length ? (
-            <VideoTagReviewCard
-              videoId={lastSubmittedVideoId}
-              tags={lastAiTags}
-              onConfirmed={(tags) => setLastAiTags(tags)}
-              onSkipped={() => {
-                setLastSubmittedVideoId(null);
-                setLastAiTags([]);
-              }}
-            />
-          ) : null}
+            {selectedAccount && (!isPrimarySummaryMode || activeBizDate !== today) ? (
+              <VideoSubmitForm
+                account={selectedAccount}
+                userId={userId}
+                today={today}
+                mode={primaryMode}
+                initialSummary={primaryMode === "backfill" ? null : primarySummary}
+                initialBizDate={primaryMode === "backfill" ? activeBizDate : null}
+                onSubmitted={handleSubmitted}
+                onCancel={() => {
+                  setRequestedMode(null);
+                  setActiveBizDate(today);
+                }}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+      </motion.div>
 
-          {selectedAccount && !isSummaryMode ? (
-            <VideoSubmitForm
-              account={selectedAccount}
-              userId={userId}
+      <Dialog open={isDataViewOpen} onOpenChange={setIsDataViewOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>数据查看</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <SubmissionCalendar
               today={today}
-              mode={panelMode}
-              initialSummary={panelMode === "backfill" ? null : selectedSummary}
-              onSubmitted={handleSubmitted}
-              onCancel={() => setRequestedMode(null)}
+              submittedDates={submittedDates}
+              selectedDate={activeBizDate}
+              onDateSelect={(date) => setActiveBizDate(date)}
+            />
+
+            <div className="rounded-[1.75rem] border border-white/70 bg-white/82 p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-text-tertiary)]">
+                    Daily Detail
+                  </p>
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
+                    {activeBizDate} 的提交情况
+                  </h3>
+                  <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                    选择日期后，可查看当日数据；如果当天尚未提交，可直接进入补交流程。
+                  </p>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className={activeDateReport ? getDashboardStatusClass("submitted") : getDashboardStatusClass("pending")}
+                >
+                  {activeDateReport ? "当日已提交" : "当日未提交"}
+                </Badge>
+              </div>
+
+              {activeDateReport ? (
+                <div className="mt-4 rounded-[1.25rem] border border-emerald-200/70 bg-emerald-50/75 p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-emerald-700">
+                          {accounts.find((account) => account.id === activeDateReport.account_id)?.display_name ?? "当前账号"}
+                        </p>
+                        <h4 className="text-base font-semibold text-foreground">
+                          {activeDateReport.title?.trim() || "未填写视频标题"}
+                        </h4>
+                        <p className="mt-1 text-xs text-emerald-800/80">
+                          提交时间：{activeDateReport.uploaded_at || "暂无"}
+                        </p>
+                      </div>
+
+                      <div className={getDashboardMetricGridClass("secondary")}>
+                        <div className="dashboard-metric-card">
+                          <div className="text-xs text-muted-foreground">播放量</div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {activeDateReport.play_count?.toLocaleString("zh-CN") ?? "--"}
+                          </div>
+                        </div>
+                        <div className="dashboard-metric-card">
+                          <div className="text-xs text-muted-foreground">互动总量</div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {(activeDateReport.likes ?? 0) +
+                              (activeDateReport.comments ?? 0) +
+                              (activeDateReport.shares ?? 0) +
+                              (activeDateReport.favorites ?? 0)}
+                          </div>
+                        </div>
+                        <div className="dashboard-metric-card">
+                          <div className="text-xs text-muted-foreground">涨粉</div>
+                          <div className="text-sm font-semibold text-foreground">{activeDateReport.follower_gain ?? "--"}</div>
+                        </div>
+                        <div className="dashboard-metric-card">
+                          <div className="text-xs text-muted-foreground">完播率</div>
+                          <div className="text-sm font-semibold text-foreground">{activeDateReport.completion_rate ?? "--"}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-2 lg:w-[180px]">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 rounded-2xl bg-white/90"
+                        onClick={() => setEditingReport(activeDateReport)}
+                      >
+                        <PencilLine className="size-4" />
+                        查看并修改
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-[1.25rem] border border-rose-200 bg-rose-50/75 p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-rose-700">这一天还没有提交数据</p>
+                      <p className="text-sm leading-6 text-rose-900/75">
+                        点击按钮后，将关闭当前弹窗，并把主页主表单切换到 {activeBizDate} 的补交模式。
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      className="h-11 rounded-2xl"
+                      onClick={() => openBackfillForDate(activeBizDate)}
+                    >
+                      <PencilLine className="size-4" />
+                      去补交这一天
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTrendViewOpen} onOpenChange={setIsTrendViewOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
+          <DialogHeader>
+            <DialogTitle>趋势查看</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ResultTrend
+              data={trendData.结果趋势}
+              personalLabel="我的数据"
+              teamAverageLabel="团队 P70"
+              emptyText="提交满两天后，可查看结果趋势。"
+            />
+            <InteractionTrend
+              data={trendData.互动趋势}
+              personalLabel="我的质量分"
+              teamAverageLabel="团队 P70"
+              emptyText="提交满两天后，可查看互动质量趋势。"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isLeaderboardOpen} onOpenChange={setIsLeaderboardOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
+          <DialogHeader>
+            <DialogTitle>排行榜</DialogTitle>
+          </DialogHeader>
+          <Leaderboard
+            data={leaderboardData}
+            ownAccountIds={accountIds}
+            ownContentDirections={ownContentDirections}
+            currentDate={today}
+            defaultRange="week"
+            defaultCompact
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
+          <DialogHeader>
+            <DialogTitle>历史记录</DialogTitle>
+          </DialogHeader>
+          {!history || history.length === 0 ? (
+            <EmptyState
+              icon={History}
+              title="暂无历史记录"
+              description="完成提交或补交后，这里会显示最近 30 条记录。"
+            />
+          ) : (
+            <HistoryList
+              history={history.map((report) => ({
+                ...report,
+                content: report.content ?? null,
+                follower_convert: report.follower_convert ?? null,
+              }))}
+              accounts={accounts.map((account) => ({ id: account.id, name: account.display_name }))}
+              accountDisplayNameMap={accountDisplayNameMap}
+              today={today}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>查看并修改当日数据</DialogTitle>
+          </DialogHeader>
+          {editingReport ? (
+            <DashboardForm
+              accounts={accounts.map((account) => ({ id: account.id, name: account.display_name }))}
+              defaultAccountId={editingReport.account_id}
+              today={today}
+              existingData={toDashboardReportData(editingReport)}
             />
           ) : null}
-        </CardContent>
-      </Card>
-    </motion.div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

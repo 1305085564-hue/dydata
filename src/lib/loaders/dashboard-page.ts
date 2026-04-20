@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountLeaderboardRow } from "@/types";
+import { isExternalEmployee } from "@/lib/member-access";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { hasPendingExemptionRequest } from "@/app/(app)/dashboard/actions";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
@@ -20,6 +21,9 @@ type DashboardHistoryRow = Omit<TodaySubmissionReportLike, "account_id"> & {
 
 export interface DashboardPageData {
   today: string;
+  isExternalUser: boolean;
+  monthSubmittedDates: string[];
+  monthReports: DashboardHistoryRow[];
   userId: string;
   userDisplayName: string;
   accounts: Array<DashboardAccountRow & { display_name: string }>;
@@ -52,10 +56,11 @@ export async function loadDashboardPageData({
       .select("id, name, content_direction")
       .eq("profile_id", userId)
       .order("created_at", { ascending: true }),
-    supabase.from("profiles").select("name").eq("id", userId).single(),
+    supabase.from("profiles").select("name, employee_type").eq("id", userId).single(),
   ]);
 
   const userDisplayName = profile?.name?.trim() || "当前用户";
+  const isExternalUser = isExternalEmployee(profile?.employee_type);
   const displayAccounts = ((accounts ?? []) as DashboardAccountRow[]).map((account, index, list) => ({
     ...account,
     name: account.name ?? "未命名账号",
@@ -69,6 +74,9 @@ export async function loadDashboardPageData({
   }));
 
   const today = formatDateOnly(new Date());
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  const monthStartDate = formatDateOnly(monthStart);
   const accountIds = displayAccounts.map((account) => account.id);
   const ownContentDirections = uniqueNonEmpty(displayAccounts.map((account) => account.content_direction));
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
@@ -80,6 +88,8 @@ export async function loadDashboardPageData({
     { data: leaderboardRows },
     { data: teamHistory },
     { data: activeProfiles },
+    { data: monthDateRows },
+    { data: monthHistory },
     hasPendingExemption,
   ] = await Promise.all([
     accountIds.length
@@ -109,6 +119,26 @@ export async function loadDashboardPageData({
       .select("report_date, user_id, play_count, follower_gain, likes, comments, shares, favorites")
       .gte("report_date", monthAgo),
     supabase.from("profiles").select("id, status"),
+    accountIds.length
+      ? supabase
+          .from("daily_reports")
+          .select("report_date")
+          .in("account_id", accountIds)
+          .gte("report_date", monthStartDate)
+          .lte("report_date", today)
+      : Promise.resolve({ data: [] }),
+    accountIds.length
+      ? supabase
+          .from("daily_reports")
+          .select(
+            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+          )
+          .in("account_id", accountIds)
+          .gte("report_date", monthStartDate)
+          .lte("report_date", today)
+          .order("report_date", { ascending: false })
+          .order("uploaded_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
     hasPendingExemptionRequest(),
   ]);
 
@@ -146,6 +176,17 @@ export async function loadDashboardPageData({
 
   return {
     today,
+    isExternalUser,
+    monthSubmittedDates: Array.from(
+      new Set(
+        ((monthDateRows ?? []) as Array<{ report_date: string | null }>)
+          .map((report) => report.report_date)
+          .filter((reportDate): reportDate is string => Boolean(reportDate)),
+      ),
+    ),
+    monthReports: ((monthHistory ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
+      (report): report is DashboardHistoryRow => typeof report.account_id === "string",
+    ),
     userId,
     userDisplayName,
     accounts: displayAccounts,

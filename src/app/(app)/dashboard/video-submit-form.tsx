@@ -69,6 +69,7 @@ interface VideoSubmitFormProps {
   today: string;
   mode: SubmitPanelMode;
   initialSummary: TodaySubmissionSummary | null;
+  initialBizDate?: string | null;
   onSubmitted: (
     video: Video,
     aiTags: Array<{
@@ -400,7 +401,7 @@ function buildIssueHintText(messages: string[]) {
   return `${messages[0]}；另外还有 ${messages.length - 1} 处问题`;
 }
 
-export function VideoSubmitForm({ account, userId, today, mode, initialSummary, onSubmitted, onCancel }: VideoSubmitFormProps) {
+export function VideoSubmitForm({ account, userId, today, mode, initialSummary, initialBizDate = null, onSubmitted, onCancel }: VideoSubmitFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today));
   const [fields, setFields] = useState<SubmissionState["fields"]>(() => createEditableFields());
@@ -418,7 +419,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   useEffect(() => {
     const nextMeta = createInitialMeta(today);
     if (isBackfillMode) {
-      nextMeta.bizDate = "";
+      nextMeta.bizDate = initialBizDate ?? "";
     }
 
     if (initialSummary) {
@@ -435,7 +436,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     setIsSubmitted(false);
     setDeleteTargetRole(null);
     setKeywordInput("");
-  }, [account?.id, initialSummary, isBackfillMode, today]);
+  }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today]);
 
   const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
