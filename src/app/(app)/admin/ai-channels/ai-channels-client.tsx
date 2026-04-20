@@ -1,645 +1,364 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BadgeInfo,
-  CheckCircle2,
-  Loader2,
-  MoreHorizontal,
-  Pencil,
-  RefreshCw,
-  Settings2,
-  ShieldAlert,
-  Trash2,
-} from "lucide-react";
+import { ArrowRight, BadgeInfo, Settings2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-type AiChannelRow = {
-  id: string;
-  name: string;
-  base_url: string;
-  api_key_masked: string;
-  model: string | null;
-  priority: number;
-  is_enabled: boolean;
-  unhealthy_until: string | null;
-  consecutive_failures: number;
-  last_failure_at: string | null;
-  last_success_at: string | null;
-  last_error_message: string | null;
-};
+import { ChannelSidebar } from "./components/channel-sidebar";
+import { ChannelDetailForm } from "./components/channel-detail-form";
+import { ChannelFeatureBindings } from "./components/channel-feature-bindings";
+import { AiChannelRow, AiFeatureItem, ChannelFormState } from "./components/types";
 
-type ChannelFormState = {
-  name: string;
-  base_url: string;
-  api_key: string;
-  model: string;
-  priority: string;
-};
-
-type ChannelStatus = "healthy" | "circuit" | "disabled";
-
-const EMPTY_FORM: ChannelFormState = {
-  name: "",
-  base_url: "",
-  api_key: "",
-  model: "",
-  priority: "100",
-};
-
-function maskApiKey(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return "—";
-  if (trimmed.length <= 8) return `${trimmed.slice(0, 4)}***`;
-  return `${trimmed.slice(0, 4)}***${trimmed.slice(-4)}`;
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatMaskedFromApi(value: string) {
-  if (!value) return "—";
-  if (value.includes("***")) return value;
-  return maskApiKey(value);
-}
-
-function getStatus(channel: AiChannelRow): ChannelStatus {
-  if (!channel.is_enabled) return "disabled";
-  if (channel.unhealthy_until && new Date(channel.unhealthy_until).getTime() > Date.now()) return "circuit";
-  return "healthy";
-}
-
-function getStatusMeta(channel: AiChannelRow) {
-  const status = getStatus(channel);
-  if (status === "disabled") {
-    return {
-      label: "已禁用",
-      variant: "outline" as const,
-      className: "border-border/70 bg-muted/70 text-muted-foreground",
-    };
-  }
-
-  if (status === "circuit") {
-    return {
-      label: `熔断中 · ${formatDateTime(channel.unhealthy_until)}`,
-      variant: "destructive" as const,
-      className: "rounded-full",
-    };
-  }
-
-  return {
-    label: "健康",
-    variant: "default" as const,
-    className: "rounded-full bg-emerald-600 text-white hover:bg-emerald-600",
-  };
-}
-
-function isRecoverable(channel: AiChannelRow) {
-  return Boolean(channel.unhealthy_until && new Date(channel.unhealthy_until).getTime() > Date.now());
-}
+const DEBOUNCE_MS = 500;
 
 export default function AIChannelsClient() {
+  // State
   const [channels, setChannels] = useState<AiChannelRow[]>([]);
+  const [features, setFeatures] = useState<AiFeatureItem[]>([]);
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+  
+  // Loading & Action State
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeChannel, setActiveChannel] = useState<AiChannelRow | null>(null);
-  const [form, setForm] = useState<ChannelFormState>(EMPTY_FORM);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [busyActions, setBusyActions] = useState<Record<string, boolean>>({});
+  const [featureSaveStates, setFeatureSaveStates] = useState<Record<string, "idle" | "pending" | "saving" | "saved" | "error">>({});
   const [deleteTarget, setDeleteTarget] = useState<AiChannelRow | null>(null);
-  const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
-  const [expandedActionRowId, setExpandedActionRowId] = useState<string | null>(null);
 
-  const orderedChannels = useMemo(
-    () => [...channels].sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name, "zh-CN")),
-    [channels]
-  );
+  // Refs for debouncing auto-save
+  const featuresRef = useRef<AiFeatureItem[]>([]);
+  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  const requestSeqRef = useRef<Record<string, number>>({});
+  const lastSavedRef = useRef<Record<string, string>>({});
 
-  async function loadChannels(nextSilent = false) {
-    if (nextSilent) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    setError(null);
+  useEffect(() => { featuresRef.current = features; }, [features]);
 
+  // Initial Load
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
-      const res = await fetch("/api/admin/ai-channels", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "加载渠道失败");
+      const [cRes, fRes] = await Promise.all([
+        fetch("/api/admin/ai-channels", { cache: "no-store" }),
+        fetch("/api/admin/ai-features", { cache: "no-store" })
+      ]);
+      
+      const cData = await cRes.json();
+      const fData = await fRes.json();
+      
+      if (!cRes.ok || cData.error) throw new Error(cData.error || "加载渠道失败");
+      if (!fRes.ok || fData.error) throw new Error(fData.error || "加载功能失败");
+      
+      const loadedChannels = Array.isArray(cData.channels) ? cData.channels : [];
+      setChannels(loadedChannels.sort((a: AiChannelRow, b: AiChannelRow) => a.priority - b.priority || a.name.localeCompare(b.name, "zh-CN")));
+      
+      const loadedFeatures = Array.isArray(fData.features) ? fData.features.map((f: any) => ({
+        ...f,
+        channel_id: f.channel_id ?? "",
+        model: f.model ?? "",
+        system_prompt: f.system_prompt ?? ""
+      })) : [];
+      
+      setFeatures(loadedFeatures);
+      
+      // Init save cache
+      const nextSaved: Record<string, string> = {};
+      for (const f of loadedFeatures) nextSaved[f.id] = JSON.stringify({
+        id: f.id, channel_id: f.channel_id || null, model: f.model || null, system_prompt: f.system_prompt || null, is_enabled: f.is_enabled
+      });
+      lastSavedRef.current = nextSaved;
+
+      // Select first channel if none selected and not adding new
+      if (loadedChannels.length > 0 && selectedChannelId === null) {
+        setSelectedChannelId(loadedChannels[0].id);
       }
-      setChannels(Array.isArray(data.channels) ? data.channels : []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "加载渠道失败";
-      setError(message);
-      feedbackToast.error(message);
+      feedbackToast.error(err instanceof Error ? err.message : "加载数据失败");
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    void loadChannels();
-  }, []);
+  useEffect(() => { void loadData(); }, []);
 
-  function openCreateDialog() {
-    setActiveChannel(null);
-    setForm(EMPTY_FORM);
-    setIsDialogOpen(true);
-  }
+  // Set action busy state
+  const setBusy = (key: string, isBusy: boolean) => {
+    setBusyActions(prev => ({ ...prev, [key]: isBusy }));
+  };
 
-  function openEditDialog(channel: AiChannelRow) {
-    setActiveChannel(channel);
-    setForm({
-      name: channel.name,
-      base_url: channel.base_url,
-      api_key: "",
-      model: channel.model ?? "",
-      priority: String(channel.priority),
-    });
-    setIsDialogOpen(true);
-  }
-
-  function closeDialog() {
-    if (isSubmitting) return;
-    setIsDialogOpen(false);
-    setActiveChannel(null);
-    setForm(EMPTY_FORM);
-  }
-
-  async function submitForm() {
-    const name = form.name.trim();
-    const baseUrl = form.base_url.trim();
-    const apiKey = form.api_key.trim();
-    const model = form.model.trim();
-    const priority = Number.parseInt(form.priority, 10);
-
-    if (!name || !baseUrl || !Number.isFinite(priority)) {
+  // Channel Actions
+  const handleSaveChannel = async (form: ChannelFormState, id?: string) => {
+    if (!form.name || !form.base_url || !form.priority) {
       feedbackToast.error("请先填写名称、地址和优先级");
       return;
     }
-    if (!activeChannel && !apiKey) {
-      feedbackToast.error("请填写密钥");
+    if (!id && !form.api_key) {
+      feedbackToast.error("新增渠道必须填写密钥");
       return;
     }
 
-    setIsSubmitting(true);
+    setBusy("save", true);
     try {
       const res = await fetch("/api/admin/ai-channels", {
-        method: activeChannel ? "PUT" : "POST",
+        method: id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: activeChannel?.id,
-          name,
-          base_url: baseUrl,
-          api_key: apiKey || undefined,
-          model: model || null,
-          priority,
+          id,
+          name: form.name.trim(),
+          base_url: form.base_url.trim(),
+          api_key: form.api_key.trim() || undefined,
+          model: form.model.trim() || null,
+          priority: Number.parseInt(form.priority, 10),
         }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "保存失败");
+      if (!res.ok || data.error) throw new Error(data.error || "保存失败");
+
+      feedbackToast.success(id ? "渠道已更新" : "渠道已新增");
+      await loadData(true);
+      
+      if (!id && data.channel?.id) {
+        setSelectedChannelId(data.channel.id);
       }
-
-      feedbackToast.success(activeChannel ? "渠道已更新" : "渠道已新增");
-      setIsDialogOpen(false);
-      setActiveChannel(null);
-      setForm(EMPTY_FORM);
-      await loadChannels(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "保存失败";
-      feedbackToast.error(message);
+      feedbackToast.error(err instanceof Error ? err.message : "保存失败");
     } finally {
-      setIsSubmitting(false);
+      setBusy("save", false);
     }
-  }
+  };
 
-  async function runChannelAction(channel: AiChannelRow, action: "test" | "ocr_test" | "toggle" | "recover" | "delete") {
-    setLoadingActionId(`${action}:${channel.id}`);
+  const handleChannelAction = async (id: string, action: "test" | "ocr_test" | "toggle" | "recover" | "delete", isEnabled?: boolean) => {
+    setBusy(`${action}:${id}`, true);
     try {
       let res: Response;
       if (action === "test" || action === "ocr_test") {
         res = await fetch("/api/admin/ai-channels/test", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            channel_id: channel.id,
-            test_kind: action === "ocr_test" ? "ocr" : "text",
-          }),
+          body: JSON.stringify({ channel_id: id, test_kind: action === "ocr_test" ? "ocr" : "text" }),
         });
       } else if (action === "recover") {
         res = await fetch("/api/admin/ai-channels/recover", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ channel_id: channel.id }),
+          body: JSON.stringify({ channel_id: id }),
         });
       } else if (action === "toggle") {
         res = await fetch("/api/admin/ai-channels", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: channel.id,
-            is_enabled: !channel.is_enabled,
-          }),
+          body: JSON.stringify({ id, is_enabled: isEnabled }),
         });
       } else {
-        res = await fetch(`/api/admin/ai-channels?id=${encodeURIComponent(channel.id)}`, {
-          method: "DELETE",
-        });
+        res = await fetch(`/api/admin/ai-channels?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       }
 
       const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "操作失败");
-      }
+      if (!res.ok || data.error) throw new Error(data.error || "操作失败");
 
       if (action === "test" || action === "ocr_test") {
-        const elapsed = typeof data.elapsed_ms === "number" ? `，耗时 ${data.elapsed_ms}ms` : "";
-        feedbackToast.success(`${action === "ocr_test" ? "截图 OCR 测试成功" : "文本连通测试成功"}${elapsed}`);
+        feedbackToast.success(`${action === "ocr_test" ? "截图 OCR" : "文本"}测试成功${data.elapsed_ms ? ` (${data.elapsed_ms}ms)` : ''}`);
       } else if (action === "toggle") {
-        feedbackToast.success(channel.is_enabled ? "已禁用渠道" : "已启用渠道");
+        feedbackToast.success(isEnabled ? "已启用渠道" : "已禁用渠道");
       } else if (action === "recover") {
         feedbackToast.success("已手动恢复渠道");
       } else {
         feedbackToast.success("已删除渠道");
+        if (selectedChannelId === id) setSelectedChannelId(channels.length > 1 ? channels.find(c => c.id !== id)?.id || null : null);
       }
 
-      await loadChannels(true);
+      await loadData(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "操作失败";
-      feedbackToast.error(message);
+      feedbackToast.error(err instanceof Error ? err.message : "操作失败");
     } finally {
-      setLoadingActionId(null);
-      setDeleteTarget(null);
-      setExpandedActionRowId(null);
+      setBusy(`${action}:${id}`, false);
+      if (action === "delete") setDeleteTarget(null);
     }
-  }
+  };
 
-  const navCards = [
-    {
-      title: "管理入口",
-      description: "从这里回到总控台。",
-      href: "/admin",
-      label: "返回总控台",
-    },
-    {
-      title: "AI 渠道管理",
-      description: "按优先级管理模型地址、密钥和熔断状态。",
-      href: null,
-      label: "当前页面",
-    },
-    {
-      title: "AI 功能配置",
-      description: "按功能指定渠道、模型和提示词。",
-      href: "/admin/ai-features",
-      label: "去看功能",
-      icon: Settings2,
-    },
-    {
-      title: "文案改写配置",
-      description: "维护展示模型、真实路线和自动流程。",
-      href: "/admin/ai-rewrite",
-      label: "去看改写配置",
-      icon: Settings2,
-    },
-  ];
+  // Feature Actions (Auto-save)
+  const queueFeatureSave = (id: string) => {
+    const timer = timersRef.current[id];
+    if (timer) clearTimeout(timer);
+    timersRef.current[id] = setTimeout(() => { void saveFeature(id); }, DEBOUNCE_MS);
+  };
+
+  const saveFeature = async (id: string) => {
+    const current = featuresRef.current.find((f) => f.id === id);
+    if (!current) return;
+    
+    const payload = {
+      id: current.id,
+      channel_id: current.channel_id.trim() ? current.channel_id : null,
+      model: current.model.trim() ? current.model.trim() : null,
+      system_prompt: current.system_prompt.trim() ? current.system_prompt : null,
+      is_enabled: current.is_enabled,
+    };
+    
+    const payloadKey = JSON.stringify(payload);
+    if (lastSavedRef.current[id] === payloadKey) {
+      setFeatureSaveStates((p) => ({ ...p, [id]: "idle" }));
+      return;
+    }
+    
+    const seq = (requestSeqRef.current[id] ?? 0) + 1;
+    requestSeqRef.current[id] = seq;
+    setFeatureSaveStates((p) => ({ ...p, [id]: "saving" }));
+    
+    try {
+      const res = await fetch("/api/admin/ai-features", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "保存失败");
+      if (requestSeqRef.current[id] !== seq) return;
+      
+      const saved = {
+        ...data.feature,
+        channel_id: data.feature.channel_id ?? "",
+        model: data.feature.model ?? "",
+        system_prompt: data.feature.system_prompt ?? ""
+      };
+      
+      lastSavedRef.current[id] = JSON.stringify({
+        id: saved.id, channel_id: saved.channel_id || null, model: saved.model || null, system_prompt: saved.system_prompt || null, is_enabled: saved.is_enabled
+      });
+      
+      setFeatures((p) => p.map((f) => (f.id === id ? saved : f)));
+      setFeatureSaveStates((p) => ({ ...p, [id]: "saved" }));
+      
+      // Update channel info silently to reflect new bindings if needed
+      if (payload.channel_id) loadData(true);
+      
+    } catch (err) {
+      if (requestSeqRef.current[id] !== seq) return;
+      setFeatureSaveStates((p) => ({ ...p, [id]: "error" }));
+      feedbackToast.error(`${current.label} 保存失败`);
+    }
+  };
+
+  const handleFeaturePatch = (id: string, patch: Record<string, unknown>) => {
+    if ("_clearCustomModel" in patch) {
+      const { _clearCustomModel, ...rest } = patch;
+      patch = rest;
+    }
+    
+    setFeatures((prev) => {
+      let nextFeature: AiFeatureItem | null = null;
+      const next = prev.map((f) => {
+        if (f.id !== id) return f;
+        nextFeature = { ...f, ...patch } as AiFeatureItem;
+        return nextFeature;
+      });
+      
+      if (nextFeature) {
+        setFeatureSaveStates((cur) => ({ ...cur, [id]: "pending" }));
+        queueFeatureSave(id);
+      }
+      return next;
+    });
+  };
+
+  const activeChannel = channels.find(c => c.id === selectedChannelId) || null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-4 sm:px-6 lg:px-8">
       <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:px-6 sm:py-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Channel Control</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">AI System Hub</p>
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">AI 渠道管理</h1>
+              <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">AI 渠道与功能管理</h1>
               <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-                用最少的操作控制多个 AI 渠道。先看健康状态，再决定测试、恢复、禁用或删除。
+                统一管理 AI 渠道和功能绑定。左侧选择渠道，右侧配置信息并指派需要承接的功能。
               </p>
             </div>
           </div>
           <div className="grid gap-2 rounded-2xl border border-white/80 bg-white/88 p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[320px]">
             <div className="inline-flex items-center gap-2 font-medium text-[var(--color-text-primary)]">
               <BadgeInfo className="size-3.5 text-[var(--color-primary)]" />
-              渠道导航
+              导航
             </div>
             <div className="space-y-2 pt-1">
-              {navCards.map((item) =>
-                item.href ? (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className="flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]"
-                  >
-                    <div className="flex items-start gap-3">
-                      {"icon" in item && item.icon ? (
-                        <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
-                          <item.icon className="size-4" />
-                        </div>
-                      ) : null}
-                      <div>
-                        <p className="font-medium text-[var(--color-text-primary)]">{item.title}</p>
-                        <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
-                  </Link>
-                ) : (
-                  <div key={item.title} className="rounded-2xl border border-primary/15 bg-primary/10 px-3 py-2.5 text-sm text-[var(--color-text-secondary)]">
-                    <p className="font-medium text-[var(--color-text-primary)]">{item.title}</p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">{item.description}</p>
+              <Link href="/admin" className="flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]">
+                <div>
+                  <p className="font-medium text-[var(--color-text-primary)]">返回总控台</p>
+                </div>
+                <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
+              </Link>
+              <Link href="/admin/ai-rewrite" className="flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                    <Settings2 className="size-4" />
                   </div>
-                )
-              )}
+                  <div>
+                    <p className="font-medium text-[var(--color-text-primary)]">文案改写配置</p>
+                  </div>
+                </div>
+                <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <Card className="glass-card-static border-white/70 bg-white/78 backdrop-blur-[16px]">
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle className="font-semibold tracking-tight">渠道列表</CardTitle>
-              <CardDescription className="mt-1">优先级越小越先尝试。熔断中的渠道会自动跳过。</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => void loadChannels(true)} disabled={isRefreshing || isLoading}>
-                {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                刷新
-              </Button>
-              <Button size="sm" onClick={openCreateDialog}>
-                新增渠道
-              </Button>
-            </div>
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center rounded-[24px] border border-white/70 bg-white/78 shadow-[var(--shadow-card)] backdrop-blur-[16px]">
+          <div className="flex flex-col items-center gap-4 text-[var(--color-text-secondary)]">
+            <div className="size-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+            <p className="font-medium text-[var(--color-text-primary)]">加载数据中...</p><p className="text-xs text-[var(--color-text-secondary)]">正在获取渠道与绑定配置</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-              {error}
-            </div>
-          ) : null}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6 xl:flex-row xl:items-start relative overflow-hidden">
+          <ChannelSidebar
+            channels={channels}
+            selectedChannelId={selectedChannelId}
+            onSelect={setSelectedChannelId}
+            onAddClick={() => setSelectedChannelId(null)}
+            onToggleEnabled={(id, enabled) => handleChannelAction(id, "toggle", enabled)}
+          />
 
-          {isLoading ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-8 text-sm text-[var(--color-text-secondary)]">
-              <Loader2 className="size-4 animate-spin" />
-              正在加载渠道列表...
-            </div>
-          ) : orderedChannels.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/70 bg-white/70 px-4 py-12 text-center">
-              <ShieldAlert className="size-10 text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">还没有渠道</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">先新增一个渠道，再测试连通性。</p>
-              </div>
-              <Button onClick={openCreateDialog}>新增渠道</Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>名称</TableHead>
-                  <TableHead>地址</TableHead>
-                  <TableHead>密钥</TableHead>
-                  <TableHead>模型</TableHead>
-                  <TableHead>优先级</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>最近记录</TableHead>
-                  <TableHead>失败次数</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orderedChannels.map((channel) => {
-                  const status = getStatus(channel);
-                  const meta = getStatusMeta(channel);
-                  const busy =
-                    loadingActionId === `test:${channel.id}` ||
-                    loadingActionId === `ocr_test:${channel.id}` ||
-                    loadingActionId === `toggle:${channel.id}` ||
-                    loadingActionId === `recover:${channel.id}` ||
-                    loadingActionId === `delete:${channel.id}`;
-                  const showRecovery = status === "circuit" && isRecoverable(channel);
-                  const isMoreOpen = expandedActionRowId === channel.id;
-                  return (
-                    <TableRow key={channel.id}>
-                      <TableCell className="font-medium text-[var(--color-text-primary)]">{channel.name}</TableCell>
-                      <TableCell className="max-w-[240px] truncate text-sm text-[var(--color-text-secondary)]">
-                        {channel.base_url}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs tracking-wider text-[var(--color-text-secondary)]">
-                        {formatMaskedFromApi(channel.api_key_masked)}
-                      </TableCell>
-                      <TableCell className="text-sm text-[var(--color-text-secondary)]">
-                        {channel.model || "全局默认"}
-                      </TableCell>
-                      <TableCell className="tabular-nums text-sm text-[var(--color-text-secondary)]">
-                        {channel.priority}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={meta.variant} className={meta.className}>
-                          {meta.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-[var(--color-text-secondary)]">
-                        <div className="space-y-1">
-                          <p>成功：{formatDateTime(channel.last_success_at)}</p>
-                          <p>失败：{formatDateTime(channel.last_failure_at)}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="tabular-nums text-sm text-[var(--color-text-secondary)]">
-                        {channel.consecutive_failures}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {showRecovery ? (
-                            <Button size="sm" onClick={() => void runChannelAction(channel, "recover")} disabled={busy}>
-                              {loadingActionId === `recover:${channel.id}` ? (
-                                <Loader2 className="size-4 animate-spin" />
-                              ) : (
-                                <RefreshCw className="size-4" />
-                              )}
-                              恢复
-                            </Button>
-                          ) : (
-                            <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "toggle")} disabled={busy}>
-                              {channel.is_enabled ? "禁用" : "启用"}
-                            </Button>
-                          )}
-                          <Button variant="outline" size="sm" onClick={() => openEditDialog(channel)} disabled={busy}>
-                            <Pencil className="size-4" />
-                            编辑
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setExpandedActionRowId((current) => (current === channel.id ? null : channel.id))}
-                            disabled={busy}
-                          >
-                            <MoreHorizontal className="size-4" />
-                            更多
-                          </Button>
-                        </div>
-                        {isMoreOpen ? (
-                          <div className="mt-2 flex flex-wrap justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "test")} disabled={busy}>
-                              {loadingActionId === `test:${channel.id}` ? (
-                                <Loader2 className="size-4 animate-spin" />
-                              ) : (
-                                <CheckCircle2 className="size-4" />
-                              )}
-                              文本测试
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "ocr_test")} disabled={busy}>
-                              {loadingActionId === `ocr_test:${channel.id}` ? (
-                                <Loader2 className="size-4 animate-spin" />
-                              ) : (
-                                <CheckCircle2 className="size-4" />
-                              )}
-                              OCR 测试
-                            </Button>
-                            {showRecovery ? (
-                              <Button variant="outline" size="sm" onClick={() => void runChannelAction(channel, "toggle")} disabled={busy}>
-                                禁用
-                              </Button>
-                            ) : null}
-                            <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => setDeleteTarget(channel)} disabled={busy}>
-                              <Trash2 className="size-4" />
-                              删除
-                            </Button>
-                          </div>
-                        ) : null}
-                        {channel.last_error_message ? (
-                          <p className="mt-2 max-w-[320px] truncate text-left text-xs text-destructive">
-                            最近错误：{channel.last_error_message}
-                          </p>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          <div
+            key={selectedChannelId || "new"}
+            className="flex-1 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
+          >
+            <div className="space-y-6">
+              <ChannelDetailForm
+                channel={activeChannel}
+                onSave={handleSaveChannel}
+                onTest={(id, kind) => handleChannelAction(id, kind === "ocr" ? "ocr_test" : "test")}
+                onToggle={(id, isEnabled) => handleChannelAction(id, "toggle", isEnabled)}
+                onRecover={(id) => handleChannelAction(id, "recover")}
+                onDeleteClick={setDeleteTarget}
+                busyActions={busyActions}
+              />
 
-      <Dialog open={isDialogOpen} onOpenChange={(open) => (open ? setIsDialogOpen(true) : closeDialog())}>
-        <DialogContent className="sm:max-w-[560px]">
-          <DialogHeader>
-            <DialogTitle>{activeChannel ? "编辑渠道" : "新增渠道"}</DialogTitle>
-            <DialogDescription>
-              {activeChannel ? "修改渠道信息。密钥留空则保持原值。" : "填写渠道名称、地址和密钥，保存后即可参与 failover。"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-1">
-              <Label htmlFor="ai-channel-name">名称</Label>
-              <Input
-                id="ai-channel-name"
-                value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="api7"
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-1">
-              <Label htmlFor="ai-channel-priority">优先级</Label>
-              <Input
-                id="ai-channel-priority"
-                type="number"
-                min={1}
-                value={form.priority}
-                onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value }))}
-                placeholder="100"
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="ai-channel-base-url">地址</Label>
-              <Input
-                id="ai-channel-base-url"
-                value={form.base_url}
-                onChange={(e) => setForm((prev) => ({ ...prev, base_url: e.target.value }))}
-                placeholder="https://example.com"
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="ai-channel-api-key">密钥</Label>
-              <Input
-                id="ai-channel-api-key"
-                type="password"
-                value={form.api_key}
-                onChange={(e) => setForm((prev) => ({ ...prev, api_key: e.target.value }))}
-                placeholder={activeChannel ? "留空则保持当前密钥" : "sk-..."}
-              />
-              {activeChannel ? (
-                <p className="text-xs text-muted-foreground">当前密钥：{formatMaskedFromApi(activeChannel.api_key_masked)}</p>
-              ) : null}
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="ai-channel-model">模型</Label>
-              <Input
-                id="ai-channel-model"
-                value={form.model}
-                onChange={(e) => setForm((prev) => ({ ...prev, model: e.target.value }))}
-                placeholder="留空则使用全局默认"
+              <ChannelFeatureBindings
+                channelId={selectedChannelId}
+                features={features}
+                saveStates={featureSaveStates}
+                onFeaturePatch={handleFeaturePatch}
               />
             </div>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDialog} disabled={isSubmitting}>
-              取消
-            </Button>
-            <Button onClick={() => void submitForm()} disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
-              {activeChannel ? "保存修改" : "新增渠道"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title="删除渠道"
-        description={deleteTarget ? `确定删除「${deleteTarget.name}」吗？此操作不可恢复。` : undefined}
+        description={deleteTarget ? `确定删除「${deleteTarget.name}」吗？绑定的功能将自动重置为"自动分配"。` : undefined}
         confirmText="删除"
         cancelText="取消"
         destructive
-        loading={loadingActionId === `delete:${deleteTarget?.id ?? ""}`}
-        onConfirm={async () => {
-          if (!deleteTarget) return;
-          await runChannelAction(deleteTarget, "delete");
+        loading={busyActions[`delete:${deleteTarget?.id ?? ""}`]}
+        onConfirm={() => {
+          if (deleteTarget) {
+            void handleChannelAction(deleteTarget.id, "delete");
+          }
         }}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
