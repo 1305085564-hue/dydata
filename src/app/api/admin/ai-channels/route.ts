@@ -7,10 +7,6 @@ function buildSelect() {
   return "id, name, base_url, api_key, model, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, created_at, updated_at";
 }
 
-function buildSelectWithoutKey() {
-  return "id, name, base_url, model, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, created_at, updated_at";
-}
-
 export async function GET() {
   const auth = await requireOwnerActor();
   if ("error" in auth) {
@@ -18,17 +14,14 @@ export async function GET() {
   }
 
   const { supabase } = auth;
-  const { data, error } = await supabase.from("ai_channels").select(buildSelectWithoutKey()).order("priority", { ascending: true }).order("created_at", { ascending: true });
+  const { data, error } = await supabase.from("ai_channels").select(buildSelect()).order("priority", { ascending: true }).order("created_at", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({
-    channels: (data ?? []).map((row) => {
-      const { ...rest } = row as unknown as Omit<AiChannelRow, "api_key">;
-      return { ...rest, api_key_masked: "***" };
-    }),
+    channels: (data ?? []).map((row) => normalizeChannelRow(row as unknown as AiChannelRow)),
   });
 }
 
