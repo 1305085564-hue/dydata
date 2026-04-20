@@ -28,7 +28,12 @@ export function 指标输入卡({
   optional = false,
 }: MetricInputCardProps) {
   const isWarning = field.requiresManualConfirmation && !field.confirmed;
-  const statusLabel = field.source === "ocr" ? "OCR识别" : "手动输入";
+  let statusLabel = null;
+  if (isWarning) {
+    statusLabel = "待核对";
+  } else if (field.source === "ocr") {
+    statusLabel = "AI 已识别";
+  }
   const helperText = isWarning ? "待确认，请核对 OCR 结果" : null;
 
   return (
@@ -48,14 +53,16 @@ export function 指标输入卡({
           {label}
           {optional && <span className="ml-1 font-normal text-[var(--color-text-secondary)]">可选</span>}
         </Label>
-        <span
-          className={cn(
-            badgeClass(isWarning ? "warning" : "neutral"),
-            "rounded-[var(--radius-md)] px-2 py-0.5 text-[11px]"
-          )}
-        >
-          {statusLabel}
-        </span>
+        {statusLabel && (
+          <span
+            className={cn(
+              badgeClass(isWarning ? "warning" : "neutral"),
+              "rounded-[var(--radius-md)] px-2 py-0.5 text-[11px]"
+            )}
+          >
+            {statusLabel}
+          </span>
+        )}
       </div>
 
       <div className="relative">

@@ -301,51 +301,30 @@ export function VideoSubmitPanel({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
-                onClick={() => setIsDataViewOpen(true)}
-              >
-                <Eye className="size-4" />
-                数据查看
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
-                onClick={() => setIsTrendViewOpen(true)}
-              >
-                <TrendingUp className="size-4" />
-                趋势查看
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
-                onClick={() => setIsLeaderboardOpen(true)}
-              >
-                <Trophy className="size-4" />
-                排行榜
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-full border-primary/20 bg-primary/5 px-4 text-sm text-primary hover:bg-primary/10"
-                onClick={() => setIsHistoryOpen(true)}
-              >
-                <History className="size-4" />
-                历史记录
-              </Button>
-            </div>
+
 
             <div className="dashboard-field-group space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="video-account-select" className="text-sm font-medium text-foreground">
-                  提交账号
-                </Label>
-                <AddAccountDialog />
+                <div className="flex items-center gap-4">
+                  <Label htmlFor="video-account-select" className="text-sm font-medium text-foreground">
+                    提交账号
+                  </Label>
+                  <AddAccountDialog />
+                </div>
+                <div className="hidden sm:flex items-center gap-1">
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsDataViewOpen(true)}>
+                    <Eye className="size-3.5 mr-1" />数据
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsTrendViewOpen(true)}>
+                    <TrendingUp className="size-3.5 mr-1" />趋势
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsLeaderboardOpen(true)}>
+                    <Trophy className="size-3.5 mr-1" />排行
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsHistoryOpen(true)}>
+                    <History className="size-3.5 mr-1" />历史
+                  </Button>
+                </div>
               </div>
               <Select
                 value={selectedAccountId}
@@ -368,6 +347,20 @@ export function VideoSubmitPanel({
                   ))}
                 </SelectContent>
               </Select>
+              <div className="flex sm:hidden items-center gap-1 justify-end pt-1">
+                <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsDataViewOpen(true)}>
+                  <Eye className="size-3.5 mr-1" />数据
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsTrendViewOpen(true)}>
+                  <TrendingUp className="size-3.5 mr-1" />趋势
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsLeaderboardOpen(true)}>
+                  <Trophy className="size-3.5 mr-1" />排行
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => setIsHistoryOpen(true)}>
+                  <History className="size-3.5 mr-1" />历史
+                </Button>
+              </div>
             </div>
           </CardHeader>
 
@@ -513,6 +506,7 @@ export function VideoSubmitPanel({
 
             {selectedAccount && (!isPrimarySummaryMode || activeBizDate !== today) ? (
               <VideoSubmitForm
+                key={`form-${selectedAccount.id}-${activeBizDate}-${primaryMode}`}
                 account={selectedAccount}
                 userId={userId}
                 today={today}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
@@ -459,12 +460,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const issueMessages = useMemo(() => buildIssueMessages(issueSummary), [issueSummary]);
   const issueHintText = useMemo(() => buildIssueHintText(issueMessages), [issueMessages]);
   const bizDateHelper = getBizDateHelperText(meta.bizDate);
-  const formModeTitle = isBackfillMode ? "补交历史数据" : initialSummary ? "修改今日数据" : "今日提报";
-  const formModeDescription = isBackfillMode
-    ? "可直接补交历史日期，不需要先提交今天数据。"
-    : initialSummary
-      ? "更新今天这条数据，提交后会覆盖当前账号今天的最新记录。"
-      : "先传截图或直接手填数据，完成后提交今天这条记录。";
   const submitButtonLabel = isSubmitting
     ? "提交中..."
     : isBackfillMode
@@ -784,6 +779,62 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     }
   }
 
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  const mobileSubmitBar = (
+    <div className="fixed inset-x-0 bottom-0 z-[100] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] border-t border-black/5 bg-white/92 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur-[18px] md:hidden">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2">
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            {canActuallySubmit
+              ? "已满足最低提交条件"
+              : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
+          </p>
+          <div className="grid gap-1.5">
+            <Label className="text-xs font-medium text-[var(--color-text-secondary)]">视频状态</Label>
+            <Select
+              value={meta.anomalyStatus}
+              onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
+            >
+              <SelectTrigger className="h-10 rounded-[var(--radius-lg)] bg-white text-sm">
+                <SelectValue placeholder="请选择视频状态" />
+              </SelectTrigger>
+              <SelectContent>
+                {ANOMALY_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {VIDEO_STATUS_LABELS[option]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!screenshotsRequired ? (
+              <p className="text-[11px] text-amber-600">当前状态下截图可选。</p>
+            ) : null}
+          </div>
+          <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>
+            {onCancel ? (
+              <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={onCancel}>
+                取消
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              form="video-submit-form"
+              disabled={isSubmitting || !canActuallySubmit}
+              title={canActuallySubmit ? undefined : issueSummary.reason || submitCheck.reason || undefined}
+              className="h-11 rounded-[10px] px-2 text-xs"
+            >
+              {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : initialSummary ? "保存修改" : "提交今日"}
+            </Button>
+          </div>
+        </div>
+      </div>
+  );
+
   if (!account) {
     return (
       <MotionCard className="border-none bg-white/70">
@@ -841,19 +892,28 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         animate="visible"
         className="space-y-5 pb-[140px] md:pb-6"
       >
-        <motion.div variants={itemVariants}>
-          <MotionCard className="border-none bg-white/70">
-            <div className="space-y-3 p-5">
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
-                  {formModeTitle}
-                </h3>
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  当前账号：{account.display_name} · 出镜 / 图文方向：{account.content_direction?.trim() || "未设置"} · {formModeDescription}
-                </p>
-              </div>
-            </div>
-          </MotionCard>
+        
+        <motion.div ref={slotsSectionRef} variants={itemVariants}>
+          <截图槽位区
+            slots={slots}
+            onSelectFile={handleSlotUpload}
+            onDelete={(role) => setDeleteTargetRole(role)}
+            onRetry={handleSlotRetry}
+            screenshotsRequired={screenshotsRequired}
+            issueCount={
+              issueSummary.missingRequiredSlots.length +
+              issueSummary.failedRequiredSlots.length +
+              issueSummary.pendingSlotConfirmations.length
+            }
+          />
+        </motion.div>
+
+        <motion.div ref={metricsSectionRef} variants={itemVariants}>
+          <指标分组区
+            fields={fields}
+            onFieldChange={updateField}
+            anomalyStatus={meta.anomalyStatus}
+          />
         </motion.div>
 
         <motion.div ref={metaSectionRef} variants={itemVariants}>
@@ -1065,29 +1125,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           </MotionCard>
         </motion.div>
 
-        <motion.div ref={slotsSectionRef} variants={itemVariants}>
-          <截图槽位区
-            slots={slots}
-            onSelectFile={handleSlotUpload}
-            onDelete={(role) => setDeleteTargetRole(role)}
-            onRetry={handleSlotRetry}
-            screenshotsRequired={screenshotsRequired}
-            issueCount={
-              issueSummary.missingRequiredSlots.length +
-              issueSummary.failedRequiredSlots.length +
-              issueSummary.pendingSlotConfirmations.length
-            }
-          />
-        </motion.div>
-
-        <motion.div ref={metricsSectionRef} variants={itemVariants}>
-          <指标分组区
-            fields={fields}
-            onFieldChange={updateField}
-            anomalyStatus={meta.anomalyStatus}
-          />
-        </motion.div>
-
         <motion.div variants={itemVariants} className="hidden md:block">
           <MotionCard className="border-none bg-white/70">
             <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
@@ -1148,52 +1185,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         </motion.div>
       </motion.form>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-white/92 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur-[18px] md:hidden">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2">
-          <p className="text-xs text-[var(--color-text-secondary)]">
-            {canActuallySubmit
-              ? "已满足最低提交条件"
-              : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
-          </p>
-          <div className="grid gap-1.5">
-            <Label className="text-xs font-medium text-[var(--color-text-secondary)]">视频状态</Label>
-            <Select
-              value={meta.anomalyStatus}
-              onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-            >
-              <SelectTrigger className="h-10 rounded-[var(--radius-lg)] bg-white text-sm">
-                <SelectValue placeholder="请选择视频状态" />
-              </SelectTrigger>
-              <SelectContent>
-                {ANOMALY_OPTIONS.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {VIDEO_STATUS_LABELS[option]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!screenshotsRequired ? (
-              <p className="text-[11px] text-amber-600">当前状态下截图可选。</p>
-            ) : null}
-          </div>
-          <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>
-            {onCancel ? (
-              <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={onCancel}>
-                取消
-              </Button>
-            ) : null}
-            <Button
-              type="submit"
-              form="video-submit-form"
-              disabled={isSubmitting || !canActuallySubmit}
-              title={canActuallySubmit ? undefined : issueSummary.reason || submitCheck.reason || undefined}
-              className="h-11 rounded-[10px] px-2 text-xs"
-            >
-              {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : initialSummary ? "保存修改" : "提交今日"}
-            </Button>
-          </div>
-        </div>
-      </div>
+      {mounted ? createPortal(mobileSubmitBar, document.body) : null}
     </>
   );
 }

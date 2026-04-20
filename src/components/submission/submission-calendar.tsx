@@ -92,17 +92,21 @@ export function SubmissionCalendar({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--color-text-secondary)]">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1">
+        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
           <span className="size-2 rounded-full bg-emerald-500" />
-          已提交
+          已交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1">
+        <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-rose-700">
           <span className="size-2 rounded-full bg-rose-500" />
-          未提交
+          今日未交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+        <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-slate-600">
           <span className="size-2 rounded-full bg-slate-400" />
-          未来日期
+          无记录
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full bg-slate-50/50 px-3 py-1 text-slate-400">
+          <span className="size-2 rounded-full bg-slate-300" />
+          未到
         </div>
       </div>
 
@@ -126,7 +130,7 @@ export function SubmissionCalendar({
                 "flex min-h-14 flex-col items-center justify-center rounded-2xl border text-sm font-semibold shadow-[var(--shadow-light)] transition-all sm:min-h-16",
                 onDateSelect && "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-24px_rgba(15,23,42,0.45)]",
                 cell.state === "submitted" && "border-emerald-200 bg-emerald-50 text-emerald-700",
-                cell.state === "missing" && "border-rose-200 bg-rose-50 text-rose-700",
+                cell.state === "missing" && "border-slate-200 bg-slate-50 text-slate-500",
                 cell.state === "future" && "border-slate-200 bg-slate-50 text-slate-400",
                 cell.state === "today" &&
                   (submittedDateSet.has(cell.key)
@@ -137,7 +141,7 @@ export function SubmissionCalendar({
             >
               <span>{cell.day}</span>
               <span className="mt-1 text-[10px] font-medium">
-                {cell.state === "future" ? "未到" : submittedDateSet.has(cell.key) ? "已交" : "未交"}
+                {cell.state === "future" ? "未到" : cell.state === "today" ? (submittedDateSet.has(cell.key) ? "已交" : "今日未交") : submittedDateSet.has(cell.key) ? "已交" : "无记录"}
               </span>
             </button>
           ) : (
