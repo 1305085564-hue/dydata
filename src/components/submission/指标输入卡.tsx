@@ -1,6 +1,5 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,18 +28,16 @@ export function 指标输入卡({
 }: MetricInputCardProps) {
   const isWarning = field.requiresManualConfirmation && !field.confirmed;
   let statusLabel = null;
-  if (isWarning) {
-    statusLabel = "待核对";
-  } else if (field.source === "ocr") {
-    statusLabel = "AI 已识别";
+  if (field.source === "ocr") {
+    statusLabel = "🤖 AI已识别";
   }
-  const helperText = isWarning ? "待确认，请核对 OCR 结果" : null;
+  const helperText = null;
 
   return (
     <div
       className={cn(
         "space-y-2 rounded-[var(--radius-lg)] border border-black/6 bg-white/80 p-3 shadow-[var(--shadow-card)] transition-colors",
-        isWarning && "border-[color:rgba(255,149,0,0.24)] bg-[color:rgba(255,149,0,0.04)]"
+        
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -56,7 +53,7 @@ export function 指标输入卡({
         {statusLabel && (
           <span
             className={cn(
-              badgeClass(isWarning ? "warning" : "neutral"),
+              "bg-emerald-50 text-emerald-600 border border-emerald-200",
               "rounded-[var(--radius-md)] px-2 py-0.5 text-[11px]"
             )}
           >
@@ -75,8 +72,7 @@ export function 指标输入卡({
           className={cn(
             "rounded-[var(--radius-lg)] border bg-white pr-9 font-semibold text-[var(--color-text-primary)] transition-transform duration-200",
             size === "primary" ? "h-11 text-xl" : "h-9 text-base",
-            isWarning &&
-              "border-[color:var(--color-warning)] bg-[color:rgba(255,149,0,0.08)] ring-2 ring-[color:rgba(255,149,0,0.12)]"
+            
           )}
         />
         {suffix ? (
@@ -84,9 +80,7 @@ export function 指标输入卡({
             {suffix}
           </span>
         ) : null}
-        {isWarning ? (
-          <AlertTriangle className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-warning)]" />
-        ) : null}
+        
       </div>
 
       {helperText ? <p className="text-xs font-medium text-[var(--color-warning)]">{helperText}</p> : null}

@@ -46,7 +46,7 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
         <div className="space-y-0 p-4">
           <div className="mb-4">
             <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
-            <p className="text-sm text-[var(--color-text-secondary)]">支持手动填报与 OCR 智能识别，可直接修改。</p>
+            
           </div>
 
           <div className="mb-1">

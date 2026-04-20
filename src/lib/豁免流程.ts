@@ -120,9 +120,9 @@ function resolveDateRange(input: BuildGrantDraftInput | BuildRequestDraftInput) 
   }
 
   const days = Math.floor((new Date(`${endDate}T00:00:00.000Z`).getTime() - new Date(`${startDate}T00:00:00.000Z`).getTime()) / 86400000) + 1;
-  if (days < 2) {
-    throw new Error("多日豁免至少选择2天");
-  }
+  if (days < 1) {
+      throw new Error("豁免至少选择1天");
+    }
 
   return { mode: normalizedMode, startDate, endDate };
 }

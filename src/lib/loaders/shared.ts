@@ -10,7 +10,13 @@ export function shiftDateOnly(date: Date, days: number) {
 
 export function isUuidLike(value: string | null | undefined) {
   if (!value) return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+  const val = value.trim();
+  // Match UUIDs
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val)) return true;
+  // Match MongoDB ObjectIds or hex hashes (e.g. 2513b448...)
+  if (/^[0-9a-f]{20,}$/i.test(val)) return true;
+  if (/^[0-9a-f]{8,}-[0-9a-f-]{4,}/i.test(val)) return true;
+  return false;
 }
 
 export function getSafeAccountDisplayName(input: {
@@ -21,12 +27,25 @@ export function getSafeAccountDisplayName(input: {
   total: number;
 }) {
   const rawName = input.rawName?.trim();
-  if (rawName && !isUuidLike(rawName)) return rawName;
-
   const direction = input.contentDirection?.trim();
-  if (direction) return `${input.userDisplayName} · ${direction}`;
-  if (input.total > 1) return `${input.userDisplayName} · 账号${input.index + 1}`;
-  return input.userDisplayName;
+  const baseName = input.userDisplayName;
+  
+  const looksLikeCode = isUuidLike(rawName);
+  
+  if (rawName && !looksLikeCode) {
+    if (!rawName.includes('抖音') && !rawName.includes('小红书') && !rawName.includes('视频号') && !rawName.includes('B站')) {
+       // 如果本来就是正常的中文或英文名，但没带平台前缀，帮它加上
+       if (rawName === baseName) {
+         return `抖音-${rawName}`;
+       }
+       return rawName;
+    }
+    return rawName;
+  }
+
+  if (direction) return `抖音-${baseName}(${direction})`;
+  if (input.total > 1) return `抖音-${baseName} ${input.index + 1}号`;
+  return `抖音-${baseName}`;
 }
 
 export function uniqueNonEmpty(values: Array<string | null | undefined>) {

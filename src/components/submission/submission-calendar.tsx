@@ -7,6 +7,7 @@ interface SubmissionCalendarProps {
   submittedDates: string[];
   className?: string;
   selectedDate?: string | null;
+  selectedDates?: string[];
   onDateSelect?: (date: string, hasSubmission: boolean) => void;
 }
 
@@ -29,7 +30,7 @@ function getCalendarCells(today: string, submittedDates: Set<string>) {
   const monthEnd = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0);
   const firstWeekday = (monthStart.getDay() + 6) % 7;
   const totalDays = monthEnd.getDate();
-  const cells: Array<{ key: string; day?: number; state?: "submitted" | "missing" | "future" | "today" }> = [];
+  const cells: Array<{ key: string; day?: number; state?: "submitted" | "missing" | "future" | "today" | "exempt" }> = [];
 
   for (let index = 0; index < firstWeekday; index += 1) {
     cells.push({ key: `empty-${index}` });
@@ -38,14 +39,17 @@ function getCalendarCells(today: string, submittedDates: Set<string>) {
   for (let day = 1; day <= totalDays; day += 1) {
     const current = new Date(todayDate.getFullYear(), todayDate.getMonth(), day);
     const key = formatLocalDate(current);
-    let state: "submitted" | "missing" | "future" | "today" = "missing";
+    let state: "submitted" | "missing" | "future" | "today" | "exempt" = "missing";
 
+    const isExempt = current.getDay() === 6;
     if (key > today) {
       state = "future";
     } else if (submittedDates.has(key)) {
       state = key === today ? "today" : "submitted";
     } else if (key === today) {
       state = "today";
+    } else if (isExempt) {
+      state = "exempt";
     }
 
     cells.push({ key, day, state });
@@ -62,6 +66,7 @@ export function SubmissionCalendar({
   submittedDates,
   className,
   selectedDate = null,
+  selectedDates = [],
   onDateSelect,
 }: SubmissionCalendarProps) {
   const submittedDateSet = new Set(submittedDates);
@@ -100,14 +105,15 @@ export function SubmissionCalendar({
           <span className="size-2 rounded-full bg-rose-500" />
           今日未交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-slate-600">
-          <span className="size-2 rounded-full bg-slate-400" />
-          无记录
+        <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-rose-700">
+          <span className="size-2 rounded-full bg-rose-500" />
+          漏交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-slate-50/50 px-3 py-1 text-slate-400">
+        <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-slate-500">
           <span className="size-2 rounded-full bg-slate-300" />
-          未到
+          豁免/未到
         </div>
+        
       </div>
 
       <div className="mt-5 grid grid-cols-7 gap-2">
@@ -130,18 +136,19 @@ export function SubmissionCalendar({
                 "flex min-h-14 flex-col items-center justify-center rounded-2xl border text-sm font-semibold shadow-[var(--shadow-light)] transition-all sm:min-h-16",
                 onDateSelect && "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-24px_rgba(15,23,42,0.45)]",
                 cell.state === "submitted" && "border-emerald-200 bg-emerald-50 text-emerald-700",
-                cell.state === "missing" && "border-slate-200 bg-slate-50 text-slate-500",
+                cell.state === "missing" && "border-rose-400 bg-rose-50 text-rose-600 ring-1 ring-rose-200",
+                cell.state === "exempt" && "border-slate-200 bg-slate-50 text-slate-400 opacity-70",
                 cell.state === "future" && "border-slate-200 bg-slate-50 text-slate-400",
                 cell.state === "today" &&
                   (submittedDateSet.has(cell.key)
                     ? "border-emerald-400 bg-emerald-100 text-emerald-800 ring-2 ring-emerald-200"
                     : "border-rose-400 bg-rose-100 text-rose-800 ring-2 ring-rose-200"),
-                selectedDate === cell.key && "ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-white",
+                (selectedDate === cell.key || selectedDates.includes(cell.key)) && "ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-white bg-[color:rgba(0,122,255,0.08)]",
               )}
             >
               <span>{cell.day}</span>
               <span className="mt-1 text-[10px] font-medium">
-                {cell.state === "future" ? "未到" : cell.state === "today" ? (submittedDateSet.has(cell.key) ? "已交" : "今日未交") : submittedDateSet.has(cell.key) ? "已交" : "无记录"}
+                {cell.state === "future" ? "未到" : cell.state === "today" ? (submittedDateSet.has(cell.key) ? "已交" : "今日未交") : cell.state === "exempt" ? "豁免" : submittedDateSet.has(cell.key) ? "已交" : "漏交"}
               </span>
             </button>
           ) : (

@@ -119,13 +119,13 @@ export function SubmissionSlotCard({
             }
           }}
           className={cn(
-            "relative flex min-h-28 md:min-h-40 w-full flex-col items-center justify-center gap-3 rounded-[var(--radius-2xl)] border-2 border-dashed px-4 py-4 md:py-6 text-center transition-transform duration-200",
+            "relative flex min-h-28 md:min-h-40 w-full flex-col items-center justify-center gap-3 rounded-[var(--radius-2xl)] border-2 border-dashed px-4 py-4 md:py-6 text-center transition-all duration-300 cursor-pointer overflow-hidden group",
             "bg-[color:rgba(255,255,255,0.75)]",
             isProcessing && "border-[color:rgba(0,122,255,0.45)] shadow-[0_0_0_1px_rgba(0,122,255,0.08),0_0_20px_rgba(0,122,255,0.12)]",
             isWarning && "border-[color:var(--color-warning)] bg-[color:rgba(255,149,0,0.06)]",
             isError && "border-[color:var(--color-danger)] bg-[color:rgba(255,59,48,0.06)]",
             isSuccess && "border-[color:var(--color-success)] bg-[color:rgba(52,199,89,0.06)]",
-            !isProcessing && !isWarning && !isError && !isSuccess && "border-black/10 hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]"
+            !isProcessing && !isWarning && !isError && !isSuccess && "border-black/10 hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-1 hover:shadow-md transition-all duration-300 active:scale-[0.98]"
           )}
         >
           {isProcessing ? (
@@ -137,7 +137,7 @@ export function SubmissionSlotCard({
             </div>
           ) : null}
 
-          <div className="relative flex size-14 items-center justify-center rounded-[var(--radius-xl)] bg-black/5 text-[var(--color-primary)]">
+          <div className="relative flex size-14 items-center justify-center rounded-[var(--radius-xl)] bg-black/5 text-[var(--color-primary)] transition-transform duration-300 group-hover:scale-110 group-hover:bg-primary/10">
             {isProcessing ? <Loader2 className="size-6 animate-spin" /> : <UploadCloud className="size-6" />}
             <AnimatePresence>
               {isSuccess ? (

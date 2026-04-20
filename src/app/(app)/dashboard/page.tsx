@@ -65,7 +65,6 @@ export default async function DashboardPage() {
           <VideoSubmitPanel
             accounts={data.accounts}
             userId={data.userId}
-            userDisplayName={data.userDisplayName}
             today={data.today}
             todayReports={data.todayReports}
             monthReports={data.monthReports}
