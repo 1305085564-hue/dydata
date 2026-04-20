@@ -852,45 +852,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                   当前账号：{account.display_name} · 出镜 / 图文方向：{account.content_direction?.trim() || "未设置"} · {formModeDescription}
                 </p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-                {issueSummary.totalIssueCount > 0 ? (
-                  <div className="space-y-2">
-                    <p className="font-medium text-[var(--color-text-primary)]">还不能提交，请先处理这些问题：</p>
-                    <ul className="space-y-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                      {issueMessages.map((message) => (
-                        <li key={message}>• {message}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  "当前已满足最低提交条件，可以直接提交。"
-                )}
-              </div>
             </div>
           </MotionCard>
-        </motion.div>
-
-        <motion.div ref={slotsSectionRef} variants={itemVariants}>
-          <截图槽位区
-            slots={slots}
-            onSelectFile={handleSlotUpload}
-            onDelete={(role) => setDeleteTargetRole(role)}
-            onRetry={handleSlotRetry}
-            screenshotsRequired={screenshotsRequired}
-            issueCount={
-              issueSummary.missingRequiredSlots.length +
-              issueSummary.failedRequiredSlots.length +
-              issueSummary.pendingSlotConfirmations.length
-            }
-          />
-        </motion.div>
-
-        <motion.div ref={metricsSectionRef} variants={itemVariants}>
-          <指标分组区
-            fields={fields}
-            onFieldChange={updateField}
-            anomalyStatus={meta.anomalyStatus}
-          />
         </motion.div>
 
         <motion.div ref={metaSectionRef} variants={itemVariants}>
@@ -1100,6 +1063,29 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               </div>
             </div>
           </MotionCard>
+        </motion.div>
+
+        <motion.div ref={slotsSectionRef} variants={itemVariants}>
+          <截图槽位区
+            slots={slots}
+            onSelectFile={handleSlotUpload}
+            onDelete={(role) => setDeleteTargetRole(role)}
+            onRetry={handleSlotRetry}
+            screenshotsRequired={screenshotsRequired}
+            issueCount={
+              issueSummary.missingRequiredSlots.length +
+              issueSummary.failedRequiredSlots.length +
+              issueSummary.pendingSlotConfirmations.length
+            }
+          />
+        </motion.div>
+
+        <motion.div ref={metricsSectionRef} variants={itemVariants}>
+          <指标分组区
+            fields={fields}
+            onFieldChange={updateField}
+            anomalyStatus={meta.anomalyStatus}
+          />
         </motion.div>
 
         <motion.div variants={itemVariants} className="hidden md:block">
