@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, Loader2, Save, Trash2, Power, PowerOff, RefreshCw, ShieldAlert } from "lucide-react";
 import { AiChannelRow, ChannelFormState } from "./types";
 import { formatDateTime, formatMaskedFromApi, getStatusMeta, isRecoverable } from "./utils";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface ChannelDetailFormProps {
   channel: AiChannelRow | null;
-  onSave: (form: ChannelFormState, id?: string) => Promise<void>;
+  onSave: (form: ChannelFormState, id?: string) => Promise<boolean>;
   onTest: (id: string, kind: "text" | "ocr") => Promise<void>;
   onToggle: (id: string, isEnabled: boolean) => Promise<void>;
   onRecover: (id: string) => Promise<void>;
@@ -28,6 +28,20 @@ const EMPTY_FORM: ChannelFormState = {
   priority: "100",
 };
 
+function buildInitialForm(channel: AiChannelRow | null): ChannelFormState {
+  if (!channel) {
+    return EMPTY_FORM;
+  }
+
+  return {
+    name: channel.name,
+    base_url: channel.base_url,
+    api_key: "",
+    model: channel.model || "",
+    priority: String(channel.priority),
+  };
+}
+
 export function ChannelDetailForm({
   channel,
   onSave,
@@ -37,33 +51,19 @@ export function ChannelDetailForm({
   onDeleteClick,
   busyActions,
 }: ChannelDetailFormProps) {
-  const [form, setForm] = useState<ChannelFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<ChannelFormState>(() => buildInitialForm(channel));
   const [isModified, setIsModified] = useState(false);
 
-  // Sync form with selected channel - deliberately using effect to reset form when channel selection changes
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-  useEffect(() => {
-    if (channel) {
-      setForm({
-        name: channel.name,
-        base_url: channel.base_url,
-        api_key: "",
-        model: channel.model || "",
-        priority: String(channel.priority),
-      });
-    } else {
-      setForm(EMPTY_FORM);
-    }
-    setIsModified(false);
-  }, [channel]);  const handleChange = (key: keyof ChannelFormState, value: string) => {
+  const handleChange = (key: keyof ChannelFormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setIsModified(true);
   };
 
   const handleSave = async () => {
-    await onSave(form, channel?.id);
-    setIsModified(false);
+    const success = await onSave(form, channel?.id);
+    if (success) {
+      setIsModified(false);
+    }
   };
 
   const isSaving = busyActions["save"];
@@ -71,6 +71,7 @@ export function ChannelDetailForm({
   const isTestingOcr = channel ? busyActions[`ocr_test:${channel.id}`] : false;
   const isToggling = channel ? busyActions[`toggle:${channel.id}`] : false;
   const isRecovering = channel ? busyActions[`recover:${channel.id}`] : false;
+  const statusMeta = channel ? getStatusMeta(channel) : null;
 
   return (
     <Card className="rounded-[24px] border border-white/70 bg-white/78 shadow-[var(--shadow-card)] backdrop-blur-[16px] overflow-hidden">
@@ -79,10 +80,10 @@ export function ChannelDetailForm({
           <h2 className="text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">
             {channel ? channel.name : "新增渠道"}
           </h2>
-          {channel && (
+          {channel && statusMeta && (
             <div className="mt-1 flex items-center gap-2">
-              <Badge variant={getStatusMeta(channel).variant} className={getStatusMeta(channel).className}>
-                {getStatusMeta(channel).label}
+              <Badge variant={statusMeta.variant} className={statusMeta.className}>
+                {statusMeta.label}
               </Badge>
               <span className="text-xs text-[var(--color-text-tertiary)]">ID: {channel.id.slice(0, 8)}</span>
             </div>
