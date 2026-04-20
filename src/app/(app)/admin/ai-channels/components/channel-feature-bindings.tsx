@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { AiChannelRow, AiFeatureItem } from "./types";
 import { ChannelFeatureCard } from "./channel-feature-card";
 import { buildFeatureGroups } from "./utils";
-import { ShieldAlert, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ChannelFeatureBindingsProps {
@@ -22,10 +22,10 @@ export function ChannelFeatureBindings({
   saveStates,
   onFeaturePatch
 }: ChannelFeatureBindingsProps) {
-  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
-    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedId(prev => prev === id ? null : id);
   };
 
   const featureGroups = useMemo(() => buildFeatureGroups(features), [features]);
@@ -35,13 +35,10 @@ export function ChannelFeatureBindings({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-6 rounded-2xl border border-dashed border-border/50 bg-transparent p-8 md:p-16 text-center flex flex-col items-center justify-center"
+        className="mt-6 rounded-2xl bg-transparent p-8 md:p-16 text-center flex flex-col items-center justify-center"
       >
-        <ShieldAlert className="size-8 text-muted-foreground/30 mb-3" />
-        <h3 className="text-base font-medium text-[var(--color-text-primary)]">选择或创建一个渠道</h3>
-        <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-sm">
-          在左侧选一个渠道作为查看视角后，可在这里按功能独立指定渠道、模型，或留空走自动逻辑
-        </p>
+        <Info className="size-8 text-muted-foreground/30 mb-3" />
+        <h3 className="text-base font-medium text-[var(--color-text-primary)]">请在左侧选择渠道，或新建一个渠道</h3>
       </motion.div>
     );
   }
@@ -52,13 +49,17 @@ export function ChannelFeatureBindings({
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">功能接管</h2>
           <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-sm">
-            当前渠道只作为查看视角。每个功能都可单独指定渠道、模型，或留空走默认自动逻辑。
+            当前渠道仅作为对照视角。每个功能都可独立指定接管渠道和模型，留空则由系统自动接管。
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground border-l-2 border-primary/40 bg-muted/20">
-          <Info className="size-3.5" />
-          <span>渠道留空 = 默认自动；模型留空 = 跟随渠道默认模型</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground border-l-2 border-primary/40 bg-muted/20">
+          <div className="flex items-center gap-1.5"><Info className="size-3.5" /> 提示：</div>
+          <div className="flex flex-col sm:flex-row sm:gap-2">
+            <span>渠道留空 = 默认自动 (failover)</span>
+            <span className="hidden sm:inline">|</span>
+            <span>模型留空 = 跟随渠道默认模型</span>
+          </div>
         </div>
       </div>
 
@@ -87,14 +88,14 @@ export function ChannelFeatureBindings({
                 </span>
               </h3>
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="flex flex-col gap-2">
                 {group.features.map((feature) => (
                   <ChannelFeatureCard
                     key={feature.id}
                     feature={feature}
                     channels={channels}
                     currentChannelId={channelId}
-                    isExpanded={!!expandedCards[feature.id]}
+                    isExpanded={expandedId === feature.id}
                     saveState={saveStates[feature.id] || "idle"}
                     onToggleExpand={() => toggleExpand(feature.id)}
                     onPatch={(patch) => onFeaturePatch(feature.id, patch)}

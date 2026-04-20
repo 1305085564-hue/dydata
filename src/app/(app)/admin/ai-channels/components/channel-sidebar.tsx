@@ -4,7 +4,6 @@ import { Plus, ShieldAlert } from "lucide-react";
 import { AiChannelRow } from "./types";
 import { getStatus } from "./utils";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 interface ChannelSidebarProps {
@@ -12,10 +11,9 @@ interface ChannelSidebarProps {
   selectedChannelId: string | null;
   onSelect: (id: string | null) => void;
   onAddClick: () => void;
-  onToggleEnabled: (channelId: string, enabled: boolean) => void;
 }
 
-export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddClick, onToggleEnabled }: ChannelSidebarProps) {
+export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddClick }: ChannelSidebarProps) {
   return (
     <div className="flex h-[300px] xl:h-[calc(100vh-140px)] w-full xl:w-[240px] shrink-0 flex-col rounded-[24px] border border-white/70 bg-white/78 shadow-[var(--shadow-card)] backdrop-blur-[16px] xl:sticky xl:top-24">
       <div className="flex items-center justify-between border-b border-border/40 p-4">
@@ -57,15 +55,6 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                       {channel.name}
                     </span>
                   </button>
-                  <Switch
-                    checked={channel.is_enabled}
-                    onCheckedChange={(checked) => onToggleEnabled(channel.id, checked)}
-                    className={cn(
-                      "ml-2 shrink-0 scale-75 transition-opacity duration-200",
-                      isSelected ? "opacity-100" : "opacity-60 group-hover:opacity-100"
-                    )}
-                    onClick={(e) => e.stopPropagation()}
-                  />
                   {isSelected && (
                     <div className="absolute inset-y-0 left-0 w-1 bg-white/30 rounded-r-full" />
                   )}
@@ -92,12 +81,12 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
 
 function StatusIndicator({ status }: { status: "healthy" | "circuit" | "disabled" }) {
   if (status === "healthy") {
-    return <div className="size-2 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />;
+    return <div className="size-2 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" title="健康" />;
   }
   if (status === "circuit") {
-    return <div className="size-2 shrink-0 rounded-full bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)] animate-pulse" />;
+    return <div className="size-2 shrink-0 rounded-full bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)] animate-pulse" title="熔断中" />;
   }
-  return <div className="size-2 shrink-0 rounded-full bg-muted-foreground/40" />;
+  return <div className="size-2 shrink-0 rounded-full bg-muted-foreground/40" title="已禁用" />;
 }
 
 function Badge({ count }: { count: number }) {

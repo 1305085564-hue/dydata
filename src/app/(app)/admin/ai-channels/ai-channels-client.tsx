@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgeInfo, Settings2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -364,6 +363,8 @@ export default function AIChannelsClient() {
       if (!isFeatureVersionCurrent(featureVersionRef.current[id], version)) return;
       setFeatureSaveStates((p) => ({ ...p, [id]: "error" }));
       clearFeatureFeedbackTimer(id);
+
+      // 第3批优化：自动保存失败时，需要管理员介入，因此保留 Toast
       const message = err instanceof Error ? err.message : "保存失败";
       feedbackToast.error(`${current.label} 保存失败：${message}`);
     }
@@ -400,45 +401,20 @@ export default function AIChannelsClient() {
   const activeChannel = !isCreatingChannel ? channels.find((channel) => channel.id === selectedChannelId) || null : null;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-4 sm:px-6 lg:px-8">
-      <section className="rounded-[30px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(244,248,255,0.86))] px-5 py-5 shadow-[var(--shadow-card)] backdrop-blur-[20px] sm:px-6 sm:py-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">AI System Hub</p>
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">AI 渠道与功能管理</h1>
-              <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-                统一管理 AI 渠道和功能接管。左侧渠道用于查看与维护渠道本身，右侧功能卡片可独立指定渠道、模型与提示词。
-              </p>
-            </div>
-          </div>
-          <div className="grid gap-2 rounded-2xl border border-white/80 bg-white/88 p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[320px]">
-            <div className="inline-flex items-center gap-2 font-medium text-[var(--color-text-primary)]">
-              <BadgeInfo className="size-3.5 text-[var(--color-primary)]" />
-              导航
-            </div>
-            <div className="space-y-2 pt-1">
-              <Link href="/admin" className="flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]">
-                <div>
-                  <p className="font-medium text-[var(--color-text-primary)]">返回总控台</p>
-                </div>
-                <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
-              </Link>
-              <Link href="/admin/ai-rewrite" className="flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3 py-2.5 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] transition hover:-translate-y-px hover:border-primary/20 hover:text-[var(--color-text-primary)]">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
-                    <Settings2 className="size-4" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--color-text-primary)]">文案改写配置</p>
-                  </div>
-                </div>
-                <ArrowRight className="size-4 text-[var(--color-text-tertiary)]" />
-              </Link>
-            </div>
-          </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
+      {/* 极简顶部导航 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+        <h1 className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">AI 渠道管理</h1>
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[var(--color-text-secondary)]">
+          <Link href="/admin" className="flex items-center gap-1.5 hover:text-[var(--color-text-primary)] transition-colors">
+            返回总控台
+          </Link>
+          <div className="h-3.5 w-px bg-border/60" />
+          <Link href="/admin/ai-rewrite" className="flex items-center gap-1.5 hover:text-[var(--color-text-primary)] transition-colors">
+            文案改写配置
+          </Link>
         </div>
-      </section>
+      </div>
 
       {isLoading ? (
         <div className="flex h-64 items-center justify-center rounded-[24px] border border-white/70 bg-white/78 shadow-[var(--shadow-card)] backdrop-blur-[16px]">
@@ -454,7 +430,6 @@ export default function AIChannelsClient() {
             selectedChannelId={isCreatingChannel ? null : selectedChannelId}
             onSelect={(id) => updateSelection(id, false)}
             onAddClick={() => updateSelection(null, true)}
-            onToggleEnabled={(id, enabled) => handleChannelAction(id, "toggle", enabled)}
           />
 
           <div
