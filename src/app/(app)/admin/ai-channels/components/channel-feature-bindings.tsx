@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { AiFeatureItem } from "./types";
+import { AiChannelRow, AiFeatureItem } from "./types";
 import { ChannelFeatureCard } from "./channel-feature-card";
 import { buildFeatureGroups } from "./utils";
 import { ShieldAlert, Info } from "lucide-react";
@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 
 interface ChannelFeatureBindingsProps {
   channelId: string | null;
+  channels: AiChannelRow[];
   features: AiFeatureItem[];
   saveStates: Record<string, "idle" | "pending" | "saving" | "saved" | "error">;
   onFeaturePatch: (id: string, patch: Record<string, unknown>) => void;
@@ -16,6 +17,7 @@ interface ChannelFeatureBindingsProps {
 
 export function ChannelFeatureBindings({
   channelId,
+  channels,
   features,
   saveStates,
   onFeaturePatch
@@ -38,7 +40,7 @@ export function ChannelFeatureBindings({
         <ShieldAlert className="size-8 text-muted-foreground/30 mb-3" />
         <h3 className="text-base font-medium text-[var(--color-text-primary)]">选择或创建一个渠道</h3>
         <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-sm">
-          在左侧选择一个渠道后，可在此处配置该渠道承接的 AI 功能
+          在左侧选一个渠道作为查看视角后，可在这里按功能独立指定渠道、模型，或留空走自动逻辑
         </p>
       </motion.div>
     );
@@ -50,13 +52,13 @@ export function ChannelFeatureBindings({
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">功能接管</h2>
           <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-sm">
-            将特定的 AI 功能指派给当前渠道处理，修改会自动保存。
+            当前渠道只作为查看视角。每个功能都可单独指定渠道、模型，或留空走默认自动逻辑。
           </p>
         </div>
 
         <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground border-l-2 border-primary/40 bg-muted/20">
           <Info className="size-3.5" />
-          <span>关闭开关则功能回到&quot;自动分配&quot;状态</span>
+          <span>渠道留空 = 默认自动；模型留空 = 跟随渠道默认模型</span>
         </div>
       </div>
 
@@ -90,6 +92,7 @@ export function ChannelFeatureBindings({
                   <ChannelFeatureCard
                     key={feature.id}
                     feature={feature}
+                    channels={channels}
                     currentChannelId={channelId}
                     isExpanded={!!expandedCards[feature.id]}
                     saveState={saveStates[feature.id] || "idle"}

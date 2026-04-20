@@ -24,6 +24,7 @@ export type ChannelFormState = {
 };
 
 export type ChannelStatus = "healthy" | "circuit" | "disabled";
+export type FeatureSaveState = "idle" | "pending" | "saving" | "saved" | "error";
 
 export type AiFeatureApiRow = {
   id: string;

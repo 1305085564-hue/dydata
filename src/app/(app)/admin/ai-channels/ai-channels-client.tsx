@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BadgeInfo, Settings2 } from "lucide-react";
 
@@ -10,91 +10,195 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { ChannelSidebar } from "./components/channel-sidebar";
 import { ChannelDetailForm } from "./components/channel-detail-form";
 import { ChannelFeatureBindings } from "./components/channel-feature-bindings";
-import { AiChannelRow, AiFeatureItem, ChannelFormState } from "./components/types";
+import { AiChannelRow, AiFeatureApiRow, AiFeatureItem, ChannelFormState, FeatureSaveState } from "./components/types";
+import {
+  FEATURE_SAVE_FEEDBACK_MS,
+  applyFeaturePatch,
+  buildFeatureSavePayload,
+  getFeaturePayloadKey,
+  isFeatureVersionCurrent,
+  mergeLoadedFeatures,
+  normalizeFeatureItem,
+  resolveSelectedChannelId,
+  sortChannels,
+} from "./components/utils";
 
 const DEBOUNCE_MS = 500;
+const SELECTION_STORAGE_KEY = "dydata:admin:ai-channels:selected-channel-id";
 
 export default function AIChannelsClient() {
   // State
   const [channels, setChannels] = useState<AiChannelRow[]>([]);
   const [features, setFeatures] = useState<AiFeatureItem[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
-  
+  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+
   // Loading & Action State
   const [isLoading, setIsLoading] = useState(true);
   const [busyActions, setBusyActions] = useState<Record<string, boolean>>({});
-  const [featureSaveStates, setFeatureSaveStates] = useState<Record<string, "idle" | "pending" | "saving" | "saved" | "error">>({});
+  const [featureSaveStates, setFeatureSaveStates] = useState<Record<string, FeatureSaveState>>({});
   const [deleteTarget, setDeleteTarget] = useState<AiChannelRow | null>(null);
 
   // Refs for debouncing auto-save
+  const channelsRef = useRef<AiChannelRow[]>([]);
   const featuresRef = useRef<AiFeatureItem[]>([]);
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
-  const requestSeqRef = useRef<Record<string, number>>({});
+  const saveFeedbackTimersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  const loadSeqRef = useRef(0);
+  const didInitRef = useRef(false);
+  const featureVersionRef = useRef<Record<string, number>>({});
+  const featureSaveStatesRef = useRef<Record<string, FeatureSaveState>>({});
   const lastSavedRef = useRef<Record<string, string>>({});
+  const selectedChannelIdRef = useRef<string | null>(null);
+  const isCreatingChannelRef = useRef(false);
 
+  useEffect(() => {
+    channelsRef.current = channels;
+  }, [channels]);
   useEffect(() => { featuresRef.current = features; }, [features]);
+  useEffect(() => {
+    featureSaveStatesRef.current = featureSaveStates;
+  }, [featureSaveStates]);
+  useEffect(() => {
+    selectedChannelIdRef.current = selectedChannelId;
+  }, [selectedChannelId]);
+  useEffect(() => {
+    isCreatingChannelRef.current = isCreatingChannel;
+  }, [isCreatingChannel]);
 
-  // Initial Load
-  const loadData = async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    try {
-      const [cRes, fRes] = await Promise.all([
-        fetch("/api/admin/ai-channels", { cache: "no-store" }),
-        fetch("/api/admin/ai-features", { cache: "no-store" })
-      ]);
-      
-      const cData = await cRes.json();
-      const fData = await fRes.json();
-      
-      if (!cRes.ok || cData.error) throw new Error(cData.error || "加载渠道失败");
-      if (!fRes.ok || fData.error) throw new Error(fData.error || "加载功能失败");
-      
-      const loadedChannels = Array.isArray(cData.channels) ? cData.channels : [];
-      setChannels(loadedChannels.sort((a: AiChannelRow, b: AiChannelRow) => a.priority - b.priority || a.name.localeCompare(b.name, "zh-CN")));
-      
-      const loadedFeatures = Array.isArray(fData.features) ? fData.features.map((f: any) => ({
-        ...f,
-        channel_id: f.channel_id ?? "",
-        model: f.model ?? "",
-        system_prompt: f.system_prompt ?? ""
-      })) : [];
-      
-      setFeatures(loadedFeatures);
-      
-      // Init save cache
-      const nextSaved: Record<string, string> = {};
-      for (const f of loadedFeatures) nextSaved[f.id] = JSON.stringify({
-        id: f.id, channel_id: f.channel_id || null, model: f.model || null, system_prompt: f.system_prompt || null, is_enabled: f.is_enabled
-      });
-      lastSavedRef.current = nextSaved;
+  const updateSelection = useCallback((nextChannelId: string | null, nextIsCreatingChannel = false) => {
+    selectedChannelIdRef.current = nextChannelId;
+    isCreatingChannelRef.current = nextIsCreatingChannel;
+    setSelectedChannelId(nextChannelId);
+    setIsCreatingChannel(nextIsCreatingChannel);
+  }, []);
 
-      // Select first channel if none selected and not adding new
-      if (loadedChannels.length > 0 && selectedChannelId === null) {
-        setSelectedChannelId(loadedChannels[0].id);
-      }
-    } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "加载数据失败");
-    } finally {
-      setIsLoading(false);
+  const clearFeatureSaveTimer = (id: string) => {
+    const timer = timersRef.current[id];
+    if (timer) {
+      clearTimeout(timer);
+      timersRef.current[id] = undefined;
     }
   };
 
-  useEffect(() => { void loadData(); }, []);
+  const clearFeatureFeedbackTimer = (id: string) => {
+    const timer = saveFeedbackTimersRef.current[id];
+    if (timer) {
+      clearTimeout(timer);
+      saveFeedbackTimersRef.current[id] = undefined;
+    }
+  };
+
+  // Initial Load
+  const loadData = useCallback(async (silent = false) => {
+    const loadSeq = loadSeqRef.current + 1;
+    loadSeqRef.current = loadSeq;
+    if (!silent) setIsLoading(true);
+
+    try {
+      const [cRes, fRes] = await Promise.all([
+        fetch("/api/admin/ai-channels", { cache: "no-store" }),
+        fetch("/api/admin/ai-features", { cache: "no-store" }),
+      ]);
+
+      const cData = await cRes.json();
+      const fData = await fRes.json();
+
+      if (!cRes.ok || cData.error) throw new Error(cData.error || "加载渠道失败");
+      if (!fRes.ok || fData.error) throw new Error(fData.error || "加载功能失败");
+
+      if (loadSeqRef.current !== loadSeq) {
+        return;
+      }
+
+      const loadedChannels = sortChannels(Array.isArray(cData.channels) ? cData.channels : []);
+      const loadedFeatures = Array.isArray(fData.features)
+        ? fData.features.map((feature: AiFeatureApiRow) => normalizeFeatureItem(feature))
+        : [];
+
+      setChannels(loadedChannels);
+
+      const mergedFeatures = mergeLoadedFeatures({
+        loadedFeatures,
+        localFeatures: featuresRef.current,
+        saveStates: featureSaveStatesRef.current,
+        lastSaved: lastSavedRef.current,
+        validChannelIds: new Set(loadedChannels.map((channel) => channel.id)),
+      });
+      lastSavedRef.current = mergedFeatures.lastSaved;
+      setFeatures(mergedFeatures.features);
+
+      updateSelection(
+        resolveSelectedChannelId({
+          channels: loadedChannels,
+          currentSelectedChannelId: selectedChannelIdRef.current,
+          isCreatingChannel: isCreatingChannelRef.current,
+        }),
+        isCreatingChannelRef.current,
+      );
+    } catch (err) {
+      if (loadSeqRef.current !== loadSeq) {
+        return;
+      }
+      feedbackToast.error(err instanceof Error ? err.message : "加载数据失败");
+    } finally {
+      if (loadSeqRef.current === loadSeq) {
+        setIsLoading(false);
+      }
+    }
+  }, [updateSelection]);
+
+  useEffect(() => {
+    if (didInitRef.current) {
+      return;
+    }
+    didInitRef.current = true;
+
+    if (typeof window !== "undefined") {
+      const storedSelection = window.sessionStorage.getItem(SELECTION_STORAGE_KEY);
+      if (storedSelection) {
+        selectedChannelIdRef.current = storedSelection;
+        setSelectedChannelId(storedSelection);
+      }
+    }
+
+    void loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (isCreatingChannel || !selectedChannelId) {
+      window.sessionStorage.removeItem(SELECTION_STORAGE_KEY);
+      return;
+    }
+
+    window.sessionStorage.setItem(SELECTION_STORAGE_KEY, selectedChannelId);
+  }, [isCreatingChannel, selectedChannelId]);
+
+  useEffect(() => () => {
+    Object.values(timersRef.current).forEach((timer) => {
+      if (timer) clearTimeout(timer);
+    });
+    Object.values(saveFeedbackTimersRef.current).forEach((timer) => {
+      if (timer) clearTimeout(timer);
+    });
+  }, []);
 
   // Set action busy state
   const setBusy = (key: string, isBusy: boolean) => {
-    setBusyActions(prev => ({ ...prev, [key]: isBusy }));
+    setBusyActions((prev) => ({ ...prev, [key]: isBusy }));
   };
 
   // Channel Actions
   const handleSaveChannel = async (form: ChannelFormState, id?: string) => {
     if (!form.name || !form.base_url || !form.priority) {
       feedbackToast.error("请先填写名称、地址和优先级");
-      return;
+      return false;
     }
     if (!id && !form.api_key) {
       feedbackToast.error("新增渠道必须填写密钥");
-      return;
+      return false;
     }
 
     setBusy("save", true);
@@ -114,14 +218,16 @@ export default function AIChannelsClient() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "保存失败");
 
+      if (!id && data.channel?.id) {
+        updateSelection(data.channel.id, false);
+      }
+
       feedbackToast.success(id ? "渠道已更新" : "渠道已新增");
       await loadData(true);
-      
-      if (!id && data.channel?.id) {
-        setSelectedChannelId(data.channel.id);
-      }
+      return true;
     } catch (err) {
       feedbackToast.error(err instanceof Error ? err.message : "保存失败");
+      return false;
     } finally {
       setBusy("save", false);
     }
@@ -129,6 +235,7 @@ export default function AIChannelsClient() {
 
   const handleChannelAction = async (id: string, action: "test" | "ocr_test" | "toggle" | "recover" | "delete", isEnabled?: boolean) => {
     setBusy(`${action}:${id}`, true);
+
     try {
       let res: Response;
       if (action === "test" || action === "ocr_test") {
@@ -157,19 +264,44 @@ export default function AIChannelsClient() {
       if (!res.ok || data.error) throw new Error(data.error || "操作失败");
 
       if (action === "test" || action === "ocr_test") {
-        feedbackToast.success(`${action === "ocr_test" ? "截图 OCR" : "文本"}测试成功${data.elapsed_ms ? ` (${data.elapsed_ms}ms)` : ''}`);
+        feedbackToast.success(`${action === "ocr_test" ? "截图 OCR" : "文本"}测试成功${data.elapsed_ms ? ` (${data.elapsed_ms}ms)` : ""}`);
       } else if (action === "toggle") {
         feedbackToast.success(isEnabled ? "已启用渠道" : "已禁用渠道");
       } else if (action === "recover") {
         feedbackToast.success("已手动恢复渠道");
       } else {
         feedbackToast.success("已删除渠道");
-        if (selectedChannelId === id) setSelectedChannelId(channels.length > 1 ? channels.find(c => c.id !== id)?.id || null : null);
+
+        const remainingChannels = channelsRef.current.filter((channel) => channel.id !== id);
+        setChannels(remainingChannels);
+        setFeatures((prev) =>
+          prev.map((feature) =>
+            feature.channel_id === id
+              ? {
+                  ...feature,
+                  channel_id: "",
+                  channel_name: null,
+                }
+              : feature,
+          ),
+        );
+
+        if (selectedChannelIdRef.current === id) {
+          updateSelection(
+            resolveSelectedChannelId({
+              channels: remainingChannels,
+              currentSelectedChannelId: null,
+              isCreatingChannel: false,
+            }),
+            false,
+          );
+        }
       }
 
       await loadData(true);
     } catch (err) {
-      feedbackToast.error(err instanceof Error ? err.message : "操作失败");
+      const message = err instanceof Error ? err.message : "操作失败";
+      feedbackToast.error(message);
     } finally {
       setBusy(`${action}:${id}`, false);
       if (action === "delete") setDeleteTarget(null);
@@ -178,33 +310,38 @@ export default function AIChannelsClient() {
 
   // Feature Actions (Auto-save)
   const queueFeatureSave = (id: string) => {
-    const timer = timersRef.current[id];
-    if (timer) clearTimeout(timer);
-    timersRef.current[id] = setTimeout(() => { void saveFeature(id); }, DEBOUNCE_MS);
+    clearFeatureSaveTimer(id);
+    timersRef.current[id] = setTimeout(() => {
+      void saveFeature(id);
+    }, DEBOUNCE_MS);
+  };
+
+  const scheduleFeatureSaveStateReset = (id: string, version: number) => {
+    clearFeatureFeedbackTimer(id);
+    saveFeedbackTimersRef.current[id] = setTimeout(() => {
+      if (!isFeatureVersionCurrent(featureVersionRef.current[id], version)) return;
+
+      const current = featuresRef.current.find((feature) => feature.id === id);
+      if (!current || getFeaturePayloadKey(current) !== lastSavedRef.current[id]) return;
+
+      setFeatureSaveStates((prev) => ({ ...prev, [id]: "idle" }));
+    }, FEATURE_SAVE_FEEDBACK_MS);
   };
 
   const saveFeature = async (id: string) => {
     const current = featuresRef.current.find((f) => f.id === id);
     if (!current) return;
-    
-    const payload = {
-      id: current.id,
-      channel_id: current.channel_id.trim() ? current.channel_id : null,
-      model: current.model.trim() ? current.model.trim() : null,
-      system_prompt: current.system_prompt.trim() ? current.system_prompt : null,
-      is_enabled: current.is_enabled,
-    };
-    
-    const payloadKey = JSON.stringify(payload);
+
+    const version = featureVersionRef.current[id] ?? 0;
+    const payload = buildFeatureSavePayload(current);
+    const payloadKey = getFeaturePayloadKey(payload);
     if (lastSavedRef.current[id] === payloadKey) {
       setFeatureSaveStates((p) => ({ ...p, [id]: "idle" }));
       return;
     }
-    
-    const seq = (requestSeqRef.current[id] ?? 0) + 1;
-    requestSeqRef.current[id] = seq;
+
     setFeatureSaveStates((p) => ({ ...p, [id]: "saving" }));
-    
+
     try {
       const res = await fetch("/api/admin/ai-features", {
         method: "PUT",
@@ -213,47 +350,46 @@ export default function AIChannelsClient() {
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "保存失败");
-      if (requestSeqRef.current[id] !== seq) return;
-      
-      const saved = {
-        ...data.feature,
-        channel_id: data.feature.channel_id ?? "",
-        model: data.feature.model ?? "",
-        system_prompt: data.feature.system_prompt ?? ""
-      };
-      
-      lastSavedRef.current[id] = JSON.stringify({
-        id: saved.id, channel_id: saved.channel_id || null, model: saved.model || null, system_prompt: saved.system_prompt || null, is_enabled: saved.is_enabled
-      });
-      
+
+      if (!isFeatureVersionCurrent(featureVersionRef.current[id], version)) return;
+
+      const saved = normalizeFeatureItem(data.feature as AiFeatureApiRow);
+      lastSavedRef.current[id] = getFeaturePayloadKey(saved);
+
       setFeatures((p) => p.map((f) => (f.id === id ? saved : f)));
       setFeatureSaveStates((p) => ({ ...p, [id]: "saved" }));
-      
-      // Update channel info silently to reflect new bindings if needed
-      if (payload.channel_id) loadData(true);
-      
+
+      scheduleFeatureSaveStateReset(id, version);
     } catch (err) {
-      if (requestSeqRef.current[id] !== seq) return;
+      if (!isFeatureVersionCurrent(featureVersionRef.current[id], version)) return;
       setFeatureSaveStates((p) => ({ ...p, [id]: "error" }));
-      feedbackToast.error(`${current.label} 保存失败`);
+      clearFeatureFeedbackTimer(id);
+      const message = err instanceof Error ? err.message : "保存失败";
+      feedbackToast.error(`${current.label} 保存失败：${message}`);
     }
   };
 
   const handleFeaturePatch = (id: string, patch: Record<string, unknown>) => {
-    if ("_clearCustomModel" in patch) {
-      const { _clearCustomModel, ...rest } = patch;
-      patch = rest;
-    }
-    
     setFeatures((prev) => {
       let nextFeature: AiFeatureItem | null = null;
       const next = prev.map((f) => {
         if (f.id !== id) return f;
-        nextFeature = { ...f, ...patch } as AiFeatureItem;
+        nextFeature = applyFeaturePatch(f, patch);
         return nextFeature;
       });
-      
+
       if (nextFeature) {
+        featureVersionRef.current[id] = (featureVersionRef.current[id] ?? 0) + 1;
+        const nextPayloadKey = getFeaturePayloadKey(nextFeature);
+
+        if (nextPayloadKey === lastSavedRef.current[id]) {
+          clearFeatureSaveTimer(id);
+          clearFeatureFeedbackTimer(id);
+          setFeatureSaveStates((cur) => ({ ...cur, [id]: "idle" }));
+          return next;
+        }
+
+        clearFeatureFeedbackTimer(id);
         setFeatureSaveStates((cur) => ({ ...cur, [id]: "pending" }));
         queueFeatureSave(id);
       }
@@ -261,7 +397,7 @@ export default function AIChannelsClient() {
     });
   };
 
-  const activeChannel = channels.find(c => c.id === selectedChannelId) || null;
+  const activeChannel = !isCreatingChannel ? channels.find((channel) => channel.id === selectedChannelId) || null : null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-4 sm:px-6 lg:px-8">
@@ -272,7 +408,7 @@ export default function AIChannelsClient() {
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)] sm:text-[30px]">AI 渠道与功能管理</h1>
               <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
-                统一管理 AI 渠道和功能绑定。左侧选择渠道，右侧配置信息并指派需要承接的功能。
+                统一管理 AI 渠道和功能接管。左侧渠道用于查看与维护渠道本身，右侧功能卡片可独立指定渠道、模型与提示词。
               </p>
             </div>
           </div>
@@ -315,14 +451,14 @@ export default function AIChannelsClient() {
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start relative overflow-hidden">
           <ChannelSidebar
             channels={channels}
-            selectedChannelId={selectedChannelId}
-            onSelect={setSelectedChannelId}
-            onAddClick={() => setSelectedChannelId(null)}
+            selectedChannelId={isCreatingChannel ? null : selectedChannelId}
+            onSelect={(id) => updateSelection(id, false)}
+            onAddClick={() => updateSelection(null, true)}
             onToggleEnabled={(id, enabled) => handleChannelAction(id, "toggle", enabled)}
           />
 
           <div
-            key={selectedChannelId || "new"}
+            key={activeChannel?.id ?? (isCreatingChannel ? "new" : "empty")}
             className="flex-1 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
           >
             <div className="space-y-6">
@@ -337,7 +473,8 @@ export default function AIChannelsClient() {
               />
 
               <ChannelFeatureBindings
-                channelId={selectedChannelId}
+                channelId={activeChannel?.id ?? null}
+                channels={channels}
                 features={features}
                 saveStates={featureSaveStates}
                 onFeaturePatch={handleFeaturePatch}

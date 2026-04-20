@@ -1,5 +1,14 @@
-import { AiChannelRow, ChannelStatus, AiFeatureItem, AiFeatureCardItem } from "./types";
+import {
+  AiChannelRow,
+  ChannelStatus,
+  AiFeatureApiRow,
+  AiFeatureItem,
+  AiFeatureCardItem,
+  FeatureSaveState,
+} from "./types";
 import { AI_FEATURE_GROUP_ORDER, getAiFeatureMetadata, type AiFeatureGroup } from "@/lib/ai/feature-metadata";
+
+export const FEATURE_SAVE_FEEDBACK_MS = 1600;
 
 export function maskApiKey(value: string) {
   const trimmed = value.trim();
@@ -23,6 +32,10 @@ export function formatMaskedFromApi(value: string) {
   if (!value) return "—";
   if (value.includes("***")) return value;
   return maskApiKey(value);
+}
+
+export function sortChannels(channels: AiChannelRow[]) {
+  return [...channels].sort((left, right) => left.priority - right.priority || left.name.localeCompare(right.name, "zh-CN"));
 }
 
 export function getStatus(channel: AiChannelRow): ChannelStatus {
@@ -58,6 +71,116 @@ export function getStatusMeta(channel: AiChannelRow) {
 
 export function isRecoverable(channel: AiChannelRow) {
   return Boolean(channel.unhealthy_until && new Date(channel.unhealthy_until).getTime() > Date.now());
+}
+
+export type FeatureSavePayload = {
+  id: string;
+  channel_id: string | null;
+  model: string | null;
+  system_prompt: string | null;
+  is_enabled: boolean;
+};
+
+export function normalizeFeatureItem(feature: AiFeatureApiRow | AiFeatureItem): AiFeatureItem {
+  return {
+    ...feature,
+    channel_id: feature.channel_id ?? "",
+    channel_name: feature.channel_name ?? null,
+    model: typeof feature.model === "string" ? feature.model : "",
+    system_prompt: feature.system_prompt ?? "",
+  };
+}
+
+export function buildFeatureSavePayload(feature: AiFeatureItem): FeatureSavePayload {
+  const channelId = feature.channel_id.trim();
+  const model = feature.model.trim();
+  const systemPrompt = feature.system_prompt.trim();
+
+  return {
+    id: feature.id,
+    channel_id: channelId || null,
+    model: model || null,
+    system_prompt: systemPrompt || null,
+    is_enabled: feature.is_enabled,
+  };
+}
+
+export function getFeaturePayloadKey(featureOrPayload: AiFeatureItem | FeatureSavePayload) {
+  const payload = "feature_key" in featureOrPayload ? buildFeatureSavePayload(featureOrPayload) : featureOrPayload;
+  return JSON.stringify(payload);
+}
+
+export function applyFeaturePatch(feature: AiFeatureItem, patch: Record<string, unknown>): AiFeatureItem {
+  const next = {
+    ...feature,
+    ...patch,
+    channel_id: typeof patch.channel_id === "string" ? patch.channel_id : feature.channel_id,
+    channel_name:
+      patch.channel_name === null || typeof patch.channel_name === "string" ? patch.channel_name : feature.channel_name,
+    model: typeof patch.model === "string" ? patch.model : feature.model,
+    system_prompt: typeof patch.system_prompt === "string" ? patch.system_prompt : feature.system_prompt,
+  } satisfies AiFeatureItem;
+
+  return next;
+}
+
+export function isFeatureVersionCurrent(currentVersion: number | undefined, expectedVersion: number) {
+  return (currentVersion ?? 0) === expectedVersion;
+}
+
+export function resolveSelectedChannelId(input: {
+  channels: AiChannelRow[];
+  currentSelectedChannelId: string | null;
+  isCreatingChannel: boolean;
+}) {
+  if (input.isCreatingChannel) return null;
+  if (input.channels.length === 0) return null;
+
+  if (input.currentSelectedChannelId && input.channels.some((channel) => channel.id === input.currentSelectedChannelId)) {
+    return input.currentSelectedChannelId;
+  }
+
+  return input.channels[0].id;
+}
+
+export function mergeLoadedFeatures(input: {
+  loadedFeatures: AiFeatureItem[];
+  localFeatures: AiFeatureItem[];
+  saveStates: Record<string, FeatureSaveState>;
+  lastSaved: Record<string, string>;
+  validChannelIds?: Set<string>;
+}) {
+  const localById = new Map(input.localFeatures.map((feature) => [feature.id, feature]));
+  const nextLastSaved: Record<string, string> = {};
+
+  const features = input.loadedFeatures.map((serverFeature) => {
+    const normalizedServer = normalizeFeatureItem(serverFeature);
+    const localFeature = localById.get(normalizedServer.id);
+    const localFeatureToKeep =
+      localFeature &&
+      (!localFeature.channel_id || !input.validChannelIds || input.validChannelIds.has(localFeature.channel_id))
+        ? localFeature
+        : null;
+    const saveState = input.saveStates[normalizedServer.id] ?? "idle";
+
+    if (localFeatureToKeep) {
+      const localPayloadKey = getFeaturePayloadKey(localFeatureToKeep);
+      const hasUnsavedLocalChanges = localPayloadKey !== input.lastSaved[normalizedServer.id];
+
+      if (hasUnsavedLocalChanges && (saveState === "pending" || saveState === "saving" || saveState === "error")) {
+        nextLastSaved[normalizedServer.id] = input.lastSaved[normalizedServer.id] ?? getFeaturePayloadKey(normalizedServer);
+        return localFeatureToKeep;
+      }
+    }
+
+    nextLastSaved[normalizedServer.id] = getFeaturePayloadKey(normalizedServer);
+    return normalizedServer;
+  });
+
+  return {
+    features,
+    lastSaved: nextLastSaved,
+  };
 }
 
 export type AiFeatureGroupSection = {
