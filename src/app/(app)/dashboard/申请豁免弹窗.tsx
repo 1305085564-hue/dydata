@@ -102,12 +102,13 @@ function ExemptionModal({ hasPending, today, submittedDates }: Props) {
               </p>
               
               <div className="relative overflow-hidden rounded-[1.5rem] bg-slate-50/50 p-1 ring-1 ring-black/5">
-                <SubmissionCalendar 
+                <SubmissionCalendar
                   today={today}
                   submittedDates={submittedDates}
                   selectedDates={selectedDates}
                   onDateSelect={(date) => toggleDate(date)}
                   className="border-none shadow-none bg-transparent"
+                  compact
                 />
               </div>
             </div>

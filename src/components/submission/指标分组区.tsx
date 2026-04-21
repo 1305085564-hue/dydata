@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 
-import { MotionCard } from "@/components/ui/motion-card";
 import { itemVariants } from "@/lib/animations";
 import type { EditableMetricKey, SubmissionFieldState } from "@/components/submission/提交状态机";
 import { 指标输入卡 } from "@/components/submission/指标输入卡";
@@ -43,18 +42,21 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
 
   return (
-    <motion.div variants={itemVariants}>
-      <MotionCard index={0} className="border-none bg-white/70">
-        <div className="space-y-0 p-4">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
-            
-          </div>
+    <motion.div variants={itemVariants} className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            填写核心业务数据、互动数据和留存转化数据。
+          </p>
+        </div>
+      </div>
 
-          <div className="mb-1">
+      <div className="space-y-4">
+        <div className="mb-1">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">核心数据</p>
             <div className="grid grid-cols-3 gap-3">
-              {CORE_ITEMS.map((item) => (
+              {CORE_ITEMS.map((item, index) => (
                 <指标输入卡
                   key={item.key}
                   label={item.label}
@@ -66,6 +68,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                   onChange={(value) => onFieldChange(item.key, value)}
                   onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                   onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                  animationDelay={index * 150}
                 />
               ))}
             </div>
@@ -76,7 +79,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           <div>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">互动数据</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {INTERACTION_ITEMS.map((item) => (
+              {INTERACTION_ITEMS.map((item, index) => (
                 <指标输入卡
                   key={item.key}
                   label={item.label}
@@ -85,6 +88,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                   onChange={(value) => onFieldChange(item.key, value)}
                   onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                   onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                  animationDelay={(CORE_ITEMS.length + index) * 150}
                 />
               ))}
             </div>
@@ -97,7 +101,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
               完播留存{retentionOptional && <span className="ml-1 normal-case">（可选）</span>}
             </p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {RETENTION_ITEMS.map((item) => (
+              {RETENTION_ITEMS.map((item, index) => (
                 <指标输入卡
                   key={item.key}
                   label={item.label}
@@ -109,12 +113,12 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                   onChange={(value) => onFieldChange(item.key, value)}
                   onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                   onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                  animationDelay={index * 150}
                 />
               ))}
             </div>
           </div>
         </div>
-      </MotionCard>
     </motion.div>
   );
 }

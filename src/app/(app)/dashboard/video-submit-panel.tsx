@@ -433,6 +433,7 @@ export function VideoSubmitPanel({
               today={today}
               submittedDates={submittedDates}
               selectedDate={activeBizDate}
+              compact
               onDateSelect={(date, hasSubmission) => {
                 setActiveBizDate(date);
                 if (hasSubmission) {

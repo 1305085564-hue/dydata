@@ -416,8 +416,33 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
+  const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  // Track all created blob URLs to clean them up on unmount
+  useEffect(() => {
+    Object.values(slots).forEach((slot) => {
+      if (slot.assetUrl && slot.assetUrl.startsWith("blob:")) {
+        blobUrlsRef.current.add(slot.assetUrl);
+      }
+    });
+  }, [slots]);
 
   useEffect(() => {
+    return () => {
+      blobUrlsRef.current.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+      blobUrlsRef.current.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Clear previously generated blobs when switching accounts or initializing
+    blobUrlsRef.current.forEach((url) => {
+      URL.revokeObjectURL(url);
+    });
+    blobUrlsRef.current.clear();
+
     const nextMeta = createInitialMeta(today);
     if (isBackfillMode) {
       nextMeta.bizDate = initialBizDate ?? "";
@@ -537,6 +562,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   }
 
   async function handleSlotUpload(role: SubmissionSlotRole, file: File) {
+    // Revoke old blob URL for this slot to avoid leak when uploading a new file over an existing one
+    const oldUrl = slots[role]?.assetUrl;
+    if (oldUrl && oldUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(oldUrl);
+      blobUrlsRef.current.delete(oldUrl);
+    }
+
     setSlots((current) => ({
       ...current,
       [role]: {
@@ -693,6 +725,16 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     void handleSlotUpload(role, slot.file);
   }
 
+  const cancelTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cancelTimeoutRef.current !== null) {
+        window.clearTimeout(cancelTimeoutRef.current);
+      }
+    };
+  }, []);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setHasAttemptedSubmit(true);
@@ -784,7 +826,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         className:
           "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
       });
-      window.setTimeout(() => {
+      cancelTimeoutRef.current = window.setTimeout(() => {
         onCancel?.();
       }, 2200);
     } catch (error) {
@@ -798,7 +840,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
-    return () => setMounted(false);
   }, []);
 
   const mobileSubmitBar = (
@@ -879,6 +920,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               variant="destructive"
               onClick={() => {
                 if (!deleteTargetRole) return;
+
+                // Cleanup Blob URL before deleting
+                const targetSlot = slots[deleteTargetRole];
+                if (targetSlot.assetUrl && targetSlot.assetUrl.startsWith("blob:")) {
+                  URL.revokeObjectURL(targetSlot.assetUrl);
+                }
+
                 setSlots((current) => ({
                   ...current,
                   [deleteTargetRole]: {
@@ -907,28 +955,46 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         animate="visible"
         className="space-y-5 pb-[140px] md:pb-[100px]"
       >
-        <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-          {/* 左侧对比区 & 素材链接区 (50%) */}
-          <div className="w-full lg:w-1/2 flex flex-col gap-6">
-            <motion.div ref={slotsSectionRef} variants={itemVariants}>
-              <截图槽位区
-                slots={slots}
-                onSelectFile={handleSlotUpload}
-                onDelete={(role) => setDeleteTargetRole(role)}
-                onRetry={handleSlotRetry}
-                screenshotsRequired={screenshotsRequired}
-                focusedRole={focusedRole}
-                issueCount={
-                  issueSummary.missingRequiredSlots.length +
-                  issueSummary.failedRequiredSlots.length +
-                  issueSummary.pendingSlotConfirmations.length
-                }
-              />
-            </motion.div>
+        <div className="space-y-6">
+          {/* 第一行：截图槽位区 & 指标分组区 */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            <div className="w-full lg:w-1/2 flex flex-col gap-6">
+              <motion.div ref={slotsSectionRef} variants={itemVariants}>
+                <截图槽位区
+                  slots={slots}
+                  onSelectFile={handleSlotUpload}
+                  onDelete={(role) => setDeleteTargetRole(role)}
+                  onRetry={handleSlotRetry}
+                  screenshotsRequired={screenshotsRequired}
+                  focusedRole={focusedRole}
+                  issueCount={
+                    issueSummary.missingRequiredSlots.length +
+                    issueSummary.failedRequiredSlots.length +
+                    issueSummary.pendingSlotConfirmations.length
+                  }
+                />
+              </motion.div>
+            </div>
 
-            <motion.div ref={metaSectionRef} variants={itemVariants} className="flex-1 flex flex-col">
-              <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm flex-1 flex flex-col">
-                <div className="space-y-4 p-5 flex-1">
+            <div className="w-full lg:w-1/2 flex flex-col gap-6">
+              <motion.div ref={metricsSectionRef} variants={itemVariants}>
+                <指标分组区
+                  fields={fields}
+                  onFieldChange={updateField}
+                  onFocusField={handleFieldFocus}
+                  onBlurField={handleFieldBlur}
+                  anomalyStatus={meta.anomalyStatus}
+                />
+              </motion.div>
+            </div>
+          </div>
+
+          {/* 第二行：视频链接等元数据信息 & 文案提取区 */}
+          <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+            <div className="w-full lg:w-1/2 flex flex-col">
+              <motion.div ref={metaSectionRef} variants={itemVariants} className="flex-1 flex flex-col">
+                <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm flex-1 flex flex-col">
+                  <div className="space-y-4 p-5 flex-1">
                   <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors">
                     <Label htmlFor="video_url">抖音视频链接</Label>
                     <Input
@@ -1096,18 +1162,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             </motion.div>
           </div>
 
-          {/* 右侧表单区 & 文案提取区 (50%) */}
-          <div className="w-full lg:w-1/2 flex flex-col gap-6">
-            <motion.div ref={metricsSectionRef} variants={itemVariants}>
-              <指标分组区
-                fields={fields}
-                onFieldChange={updateField}
-                onFocusField={handleFieldFocus}
-                onBlurField={handleFieldBlur}
-                anomalyStatus={meta.anomalyStatus}
-              />
-            </motion.div>
-
+          <div className="w-full lg:w-1/2 flex flex-col">
             <motion.div variants={itemVariants} className="flex-1 flex flex-col">
               <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm flex-1 flex flex-col">
                 <div className="space-y-2 p-5 flex-1 flex flex-col rounded-[var(--radius-xl)] border border-transparent transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
@@ -1127,26 +1182,33 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             </motion.div>
           </div>
         </div>
+        </div>
 
-        <motion.div variants={itemVariants} className="hidden md:block pointer-events-none">
+        <motion.div variants={itemVariants} className="hidden md:flex sticky bottom-8 justify-center pointer-events-none z-[90]">
           {/* FAB 悬浮操作条 */}
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[90] w-full max-w-[800px] px-4 pointer-events-auto">
-            <div className="rounded-[24px] bg-white/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] border border-white/50 p-3 flex items-center justify-between ring-1 ring-black/5 transition-all hover:shadow-[0_16px_48px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.06)]">
-              <div className="space-y-0.5 lg:flex-1 pl-4">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                  {canActuallySubmit ? "✅ 已就绪" : "⚠️ 等待完善"}
-                </p>
-                <p className="text-[11px] text-[var(--color-text-secondary)] truncate max-w-[280px]">
-                  {canActuallySubmit ? "所有必填项已确认，可提交今日数据。" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
-                </p>
+          <div className="rounded-full pointer-events-auto bg-white/85 backdrop-blur-[20px] backdrop-saturate-[180%] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.04)] border border-white/50 py-4 px-6 min-h-[72px] flex items-center justify-between gap-8 transition-all hover:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.12)] w-max">
+            <div className="flex items-center gap-3">
+                {canActuallySubmit ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                )}
+                <div className="flex flex-col justify-center">
+                  <p className="text-[14px] font-semibold text-[var(--color-text-primary)] leading-tight">
+                    {canActuallySubmit ? "一切就绪" : "待完善信息"}
+                  </p>
+                  <p className="text-[11px] font-medium text-[var(--color-text-secondary)] truncate max-w-[200px] leading-tight mt-0.5">
+                    {canActuallySubmit ? "可提交今日数据" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单"}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 pr-1">
-                <div className="grid gap-2 min-w-[130px]">
+              <div className="flex items-center gap-2">
+                <div className="grid gap-2 min-w-[120px]">
                   <Select
                     value={meta.anomalyStatus}
                     onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
                   >
-                    <SelectTrigger className="h-10 rounded-[14px] bg-white/50 shadow-sm border-black/5 hover:bg-white text-sm font-medium transition-colors">
+                    <SelectTrigger className="h-11 rounded-full bg-[#f8fafc] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] border-black/5 hover:bg-white text-[14px] font-medium transition-all focus:ring-2 focus:ring-primary/20">
                       <SelectValue placeholder="请选择状态" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1160,7 +1222,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 </div>
                 <div className="flex items-center gap-2">
                   {onCancel ? (
-                    <Button type="button" variant="ghost" className="h-10 rounded-[14px] px-5 hover:bg-black/5 font-medium" onClick={onCancel}>
+                    <Button type="button" variant="ghost" className="h-11 rounded-full px-5 hover:bg-black/5 font-semibold text-[14px] text-[var(--color-text-main)] bg-[#f1f5f9]" onClick={onCancel}>
                       取消
                     </Button>
                   ) : null}
@@ -1168,14 +1230,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     type="submit"
                     disabled={isSubmitting || !canActuallySubmit}
                     title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
-                    className="h-10 rounded-[14px] px-8 shadow-md font-semibold text-sm transition-transform active:scale-95 bg-primary hover:bg-primary/90 text-white"
+                    className="h-11 rounded-full px-7 font-bold text-[14px] transition-all bg-[var(--color-primary)] text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(37,99,235,0.5)] hover:bg-[#1d4ed8] active:translate-y-0 disabled:shadow-none disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:translate-y-0"
                   >
                     {submitButtonLabel}
                   </Button>
                 </div>
               </div>
             </div>
-          </div>
         </motion.div>
       </motion.form>
 

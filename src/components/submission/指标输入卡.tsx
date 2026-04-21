@@ -1,6 +1,7 @@
 "use client";
 
 
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ interface MetricInputCardProps {
   onBlur?: () => void;
   size?: "primary" | "secondary";
   optional?: boolean;
+  animationDelay?: number;
 }
 
 export function MetricInputCard({
@@ -28,7 +30,40 @@ export function MetricInputCard({
   onBlur,
   size = "secondary",
   optional = false,
+  animationDelay = 0,
 }: MetricInputCardProps) {
+  const [displayValue, setDisplayValue] = useState(field.value);
+
+  useEffect(() => {
+    if (field.source === "ocr") {
+      let i = 0;
+      const target = String(field.value);
+      setDisplayValue("");
+
+      const speed = Math.max(15, 300 / (target.length || 1));
+      let timer: ReturnType<typeof setInterval>;
+
+      const delayTimer = setTimeout(() => {
+        timer = setInterval(() => {
+          if (i < target.length) {
+            // Note: i++ happens AFTER substring, so it takes 0 to target.length
+            i++;
+            setDisplayValue(target.substring(0, i));
+          } else {
+            clearInterval(timer);
+          }
+        }, speed);
+      }, animationDelay);
+
+      return () => {
+        clearTimeout(delayTimer);
+        clearInterval(timer);
+      };
+    } else {
+      setDisplayValue(field.value);
+    }
+  }, [field.value, field.source, animationDelay]);
+
   let statusLabel = null;
   if (field.source === "ocr") {
     statusLabel = "🤖 AI已识别";
@@ -54,8 +89,8 @@ export function MetricInputCard({
         {statusLabel && (
           <span
             className={cn(
-              "text-emerald-600 bg-emerald-50/80 border border-emerald-100",
-              "rounded px-1 py-0.5 text-[10px] scale-90 origin-right"
+              "rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-wide scale-90 origin-right shadow-sm",
+              "bg-linear-to-br from-indigo-50 to-indigo-100 text-indigo-700 border border-indigo-200/60"
             )}
           >
             {statusLabel}
@@ -68,13 +103,16 @@ export function MetricInputCard({
           type="number"
           min={0}
           step={step}
-          value={field.value}
+          value={displayValue}
           onChange={(event) => onChange(event.target.value)}
           onFocus={onFocus}
           onBlur={onBlur}
           className={cn(
-            "rounded-[var(--radius-md)] border-black/8 bg-white/60 pr-8 font-semibold text-[var(--color-text-primary)] transition-all focus:bg-white focus:border-primary/40 focus:ring-2 focus:ring-primary/10",
+            "rounded-[var(--radius-md)] pr-8 font-semibold text-[var(--color-text-primary)] transition-all focus:bg-white focus:border-primary/40 focus:ring-2 focus:ring-primary/10",
             size === "primary" ? "h-10 text-lg" : "h-9 text-base",
+            field.source === "ocr"
+              ? "bg-white border-black/10 border-b-2 border-b-[var(--color-primary)] shadow-sm font-mono tracking-tight"
+              : "border-black/8 bg-white/60"
           )}
         />
         {suffix ? (
