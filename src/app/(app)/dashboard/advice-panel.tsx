@@ -299,7 +299,11 @@ export function AdvicePanel() {
 
           <div className="space-y-2">
             <p className="text-sm font-medium">选择视频</p>
-            <Select value={selectedVideoId} onValueChange={(value) => setSelectedVideoId(value ?? "")}>
+            <Select
+              value={selectedVideoId}
+              onValueChange={(value) => setSelectedVideoId(value ?? "")}
+              items={videoOptions.map((video) => ({ value: video.id, label: getVideoLabel(video) }))}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={videoOptions.length ? "请选择视频" : "暂无可关联视频"} />
               </SelectTrigger>

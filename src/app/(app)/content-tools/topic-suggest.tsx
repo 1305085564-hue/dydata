@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Loader2, Sparkles, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,6 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<TopicSuggestResponse["data"] | null>(null);
-
-  const accountOptions = useMemo(() => [{ id: "all", name: "全部账号" }, ...accounts], [accounts]);
 
   async function loadSuggestions() {
     setLoading(true);
@@ -65,12 +63,20 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_140px] md:items-end">
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">账号范围</div>
-            <Select value={accountId} onValueChange={(value) => setAccountId(value || "all")}>
+            <Select
+              value={accountId}
+              onValueChange={(value) => setAccountId(value || "all")}
+              items={[
+                { value: "all", label: "全部账号" },
+                ...accounts.map((account) => ({ value: account.id, label: account.name })),
+              ]}
+            >
               <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                 <SelectValue placeholder="全部账号" />
               </SelectTrigger>
               <SelectContent>
-                {accountOptions.map((account) => (
+                <SelectItem value="all">全部账号</SelectItem>
+                {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
                   </SelectItem>
@@ -81,7 +87,11 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
 
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">统计范围</div>
-            <Select value={String(days)} onValueChange={(value) => setDays(Number(value) as 7 | 14 | 30)}>
+            <Select
+              value={String(days)}
+              onValueChange={(value) => setDays(Number(value) as 7 | 14 | 30)}
+              items={TOPIC_DAY_OPTIONS.map((option) => ({ value: String(option), label: `近 ${option} 天` }))}
+            >
               <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                 <SelectValue placeholder="时间范围" />
               </SelectTrigger>

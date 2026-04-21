@@ -290,6 +290,7 @@ export function VideoSubmitPanel({
                     if (!value) return;
                     resetPanelForAccount(value);
                   }}
+                  items={accounts.map((account) => ({ value: account.id, label: account.display_name }))}
                 >
                   <SelectTrigger
                     id="video-account-select"

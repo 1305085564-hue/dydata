@@ -48,6 +48,12 @@ const MODEL_OPTIONS = [
   "gemini-3-flash",
 ];
 
+const MODEL_SELECT_ITEMS = [
+  { value: DEFAULT_MODEL_VALUE, label: "跟随渠道默认" },
+  ...MODEL_OPTIONS.map((model) => ({ value: model, label: model })),
+  { value: CUSTOM_MODEL_VALUE, label: "自定义输入" },
+];
+
 function isCustomModel(model: string) {
   return Boolean(model.trim() && !MODEL_OPTIONS.includes(model.trim()));
 }
@@ -279,6 +285,10 @@ function FeatureCard({
                   channel_id: value === AUTO_CHANNEL_VALUE ? "" : (value ?? ""),
                 })
               }
+              items={[
+                { value: AUTO_CHANNEL_VALUE, label: "默认自动（failover）" },
+                ...channels.map((channel) => ({ value: channel.id, label: channel.name })),
+              ]}
             >
               <SelectTrigger id={`feature-channel-${feature.id}`} className="h-10 w-full rounded-2xl bg-white/80">
                 <SelectValue />
@@ -309,6 +319,7 @@ function FeatureCard({
                 }
                 onFeaturePatch(feature.id, { model: value ?? "", _clearCustomModel: true });
               }}
+              items={MODEL_SELECT_ITEMS}
             >
               <SelectTrigger id={`feature-model-${feature.id}`} className="h-10 w-full rounded-2xl bg-white/80">
                 <SelectValue />

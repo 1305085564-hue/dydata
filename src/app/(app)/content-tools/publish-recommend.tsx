@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Clock3, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,7 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<PublishRecommendResponse["data"] | null>(null);
 
-  const accountOptions = useMemo(() => [{ id: "all", name: "全部账号" }, ...accounts], [accounts]);
-
-  async function loadRecommendations() {
+  const loadRecommendations = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -54,11 +52,11 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [accountId, days]);
 
   useEffect(() => {
     void loadRecommendations();
-  }, [accountId, days]);
+  }, [loadRecommendations]);
 
   return (
     <div className="space-y-4">
@@ -66,12 +64,20 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_140px] md:items-end">
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">账号范围</div>
-            <Select value={accountId} onValueChange={(value) => setAccountId(value || "all")}>
+            <Select
+              value={accountId}
+              onValueChange={(value) => setAccountId(value || "all")}
+              items={[
+                { value: "all", label: "全部账号" },
+                ...accounts.map((account) => ({ value: account.id, label: account.name })),
+              ]}
+            >
               <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                 <SelectValue placeholder="全部账号" />
               </SelectTrigger>
               <SelectContent>
-                {accountOptions.map((account) => (
+                <SelectItem value="all">全部账号</SelectItem>
+                {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
                   </SelectItem>
@@ -82,7 +88,11 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
 
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">统计范围</div>
-            <Select value={String(days)} onValueChange={(value) => setDays(Number(value) as 30 | 60 | 90)}>
+            <Select
+              value={String(days)}
+              onValueChange={(value) => setDays(Number(value) as 30 | 60 | 90)}
+              items={PUBLISH_DAY_OPTIONS.map((option) => ({ value: String(option), label: `近 ${option} 天` }))}
+            >
               <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                 <SelectValue placeholder="时间范围" />
               </SelectTrigger>

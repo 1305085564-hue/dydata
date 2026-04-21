@@ -82,7 +82,14 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">负责人</div>
-          <Select value={filters.profileId} onValueChange={(value) => updateFilter("profileId", value || "all")}>
+          <Select
+            value={filters.profileId}
+            onValueChange={(value) => updateFilter("profileId", value || "all")}
+            items={[
+              { value: "all", label: "全部负责人" },
+              ...profiles.map((profile) => ({ value: profile.id, label: profile.name })),
+            ]}
+          >
             <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
               <SelectValue placeholder="全部负责人" />
             </SelectTrigger>
@@ -99,7 +106,14 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
 
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">账号</div>
-          <Select value={filters.accountId} onValueChange={(value) => updateFilter("accountId", value || "all")}>
+          <Select
+            value={filters.accountId}
+            onValueChange={(value) => updateFilter("accountId", value || "all")}
+            items={[
+              { value: "all", label: "全部账号" },
+              ...accounts.map((account) => ({ value: account.id, label: account.name })),
+            ]}
+          >
             <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
               <SelectValue placeholder="全部账号" />
             </SelectTrigger>
@@ -137,7 +151,11 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">状态</div>
           <div className="flex gap-2">
-            <Select value={filters.status} onValueChange={(value) => updateFilter("status", (value || "all") as VideoFilterValue["status"])}>
+            <Select
+              value={filters.status}
+              onValueChange={(value) => updateFilter("status", (value || "all") as VideoFilterValue["status"])}
+              items={STATUS_OPTIONS.map((status) => ({ value: status, label: status === "all" ? "全部状态" : status }))}
+            >
               <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                 <SelectValue placeholder="全部状态" />
               </SelectTrigger>

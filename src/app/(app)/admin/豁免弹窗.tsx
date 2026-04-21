@@ -51,6 +51,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
   const [isPending, startTransition] = useTransition();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showPermanentConfirm, setShowPermanentConfirm] = useState(false);
+  const [fallbackYesterday] = useState(() => new Date(Date.now() - 86400000).toISOString().slice(0, 10));
 
   const initialValues = useMemo<ExemptionFormValues>(() => {
     if (!profile) {
@@ -169,7 +170,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
             <label className="text-sm font-medium">豁免类型</label>
             <Select value={formValues.mode} onValueChange={handleModeChange} disabled={isPending}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>{MODE_LABELS[formValues.mode]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">正常</SelectItem>
@@ -185,7 +186,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
               <label className="text-sm font-medium">豁免日期</label>
               <Input
                 type="date"
-                value={formValues.date ?? new Date(Date.now() - 86400000).toISOString().slice(0, 10)}
+                value={formValues.date ?? fallbackYesterday}
                 onChange={(e) => updateField("date", e.target.value)}
                 disabled={isPending}
               />

@@ -291,6 +291,10 @@ export function PermissionManager({
                       requestRoleChange(member.id, member.name, value as "member" | "admin")
                     }
                     disabled={isChangingRole || isSavingPermissions || isRemoving || isResettingPassword}
+                    items={[
+                      { value: "admin", label: "管理员" },
+                      { value: "member", label: "成员" },
+                    ]}
                   >
                     <SelectTrigger className="h-11 w-full sm:h-10 sm:w-28">
                       <SelectValue />

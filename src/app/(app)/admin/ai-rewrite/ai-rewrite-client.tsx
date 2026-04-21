@@ -359,6 +359,48 @@ export default function AIRewriteClient() {
     }));
   }, [bundle.workflowSteps, bundle.workflows]);
 
+  const modelViewItems = useMemo(
+    () => bundle.modelViews.map((row) => ({ value: row.id, label: row.label })),
+    [bundle.modelViews],
+  );
+
+  const workflowItems = useMemo(
+    () => bundle.workflows.map((row) => ({ value: row.id, label: row.name })),
+    [bundle.workflows],
+  );
+
+  const workflowStepItems = useMemo(
+    () => [
+      { value: NONE_VALUE, label: "不绑定步骤（通用）" },
+      ...bundle.workflowSteps.map((row) => ({
+        value: row.id,
+        label: `${row.workflow?.name ?? "未知流程"} / ${row.name}`,
+      })),
+    ],
+    [bundle.workflowSteps],
+  );
+
+  const lengthPresetItems = useMemo(
+    () => [
+      { value: NONE_VALUE, label: "跟随默认字数" },
+      ...bundle.lengthPresets.map((row) => ({ value: row.id, label: row.name })),
+    ],
+    [bundle.lengthPresets],
+  );
+
+  const channelItems = useMemo(
+    () => bundle.channels.map((row) => ({
+      value: row.id,
+      label: row.name + (row.is_enabled ? "" : "（已停用）"),
+    })),
+    [bundle.channels],
+  );
+
+  const optionalModelViewItems = useMemo(
+    () => [{ value: NONE_VALUE, label: "不绑定，跟随顶部展示模型" }, ...modelViewItems],
+    [modelViewItems],
+  );
+
   async function loadBundle(silent = false) {
     if (silent) {
       setIsRefreshing(true);
@@ -1437,7 +1479,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fixed-mode-model-view">绑定展示模型</Label>
-                <Select value={textField("model_view_id")} onValueChange={(value) => setField("model_view_id", value ?? "")}>
+                <Select
+                  value={textField("model_view_id")}
+                  onValueChange={(value) => setField("model_view_id", value ?? "")}
+                  items={modelViewItems}
+                >
                   <SelectTrigger id="fixed-mode-model-view" className="w-full rounded-2xl bg-white/80">
                     <SelectValue placeholder="选择展示模型" />
                   </SelectTrigger>
@@ -1452,7 +1498,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="fixed-mode-length">固定字数</Label>
-                <Select value={textField("length_preset_id") || NONE_VALUE} onValueChange={(value) => setField("length_preset_id", value ?? NONE_VALUE)}>
+                <Select
+                  value={textField("length_preset_id") || NONE_VALUE}
+                  onValueChange={(value) => setField("length_preset_id", value ?? NONE_VALUE)}
+                  items={lengthPresetItems}
+                >
                   <SelectTrigger id="fixed-mode-length" className="w-full rounded-2xl bg-white/80">
                     <SelectValue placeholder="可选，不填则跟随默认" />
                   </SelectTrigger>
@@ -1524,7 +1574,11 @@ export default function AIRewriteClient() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="route-model-view">展示模型</Label>
-                <Select value={textField("model_view_id")} onValueChange={(value) => setField("model_view_id", value ?? "")}>
+                <Select
+                  value={textField("model_view_id")}
+                  onValueChange={(value) => setField("model_view_id", value ?? "")}
+                  items={modelViewItems}
+                >
                   <SelectTrigger id="route-model-view" className="w-full rounded-2xl bg-white/80">
                     <SelectValue placeholder="选择展示模型" />
                   </SelectTrigger>
@@ -1539,7 +1593,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="route-workflow-step">步骤绑定</Label>
-                <Select value={textField("workflow_step_id") || NONE_VALUE} onValueChange={(value) => setField("workflow_step_id", value ?? NONE_VALUE)}>
+                <Select
+                  value={textField("workflow_step_id") || NONE_VALUE}
+                  onValueChange={(value) => setField("workflow_step_id", value ?? NONE_VALUE)}
+                  items={workflowStepItems}
+                >
                   <SelectTrigger id="route-workflow-step" className="w-full rounded-2xl bg-white/80">
                     <SelectValue placeholder="可不绑步骤" />
                   </SelectTrigger>
@@ -1555,7 +1613,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="route-channel">渠道</Label>
-                <Select value={textField("channel_id")} onValueChange={(value) => setField("channel_id", value ?? "")}>
+                <Select
+                  value={textField("channel_id")}
+                  onValueChange={(value) => setField("channel_id", value ?? "")}
+                  items={channelItems}
+                >
                   <SelectTrigger id="route-channel" className="w-full rounded-2xl bg-white/80">
                     <SelectValue placeholder="选择渠道" />
                   </SelectTrigger>
@@ -1694,7 +1756,11 @@ export default function AIRewriteClient() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="step-workflow">所属流程</Label>
-                <Select value={textField("workflow_id")} onValueChange={(value) => setField("workflow_id", value ?? "")}>
+                <Select
+                  value={textField("workflow_id")}
+                  onValueChange={(value) => setField("workflow_id", value ?? "")}
+                  items={workflowItems}
+                >
                   <SelectTrigger id="step-workflow" className="w-full rounded-2xl bg-white/80">
                     <SelectValue placeholder="选择流程" />
                   </SelectTrigger>
@@ -1709,7 +1775,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="step-model-view">绑定展示模型</Label>
-                <Select value={textField("model_view_id") || NONE_VALUE} onValueChange={(value) => setField("model_view_id", value ?? NONE_VALUE)}>
+                <Select
+                  value={textField("model_view_id") || NONE_VALUE}
+                  onValueChange={(value) => setField("model_view_id", value ?? NONE_VALUE)}
+                  items={optionalModelViewItems}
+                >
                   <SelectTrigger id="step-model-view" className="w-full rounded-2xl bg-white/80">
                     <SelectValue placeholder="可不绑定" />
                   </SelectTrigger>

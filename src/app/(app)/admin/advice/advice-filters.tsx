@@ -59,7 +59,14 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">员工</div>
-          <Select value={filters.profileId} onValueChange={(value) => updateFilter("profileId", value || "all")}>
+          <Select
+            value={filters.profileId}
+            onValueChange={(value) => updateFilter("profileId", value || "all")}
+            items={[
+              { value: "all", label: "全部员工" },
+              ...profiles.map((profile) => ({ value: profile.id, label: profile.name })),
+            ]}
+          >
             <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
               <SelectValue placeholder="全部员工" />
             </SelectTrigger>
@@ -76,7 +83,14 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
 
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">账号</div>
-          <Select value={filters.accountId} onValueChange={(value) => updateFilter("accountId", value || "all")}>
+          <Select
+            value={filters.accountId}
+            onValueChange={(value) => updateFilter("accountId", value || "all")}
+            items={[
+              { value: "all", label: "全部账号" },
+              ...accounts.map((account) => ({ value: account.id, label: account.name })),
+            ]}
+          >
             <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
               <SelectValue placeholder="全部账号" />
             </SelectTrigger>
@@ -93,7 +107,11 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
 
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">状态</div>
-          <Select value={filters.status} onValueChange={(value) => updateFilter("status", (value || "all") as AdviceFilterValue["status"])}>
+          <Select
+            value={filters.status}
+            onValueChange={(value) => updateFilter("status", (value || "all") as AdviceFilterValue["status"])}
+            items={STATUS_OPTIONS.map((status) => ({ value: status, label: status === "all" ? "全部状态" : status }))}
+          >
             <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
               <SelectValue placeholder="全部状态" />
             </SelectTrigger>
@@ -109,7 +127,14 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
 
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">来源</div>
-          <Select value={filters.source} onValueChange={(value) => updateFilter("source", (value || "all") as AdviceFilterValue["source"])}>
+          <Select
+            value={filters.source}
+            onValueChange={(value) => updateFilter("source", (value || "all") as AdviceFilterValue["source"])}
+            items={SOURCE_OPTIONS.map((source) => ({
+              value: source,
+              label: source === "all" ? "全部来源" : source === "ai" ? "AI" : "管理员",
+            }))}
+          >
             <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
               <SelectValue placeholder="全部来源" />
             </SelectTrigger>

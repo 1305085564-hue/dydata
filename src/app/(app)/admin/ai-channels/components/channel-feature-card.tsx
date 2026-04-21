@@ -153,6 +153,10 @@ export function ChannelFeatureCard({
                 <Select
                   value={feature.channel_id || AUTO_CHANNEL_VALUE}
                   onValueChange={handleChannelChange}
+                  items={[
+                    { value: AUTO_CHANNEL_VALUE, label: "系统自动分配（failover）" },
+                    ...channels.map((channel) => ({ value: channel.id, label: channel.name })),
+                  ]}
                 >
                   <SelectTrigger
                     id={`feature-channel-${feature.id}`}

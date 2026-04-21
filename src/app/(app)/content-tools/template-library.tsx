@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BookCopy, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,7 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<TemplateLibraryResponse["data"] | null>(null);
 
-  const accountOptions = useMemo(() => [{ id: "all", name: "全部账号" }, ...accounts], [accounts]);
-
-  async function loadTemplates() {
+  const loadTemplates = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -55,11 +53,11 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [accountId, days]);
 
   useEffect(() => {
     void loadTemplates();
-  }, [accountId, days]);
+  }, [loadTemplates]);
 
   return (
     <div className="space-y-4">
@@ -67,12 +65,20 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_140px] md:items-end">
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">账号范围</div>
-            <Select value={accountId} onValueChange={(value) => setAccountId(value || "all")}>
+            <Select
+              value={accountId}
+              onValueChange={(value) => setAccountId(value || "all")}
+              items={[
+                { value: "all", label: "全部账号" },
+                ...accounts.map((account) => ({ value: account.id, label: account.name })),
+              ]}
+            >
               <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                 <SelectValue placeholder="全部账号" />
               </SelectTrigger>
               <SelectContent>
-                {accountOptions.map((account) => (
+                <SelectItem value="all">全部账号</SelectItem>
+                {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
                   </SelectItem>
@@ -83,7 +89,11 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
 
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">统计范围</div>
-            <Select value={String(days)} onValueChange={(value) => setDays(Number(value) as 14 | 30 | 60)}>
+            <Select
+              value={String(days)}
+              onValueChange={(value) => setDays(Number(value) as 14 | 30 | 60)}
+              items={TEMPLATE_DAY_OPTIONS.map((option) => ({ value: String(option), label: `近 ${option} 天` }))}
+            >
               <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
                 <SelectValue placeholder="时间范围" />
               </SelectTrigger>

@@ -103,6 +103,10 @@ export function PKSelector({
             value={currentOpponentId ?? undefined}
             onValueChange={(value) => onOpponentChange(value || null)}
             disabled={mode !== "1v1" || members.length === 0}
+            items={members.map((member) => ({
+              value: member.id,
+              label: member.label ? `${member.name} · ${member.label}` : member.name,
+            }))}
           >
             <SelectTrigger className="w-full rounded-xl border-white/70 bg-background/80 px-3 dark:border-white/10 dark:bg-white/10">
               <SelectValue placeholder="选择一个对手" />

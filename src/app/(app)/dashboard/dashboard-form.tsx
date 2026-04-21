@@ -218,7 +218,11 @@ export function DashboardForm({ accounts, defaultAccountId, today, existingData 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="account_id">账号</Label>
-                  <Select value={selectedAccountId} disabled>
+                  <Select
+                    value={selectedAccountId}
+                    disabled
+                    items={accounts.map((account) => ({ value: account.id, label: account.name }))}
+                  >
                     <SelectTrigger id="account_id" className="h-10 w-full bg-background/80">
                       <SelectValue placeholder="请选择账号" />
                     </SelectTrigger>
