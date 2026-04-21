@@ -35,3 +35,14 @@
 - 再读 `README.md`
 - 再读 `docs/维护交接清单.md`
 - 涉及数据和截图链路时，再读 `docs/数据口径.md`、`docs/截图上传维护手册.md`
+## GitHub 连接记忆
+
+- DYData 正式目标形态仍然是：fetch / push 都走 SSH，即 `git@github.com:1305085564-hue/dydata.git`
+- 但这台 Win 电脑历史上能 push，并不代表 SSH 已经打通；那次实际依赖的是 HTTPS + 本机保存的 GitHub token
+- 当前本机长期 SSH 配置已经写入：
+  - `C:\Users\25417\.ssh\config`
+  - `github.com -> ssh.github.com:443`
+  - `IdentityFile C:\Users\25417\.ssh\id_ed25519`
+  - `IdentitiesOnly yes`
+- 当前 SSH 未彻底恢复的唯一原因：GitHub 账号尚未绑定 `C:\Users\25417\.ssh\id_ed25519.pub`
+- 以后只要再次遇到“昨天能 push，今天突然不行”，先查协议和凭据，不要先怀疑仓库代码
