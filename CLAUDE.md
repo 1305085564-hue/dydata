@@ -73,3 +73,8 @@
 - `NO_PROXY=localhost,127.0.0.1,::1`
 - `NODE_USE_ENV_PROXY=1`
 - 只看默认模型不够，旧会话可能保留 `providerOverride`；判断是否真的切过去，要看“新开会话 + gateway 日志 + models status”
+
+## 踩坑记录
+- **组件 API 误用**：使用项目封装的 UI 组件（如 Dialog）前，必须点进源码查看 Props 定义，本项目 DialogTrigger 接收 `render={...}` 透传，而不是标准的 Radix `asChild`。
+- **UI 联动遗漏**：实现交互联动（如 Focus 高亮）时，必须覆盖组件的所有渲染形态。如果组件处于折叠态或空状态，外层的占位按钮同样需要响应高亮逻辑。
+- **重构机械复制**：在将相邻的表单字段解耦成不同 DOM 时，极易机械复制 `data-missing` 或错误文本验证逻辑（例如将 `videoTitle` 的校验条件误绑给非必填的 `videoUrl`）。提取时需逐行确认字段专属条件。

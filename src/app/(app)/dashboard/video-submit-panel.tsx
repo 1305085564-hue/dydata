@@ -293,7 +293,7 @@ export function VideoSubmitPanel({
                 >
                   <SelectTrigger
                     id="video-account-select"
-                    className="h-12 w-full rounded-[14px] bg-white border border-black/10 px-4 text-sm shadow-sm transition-all hover:border-primary/30"
+                    className="h-11 flex-1 rounded-[var(--radius-lg)] bg-white border border-black/10 px-4 text-sm shadow-sm transition-all hover:border-primary/30"
                   >
                     <SelectValue placeholder="请选择账号" />
                   </SelectTrigger>
@@ -305,8 +305,8 @@ export function VideoSubmitPanel({
                     ))}
                   </SelectContent>
                 </Select>
-                
-                <div className="relative w-full">
+
+                <div className="relative flex-1">
                   <input
                     type="date"
                     value={activeBizDate}
@@ -318,7 +318,7 @@ export function VideoSubmitPanel({
                         setRequestedMode(null);
                       }
                     }}
-                    className="h-12 w-full rounded-[14px] bg-white border border-black/10 px-4 text-sm shadow-sm transition-all hover:border-primary/30 focus:ring-2 focus:ring-primary/20 outline-none"
+                    className="h-11 w-full rounded-[var(--radius-lg)] bg-white border border-black/10 px-4 text-sm shadow-sm transition-all hover:border-primary/30 focus:ring-2 focus:ring-primary/20 outline-none"
                   />
                 </div>
               </div>

@@ -410,6 +410,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
+  const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(null);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
@@ -436,6 +437,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     setIsSubmitted(false);
     setDeleteTargetRole(null);
     setKeywordInput("");
+    setFocusedRole(null);
   }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today]);
 
   const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
@@ -493,6 +495,20 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               : null;
 
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function handleFieldFocus(key: EditableMetricKey) {
+    if (["play_count", "follower_gain", "likes", "comments", "shares", "favorites"].includes(key)) {
+      setFocusedRole("screenshot_1");
+    } else if (["avg_play_duration", "bounce_rate_2s", "completion_rate_5s", "completion_rate"].includes(key)) {
+      setFocusedRole("screenshot_2");
+    } else if (key === "follower_convert") {
+      setFocusedRole("screenshot_3");
+    }
+  }
+
+  function handleFieldBlur() {
+    setFocusedRole(null);
   }
 
   function applyOverviewFields(
@@ -889,278 +905,277 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-5 pb-[140px] md:pb-6"
+        className="space-y-5 pb-[140px] md:pb-[100px]"
       >
-        
-        <motion.div ref={slotsSectionRef} variants={itemVariants}>
-          <截图槽位区
-            slots={slots}
-            onSelectFile={handleSlotUpload}
-            onDelete={(role) => setDeleteTargetRole(role)}
-            onRetry={handleSlotRetry}
-            screenshotsRequired={screenshotsRequired}
-            issueCount={
-              issueSummary.missingRequiredSlots.length +
-              issueSummary.failedRequiredSlots.length +
-              issueSummary.pendingSlotConfirmations.length
-            }
-          />
-        </motion.div>
+        <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+          {/* 左侧对比区 & 素材链接区 (50%) */}
+          <div className="w-full lg:w-1/2 flex flex-col gap-6">
+            <motion.div ref={slotsSectionRef} variants={itemVariants}>
+              <截图槽位区
+                slots={slots}
+                onSelectFile={handleSlotUpload}
+                onDelete={(role) => setDeleteTargetRole(role)}
+                onRetry={handleSlotRetry}
+                screenshotsRequired={screenshotsRequired}
+                focusedRole={focusedRole}
+                issueCount={
+                  issueSummary.missingRequiredSlots.length +
+                  issueSummary.failedRequiredSlots.length +
+                  issueSummary.pendingSlotConfirmations.length
+                }
+              />
+            </motion.div>
 
-        <motion.div ref={metricsSectionRef} variants={itemVariants}>
-          <指标分组区
-            fields={fields}
-            onFieldChange={updateField}
-            anomalyStatus={meta.anomalyStatus}
-          />
-        </motion.div>
+            <motion.div ref={metaSectionRef} variants={itemVariants} className="flex-1 flex flex-col">
+              <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm flex-1 flex flex-col">
+                <div className="space-y-4 p-5 flex-1">
+                  <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors">
+                    <Label htmlFor="video_url">抖音视频链接</Label>
+                    <Input
+                      id="video_url"
+                      value={meta.videoUrl}
+                      onChange={(event) => updateMeta("videoUrl", event.target.value)}
+                      placeholder="https://www.douyin.com/video/..."
+                      className="h-11 rounded-[var(--radius-lg)] bg-white shadow-sm"
+                    />
+                  </div>
+                  <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
+                    <Label htmlFor="video_title">视频标题 <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="video_title"
+                      value={meta.videoTitle}
+                      onChange={(event) => updateMeta("videoTitle", event.target.value)}
+                      placeholder="输入视频标题"
+                      className="h-11 rounded-[var(--radius-lg)] bg-white shadow-sm"
+                    />
+                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
+                      <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写视频标题</p>
+                    ) : null}
+                  </div>
 
-        <motion.div ref={metaSectionRef} variants={itemVariants}>
-          <MotionCard className="border-none bg-white/70">
-            <div className="space-y-4 p-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
-                  <Label htmlFor="video_url">抖音视频链接</Label>
-                  <Input
-                    id="video_url"
-                    value={meta.videoUrl}
-                    onChange={(event) => updateMeta("videoUrl", event.target.value)}
-                    placeholder="https://www.douyin.com/video/..."
-                    className="h-11 rounded-[var(--radius-lg)] bg-white"
-                  />
-                </div>
-                <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
-                  <Label htmlFor="video_title">视频标题 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="video_title"
-                    value={meta.videoTitle}
-                    onChange={(event) => updateMeta("videoTitle", event.target.value)}
-                    placeholder="输入视频标题"
-                    className="h-11 rounded-[var(--radius-lg)] bg-white"
-                  />
-                  {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
-                    <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写视频标题</p>
-                  ) : null}
-                </div>
-              </div>
+                  <div ref={topicTagSectionRef} className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.topicTagMissing)}>
+                    <Label>话题标签 <span className="text-red-500">*</span></Label>
+                    <div className="flex gap-3">
+                      {(["干货", "复盘"] as const).map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
+                          className={[
+                            "flex-1 h-11 rounded-[var(--radius-lg)] border text-sm font-medium transition-all shadow-sm",
+                            meta.topicTag === tag
+                              ? "border-[#007AFF] bg-[#007AFF] text-white"
+                              : "border-black/10 bg-white text-[var(--color-text-primary)] hover:border-[#007AFF]/50",
+                          ].join(" ")}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                    {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
+                      <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未选择话题标签</p>
+                    ) : null}
+                  </div>
 
-              <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
-                <Label htmlFor="content">文案 <span className="text-red-500">*</span></Label>
-                <textarea
-                  id="content"
-                  value={meta.content}
-                  onChange={(event) => updateMeta("content", event.target.value)}
-                  placeholder="粘贴视频文案"
-                  className="min-h-[120px] w-full rounded-[var(--radius-lg)] border border-black/8 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[color:rgba(0,122,255,0.16)]"
-                />
-                {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                  <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写文案</p>
-                ) : null}
-              </div>
-
-              <div ref={topicTagSectionRef} className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.topicTagMissing)}>
-                <Label>话题标签 <span className="text-red-500">*</span></Label>
-                <div className="flex gap-3">
-                  {(["干货", "复盘"] as const).map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
-                      className={[
-                        "flex-1 h-11 rounded-[var(--radius-lg)] border text-sm font-medium transition-all",
-                        meta.topicTag === tag
-                          ? "border-[#007AFF] bg-[#007AFF] text-white"
-                          : "border-black/10 bg-white text-[var(--color-text-primary)] hover:border-[#007AFF]/50",
-                      ].join(" ")}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-                {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
-                  <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未选择话题标签</p>
-                ) : null}
-              </div>
-
-              <div className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("contentKeywords"))}>
-                <Label>
-                  内容标签 <span className="text-red-500">*</span> <span className="text-xs font-normal text-[var(--color-text-secondary)]">最多3个</span>
-                </Label>
-                {keywordSuggestions.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {keywordSuggestions.map((kw) => (
-                      <button
-                        key={kw}
-                        type="button"
-                        disabled={meta.contentKeywords.length >= 3 && !meta.contentKeywords.includes(kw)}
-                        onClick={() => {
-                          if (meta.contentKeywords.includes(kw)) {
-                            updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw));
-                          } else if (meta.contentKeywords.length < 3) {
-                            updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
+                  <div className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("contentKeywords"))}>
+                    <Label>
+                      内容标签 <span className="text-red-500">*</span> <span className="text-xs font-normal text-[var(--color-text-secondary)]">最多3个</span>
+                    </Label>
+                    {keywordSuggestions.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {keywordSuggestions.map((kw) => (
+                          <button
+                            key={kw}
+                            type="button"
+                            disabled={meta.contentKeywords.length >= 3 && !meta.contentKeywords.includes(kw)}
+                            onClick={() => {
+                              if (meta.contentKeywords.includes(kw)) {
+                                updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw));
+                              } else if (meta.contentKeywords.length < 3) {
+                                updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
+                              }
+                            }}
+                            className={[
+                              "rounded-full border px-3 py-1 text-xs transition-all shadow-sm",
+                              meta.contentKeywords.includes(kw)
+                                ? "border-[#007AFF] bg-[#007AFF] text-white"
+                                : "border-black/10 bg-white text-[var(--color-text-secondary)] hover:border-[#007AFF]/50 disabled:opacity-40",
+                            ].join(" ")}
+                          >
+                            {kw}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                    {meta.contentKeywords.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {meta.contentKeywords.map((kw) => (
+                          <span
+                            key={kw}
+                            className="flex items-center gap-1 rounded-full border border-[#007AFF] bg-[#007AFF]/8 px-3 py-1 text-xs text-[#007AFF]"
+                          >
+                            {kw}
+                            <button
+                              type="button"
+                              onClick={() => updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw))}
+                              className="ml-0.5 opacity-70 hover:opacity-100"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    <div className="flex gap-2">
+                      <Input
+                        value={keywordInput}
+                        onChange={(event) => setKeywordInput(event.target.value)}
+                        onKeyDown={(event) => {
+                          if ((event.key === "Enter" || event.key === " ") && keywordInput.trim() && meta.contentKeywords.length < 3) {
+                            event.preventDefault();
+                            const kw = keywordInput.trim();
+                            if (!meta.contentKeywords.includes(kw)) {
+                              updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
+                            }
+                            setKeywordInput("");
                           }
                         }}
-                        className={[
-                          "rounded-full border px-3 py-1 text-xs transition-all",
-                          meta.contentKeywords.includes(kw)
-                            ? "border-[#007AFF] bg-[#007AFF] text-white"
-                            : "border-black/10 bg-white text-[var(--color-text-secondary)] hover:border-[#007AFF]/50 disabled:opacity-40",
-                        ].join(" ")}
+                        placeholder={meta.contentKeywords.length >= 3 ? "最多3个标签" : "输入后按空格或回车添加"}
+                        disabled={meta.contentKeywords.length >= 3}
+                        className="h-9 rounded-[var(--radius-lg)] bg-white text-sm shadow-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={!keywordInput.trim() || meta.contentKeywords.length >= 3}
+                        onClick={() => {
+                          const kw = keywordInput.trim();
+                          if (kw && !meta.contentKeywords.includes(kw) && meta.contentKeywords.length < 3) {
+                            updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
+                            setKeywordInput("");
+                          }
+                        }}
+                        className="h-9 rounded-[var(--radius-lg)] px-3 text-sm shadow-sm"
                       >
-                        {kw}
-                      </button>
-                    ))}
+                        添加
+                      </Button>
+                    </div>
+                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("contentKeywords") ? (
+                      <p className="text-xs font-medium text-[var(--color-danger)]">必填，至少添加 1 个内容标签</p>
+                    ) : null}
                   </div>
-                ) : null}
-                {meta.contentKeywords.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {meta.contentKeywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="flex items-center gap-1 rounded-full border border-[#007AFF] bg-[#007AFF]/8 px-3 py-1 text-xs text-[#007AFF]"
-                      >
-                        {kw}
-                        <button
-                          type="button"
-                          onClick={() => updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw))}
-                          className="ml-0.5 opacity-70 hover:opacity-100"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="published_at">发布时间</Label>
+                      <Input
+                        id="published_at"
+                        type="datetime-local"
+                        step={3600}
+                        value={meta.publishedAt}
+                        onChange={(event) => {
+                          const synced = syncPublishedAtAndText({
+                            nextPublishedAt: event.target.value,
+                            nextPublishedAtText: meta.publishedAtText,
+                            changedField: "published_at",
+                          });
+                          setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
+                        }}
+                        className="h-11 rounded-[var(--radius-lg)] bg-white shadow-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>上传时间</Label>
+                      <div className="flex h-11 items-center rounded-[var(--radius-lg)] border border-black/8 bg-[color:rgba(255,255,255,0.7)] px-3 text-sm text-[var(--color-text-secondary)] shadow-sm">
+                        {meta.uploadedAt}
+                      </div>
+                    </div>
                   </div>
-                ) : null}
-                <div className="flex gap-2">
-                  <Input
-                    value={keywordInput}
-                    onChange={(event) => setKeywordInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if ((event.key === "Enter" || event.key === " ") && keywordInput.trim() && meta.contentKeywords.length < 3) {
-                        event.preventDefault();
-                        const kw = keywordInput.trim();
-                        if (!meta.contentKeywords.includes(kw)) {
-                          updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
-                        }
-                        setKeywordInput("");
-                      }
-                    }}
-                    placeholder={meta.contentKeywords.length >= 3 ? "最多3个标签" : "输入后按空格或回车添加"}
-                    disabled={meta.contentKeywords.length >= 3}
-                    className="h-9 rounded-[var(--radius-lg)] bg-white text-sm"
+                </div>
+              </MotionCard>
+            </motion.div>
+          </div>
+
+          {/* 右侧表单区 & 文案提取区 (50%) */}
+          <div className="w-full lg:w-1/2 flex flex-col gap-6">
+            <motion.div ref={metricsSectionRef} variants={itemVariants}>
+              <指标分组区
+                fields={fields}
+                onFieldChange={updateField}
+                onFocusField={handleFieldFocus}
+                onBlurField={handleFieldBlur}
+                anomalyStatus={meta.anomalyStatus}
+              />
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="flex-1 flex flex-col">
+              <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm flex-1 flex flex-col">
+                <div className="space-y-2 p-5 flex-1 flex flex-col rounded-[var(--radius-xl)] border border-transparent transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
+                  <Label htmlFor="content">文案 <span className="text-red-500">*</span></Label>
+                  <textarea
+                    id="content"
+                    value={meta.content}
+                    onChange={(event) => updateMeta("content", event.target.value)}
+                    placeholder="粘贴视频文案"
+                    className="flex-1 min-h-[240px] w-full rounded-[var(--radius-lg)] border border-black/8 bg-white px-4 py-3 text-sm outline-none shadow-sm focus:ring-2 focus:ring-[color:rgba(0,122,255,0.16)] resize-none"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={!keywordInput.trim() || meta.contentKeywords.length >= 3}
-                    onClick={() => {
-                      const kw = keywordInput.trim();
-                      if (kw && !meta.contentKeywords.includes(kw) && meta.contentKeywords.length < 3) {
-                        updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
-                        setKeywordInput("");
-                      }
-                    }}
-                    className="h-9 rounded-[var(--radius-lg)] px-3 text-sm"
+                  {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
+                    <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写文案</p>
+                  ) : null}
+                </div>
+              </MotionCard>
+            </motion.div>
+          </div>
+        </div>
+
+        <motion.div variants={itemVariants} className="hidden md:block pointer-events-none">
+          {/* FAB 悬浮操作条 */}
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[90] w-full max-w-[800px] px-4 pointer-events-auto">
+            <div className="rounded-[24px] bg-white/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] border border-white/50 p-3 flex items-center justify-between ring-1 ring-black/5 transition-all hover:shadow-[0_16px_48px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.06)]">
+              <div className="space-y-0.5 lg:flex-1 pl-4">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {canActuallySubmit ? "✅ 已就绪" : "⚠️ 等待完善"}
+                </p>
+                <p className="text-[11px] text-[var(--color-text-secondary)] truncate max-w-[280px]">
+                  {canActuallySubmit ? "所有必填项已确认，可提交今日数据。" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pr-1">
+                <div className="grid gap-2 min-w-[130px]">
+                  <Select
+                    value={meta.anomalyStatus}
+                    onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
                   >
-                    添加
+                    <SelectTrigger className="h-10 rounded-[14px] bg-white/50 shadow-sm border-black/5 hover:bg-white text-sm font-medium transition-colors">
+                      <SelectValue placeholder="请选择状态" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ANOMALY_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {VIDEO_STATUS_LABELS[option]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  {onCancel ? (
+                    <Button type="button" variant="ghost" className="h-10 rounded-[14px] px-5 hover:bg-black/5 font-medium" onClick={onCancel}>
+                      取消
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || !canActuallySubmit}
+                    title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
+                    className="h-10 rounded-[14px] px-8 shadow-md font-semibold text-sm transition-transform active:scale-95 bg-primary hover:bg-primary/90 text-white"
+                  >
+                    {submitButtonLabel}
                   </Button>
-                </div>
-                {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("contentKeywords") ? (
-                  <p className="text-xs font-medium text-[var(--color-danger)]">必填，至少添加 1 个内容标签</p>
-                ) : null}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Date selector moved to panel top */}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="published_at">发布时间</Label>
-                  <Input
-                    id="published_at"
-                    type="datetime-local"
-                    step={3600}
-                    value={meta.publishedAt}
-                    onChange={(event) => {
-                      const synced = syncPublishedAtAndText({
-                        nextPublishedAt: event.target.value,
-                        nextPublishedAtText: meta.publishedAtText,
-                        changedField: "published_at",
-                      });
-                      setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
-                    }}
-                    className="h-11 rounded-[var(--radius-lg)] bg-white"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>上传时间</Label>
-                  <div className="flex h-11 items-center rounded-[var(--radius-lg)] border border-black/8 bg-[color:rgba(255,255,255,0.7)] px-3 text-sm text-[var(--color-text-secondary)]">
-                    {meta.uploadedAt}
-                  </div>
                 </div>
               </div>
             </div>
-          </MotionCard>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="hidden md:block">
-          <MotionCard className="border-none bg-white/70">
-            <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-              <div className="space-y-1 lg:flex-1">
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                  {canActuallySubmit ? "已满足最低提交条件" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
-                </p>
-                <p className="text-xs text-[var(--color-text-secondary)]">
-                  {canActuallySubmit
-                    ? screenshotsRequired
-                      ? "截图识别完成后，必填信息已补全，可以直接提交。"
-                      : "当前视频状态下截图可选，必填信息已补全，可以直接提交。"
-                    : issueSummary.totalIssueCount > 0
-                      ? `当前还有 ${issueSummary.totalIssueCount} 项问题未处理。`
-                      : screenshotsRequired
-                        ? "截图识别完成后，再补充视频信息即可提交。"
-                        : "补充视频信息后即可提交，截图仅作补充。"}
-                </p>
-              </div>
-              <div className="grid gap-2 lg:min-w-[220px]">
-                <Label className="text-xs font-medium text-[var(--color-text-secondary)]">视频状态</Label>
-                <Select
-                  value={meta.anomalyStatus}
-                  onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-                >
-                  <SelectTrigger className="h-11 rounded-[var(--radius-lg)] bg-white">
-                    <SelectValue placeholder="请选择视频状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ANOMALY_OPTIONS.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {VIDEO_STATUS_LABELS[option]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!screenshotsRequired ? (
-                  <p className="text-xs text-amber-600">当前状态下截图可选，可直接提交文字和数据。</p>
-                ) : null}
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                {onCancel ? (
-                  <Button type="button" variant="outline" className="h-11 rounded-[10px] px-6" onClick={onCancel}>
-                    取消
-                  </Button>
-                ) : null}
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || !canActuallySubmit}
-                  title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
-                  className="h-11 rounded-[10px] px-6"
-                >
-                  {submitButtonLabel}
-                </Button>
-              </div>
-            </div>
-          </MotionCard>
+          </div>
         </motion.div>
       </motion.form>
 

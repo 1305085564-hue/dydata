@@ -10,6 +10,8 @@ import { 指标输入卡 } from "@/components/submission/指标输入卡";
 interface MetricGroupProps {
   fields: Record<string, SubmissionFieldState>;
   onFieldChange: (key: EditableMetricKey, value: string) => void;
+  onFocusField?: (key: EditableMetricKey) => void;
+  onBlurField?: (key: EditableMetricKey) => void;
   anomalyStatus?: string;
 }
 
@@ -37,7 +39,7 @@ const RETENTION_ITEMS: MetricItem[] = [
 
 const DIVIDER = <div className="my-2 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />;
 
-export function 指标分组区({ fields, onFieldChange, anomalyStatus }: MetricGroupProps) {
+export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlurField, anomalyStatus }: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
 
   return (
@@ -62,6 +64,8 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
                   size="primary"
                   optional={item.optional}
                   onChange={(value) => onFieldChange(item.key, value)}
+                  onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
+                  onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 />
               ))}
             </div>
@@ -79,6 +83,8 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
                   field={fields[item.key]}
                   size="secondary"
                   onChange={(value) => onFieldChange(item.key, value)}
+                  onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
+                  onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 />
               ))}
             </div>
@@ -101,6 +107,8 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
                   size="secondary"
                   optional={retentionOptional}
                   onChange={(value) => onFieldChange(item.key, value)}
+                  onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
+                  onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 />
               ))}
             </div>
@@ -110,3 +118,5 @@ export function 指标分组区({ fields, onFieldChange, anomalyStatus }: Metric
     </motion.div>
   );
 }
+
+export { MetricGroupSection as 指标分组区 };
