@@ -10,7 +10,9 @@ function hasPermission(role: UserRole, permissions: Permissions, key: Permission
 export interface PermissionManagerMember {
   id: string;
   name: string;
+  email?: string | null;
   role: UserRole;
+  teamName?: string | null;
   permissions: Permissions;
 }
 

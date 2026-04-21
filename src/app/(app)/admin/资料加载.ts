@@ -11,6 +11,7 @@ export interface TeamRelation {
 export interface ProfileWithExemptionFields {
   id: string;
   name: string;
+  email?: string | null;
   role: string;
   status: UserStatus;
   exempt_type: ExemptType | null;
@@ -27,6 +28,7 @@ export interface ProfileWithExemptionFields {
 export interface ProfileWithoutExemptionFields {
   id: string;
   name: string;
+  email?: string | null;
   role: string;
   status: UserStatus;
   permissions?: unknown;

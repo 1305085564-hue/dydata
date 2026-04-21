@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountLeaderboardRow } from "@/types";
-import { isExternalEmployee } from "@/lib/member-access";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { hasPendingExemptionRequest } from "@/app/(app)/dashboard/actions";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
@@ -56,11 +55,10 @@ export async function loadDashboardPageData({
       .select("id, name, content_direction")
       .eq("profile_id", userId)
       .order("created_at", { ascending: true }),
-    supabase.from("profiles").select("name, employee_type").eq("id", userId).single(),
+    supabase.from("profiles").select("name").eq("id", userId).single(),
   ]);
 
   const userDisplayName = profile?.name?.trim() || "当前用户";
-  const isExternalUser = isExternalEmployee(profile?.employee_type);
   const displayAccounts = ((accounts ?? []) as DashboardAccountRow[]).map((account, index, list) => ({
     ...account,
     name: account.name ?? "未命名账号",
@@ -176,7 +174,7 @@ export async function loadDashboardPageData({
 
   return {
     today,
-    isExternalUser,
+    isExternalUser: false,
     monthSubmittedDates: Array.from(
       new Set(
         ((monthDateRows ?? []) as Array<{ report_date: string | null }>)

@@ -1,6 +1,5 @@
 export type UserRole = "member" | "admin" | "owner";
 export type UserStatus = "active" | "exempt";
-export type EmployeeType = "internal" | "external";
 export type ExemptType = "permanent" | "temporary";
 export type LeaderboardRange = "today" | "week" | "month";
 export type LeaderboardType = "overall" | "tag" | "progress";
@@ -45,7 +44,6 @@ export interface Profile {
   email?: string | null;
   role: UserRole;
   status: UserStatus;
-  employee_type?: EmployeeType | null;
   exempt_type: ExemptType | null;
   exempt_start_date: string | null;
   exempt_end_date: string | null;

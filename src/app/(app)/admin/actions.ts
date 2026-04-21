@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTeamMeta, getTeamOptions } from "@/lib/teams";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import {
   formatExemptionDetail,
@@ -36,11 +37,16 @@ async function writeAuditLog(
 }
 
 async function getProfileTeamId(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  _supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
 ) {
-  const { data: profile } = await supabase.from("profiles").select("team_id").eq("id", userId).single();
-  return profile?.team_id ?? null;
+  const adminSupabase = createAdminClient();
+  const { data, error } = await adminSupabase.auth.admin.getUserById(userId);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return getTeamMeta(data.user?.user_metadata).teamId;
 }
 
 async function syncProfileExemptionProjection(
@@ -426,7 +432,7 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
 
   const supabase = await createClient();
 
-  const { data: target } = await supabase.from("profiles").select("role, name, team_id").eq("id", targetUserId).single();
+  const { data: target } = await supabase.from("profiles").select("role, name").eq("id", targetUserId).single();
   if (!target) return { error: "用户不存在" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
@@ -450,7 +456,7 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
 
   if (error) return { error: error.message };
 
-  const teamId = await getProfileTeamId(supabase, perm.userId);
+  const teamId = await getProfileTeamId(supabase, targetUserId);
   await supabase.from("member_change_log").insert({
     user_id: targetUserId,
     team_id: teamId,
@@ -531,5 +537,32 @@ export async function changeRole(
   await writeAuditLog(supabase, perm.userId, "change_role", targetUserId, `${target.name}: ${target.role} → ${newRole}`);
 
   revalidatePath("/admin");
+  return {};
+}
+
+export async function createTeam(teamName: string): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_invite")) return { error: "无权限" };
+
+  const normalizedName = teamName.trim();
+  if (!normalizedName) return { error: "请输入团队名称" };
+
+  const teams = await getTeamOptions();
+  if (teams.some((team) => team.name === normalizedName)) {
+    return { error: "团队名称已存在" };
+  }
+
+  const adminSupabase = createAdminClient();
+  const { error } = await adminSupabase.from("teams").insert({
+    name: normalizedName,
+  });
+  if (error) return { error: error.message };
+
+  const supabase = await createClient();
+  await writeAuditLog(supabase, perm.userId, "create_team", normalizedName, normalizedName);
+
+  revalidatePath("/admin");
+  revalidatePath("/register");
   return {};
 }

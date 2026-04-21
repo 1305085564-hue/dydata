@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getTeamMeta } from "@/lib/teams";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
 import { buildRequestDraft, type GrantMode } from "@/lib/豁免流程";
 
@@ -48,12 +49,7 @@ export async function submitReport(formData: FormData) {
     return { error: "账号不存在或无权限提交" };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name")
-    .eq("id", user.id)
-    .single();
-
+  const { data: profile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
   const submitter = profile?.name ?? "未知";
 
   if (!account_id || !title || !report_date) {
@@ -64,7 +60,6 @@ export async function submitReport(formData: FormData) {
     return { error: "涨粉为必填项" };
   }
 
-  // 检查是否已有该日期的记录（upsert）
   const { data: existing } = await supabase
     .from("daily_reports")
     .select("id")
@@ -101,7 +96,6 @@ export async function submitReport(formData: FormData) {
     return { error: error.message };
   }
 
-  // 飞书通知管理员（异步，不阻塞返回）
   if (!existing) {
     notifyFeishu(submitter, title, play_count).catch(() => {});
   }
@@ -112,7 +106,9 @@ export async function submitReport(formData: FormData) {
 
 export async function hasPendingExemptionRequest(): Promise<boolean> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   const { data } = await supabase
@@ -132,7 +128,9 @@ export async function submitExemptionRequest(input: {
   endDate?: string;
 }): Promise<{ error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "请先登录" };
 
   const { data: existing } = await supabase
@@ -144,16 +142,10 @@ export async function submitExemptionRequest(input: {
 
   if ((existing?.length ?? 0) > 0) return { error: "已有待审批申请" };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("team_id")
-    .eq("id", user.id)
-    .single();
-
   const today = new Date().toISOString().slice(0, 10);
   const draft = buildRequestDraft({
     applicantUserId: user.id,
-    teamId: profile?.team_id ?? null,
+    teamId: getTeamMeta(user.user_metadata).teamId,
     mode: input.mode,
     reason: input.reason,
     today,
@@ -170,7 +162,9 @@ export async function submitExemptionRequest(input: {
 
 export async function createAccount(name: string, contentDirection?: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "请先登录" };
 
   if (!name?.trim()) return { error: "账号名称不能为空" };
@@ -201,12 +195,10 @@ async function notifyFeishu(submitter: string, title: string, playCount: number)
       msg_type: "interactive",
       card: {
         header: {
-          title: { tag: "plain_text", content: "✅ 日报提交通知" },
+          title: { tag: "plain_text", content: "日报提交通知" },
           template: "green",
         },
-        elements: [
-          { tag: "div", text: { tag: "lark_md", content } },
-        ],
+        elements: [{ tag: "div", text: { tag: "lark_md", content } }],
       },
     }),
   });

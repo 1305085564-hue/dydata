@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Eye, FilePenLine, History, PencilLine, TrendingUp, Trophy } from "lucide-react";
+import { Eye, FilePenLine, History, PencilLine, ScanSearch, TrendingUp, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +53,7 @@ type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
 interface VideoSubmitPanelProps {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
   userId: string;
+  userDisplayName: string;
   today: string;
   todayReports: TodaySubmissionReportLike[];
   monthReports: MonthReport[];
@@ -116,6 +117,7 @@ function toOverrideReport(summaryOverride: TodaySubmissionReportLike): MonthRepo
 export function VideoSubmitPanel({
   accounts,
   userId,
+  userDisplayName,
   today,
   todayReports,
   monthReports,
@@ -186,8 +188,21 @@ export function VideoSubmitPanel({
   );
 
   const submittedDates = useMemo(
-    () => Array.from(new Set(mergedMonthReports.filter(r => r.account_id === selectedAccountId).map((report) => report.report_date).filter(Boolean))),
+    () =>
+      Array.from(
+        new Set(
+          mergedMonthReports
+            .filter((report) => report.account_id === selectedAccountId)
+            .map((report) => report.report_date)
+            .filter(Boolean),
+        ),
+      ),
     [mergedMonthReports, selectedAccountId],
+  );
+
+  const submittedCount = useMemo(
+    () => accounts.filter((account) => Boolean(getTodaySubmissionSummary(mergedTodayReports, account.id))).length,
+    [accounts, mergedTodayReports],
   );
 
   const isTodayFlow = activeBizDate === today;
@@ -241,7 +256,7 @@ export function VideoSubmitPanel({
     return (
       <Card className="overflow-hidden rounded-3xl border-orange-200 bg-orange-50/80 shadow-sm backdrop-blur-sm">
         <CardContent className="px-6 py-5 text-sm text-orange-700">
-          当前没有可提交的数据账号，请联系管理员为你分配账号后再继续操作。
+          当前没有可提交的数据账号，请联系管理员分配账号后再继续操作。
         </CardContent>
       </Card>
     );
@@ -258,32 +273,58 @@ export function VideoSubmitPanel({
         <Card className={`${getDashboardSurfaceClass("hero")} overflow-hidden rounded-[1.75rem] border-0`}>
           <CardHeader className="space-y-4 border-b border-border/45 bg-background/20 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
             <div className="dashboard-field-group space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <Label className="text-sm font-semibold text-foreground shrink-0">
-                    填报设置
-                  </Label>
+                  <Label className="shrink-0 text-sm font-semibold text-foreground">填报设置</Label>
                   <AddAccountDialog />
                 </div>
-                
+
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs font-medium border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 shadow-sm transition-all" onClick={() => setIsDataViewOpen(true)}>
-                    <Eye className="size-3.5 mr-1.5" />数据
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
+                    onClick={() => setIsDataViewOpen(true)}
+                  >
+                    <Eye className="mr-1.5 size-3.5" />
+                    数据查看
                   </Button>
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs font-medium border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 shadow-sm transition-all" onClick={() => setIsTrendViewOpen(true)}>
-                    <TrendingUp className="size-3.5 mr-1.5" />趋势
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
+                    onClick={() => setIsTrendViewOpen(true)}
+                  >
+                    <TrendingUp className="mr-1.5 size-3.5" />
+                    趋势查看
                   </Button>
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs font-medium border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 shadow-sm transition-all" onClick={() => setIsLeaderboardOpen(true)}>
-                    <Trophy className="size-3.5 mr-1.5" />排行
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
+                    onClick={() => setIsLeaderboardOpen(true)}
+                  >
+                    <Trophy className="mr-1.5 size-3.5" />
+                    排行榜
                   </Button>
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs font-medium border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 shadow-sm transition-all" onClick={() => setIsHistoryOpen(true)}>
-                    <History className="size-3.5 mr-1.5" />历史
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
+                    onClick={() => setIsHistoryOpen(true)}
+                  >
+                    <History className="mr-1.5 size-3.5" />
+                    历史记录
                   </Button>
                   <申请豁免弹窗 hasPending={hasPendingExemption} today={today} submittedDates={submittedDates} />
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
                 <Select
                   value={selectedAccountId}
                   onValueChange={(value) => {
@@ -294,7 +335,7 @@ export function VideoSubmitPanel({
                 >
                   <SelectTrigger
                     id="video-account-select"
-                    className="h-11 flex-1 rounded-[var(--radius-lg)] bg-white border border-black/10 px-4 text-sm shadow-sm transition-all hover:border-primary/30"
+                    className="h-11 rounded-[var(--radius-lg)] border border-black/10 bg-white px-4 text-sm shadow-sm transition-all hover:border-primary/30"
                   >
                     <SelectValue placeholder="请选择账号" />
                   </SelectTrigger>
@@ -307,19 +348,18 @@ export function VideoSubmitPanel({
                   </SelectContent>
                 </Select>
 
-                <div className="relative flex-1">
+                <div className="relative">
                   <input
                     type="date"
                     value={activeBizDate}
                     max={today}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (val) {
-                        setActiveBizDate(val);
-                        setRequestedMode(null);
-                      }
+                      const value = e.target.value;
+                      if (!value) return;
+                      setActiveBizDate(value);
+                      setRequestedMode(null);
                     }}
-                    className="h-11 w-full rounded-[var(--radius-lg)] bg-white border border-black/10 px-4 text-sm shadow-sm transition-all hover:border-primary/30 focus:ring-2 focus:ring-primary/20 outline-none"
+                    className="h-11 w-full rounded-[var(--radius-lg)] border border-black/10 bg-white px-4 text-sm shadow-sm transition-all outline-none hover:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
               </div>
@@ -327,10 +367,6 @@ export function VideoSubmitPanel({
           </CardHeader>
 
           <CardContent className="space-y-4 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
-            
-
-            
-
             {primarySummary && isPrimarySummaryMode ? (
               <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-emerald-950 sm:p-5`}>
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -434,23 +470,7 @@ export function VideoSubmitPanel({
               today={today}
               submittedDates={submittedDates}
               selectedDate={activeBizDate}
-              compact
-              onDateSelect={(date, hasSubmission) => {
-                setActiveBizDate(date);
-                if (hasSubmission) {
-                  // If it already has data, we should open the Edit Form directly!
-                  const report = mergedMonthReports.filter((r) => r.report_date === date && r.account_id === selectedAccountId).sort((left, right) => (right.uploaded_at ?? "").localeCompare(left.uploaded_at ?? ""))[0];
-                  if (report) {
-                    setEditingReport(report);
-                    // don't close data view, or maybe close it so only one modal is open
-                    setIsDataViewOpen(false);
-                  }
-                } else {
-                  // If no data, jump to the backfill form on the main screen
-                  setRequestedMode(null);
-                  setIsDataViewOpen(false);
-                }
-              }}
+              onDateSelect={(date) => setActiveBizDate(date)}
             />
 
             <div className="rounded-[1.75rem] border border-white/70 bg-white/82 p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-5">

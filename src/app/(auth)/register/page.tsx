@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { getTeamOptions } from "@/lib/teams";
 import { createClient } from "@/lib/supabase/server";
 
 import { RegisterForm } from "./register-form";
@@ -8,7 +9,9 @@ type RegisterFormState = {
   error: string | null;
 };
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const teams = await getTeamOptions();
+
   async function registerAction(
     _: RegisterFormState,
     formData: FormData,
@@ -19,6 +22,8 @@ export default function RegisterPage() {
     const email = formData.get("email")?.toString().trim() ?? "";
     const password = formData.get("password")?.toString() ?? "";
     const inviteCode = formData.get("inviteCode")?.toString().trim() ?? "";
+    const teamId = formData.get("teamId")?.toString().trim() ?? "";
+    const selectedTeam = teams.find((team) => team.id === teamId);
 
     if (!name || !email || !password || !inviteCode) {
       return { error: "请完整填写姓名、邮箱、密码和邀请码。" };
@@ -28,16 +33,20 @@ export default function RegisterPage() {
       return { error: "密码至少需要 6 位。" };
     }
 
+    if (!selectedTeam) {
+      return { error: "请选择团队。" };
+    }
+
     const supabase = await createClient();
 
-    const { data: inviteId, error: inviteError } = await supabase
-      .rpc("validate_invite_code", { p_code: inviteCode });
+    const { data: inviteId, error: inviteError } = await supabase.rpc("validate_invite_code", {
+      p_code: inviteCode,
+    });
 
     if (inviteError || !inviteId) {
       return { error: "邀请码无效或已被使用。" };
     }
 
-    // 检查有效期
     const { data: inviteRow } = await supabase
       .from("invite_codes")
       .select("expires_at")
@@ -48,14 +57,14 @@ export default function RegisterPage() {
       return { error: "邀请码已过期，请联系管理员获取新的邀请码。" };
     }
 
-    const invite = { id: inviteId as string };
-
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           name,
+          team_id: selectedTeam.id,
+          team_name: selectedTeam.name,
         },
       },
     });
@@ -81,7 +90,7 @@ export default function RegisterPage() {
         used_by: userId,
         used_at: new Date().toISOString(),
       })
-      .eq("id", invite.id)
+      .eq("id", inviteId)
       .is("used_by", null);
 
     if (updateInviteError) {
@@ -95,5 +104,5 @@ export default function RegisterPage() {
     redirect("/dashboard");
   }
 
-  return <RegisterForm action={registerAction} />;
+  return <RegisterForm action={registerAction} teams={teams} />;
 }

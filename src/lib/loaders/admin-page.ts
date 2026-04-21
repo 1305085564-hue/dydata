@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTeamMeta, getTeamOptions, type TeamOption } from "@/lib/teams";
 import { build团队趋势数据 } from "@/lib/趋势图";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
@@ -31,6 +32,7 @@ export interface AdminPageData {
   avgPlayByAccount: Record<string, number>;
   dayCountByAccount: Record<string, number>;
   allProfiles: any[];
+  teams: TeamOption[];
   logsWithNames: any[];
   exemptionRequests: ExemptionRequestRow[];
   inviteCodes: any[];
@@ -143,6 +145,7 @@ export async function loadAdminPageData({
   }
 
   const adminSupabase = createAdminClient();
+  const teams = await getTeamOptions();
   const { data: allProfiles } = await loadProfilesWithExemptionFallback({
     loadWithExemption: async () =>
       adminSupabase
@@ -155,6 +158,29 @@ export async function loadAdminPageData({
         .select("id, name, role, status, permissions, created_at")
         .order("created_at", { ascending: true }),
   });
+
+  const authUsersResult = await adminSupabase.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  const authUserById = new Map(
+    (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]),
+  );
+  const authEmailByUserId = new Map(
+    (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser.email ?? null]),
+  );
+  const hydratedProfiles = (profiles ?? []).map((profile) => ({
+    ...profile,
+    email: authEmailByUserId.get(profile.id) ?? null,
+    team_name: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamName,
+    team_id: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamId,
+  }));
+  const hydratedAllProfiles = (allProfiles ?? []).map((profile) => ({
+    ...profile,
+    email: authEmailByUserId.get(profile.id) ?? null,
+    team_name: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamName,
+    team_id: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamId,
+  }));
 
   const [{ data: auditLogs }, { data: pendingRequests }, { data: inviteCodes }] = await Promise.all([
     supabase.from("audit_logs").select("id, created_at, user_id, action, target, detail").order("created_at", { ascending: false }).limit(50),
@@ -219,7 +245,7 @@ export async function loadAdminPageData({
     queryDate,
     perm,
     permissionManagerCapabilities,
-    profiles: profiles ?? [],
+    profiles: hydratedProfiles,
     accountRows,
     submittedProfileIds,
     submittedAccountIds,
@@ -228,7 +254,8 @@ export async function loadAdminPageData({
     dayCountBySubmitter,
     avgPlayByAccount,
     dayCountByAccount,
-    allProfiles: allProfiles ?? [],
+    allProfiles: hydratedAllProfiles,
+    teams,
     logsWithNames,
     exemptionRequests,
     inviteCodes: inviteCodes ?? [],

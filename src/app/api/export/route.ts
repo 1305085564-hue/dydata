@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { buildAnalyticsAccessContext } from "@/lib/analytics-access";
+import { getTeamMeta } from "@/lib/teams";
 import { formatShanghaiDateTime } from "@/lib/日报";
-import * as XLSX from "xlsx";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -17,24 +17,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [{ data: profile }, { data: demoTeam }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("name, role, team_id")
-      .eq("id", user.id)
-      .single(),
-    adminSupabase.from("teams").select("id").eq("is_demo", true).limit(1).maybeSingle(),
-  ]);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, role")
+    .eq("id", user.id)
+    .single();
 
   const role = profile?.role ?? "member";
-  const access = buildAnalyticsAccessContext({
-    userId: user.id,
-    role,
-    teamId: profile?.team_id ?? null,
-    demoTeamId: demoTeam?.id ?? null,
-  });
+  const currentTeamId = getTeamMeta(user.user_metadata).teamId;
 
-  if (!access.effectiveTeamId) {
+  if (!currentTeamId && role !== "admin" && role !== "owner") {
     return NextResponse.json({ error: "No team available" }, { status: 400 });
   }
 
@@ -45,13 +37,12 @@ export async function GET(request: NextRequest) {
   let query = adminSupabase
     .from("daily_reports")
     .select(
-      "report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, user_id, profiles!inner(team_id)"
+      "report_date, submitter, title, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, user_id"
     )
-    .eq("profiles.team_id", access.effectiveTeamId)
     .order("report_date", { ascending: false })
     .order("submitter", { ascending: true });
 
-  if (!access.canViewAllMembers) {
+  if (role !== "admin" && role !== "owner") {
     query = query.eq("user_id", user.id);
   }
 
@@ -64,55 +55,76 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // 转换为 Excel 友好格式
-  const rows = (data ?? []).map((r) => ({
-    日期: r.report_date,
-    提交人: r.submitter,
-    视频标题: r.title,
-    "播放量(万)": r.play_count != null ? (r.play_count / 10000).toFixed(2) : "",
-    完播率: r.completion_rate ?? "",
-    平均播放时长: r.avg_play_duration ?? "",
-    "2s跳出率": r.bounce_rate_2s ?? "",
-    "5s完播率": r.completion_rate_5s ?? "",
-    涨粉: r.follower_gain,
-    导粉: r.follower_convert ?? "",
-    点赞: r.likes,
-    评论: r.comments,
-    分享: r.shares,
-    收藏: r.favorites,
-    文案内容: r.content ? (r.content.length > 50 ? r.content.slice(0, 50) + "..." : r.content) : "",
-    发布时间: r.published_at ? formatShanghaiDateTime(r.published_at) : "",
-    上传时间: r.uploaded_at ? formatShanghaiDateTime(r.uploaded_at) : "",
+  const authUsersResult = await adminSupabase.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+
+  if (authUsersResult.error) {
+    return NextResponse.json({ error: authUsersResult.error.message }, { status: 500 });
+  }
+
+  const teamIdByUserId = new Map(
+    (authUsersResult.data?.users ?? []).map((authUser) => [
+      authUser.id,
+      getTeamMeta(authUser.user_metadata).teamId,
+    ]),
+  );
+
+  const filteredRows =
+    role === "admin" || role === "owner"
+      ? (data ?? []).filter((row) => {
+          if (!currentTeamId) return true;
+          return teamIdByUserId.get(row.user_id) === currentTeamId;
+        })
+      : (data ?? []);
+
+  const rows = filteredRows.map((report) => ({
+    日期: report.report_date,
+    提交人: report.submitter,
+    视频标题: report.title,
+    "播放量(万)": report.play_count != null ? (report.play_count / 10000).toFixed(2) : "",
+    完播率: report.completion_rate ?? "",
+    平均播放时长: report.avg_play_duration ?? "",
+    "2s跳出率": report.bounce_rate_2s ?? "",
+    "5s完播率": report.completion_rate_5s ?? "",
+    涨粉: report.follower_gain,
+    导粉: report.follower_convert ?? "",
+    点赞: report.likes,
+    评论: report.comments,
+    分享: report.shares,
+    收藏: report.favorites,
+    文案内容: report.content ? (report.content.length > 50 ? `${report.content.slice(0, 50)}...` : report.content) : "",
+    发布时间: report.published_at ? formatShanghaiDateTime(report.published_at) : "",
+    上传时间: report.uploaded_at ? formatShanghaiDateTime(report.uploaded_at) : "",
   }));
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
 
-  // 设置列宽
   ws["!cols"] = [
-    { wch: 12 }, // 日期
-    { wch: 10 }, // 提交人
-    { wch: 30 }, // 标题
-    { wch: 12 }, // 播放量
-    { wch: 10 }, // 完播率
-    { wch: 14 }, // 平均播放时长
-    { wch: 10 }, // 2s跳出率
-    { wch: 10 }, // 5s完播率
-    { wch: 8 },  // 涨粉
-    { wch: 8 },  // 导粉
-    { wch: 8 },  // 点赞
-    { wch: 8 },  // 评论
-    { wch: 8 },  // 分享
-    { wch: 8 },  // 收藏
-    { wch: 40 }, // 文案内容
-    { wch: 18 }, // 发布时间
-    { wch: 18 }, // 上传时间
+    { wch: 12 },
+    { wch: 10 },
+    { wch: 30 },
+    { wch: 12 },
+    { wch: 10 },
+    { wch: 14 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 8 },
+    { wch: 40 },
+    { wch: 18 },
+    { wch: 18 },
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, "数据日报");
 
   const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
-
   const filename = `抖音数据日报${from ? `_${from}` : ""}${to ? `_至_${to}` : ""}.xlsx`;
 
   return new NextResponse(buf, {

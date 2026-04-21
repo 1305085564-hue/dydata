@@ -12,6 +12,7 @@ import { AuditLogList } from "./audit-log-list";
 import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { PermissionManager } from "./permission-manager";
+import { TeamManager } from "./team-manager";
 import { hasPermission } from "@/lib/permissions";
 import { 豁免申请列表 } from "./豁免申请列表";
 import { loadAdminPageData } from "@/lib/loaders/admin-page";
@@ -169,7 +170,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       members={data.allProfiles.map((profile) => ({
                         id: profile.id,
                         name: profile.name,
+                        email: profile.email ?? null,
                         role: profile.role as UserRole,
+                        teamName: profile.team_name ?? null,
                         permissions: (profile.permissions ?? {}) as Permissions,
                       }))}
                       currentUserId={user.id}
@@ -186,7 +189,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <DashboardAnimatedSection index={4}>
               <AppShellSection title="邀请码管理" description="维护成员加入入口。">
                 <Card className="glass-card-static border-white/60 glass-panel h-full">
-                  <CardContent className="p-0">
+                  <CardContent className="space-y-6 p-6">
+                    <TeamManager teams={data.teams} />
                     <InviteCodeManager adminId={user.id} existingCodes={data.inviteCodes} profileNames={Object.fromEntries(profileMap)} />
                   </CardContent>
                 </Card>

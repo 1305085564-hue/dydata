@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { TeamOption } from "@/lib/teams";
 
 type RegisterFormState = {
   error: string | null;
@@ -23,6 +24,7 @@ type RegisterFormState = {
 
 type RegisterFormProps = {
   action: (state: RegisterFormState, formData: FormData) => Promise<RegisterFormState>;
+  teams: TeamOption[];
 };
 
 type PasswordStrengthLevel = "weak" | "medium" | "strong";
@@ -45,7 +47,6 @@ function getPasswordStrengthLevel(password: string): PasswordStrengthLevel | nul
   if (!password) return null;
 
   let score = 0;
-
   if (password.length >= 6) score += 1;
   if (password.length >= 10) score += 1;
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
@@ -95,7 +96,7 @@ function SubmitButton() {
               strokeLinecap="round"
             />
           </svg>
-          注册中
+          注册中...
         </>
       ) : (
         "创建账号"
@@ -104,7 +105,7 @@ function SubmitButton() {
   );
 }
 
-export function RegisterForm({ action }: RegisterFormProps) {
+export function RegisterForm({ action, teams }: RegisterFormProps) {
   const [state, formAction] = useActionState(action, initialState);
   const formControls = useAnimationControls();
   const shouldReduceMotion = useReducedMotion();
@@ -126,18 +127,25 @@ export function RegisterForm({ action }: RegisterFormProps) {
     <div className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-6">
       <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <section className="hidden rounded-[32px] border border-white/65 bg-white/55 p-8 shadow-[var(--shadow-float)] backdrop-blur-[18px] lg:block">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">Invite Registration</p>
-          <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">创建你的 DYData 账号</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-text-tertiary)]">
+            Invite Registration
+          </p>
+          <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">
+            创建你的 DYData 账号
+          </h1>
           <p className="mt-3 max-w-md text-sm leading-7 text-[var(--color-text-secondary)]">
-            用邀请码接入团队，完成后直接进入原有后台权限体系。这里只统一视觉模板，不改注册逻辑和账号流转。
+            用邀请码加入团队，并在注册时选择你的所属团队。团队名称由后台统一维护，已有员工默认归属深圳二部。
           </p>
           <div className="mt-8 space-y-3">
             {[
-              "姓名、邮箱、密码、邀请码仍是原有注册字段",
-              "密码强度提示保留，方便快速判断安全性",
+              "姓名、邮箱、密码、邀请码仍然是原有注册字段",
+              "新增团队选择，便于后续按团队管理成员与数据",
               "注册完成后仍按原流程进入系统",
             ].map((item) => (
-              <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
+              <div
+                key={item}
+                className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]"
+              >
                 <span className="size-2 rounded-full bg-[var(--color-primary)]" />
                 {item}
               </div>
@@ -147,7 +155,7 @@ export function RegisterForm({ action }: RegisterFormProps) {
             href="/demo"
             className="mt-6 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/14"
           >
-            不登录，进入演示站（右上角可退出）
+            先看演示站（右上角可退出）
           </Link>
         </section>
 
@@ -167,8 +175,12 @@ export function RegisterForm({ action }: RegisterFormProps) {
                 DY
               </motion.div>
               <div className="space-y-2">
-                <CardTitle className="text-center text-2xl font-semibold tracking-[-0.03em]">注册 DYData</CardTitle>
-                <CardDescription className="text-sm leading-6">使用邀请码创建团队账号</CardDescription>
+                <CardTitle className="text-center text-2xl font-semibold tracking-[-0.03em]">
+                  注册 DYData
+                </CardTitle>
+                <CardDescription className="text-sm leading-6">
+                  使用邀请码创建团队账号
+                </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -187,6 +199,7 @@ export function RegisterForm({ action }: RegisterFormProps) {
                     />
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email">邮箱</Label>
                   <div className="input-focus-line">
@@ -201,6 +214,26 @@ export function RegisterForm({ action }: RegisterFormProps) {
                     />
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="teamId">所属团队</Label>
+                  <div className="input-focus-line">
+                    <select
+                      id="teamId"
+                      name="teamId"
+                      className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+                      defaultValue={teams[0]?.id ?? ""}
+                      required
+                    >
+                      {teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="password">密码</Label>
                   <div className="input-focus-line">
@@ -219,7 +252,11 @@ export function RegisterForm({ action }: RegisterFormProps) {
                   <div className="space-y-2 rounded-2xl border border-white/70 bg-white/78 p-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>密码强度</span>
-                      <span>{passwordStrengthLevel ? passwordStrengthConfig[passwordStrengthIndex - 1]?.label : "未输入"}</span>
+                      <span>
+                        {passwordStrengthLevel
+                          ? passwordStrengthConfig[passwordStrengthIndex - 1]?.label
+                          : "未输入"}
+                      </span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {passwordStrengthConfig.map((item, index) => {
@@ -245,6 +282,7 @@ export function RegisterForm({ action }: RegisterFormProps) {
                     </div>
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="inviteCode">邀请码</Label>
                   <div className="input-focus-line">
@@ -258,13 +296,16 @@ export function RegisterForm({ action }: RegisterFormProps) {
                     />
                   </div>
                 </div>
+
                 <SubmitButton />
+
                 <Link
                   className="flex w-full items-center justify-center rounded-xl border border-primary/20 bg-primary/8 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/12"
                   href="/demo"
                 >
                   先看演示站（右上角可退出）
                 </Link>
+
                 <p className="text-center text-sm text-muted-foreground">
                   已有账号？
                   <Link className="ml-1 underline underline-offset-4" href="/login">
