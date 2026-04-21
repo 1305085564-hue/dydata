@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { buildFeishuAlertCard, dedupeAlerts, generateSmartAlerts, type SmartAlert } from "@/lib/smart-alert";
 
 type AlertLogRow = {
@@ -40,16 +41,6 @@ type ReportRow = {
 function createServiceClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceRoleKey!);
-}
-
-function getSecret(request: NextRequest) {
-  return new URL(request.url).searchParams.get("secret");
-}
-
-function isAuthorized(request: NextRequest) {
-  const expectedSecret = process.env.CRON_SECRET ?? process.env.REMIND_SECRET;
-  const secret = getSecret(request);
-  return Boolean(expectedSecret && secret === expectedSecret);
 }
 
 function extractAccount(row: ReportRow["accounts"]) {
@@ -92,7 +83,7 @@ function parseExistingAlerts(rows: AlertLogRow[]): SmartAlert[] {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

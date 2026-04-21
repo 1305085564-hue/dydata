@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { buildReminderContent } from "@/lib/飞书提醒";
 import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
+import { isCronAuthorized } from "@/lib/cron-auth";
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const secret = searchParams.get("secret");
-  const expectedSecret = process.env.CRON_SECRET ?? process.env.REMIND_SECRET;
-
-  if (!expectedSecret || secret !== expectedSecret) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

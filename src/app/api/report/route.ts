@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { callAiText } from "@/lib/ai/client";
+import { isCronAuthorized } from "@/lib/cron-auth";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const secret = searchParams.get("secret");
   const type = searchParams.get("type") ?? "week"; // "week" or "month"
-  const expectedSecret = process.env.CRON_SECRET ?? process.env.REMIND_SECRET;
 
-  if (!expectedSecret || secret !== expectedSecret) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
