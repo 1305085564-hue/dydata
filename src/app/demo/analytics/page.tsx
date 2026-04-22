@@ -7,7 +7,6 @@ import { HitAnalyzer } from "@/app/(app)/admin/analytics/hit-analyzer";
 import { PersonnelAnalysis } from "@/app/(app)/admin/analytics/personnel-analysis";
 import { TimeAnalysis } from "@/app/(app)/admin/analytics/time-analysis";
 import { 视频结论卡 } from "@/app/(app)/admin/analytics/视频结论卡";
-import type { AnalyticsVideoRow } from "@/app/(app)/admin/analytics/视频结论卡-类型";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDemoAnalyticsPageData } from "@/lib/demo-data";
@@ -17,18 +16,22 @@ export default function DemoAnalyticsPage() {
 
   const sections: AnalyticsSection[] = [
     {
+      id: "hit-analyzer",
       title: "爆款分析器",
       content: <HitAnalyzer reports={data.filteredReports} submitters={data.submitters} />,
     },
     {
+      id: "personnel-analysis",
       title: "人员深度分析",
       content: <PersonnelAnalysis reports={data.filteredReports} title="演示团队表现" />,
     },
     {
+      id: "time-analysis",
       title: "时间维度分析",
       content: <TimeAnalysis reports={data.filteredReports} />,
     },
     {
+      id: "demo-ai",
       title: "AI 洞察（演示）",
       content: (
         <Card className="border-white/70 bg-white/82 shadow-[var(--shadow-card)]">
@@ -55,13 +58,15 @@ export default function DemoAnalyticsPage() {
       <AppShellHero
         eyebrow="Demo Analytics"
         title="完整展示分析页的结构与节奏"
-        description="演示环境保留首屏结论区、深度分析区和时间维度区，让外部访客能直接评价信息架构。"
+        description="演示环境保留首屏结论区、深度分析区和时间维度区，让外部访客能直接评估信息架构。"
         meta={<DemoModeChip />}
       >
         <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
           <span className="size-1.5 rounded-full bg-[var(--color-primary)]" aria-hidden />
           <span className="font-medium text-[var(--color-text-primary)]">分析周期</span>
-          <span>{data.range.from} 至 {data.range.to}</span>
+          <span>
+            {data.range.from} 至 {data.range.to}
+          </span>
         </div>
       </AppShellHero>
 
@@ -71,7 +76,7 @@ export default function DemoAnalyticsPage() {
         description="这里直接复用正式站的爆款结论卡结构，演示访客能完整看到首屏布局。"
       >
         <视频结论卡
-          videos={data.filteredVideos as AnalyticsVideoRow[]}
+          videos={data.filteredVideos as any[]}
           snapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
           videoTags={data.filteredVideoTags as VideoTag[]}
         />

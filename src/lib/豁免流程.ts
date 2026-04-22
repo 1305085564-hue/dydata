@@ -1,4 +1,6 @@
+import type { ExemptionCategory } from "@/types";
 import type { ExemptionProfileLike } from "./豁免";
+import { normalizeExemptionCategory } from "./豁免";
 
 export type LegacyGrantMode = "single" | "3days" | "4days" | "5days";
 export type GrantMode = "yesterday" | "range" | "permanent";
@@ -9,6 +11,7 @@ interface BuildGrantDraftInput {
   userId: string;
   teamId: string | null;
   mode: AnyGrantMode;
+  category?: ExemptionCategory | null;
   reason?: string | null;
   requestId: string | null;
   today: string;
@@ -20,6 +23,7 @@ interface BuildRequestDraftInput {
   applicantUserId: string;
   teamId: string | null;
   mode: GrantMode;
+  category?: ExemptionCategory | null;
   reason?: string | null;
   today: string;
   startDate?: string;
@@ -38,6 +42,7 @@ interface ExemptionGrantDraft {
   start_date: string;
   end_date: string | null;
   grant_type: AnyGrantMode;
+  exemption_category: ExemptionCategory;
   status: "active";
 }
 
@@ -45,6 +50,7 @@ interface ExemptionRequestDraft {
   applicant_user_id: string;
   team_id: string | null;
   exemption_type: GrantMode;
+  exemption_category: ExemptionCategory;
   start_date: string;
   end_date: string | null;
   reason: string | null;
@@ -119,10 +125,15 @@ function resolveDateRange(input: BuildGrantDraftInput | BuildRequestDraftInput) 
     throw new Error("开始日期不能晚于结束日期");
   }
 
-  const days = Math.floor((new Date(`${endDate}T00:00:00.000Z`).getTime() - new Date(`${startDate}T00:00:00.000Z`).getTime()) / 86400000) + 1;
+  const days =
+    Math.floor(
+      (new Date(`${endDate}T00:00:00.000Z`).getTime() -
+        new Date(`${startDate}T00:00:00.000Z`).getTime()) /
+        86400000,
+    ) + 1;
   if (days < 1) {
-      throw new Error("豁免至少选择1天");
-    }
+    throw new Error("豁免至少选择1天");
+  }
 
   return { mode: normalizedMode, startDate, endDate };
 }
@@ -132,6 +143,7 @@ export function buildGrantDraft(input: BuildGrantDraftInput): {
   profile: ExemptionProfileLike;
 } {
   const reason = normalizeReason(input.reason);
+  const category = normalizeExemptionCategory(input.category);
   const { mode, startDate, endDate } = resolveDateRange(input);
 
   if (mode === "permanent" && !reason) {
@@ -146,6 +158,7 @@ export function buildGrantDraft(input: BuildGrantDraftInput): {
       start_date: startDate,
       end_date: endDate,
       grant_type: input.mode,
+      exemption_category: category,
       status: "active",
     },
     profile: {
@@ -155,6 +168,7 @@ export function buildGrantDraft(input: BuildGrantDraftInput): {
       exempt_start_date: mode === "permanent" ? null : startDate,
       exempt_end_date: mode === "permanent" ? null : endDate,
       exempt_reason: reason,
+      exemption_category: category,
     },
   };
 }
@@ -166,6 +180,7 @@ export function buildRequestDraft(input: BuildRequestDraftInput): ExemptionReque
     applicant_user_id: input.applicantUserId,
     team_id: input.teamId,
     exemption_type: mode,
+    exemption_category: normalizeExemptionCategory(input.category),
     start_date: startDate,
     end_date: endDate,
     reason: normalizeReason(input.reason),

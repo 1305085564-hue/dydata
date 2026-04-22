@@ -23,11 +23,17 @@ const MODE_LABELS: Record<string, string> = {
   "5days": "多日豁免",
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  waive: "免交",
+  leave: "请假",
+};
+
 export interface ExemptionRequestRow {
   id: string;
   applicant_user_id: string;
   applicant_name: string;
   exemption_type: string;
+  exemption_category: string | null;
   reason: string | null;
   created_at: string;
 }
@@ -55,7 +61,9 @@ function RequestRow({ request }: { request: ExemptionRequestRow }) {
   return (
     <TableRow>
       <TableCell className="font-medium">{request.applicant_name}</TableCell>
-      <TableCell>{MODE_LABELS[request.exemption_type] ?? request.exemption_type}</TableCell>
+      <TableCell>
+        {[CATEGORY_LABELS[request.exemption_category ?? "waive"] ?? "免交", MODE_LABELS[request.exemption_type] ?? request.exemption_type].join("｜")}
+      </TableCell>
       <TableCell className="max-w-[200px] truncate text-muted-foreground">
         {request.reason ?? "-"}
       </TableCell>

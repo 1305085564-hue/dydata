@@ -42,7 +42,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
 
   return (
-    <motion.div variants={itemVariants} className="space-y-4">
+    <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
@@ -52,8 +52,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="mb-1">
+      <div className="flex flex-1 flex-col gap-4">
+        <div className="rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">核心数据</p>
             <div className="grid grid-cols-3 gap-3">
               {CORE_ITEMS.map((item, index) => (
@@ -76,7 +76,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
           {DIVIDER}
 
-          <div>
+          <div className="rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">互动数据</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {INTERACTION_ITEMS.map((item, index) => (
@@ -96,7 +96,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
           {DIVIDER}
 
-          <div className={retentionOptional ? "opacity-50" : ""}>
+          <div className={retentionOptional ? "rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] opacity-50" : "rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"}>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
               完播留存{retentionOptional && <span className="ml-1 normal-case">（可选）</span>}
             </p>
@@ -118,6 +118,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
               ))}
             </div>
           </div>
+
         </div>
     </motion.div>
   );

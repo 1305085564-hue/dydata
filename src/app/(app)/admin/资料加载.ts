@@ -2,7 +2,7 @@ export interface QueryErrorLike {
   message: string;
 }
 
-import type { UserStatus, ExemptType } from "@/types";
+import type { UserStatus, ExemptType, ExemptionCategory } from "@/types";
 
 export interface TeamRelation {
   name: string | null;
@@ -18,6 +18,7 @@ export interface ProfileWithExemptionFields {
   exempt_start_date: string | null;
   exempt_end_date: string | null;
   exempt_reason: string | null;
+  exemption_category: ExemptionCategory | null;
   permissions?: unknown;
   created_at?: string;
   team_id?: string | null;
@@ -62,6 +63,7 @@ function isMissingExemptionColumnError(error: QueryErrorLike | null) {
     "profiles.exempt_start_date",
     "profiles.exempt_end_date",
     "profiles.exempt_reason",
+    "profiles.exemption_category",
   ].some((column) => error.message.includes(column));
 }
 
@@ -73,6 +75,7 @@ function normalizeProfile(profile: ProfileWithoutExemptionFields): ProfileWithEx
     exempt_start_date: null,
     exempt_end_date: null,
     exempt_reason: null,
+    exemption_category: null,
   };
 }
 

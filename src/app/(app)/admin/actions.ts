@@ -58,6 +58,7 @@ async function syncProfileExemptionProjection(
     exempt_start_date: string | null;
     exempt_end_date: string | null;
     exempt_reason: string | null;
+    exemption_category?: "waive" | "leave" | null;
   }
 ) {
   return supabase
@@ -68,6 +69,7 @@ async function syncProfileExemptionProjection(
       exempt_start_date: fields.exempt_start_date,
       exempt_end_date: fields.exempt_end_date,
       exempt_reason: fields.exempt_reason,
+      exemption_category: fields.exemption_category ?? null,
     })
     .eq("id", userId);
 }
@@ -91,6 +93,7 @@ async function applyGrantToProfile(
     userId: string;
     teamId: string | null;
     mode: AnyGrantMode;
+    category?: "waive" | "leave" | null;
     reason?: string | null;
     requestId: string | null;
     today?: string;
@@ -168,6 +171,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
         exempt_start_date: null,
         exempt_end_date: null,
         exempt_reason: null,
+        exemption_category: null,
       });
 
       if (profileError) {
@@ -189,6 +193,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       teamId,
       mode,
       reason: values.reason,
+      category: values.category,
       requestId: null,
       today: new Date().toISOString().slice(0, 10),
       startDate: values.mode === "range" ? values.startDate ?? null : values.date ?? null,
@@ -232,6 +237,7 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
     exempt_start_date: null,
     exempt_end_date: null,
     exempt_reason: null,
+    exemption_category: null,
   });
 
   if (error) {
@@ -247,6 +253,7 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
 
 export async function submitExemptionRequest(input: {
   mode: GrantMode;
+  category: "waive" | "leave";
   reason?: string | null;
   startDate?: string;
   endDate?: string;
@@ -262,6 +269,7 @@ export async function submitExemptionRequest(input: {
       applicantUserId: perm.userId,
       teamId,
       mode: input.mode,
+      category: input.category,
       reason: input.reason,
       today: new Date().toISOString().slice(0, 10),
       startDate: input.startDate,
@@ -278,7 +286,13 @@ export async function submitExemptionRequest(input: {
     };
   }
 
-  await writeAuditLog(supabase, perm.userId, "submit_exemption_request", perm.userId, `${input.mode}|${input.reason ?? ""}`);
+  await writeAuditLog(
+    supabase,
+    perm.userId,
+    "submit_exemption_request",
+    perm.userId,
+    `${input.category}|${input.mode}|${input.reason ?? ""}`,
+  );
   revalidatePath("/admin");
   revalidatePath("/dashboard");
   return {};
@@ -296,7 +310,7 @@ export async function reviewExemptionRequest(input: {
 
   const { data: request, error: fetchError } = await supabase
     .from("exemption_request")
-    .select("id, applicant_user_id, exemption_type, start_date, end_date, reason, request_status")
+    .select("id, applicant_user_id, exemption_type, exemption_category, start_date, end_date, reason, request_status")
     .eq("id", input.requestId)
     .single();
 
@@ -320,6 +334,7 @@ export async function reviewExemptionRequest(input: {
       userId: request.applicant_user_id,
       teamId,
       mode: normalizeGrantMode(request.exemption_type as AnyGrantMode),
+      category: request.exemption_category,
       reason: request.reason,
       requestId: request.id,
       today: new Date().toISOString().slice(0, 10),
@@ -337,7 +352,7 @@ export async function reviewExemptionRequest(input: {
     perm.userId,
     input.decision === "approved" ? "approve_exemption_request" : "reject_exemption_request",
     input.requestId,
-    `${request.applicant_user_id}|${request.exemption_type}`
+    `${request.applicant_user_id}|${request.exemption_category}|${request.exemption_type}`
   );
 
   revalidatePath("/admin");

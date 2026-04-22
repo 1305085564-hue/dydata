@@ -192,6 +192,22 @@ export function SubmissionStatus({
     );
   }
 
+  function getExemptionBadgeVariant(
+    exemption: { isExempt: boolean; category: "waive" | "leave" | null },
+    fallback: "success" | "warning" | "danger" | "neutral",
+  ) {
+    if (!exemption.isExempt) return fallback;
+    return exemption.category === "leave" ? "warning" : "success";
+  }
+
+  function getExemptionBadgeLabel(
+    exemption: { isExempt: boolean; label: string | null },
+    fallback: string,
+  ) {
+    if (!exemption.isExempt) return fallback;
+    return exemption.label ?? "免交";
+  }
+
   function renderAccountMeta(account: AccountRow) {
     return (
       <div className="flex flex-wrap gap-1">
@@ -326,10 +342,13 @@ export function SubmissionStatus({
                         <TableCell className="tabular-nums">{row.accountCount}</TableCell>
                         <TableCell>
                           <Badge
-                            variant={row.exemption.isExempt ? "neutral" : row.isSubmitted ? "success" : row.isPartial ? "warning" : "danger"}
+                            variant={getExemptionBadgeVariant(
+                              row.exemption,
+                              row.isSubmitted ? "success" : row.isPartial ? "warning" : "danger",
+                            )}
                             className="text-xs"
                           >
-                            {row.exemption.isExempt ? "豁免中" : row.statusText}
+                            {getExemptionBadgeLabel(row.exemption, row.statusText)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -418,8 +437,8 @@ export function SubmissionStatus({
                             </TableCell>
                             <TableCell className="tabular-nums">{row.accountCount}</TableCell>
                             <TableCell>
-                              <Badge variant="neutral" className="text-xs">
-                                {row.statusText}
+                              <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                                {getExemptionBadgeLabel(row.exemption, row.statusText)}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -535,8 +554,8 @@ export function SubmissionStatus({
                             编辑
                           </Button>
                         </div>
-                        <Badge variant="neutral" className="text-xs">
-                          {row.statusText}
+                        <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                          {getExemptionBadgeLabel(row.exemption, row.statusText)}
                         </Badge>
                         {renderExemptionHint(row.exemption.label, row.exemption.reason)}
                       </div>
@@ -627,8 +646,8 @@ export function SubmissionStatus({
                             <TableCell>{row.profile_name}</TableCell>
                             <TableCell>{renderAccountMeta(row)}</TableCell>
                             <TableCell>
-                              <Badge variant="neutral" className="text-xs">
-                                {row.isSubmitted ? "已提交" : "未提交"}
+                              <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                                {getExemptionBadgeLabel(row.exemption, row.isSubmitted ? "已提交" : "未提交")}
                               </Badge>
                             </TableCell>
                             <TableCell>{renderExemptionHint(row.exemption.label, row.exemption.reason)}</TableCell>
@@ -727,8 +746,8 @@ export function SubmissionStatus({
                             编辑
                           </Button>
                         </div>
-                        <Badge variant="neutral" className="text-xs">
-                          {row.isSubmitted ? "已交" : "未交"}
+                        <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                          {getExemptionBadgeLabel(row.exemption, row.isSubmitted ? "已交" : "未交")}
                         </Badge>
                         {renderAccountMeta(row)}
                         {renderExemptionHint(row.exemption.label, row.exemption.reason)}

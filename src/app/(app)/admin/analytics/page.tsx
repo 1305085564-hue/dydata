@@ -4,15 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
 import { AnalyticsPageHeader } from "@/components/analytics/分析页顶部";
 import { type AnalyticsRangePreset } from "@/lib/analytics-access";
-import { AnalyticsSections } from "./analytics-sections";
-import type { AnalyticsSection } from "./analytics-sections";
-import { HitAnalyzer } from "./hit-analyzer";
-import { PersonnelAnalysis } from "./personnel-analysis";
-import { TimeAnalysis } from "./time-analysis";
-import { AiInsight } from "./ai-insight";
-import { 视频结论卡 } from "./视频结论卡";
-import type { AnalyticsVideoRow } from "./视频结论卡-类型";
-import { FollowerConvertTrend } from "./follower-convert-trend";
+import { AnalyticsWorkbench } from "./analytics-workbench";
 import { loadAnalyticsPageData } from "@/lib/loaders/analytics-page";
 
 interface AnalyticsPageProps {
@@ -41,38 +33,6 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     to: params.to,
   });
 
-  const sections: AnalyticsSection[] = [
-    ...(data.isPrivilegedUser
-      ? [
-          {
-            title: "导粉趋势",
-            content: <FollowerConvertTrend reports={data.filteredReports} />,
-          },
-        ]
-      : []),
-    {
-      title: "爆款分析器",
-      content: <HitAnalyzer reports={data.filteredReports} submitters={data.submitters} />,
-    },
-    {
-      title: data.isPrivilegedUser ? "人员深度分析" : "我的表现分析",
-      content: (
-        <PersonnelAnalysis
-          reports={data.filteredReports}
-          title={data.isPrivilegedUser ? "团队成员表现" : "仅展示我的个人数据"}
-        />
-      ),
-    },
-    {
-      title: "时间维度分析",
-      content: <TimeAnalysis reports={data.filteredReports} />,
-    },
-    {
-      title: "AI 洞察",
-      content: <AiInsight scopeEntityId={user.id} />,
-    },
-  ];
-
   return (
     <AppShell width="wide" className="pb-10">
       <AppShellHero
@@ -83,7 +43,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
           <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
             <span className="size-1.5 rounded-full bg-[var(--color-primary)]" aria-hidden />
             <span className="font-medium text-[var(--color-text-primary)]">分析周期</span>
-            <span>{data.range.from} 至 {data.range.to}</span>
+            <span>
+              {data.range.from} 至 {data.range.to}
+            </span>
           </div>
         }
       >
@@ -96,16 +58,16 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         title="核心结论区"
         description="首屏优先展示本周期最值得处理的核心结论。"
       >
-        <视频结论卡
-          videos={data.filteredVideos as AnalyticsVideoRow[]}
-          snapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
-          videoTags={data.filteredVideoTags as VideoTag[]}
+        <AnalyticsWorkbench
+          userId={user.id}
+          isPrivilegedUser={data.isPrivilegedUser}
+          filteredReports={data.filteredReports}
+          filteredVideos={data.filteredVideos as any[]}
+          filteredSnapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
+          filteredVideoTags={data.filteredVideoTags as VideoTag[]}
+          submitters={data.submitters}
         />
       </AppShellSection>
-
-      <div className="mt-8">
-        <AnalyticsSections sections={sections} />
-      </div>
     </AppShell>
   );
 }

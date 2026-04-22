@@ -31,6 +31,10 @@ test("dashboard 视觉样式 helper 返回统一的区块和状态 class", async
     mod.getDashboardStatusClass("editing"),
     "dashboard-status dashboard-status-editing"
   );
+  assert.equal(
+    mod.getDashboardStatusClass("leave"),
+    "dashboard-status dashboard-status-leave"
+  );
 
   assert.equal(
     mod.getDashboardMetricGridClass("primary"),

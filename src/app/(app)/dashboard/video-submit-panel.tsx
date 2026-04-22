@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Eye, FilePenLine, History, PencilLine, ScanSearch, TrendingUp, Trophy } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Eye, FilePenLine, History, PencilLine, TrendingUp, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,14 +18,12 @@ import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Video, VideoTagReviewDimension } from "@/types";
+import {
+  getExemptionDatesForMonth,
+  getExemptionStateForDate,
+  type ExemptionProfileLike,
+} from "@/lib/豁免";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import { DashboardForm, type DashboardReportData } from "./dashboard-form";
 import {
@@ -33,21 +31,31 @@ import {
   getDashboardStatusClass,
   getDashboardSurfaceClass,
 } from "./dashboard-visuals";
-import { AddAccountDialog } from "./添加账号弹窗";
 import { 申请豁免弹窗 } from "./申请豁免弹窗";
 import { HistoryList } from "./history-list";
 import { VideoSubmitForm } from "./video-submit-form";
 import {
   getTodaySubmissionSummary,
+  resolveSubmissionDayStatus,
   resolveSubmitPanelMode,
   type SubmitPanelRequestedMode,
   type TodaySubmissionReportLike,
 } from "./video-submit-panel-state";
 import { VideoTagReviewCard } from "./video-tag-review-card";
+import { cn } from "@/lib/utils";
 
 type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;
   account_id: string;
+};
+
+type DashboardActionCard = {
+  key: string;
+  title: string;
+  description: string;
+  icon: typeof Eye;
+  tone: "primary" | "success" | "warning" | "neutral";
+  onClick: () => void;
 };
 
 interface VideoSubmitPanelProps {
@@ -64,6 +72,7 @@ interface VideoSubmitPanelProps {
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  userExemptionProfile: ExemptionProfileLike;
 }
 
 function toDashboardReportData(report: MonthReport): DashboardReportData {
@@ -128,7 +137,9 @@ export function VideoSubmitPanel({
   ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption = false,
+  userExemptionProfile,
 }: VideoSubmitPanelProps) {
+  const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [activeBizDate, setActiveBizDate] = useState(today);
@@ -145,6 +156,8 @@ export function VideoSubmitPanel({
     reason: string | null;
   }>>([]);
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
+  const [pendingBackfillDate, setPendingBackfillDate] = useState<string | null>(null);
+  const [pendingFocusDate, setPendingFocusDate] = useState<string | null>(null);
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? accounts[0] ?? null,
@@ -179,6 +192,30 @@ export function VideoSubmitPanel({
     [mergedTodayReports, selectedAccount],
   );
 
+  const monthExemptionDates = useMemo(
+    () => getExemptionDatesForMonth(userExemptionProfile, today),
+    [today, userExemptionProfile],
+  );
+
+  const accountCards = useMemo(
+    () =>
+      accounts.map((account) => {
+        const summary = getTodaySubmissionSummary(mergedTodayReports, account.id);
+        const todayStatus = resolveSubmissionDayStatus({
+          date: today,
+          today,
+          report: summary,
+          exemption: getExemptionStateForDate(userExemptionProfile, today),
+        });
+        return {
+          account,
+          summary,
+          todayStatus,
+        };
+      }),
+    [accounts, mergedTodayReports, today, userExemptionProfile],
+  );
+
   const activeDateReport = useMemo(
     () =>
       mergedMonthReports
@@ -200,11 +237,6 @@ export function VideoSubmitPanel({
     [mergedMonthReports, selectedAccountId],
   );
 
-  const submittedCount = useMemo(
-    () => accounts.filter((account) => Boolean(getTodaySubmissionSummary(mergedTodayReports, account.id))).length,
-    [accounts, mergedTodayReports],
-  );
-
   const isTodayFlow = activeBizDate === today;
   const primarySummary = isTodayFlow ? selectedSummary : null;
   const primaryRequestedMode = isTodayFlow ? requestedMode : "backfill";
@@ -213,6 +245,88 @@ export function VideoSubmitPanel({
     requestedMode: primaryRequestedMode,
   });
   const isPrimarySummaryMode = primaryMode === "summary";
+  const activeExemptionState = useMemo(
+    () => getExemptionStateForDate(userExemptionProfile, activeBizDate),
+    [activeBizDate, userExemptionProfile],
+  );
+  const activeDateStatus = useMemo(
+    () =>
+      resolveSubmissionDayStatus({
+        date: activeBizDate,
+        today,
+        report: activeDateReport,
+        exemption: activeExemptionState,
+      }),
+    [activeBizDate, activeDateReport, activeExemptionState, today],
+  );
+  const shouldShowBlockedStateCard = activeDateStatus.state === "waive" || activeDateStatus.state === "leave";
+  const actionCards = useMemo<DashboardActionCard[]>(
+    () => [
+      {
+        key: "data-view",
+        title: "数据查看",
+        description: "查看日历状态与当天详情",
+        icon: Eye,
+        tone: "primary",
+        onClick: () => setIsDataViewOpen(true),
+      },
+      {
+        key: "trend-view",
+        title: "趋势查看",
+        description: "快速查看近期趋势变化",
+        icon: TrendingUp,
+        tone: "success",
+        onClick: () => setIsTrendViewOpen(true),
+      },
+      {
+        key: "leaderboard",
+        title: "排行榜",
+        description: "查看当前账号表现排名",
+        icon: Trophy,
+        tone: "warning",
+        onClick: () => setIsLeaderboardOpen(true),
+      },
+      {
+        key: "history",
+        title: "历史记录",
+        description: "查看并编辑最近填报记录",
+        icon: History,
+        tone: "neutral",
+        onClick: () => setIsHistoryOpen(true),
+      },
+    ],
+    [],
+  );
+
+  useEffect(() => {
+    if (!pendingBackfillDate || isDataViewOpen) return;
+    if (activeBizDate !== pendingBackfillDate || primaryMode !== "backfill") return;
+
+    const timeoutId = window.setTimeout(() => {
+      formAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      formAnchorRef.current
+        ?.querySelector<HTMLElement>("input, textarea, button, [tabindex]")
+        ?.focus({ preventScroll: true });
+      setPendingBackfillDate(null);
+    }, 120);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeBizDate, isDataViewOpen, pendingBackfillDate, primaryMode]);
+
+  useEffect(() => {
+    if (!pendingFocusDate || isDataViewOpen) return;
+    if (activeBizDate !== pendingFocusDate) return;
+
+    const timeoutId = window.setTimeout(() => {
+      formAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      formAnchorRef.current
+        ?.querySelector<HTMLElement>("input, textarea, button, [tabindex]")
+        ?.focus({ preventScroll: true });
+      setPendingFocusDate(null);
+    }, 120);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeBizDate, isDataViewOpen, pendingFocusDate]);
 
   function resetPanelForAccount(accountId: string) {
     setSelectedAccountId(accountId);
@@ -248,8 +362,89 @@ export function VideoSubmitPanel({
 
   function openBackfillForDate(date: string) {
     setActiveBizDate(date);
+    setRequestedMode("backfill");
+    setIsDataViewOpen(false);
+    setPendingBackfillDate(date);
+    setPendingFocusDate(date);
+  }
+
+  function getReportForDate(date: string) {
+    return (
+      mergedMonthReports
+        .filter((report) => report.report_date === date && report.account_id === selectedAccountId)
+        .sort((left, right) => (right.uploaded_at ?? "").localeCompare(left.uploaded_at ?? ""))[0] ?? null
+    );
+  }
+
+  function openSubmittedDate(date: string) {
+    setActiveBizDate(date);
+    setIsDataViewOpen(false);
+    setPendingFocusDate(date);
+
+    if (date === today && selectedSummary) {
+      setRequestedMode("editToday");
+      return;
+    }
+
+    const matchedReport = getReportForDate(date);
+    if (matchedReport) {
+      setRequestedMode(null);
+      setEditingReport(matchedReport);
+    }
+  }
+
+  function jumpFromDataView(date: string) {
+    const dateReport = getReportForDate(date);
+    const dateExemptionState = getExemptionStateForDate(userExemptionProfile, date);
+    const dateStatus = resolveSubmissionDayStatus({
+      date,
+      today,
+      report: date === today ? selectedSummary : dateReport,
+      exemption: dateExemptionState,
+    });
+
+    if (dateStatus.state === "submitted") {
+      openSubmittedDate(date);
+      return;
+    }
+
+    if (dateStatus.canBackfill) {
+      openBackfillForDate(date);
+      return;
+    }
+
+    setActiveBizDate(date);
     setRequestedMode(null);
     setIsDataViewOpen(false);
+    setPendingFocusDate(date);
+  }
+
+  function handleHistoryReportOpen(report: {
+    id: string;
+    account_id: string;
+    report_date: string;
+    title: string | null;
+    play_count: number | null;
+    completion_rate: string | null;
+    avg_play_duration: string | null;
+    bounce_rate_2s: string | null;
+    completion_rate_5s: string | null;
+    likes: number | null;
+    comments: number | null;
+    shares: number | null;
+    favorites: number | null;
+    follower_gain: number | null;
+    follower_convert: number | null;
+    content: string | null;
+    published_at: string | null;
+    uploaded_at: string | null;
+  }) {
+    setSelectedAccountId(report.account_id);
+    setActiveBizDate(report.report_date);
+    setRequestedMode(null);
+    setIsHistoryOpen(false);
+    setPendingFocusDate(report.report_date);
+    setEditingReport(report);
   }
 
   if (!accounts.length) {
@@ -270,86 +465,79 @@ export function VideoSubmitPanel({
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-5"
       >
+        <div className="app-shell-metric-strip dashboard-action-strip" aria-label="快捷功能入口">
+          {actionCards.map((action) => {
+            const Icon = action.icon;
+
+            return (
+              <button
+                key={action.key}
+                type="button"
+                className="app-shell-metric dashboard-top-action-card"
+                data-tone={action.tone}
+                onClick={action.onClick}
+              >
+                <div className="dashboard-top-action-card-head">
+                  <span className="dashboard-top-action-icon">
+                    <Icon className="size-4" />
+                  </span>
+                  <div className="dashboard-top-action-title">{action.title}</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="app-shell-metric-hint">{action.description}</div>
+                </div>
+              </button>
+            );
+          })}
+          <申请豁免弹窗
+            hasPending={hasPendingExemption}
+            today={today}
+            submittedDates={submittedDates}
+            waiveDates={monthExemptionDates.waiveDates}
+            leaveDates={monthExemptionDates.leaveDates}
+            initialSelectedDates={activeBizDate ? [activeBizDate] : []}
+            triggerClassName="app-shell-metric dashboard-top-action-card"
+            triggerVariant="card"
+            triggerTitle={hasPendingExemption ? "申请审批中" : "申请豁免"}
+            triggerDescription={hasPendingExemption ? "当前有申请正在等待审批" : "发起免交或请假申请"}
+          />
+        </div>
+
         <Card className={`${getDashboardSurfaceClass("hero")} overflow-hidden rounded-[1.75rem] border-0`}>
-          <CardHeader className="space-y-4 border-b border-border/45 bg-background/20 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
-            <div className="dashboard-field-group space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <Label className="shrink-0 text-sm font-semibold text-foreground">填报设置</Label>
-                  <AddAccountDialog />
+          <CardHeader className="space-y-5 border-b border-border/45 bg-background/20 px-5 pb-5 pt-5 sm:px-6 sm:pt-6">
+            <div className="space-y-5">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    填报设置
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-lg font-semibold text-foreground">
+                        {userDisplayName || "当前登录人"}
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-[11px] font-medium text-primary"
+                      >
+                        {accounts.length} 个账号
+                      </Badge>
+                    </div>
+                    <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                      点击账号卡片即可切换下方的数据填报内容，日期选择仍可用于查看或补交指定日期的数据。
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
-                    onClick={() => setIsDataViewOpen(true)}
+                <div className="dashboard-date-panel">
+                  <Label
+                    htmlFor="dashboard-biz-date"
+                    className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                   >
-                    <Eye className="mr-1.5 size-3.5" />
-                    数据查看
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
-                    onClick={() => setIsTrendViewOpen(true)}
-                  >
-                    <TrendingUp className="mr-1.5 size-3.5" />
-                    趋势查看
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
-                    onClick={() => setIsLeaderboardOpen(true)}
-                  >
-                    <Trophy className="mr-1.5 size-3.5" />
-                    排行榜
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 border-primary/20 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5"
-                    onClick={() => setIsHistoryOpen(true)}
-                  >
-                    <History className="mr-1.5 size-3.5" />
-                    历史记录
-                  </Button>
-                  <申请豁免弹窗 hasPending={hasPendingExemption} today={today} submittedDates={submittedDates} />
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
-                <Select
-                  value={selectedAccountId}
-                  onValueChange={(value) => {
-                    if (!value) return;
-                    resetPanelForAccount(value);
-                  }}
-                  items={accounts.map((account) => ({ value: account.id, label: account.display_name }))}
-                >
-                  <SelectTrigger
-                    id="video-account-select"
-                    className="h-11 rounded-[var(--radius-lg)] border border-black/10 bg-white px-4 text-sm shadow-sm transition-all hover:border-primary/30"
-                  >
-                    <SelectValue placeholder="请选择账号" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.display_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="relative">
+                    填报日期
+                  </Label>
                   <input
+                    id="dashboard-biz-date"
                     type="date"
                     value={activeBizDate}
                     max={today}
@@ -359,14 +547,123 @@ export function VideoSubmitPanel({
                       setActiveBizDate(value);
                       setRequestedMode(null);
                     }}
-                    className="h-11 w-full rounded-[var(--radius-lg)] border border-black/10 bg-white px-4 text-sm shadow-sm transition-all outline-none hover:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="dashboard-date-input"
                   />
                 </div>
               </div>
+
+              <div className="dashboard-account-grid" role="list" aria-label="账号切换列表">
+                {accountCards.map(({ account, summary, todayStatus }) => {
+                  const isSelected = account.id === selectedAccountId;
+
+                  return (
+                    <button
+                      key={account.id}
+                      type="button"
+                      role="listitem"
+                      aria-pressed={isSelected}
+                      data-selected={isSelected ? "true" : "false"}
+                      className={cn("dashboard-account-card", isSelected && "dashboard-account-card-selected")}
+                      onClick={() => resetPanelForAccount(account.id)}
+                    >
+                      <div className="dashboard-account-card-header">
+                        <div className="space-y-1">
+                          <div className="dashboard-account-card-name">{account.display_name}</div>
+                          {account.content_direction ? (
+                            <div className="dashboard-account-card-direction">{account.content_direction}</div>
+                          ) : null}
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "dashboard-account-status",
+                            todayStatus.tone === "submitted"
+                              ? "dashboard-account-status-submitted"
+                              : todayStatus.tone === "leave"
+                                ? "dashboard-account-status-leave"
+                                : "dashboard-account-status-pending",
+                          )}
+                        >
+                          {todayStatus.state === "submitted"
+                            ? "今日已交"
+                            : todayStatus.state === "waive"
+                              ? "今日免交"
+                              : todayStatus.state === "leave"
+                                ? "今日请假"
+                                : "今日待提交"}
+                        </Badge>
+                      </div>
+
+                      <div className="dashboard-account-card-footer">
+                        <span className="dashboard-account-card-note">
+                          {summary?.uploadedAt
+                            ? `最近提交 ${summary.uploadedAt}`
+                            : todayStatus.state === "waive"
+                              ? "今日已按免交处理"
+                              : todayStatus.state === "leave"
+                                ? "今日已按请假处理"
+                                : "点击后直接切换到该账号填报"}
+                        </span>
+                        <span className="dashboard-account-card-current">
+                          {isSelected ? "当前选中" : "点击切换"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {false ? <div className="dashboard-action-grid">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="dashboard-action-button"
+                  onClick={() => setIsDataViewOpen(true)}
+                >
+                  <Eye className="size-[18px]" />
+                  <span>数据查看</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="dashboard-action-button"
+                  onClick={() => setIsTrendViewOpen(true)}
+                >
+                  <TrendingUp className="size-[18px]" />
+                  <span>趋势查看</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="dashboard-action-button"
+                  onClick={() => setIsLeaderboardOpen(true)}
+                >
+                  <Trophy className="size-[18px]" />
+                  <span>排行榜</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="dashboard-action-button"
+                  onClick={() => setIsHistoryOpen(true)}
+                >
+                  <History className="size-[18px]" />
+                  <span>历史记录</span>
+                </Button>
+                <申请豁免弹窗
+                  hasPending={hasPendingExemption}
+                  today={today}
+                  submittedDates={submittedDates}
+                  waiveDates={monthExemptionDates.waiveDates}
+                  leaveDates={monthExemptionDates.leaveDates}
+                  triggerClassName="dashboard-action-button"
+                />
+              </div> : null}
             </div>
           </CardHeader>
 
           <CardContent className="space-y-4 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+            <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
             {primarySummary && isPrimarySummaryMode ? (
               <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-emerald-950 sm:p-5`}>
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -439,7 +736,40 @@ export function VideoSubmitPanel({
               />
             ) : null}
 
-            {selectedAccount && (!isPrimarySummaryMode || activeBizDate !== today) ? (
+            {selectedAccount && shouldShowBlockedStateCard ? (
+              <div
+                className={cn(
+                  "rounded-[1.5rem] p-4 text-sm sm:p-5",
+                  activeDateStatus.state === "waive"
+                    ? `${getDashboardSurfaceClass("success")} text-emerald-950`
+                    : "rounded-[1.5rem] border border-amber-200 bg-amber-50/80 text-amber-950",
+                )}
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-3">
+                    <span className={getDashboardStatusClass(activeDateStatus.tone)}>
+                      <FilePenLine className="size-4" />
+                      {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
+                    </span>
+                    <div className="space-y-1">
+                      <div className="text-lg font-semibold text-foreground sm:text-xl">
+                        {activeBizDate} 已标记为{activeDateStatus.label}
+                      </div>
+                      <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                        {activeDateStatus.description}
+                      </p>
+                    </div>
+                    {activeExemptionState.reason ? (
+                      <p className="text-sm text-[var(--color-text-secondary)]">
+                        原因：{activeExemptionState.reason}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {selectedAccount && !shouldShowBlockedStateCard && (!isPrimarySummaryMode || activeBizDate !== today) ? (
               <VideoSubmitForm
                 key={`form-${selectedAccount.id}-${activeBizDate}-${primaryMode}`}
                 account={selectedAccount}
@@ -469,10 +799,13 @@ export function VideoSubmitPanel({
             <SubmissionCalendar
               today={today}
               submittedDates={submittedDates}
+              waiveDates={monthExemptionDates.waiveDates}
+              leaveDates={monthExemptionDates.leaveDates}
               selectedDate={activeBizDate}
-              onDateSelect={(date) => setActiveBizDate(date)}
+              onDateSelect={(date) => jumpFromDataView(date)}
             />
 
+            {false ? (
             <div className="rounded-[1.75rem] border border-white/70 bg-white/82 p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
@@ -483,18 +816,18 @@ export function VideoSubmitPanel({
                     {activeBizDate} 的提交情况
                   </h3>
                   <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-                    选择日期后，可查看当日数据；如果当天尚未提交，可直接进入补交流程。
+                    选择日期后，可查看当日状态；免交和请假会独立展示，不再落入未交/漏交逻辑。
                   </p>
                 </div>
                 <Badge
                   variant="secondary"
-                  className={activeDateReport ? getDashboardStatusClass("submitted") : getDashboardStatusClass("pending")}
+                  className={getDashboardStatusClass(activeDateStatus.tone)}
                 >
-                  {activeDateReport ? "当日已提交" : "当日未提交"}
+                  {activeDateStatus.label}
                 </Badge>
               </div>
 
-              {activeDateReport ? (
+              {activeDateStatus.state === "submitted" && activeDateReport ? (
                 <div className="mt-4 rounded-[1.25rem] border border-emerald-200/70 bg-emerald-50/75 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-3">
@@ -550,13 +883,53 @@ export function VideoSubmitPanel({
                     </div>
                   </div>
                 </div>
+              ) : shouldShowBlockedStateCard ? (
+                <div
+                  className={cn(
+                    "mt-4 rounded-[1.25rem] border p-4",
+                    activeDateStatus.state === "waive"
+                      ? "border-emerald-200 bg-emerald-50/75"
+                      : "border-amber-200 bg-amber-50/80",
+                  )}
+                >
+                  <div className="space-y-2">
+                    <p
+                      className={cn(
+                        "text-sm font-semibold",
+                        activeDateStatus.state === "waive" ? "text-emerald-700" : "text-amber-700",
+                      )}
+                    >
+                      这一天已标记为{activeDateStatus.label}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-sm leading-6",
+                        activeDateStatus.state === "waive" ? "text-emerald-900/75" : "text-amber-900/75",
+                      )}
+                    >
+                      {activeDateStatus.description}
+                    </p>
+                    {activeExemptionState.reason ? (
+                      <p className="text-sm text-[var(--color-text-secondary)]">原因：{activeExemptionState.reason}</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : activeDateStatus.state === "future" ? (
+                <div className="mt-4 rounded-[1.25rem] border border-slate-200 bg-slate-50/80 p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-700">这一天还未到</p>
+                    <p className="text-sm leading-6 text-slate-600">{activeDateStatus.description}</p>
+                  </div>
+                </div>
               ) : (
                 <div className="mt-4 rounded-[1.25rem] border border-rose-200 bg-rose-50/75 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-rose-700">这一天还没有提交数据</p>
+                      <p className="text-sm font-semibold text-rose-700">
+                        {activeDateStatus.state === "unsubmitted" ? "今天还没有提交数据" : "这一天漏交了数据"}
+                      </p>
                       <p className="text-sm leading-6 text-rose-900/75">
-                        点击按钮后，将关闭当前弹窗，并把主页主表单切换到 {activeBizDate} 的补交模式。
+                        {activeDateStatus.description} 点击按钮后，将关闭当前弹窗，并把主页主表单切换到 {activeBizDate} 的补交模式。
                       </p>
                     </div>
                     <Button
@@ -571,6 +944,7 @@ export function VideoSubmitPanel({
                 </div>
               )}
             </div>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
@@ -634,6 +1008,15 @@ export function VideoSubmitPanel({
               accounts={accounts.map((account) => ({ id: account.id, name: account.display_name }))}
               accountDisplayNameMap={accountDisplayNameMap}
               today={today}
+              onReportOpen={(report) => {
+                if (!report.report_date) return;
+                handleHistoryReportOpen({
+                  ...report,
+                  report_date: report.report_date,
+                  content: report.content ?? null,
+                  follower_convert: report.follower_convert ?? null,
+                });
+              }}
             />
           )}
         </DialogContent>
@@ -650,6 +1033,7 @@ export function VideoSubmitPanel({
               defaultAccountId={editingReport.account_id}
               today={today}
               existingData={toDashboardReportData(editingReport)}
+              actionBarMode="inline"
             />
           ) : null}
         </DialogContent>

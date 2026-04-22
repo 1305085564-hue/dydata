@@ -1,3 +1,5 @@
+import type { ExemptionState } from "@/lib/豁免";
+
 export interface TodaySubmissionReportLike {
   account_id: string | null;
   title: string | null;
@@ -38,8 +40,18 @@ export interface TodaySubmissionSummary {
   uploadedAt: string | null;
 }
 
+export type SubmissionDayState = "submitted" | "waive" | "leave" | "unsubmitted" | "missing" | "future";
 export type SubmitPanelRequestedMode = "editToday" | "backfill" | null;
 export type SubmitPanelMode = "summary" | "create" | "editToday" | "backfill";
+
+export interface SubmissionDayStatus {
+  state: SubmissionDayState;
+  label: "已交" | "免交" | "请假" | "未交" | "漏交" | "未到";
+  description: string;
+  tone: "submitted" | "leave" | "pending" | "editing";
+  isCompleted: boolean;
+  canBackfill: boolean;
+}
 
 function toTimestamp(value: string | null | undefined) {
   if (!value) return Number.NEGATIVE_INFINITY;
@@ -107,4 +119,80 @@ export function resolveSubmitPanelMode({
   if (requestedMode === "backfill") return "backfill";
   if (summary) return "summary";
   return "create";
+}
+
+export function resolveSubmissionDayStatus({
+  date,
+  today,
+  report,
+  exemption,
+}: {
+  date: string;
+  today: string;
+  report: TodaySubmissionSummary | TodaySubmissionReportLike | null;
+  exemption: ExemptionState;
+}): SubmissionDayStatus {
+  if (report) {
+    return {
+      state: "submitted",
+      label: "已交",
+      description: "当天数据已提交。",
+      tone: "submitted",
+      isCompleted: true,
+      canBackfill: false,
+    };
+  }
+
+  if (exemption.isExempt) {
+    if (exemption.category === "leave") {
+      return {
+        state: "leave",
+        label: "请假",
+        description: "当天已按请假处理，不计入未交或漏交。",
+        tone: "leave",
+        isCompleted: false,
+        canBackfill: false,
+      };
+    }
+
+    return {
+      state: "waive",
+      label: "免交",
+      description: "当天已按免交处理，视作已完成，无需再提交。",
+      tone: "submitted",
+      isCompleted: true,
+      canBackfill: false,
+    };
+  }
+
+  if (date > today) {
+    return {
+      state: "future",
+      label: "未到",
+      description: "该日期还没到，无需提交。",
+      tone: "editing",
+      isCompleted: false,
+      canBackfill: false,
+    };
+  }
+
+  if (date === today) {
+    return {
+      state: "unsubmitted",
+      label: "未交",
+      description: "当天还没有提交数据。",
+      tone: "pending",
+      isCompleted: false,
+      canBackfill: true,
+    };
+  }
+
+  return {
+    state: "missing",
+    label: "漏交",
+    description: "该日期没有提交数据，也没有免交或请假记录。",
+    tone: "pending",
+    isCompleted: false,
+    canBackfill: true,
+  };
 }

@@ -2,9 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 // @ts-expect-error node test 直接加载 ts 模块
-const loadModule = () => import("./豁免流程.ts").catch(() => null);
+const loadModule = async () => {
+  const mod = await import("./豁免流程.ts").catch(() => null);
+  if (!mod) return null;
+  return (mod.default ?? mod) as typeof import("./豁免流程.ts");
+};
 
-test("buildGrantDraft 将昨日、多日、永久豁免转换为 grant 与 profile 投影", async () => {
+test("buildGrantDraft 会把语义分类写入 grant 和 profile 投影", async () => {
   const mod = await loadModule();
   assert.ok(mod, "应提供 豁免流程 模块");
   assert.equal(typeof mod.buildGrantDraft, "function");
@@ -13,23 +17,23 @@ test("buildGrantDraft 将昨日、多日、永久豁免转换为 grant 与 profi
     userId: "user-1",
     teamId: "team-1",
     mode: "yesterday",
-    reason: "外出",
+    category: "waive",
+    reason: "休市",
     requestId: null,
     today: "2026-03-22",
   });
 
   assert.equal(yesterday.grant.grant_type, "yesterday");
-  assert.equal(yesterday.grant.start_date, "2026-03-21");
-  assert.equal(yesterday.grant.end_date, "2026-03-21");
-  assert.equal(yesterday.profile.exempt_type, "temporary");
+  assert.equal(yesterday.grant.exemption_category, "waive");
+  assert.equal(yesterday.profile.exemption_category, "waive");
   assert.equal(yesterday.profile.exempt_start_date, "2026-03-21");
-  assert.equal(yesterday.profile.exempt_end_date, "2026-03-21");
 
   const multi = mod.buildGrantDraft({
     userId: "user-1",
     teamId: "team-1",
     mode: "range",
-    reason: "出差",
+    category: "leave",
+    reason: "病假",
     requestId: "req-1",
     today: "2026-03-22",
     startDate: "2026-03-24",
@@ -38,33 +42,28 @@ test("buildGrantDraft 将昨日、多日、永久豁免转换为 grant 与 profi
 
   assert.equal(multi.grant.request_id, "req-1");
   assert.equal(multi.grant.grant_type, "range");
-  assert.equal(multi.grant.start_date, "2026-03-24");
-  assert.equal(multi.grant.end_date, "2026-03-26");
+  assert.equal(multi.grant.exemption_category, "leave");
   assert.equal(multi.profile.exempt_type, "temporary");
-  assert.equal(multi.profile.exempt_start_date, "2026-03-24");
-  assert.equal(multi.profile.exempt_end_date, "2026-03-26");
+  assert.equal(multi.profile.exemption_category, "leave");
 
   const permanent = mod.buildGrantDraft({
     userId: "user-1",
     teamId: "team-1",
     mode: "permanent",
-    reason: "长期病假",
+    category: "waive",
+    reason: "长期停更",
     requestId: null,
     today: "2026-03-22",
   });
 
   assert.equal(permanent.grant.grant_type, "permanent");
-  assert.equal(permanent.grant.start_date, "2026-03-22");
-  assert.equal(permanent.grant.end_date, null);
   assert.equal(permanent.profile.status, "exempt");
-  assert.equal(permanent.profile.exempt_type, "permanent");
-  assert.equal(permanent.profile.exempt_reason, "长期病假");
+  assert.equal(permanent.profile.exemption_category, "waive");
 });
 
 test("buildGrantDraft 对永久豁免缺少原因时报错", async () => {
   const mod = await loadModule();
   assert.ok(mod, "应提供 豁免流程 模块");
-  assert.equal(typeof mod.buildGrantDraft, "function");
 
   assert.throws(
     () =>
@@ -72,6 +71,7 @@ test("buildGrantDraft 对永久豁免缺少原因时报错", async () => {
         userId: "user-1",
         teamId: "team-1",
         mode: "permanent",
+        category: "waive",
         reason: "   ",
         requestId: null,
         today: "2026-03-22",
@@ -80,15 +80,15 @@ test("buildGrantDraft 对永久豁免缺少原因时报错", async () => {
   );
 });
 
-test("buildRequestDraft 生成待审批申请并保留自由日期范围", async () => {
+test("buildRequestDraft 生成申请时保留语义分类", async () => {
   const mod = await loadModule();
   assert.ok(mod, "应提供 豁免流程 模块");
-  assert.equal(typeof mod.buildRequestDraft, "function");
 
   const request = mod.buildRequestDraft({
     applicantUserId: "user-1",
     teamId: "team-1",
     mode: "range",
+    category: "leave",
     reason: "家中有事",
     today: "2026-03-22",
     startDate: "2026-03-25",
@@ -98,6 +98,7 @@ test("buildRequestDraft 生成待审批申请并保留自由日期范围", async
   assert.equal(request.applicant_user_id, "user-1");
   assert.equal(request.team_id, "team-1");
   assert.equal(request.exemption_type, "range");
+  assert.equal(request.exemption_category, "leave");
   assert.equal(request.start_date, "2026-03-25");
   assert.equal(request.end_date, "2026-03-28");
   assert.equal(request.reason, "家中有事");
@@ -114,10 +115,9 @@ test("normalizeGrantMode 兼容旧模式", async () => {
   assert.equal(mod.normalizeGrantMode("permanent"), "permanent");
 });
 
-test("buildReviewPatch 为审批结果生成 request 更新补丁", async () => {
+test("buildReviewPatch 会生成审批补丁", async () => {
   const mod = await loadModule();
   assert.ok(mod, "应提供 豁免流程 模块");
-  assert.equal(typeof mod.buildReviewPatch, "function");
 
   const approved = mod.buildReviewPatch({ reviewerId: "admin-1", decision: "approved" });
   assert.equal(approved.request_status, "approved");

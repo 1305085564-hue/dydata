@@ -3,6 +3,7 @@ import type { AccountLeaderboardRow } from "@/types";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { hasPendingExemptionRequest } from "@/app/(app)/dashboard/actions";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
+import { getExemptionStateForDate, type ExemptionProfileLike } from "@/lib/豁免";
 import { formatDateOnly, getSafeAccountDisplayName, shiftDateOnly, uniqueNonEmpty } from "./shared";
 
 type DashboardSupabase = SupabaseClient<any, "public", any>;
@@ -34,6 +35,7 @@ export interface DashboardPageData {
   leaderboardData: AccountLeaderboardRow[];
   trendData: ReturnType<typeof build个人趋势数据>;
   hasPendingExemption: boolean;
+  userExemptionProfile: ExemptionProfileLike;
   summary: {
     totalAccounts: number;
     submittedCount: number;
@@ -55,10 +57,23 @@ export async function loadDashboardPageData({
       .select("id, name, content_direction")
       .eq("profile_id", userId)
       .order("created_at", { ascending: true }),
-    supabase.from("profiles").select("name").eq("id", userId).single(),
+    supabase
+      .from("profiles")
+      .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
+      .eq("id", userId)
+      .single(),
   ]);
 
   const userDisplayName = profile?.name?.trim() || "当前用户";
+  const userExemptionProfile: ExemptionProfileLike = {
+    id: userId,
+    status: profile?.status ?? "active",
+    exempt_type: profile?.exempt_type ?? null,
+    exempt_start_date: profile?.exempt_start_date ?? null,
+    exempt_end_date: profile?.exempt_end_date ?? null,
+    exempt_reason: profile?.exempt_reason ?? null,
+    exemption_category: profile?.exemption_category ?? null,
+  };
   const displayAccounts = ((accounts ?? []) as DashboardAccountRow[]).map((account, index, list) => ({
     ...account,
     name: account.name ?? "未命名账号",
@@ -172,6 +187,14 @@ export async function loadDashboardPageData({
     activeUserIds,
   );
 
+  const todayExemptionState = getExemptionStateForDate(userExemptionProfile, today);
+  const submittedCountForSummary = todayExemptionState.isExempt && todayExemptionState.category !== "leave"
+    ? displayAccounts.length
+    : submittedAccountIds.size;
+  const pendingCountForSummary = todayExemptionState.isExempt
+    ? 0
+    : Math.max(displayAccounts.length - submittedAccountIds.size, 0);
+
   return {
     today,
     isExternalUser: false,
@@ -198,10 +221,11 @@ export async function loadDashboardPageData({
     leaderboardData: (leaderboardRows ?? []) as AccountLeaderboardRow[],
     trendData,
     hasPendingExemption,
+    userExemptionProfile,
     summary: {
       totalAccounts: displayAccounts.length,
-      submittedCount: submittedAccountIds.size,
-      pendingCount: Math.max(displayAccounts.length - submittedAccountIds.size, 0),
+      submittedCount: submittedCountForSummary,
+      pendingCount: pendingCountForSummary,
       historyCount: (history ?? []).length,
     },
   };

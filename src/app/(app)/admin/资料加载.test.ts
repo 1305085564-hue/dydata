@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { loadProfilesWithExemptionFallback } from "./资料加载";
+import { loadProfilesWithExemptionFallback } from "./资料加载.ts";
 
 test("豁免字段查询成功时直接返回完整数据", async () => {
   const result = await loadProfilesWithExemptionFallback({
@@ -16,6 +16,7 @@ test("豁免字段查询成功时直接返回完整数据", async () => {
           exempt_start_date: null,
           exempt_end_date: null,
           exempt_reason: null,
+          exemption_category: null,
         },
       ],
       error: null,
@@ -37,6 +38,7 @@ test("豁免字段查询成功时直接返回完整数据", async () => {
       exempt_start_date: null,
       exempt_end_date: null,
       exempt_reason: null,
+      exemption_category: null,
     },
   ]);
 });
@@ -74,6 +76,7 @@ test("缺少豁免字段时回退到基础查询并补齐空值", async () => {
       exempt_start_date: null,
       exempt_end_date: null,
       exempt_reason: null,
+      exemption_category: null,
     },
   ]);
 });

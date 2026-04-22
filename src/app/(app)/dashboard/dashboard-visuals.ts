@@ -1,5 +1,5 @@
 export type DashboardSurfaceTone = "hero" | "panel" | "success";
-export type DashboardStatusTone = "submitted" | "pending" | "editing";
+export type DashboardStatusTone = "submitted" | "pending" | "editing" | "leave";
 export type DashboardMetricGridTone = "primary" | "secondary";
 
 export function getDashboardSurfaceClass(tone: DashboardSurfaceTone): string {

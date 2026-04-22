@@ -891,6 +891,63 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       </div>
   );
 
+  const desktopSubmitBar = (
+    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[95] hidden justify-center px-4 md:flex">
+      <div className="pointer-events-auto flex min-h-[60px] w-auto max-w-[min(720px,calc(100vw-2rem))] items-center justify-between gap-4 rounded-[20px] border border-white/50 bg-white/90 px-4 py-3 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.04)] backdrop-blur-[20px] backdrop-saturate-[180%] transition-all hover:shadow-[0_18px_34px_-8px_rgba(0,0,0,0.12)]">
+        <div className="flex min-w-0 items-center gap-3">
+          {canActuallySubmit ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          )}
+          <div className="flex min-w-0 flex-col justify-center">
+            <p className="text-[13px] font-semibold leading-tight text-[var(--color-text-primary)]">
+              {canActuallySubmit ? "Ready" : "Needs Work"}
+            </p>
+            <p className="mt-0.5 max-w-[170px] truncate text-[10px] font-medium leading-tight text-[var(--color-text-secondary)]">
+              {canActuallySubmit ? "Submit today" : issueHintText || issueSummary.reason || submitCheck.reason || "Complete the form"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="grid w-[112px] gap-2">
+            <Select
+              value={meta.anomalyStatus}
+              onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
+            >
+              <SelectTrigger className="h-10 rounded-full border-black/5 bg-[#f8fafc] px-3 text-[13px] font-medium shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] transition-all hover:bg-white focus:ring-2 focus:ring-primary/20">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {ANOMALY_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {VIDEO_STATUS_LABELS[option]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            {onCancel ? (
+              <Button type="button" variant="ghost" className="h-10 rounded-full bg-[#f1f5f9] px-4 text-[13px] font-semibold text-[var(--color-text-main)] hover:bg-black/5" onClick={onCancel}>
+                Cancel
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              form="video-submit-form"
+              disabled={isSubmitting || !canActuallySubmit}
+              title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
+              className="h-10 rounded-full bg-[var(--color-primary)] px-5 text-[13px] font-bold text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all hover:-translate-y-0.5 hover:bg-[#1d4ed8] hover:shadow-[0_6px_20px_rgba(37,99,235,0.5)] active:translate-y-0 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:hover:translate-y-0"
+            >
+              {submitButtonLabel}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   if (!account) {
     return (
       <MotionCard className="border-none bg-white/70">
@@ -953,12 +1010,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-5 pb-[140px] md:pb-[100px]"
+        className="space-y-5 pb-[140px] md:pb-[180px]"
       >
         <div className="space-y-6">
           {/* 第一行：截图槽位区 & 指标分组区 */}
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
-            <div className="w-full lg:w-1/2 flex flex-col gap-6">
+          <MotionCard className="border-none bg-white/68 shadow-sm backdrop-blur-sm">
+            <div className="grid items-start gap-6 p-5 xl:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] xl:gap-0">
+            <div className="flex min-w-0 flex-col gap-6 xl:border-r xl:border-black/6 xl:pr-6">
               <motion.div ref={slotsSectionRef} variants={itemVariants}>
                 <截图槽位区
                   slots={slots}
@@ -976,7 +1034,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               </motion.div>
             </div>
 
-            <div className="w-full lg:w-1/2 flex flex-col gap-6">
+            <div className="flex min-w-0 flex-col gap-6 xl:pl-6">
               <motion.div ref={metricsSectionRef} variants={itemVariants}>
                 <指标分组区
                   fields={fields}
@@ -988,12 +1046,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               </motion.div>
             </div>
           </div>
+          </MotionCard>
 
           {/* 第二行：视频链接等元数据信息 & 文案提取区 */}
-          <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-            <div className="w-full lg:w-1/2 flex flex-col">
-              <motion.div ref={metaSectionRef} variants={itemVariants} className="flex-1 flex flex-col">
-                <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm flex-1 flex flex-col">
+          <div className="grid items-stretch gap-6 xl:grid-cols-2 xl:[&>*]:min-h-[30rem]">
+            <div className="flex min-w-0 flex-col xl:h-full">
+              <motion.div ref={metaSectionRef} variants={itemVariants} className="flex h-full flex-1 flex-col">
+                <MotionCard className="flex h-full flex-1 flex-col border-none bg-white/70 shadow-sm backdrop-blur-sm">
                   <div className="space-y-4 p-5 flex-1">
                   <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors">
                     <Label htmlFor="video_url">抖音视频链接</Label>
@@ -1162,17 +1221,17 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             </motion.div>
           </div>
 
-          <div className="w-full lg:w-1/2 flex flex-col">
-            <motion.div variants={itemVariants} className="flex-1 flex flex-col">
-              <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm flex-1 flex flex-col">
-                <div className="space-y-2 p-5 flex-1 flex flex-col rounded-[var(--radius-xl)] border border-transparent transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
+          <div className="flex min-w-0 flex-col xl:h-full">
+            <motion.div variants={itemVariants} className="flex h-full flex-1 flex-col">
+              <MotionCard className="flex h-full flex-1 flex-col border-none bg-white/70 shadow-sm backdrop-blur-sm">
+                <div className="flex h-full flex-1 flex-col space-y-2 rounded-[var(--radius-xl)] border border-transparent p-5 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
                   <Label htmlFor="content">文案 <span className="text-red-500">*</span></Label>
                   <textarea
                     id="content"
                     value={meta.content}
                     onChange={(event) => updateMeta("content", event.target.value)}
                     placeholder="粘贴视频文案"
-                    className="flex-1 min-h-[240px] w-full rounded-[var(--radius-lg)] border border-black/8 bg-white px-4 py-3 text-sm outline-none shadow-sm focus:ring-2 focus:ring-[color:rgba(0,122,255,0.16)] resize-none"
+                    className="min-h-[16rem] w-full flex-1 rounded-[var(--radius-lg)] border border-black/8 bg-white px-4 py-3 text-sm leading-6 outline-none shadow-sm focus:ring-2 focus:ring-[color:rgba(0,122,255,0.16)] resize-none xl:min-h-0"
                   />
                   {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
                     <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写文案</p>
@@ -1184,7 +1243,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         </div>
         </div>
 
-        <motion.div variants={itemVariants} className="hidden md:flex sticky bottom-8 justify-center pointer-events-none z-[90]">
+        <motion.div variants={itemVariants} className="hidden">
           {/* FAB 悬浮操作条 */}
           <div className="rounded-full pointer-events-auto bg-white/85 backdrop-blur-[20px] backdrop-saturate-[180%] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.04)] border border-white/50 py-4 px-6 min-h-[72px] flex items-center justify-between gap-8 transition-all hover:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.12)] w-max">
             <div className="flex items-center gap-3">
@@ -1240,6 +1299,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         </motion.div>
       </motion.form>
 
+      {mounted ? createPortal(desktopSubmitBar, document.body) : null}
       {mounted ? createPortal(mobileSubmitBar, document.body) : null}
     </>
   );

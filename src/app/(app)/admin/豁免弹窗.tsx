@@ -47,6 +47,11 @@ const MODE_LABELS: Record<ExemptionFormValues["mode"], string> = {
   range: "多日豁免",
 };
 
+const CATEGORY_LABELS: Record<ExemptionFormValues["category"], string> = {
+  waive: "免交",
+  leave: "请假",
+};
+
 export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -58,6 +63,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
       return {
         userId: "",
         mode: "yesterday",
+        category: "waive",
         reason: "",
       };
     }
@@ -97,6 +103,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     setFormValues((current) => ({
       userId: current.userId,
       mode,
+      category: current.category,
       reason: current.reason ?? "",
       date: mode === "yesterday" ? current.date ?? current.startDate ?? current.endDate ?? "" : undefined,
       startDate: mode === "range" ? current.startDate ?? current.date ?? "" : undefined,
@@ -122,7 +129,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
         return;
       }
 
-      feedbackToast.success(`${profile.name}已更新为${MODE_LABELS[formValues.mode]}`);
+      feedbackToast.success(`${profile.name}已更新为${CATEGORY_LABELS[formValues.category]} ${MODE_LABELS[formValues.mode]}`);
       onOpenChange(false);
     });
   }
@@ -167,7 +174,24 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">豁免类型</label>
+            <label className="text-sm font-medium">申请语义</label>
+            <Select
+              value={formValues.category}
+              onValueChange={(value) => updateField("category", value as ExemptionFormValues["category"])}
+              disabled={isPending}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue>{CATEGORY_LABELS[formValues.category]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="waive">免交</SelectItem>
+                <SelectItem value="leave">请假</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">日期模式</label>
             <Select value={formValues.mode} onValueChange={handleModeChange} disabled={isPending}>
               <SelectTrigger className="w-full">
                 <SelectValue>{MODE_LABELS[formValues.mode]}</SelectValue>

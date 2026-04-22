@@ -101,6 +101,7 @@ export async function grantExemption(params: Record<string, unknown>, dryRun: bo
       exempt_start_date: date,
       exempt_end_date: date,
       exempt_reason: reason,
+      exemption_category: "waive",
     })
     .in("id", targets);
 

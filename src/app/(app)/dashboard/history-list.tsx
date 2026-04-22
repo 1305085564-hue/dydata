@@ -45,6 +45,7 @@ interface HistoryListProps {
   accounts: DashboardAccountOption[];
   accountDisplayNameMap: Record<string, string>;
   today: string;
+  onReportOpen?: (report: HistoryReport) => void;
 }
 
 function toExistingData(report: HistoryReport): DashboardReportData {
@@ -72,7 +73,7 @@ function toExistingData(report: HistoryReport): DashboardReportData {
 
 const DEFAULT_VISIBLE = 10;
 
-export function HistoryList({ history, accounts, accountDisplayNameMap, today }: HistoryListProps) {
+export function HistoryList({ history, accounts, accountDisplayNameMap, today, onReportOpen }: HistoryListProps) {
   const [expanded, setExpanded] = useState(false);
   const [editingReport, setEditingReport] = useState<HistoryReport | null>(null);
   const visible = expanded ? history : history.slice(0, DEFAULT_VISIBLE);
@@ -101,7 +102,11 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today }:
           </TableHeader>
           <TableBody>
             {visible.map((report) => (
-              <TableRow key={report.id}>
+              <TableRow
+                key={report.id}
+                className={onReportOpen ? "cursor-pointer" : undefined}
+                onClick={onReportOpen ? () => onReportOpen(report) : undefined}
+              >
                 <TableCell className="whitespace-nowrap text-muted-foreground">
                   {report.report_date?.slice(5)}
                 </TableCell>
@@ -121,7 +126,15 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today }:
                 <TableCell className="text-right tabular-nums">{report.shares}</TableCell>
                 <TableCell className="text-right tabular-nums hidden lg:table-cell">{report.favorites}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditingReport(report)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setEditingReport(report);
+                    }}
+                  >
                     <Pencil className="size-3.5" />
                   </Button>
                 </TableCell>
@@ -133,7 +146,11 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today }:
 
       <div className="space-y-3 md:hidden">
         {visible.map((report) => (
-          <div key={report.id} className="space-y-2 rounded-lg border bg-background p-4">
+          <div
+            key={report.id}
+            className={onReportOpen ? "cursor-pointer space-y-2 rounded-lg border bg-background p-4" : "space-y-2 rounded-lg border bg-background p-4"}
+            onClick={onReportOpen ? () => onReportOpen(report) : undefined}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">{report.report_date?.slice(5)}</p>
@@ -145,7 +162,15 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today }:
                 <p className="text-sm font-semibold tabular-nums">
                   {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
                 </p>
-                <Button variant="ghost" size="icon" className="size-7" onClick={() => setEditingReport(report)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setEditingReport(report);
+                  }}
+                >
                   <Pencil className="size-3.5" />
                 </Button>
               </div>
@@ -193,6 +218,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today }:
               defaultAccountId={editingReport.account_id}
               today={today}
               existingData={toExistingData(editingReport)}
+              actionBarMode="inline"
             />
           )}
         </DialogContent>

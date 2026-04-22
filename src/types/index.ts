@@ -1,6 +1,7 @@
 export type UserRole = "member" | "admin" | "owner";
 export type UserStatus = "active" | "exempt";
 export type ExemptType = "permanent" | "temporary";
+export type ExemptionCategory = "waive" | "leave";
 export type LeaderboardRange = "today" | "week" | "month";
 export type LeaderboardType = "overall" | "tag" | "progress";
 
@@ -48,6 +49,7 @@ export interface Profile {
   exempt_start_date: string | null;
   exempt_end_date: string | null;
   exempt_reason: string | null;
+  exemption_category: ExemptionCategory | null;
   permissions: Permissions;
   team_id?: string | null;
   group_id?: string | null;
@@ -348,6 +350,7 @@ export interface ExemptionRequest {
   applicant_user_id: string | null;
   team_id: string | null;
   exemption_type: ExemptionRequestType;
+  exemption_category: ExemptionCategory | null;
   start_date: string;
   end_date: string | null;
   reason: string | null;
@@ -365,6 +368,7 @@ export interface ExemptionGrant {
   start_date: string | null;
   end_date: string | null;
   grant_type: ExemptionRequestType | null;
+  exemption_category: ExemptionCategory | null;
   status: string | null;
   created_at: string;
 }

@@ -66,7 +66,7 @@ export async function loadAdminPageData({
     loadWithExemption: async () =>
       supabase
         .from("profiles")
-        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason")
+        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
       supabase
@@ -150,7 +150,7 @@ export async function loadAdminPageData({
     loadWithExemption: async () =>
       adminSupabase
         .from("profiles")
-        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, permissions, created_at")
+        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, created_at")
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
       adminSupabase
@@ -186,7 +186,7 @@ export async function loadAdminPageData({
     supabase.from("audit_logs").select("id, created_at, user_id, action, target, detail").order("created_at", { ascending: false }).limit(50),
     supabase
       .from("exemption_request")
-      .select("id, applicant_user_id, exemption_type, reason, created_at")
+      .select("id, applicant_user_id, exemption_type, exemption_category, reason, created_at")
       .eq("request_status", "pending")
       .order("created_at", { ascending: true }),
     supabase.from("invite_codes").select("id, code, used, used_by, expires_at, created_at").order("created_at", { ascending: false }).limit(50),
@@ -202,6 +202,7 @@ export async function loadAdminPageData({
     applicant_user_id: request.applicant_user_id,
     applicant_name: profileMap.get(request.applicant_user_id) ?? "未知成员",
     exemption_type: request.exemption_type,
+    exemption_category: request.exemption_category,
     reason: request.reason,
     created_at: request.created_at,
   }));

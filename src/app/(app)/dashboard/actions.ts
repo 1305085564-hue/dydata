@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTeamMeta } from "@/lib/teams";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
 import { buildRequestDraft, type GrantMode } from "@/lib/豁免流程";
+import type { ExemptionCategory } from "@/types";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
@@ -123,6 +124,7 @@ export async function hasPendingExemptionRequest(): Promise<boolean> {
 
 export async function submitExemptionRequest(input: {
   mode: GrantMode;
+  category: ExemptionCategory;
   reason: string;
   startDate?: string;
   endDate?: string;
@@ -147,6 +149,7 @@ export async function submitExemptionRequest(input: {
     applicantUserId: user.id,
     teamId: getTeamMeta(user.user_metadata).teamId,
     mode: input.mode,
+    category: input.category,
     reason: input.reason,
     today,
     startDate: input.startDate,

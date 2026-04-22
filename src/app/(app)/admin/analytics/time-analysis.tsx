@@ -9,7 +9,7 @@ interface Report {
   id: string;
   report_date: string;
   play_count: number | null;
-  follower_gain: number;
+  follower_gain: number | null;
   follower_convert: number | null;
   published_at?: string | null;
   uploaded_at?: string;

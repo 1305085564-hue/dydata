@@ -11,6 +11,7 @@ import {
 } from "@/lib/remind-submission";
 import { buildReminderContent } from "@/lib/飞书提醒";
 import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
+import type { ExemptionCategory } from "@/types";
 
 type ProfileRow = {
   id: string;
@@ -21,6 +22,7 @@ type ProfileRow = {
   exempt_start_date: string | null;
   exempt_end_date: string | null;
   exempt_reason: string | null;
+  exemption_category: ExemptionCategory | null;
 };
 
 type AccountRow = {
@@ -67,7 +69,9 @@ export async function GET(request: NextRequest) {
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason")
+      .select(
+        "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
+      )
       .eq("role", "member"),
     supabase.from("accounts").select("id, profile_id"),
     supabase
