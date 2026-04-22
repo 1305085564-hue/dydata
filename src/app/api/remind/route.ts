@@ -11,13 +11,13 @@ import {
 } from "@/lib/remind-submission";
 import { buildReminderContent } from "@/lib/飞书提醒";
 import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
-import type { ExemptionCategory } from "@/types";
+import type { ExemptionCategory, UserStatus } from "@/types";
 
 type ProfileRow = {
   id: string;
   name: string;
   role: string;
-  status: "active" | "exempt" | null;
+  status: UserStatus | null;
   exempt_type: "permanent" | "temporary" | null;
   exempt_start_date: string | null;
   exempt_end_date: string | null;
@@ -93,8 +93,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: reportsError.message }, { status: 500 });
   }
 
+  const normalizedProfiles = ((profiles ?? []) as ProfileRow[]).map((profile) => ({
+    ...profile,
+    status: profile.status ?? "active",
+  }));
+
   const all = buildSubmissionStatus({
-    profiles: (profiles ?? []) as ProfileRow[],
+    profiles: normalizedProfiles,
     accounts: (accounts ?? []) as AccountRow[],
     reports: (reports ?? []) as ReportRow[],
     today,
