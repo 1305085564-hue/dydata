@@ -40,6 +40,12 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     requiresAdmin: true,
     hideWhenPrefixed: true,
   },
+  {
+    href: "/admin/modules",
+    label: "功能模块",
+    match: (pathname) => pathname === "/admin/modules" || pathname.startsWith("/admin/modules/"),
+    requiresAdmin: true,
+  },
 ];
 
 export function getAdminSecondaryNavItems(options: { canManageAdmin: boolean }) {

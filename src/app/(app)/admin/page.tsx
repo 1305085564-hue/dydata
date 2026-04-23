@@ -1,24 +1,18 @@
 import { redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
+import { ResultTrend } from "@/components/charts/result-trend";
+import { InteractionTrend } from "@/components/charts/interaction-trend";
+import { hasPermission } from "@/lib/permissions";
+import { createClient } from "@/lib/supabase/server";
+import { loadAdminPageData } from "@/lib/loaders/admin-page";
+
 import { DashboardAnimatedSection } from "../dashboard/dashboard-animated-section";
 import { InviteCodeManager } from "./generate-invite-button";
 import { SubmissionStatus } from "./submission-status";
-import { ExportButton } from "./export-button";
-import { DataManager } from "./data-manager";
-import { AuditLogList } from "./audit-log-list";
-import { ResultTrend } from "@/components/charts/result-trend";
-import { InteractionTrend } from "@/components/charts/interaction-trend";
-import { PermissionManager } from "./permission-manager";
 import { TeamManager } from "./team-manager";
-import { hasPermission } from "@/lib/permissions";
-import { 豁免申请列表 } from "./豁免申请列表";
-import { loadAdminPageData } from "@/lib/loaders/admin-page";
-import type { Permissions, UserRole } from "@/types";
-
-// New specialized components
 import { ActionHub } from "./components/action-hub";
 import { SystemLogTicker } from "./components/system-log-ticker";
 import { MetricCardsRow } from "./components/metric-cards";
@@ -75,6 +69,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   ];
 
   const profileMap = new Map(data.allProfiles.map((profile) => [profile.id, profile.name]));
+  const currentUserName = profileMap.get(user.id)?.trim() ?? "";
+  const canManageInviteModule =
+    hasPermission(data.perm.role, data.perm.permissions, "manage_invite") &&
+    currentUserName === "阿禅";
 
   return (
     <>
@@ -94,18 +92,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           }
         >
           <AdminSecondaryNav pathname="/admin" canManageAdmin />
-          
+
           <MetricCardsRow cards={topSummaryCards} />
         </AppShellHero>
 
         <DashboardAnimatedSection index={0}>
-          <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr] mb-8">
-            <div className="space-y-6 flex flex-col">
-              <AppShellSection
-                title="团队趋势总览"
-                className="flex-1"
-                bodyClassName="h-full"
-              >
+          <section className="mb-8 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+            <div className="flex flex-col space-y-6">
+              <AppShellSection title="团队趋势总览" className="flex-1" bodyClassName="h-full">
                 <div className="space-y-6">
                   <ResultTrend
                     data={data.trendData.结果趋势}
@@ -124,16 +118,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </div>
 
             <div className="flex flex-col">
-              <ActionHub 
-                pendingRequestCount={data.summary.pendingRequestCount} 
-                quickActions={data.quickActions} 
+              <ActionHub
+                pendingRequestCount={data.summary.pendingRequestCount}
+                quickActions={data.quickActions}
+                canManageMembers={hasPermission(data.perm.role, data.perm.permissions, "manage_members")}
+                exemptionRequests={data.exemptionRequests}
               />
             </div>
           </section>
         </DashboardAnimatedSection>
 
-        {/* Bento Box Layout for subsequent modules */}
-        <div className="grid gap-6 lg:grid-cols-2 mb-8">
+        <div className="mb-8 grid gap-6 lg:grid-cols-2">
           <DashboardAnimatedSection index={1} className="lg:col-span-2">
             <AppShellSection title="提交状态检查" description="先处理谁没交，再做后续管理动作。">
               <SubmissionStatus
@@ -149,103 +144,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </AppShellSection>
           </DashboardAnimatedSection>
 
-          {hasPermission(data.perm.role, data.perm.permissions, "manage_members") && (
+          {canManageInviteModule ? (
             <DashboardAnimatedSection index={2}>
-              <AppShellSection title="豁免申请" description="集中处理成员当天的豁免请求。">
-                <Card className="glass-card-static border-white/60 glass-panel h-full">
-                  <CardContent className="p-0">
-                    <豁免申请列表 requests={data.exemptionRequests} />
-                  </CardContent>
-                </Card>
-              </AppShellSection>
-            </DashboardAnimatedSection>
-          )}
-
-          {(data.permissionManagerCapabilities.canRemoveMember || data.permissionManagerCapabilities.canChangeRole || data.permissionManagerCapabilities.canEditPermissions) && (
-            <DashboardAnimatedSection index={3}>
-              <AppShellSection title="角色与权限管理" description="控制成员角色和管理权限。">
-                <Card className="glass-card-static border-white/60 glass-panel h-full">
-                  <CardContent className="p-0">
-                    <PermissionManager
-                      members={data.allProfiles.map((profile) => ({
-                        id: profile.id,
-                        name: profile.name,
-                        email: profile.email ?? null,
-                        role: profile.role as UserRole,
-                        teamName: profile.team_name ?? null,
-                        permissions: (profile.permissions ?? {}) as Permissions,
-                      }))}
-                      currentUserId={user.id}
-                      currentUserRole={data.perm.role}
-                      currentUserPermissions={data.perm.permissions}
-                    />
-                  </CardContent>
-                </Card>
-              </AppShellSection>
-            </DashboardAnimatedSection>
-          )}
-
-          {hasPermission(data.perm.role, data.perm.permissions, "manage_invite") && (
-            <DashboardAnimatedSection index={4}>
               <AppShellSection title="邀请码管理" description="维护成员加入入口。">
-                <Card className="glass-card-static border-white/60 glass-panel h-full">
+                <Card className="glass-card-static h-full border-white/60 glass-panel">
                   <CardContent className="space-y-6 p-6">
                     <TeamManager teams={data.teams} />
-                    <InviteCodeManager adminId={user.id} existingCodes={data.inviteCodes} profileNames={Object.fromEntries(profileMap)} />
-                  </CardContent>
-                </Card>
-              </AppShellSection>
-            </DashboardAnimatedSection>
-          )}
-          
-          {hasPermission(data.perm.role, data.perm.permissions, "edit_data") && (
-            <DashboardAnimatedSection index={5} className="lg:col-span-2">
-              <AppShellSection title="数据管理与修正" description="处理异常值、补录和修正。">
-                <Card className="glass-card-static border-white/60 glass-panel h-full">
-                  <CardContent className="p-0">
-                    <DataManager
-                      reports={data.fullReports}
-                      defaultDate={data.queryDate}
-                      avgPlayBySubmitter={data.avgPlayBySubmitter}
-                      dayCountBySubmitter={data.dayCountBySubmitter}
-                      avgPlayByAccount={data.avgPlayByAccount}
-                      dayCountByAccount={data.dayCountByAccount}
+                    <InviteCodeManager
+                      adminId={user.id}
+                      existingCodes={data.inviteCodes}
+                      profileNames={Object.fromEntries(profileMap)}
                     />
                   </CardContent>
                 </Card>
               </AppShellSection>
             </DashboardAnimatedSection>
-          )}
-
-          <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
-            {hasPermission(data.perm.role, data.perm.permissions, "export_data") && (
-              <DashboardAnimatedSection index={6}>
-                <AppShellSection title="数据导出">
-                  <Card className="glass-card-static border-white/60 glass-panel h-full">
-                    <CardContent className="p-0">
-                      <ExportButton />
-                    </CardContent>
-                  </Card>
-                </AppShellSection>
-              </DashboardAnimatedSection>
-            )}
-
-            {hasPermission(data.perm.role, data.perm.permissions, "view_audit_log") && (
-              <DashboardAnimatedSection index={7}>
-                <AppShellSection title="近期操作审计">
-                  <Card className="glass-card-static border-white/60 glass-panel h-full">
-                    <CardContent className="p-0">
-                      <AuditLogList logs={data.logsWithNames} />
-                    </CardContent>
-                  </Card>
-                </AppShellSection>
-              </DashboardAnimatedSection>
-            )}
-          </div>
+          ) : null}
         </div>
       </AppShell>
 
-      {/* 底部全屏动态流组件 */}
       <SystemLogTicker logs={data.logsWithNames} />
     </>
   );
