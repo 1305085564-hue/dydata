@@ -57,6 +57,12 @@ interface ExemptionRequestDraft {
   request_status: "pending";
 }
 
+export type LegacyExemptionRequestDraft = Omit<ExemptionRequestDraft, "exemption_category">;
+
+interface MessageLikeError {
+  message: string;
+}
+
 interface ExemptionRequestReviewPatch {
   request_status: ReviewDecision;
   reviewed_by: string;
@@ -186,6 +192,26 @@ export function buildRequestDraft(input: BuildRequestDraftInput): ExemptionReque
     reason: normalizeReason(input.reason),
     request_status: "pending",
   };
+}
+
+export function stripExemptionCategoryFromRequestDraft(
+  draft: ExemptionRequestDraft
+): LegacyExemptionRequestDraft {
+  return {
+    applicant_user_id: draft.applicant_user_id,
+    team_id: draft.team_id,
+    exemption_type: draft.exemption_type,
+    start_date: draft.start_date,
+    end_date: draft.end_date,
+    reason: draft.reason,
+    request_status: draft.request_status,
+  };
+}
+
+export function isMissingExemptionRequestCategoryError(error: MessageLikeError | null | undefined) {
+  if (!error?.message) return false;
+
+  return error.message.includes("exemption_request") && error.message.includes("exemption_category");
 }
 
 export function buildReviewPatch(input: BuildReviewPatchInput): ExemptionRequestReviewPatch {

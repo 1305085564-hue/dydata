@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getTeamMeta } from "@/lib/teams";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
-import { buildRequestDraft, type GrantMode } from "@/lib/豁免流程";
+import {
+  buildRequestDraft,
+  isMissingExemptionRequestCategoryError,
+  stripExemptionCategoryFromRequestDraft,
+  type GrantMode,
+} from "@/lib/豁免流程";
 import type { ExemptionCategory } from "@/types";
 
 function isUuidLike(value: string) {
@@ -157,7 +162,15 @@ export async function submitExemptionRequest(input: {
   });
 
   const { error } = await supabase.from("exemption_request").insert(draft);
-  if (error) return { error: error.message };
+  if (error) {
+    if (!isMissingExemptionRequestCategoryError(error)) return { error: error.message };
+
+    const fallback = await supabase
+      .from("exemption_request")
+      .insert(stripExemptionCategoryFromRequestDraft(draft));
+
+    if (fallback.error) return { error: fallback.error.message };
+  }
 
   revalidatePath("/dashboard");
   return {};

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { getTeamMeta, getTeamOptions, type TeamOption } from "@/lib/teams";
 import { build团队趋势数据 } from "@/lib/趋势图";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
@@ -10,6 +11,32 @@ import type { Permissions, UserRole } from "@/types";
 import { shiftDateOnly } from "./shared";
 
 type AdminSupabase = SupabaseClient<any, "public", any>;
+
+async function loadPendingExemptionRequests(supabase: AdminSupabase) {
+  const primary = await supabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, exemption_type, exemption_category, reason, created_at")
+    .eq("request_status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (!isMissingExemptionRequestCategoryError(primary.error)) {
+    return primary;
+  }
+
+  const fallback = await supabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, exemption_type, reason, created_at")
+    .eq("request_status", "pending")
+    .order("created_at", { ascending: true });
+
+  return {
+    data: fallback.data?.map((request) => ({
+      ...request,
+      exemption_category: "waive" as const,
+    })) ?? null,
+    error: fallback.error,
+  };
+}
 
 export interface AdminPageData {
   queryDate: string;
@@ -184,11 +211,7 @@ export async function loadAdminPageData({
 
   const [{ data: auditLogs }, { data: pendingRequests }, { data: inviteCodes }] = await Promise.all([
     supabase.from("audit_logs").select("id, created_at, user_id, action, target, detail").order("created_at", { ascending: false }).limit(50),
-    supabase
-      .from("exemption_request")
-      .select("id, applicant_user_id, exemption_type, exemption_category, reason, created_at")
-      .eq("request_status", "pending")
-      .order("created_at", { ascending: true }),
+    loadPendingExemptionRequests(supabase),
     supabase.from("invite_codes").select("id, code, used, used_by, expires_at, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
 

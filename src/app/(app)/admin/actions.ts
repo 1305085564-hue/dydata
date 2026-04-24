@@ -13,7 +13,9 @@ import {
   buildGrantDraft,
   buildRequestDraft,
   buildReviewPatch,
+  isMissingExemptionRequestCategoryError,
   normalizeGrantMode,
+  stripExemptionCategoryFromRequestDraft,
   type AnyGrantMode,
   type GrantMode,
   type ReviewDecision,
@@ -85,6 +87,37 @@ async function deactivateExistingGrants(
     .eq("user_id", userId)
     .eq("status", "active")
     .then(() => {}, () => {});
+}
+
+async function fetchExemptionRequestForReview(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  requestId: string
+) {
+  const primary = await supabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, exemption_type, exemption_category, start_date, end_date, reason, request_status")
+    .eq("id", requestId)
+    .single();
+
+  if (!isMissingExemptionRequestCategoryError(primary.error)) {
+    return primary;
+  }
+
+  const fallback = await supabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, exemption_type, start_date, end_date, reason, request_status")
+    .eq("id", requestId)
+    .single();
+
+  return {
+    data: fallback.data
+      ? {
+          ...fallback.data,
+          exemption_category: "waive" as const,
+        }
+      : null,
+    error: fallback.error,
+  };
 }
 
 async function applyGrantToProfile(
@@ -278,7 +311,17 @@ export async function submitExemptionRequest(input: {
 
     const { error } = await supabase.from("exemption_request").insert(draft);
     if (error) {
-      return { error: error.message };
+      if (!isMissingExemptionRequestCategoryError(error)) {
+        return { error: error.message };
+      }
+
+      const fallback = await supabase
+        .from("exemption_request")
+        .insert(stripExemptionCategoryFromRequestDraft(draft));
+
+      if (fallback.error) {
+        return { error: fallback.error.message };
+      }
     }
   } catch (error) {
     return {
@@ -308,11 +351,7 @@ export async function reviewExemptionRequest(input: {
 
   const supabase = await createClient();
 
-  const { data: request, error: fetchError } = await supabase
-    .from("exemption_request")
-    .select("id, applicant_user_id, exemption_type, exemption_category, start_date, end_date, reason, request_status")
-    .eq("id", input.requestId)
-    .single();
+  const { data: request, error: fetchError } = await fetchExemptionRequestForReview(supabase, input.requestId);
 
   if (fetchError || !request) return { error: "申请不存在" };
   if (request.request_status !== "pending") return { error: "该申请已处理" };
