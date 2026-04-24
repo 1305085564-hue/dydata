@@ -637,46 +637,36 @@
   }
 
   .admin-subnav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    border-radius: 1.25rem;
-    border: 1px solid color-mix(in srgb, var(--color-border) 74%, white);
-    background: color-mix(in srgb, white 82%, var(--background));
-    padding: 0.75rem;
-    box-shadow: var(--shadow-light);
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
   .admin-subnav-link {
-    display: inline-flex;
-    min-height: 2.75rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    padding: 0.625rem 1rem;
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    transition:
-      background-color var(--duration-fast) var(--ease-out),
-      border-color var(--duration-fast) var(--ease-out),
-      color var(--duration-fast) var(--ease-out),
-      transform var(--duration-fast) var(--ease-out);
-  }
-
-  .admin-subnav-link:hover {
-    transform: translateY(-1px);
-    border-color: color-mix(in srgb, var(--color-border) 86%, white);
-    background: color-mix(in srgb, white 88%, var(--background));
-    color: var(--color-text-primary);
+    min-height: 5.25rem;
   }
 
   .admin-subnav-link-active {
     border-color: color-mix(in srgb, var(--primary) 24%, white);
     background: color-mix(in srgb, var(--primary) 10%, white);
-    color: var(--primary);
-    box-shadow: var(--shadow-light);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent),
+      var(--shadow-medium);
+  }
+
+  .admin-subnav-link-head {
+    width: 100%;
+  }
+
+  .admin-subnav-link-icon {
+    flex-shrink: 0;
+  }
+
+  .admin-subnav-link-title {
+    white-space: normal;
+  }
+
+  .admin-subnav-link-description {
+    display: block;
+    width: 100%;
   }
 
   .dark .app-shell::before {
@@ -740,19 +730,17 @@
   }
 
   .dark .admin-subnav-link {
-    color: var(--color-text-secondary);
-  }
-
-  .dark .admin-subnav-link:hover {
-    border-color: color-mix(in srgb, var(--color-border) 84%, transparent);
-    background: color-mix(in srgb, var(--glass-bg) 90%, transparent);
     color: var(--color-text-primary);
   }
 
   .dark .admin-subnav-link-active {
     border-color: color-mix(in srgb, var(--primary) 38%, transparent);
     background: color-mix(in srgb, var(--primary) 16%, transparent);
-    color: color-mix(in srgb, white 80%, var(--primary));
+  }
+
+  .dark .admin-subnav-link-icon {
+    background: color-mix(in srgb, var(--primary) 18%, transparent);
+    color: color-mix(in srgb, white 82%, var(--primary));
   }
 
   .dashboard-section-kicker {
@@ -1211,6 +1199,10 @@
   }
 
   @media (min-width: 768px) {
+    .admin-subnav {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .dashboard-metric-strip-compact[data-columns="4"] {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -1229,12 +1221,20 @@
   }
 
   @media (min-width: 1024px) {
+    .admin-subnav {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .dashboard-action-strip {
       grid-template-columns: repeat(5, minmax(0, 1fr));
     }
   }
 
   @media (min-width: 1280px) {
+    .admin-subnav {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .dashboard-form-layout {
       grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
       gap: 1.25rem;
