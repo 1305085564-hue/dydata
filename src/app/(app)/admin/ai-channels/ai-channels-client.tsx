@@ -401,7 +401,7 @@ export default function AIChannelsClient() {
   const activeChannel = !isCreatingChannel ? channels.find((channel) => channel.id === selectedChannelId) || null : null;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
+    <div className="w-full space-y-6 px-4 py-4 sm:px-6 lg:px-8">
       {/* 极简顶部导航 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
         <h1 className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">AI 渠道管理</h1>

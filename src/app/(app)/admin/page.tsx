@@ -2,14 +2,18 @@ import { redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
+import { AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
+import type { AdminPanelKey } from "@/components/admin-secondary-nav";
+import type { InteractionTrendDatum } from "@/components/charts/interaction-trend";
 import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
+import type { ResultTrendDatum } from "@/components/charts/result-trend";
 import { hasPermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { loadAdminPageData } from "@/lib/loaders/admin-page";
 
 import { DashboardAnimatedSection } from "../dashboard/dashboard-animated-section";
+import { AdminPanelLauncher } from "./admin-panel-launcher";
 import { InviteCodeManager } from "./generate-invite-button";
 import { SubmissionStatus } from "./submission-status";
 import { TeamManager } from "./team-manager";
@@ -18,7 +22,7 @@ import { SystemLogTicker } from "./components/system-log-ticker";
 import { MetricCardsRow } from "./components/metric-cards";
 
 interface AdminPageProps {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; panel?: AdminPanelKey }>;
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
@@ -37,6 +41,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   if (!data) redirect("/login");
 
+  const canManageAdmin = data.perm.role === "owner" || data.perm.role === "admin";
   const topSummaryCards = [
     {
       label: "今日提交",
@@ -57,7 +62,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       value: data.summary.pendingRequestCount,
       hint: data.summary.pendingRequestCount > 0 ? "优先处理豁免申请" : "当前没有新增待办",
       icon: "FileClock",
-      tone: data.summary.pendingRequestCount > 0 ? "warning" as const : "neutral" as const,
+      tone: data.summary.pendingRequestCount > 0 ? ("warning" as const) : ("neutral" as const),
     },
     {
       label: "邀请码存量",
@@ -72,7 +77,47 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const currentUserName = profileMap.get(user.id)?.trim() ?? "";
   const canManageInviteModule =
     hasPermission(data.perm.role, data.perm.permissions, "manage_invite") &&
-    currentUserName === "阿禅";
+    (currentUserName === "闃跨" || currentUserName === "阿豪");
+  const [resultTrendData, interactionTrendData] = Object.values(data.trendData) as [
+    ResultTrendDatum[],
+    InteractionTrendDatum[],
+  ];
+
+  const overviewContent = (
+    <div className="space-y-6">
+      <MetricCardsRow cards={topSummaryCards} />
+      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <ActionHub
+          pendingRequestCount={data.summary.pendingRequestCount}
+          quickActions={data.quickActions}
+          canManageMembers={hasPermission(data.perm.role, data.perm.permissions, "manage_members")}
+          exemptionRequests={data.exemptionRequests}
+        />
+        <Card className="glass-card-static border-white/70 glass-panel">
+          <CardContent className="space-y-4 p-5">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">提交状态快照</h3>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                关闭弹窗后仍停留在当前后台页，适合快速检查当天提交情况。
+              </p>
+            </div>
+            <div className="max-h-[55vh] overflow-y-auto">
+              <SubmissionStatus
+                profiles={data.profiles.map((profile) => ({
+                  ...profile,
+                  status: profile.status ?? "active",
+                }))}
+                accounts={data.accountRows}
+                submittedProfileIds={data.submittedProfileIds}
+                submittedAccountIds={data.submittedAccountIds}
+                defaultDate={data.queryDate}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -80,18 +125,24 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <AppShellHero
           eyebrow="Operating Cockpit"
           title="管理员中控台"
-          description="先看今天的整体状态，再处理趋势、待办和成员工具，避免在长列表里来回找重点。"
+          description="停留在后台首页，用大弹窗承载重模块，并保留当前页状态与上下文。"
           meta={
             <div className="glass-panel grid gap-2 rounded-2xl p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[320px]">
               <div className="inline-flex items-center gap-2 font-medium text-[var(--color-text-primary)]">
                 <Sparkles className="size-3.5 text-[var(--color-primary)]" />
-                今日总控摘要
+                今日总览摘要
               </div>
               <p className="text-sm font-semibold text-[var(--color-text-primary)]">{data.queryDate}</p>
             </div>
           }
         >
-          <AdminSecondaryNav pathname="/admin" canManageAdmin />
+          <AdminPanelLauncher
+            initialPanel={params.panel ?? null}
+            userRole={data.perm.role}
+            canManageAdmin={canManageAdmin}
+            initialDate={data.queryDate}
+            overviewContent={overviewContent}
+          />
 
           <MetricCardsRow cards={topSummaryCards} />
         </AppShellHero>
@@ -102,13 +153,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <AppShellSection title="团队趋势总览" className="flex-1" bodyClassName="h-full">
                 <div className="space-y-6">
                   <ResultTrend
-                    data={data.trendData.结果趋势}
+                    data={resultTrendData}
                     personalLabel="团队总量"
                     teamAverageLabel="团队人均"
                     emptyText="提交 2 天以上数据后可查看趋势图"
                   />
                   <InteractionTrend
-                    data={data.trendData.互动趋势}
+                    data={interactionTrendData}
                     personalLabel="团队质量分"
                     teamAverageLabel="团队人均"
                     emptyText="提交 2 天以上数据后可查看互动质量分趋势"

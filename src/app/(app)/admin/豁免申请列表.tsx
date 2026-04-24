@@ -1,7 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+
 import { Button } from "@/components/ui/button";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import {
   Table,
   TableBody,
@@ -10,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { feedbackToast } from "@/components/ui/feedback-toast";
+
 import { reviewExemptionRequest } from "./actions";
 
 const MODE_LABELS: Record<string, string> = {
@@ -40,21 +42,33 @@ export interface ExemptionRequestRow {
 
 interface Props {
   requests: ExemptionRequestRow[];
+  onHandled?: (requestId: string) => void;
 }
 
-function RequestRow({ request }: { request: ExemptionRequestRow }) {
+function RequestRow({
+  request,
+  onHandled,
+}: {
+  request: ExemptionRequestRow;
+  onHandled?: (requestId: string) => void;
+}) {
   const [isPending, startTransition] = useTransition();
 
   function handle(decision: "approved" | "rejected") {
     startTransition(async () => {
       const result = await reviewExemptionRequest({ requestId: request.id, decision });
+
       if (result.error) {
         feedbackToast.error(result.error);
-      } else {
-        feedbackToast.success(
-          decision === "approved" ? `已批准 ${request.applicant_name} 的豁免申请` : `已拒绝 ${request.applicant_name} 的豁免申请`,
-        );
+        return;
       }
+
+      feedbackToast.success(
+        decision === "approved"
+          ? `已批准 ${request.applicant_name} 的豁免申请`
+          : `已拒绝 ${request.applicant_name} 的豁免申请`,
+      );
+      onHandled?.(request.id);
     });
   }
 
@@ -62,12 +76,14 @@ function RequestRow({ request }: { request: ExemptionRequestRow }) {
     <TableRow>
       <TableCell className="font-medium">{request.applicant_name}</TableCell>
       <TableCell>
-        {[CATEGORY_LABELS[request.exemption_category ?? "waive"] ?? "免交", MODE_LABELS[request.exemption_type] ?? request.exemption_type].join("｜")}
+        {(CATEGORY_LABELS[request.exemption_category ?? "waive"] ?? "免交") +
+          " / " +
+          (MODE_LABELS[request.exemption_type] ?? request.exemption_type)}
       </TableCell>
       <TableCell className="max-w-[200px] truncate text-muted-foreground">
         {request.reason ?? "-"}
       </TableCell>
-      <TableCell className="text-muted-foreground text-sm">
+      <TableCell className="text-sm text-muted-foreground">
         {new Date(request.created_at).toLocaleString("zh-CN", {
           month: "2-digit",
           day: "2-digit",
@@ -99,8 +115,19 @@ function RequestRow({ request }: { request: ExemptionRequestRow }) {
   );
 }
 
-export function 豁免申请列表({ requests }: Props) {
-  if (requests.length === 0) {
+function ExemptionRequestList({ requests, onHandled }: Props) {
+  const [localRequests, setLocalRequests] = useState(requests);
+
+  useEffect(() => {
+    setLocalRequests(requests);
+  }, [requests]);
+
+  function handleRequestHandled(requestId: string) {
+    setLocalRequests((current) => current.filter((request) => request.id !== requestId));
+    onHandled?.(requestId);
+  }
+
+  if (localRequests.length === 0) {
     return <p className="text-sm text-muted-foreground">暂无待审批申请</p>;
   }
 
@@ -116,10 +143,16 @@ export function 豁免申请列表({ requests }: Props) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {requests.map((request) => (
-          <RequestRow key={request.id} request={request} />
+        {localRequests.map((request) => (
+          <RequestRow
+            key={request.id}
+            request={request}
+            onHandled={handleRequestHandled}
+          />
         ))}
       </TableBody>
     </Table>
   );
 }
+
+export { ExemptionRequestList as 豁免申请列表 };

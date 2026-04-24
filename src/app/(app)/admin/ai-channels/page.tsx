@@ -30,7 +30,7 @@ export default async function AIChannelsPage() {
         title="AI 渠道管理"
         description="维护渠道优先级、健康状态和熔断恢复，保证 AI 调用稳定。"
       >
-        <AdminSecondaryNav pathname="/admin/ai-channels" canManageAdmin />
+        <AdminSecondaryNav pathname="/admin/ai-channels" canManageAdmin panelBasePath="/admin" userRole="owner" />
       </AppShellHero>
       <AppShellSection
         eyebrow="Channel Settings"

@@ -28,7 +28,7 @@ export default async function AIRewritePage() {
         title="文案改写配置"
         description="把员工端两个固定能力套餐、普通自定义配置和背后的真实执行路线放在一页内直接维护。"
       >
-        <AdminSecondaryNav pathname="/admin/ai-rewrite" canManageAdmin />
+        <AdminSecondaryNav pathname="/admin/ai-rewrite" canManageAdmin panelBasePath="/admin" userRole="owner" />
       </AppShellHero>
 
       <AppShellSection

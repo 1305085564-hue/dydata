@@ -30,7 +30,7 @@ export default async function AIFeaturesPage() {
         title="AI 功能管理"
         description="统一管理 AI 功能的开关、模型、渠道和提示词配置。"
       >
-        <AdminSecondaryNav pathname="/admin/ai-features" canManageAdmin />
+        <AdminSecondaryNav pathname="/admin/ai-features" canManageAdmin panelBasePath="/admin" userRole="owner" />
       </AppShellHero>
       <AppShellSection
         eyebrow="Feature Settings"

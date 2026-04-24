@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import type { VideoMetricsSnapshot, VideoTag } from "@/types";
+
 import { createClient } from "@/lib/supabase/server";
 import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
 import { AnalyticsPageHeader } from "@/components/analytics/分析页顶部";
 import { type AnalyticsRangePreset } from "@/lib/analytics-access";
-import { AnalyticsWorkbench } from "./analytics-workbench";
 import { loadAnalyticsPageData } from "@/lib/loaders/analytics-page";
+
+import { AnalyticsContent } from "./analytics-content";
 
 interface AnalyticsPageProps {
   searchParams: Promise<{
@@ -49,7 +50,12 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
           </div>
         }
       >
-        <AdminSecondaryNav pathname="/admin/analytics" canManageAdmin={data.isPrivilegedUser} />
+        <AdminSecondaryNav
+          pathname="/admin/analytics"
+          canManageAdmin={data.isPrivilegedUser}
+          panelBasePath="/admin"
+          userRole={data.role as "owner" | "admin" | "member"}
+        />
         <AnalyticsPageHeader preset={data.range.preset} from={data.range.from} to={data.range.to} />
       </AppShellHero>
 
@@ -58,13 +64,13 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         title="核心结论区"
         description="首屏优先展示本周期最值得处理的核心结论。"
       >
-        <AnalyticsWorkbench
+        <AnalyticsContent
           userId={user.id}
           isPrivilegedUser={data.isPrivilegedUser}
           filteredReports={data.filteredReports}
-          filteredVideos={data.filteredVideos as any[]}
-          filteredSnapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
-          filteredVideoTags={data.filteredVideoTags as VideoTag[]}
+          filteredVideos={data.filteredVideos}
+          filteredSnapshots={data.filteredSnapshots}
+          filteredVideoTags={data.filteredVideoTags}
           submitters={data.submitters}
         />
       </AppShellSection>

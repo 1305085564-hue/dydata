@@ -1,9 +1,10 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AnalyticsRangePreset } from "@/lib/analytics-access";
+import type { AnalyticsWorkbench } from "@/app/(app)/admin/analytics/analytics-workbench";
 import { buildAnalyticsAccessContext, getPresetRange, restrictPersonRows } from "@/lib/analytics-access";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
-type AnalyticsSupabase = SupabaseClient<any, "public", any>;
+type AnalyticsSupabase = Awaited<ReturnType<typeof createClient>>;
 
 export interface AnalyticsPageData {
   range: ReturnType<typeof getPresetRange>;
@@ -12,10 +13,10 @@ export interface AnalyticsPageData {
   isPrivilegedUser: boolean;
   currentUserName: string;
   submitters: string[];
-  filteredReports: any[];
-  filteredVideos: any[];
-  filteredSnapshots: any[];
-  filteredVideoTags: any[];
+  filteredReports: Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"];
+  filteredVideos: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideos"];
+  filteredSnapshots: Parameters<typeof AnalyticsWorkbench>[0]["filteredSnapshots"];
+  filteredVideoTags: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideoTags"];
 }
 
 export async function loadAnalyticsPageData({
@@ -51,7 +52,7 @@ export async function loadAnalyticsPageData({
 
   const teamUserIds = teamProfiles.map((item) => item.id);
   const submitters = isPrivilegedUser ? teamProfiles.map((item) => item.name) : [currentUserName];
-  const [{ data: reports }, { data: videos }, { data: snapshots }, { data: videoTags }] = await Promise.all([
+  const [{ data: reports }, { data: videos }] = await Promise.all([
     adminSupabase
       .from("daily_reports")
       .select(
@@ -76,14 +77,20 @@ export async function loadAnalyticsPageData({
           })),
         };
       }),
-    adminSupabase.from("video_metrics_snapshots").select("*"),
-    adminSupabase.from("video_tags").select("*"),
   ]);
 
   const filteredReports = access.canViewAllMembers ? reports ?? [] : restrictPersonRows(reports ?? [], { role, currentUserName });
   const filteredVideos = (videos ?? []).filter((video) => (access.canViewAllMembers ? true : video.user_id === userId));
-  const filteredSnapshots = (snapshots ?? []).filter((snapshot) => filteredVideos.some((video) => video.id === snapshot.video_id));
-  const filteredVideoTags = (videoTags ?? []).filter((tag) => filteredVideos.some((video) => video.id === tag.video_id));
+  const filteredVideoIds = filteredVideos.map((video) => video.id);
+  const [{ data: snapshots }, { data: videoTags }] =
+    filteredVideoIds.length > 0
+      ? await Promise.all([
+          adminSupabase.from("video_metrics_snapshots").select("*").in("video_id", filteredVideoIds),
+          adminSupabase.from("video_tags").select("*").in("video_id", filteredVideoIds),
+        ])
+      : [{ data: [] }, { data: [] }];
+  const filteredSnapshots = snapshots ?? [];
+  const filteredVideoTags = videoTags ?? [];
 
   return {
     range,

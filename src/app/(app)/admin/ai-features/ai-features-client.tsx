@@ -232,7 +232,8 @@ export default function AIFeaturesClient() {
       return;
     }
     if ("_clearCustomModel" in patch) {
-      const { _clearCustomModel, ...rest } = patch;
+      const rest = { ...patch };
+      delete rest._clearCustomModel;
       setCustomModelMode((p) => ({ ...p, [id]: false }));
       setFeaturePatch(id, rest as Partial<AiFeatureItem>);
       return;
@@ -247,7 +248,7 @@ export default function AIFeaturesClient() {
   const featureGroups = buildFeatureGroups(features);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 px-4 py-4 sm:px-6 lg:px-8">
+    <div className="w-full space-y-8 px-4 py-4 sm:px-6 lg:px-8">
       <AIFeaturesHero />
       <AIFeaturesNavCards featureGroups={featureGroups} />
       <AIFeaturesGroupList
