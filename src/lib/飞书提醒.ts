@@ -33,6 +33,8 @@ export function buildReminderContent(input: {
   streakMap: Map<string, number>;
   submittedCount: number;
   totalCount: number;
+  today?: string;
+  sourceLabel?: string;
 }) {
   const escalationManager = getEscalationManager();
   const escalatedMembers = input.unsubmitted.filter((member) => (input.streakMap.get(member.user_id) ?? 0) >= 3);
@@ -52,6 +54,14 @@ export function buildReminderContent(input: {
     "",
     `**已提交：** ${input.submittedCount}/${input.totalCount} 人`,
   ];
+
+  if (input.today || input.sourceLabel) {
+    lines.push(
+      "",
+      `**日期：** ${input.today ?? "未提供"}`,
+      `**来源：** ${input.sourceLabel ?? "未提供"}（账号归属+用户归属双口径）`,
+    );
+  }
 
   if (escalatedMembers.length > 0 && escalationManager) {
     lines.push(

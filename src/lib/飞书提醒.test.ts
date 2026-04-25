@@ -41,3 +41,18 @@ test("负责人按手机号固定到十八老师", () => {
   assert.equal(manager?.phone, "18867289333");
   assert.equal(manager?.name, "十八老师");
 });
+
+test("提醒内容可标识当前来源口径", () => {
+  const result = buildReminderContent({
+    unsubmitted: [{ user_id: "u1", name: "小王" }],
+    streakMap: new Map([["u1", 2]]),
+    submittedCount: 9,
+    totalCount: 10,
+    today: "2026-04-25",
+    sourceLabel: "Vercel Cron /api/remind v2",
+  });
+
+  assert.match(result.content, /\*\*日期：\*\* 2026-04-25/);
+  assert.match(result.content, /\*\*来源：\*\* Vercel Cron \/api\/remind v2/);
+  assert.match(result.content, /账号归属\+用户归属双口径/);
+});

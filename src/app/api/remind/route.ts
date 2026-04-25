@@ -13,6 +13,8 @@ import { buildReminderContent } from "@/lib/飞书提醒";
 import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
 import type { ExemptionCategory, UserStatus } from "@/types";
 
+const REMIND_SOURCE_LABEL = "Vercel Cron /api/remind v2";
+
 type ProfileRow = {
   id: string;
   name: string;
@@ -126,6 +128,8 @@ export async function GET(request: NextRequest) {
     streakMap,
     submittedCount,
     totalCount: all.length,
+    today,
+    sourceLabel: REMIND_SOURCE_LABEL,
   });
 
   const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
@@ -151,6 +155,17 @@ export async function GET(request: NextRequest) {
               content,
             },
           },
+          {
+            tag: "action",
+            actions: [
+              {
+                tag: "button",
+                text: { tag: "plain_text", content: "打开 DYData" },
+                type: "primary",
+                url: "https://dydata.cc",
+              },
+            ],
+          },
         ],
       },
     }),
@@ -168,5 +183,7 @@ export async function GET(request: NextRequest) {
     escalationManager: escalationManager?.name ?? null,
     total: all.length,
     submitted: submittedCount,
+    source: REMIND_SOURCE_LABEL,
+    today,
   });
 }
