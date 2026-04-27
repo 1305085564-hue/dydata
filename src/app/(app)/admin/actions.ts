@@ -171,6 +171,7 @@ async function applyGrantToProfile(
     today?: string;
     startDate?: string | null;
     endDate?: string | null;
+    replaceExisting?: boolean;
   }
 ) {
   const draft = buildGrantDraft({
@@ -178,7 +179,12 @@ async function applyGrantToProfile(
     today: input.today ?? new Date().toISOString().slice(0, 10),
   });
 
-  await deactivateExistingGrants(supabase, input.userId);
+  const shouldReplaceExisting =
+    input.replaceExisting === true || draft.profile.exempt_type === "permanent";
+
+  if (shouldReplaceExisting) {
+    await deactivateExistingGrants(supabase, input.userId);
+  }
 
   // exemption_grant 表可能未建，insert 失败不阻断（profiles 才是关键）
   await supabase.from("exemption_grant").insert(draft.grant).then(() => {}, () => {});
@@ -274,6 +280,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       today: new Date().toISOString().slice(0, 10),
       startDate: values.mode === "range" ? values.startDate ?? null : values.date ?? null,
       endDate: values.mode === "range" ? values.endDate ?? null : values.date ?? null,
+      replaceExisting: true,
     });
 
     if (result.error) {
@@ -411,6 +418,7 @@ export async function reviewExemptionRequest(input: {
       today: new Date().toISOString().slice(0, 10),
       startDate: request.start_date,
       endDate: request.end_date,
+      replaceExisting: false,
     });
 
     if (result.error) {

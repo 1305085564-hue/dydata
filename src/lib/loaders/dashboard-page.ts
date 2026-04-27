@@ -102,18 +102,15 @@ async function loadApprovedRequestGrantsFallback(
     .order("created_at", { ascending: false });
 
   if (!isMissingExemptionRequestCategoryError(primary.error)) {
-    const latestRequest = ((primary.data ?? []) as ApprovedRequestGrantRow[])[0];
-    if (!latestRequest) return [];
-
-    return [{
-      user_id: latestRequest.applicant_user_id,
-      start_date: latestRequest.start_date,
-      end_date: latestRequest.end_date,
-      grant_type: latestRequest.exemption_type,
-      exemption_category: latestRequest.exemption_category ?? "waive",
+    return ((primary.data ?? []) as ApprovedRequestGrantRow[]).map((request) => ({
+      user_id: request.applicant_user_id,
+      start_date: request.start_date,
+      end_date: request.end_date,
+      grant_type: request.exemption_type,
+      exemption_category: request.exemption_category ?? "waive",
       status: "active",
-      created_at: latestRequest.created_at,
-    }];
+      created_at: request.created_at,
+    }));
   }
 
   const fallback = await supabase
@@ -123,18 +120,15 @@ async function loadApprovedRequestGrantsFallback(
     .eq("request_status", "approved")
     .order("created_at", { ascending: false });
 
-  const latestFallbackRequest = ((fallback.data ?? []) as ApprovedRequestGrantRow[])[0];
-  if (!latestFallbackRequest) return [];
-
-  return [{
-    user_id: latestFallbackRequest.applicant_user_id,
-    start_date: latestFallbackRequest.start_date,
-    end_date: latestFallbackRequest.end_date,
-    grant_type: latestFallbackRequest.exemption_type,
+  return ((fallback.data ?? []) as ApprovedRequestGrantRow[]).map((request) => ({
+    user_id: request.applicant_user_id,
+    start_date: request.start_date,
+    end_date: request.end_date,
+    grant_type: request.exemption_type,
     exemption_category: "waive",
     status: "active",
-    created_at: latestFallbackRequest.created_at,
-  }];
+    created_at: request.created_at,
+  }));
 }
 
 async function loadUserExemptionGrants(
