@@ -30,6 +30,15 @@ interface BuildRequestDraftInput {
   endDate?: string;
 }
 
+interface BuildRequestDraftsForDatesInput {
+  applicantUserId: string;
+  teamId: string | null;
+  category?: ExemptionCategory | null;
+  reason?: string | null;
+  dates: string[];
+  today: string;
+}
+
 interface BuildReviewPatchInput {
   reviewerId: string;
   decision: ReviewDecision;
@@ -192,6 +201,29 @@ export function buildRequestDraft(input: BuildRequestDraftInput): ExemptionReque
     reason: normalizeReason(input.reason),
     request_status: "pending",
   };
+}
+
+export function buildRequestDraftsForDates(
+  input: BuildRequestDraftsForDatesInput,
+): ExemptionRequestDraft[] {
+  const dates = Array.from(new Set(input.dates.filter(Boolean))).sort();
+
+  if (dates.length === 0) {
+    throw new Error("至少选择1天");
+  }
+
+  return dates.map((date) =>
+    buildRequestDraft({
+      applicantUserId: input.applicantUserId,
+      teamId: input.teamId,
+      mode: "range",
+      category: input.category,
+      reason: input.reason,
+      today: input.today,
+      startDate: date,
+      endDate: date,
+    }),
+  );
 }
 
 export function stripExemptionCategoryFromRequestDraft(

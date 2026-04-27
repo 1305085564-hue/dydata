@@ -6,6 +6,7 @@ import { getTeamMeta } from "@/lib/teams";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
 import {
   buildRequestDraft,
+  buildRequestDraftsForDates,
   isMissingExemptionRequestCategoryError,
   stripExemptionCategoryFromRequestDraft,
   type GrantMode,
@@ -131,6 +132,7 @@ export async function submitExemptionRequest(input: {
   mode: GrantMode;
   category: ExemptionCategory;
   reason: string;
+  dates?: string[];
   startDate?: string;
   endDate?: string;
 }): Promise<{ error?: string }> {
@@ -150,24 +152,36 @@ export async function submitExemptionRequest(input: {
   if ((existing?.length ?? 0) > 0) return { error: "已有待审批申请" };
 
   const today = new Date().toISOString().slice(0, 10);
-  const draft = buildRequestDraft({
-    applicantUserId: user.id,
-    teamId: getTeamMeta(user.user_metadata).teamId,
-    mode: input.mode,
-    category: input.category,
-    reason: input.reason,
-    today,
-    startDate: input.startDate,
-    endDate: input.endDate,
-  });
+  const drafts =
+    input.dates && input.dates.length > 0
+      ? buildRequestDraftsForDates({
+          applicantUserId: user.id,
+          teamId: getTeamMeta(user.user_metadata).teamId,
+          category: input.category,
+          reason: input.reason,
+          dates: input.dates,
+          today,
+        })
+      : [
+          buildRequestDraft({
+            applicantUserId: user.id,
+            teamId: getTeamMeta(user.user_metadata).teamId,
+            mode: input.mode,
+            category: input.category,
+            reason: input.reason,
+            today,
+            startDate: input.startDate,
+            endDate: input.endDate,
+          }),
+        ];
 
-  const { error } = await supabase.from("exemption_request").insert(draft);
+  const { error } = await supabase.from("exemption_request").insert(drafts);
   if (error) {
     if (!isMissingExemptionRequestCategoryError(error)) return { error: error.message };
 
     const fallback = await supabase
       .from("exemption_request")
-      .insert(stripExemptionCategoryFromRequestDraft(draft));
+      .insert(drafts.map((draft) => stripExemptionCategoryFromRequestDraft(draft)));
 
     if (fallback.error) return { error: fallback.error.message };
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,9 +46,7 @@ function ExemptionModal({
 
   function handleOpen() {
     if (hasPending) return;
-    setSelectedDates(
-      Array.from(new Set(initialSelectedDates.filter(Boolean))).sort(),
-    );
+    setSelectedDates(Array.from(new Set(initialSelectedDates.filter(Boolean))).sort());
     setReason("");
     setOpen(true);
   }
@@ -62,17 +60,9 @@ function ExemptionModal({
     });
   }
 
-  const { startDate, endDate } = useMemo(() => {
-    if (selectedDates.length === 0) return { startDate: "", endDate: "" };
-    return {
-      startDate: selectedDates[0],
-      endDate: selectedDates[selectedDates.length - 1],
-    };
-  }, [selectedDates]);
-
   function handleSubmit() {
     if (selectedDates.length === 0) {
-      feedbackToast.error("请在日历上点击选择需要豁免的日期");
+      feedbackToast.error("请选择需要申请豁免的日期");
       return;
     }
 
@@ -86,8 +76,7 @@ function ExemptionModal({
         mode: "range",
         category: "waive",
         reason: reason.trim(),
-        startDate,
-        endDate,
+        dates: selectedDates,
       });
 
       if (result.error) {
@@ -151,10 +140,10 @@ function ExemptionModal({
           <div className="grid grid-cols-1 gap-6 px-6 pb-6 lg:grid-cols-2">
             <div className="space-y-3">
               <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-                点击日历上的漏交、未交或未来日期，直接将其加入豁免申请区间。
+                点击日历上的漏交、未交或未来日期，只会提交你点中的那些日期。
                 <br />
                 <span className="font-semibold text-[var(--color-primary)]">
-                  注：跨天选择会自动形成连续的豁免区间。
+                  注：不会再自动补成连续区间。
                 </span>
               </p>
 
@@ -175,17 +164,18 @@ function ExemptionModal({
             <div className="flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">已选豁免区间</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">已选豁免日期</p>
                   {selectedDates.length > 0 ? (
-                    <div className="flex flex-col gap-2 rounded-[1rem] bg-primary/5 p-4 ring-1 ring-primary/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-primary">开始日期</span>
-                        <span className="text-sm font-bold text-primary">{startDate}</span>
-                      </div>
-                      <div className="h-px bg-primary/10" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-primary">结束日期</span>
-                        <span className="text-sm font-bold text-primary">{endDate}</span>
+                    <div className="rounded-[1rem] bg-primary/5 p-4 ring-1 ring-primary/20">
+                      <div className="flex flex-wrap gap-2">
+                        {selectedDates.map((date) => (
+                          <span
+                            key={date}
+                            className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary ring-1 ring-primary/15"
+                          >
+                            {date}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   ) : (
