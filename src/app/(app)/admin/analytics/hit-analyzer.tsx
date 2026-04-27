@@ -1100,7 +1100,7 @@ export function HitAnalyzer({
 
       {stats ? (
         <div className="grid items-start gap-3 xl:grid-cols-2">
-          <div className="self-start rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+          <div className="flex self-start rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl xl:h-[405px] xl:flex-col">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">文案分析</p>
@@ -1112,7 +1112,7 @@ export function HitAnalyzer({
             </div>
 
             {stats.contents.length > 0 ? (
-              <div className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-1">
+              <div className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-1 xl:min-h-0 xl:flex-1">
                 {stats.contents.map((content, index) => (
                   <div key={`${index}-${content.slice(0, 8)}`} className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
                     <p className="max-h-[10rem] overflow-y-auto whitespace-pre-wrap pr-2 text-sm leading-6 text-slate-700">{content}</p>
@@ -1126,9 +1126,9 @@ export function HitAnalyzer({
             )}
           </div>
 
-          <div className="self-start rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+          <div className="flex self-start rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl xl:h-[405px] xl:flex-col">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">规律总结</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:min-h-0 xl:flex-1">
               {stats.crDistribution ? <SummaryBucketCard title="完播率区间分布" items={stats.crDistribution} /> : null}
               <SummaryBucketCard title="标题长度分布" items={stats.titleLenDist} />
               {stats.contentLenDist ? <SummaryBucketCard title="文案长度分布" items={stats.contentLenDist} /> : null}
