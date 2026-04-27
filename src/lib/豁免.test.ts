@@ -189,3 +189,36 @@ test("按月生成免交或请假日期集合", () => {
   assert.deepEqual(buckets.waiveDates, []);
   assert.deepEqual(buckets.leaveDates, ["2026-04-01", "2026-04-02"]);
 });
+
+test("宸叉壒鍑嗙殑鍘嗗彶 grant 涔熶細鍦ㄦ湀鍘嗕腑鎸夊厤浜ょ粯鍒?", () => {
+  const profile = {
+    id: "u11",
+    status: "active" as const,
+    exempt_type: null,
+    exempt_start_date: null,
+    exempt_end_date: null,
+    exempt_reason: null,
+    exemption_category: null,
+  };
+
+  const grants = [
+    {
+      user_id: "u11",
+      start_date: "2026-04-02",
+      end_date: "2026-04-03",
+      grant_type: "range",
+      exemption_category: "waive" as const,
+      status: "active",
+      created_at: "2026-04-04T08:00:00.000Z",
+    },
+  ];
+
+  const state = getExemptionStateForDate(profile, "2026-04-02", grants);
+  const buckets = getExemptionDatesForMonth(profile, "2026-04-20", grants);
+
+  assert.equal(state.isExempt, true);
+  assert.equal(state.label, "免交");
+  assert.equal(state.category, "waive");
+  assert.deepEqual(buckets.waiveDates, ["2026-04-02", "2026-04-03"]);
+  assert.deepEqual(buckets.leaveDates, []);
+});

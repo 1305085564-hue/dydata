@@ -3,10 +3,14 @@ import type { AccountLeaderboardRow } from "@/types";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { hasPendingExemptionRequest } from "@/app/(app)/dashboard/actions";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
-import { getExemptionStateForDate, type ExemptionProfileLike } from "@/lib/豁免";
+import {
+  getExemptionStateForDate,
+  type ExemptionGrantLike,
+  type ExemptionProfileLike,
+} from "@/lib/豁免";
 import { formatDateOnly, getSafeAccountDisplayName, shiftDateOnly, uniqueNonEmpty } from "./shared";
 
-type DashboardSupabase = SupabaseClient<any, "public", any>;
+type DashboardSupabase = SupabaseClient<unknown, "public", unknown>;
 
 type DashboardAccountRow = {
   id: string;
@@ -36,6 +40,7 @@ export interface DashboardPageData {
   trendData: ReturnType<typeof build个人趋势数据>;
   hasPendingExemption: boolean;
   userExemptionProfile: ExemptionProfileLike;
+  userExemptionGrants: ExemptionGrantLike[];
   summary: {
     totalAccounts: number;
     submittedCount: number;
@@ -103,6 +108,7 @@ export async function loadDashboardPageData({
     { data: activeProfiles },
     { data: monthDateRows },
     { data: monthHistory },
+    { data: exemptionGrants },
     hasPendingExemption,
   ] = await Promise.all([
     accountIds.length
@@ -152,8 +158,16 @@ export async function loadDashboardPageData({
           .order("report_date", { ascending: false })
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("exemption_grant")
+      .select("user_id, start_date, end_date, grant_type, exemption_category, status, created_at")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false }),
     hasPendingExemptionRequest(),
   ]);
+
+  const userExemptionGrants = (exemptionGrants ?? []) as ExemptionGrantLike[];
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
@@ -187,7 +201,11 @@ export async function loadDashboardPageData({
     activeUserIds,
   );
 
-  const todayExemptionState = getExemptionStateForDate(userExemptionProfile, today);
+  const todayExemptionState = getExemptionStateForDate(
+    userExemptionProfile,
+    today,
+    userExemptionGrants,
+  );
   const submittedCountForSummary = todayExemptionState.isExempt && todayExemptionState.category !== "leave"
     ? displayAccounts.length
     : submittedAccountIds.size;
@@ -222,6 +240,7 @@ export async function loadDashboardPageData({
     trendData,
     hasPendingExemption,
     userExemptionProfile,
+    userExemptionGrants,
     summary: {
       totalAccounts: displayAccounts.length,
       submittedCount: submittedCountForSummary,

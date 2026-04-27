@@ -37,6 +37,16 @@ export interface ExemptionDateBuckets {
   leaveDates: string[];
 }
 
+export interface ExemptionGrantLike {
+  user_id?: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  grant_type: string | null;
+  exemption_category?: ExemptionCategory | null;
+  status?: string | null;
+  created_at?: string | null;
+}
+
 export function normalizeExemptionCategory(
   category?: ExemptionCategory | null,
 ): ExemptionCategory {
@@ -99,6 +109,92 @@ function listDateRange(startDate: string, endDate: string) {
   }
 
   return dates;
+}
+
+function getBaseInactiveExemptionState(
+  profile: ExemptionProfileLike,
+  category: ExemptionCategory,
+): ExemptionState {
+  return {
+    isExempt: false,
+    type: profile.exempt_type,
+    category: profile.exempt_type ? category : null,
+    label: null,
+    detail: null,
+    reason: profile.exempt_reason,
+  };
+}
+
+function buildExemptionStateFromGrant(grant: ExemptionGrantLike): ExemptionState {
+  const category = normalizeExemptionCategory(grant.exemption_category);
+  const isPermanent = grant.grant_type === "permanent";
+  const detail =
+    isPermanent || !grant.start_date || !grant.end_date
+      ? "闀挎湡"
+      : formatRangeDetail(grant.start_date, grant.end_date);
+
+  return {
+    isExempt: true,
+    type: isPermanent ? "permanent" : "temporary",
+    category,
+    label: getExemptionCategoryLabel(category),
+    detail,
+    reason: null,
+  };
+}
+
+function getGrantStateForDate(
+  grants: ExemptionGrantLike[],
+  date: string,
+): ExemptionState | null {
+  const matchedGrant = grants.find((grant) => {
+    if ((grant.status ?? "active") !== "active") return false;
+    if (grant.grant_type === "permanent") return true;
+    if (!grant.start_date || !grant.end_date) return false;
+    return grant.start_date <= date && date <= grant.end_date;
+  });
+
+  return matchedGrant ? buildExemptionStateFromGrant(matchedGrant) : null;
+}
+
+function appendGrantDates(
+  buckets: ExemptionDateBuckets,
+  grant: ExemptionGrantLike,
+  monthStart: string,
+  monthEnd: string,
+) {
+  if ((grant.status ?? "active") !== "active") return;
+
+  let startDate: string | null = null;
+  let endDate: string | null = null;
+
+  if (grant.grant_type === "permanent") {
+    startDate = monthStart;
+    endDate = monthEnd;
+  } else if (grant.start_date && grant.end_date) {
+    startDate = grant.start_date > monthStart ? grant.start_date : monthStart;
+    endDate = grant.end_date < monthEnd ? grant.end_date : monthEnd;
+    if (startDate > endDate) return;
+  }
+
+  if (!startDate || !endDate) return;
+
+  const targetKey =
+    normalizeExemptionCategory(grant.exemption_category) === "leave"
+      ? "leaveDates"
+      : "waiveDates";
+
+  buckets[targetKey].push(...listDateRange(startDate, endDate));
+}
+
+function dedupeExemptionBuckets(buckets: ExemptionDateBuckets): ExemptionDateBuckets {
+  const leaveDates = Array.from(new Set(buckets.leaveDates)).sort();
+  const leaveDateSet = new Set(leaveDates);
+  const waiveDates = Array.from(
+    new Set(buckets.waiveDates.filter((date) => !leaveDateSet.has(date))),
+  ).sort();
+
+  return { waiveDates, leaveDates };
 }
 
 export function buildExemptionFields(values: ExemptionFormValues): ExemptionProfileLike {
@@ -235,6 +331,7 @@ export function formatExemptionDetail(values: ExemptionFormValues) {
 export function getExemptionStateForDate(
   profile: ExemptionProfileLike,
   date: string,
+  grants: ExemptionGrantLike[] = [],
 ): ExemptionState {
   const category = normalizeExemptionCategory(profile.exemption_category);
 
@@ -266,23 +363,24 @@ export function getExemptionStateForDate(
     };
   }
 
-  return {
-    isExempt: false,
-    type: profile.exempt_type,
-    category: profile.exempt_type ? category : null,
-    label: null,
-    detail: null,
-    reason: profile.exempt_reason,
-  };
+  const grantState = getGrantStateForDate(grants, date);
+  if (grantState) {
+    return grantState;
+  }
+
+  return getBaseInactiveExemptionState(profile, category);
 }
 
 export function getExemptionDatesForMonth(
   profile: ExemptionProfileLike,
   referenceDate: string,
+  grants: ExemptionGrantLike[] = [],
 ): ExemptionDateBuckets {
   const date = new Date(`${referenceDate}T00:00:00.000Z`);
   const monthStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
   const monthEnd = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0));
+  const monthStartKey = monthStart.toISOString().slice(0, 10);
+  const monthEndKey = monthEnd.toISOString().slice(0, 10);
 
   let startDate: string | null = null;
   let endDate: string | null = null;
@@ -310,12 +408,18 @@ export function getExemptionDatesForMonth(
     }
   }
 
-  if (!startDate || !endDate) {
-    return { waiveDates: [], leaveDates: [] };
+  const buckets: ExemptionDateBuckets = { waiveDates: [], leaveDates: [] };
+
+  if (startDate && endDate) {
+    const dates = listDateRange(startDate, endDate);
+    if (normalizeExemptionCategory(profile.exemption_category) === "leave") {
+      buckets.leaveDates.push(...dates);
+    } else {
+      buckets.waiveDates.push(...dates);
+    }
   }
 
-  const dates = listDateRange(startDate, endDate);
-  return normalizeExemptionCategory(profile.exemption_category) === "leave"
-    ? { waiveDates: [], leaveDates: dates }
-    : { waiveDates: dates, leaveDates: [] };
+  grants.forEach((grant) => appendGrantDates(buckets, grant, monthStartKey, monthEndKey));
+
+  return dedupeExemptionBuckets(buckets);
 }

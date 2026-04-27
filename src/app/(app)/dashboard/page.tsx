@@ -41,6 +41,7 @@ export default async function DashboardPage() {
             accountDisplayNameMap={data.accountDisplayNameMap}
             hasPendingExemption={data.hasPendingExemption}
             userExemptionProfile={data.userExemptionProfile}
+            userExemptionGrants={data.userExemptionGrants}
           />
         </AppShellHero>
       </DashboardAnimatedSection>

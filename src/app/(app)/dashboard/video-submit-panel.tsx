@@ -22,6 +22,7 @@ import type { Video, VideoTagReviewDimension } from "@/types";
 import {
   getExemptionDatesForMonth,
   getExemptionStateForDate,
+  type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
@@ -73,6 +74,7 @@ interface VideoSubmitPanelProps {
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   userExemptionProfile: ExemptionProfileLike;
+  userExemptionGrants: ExemptionGrantLike[];
 }
 
 function toDashboardReportData(report: MonthReport): DashboardReportData {
@@ -138,6 +140,7 @@ export function VideoSubmitPanel({
   accountDisplayNameMap,
   hasPendingExemption = false,
   userExemptionProfile,
+  userExemptionGrants,
 }: VideoSubmitPanelProps) {
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
@@ -193,8 +196,8 @@ export function VideoSubmitPanel({
   );
 
   const monthExemptionDates = useMemo(
-    () => getExemptionDatesForMonth(userExemptionProfile, today),
-    [today, userExemptionProfile],
+    () => getExemptionDatesForMonth(userExemptionProfile, today, userExemptionGrants),
+    [today, userExemptionGrants, userExemptionProfile],
   );
 
   const accountCards = useMemo(
@@ -205,7 +208,7 @@ export function VideoSubmitPanel({
           date: today,
           today,
           report: summary,
-          exemption: getExemptionStateForDate(userExemptionProfile, today),
+          exemption: getExemptionStateForDate(userExemptionProfile, today, userExemptionGrants),
         });
         return {
           account,
@@ -213,7 +216,7 @@ export function VideoSubmitPanel({
           todayStatus,
         };
       }),
-    [accounts, mergedTodayReports, today, userExemptionProfile],
+    [accounts, mergedTodayReports, today, userExemptionGrants, userExemptionProfile],
   );
 
   const activeDateReport = useMemo(
@@ -246,8 +249,8 @@ export function VideoSubmitPanel({
   });
   const isPrimarySummaryMode = primaryMode === "summary";
   const activeExemptionState = useMemo(
-    () => getExemptionStateForDate(userExemptionProfile, activeBizDate),
-    [activeBizDate, userExemptionProfile],
+    () => getExemptionStateForDate(userExemptionProfile, activeBizDate, userExemptionGrants),
+    [activeBizDate, userExemptionGrants, userExemptionProfile],
   );
   const activeDateStatus = useMemo(
     () =>
@@ -395,7 +398,11 @@ export function VideoSubmitPanel({
 
   function jumpFromDataView(date: string) {
     const dateReport = getReportForDate(date);
-    const dateExemptionState = getExemptionStateForDate(userExemptionProfile, date);
+    const dateExemptionState = getExemptionStateForDate(
+      userExemptionProfile,
+      date,
+      userExemptionGrants,
+    );
     const dateStatus = resolveSubmissionDayStatus({
       date,
       today,
