@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CartesianGrid,
   Cell,
@@ -58,6 +59,8 @@ interface DateBounds {
   min: string;
   max: string;
 }
+
+const SUBMITTER_PAGE_SIZE = 9;
 
 function parsePercent(value: string | null): number | null {
   if (!value) return null;
@@ -203,7 +206,12 @@ export function HitAnalyzer({
 }: HitAnalyzerProps) {
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedSubmitters, setSelectedSubmitters] = useState<string[]>([]);
+  const [submitterPage, setSubmitterPage] = useState(0);
   const [activePointId, setActivePointId] = useState<string | null>(null);
+  const [isScatterPanelOpen, setIsScatterPanelOpen] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches,
+  );
+  const [isFloatingLayerMounted, setIsFloatingLayerMounted] = useState(false);
 
   const dateBounds = useMemo(() => getDateBounds(reports), [reports]);
   const initialTimeState = useMemo(() => getInitialTimeState(dateBounds), [dateBounds]);
@@ -213,6 +221,12 @@ export function HitAnalyzer({
   const [dateTo, setDateTo] = useState(initialTimeState.end);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsFloatingLayerMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveTimePreset(initialTimeState.preset);
     setDateFrom(initialTimeState.start);
     setDateTo(initialTimeState.end);
@@ -220,6 +234,7 @@ export function HitAnalyzer({
 
   useEffect(() => {
     if (!lockedSubmitter) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedSubmitters([]);
       return;
     }
@@ -255,6 +270,12 @@ export function HitAnalyzer({
 
   const activeFilterFn = filters.find((filter) => filter.id === activeFilter)?.filter ?? (() => true);
   const effectiveSelectedSubmitters = lockedSubmitter ? [lockedSubmitter] : selectedSubmitters;
+  const submitterPageCount = Math.max(1, Math.ceil(submitters.length / SUBMITTER_PAGE_SIZE));
+  const lockedSubmitterIndex = lockedSubmitter ? submitters.indexOf(lockedSubmitter) : -1;
+  const safeSubmitterPage =
+    lockedSubmitterIndex >= 0
+      ? Math.floor(lockedSubmitterIndex / SUBMITTER_PAGE_SIZE)
+      : Math.min(submitterPage, submitterPageCount - 1);
 
   function applyTimePreset(nextPreset: TimePreset) {
     setActiveTimePreset(nextPreset);
@@ -477,6 +498,7 @@ export function HitAnalyzer({
 
   useEffect(() => {
     if (scatterData.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActivePointId(null);
       return;
     }
@@ -594,11 +616,140 @@ export function HitAnalyzer({
     );
   };
 
+  const renderScatterChart = (className?: string) => (
+    <div className={cn("h-full w-full rounded-2xl border border-white/70 bg-white/70 p-2 shadow-inner", className)}>
+      {scatterData.length > 0 ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart margin={{ top: 18, right: 18, bottom: 14, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <XAxis
+              type="number"
+              dataKey="cr"
+              name="完播率"
+              unit="%"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 11, fill: "#64748b" }}
+              domain={["auto", "auto"]}
+            />
+            <YAxis
+              type="number"
+              dataKey="play"
+              name="播放量"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 11, fill: "#64748b" }}
+              tickFormatter={(value: number) => formatPlayCount(value)}
+              domain={["auto", "auto"]}
+            />
+            <ZAxis type="number" dataKey="engagement" range={[54, 220]} name="互动量" />
+            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: "3 3", stroke: "#94a3b8" }} />
+            <ReferenceLine
+              y={hitThreshold}
+              stroke="var(--color-rose-500, #f43f5e)"
+              strokeDasharray="4 4"
+              label={{
+                position: "insideTopLeft",
+                value: "10w+",
+                fill: "var(--color-rose-500, #f43f5e)",
+                fontSize: 11,
+                fontWeight: 600,
+                offset: 8,
+              }}
+            />
+            {scatterSummary ? (
+              <ReferenceLine
+                x={scatterSummary.highCompletionLine}
+                stroke="var(--color-primary, #3b82f6)"
+                strokeDasharray="4 4"
+                label={{
+                  position: "insideBottomRight",
+                  value: formatPercent(scatterSummary.highCompletionLine),
+                  fill: "var(--color-primary, #3b82f6)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}
+              />
+            ) : null}
+            <Scatter data={scatterData} shape="circle">
+              {scatterData.map((datum, index) => {
+                const isActive = datum.id === activePointId;
+                return (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={datum.isHit ? "var(--color-rose-500, #f43f5e)" : "var(--color-primary-light, #60a5fa)"}
+                    fillOpacity={isActive ? 0.98 : datum.isHit ? 0.84 : 0.62}
+                    stroke={isActive ? "#0f172a" : datum.isHit ? "var(--color-rose-600, #e11d48)" : "var(--color-primary, #3b82f6)"}
+                    strokeWidth={isActive ? 2.8 : datum.isHit ? 1.4 : 1}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setActivePointId(datum.id)}
+                  />
+                );
+              })}
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white/60 px-4 text-center">
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-slate-700">暂无可绘制散点</p>
+            <p className="text-xs leading-5 text-slate-500">需要同时存在播放量和完播率。</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const floatingScatterLayer = isFloatingLayerMounted
+    ? createPortal(
+        <>
+          {!isScatterPanelOpen ? (
+            <button
+              type="button"
+              onClick={() => setIsScatterPanelOpen(true)}
+              className="fixed bottom-4 right-4 z-[90] rounded-full border border-slate-200/80 bg-white/95 px-4 py-2 text-xs font-semibold text-slate-700 shadow-lg shadow-slate-900/10 backdrop-blur transition-colors hover:bg-slate-50 md:bottom-auto md:right-6 md:top-24"
+            >
+              散点图{scatterData.length > 0 ? ` · ${scatterData.length}` : ""}
+            </button>
+          ) : null}
+
+          {isScatterPanelOpen ? (
+            <div className="fixed inset-x-3 bottom-3 z-[90] flex h-[46vh] flex-col rounded-2xl border border-white/70 bg-white/90 p-3 shadow-2xl shadow-slate-900/15 backdrop-blur-xl md:inset-auto md:right-6 md:top-24 md:h-[260px] md:w-[520px]">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Scatter View</p>
+                  <p className="truncate text-sm font-bold text-slate-900">爆款特征散点图</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {scatterSummary ? (
+                    <span className="rounded-full border border-slate-200/80 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                      共 {scatterData.length} 个
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setIsScatterPanelOpen(false)}
+                    className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                  >
+                    隐藏
+                  </button>
+                </div>
+              </div>
+              <div className="min-h-0 flex-1">{renderScatterChart()}</div>
+            </div>
+          ) : null}
+        </>,
+        document.body,
+      )
+    : null;
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-[28px] border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
-        <div className="space-y-4">
-          <div className="space-y-2">
+    <div className="space-y-6" aria-label="爆款分析">
+      {floatingScatterLayer}
+
+      <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur-xl">
+        <div className="space-y-3">
+          <div className="grid gap-2 xl:grid-cols-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="mr-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">Quick Filters</span>
               {filters.map((filter) => (
@@ -606,7 +757,7 @@ export function HitAnalyzer({
                   key={filter.id}
                   onClick={() => setActiveFilter(filter.id)}
                   className={cn(
-                    "rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-300",
+                    "rounded-full border px-3 py-1 text-xs font-semibold transition-all duration-300",
                     activeFilter === filter.id
                       ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-md shadow-blue-500/20"
                       : "border-slate-200/60 bg-white/60 text-slate-600 hover:border-slate-300 hover:bg-white",
@@ -624,7 +775,7 @@ export function HitAnalyzer({
                   key={preset.id}
                   onClick={() => applyTimePreset(preset.id)}
                   className={cn(
-                    "rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-300",
+                    "rounded-full border px-3 py-1 text-xs font-semibold transition-all duration-300",
                     activeTimePreset === preset.id
                       ? "border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/15"
                       : "border-slate-200/60 bg-white/60 text-slate-600 hover:border-slate-300 hover:bg-white",
@@ -636,7 +787,7 @@ export function HitAnalyzer({
             </div>
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)]">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">Submitters</p>
               {lockedSubmitter ? (
@@ -652,8 +803,36 @@ export function HitAnalyzer({
                   </button>
                 </div>
               ) : null}
-              <div className="flex flex-wrap gap-2">
-                {submitters.map((name) => (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="rounded-full bg-white/70 px-2.5 py-1 font-medium">已选 {effectiveSelectedSubmitters.length} 人</span>
+              {submitterPageCount > 1 ? (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <button
+                    type="button"
+                    onClick={() => setSubmitterPage((current) => Math.max(0, current - 1))}
+                    disabled={safeSubmitterPage === 0}
+                    className="rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 font-semibold text-slate-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    上一页
+                  </button>
+                  <span className="min-w-12 text-center tabular-nums">
+                    {safeSubmitterPage + 1}/{submitterPageCount}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitterPage((current) => Math.min(submitterPageCount - 1, current + 1))}
+                    disabled={safeSubmitterPage >= submitterPageCount - 1}
+                    className="rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 font-semibold text-slate-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    下一页
+                  </button>
+                </div>
+              ) : null}
+              </div>
+              <div className="flex max-h-[5.9rem] flex-wrap gap-1.5 overflow-hidden">
+                {submitters
+                  .slice(safeSubmitterPage * SUBMITTER_PAGE_SIZE, safeSubmitterPage * SUBMITTER_PAGE_SIZE + SUBMITTER_PAGE_SIZE)
+                  .map((name) => (
                   <button
                     key={name}
                     onClick={() => {
@@ -671,7 +850,7 @@ export function HitAnalyzer({
                       });
                     }}
                     className={cn(
-                      "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                      "min-w-0 truncate rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                       effectiveSelectedSubmitters.includes(name)
                         ? "border-slate-800 bg-slate-800 text-white"
                         : "border-slate-200 bg-transparent text-slate-600 hover:border-slate-300 hover:bg-white/50",
@@ -683,7 +862,7 @@ export function HitAnalyzer({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+            <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">时间范围</p>
@@ -698,7 +877,7 @@ export function HitAnalyzer({
                 ) : null}
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-medium text-slate-500">开始日期</p>
                   <Input
@@ -708,7 +887,7 @@ export function HitAnalyzer({
                     max={dateTo || dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("from", event.target.value)}
-                    className="h-10 bg-white"
+                    className="h-8 bg-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -720,51 +899,48 @@ export function HitAnalyzer({
                     max={dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("to", event.target.value)}
-                    className="h-10 bg-white"
+                    className="h-8 bg-white"
                   />
                 </div>
               </div>
 
-              <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                固定周期会自动改写开始/结束日期；手动修改日期后会自动切到“自定义”。当前筛选基于日报日期，并在页面已有分析周期范围内继续细分。
-              </p>
             </div>
           </div>
         </div>
       </div>
 
       {stats ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <div className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-xl border border-white/60 bg-white/85 px-3 py-2.5 shadow-sm backdrop-blur-xl">
             <p className="text-xs font-medium text-slate-500">筛选样本</p>
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{stats.count}</p>
+            <p className="mt-1 text-xl font-black tracking-tight text-slate-900">{stats.count}</p>
             <p className="mt-1 text-xs text-slate-500">其中 {stats.validScatterCount} 条可进入散点图分析</p>
           </div>
-          <div className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+          <div className="rounded-xl border border-white/60 bg-white/85 px-3 py-2.5 shadow-sm backdrop-blur-xl">
             <p className="text-xs font-medium text-slate-500">平均播放量</p>
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{formatPlayCount(stats.avgPlay)}</p>
+            <p className="mt-1 text-xl font-black tracking-tight text-slate-900">{formatPlayCount(stats.avgPlay)}</p>
             <p className="mt-1 text-xs text-slate-500">爆款率 {formatPercent(stats.hitRate)}</p>
           </div>
-          <div className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+          <div className="rounded-xl border border-white/60 bg-white/85 px-3 py-2.5 shadow-sm backdrop-blur-xl">
             <p className="text-xs font-medium text-slate-500">平均完播率</p>
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">
+            <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
               {stats.avgCr !== null ? formatPercent(stats.avgCr) : "--"}
             </p>
             <p className="mt-1 text-xs text-slate-500">高完播样本占比 {formatPercent(stats.highCompletionRate)}</p>
           </div>
-          <div className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+          <div className="rounded-xl border border-white/60 bg-white/85 px-3 py-2.5 shadow-sm backdrop-blur-xl">
             <p className="text-xs font-medium text-slate-500">平均互动率</p>
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">
+            <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
               {stats.engagementRate !== null ? formatPercent(stats.engagementRate, 2) : "--"}
             </p>
             <p className="mt-1 text-xs text-slate-500">均值点赞 {stats.avgLikes.toLocaleString("zh-CN")}</p>
           </div>
-          <div className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
+          <div className="rounded-xl border border-white/60 bg-white/85 px-3 py-2.5 shadow-sm backdrop-blur-xl">
             <p className="text-xs font-medium text-slate-500">平均播放时长</p>
-            <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">
+            <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
               {stats.avgDur !== null ? `${stats.avgDur.toFixed(1)}秒` : "--"}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-0.5 truncate text-xs text-slate-500">
               均值评赞转藏 {stats.avgComments}/{stats.avgShares}/{stats.avgFavorites}
             </p>
           </div>
@@ -777,7 +953,7 @@ export function HitAnalyzer({
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">图表分析</p>
             <h3 className="text-lg font-bold text-[var(--color-text-primary)]">爆款特征散点图</h3>
             <p className="text-xs text-[var(--color-text-secondary)]">
-              先完成筛选和结果概览，再看视频提交样本与摘要，散点图放在整个模块最下面。
+              先完成筛选和结果概览，再通过右上角悬浮散点图观察播放与完播的关系。
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -850,9 +1026,9 @@ export function HitAnalyzer({
                 </div>
 
                 {leadInsight.content ? (
-                  <div className="rounded-2xl border border-slate-100 bg-white p-4">
+                  <div className="rounded-2xl border border-slate-100 bg-white p-3">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">关联文案</p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{leadInsight.content}</p>
+                    <p className="max-h-[12rem] overflow-y-auto whitespace-pre-wrap pr-2 text-sm leading-6 text-slate-700">{leadInsight.content}</p>
                   </div>
                 ) : null}
 
@@ -939,7 +1115,7 @@ export function HitAnalyzer({
               <div className="mt-4 max-h-[320px] space-y-2 overflow-y-auto pr-1">
                 {stats.contents.map((content, index) => (
                   <div key={`${index}-${content.slice(0, 8)}`} className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{content}</p>
+                    <p className="max-h-[12rem] overflow-y-auto whitespace-pre-wrap pr-2 text-sm leading-6 text-slate-700">{content}</p>
                   </div>
                 ))}
               </div>
@@ -977,101 +1153,6 @@ export function HitAnalyzer({
         </div>
       )}
 
-      <div className="rounded-3xl border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.82)_0%,rgba(248,250,252,0.72)_100%)] p-6 shadow-sm backdrop-blur-xl">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Scatter View</p>
-            <p className="text-sm font-semibold text-slate-900">散点图已移动到爆款分析器最下面</p>
-          </div>
-          {scatterSummary ? (
-            <span className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600">
-              共 {scatterData.length} 个散点
-            </span>
-          ) : null}
-        </div>
-
-        <div className="h-[420px] w-full rounded-[28px] border border-white/70 bg-white/70 p-3 shadow-inner">
-          {scatterData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 24, right: 24, bottom: 20, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis
-                  type="number"
-                  dataKey="cr"
-                  name="完播率"
-                  unit="%"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "#64748b" }}
-                  domain={["auto", "auto"]}
-                />
-                <YAxis
-                  type="number"
-                  dataKey="play"
-                  name="播放量"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "#64748b" }}
-                  tickFormatter={(value: number) => formatPlayCount(value)}
-                  domain={["auto", "auto"]}
-                />
-                <ZAxis type="number" dataKey="engagement" range={[80, 420]} name="互动量" />
-                <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: "3 3", stroke: "#94a3b8" }} />
-                <ReferenceLine
-                  y={hitThreshold}
-                  stroke="var(--color-rose-500, #f43f5e)"
-                  strokeDasharray="4 4"
-                  label={{
-                    position: "insideTopLeft",
-                    value: "爆款阈值线 (10w+)",
-                    fill: "var(--color-rose-500, #f43f5e)",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    offset: 10,
-                  }}
-                />
-                {scatterSummary ? (
-                  <ReferenceLine
-                    x={scatterSummary.highCompletionLine}
-                    stroke="var(--color-primary, #3b82f6)"
-                    strokeDasharray="4 4"
-                    label={{
-                      position: "insideBottomRight",
-                      value: `完播参考线 (${formatPercent(scatterSummary.highCompletionLine)})`,
-                      fill: "var(--color-primary, #3b82f6)",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  />
-                ) : null}
-                <Scatter data={scatterData} shape="circle">
-                  {scatterData.map((datum, index) => {
-                    const isActive = datum.id === activePointId;
-                    return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={datum.isHit ? "var(--color-rose-500, #f43f5e)" : "var(--color-primary-light, #60a5fa)"}
-                        fillOpacity={isActive ? 0.98 : datum.isHit ? 0.84 : 0.62}
-                        stroke={isActive ? "#0f172a" : datum.isHit ? "var(--color-rose-600, #e11d48)" : "var(--color-primary, #3b82f6)"}
-                        strokeWidth={isActive ? 2.8 : datum.isHit ? 1.4 : 1}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setActivePointId(datum.id)}
-                      />
-                    );
-                  })}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-white/60 px-6 text-center">
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-slate-700">当前筛选下暂无可绘制散点图的数据</p>
-                <p className="text-xs text-slate-500">需要同时存在播放量和完播率，放宽时间周期或其他筛选后会自动恢复渲染。</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

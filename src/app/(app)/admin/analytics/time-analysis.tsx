@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, Clock3, Flame, Info, MousePointer2, Pin, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, Flame, MousePointer2, Pin, XCircle } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
@@ -251,18 +251,18 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
     : false;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-1.5">
-          <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">时间维度分析</h3>
-          <p className="max-w-2xl text-sm text-[var(--color-text-secondary)]">
+    <div className="space-y-4">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.72fr)]">
+        <div className="space-y-1">
+          <h3 className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">时间维度分析</h3>
+          <p className="max-w-2xl text-xs leading-5 text-[var(--color-text-secondary)]">
             保留 7 x 24 热力图结构，用播放中位数观察一周内各发布时间的表现；悬停可预览，点击可锁定右侧详情。
           </p>
         </div>
 
         <div
           className={cn(
-            "relative overflow-hidden rounded-2xl border px-5 py-4 shadow-[0_2px_10px_rgba(225,29,72,0.06)] backdrop-blur-sm",
+            "relative overflow-hidden rounded-xl border px-4 py-3 shadow-[0_2px_10px_rgba(225,29,72,0.06)] backdrop-blur-sm",
             recommendationMeta.hasRecommendation
               ? "border-rose-200/60 bg-[linear-gradient(135deg,rgba(255,241,242,0.86)_0%,rgba(255,228,230,0.6)_100%)]"
               : "border-slate-200 bg-[linear-gradient(135deg,rgba(248,250,252,0.95)_0%,rgba(241,245,249,0.86)_100%)]",
@@ -278,11 +278,11 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
             <div className="flex items-center gap-3">
               <div
                 className={cn(
-                  "flex size-11 items-center justify-center rounded-full shadow-inner",
+                  "flex size-9 items-center justify-center rounded-full shadow-inner",
                   recommendationMeta.hasRecommendation ? "bg-rose-100 text-rose-600" : "bg-slate-100 text-slate-500",
                 )}
               >
-                {recommendationMeta.hasRecommendation ? <Flame className="size-5" /> : <Clock3 className="size-5" />}
+                {recommendationMeta.hasRecommendation ? <Flame className="size-4" /> : <Clock3 className="size-4" />}
               </div>
               <div>
                 <p
@@ -295,7 +295,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 </p>
                 <p
                   className={cn(
-                    "mt-0.5 text-base font-black tracking-tight",
+                    "mt-0.5 text-sm font-black tracking-tight",
                     recommendationMeta.hasRecommendation ? "text-rose-950" : "text-slate-800",
                   )}
                 >
@@ -303,55 +303,55 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 </p>
               </div>
             </div>
-            <p className="text-sm leading-6 text-slate-600">{recommendationMeta.description}</p>
+            <p className="line-clamp-2 text-xs leading-5 text-slate-600">{recommendationMeta.description}</p>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-        <section className="rounded-[28px] border border-white/65 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.84))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
-          <div className="mb-5 grid gap-3 lg:grid-cols-2 2xl:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-[var(--shadow-light)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
+        <section className="rounded-2xl border border-white/65 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.84))] p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
+          <div className="mb-4 grid gap-2 md:grid-cols-4">
+            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
               <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">有效样本数</p>
-              <p className="mt-1 text-xl font-bold text-slate-950">{heatmapData.totalEligible}</p>
-              <p className="mt-1 text-xs text-slate-500">已同时具备播放数据和可解析发布时间</p>
+              <p className="mt-1 text-lg font-bold text-slate-950">{heatmapData.totalEligible}</p>
+              <p className="mt-0.5 truncate text-[11px] text-slate-500">已同时具备播放数据和可解析发布时间</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-[var(--shadow-light)]">
+            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
               <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">未纳入统计数</p>
-              <p className="mt-1 text-xl font-bold text-slate-950">{excludedCount}</p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-lg font-bold text-slate-950">{excludedCount}</p>
+              <p className="mt-0.5 truncate text-[11px] text-slate-500">
                 {excludedReasons.length > 0 ? excludedReasons.join("；") : "当前无排除样本"}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-[var(--shadow-light)]">
+            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
               <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">推荐窗口置信度</p>
-              <p className="mt-1 text-xl font-bold text-slate-950">
+              <p className="mt-1 text-lg font-bold text-slate-950">
                 {recommendationMeta.confidence ? recommendationMeta.confidence : "暂无"}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-0.5 truncate text-[11px] text-slate-500">
                 {recommendationMeta.hasRecommendation && recommendationWindowStats
                   ? `基于连续 3 小时窗口内 ${recommendationWindowStats.count} 条样本推断`
                   : "未达到稳定推荐所需的最低窗口样本"}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-[var(--shadow-light)]">
+            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
               <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">最高播放中位数</p>
-              <p className="mt-1 text-xl font-bold text-slate-950">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
-              <p className="mt-1 text-xs text-slate-500">用于定义热力图颜色强弱</p>
+              <p className="mt-1 text-lg font-bold text-slate-950">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
+              <p className="mt-0.5 truncate text-[11px] text-slate-500">用于定义热力图颜色强弱</p>
             </div>
           </div>
 
-          <div className="mb-5 rounded-2xl border border-slate-200/80 bg-slate-50/75 p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="mb-4 rounded-xl border border-slate-200/80 bg-slate-50/75 p-3">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-slate-900">推荐窗口说明</p>
-                <p className="text-sm leading-6 text-slate-600">{recommendationMeta.description}</p>
+                <p className="line-clamp-2 text-xs leading-5 text-slate-600">{recommendationMeta.description}</p>
               </div>
               {recommendationMeta.hasRecommendation ? (
-                <div className="rounded-xl border border-rose-200/80 bg-white/90 px-4 py-3 text-sm shadow-[var(--shadow-light)]">
+                <div className="rounded-xl border border-rose-200/80 bg-white/90 px-3 py-2 text-sm shadow-[var(--shadow-light)]">
                   <p className="font-semibold text-slate-900">{recommendationMeta.title}</p>
                   <p className="mt-1 text-slate-500">
                     窗口样本 {recommendationWindowStats?.count ?? 0} 条，窗口总播放{" "}
@@ -366,11 +366,11 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
             </div>
           </div>
 
-          <div className="overflow-x-auto pb-2">
+          <div className="overflow-x-auto pb-1">
             <div className="min-w-[760px]">
               <div
-                className="mb-3 grid items-center gap-2"
-                style={{ gridTemplateColumns: "72px repeat(24, minmax(20px, 1fr))" }}
+                className="mb-2 grid items-center gap-1.5"
+                style={{ gridTemplateColumns: "56px repeat(24, minmax(18px, 1fr))" }}
               >
                 <div />
                 {HOURS.map((hour) => (
@@ -380,14 +380,14 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 ))}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {WEEKDAYS.map((day, weekdayIndex) => (
                   <div
                     key={day}
-                    className="grid items-center gap-2"
-                    style={{ gridTemplateColumns: "72px repeat(24, minmax(20px, 1fr))" }}
+                    className="grid items-center gap-1.5"
+                    style={{ gridTemplateColumns: "56px repeat(24, minmax(18px, 1fr))" }}
                   >
-                    <div className="pr-2 text-sm font-semibold text-slate-600">{day}</div>
+                    <div className="pr-1 text-sm font-semibold text-slate-600">{day}</div>
                     {HOURS.map((hour) => {
                       const cell = heatmapData.grid[weekdayIndex][hour];
                       const isPreview =
@@ -414,7 +414,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                             )
                           }
                           className={cn(
-                            "group relative aspect-square min-h-6 rounded-[10px] border transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                            "group relative aspect-square min-h-5 rounded-lg border transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                             getIntensityClass(cell.medianPlay, heatmapData.maxMedianPlay),
                             cell.count > 0 ? "hover:-translate-y-0.5 hover:shadow-md" : "opacity-65 hover:opacity-80",
                             isWindowCell && "ring-1 ring-rose-300/90 ring-offset-1 ring-offset-white",
@@ -438,7 +438,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
             </div>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/75 p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mt-3 flex flex-col gap-2 rounded-xl border border-slate-200/80 bg-slate-50/75 p-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
               <div className="flex items-center gap-2">
                 <span className="inline-flex size-3 rounded bg-slate-100 ring-1 ring-slate-200" />
@@ -463,7 +463,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
           </div>
         </section>
 
-        <aside className="space-y-4 rounded-[28px] border border-slate-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(245,247,250,0.92))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
+        <aside className="space-y-3 rounded-2xl border border-slate-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(245,247,250,0.92))] p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-slate-400">
               <MousePointer2 className="size-3.5" />
@@ -479,7 +479,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
 
           {activeCell && activeSummary ? (
             <>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <div
                   className={cn(
                     "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
@@ -492,7 +492,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   {activeIsRecommended ? "属于推荐窗口" : "不属于推荐窗口"}
                 </div>
                 <div>
-                  <h4 className="text-2xl font-black tracking-tight text-slate-950">
+                  <h4 className="text-xl font-black tracking-tight text-slate-950">
                     {WEEKDAYS[activeCell.weekdayIndex]}
                   </h4>
                   <p className="mt-1 text-sm text-slate-500">{formatHourRange(activeCell.hour)}</p>
@@ -510,19 +510,19 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                   <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[var(--shadow-light)]">
                     <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">样本数</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-950">{activeSummary.count} 条</p>
+                    <p className="mt-1 text-xl font-bold text-slate-950">{activeSummary.count} 条</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[var(--shadow-light)]">
                     <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">播放中位数</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-950">{formatPlayCount(activeSummary.medianPlay)}</p>
+                    <p className="mt-1 text-xl font-bold text-slate-950">{formatPlayCount(activeSummary.medianPlay)}</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[var(--shadow-light)] sm:col-span-2 xl:col-span-1">
                     <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">总播放</p>
-                    <p className="mt-2 text-2xl font-bold text-slate-950">{formatPlayCount(activeSummary.totalPlay)}</p>
+                    <p className="mt-1 text-xl font-bold text-slate-950">{formatPlayCount(activeSummary.totalPlay)}</p>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
+                <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3">
                   <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">一句解释</p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
                     {buildCellDescription(activeSummary, activeIsRecommended, heatmapData.maxMedianPlay)}
@@ -540,14 +540,6 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
             </div>
           )}
         </aside>
-      </div>
-
-      <div className="flex items-start gap-2 rounded-xl border border-blue-100/50 bg-blue-50/50 p-3 text-sm text-blue-800">
-        <Info className="mt-0.5 size-4 shrink-0 text-blue-500" />
-        <p className="leading-relaxed text-[13px]">
-          热力图基于历史发布时间数据的<strong className="mx-0.5 font-semibold">播放量中位数</strong>
-          生成。为了避免时区偏移影响发布时间语义，这里按样本记录里的原始发布时间时段进行统计；缺少或无法解析发布时间的样本不会被纳入分析。推荐窗口置信度为前端展示层推断，用于帮助判断参考强弱，不会改动底层算法结论。
-        </p>
       </div>
     </div>
   );

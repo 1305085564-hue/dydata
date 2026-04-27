@@ -49,30 +49,29 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
   }
 
   return (
-    <section className="rounded-[28px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(246,249,255,0.86))] p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div className="space-y-3">
-            <p className="text-[11px] font-semibold tracking-[0.2em] text-[var(--color-text-tertiary)] uppercase">Business Analytics</p>
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-[-0.025em] text-[var(--color-text-primary)] sm:text-[30px]">经营分析总览</h1>
-              <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">先看核心结论判断方向，再下钻到各分析模块，减少信息噪音，提升决策速度。</p>
+    <section className="rounded-2xl border border-white/70 bg-white/82 p-3 shadow-[var(--shadow-light)] backdrop-blur-[18px] sm:p-4">
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Business Analytics</p>
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h1 className="text-xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-2xl">经营分析总览</h1>
+              <span className="text-xs font-medium text-[var(--color-text-secondary)]">{from} 至 {to}</span>
             </div>
           </div>
 
-          <div className="grid gap-2 rounded-[18px] border border-white/80 bg-white/88 p-3 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[280px]">
+          <div className="grid gap-1 rounded-xl border border-white/80 bg-white/88 px-3 py-2 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[240px]">
             <div className="inline-flex items-center gap-1.5 font-medium text-[var(--color-text-primary)]">
               <CalendarDays className="size-3.5 text-[var(--color-primary)]" />
               当前分析周期
             </div>
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{from} 至 {to}</p>
-            <p>口径统一后再看趋势，结论更稳定。</p>
           </div>
         </div>
 
-        <div className="rounded-[22px] border border-white/75 bg-white/72 p-4 backdrop-blur-[12px] sm:p-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="space-y-3">
+        <div className="rounded-xl border border-white/75 bg-white/72 p-3 backdrop-blur-[12px]">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+            <div className="space-y-2">
               <p className="text-xs font-semibold tracking-[0.08em] text-[var(--color-text-secondary)]">快捷时间切换</p>
               <div className="flex flex-wrap gap-2">
                 {presetOptions.map((option) => (
@@ -81,7 +80,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
                     size="sm"
                     variant={preset === option.value ? "default" : "outline"}
                     className={cn(
-                      "h-8 rounded-full px-4 text-xs transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]",
+                      "h-7 rounded-full px-3 text-xs transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]",
                       preset === option.value
                         ? "border-transparent shadow-[var(--shadow-light)]"
                         : "border-white/70 bg-white/88 text-[var(--color-text-secondary)]",

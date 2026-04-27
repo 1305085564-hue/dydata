@@ -8,7 +8,6 @@ import { HitAnalyzer } from "./hit-analyzer";
 import { PersonnelAnalysis } from "./personnel-analysis";
 import { TimeAnalysis } from "./time-analysis";
 import { AiInsight } from "./ai-insight";
-import { 视频结论卡 } from "./视频结论卡";
 import type { AnalyticsVideoRow } from "./视频结论卡-类型";
 import { FollowerConvertTrend } from "./follower-convert-trend";
 import { Button } from "@/components/ui/button";
@@ -45,15 +44,10 @@ interface AnalyticsWorkbenchProps {
   submitters: string[];
 }
 
-type AnalyticsSectionTarget = "hit-analyzer" | "personnel-analysis" | "time-analysis";
-
 export function AnalyticsWorkbench({
   userId,
   isPrivilegedUser,
   filteredReports,
-  filteredVideos,
-  filteredSnapshots,
-  filteredVideoTags,
   submitters,
 }: AnalyticsWorkbenchProps) {
   const [focusedSectionId, setFocusedSectionId] = useState<string | null>(null);
@@ -74,35 +68,11 @@ export function AnalyticsWorkbench({
     [scopedReports],
   );
 
-  const scopedVideos = useMemo(
-    () =>
-      lockedSubmitter
-        ? filteredVideos.filter((video) => (video.profiles?.name ?? "") === lockedSubmitter)
-        : filteredVideos,
-    [filteredVideos, lockedSubmitter],
-  );
-
-  const scopedVideoIds = useMemo(() => new Set(scopedVideos.map((video) => video.id)), [scopedVideos]);
-
-  const scopedSnapshots = useMemo(
-    () => filteredSnapshots.filter((snapshot) => scopedVideoIds.has(snapshot.video_id)),
-    [filteredSnapshots, scopedVideoIds],
-  );
-
-  const scopedVideoTags = useMemo(
-    () => filteredVideoTags.filter((tag) => scopedVideoIds.has(tag.video_id)),
-    [filteredVideoTags, scopedVideoIds],
-  );
-
   function focusSection(sectionId: string, submitter?: string | null) {
     if (typeof submitter === "string") {
       setLockedSubmitter(submitter);
     }
     setFocusedSectionId(sectionId);
-  }
-
-  function handleConclusionNavigate(target: AnalyticsSectionTarget, submitter?: string | null) {
-    focusSection(target, submitter);
   }
 
   const sections: AnalyticsSection[] = [
@@ -152,17 +122,11 @@ export function AnalyticsWorkbench({
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-6">
-        <视频结论卡
-          videos={scopedVideos as AnalyticsVideoRow[]}
-          snapshots={scopedSnapshots}
-          videoTags={scopedVideoTags}
-          onNavigate={handleConclusionNavigate}
-        />
+    <div className="space-y-5">
+      <div className="space-y-3">
 
         {lockedSubmitter ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-blue-900">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-xs text-blue-900">
             <span className="font-medium">当前已锁定成员：</span>
             <span className="rounded-full bg-white/90 px-3 py-1 font-semibold text-blue-700">{lockedSubmitter}</span>
             <span className="text-blue-700/80">下方爆款分析、时间分析和结论卡都已同步切到该成员样本。</span>

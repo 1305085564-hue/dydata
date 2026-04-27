@@ -100,6 +100,7 @@ export function PersonnelAnalysis({
   onSelectPerson,
 }: PersonnelAnalysisProps) {
   const [sortBy, setSortBy] = useState<SortKey>("avgPlay");
+  const shouldReduceMotion = useReducedMotion();
 
   const stats = useMemo(() => {
     const p70Map = computeP70Map(reports);
@@ -186,10 +187,9 @@ export function PersonnelAnalysis({
   const maxHitRate = Math.max(...stats.map((stat) => stat.hitRate), 1);
   const maxAvgPlay = Math.max(...stats.map((stat) => Math.max(stat.recentAvgPlay, stat.prevAvgPlay, stat.avgPlay)), 1);
   const maxEngagement = Math.max(...stats.map((stat) => stat.engagementRate), 1);
-  const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
           <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">{title}</h3>
@@ -216,7 +216,7 @@ export function PersonnelAnalysis({
         </div>
       </div>
 
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-3 xl:grid-cols-2">
+      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {sorted.map((person, index) => (
             <motion.div
@@ -264,24 +264,24 @@ function PersonRankCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-[22px] border bg-white p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] lg:p-4",
+        "group relative overflow-hidden rounded-2xl border bg-white p-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
         person.suggestion.borderColor,
         isActive && "ring-2 ring-blue-400/70 ring-offset-2 ring-offset-white",
       )}
     >
-      <div className="pointer-events-none absolute -right-2 -top-5 text-[72px] font-black leading-none text-slate-50 transition-colors group-hover:text-blue-50/60">
+      <div className="pointer-events-none absolute -right-2 -top-4 text-[58px] font-black leading-none text-slate-50 transition-colors group-hover:text-blue-50/60">
         {rank}
       </div>
 
-      <div className="relative z-10 space-y-3">
-        <div className="flex items-start justify-between gap-3">
+      <div className="relative z-10 space-y-2.5">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600 shadow-inner">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 shadow-inner">
                 {rank}
               </div>
               <div className="min-w-0">
-                <h4 className="truncate text-[15px] font-bold text-slate-800">{person.name}</h4>
+                <h4 className="truncate text-sm font-bold text-slate-800">{person.name}</h4>
                 <p className="mt-0.5 text-[11px] font-medium text-slate-400">
                   {isInsufficient ? "样本不足 · " : ""}已收集 {person.count} 条视频
                 </p>
@@ -289,28 +289,28 @@ function PersonRankCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className={cn("shrink-0 border-transparent", person.suggestion.bgColor, person.suggestion.color)}>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+            <Badge variant="outline" className={cn("h-6 shrink-0 border-transparent px-2 text-[10px]", person.suggestion.bgColor, person.suggestion.color)}>
               {person.suggestion.label}
             </Badge>
             <TrendBadge trend={person.trend} />
           </div>
         </div>
 
-        <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1.18fr)_minmax(0,0.82fr)]">
-          <div className="rounded-2xl bg-slate-50/80 p-2.5">
-            <div className="flex items-end justify-between gap-3">
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:grid-cols-1 2xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+          <div className="rounded-xl bg-slate-50/80 p-2">
+            <div className="flex items-end justify-between gap-2">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">均播对比</p>
-                <p className="mt-1 text-[17px] font-bold text-slate-900">{formatPlayCountCompact(person.avgPlay)}</p>
+                <p className="mt-0.5 text-base font-bold text-slate-900">{formatPlayCountCompact(person.avgPlay)}</p>
               </div>
               <div className="text-right">
                 <p className="text-[11px] font-medium text-slate-400">稳定性</p>
-                <p className="mt-1 text-sm font-semibold text-slate-700">{person.stability.toFixed(1)}</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-700">{person.stability.toFixed(1)}</p>
               </div>
             </div>
 
-            <div className="mt-3 space-y-2.5">
+            <div className="mt-2 space-y-2">
               <StackedBar
                 label="本周 (近7天)"
                 value={formatPlayCountCompact(person.recentAvgPlay)}
@@ -329,7 +329,7 @@ function PersonRankCard({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <MetricBarCard
               title="综合爆款率"
               value={`${person.hitRate.toFixed(1)}%`}
@@ -350,11 +350,11 @@ function PersonRankCard({
         </div>
 
         {onSelectPerson ? (
-          <div className="border-t border-slate-100 pt-3">
+          <div className="border-t border-slate-100 pt-2">
             <button
               type="button"
               onClick={() => onSelectPerson(person.name)}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
             >
               查看该成员样本
             </button>
@@ -376,7 +376,7 @@ function TrendBadge({ trend }: { trend: number }) {
     );
 
   return (
-    <div className="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+    <div className="flex h-6 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
       {icon}
       <span>{formatSignedPercent(trend)}</span>
     </div>
@@ -399,8 +399,8 @@ function StackedBar({
   muted?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
-      <div className={cn("flex items-center justify-between text-[11px] font-semibold", muted ? "text-slate-400" : "text-slate-500")}>
+    <div className="space-y-1">
+      <div className={cn("flex items-center justify-between gap-2 text-[10px] font-semibold", muted ? "text-slate-400" : "text-slate-500")}>
         <span>{label}</span>
         <span className={cn("text-slate-700", muted && "text-slate-500")}>{value}</span>
       </div>
@@ -427,17 +427,17 @@ function MetricBarCard({
   description: string;
 }) {
   return (
-    <div className={cn("rounded-[18px] p-2.5", toneClassName)}>
-      <div className="flex items-end justify-between gap-3">
+    <div className={cn("rounded-xl p-2", toneClassName)}>
+      <div className="flex items-end justify-between gap-2">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{title}</p>
-          <p className="mt-0.5 text-base font-bold text-slate-900">{value}</p>
+          <p className="mt-0.5 text-sm font-bold text-slate-900">{value}</p>
         </div>
       </div>
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/90">
         <div className={cn("h-full rounded-full transition-all duration-1000", barClassName)} style={{ width: `${width}%` }} />
       </div>
-      <p className="mt-1 text-[10px] leading-4 text-slate-500">{description}</p>
+      <p className="mt-1 line-clamp-1 text-[10px] leading-4 text-slate-500">{description}</p>
     </div>
   );
 }
