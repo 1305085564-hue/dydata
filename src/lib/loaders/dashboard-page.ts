@@ -8,9 +8,10 @@ import {
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
+import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { formatDateOnly, getSafeAccountDisplayName, shiftDateOnly, uniqueNonEmpty } from "./shared";
 
-type DashboardSupabase = SupabaseClient<unknown, "public", unknown>;
+type DashboardSupabase = SupabaseClient;
 
 type DashboardAccountRow = {
   id: string;
@@ -22,6 +23,131 @@ type DashboardHistoryRow = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;
   account_id: string;
 };
+
+type ProfileWithExemptionRow = {
+  name: string | null;
+  status: string | null;
+  exempt_type: "permanent" | "temporary" | null;
+  exempt_start_date: string | null;
+  exempt_end_date: string | null;
+  exempt_reason: string | null;
+  exemption_category: "waive" | "leave" | null;
+};
+
+type ProfileWithoutCategoryRow = Omit<ProfileWithExemptionRow, "exemption_category">;
+
+type ApprovedRequestGrantRow = {
+  applicant_user_id: string;
+  exemption_type: string;
+  exemption_category?: "waive" | "leave" | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string | null;
+};
+
+function isMissingProfileExemptionCategoryError(error: { message?: string } | null | undefined) {
+  return Boolean(
+    error?.message &&
+      (error.message.includes("profiles.exemption_category") ||
+        error.message.includes("column profiles.exemption_category does not exist") ||
+        error.message.includes("Could not find the 'exemption_category' column of 'profiles'")),
+  );
+}
+
+function isMissingExemptionGrantTableError(error: { message?: string } | null | undefined) {
+  return Boolean(
+    error?.message &&
+      error.message.includes("public.exemption_grant") &&
+      error.message.includes("schema cache"),
+  );
+}
+
+async function loadDashboardProfile(
+  supabase: DashboardSupabase,
+  userId: string,
+): Promise<ProfileWithExemptionRow | null> {
+  const primary = await supabase
+    .from("profiles")
+    .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
+    .eq("id", userId)
+    .single();
+
+  if (!isMissingProfileExemptionCategoryError(primary.error)) {
+    return (primary.data as ProfileWithExemptionRow | null) ?? null;
+  }
+
+  const fallback = await supabase
+    .from("profiles")
+    .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason")
+    .eq("id", userId)
+    .single();
+
+  if (!fallback.data) return null;
+
+  return {
+    ...(fallback.data as ProfileWithoutCategoryRow),
+    exemption_category: null,
+  };
+}
+
+async function loadApprovedRequestGrantsFallback(
+  supabase: DashboardSupabase,
+  userId: string,
+): Promise<ExemptionGrantLike[]> {
+  const primary = await supabase
+    .from("exemption_request")
+    .select("applicant_user_id, exemption_type, exemption_category, start_date, end_date, created_at")
+    .eq("applicant_user_id", userId)
+    .eq("request_status", "approved")
+    .order("created_at", { ascending: false });
+
+  if (!isMissingExemptionRequestCategoryError(primary.error)) {
+    return ((primary.data ?? []) as ApprovedRequestGrantRow[]).map((request) => ({
+      user_id: request.applicant_user_id,
+      start_date: request.start_date,
+      end_date: request.end_date,
+      grant_type: request.exemption_type,
+      exemption_category: request.exemption_category ?? "waive",
+      status: "active",
+      created_at: request.created_at,
+    }));
+  }
+
+  const fallback = await supabase
+    .from("exemption_request")
+    .select("applicant_user_id, exemption_type, start_date, end_date, created_at")
+    .eq("applicant_user_id", userId)
+    .eq("request_status", "approved")
+    .order("created_at", { ascending: false });
+
+  return ((fallback.data ?? []) as ApprovedRequestGrantRow[]).map((request) => ({
+    user_id: request.applicant_user_id,
+    start_date: request.start_date,
+    end_date: request.end_date,
+    grant_type: request.exemption_type,
+    exemption_category: "waive",
+    status: "active",
+    created_at: request.created_at,
+  }));
+}
+
+async function loadUserExemptionGrants(
+  supabase: DashboardSupabase,
+  userId: string,
+): Promise<ExemptionGrantLike[]> {
+  const primary = await supabase
+    .from("exemption_grant")
+    .select("user_id, start_date, end_date, grant_type, exemption_category, status, created_at")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  if (!isMissingExemptionGrantTableError(primary.error)) {
+    return (primary.data ?? []) as ExemptionGrantLike[];
+  }
+
+  return loadApprovedRequestGrantsFallback(supabase, userId);
+}
 
 export interface DashboardPageData {
   today: string;
@@ -56,23 +182,20 @@ export async function loadDashboardPageData({
   supabase: DashboardSupabase;
   userId: string;
 }): Promise<DashboardPageData> {
-  const [{ data: accounts }, { data: profile }] = await Promise.all([
+  const [accountsResult, profile] = await Promise.all([
     supabase
       .from("accounts")
       .select("id, name, content_direction")
       .eq("profile_id", userId)
       .order("created_at", { ascending: true }),
-    supabase
-      .from("profiles")
-      .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
-      .eq("id", userId)
-      .single(),
+    loadDashboardProfile(supabase, userId),
   ]);
 
+  const accounts = accountsResult.data;
   const userDisplayName = profile?.name?.trim() || "当前用户";
   const userExemptionProfile: ExemptionProfileLike = {
     id: userId,
-    status: profile?.status ?? "active",
+    status: profile?.status === "exempt" ? "exempt" : "active",
     exempt_type: profile?.exempt_type ?? null,
     exempt_start_date: profile?.exempt_start_date ?? null,
     exempt_end_date: profile?.exempt_end_date ?? null,
@@ -108,7 +231,7 @@ export async function loadDashboardPageData({
     { data: activeProfiles },
     { data: monthDateRows },
     { data: monthHistory },
-    { data: exemptionGrants },
+    userExemptionGrants,
     hasPendingExemption,
   ] = await Promise.all([
     accountIds.length
@@ -158,16 +281,9 @@ export async function loadDashboardPageData({
           .order("report_date", { ascending: false })
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [] }),
-    supabase
-      .from("exemption_grant")
-      .select("user_id, start_date, end_date, grant_type, exemption_category, status, created_at")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false }),
+    loadUserExemptionGrants(supabase, userId),
     hasPendingExemptionRequest(),
   ]);
-
-  const userExemptionGrants = (exemptionGrants ?? []) as ExemptionGrantLike[];
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
@@ -206,9 +322,10 @@ export async function loadDashboardPageData({
     today,
     userExemptionGrants,
   );
-  const submittedCountForSummary = todayExemptionState.isExempt && todayExemptionState.category !== "leave"
-    ? displayAccounts.length
-    : submittedAccountIds.size;
+  const submittedCountForSummary =
+    todayExemptionState.isExempt && todayExemptionState.category !== "leave"
+      ? displayAccounts.length
+      : submittedAccountIds.size;
   const pendingCountForSummary = todayExemptionState.isExempt
     ? 0
     : Math.max(displayAccounts.length - submittedAccountIds.size, 0);
