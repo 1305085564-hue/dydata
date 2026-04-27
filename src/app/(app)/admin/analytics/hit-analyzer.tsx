@@ -1099,7 +1099,7 @@ export function HitAnalyzer({
       </div>
 
       {stats ? (
-        <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="grid items-start gap-3 xl:grid-cols-2">
           <div className="self-start rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div>
