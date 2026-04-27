@@ -194,29 +194,6 @@ function getRecommendationMeta(
   };
 }
 
-function buildCellDescription(
-  cell: TimeAnalysisCell,
-  isRecommended: boolean,
-  maxMedianPlay: number,
-) {
-  if (cell.count === 0) {
-    return "这个时段当前没有有效样本，建议查看相邻时段或优先参考推荐窗口。";
-  }
-
-  if (isRecommended) {
-    return "这个时段位于当前推荐窗口内，样本量和播放表现都相对更值得优先验证。";
-  }
-
-  if ((cell.medianPlay ?? 0) >= maxMedianPlay * 0.8) {
-    return "这个时段的播放中位数已经接近全局高位，可以和推荐窗口一起做 AB 对比。";
-  }
-
-  if (cell.count >= 3) {
-    return "这个时段已有一定样本基础，但整体表现仍需和推荐窗口对照判断稳定性。";
-  }
-
-  return "这个时段有少量样本，可作为补充观察点，但暂时不建议单独据此定排期。";
-}
 
 export function TimeAnalysis({ reports }: TimeAnalysisProps) {
   const heatmapData = useMemo(() => buildTimeAnalysisSummary(reports), [reports]);
@@ -308,8 +285,8 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
-        <section className="rounded-2xl border border-white/65 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.84))] p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
+        <section className="self-start rounded-2xl border border-white/65 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.84))] p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
           <div className="mb-4 grid gap-2 md:grid-cols-4">
             <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
               <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">有效样本数</p>
@@ -463,7 +440,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
           </div>
         </section>
 
-        <aside className="space-y-3 rounded-2xl border border-slate-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(245,247,250,0.92))] p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
+        <aside className="space-y-2.5 self-start rounded-2xl border border-slate-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(245,247,250,0.92))] p-3 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-slate-400">
               <MousePointer2 className="size-3.5" />
@@ -492,50 +469,39 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   {activeIsRecommended ? "属于推荐窗口" : "不属于推荐窗口"}
                 </div>
                 <div>
-                  <h4 className="text-xl font-black tracking-tight text-slate-950">
+                  <h4 className="text-lg font-black tracking-tight text-slate-950">
                     {WEEKDAYS[activeCell.weekdayIndex]}
                   </h4>
-                  <p className="mt-1 text-sm text-slate-500">{formatHourRange(activeCell.hour)}</p>
+                  <p className="mt-0.5 text-sm text-slate-500">{formatHourRange(activeCell.hour)}</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[var(--shadow-light)]">
+              <div className="space-y-2.5">
+                <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
                   <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">当前时段</p>
-                  <p className="mt-2 text-lg font-bold text-slate-950">
+                  <p className="mt-1 text-base font-bold text-slate-950">
                     {WEEKDAYS[activeCell.weekdayIndex]} {formatHourRange(activeCell.hour)}
                   </p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                  <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[var(--shadow-light)]">
+                <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+                  <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
                     <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">样本数</p>
-                    <p className="mt-1 text-xl font-bold text-slate-950">{activeSummary.count} 条</p>
+                    <p className="mt-0.5 text-lg font-bold text-slate-950">{activeSummary.count} 条</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[var(--shadow-light)]">
+                  <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
                     <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">播放中位数</p>
-                    <p className="mt-1 text-xl font-bold text-slate-950">{formatPlayCount(activeSummary.medianPlay)}</p>
+                    <p className="mt-0.5 text-lg font-bold text-slate-950">{formatPlayCount(activeSummary.medianPlay)}</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[var(--shadow-light)] sm:col-span-2 xl:col-span-1">
+                  <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
                     <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">总播放</p>
-                    <p className="mt-1 text-xl font-bold text-slate-950">{formatPlayCount(activeSummary.totalPlay)}</p>
+                    <p className="mt-0.5 text-lg font-bold text-slate-950">{formatPlayCount(activeSummary.totalPlay)}</p>
                   </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3">
-                  <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">一句解释</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {buildCellDescription(activeSummary, activeIsRecommended, heatmapData.maxMedianPlay)}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 text-sm leading-6 text-slate-600">
-                  {selectedCell ? "再次点击当前格子可取消锁定，恢复为悬停预览模式。" : "当前未锁定时段，点击热力格可固定查看。"}
                 </div>
               </div>
             </>
           ) : (
-            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-5 text-sm text-slate-600">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 text-sm text-slate-600">
               点击任意热力单元格查看该时段表现。
             </div>
           )}
