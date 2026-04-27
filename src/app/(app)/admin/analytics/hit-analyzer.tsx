@@ -182,11 +182,11 @@ function SummaryBucketCard({
   items: Array<{ label: string; count: number; pct: number }>;
 }) {
   return (
-    <div className="rounded-2xl bg-slate-50/80 p-4">
-      <p className="text-xs font-semibold text-slate-500">{title}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+    <div className="rounded-xl bg-slate-50/80 p-3">
+      <p className="text-[11px] font-semibold text-slate-500">{title}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {items.map((item) => (
-          <div key={item.label} className="rounded-xl border border-slate-200/80 bg-white px-2.5 py-1.5 text-xs">
+          <div key={item.label} className="rounded-full border border-slate-200/80 bg-white px-2 py-1 text-[11px]">
             <span className="font-semibold tracking-tight text-slate-700">{item.label}</span>
             <span className="ml-1 tabular-nums text-slate-400">
               {item.count}条 ({item.pct}%)
@@ -1099,8 +1099,8 @@ export function HitAnalyzer({
       </div>
 
       {stats ? (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="rounded-[28px] border border-white/60 bg-white/85 p-5 shadow-sm backdrop-blur-xl">
+        <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="self-start rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">文案分析</p>
@@ -1112,10 +1112,10 @@ export function HitAnalyzer({
             </div>
 
             {stats.contents.length > 0 ? (
-              <div className="mt-4 max-h-[320px] space-y-2 overflow-y-auto pr-1">
+              <div className="mt-3 max-h-[320px] space-y-2 overflow-y-auto pr-1">
                 {stats.contents.map((content, index) => (
-                  <div key={`${index}-${content.slice(0, 8)}`} className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
-                    <p className="max-h-[12rem] overflow-y-auto whitespace-pre-wrap pr-2 text-sm leading-6 text-slate-700">{content}</p>
+                  <div key={`${index}-${content.slice(0, 8)}`} className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+                    <p className="max-h-[10rem] overflow-y-auto whitespace-pre-wrap pr-2 text-sm leading-6 text-slate-700">{content}</p>
                   </div>
                 ))}
               </div>
@@ -1126,9 +1126,9 @@ export function HitAnalyzer({
             )}
           </div>
 
-          <div className="rounded-[28px] border border-white/60 bg-white/85 p-5 shadow-sm backdrop-blur-xl">
+          <div className="self-start rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur-xl">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">规律总结</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {stats.crDistribution ? <SummaryBucketCard title="完播率区间分布" items={stats.crDistribution} /> : null}
               <SummaryBucketCard title="标题长度分布" items={stats.titleLenDist} />
               {stats.contentLenDist ? <SummaryBucketCard title="文案长度分布" items={stats.contentLenDist} /> : null}
