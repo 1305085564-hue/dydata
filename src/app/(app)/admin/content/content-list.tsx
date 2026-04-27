@@ -66,6 +66,18 @@ function formatDateTime(value: string | null) {
   }).format(date);
 }
 
+function getVideoDateKey(video: VideoRow) {
+  return (video.published_at ?? video.created_at)?.slice(0, 10) ?? "";
+}
+
+function getVideoMonthKey(video: VideoRow) {
+  return getVideoDateKey(video).slice(0, 7);
+}
+
+function getSnapshotPlay(snapshot: VideoMetricsSnapshot | undefined) {
+  return snapshot?.play_count ?? 0;
+}
+
 export function ContentList({
   videos,
   snapshots,
@@ -81,6 +93,7 @@ export function ContentList({
     status: "all",
     hasSnapshot: "all",
     reviewed: "all",
+    rankScope: "all",
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [localReviewedIds, setLocalReviewedIds] = useState<Set<string>>(
@@ -106,18 +119,13 @@ export function ContentList({
   }, []);
 
   const filtered = useMemo(() => {
-    return videos.filter((video) => {
+    const rows = videos.filter((video) => {
       if (filters.profileId !== "all" && video.user_id !== filters.profileId) return false;
       if (filters.accountId !== "all" && video.account_id !== filters.accountId) return false;
       if (filters.status !== "all" && video.anomaly_status !== filters.status) return false;
-      if (filters.startDate) {
-        const pub = video.published_at?.slice(0, 10) ?? "";
-        if (pub < filters.startDate) return false;
-      }
-      if (filters.endDate) {
-        const pub = video.published_at?.slice(0, 10) ?? "";
-        if (pub > filters.endDate) return false;
-      }
+      const pub = getVideoDateKey(video);
+      if (filters.startDate && pub < filters.startDate) return false;
+      if (filters.endDate && pub > filters.endDate) return false;
       const hasSnap = snapshotMap.has(video.id);
       if (filters.hasSnapshot === "yes" && !hasSnap) return false;
       if (filters.hasSnapshot === "no" && hasSnap) return false;
@@ -125,6 +133,30 @@ export function ContentList({
       if (filters.reviewed === "yes" && !isReviewed) return false;
       if (filters.reviewed === "no" && isReviewed) return false;
       return true;
+    });
+
+    let scopedRows = rows;
+    if (filters.rankScope === "day") {
+      const targetDay =
+        filters.startDate ||
+        filters.endDate ||
+        rows.map(getVideoDateKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
+        "";
+      scopedRows = targetDay ? rows.filter((video) => getVideoDateKey(video) === targetDay) : rows;
+    }
+
+    if (filters.rankScope === "month") {
+      const targetMonth =
+        (filters.startDate || filters.endDate)?.slice(0, 7) ||
+        rows.map(getVideoMonthKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
+        "";
+      scopedRows = targetMonth ? rows.filter((video) => getVideoMonthKey(video) === targetMonth) : rows;
+    }
+
+    return [...scopedRows].sort((left, right) => {
+      const playDiff = getSnapshotPlay(snapshotMap.get(right.id)) - getSnapshotPlay(snapshotMap.get(left.id));
+      if (playDiff !== 0) return playDiff;
+      return getVideoDateKey(right).localeCompare(getVideoDateKey(left));
     });
   }, [videos, filters, snapshotMap, localReviewedIds]);
 
@@ -139,6 +171,7 @@ export function ContentList({
         <Table>
           <TableHeader>
             <TableRow className="border-b border-border/40">
+              <TableHead className="w-16 text-xs">排名</TableHead>
               <TableHead className="min-w-[200px] text-xs">标题</TableHead>
               <TableHead className="text-xs">人员</TableHead>
               <TableHead className="text-xs">账号</TableHead>
@@ -155,17 +188,20 @@ export function ContentList({
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="py-12 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
                   暂无内容
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((video) => {
+              filtered.map((video, index) => {
                 const snap = snapshotMap.get(video.id);
                 const sample = getSampleCredibility(snap?.play_count ?? null, video.anomaly_status);
                 const isReviewed = localReviewedIds.has(video.id);
                 return (
                   <TableRow key={video.id} className="border-b border-border/30 hover:bg-muted/20">
+                    <TableCell className="py-3 text-sm font-semibold tabular-nums text-muted-foreground">
+                      #{index + 1}
+                    </TableCell>
                     <TableCell className="max-w-md py-3">
                       <div className="line-clamp-2 text-sm font-medium text-foreground" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                         {video.video_title || video.content?.slice(0, 30) || "（无标题）"}

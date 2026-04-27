@@ -24,6 +24,7 @@ export interface ContentFilterValue {
   status: AnomalyStatus | "all";
   hasSnapshot: "all" | "yes" | "no";
   reviewed: "all" | "yes" | "no";
+  rankScope: "all" | "day" | "month";
 }
 
 interface ContentFiltersProps {
@@ -40,6 +41,7 @@ const INITIAL_FILTERS: ContentFilterValue = {
   status: "all",
   hasSnapshot: "all",
   reviewed: "all",
+  rankScope: "all",
 };
 
 const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [
@@ -124,6 +126,17 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
             <SelectItem value="all">全部</SelectItem>
             <SelectItem value="yes">已复盘</SelectItem>
             <SelectItem value="no">未复盘</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.rankScope} onValueChange={(v) => updateFilter("rankScope", v as "all" | "day" | "month")}>
+          <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
+            <SelectValue>{getContentFilterLabel({ type: "rankScope", value: filters.rankScope })}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部播放排名</SelectItem>
+            <SelectItem value="day">日播放排名</SelectItem>
+            <SelectItem value="month">月播放排名</SelectItem>
           </SelectContent>
         </Select>
 

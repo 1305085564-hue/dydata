@@ -2,7 +2,7 @@ type NamedOption = { id: string; name: string };
 
 type ContentFilterLabelInput =
   | { type: "profile" | "account"; value: string; options: NamedOption[] }
-  | { type: "status" | "hasSnapshot" | "reviewed"; value: string; options?: NamedOption[] };
+  | { type: "status" | "hasSnapshot" | "reviewed" | "rankScope"; value: string; options?: NamedOption[] };
 
 const FALLBACK_LABELS = {
   profile: "全部人员",
@@ -10,6 +10,7 @@ const FALLBACK_LABELS = {
   status: "全部状态",
   hasSnapshot: "全部快照",
   reviewed: "全部",
+  rankScope: "全部播放排名",
 } as const;
 
 const STATIC_LABELS = {
@@ -20,6 +21,11 @@ const STATIC_LABELS = {
   reviewed: {
     yes: "已复盘",
     no: "未复盘",
+  },
+  rankScope: {
+    all: "全部播放排名",
+    day: "日播放排名",
+    month: "月播放排名",
   },
 } as const;
 
@@ -34,6 +40,10 @@ export function getContentFilterLabel(input: ContentFilterLabelInput) {
 
   if (input.type === "status") {
     return input.value || FALLBACK_LABELS.status;
+  }
+
+  if (input.type === "rankScope") {
+    return STATIC_LABELS.rankScope[input.value as "all" | "day" | "month"] ?? FALLBACK_LABELS.rankScope;
   }
 
   return STATIC_LABELS[input.type][input.value as "yes" | "no"] ?? FALLBACK_LABELS[input.type];
