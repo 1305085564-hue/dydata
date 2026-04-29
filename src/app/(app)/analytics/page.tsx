@@ -35,6 +35,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     preset: (params.preset ?? "30d") as AnalyticsRangePreset,
     from: params.from,
     to: params.to,
+    includeVideoDetails: false,
   });
 
   const sections: AnalyticsSection[] = [

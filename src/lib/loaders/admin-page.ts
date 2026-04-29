@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
-import { getTeamMeta, getTeamOptions, type TeamOption } from "@/lib/teams";
+import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { build团队趋势数据 } from "@/lib/趋势图";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
@@ -186,29 +186,6 @@ export async function loadAdminPageData({
         .order("created_at", { ascending: true }),
   });
 
-  const authUsersResult = await adminSupabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-  const authUserById = new Map(
-    (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]),
-  );
-  const authEmailByUserId = new Map(
-    (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser.email ?? null]),
-  );
-  const hydratedProfiles = (profiles ?? []).map((profile) => ({
-    ...profile,
-    email: authEmailByUserId.get(profile.id) ?? null,
-    team_name: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamName,
-    team_id: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamId,
-  }));
-  const hydratedAllProfiles = (allProfiles ?? []).map((profile) => ({
-    ...profile,
-    email: authEmailByUserId.get(profile.id) ?? null,
-    team_name: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamName,
-    team_id: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamId,
-  }));
-
   const [{ data: auditLogs }, { data: pendingRequests }, { data: inviteCodes }] = await Promise.all([
     supabase.from("audit_logs").select("id, created_at, user_id, action, target, detail").order("created_at", { ascending: false }).limit(50),
     loadPendingExemptionRequests(supabase),
@@ -269,7 +246,7 @@ export async function loadAdminPageData({
     queryDate,
     perm,
     permissionManagerCapabilities,
-    profiles: hydratedProfiles,
+    profiles: profiles ?? [],
     accountRows,
     submittedProfileIds,
     submittedAccountIds,
@@ -278,7 +255,7 @@ export async function loadAdminPageData({
     dayCountBySubmitter,
     avgPlayByAccount,
     dayCountByAccount,
-    allProfiles: hydratedAllProfiles,
+    allProfiles: allProfiles ?? [],
     teams,
     logsWithNames,
     exemptionRequests,

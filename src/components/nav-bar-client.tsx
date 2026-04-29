@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { getNavItems } from "@/components/nav-bar-items";
@@ -15,6 +16,16 @@ interface NavBarClientProps {
 
 export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const navItems = useMemo(() => getNavItems({ showAnalytics, showAdmin }), [showAdmin, showAnalytics]);
+
+  useEffect(() => {
+    for (const item of navItems) {
+      if (item.href !== pathname) {
+        router.prefetch(item.href);
+      }
+    }
+  }, [navItems, pathname, router]);
 
   const linkClass = (href: string, active = pathname === href) =>
     cn(
@@ -45,7 +56,7 @@ export function NavBarClient({ name, showAdmin, showAnalytics }: NavBarClientPro
               className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-full border border-border/65 bg-background/55 p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               aria-label="主导航"
             >
-              {getNavItems({ showAnalytics, showAdmin }).map((item) => (
+              {navItems.map((item) => (
                 <Link key={item.href} href={item.href} className={linkClass(item.href, item.match(pathname))}>
                   {item.label}
                 </Link>

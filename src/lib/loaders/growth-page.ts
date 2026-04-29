@@ -41,6 +41,8 @@ type AiInsightRow = {
   created_at: string;
 };
 
+let contentScriptSchemaAvailable: boolean | null = null;
+
 function collectTags(accounts: MetricsAccount[]): string[] {
   return Array.from(
     new Set(
@@ -51,6 +53,87 @@ function collectTags(accounts: MetricsAccount[]): string[] {
     ),
   );
 }
+
+function isMissingContentScriptSchemaError(error: { message?: string } | null | undefined) {
+  return Boolean(
+    error?.message &&
+      (error.message.includes("content_item.account_id") ||
+        error.message.includes("script_document.content_item_id") ||
+        error.message.includes("script_segment.segment_type") ||
+        error.message.includes("column content_item.account_id does not exist") ||
+        error.message.includes("column script_document.content_item_id does not exist") ||
+        error.message.includes("column script_segment.segment_type does not exist") ||
+        error.message.includes("Could not find the 'account_id' column of 'content_item'") ||
+        error.message.includes("Could not find the 'content_item_id' column of 'script_document'") ||
+        error.message.includes("Could not find the 'segment_type' column of 'script_segment'")),
+  );
+}
+
+async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
+  if (contentScriptSchemaAvailable === false) {
+    return {
+      contentItems: [] as ContentItemRow[],
+      scriptDocuments: [] as ScriptDocumentRow[],
+      scriptSegments: [] as ScriptSegmentRow[],
+    };
+  }
+
+  const contentItemsResult = await supabase
+    .from("content_item")
+    .select("id, account_id, biz_date, owner_user_id")
+    .eq("owner_user_id", userId);
+
+  if (isMissingContentScriptSchemaError(contentItemsResult.error)) {
+    contentScriptSchemaAvailable = false;
+    return {
+      contentItems: [],
+      scriptDocuments: [],
+      scriptSegments: [],
+    };
+  }
+
+  const contentItems = (contentItemsResult.data ?? []) as ContentItemRow[];
+  if (!contentItems.length) {
+    contentScriptSchemaAvailable = true;
+    return {
+      contentItems,
+      scriptDocuments: [],
+      scriptSegments: [],
+    };
+  }
+
+  const [scriptDocumentsResult, scriptSegmentsResult] = await Promise.all([
+    supabase.from("script_document").select("id, content_item_id, raw_text, estimated_duration_sec"),
+    supabase.from("script_segment").select("id, script_document_id, segment_type, segment_order, content, start_sec, end_sec"),
+  ]);
+
+  if (
+    isMissingContentScriptSchemaError(scriptDocumentsResult.error) ||
+    isMissingContentScriptSchemaError(scriptSegmentsResult.error)
+  ) {
+    contentScriptSchemaAvailable = false;
+    return {
+      contentItems: [],
+      scriptDocuments: [],
+      scriptSegments: [],
+    };
+  }
+
+  contentScriptSchemaAvailable = true;
+  return {
+    contentItems,
+    scriptDocuments: (scriptDocumentsResult.data ?? []) as ScriptDocumentRow[],
+    scriptSegments: (scriptSegmentsResult.data ?? []) as ScriptSegmentRow[],
+  };
+}
+
+export const __internal = {
+  isMissingContentScriptSchemaError,
+  loadScriptContextData,
+  resetContentScriptSchemaCache() {
+    contentScriptSchemaAvailable = null;
+  },
+};
 
 export interface GrowthPageData {
   profileName: string;
@@ -91,10 +174,8 @@ export async function loadGrowthPageData({
     allAccountsResult,
     teamReportsResult,
     profilesResult,
-    contentItemsResult,
-    scriptDocumentsResult,
-    scriptSegmentsResult,
     aiInsightResult,
+    scriptContextData,
   ] = await Promise.all([
     supabase.from("profiles").select("id, name").eq("id", userId).single(),
     supabase
@@ -108,15 +189,13 @@ export async function loadGrowthPageData({
       .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
       .gte("report_date", monthAgo),
     supabase.from("profiles").select("id, name"),
-    supabase.from("content_item").select("id, account_id, biz_date, owner_user_id").eq("owner_user_id", userId),
-    supabase.from("script_document").select("id, content_item_id, raw_text, estimated_duration_sec"),
-    supabase.from("script_segment").select("id, script_document_id, segment_type, segment_order, content, start_sec, end_sec"),
     supabase
       .from("ai_insight_result")
       .select("id, insight_type, result_status, result_json, rendered_text, created_at")
       .eq("insight_type", "growth_edit")
       .order("created_at", { ascending: false })
       .limit(1),
+    loadScriptContextData(supabase, userId),
   ]);
 
   const profile = profileResult.data as ProfileRow | null;
@@ -124,9 +203,7 @@ export async function loadGrowthPageData({
   const allAccounts = (allAccountsResult.data ?? []) as MetricsAccount[];
   const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
   const profileNameMap = new Map(((profilesResult.data ?? []) as ProfileRow[]).map((item) => [item.id, item.name ?? ""]));
-  const contentItems = (contentItemsResult.data ?? []) as ContentItemRow[];
-  const scriptDocuments = (scriptDocumentsResult.data ?? []) as ScriptDocumentRow[];
-  const scriptSegments = (scriptSegmentsResult.data ?? []) as ScriptSegmentRow[];
+  const { contentItems, scriptDocuments, scriptSegments } = scriptContextData;
   const aiInsight = ((aiInsightResult.data ?? [])[0] ?? null) as AiInsightRow | null;
 
   const teamReportsWithSubmitter: GrowthReport[] = teamReports.map((report) => ({

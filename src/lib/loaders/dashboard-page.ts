@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountLeaderboardRow } from "@/types";
 import { build个人趋势数据 } from "@/lib/趋势图";
-import { hasPendingExemptionRequest } from "@/app/(app)/dashboard/actions";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
 import {
   getExemptionStateForDate,
@@ -45,6 +44,9 @@ type ApprovedRequestGrantRow = {
   created_at: string | null;
 };
 
+let profileExemptionCategoryAvailable: boolean | null = null;
+let exemptionGrantTableAvailable: boolean | null = null;
+
 function isMissingProfileExemptionCategoryError(error: { message?: string } | null | undefined) {
   return Boolean(
     error?.message &&
@@ -62,20 +64,10 @@ function isMissingExemptionGrantTableError(error: { message?: string } | null | 
   );
 }
 
-async function loadDashboardProfile(
+async function loadDashboardProfileWithoutCategory(
   supabase: DashboardSupabase,
   userId: string,
 ): Promise<ProfileWithExemptionRow | null> {
-  const primary = await supabase
-    .from("profiles")
-    .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
-    .eq("id", userId)
-    .single();
-
-  if (!isMissingProfileExemptionCategoryError(primary.error)) {
-    return (primary.data as ProfileWithExemptionRow | null) ?? null;
-  }
-
   const fallback = await supabase
     .from("profiles")
     .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason")
@@ -88,6 +80,29 @@ async function loadDashboardProfile(
     ...(fallback.data as ProfileWithoutCategoryRow),
     exemption_category: null,
   };
+}
+
+async function loadDashboardProfile(
+  supabase: DashboardSupabase,
+  userId: string,
+): Promise<ProfileWithExemptionRow | null> {
+  if (profileExemptionCategoryAvailable === false) {
+    return loadDashboardProfileWithoutCategory(supabase, userId);
+  }
+
+  const primary = await supabase
+    .from("profiles")
+    .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
+    .eq("id", userId)
+    .single();
+
+  if (!isMissingProfileExemptionCategoryError(primary.error)) {
+    profileExemptionCategoryAvailable = true;
+    return (primary.data as ProfileWithExemptionRow | null) ?? null;
+  }
+
+  profileExemptionCategoryAvailable = false;
+  return loadDashboardProfileWithoutCategory(supabase, userId);
 }
 
 async function loadApprovedRequestGrantsFallback(
@@ -135,6 +150,10 @@ async function loadUserExemptionGrants(
   supabase: DashboardSupabase,
   userId: string,
 ): Promise<ExemptionGrantLike[]> {
+  if (exemptionGrantTableAvailable === false) {
+    return loadApprovedRequestGrantsFallback(supabase, userId);
+  }
+
   const primary = await supabase
     .from("exemption_grant")
     .select("user_id, start_date, end_date, grant_type, exemption_category, status, created_at")
@@ -143,10 +162,23 @@ async function loadUserExemptionGrants(
     .order("created_at", { ascending: false });
 
   if (!isMissingExemptionGrantTableError(primary.error)) {
+    exemptionGrantTableAvailable = true;
     return (primary.data ?? []) as ExemptionGrantLike[];
   }
 
+  exemptionGrantTableAvailable = false;
   return loadApprovedRequestGrantsFallback(supabase, userId);
+}
+
+async function loadHasPendingExemptionRequest(supabase: DashboardSupabase, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("exemption_request")
+    .select("id")
+    .eq("applicant_user_id", userId)
+    .eq("request_status", "pending")
+    .limit(1);
+
+  return (data?.length ?? 0) > 0;
 }
 
 export interface DashboardPageData {
@@ -282,7 +314,7 @@ export async function loadDashboardPageData({
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [] }),
     loadUserExemptionGrants(supabase, userId),
-    hasPendingExemptionRequest(),
+    loadHasPendingExemptionRequest(supabase, userId),
   ]);
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(

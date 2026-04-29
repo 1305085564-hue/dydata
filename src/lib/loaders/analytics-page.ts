@@ -25,12 +25,14 @@ export async function loadAnalyticsPageData({
   preset,
   from,
   to,
+  includeVideoDetails = true,
 }: {
   supabase: AnalyticsSupabase;
   userId: string;
   preset: AnalyticsRangePreset;
   from?: string;
   to?: string;
+  includeVideoDetails?: boolean;
 }): Promise<AnalyticsPageData> {
   const adminSupabase = createAdminClient();
   const range = getPresetRange(preset, new Date(), { from, to });
@@ -52,34 +54,56 @@ export async function loadAnalyticsPageData({
 
   const teamUserIds = teamProfiles.map((item) => item.id);
   const submitters = isPrivilegedUser ? teamProfiles.map((item) => item.name) : [currentUserName];
-  const [{ data: reports }, { data: videos }] = await Promise.all([
-    adminSupabase
-      .from("daily_reports")
-      .select(
-        "id, user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
-      )
-      .in("user_id", teamUserIds)
-      .gte("report_date", range.from)
-      .lte("report_date", range.to)
-      .order("report_date", { ascending: false }),
-    adminSupabase
-      .from("videos")
-      .select("*, accounts(name)")
-      .in("user_id", teamUserIds)
-      .order("published_at", { ascending: false })
-      .then((result) => {
-        const nameMap = new Map(teamProfiles.map((teamProfile) => [teamProfile.id, teamProfile.name]));
-        return {
-          ...result,
-          data: (result.data ?? []).map((video) => ({
-            ...video,
-            profiles: { name: nameMap.get(video.user_id) ?? "未知" },
-          })),
-        };
-      }),
-  ]);
+  const reportsQuery = adminSupabase
+    .from("daily_reports")
+    .select(
+      "id, user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+    )
+    .in("user_id", teamUserIds)
+    .gte("report_date", range.from)
+    .lte("report_date", range.to)
+    .order("report_date", { ascending: false });
+
+  const videosQuery = includeVideoDetails
+    ? adminSupabase
+        .from("videos")
+        .select("*, accounts(name)")
+        .in("user_id", teamUserIds)
+        .order("published_at", { ascending: false })
+        .then((result) => {
+          const nameMap = new Map(teamProfiles.map((teamProfile) => [teamProfile.id, teamProfile.name]));
+          return {
+            ...result,
+            data: (result.data ?? []).map((video) => ({
+              ...video,
+              profiles: { name: nameMap.get(video.user_id) ?? "未知" },
+            })),
+          };
+        })
+    : null;
+
+  const [{ data: reports }, videosResult] = includeVideoDetails
+    ? await Promise.all([reportsQuery, videosQuery])
+    : [await reportsQuery, null];
 
   const filteredReports = access.canViewAllMembers ? reports ?? [] : restrictPersonRows(reports ?? [], { role, currentUserName });
+
+  if (!includeVideoDetails) {
+    return {
+      range,
+      userId,
+      role,
+      isPrivilegedUser,
+      currentUserName,
+      submitters,
+      filteredReports,
+      filteredVideos: [],
+      filteredSnapshots: [],
+      filteredVideoTags: [],
+    };
+  }
+
+  const videos = videosResult?.data ?? [];
   const filteredVideos = (videos ?? []).filter((video) => (access.canViewAllMembers ? true : video.user_id === userId));
   const filteredVideoIds = filteredVideos.map((video) => video.id);
   const [{ data: snapshots }, { data: videoTags }] =

@@ -9,8 +9,19 @@ type VideoRow = Video & {
   profiles: { name: string };
 };
 
+type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
+  accounts: { name: string | null } | Array<{ name: string | null }> | null;
+  profiles: { name: string | null } | Array<{ name: string | null }> | null;
+};
+
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
+
+const CONTENT_VIDEO_SELECT =
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name), profiles!inner(name)";
+
+const CONTENT_SNAPSHOT_SELECT =
+  "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares";
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -26,6 +37,19 @@ export interface AdminContentPageData {
   };
 }
 
+function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"], fallback: string) {
+  const row = Array.isArray(value) ? value[0] : value;
+  return row?.name ?? fallback;
+}
+
+function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
+  return rows.map((row) => ({
+    ...row,
+    accounts: { name: readJoinedName(row.accounts, "未命名账号") },
+    profiles: { name: readJoinedName(row.profiles, "未命名成员") },
+  }));
+}
+
 export async function loadAdminContentPageData({ supabase }: { supabase: LoaderSupabase }): Promise<AdminContentPageData> {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,10 +63,16 @@ export async function loadAdminContentPageData({ supabase }: { supabase: LoaderS
     { data: accounts },
     { data: reviewedResults },
   ] = await Promise.all([
-    supabase.from("videos").select("*, accounts!inner(name), profiles!inner(name)"),
+    supabase
+      .from("videos")
+      .select(CONTENT_VIDEO_SELECT)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false }),
     supabase
       .from("video_metrics_snapshots")
-      .select("video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares"),
+      .select(CONTENT_SNAPSHOT_SELECT)
+      .eq("snapshot_type", "24h")
+      .order("captured_at", { ascending: false }),
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     supabase.from("accounts").select("id, name").order("name", { ascending: true }),
     serviceClient
@@ -52,7 +82,7 @@ export async function loadAdminContentPageData({ supabase }: { supabase: LoaderS
       .eq("result_status", "success"),
   ]);
 
-  const videos = ((videosRaw ?? []) as VideoRow[]).sort((left, right) => {
+  const videos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort((left, right) => {
     const leftTs = left.published_at ? new Date(left.published_at).getTime() : new Date(left.created_at).getTime();
     const rightTs = right.published_at ? new Date(right.published_at).getTime() : new Date(right.created_at).getTime();
     return rightTs - leftTs;
@@ -85,3 +115,9 @@ export async function loadAdminContentPageData({ supabase }: { supabase: LoaderS
     },
   };
 }
+
+export const __internal = {
+  CONTENT_VIDEO_SELECT,
+  CONTENT_SNAPSHOT_SELECT,
+  normalizeVideoRows,
+};
