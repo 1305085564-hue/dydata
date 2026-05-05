@@ -56,6 +56,12 @@ type AsyncTrendData = {
   互动趋势: InteractionTrendDatum[];
 };
 
+type AsyncActivityData = {
+  monthSubmittedDates: string[];
+  monthReports: MonthReport[];
+  history: MonthReport[];
+};
+
 type DashboardActionCard = {
   key: string;
   title: string;
@@ -167,6 +173,7 @@ export function VideoSubmitPanel({
   const [leaderboardData, setLeaderboardData] = useState<Parameters<typeof Leaderboard>[0]["data"] | null>(null);
   const [asyncAccountIds, setAsyncAccountIds] = useState<string[]>(accountIds);
   const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>(ownContentDirections);
+  const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
 
   useEffect(() => {
     if (!isTrendViewOpen || trendData) return;
@@ -189,6 +196,22 @@ export function VideoSubmitPanel({
       })
       .catch(() => {});
   }, [isLeaderboardOpen, leaderboardData]);
+
+  useEffect(() => {
+    if ((!isDataViewOpen && !isHistoryOpen) || activityData) return;
+    fetch("/api/dashboard/activity")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.monthReports) && Array.isArray(data.history)) {
+          setActivityData({
+            monthSubmittedDates: Array.isArray(data.monthSubmittedDates) ? data.monthSubmittedDates : [],
+            monthReports: data.monthReports,
+            history: data.history,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [activityData, isDataViewOpen, isHistoryOpen]);
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? accounts[0] ?? null,
@@ -214,9 +237,11 @@ export function VideoSubmitPanel({
 
     return [
       ...overrideReports,
-      ...monthReports.filter((report) => !overrideKeys.has(`${report.account_id}-${report.report_date}`)),
+      ...(activityData?.monthReports ?? monthReports).filter(
+        (report) => !overrideKeys.has(`${report.account_id}-${report.report_date}`),
+      ),
     ];
-  }, [monthReports, reportOverrides]);
+  }, [activityData?.monthReports, monthReports, reportOverrides]);
 
   const selectedSummary = useMemo(
     () => (selectedAccount ? getTodaySubmissionSummary(mergedTodayReports, selectedAccount.id) : null),
@@ -267,6 +292,8 @@ export function VideoSubmitPanel({
       ),
     [mergedMonthReports, selectedAccountId],
   );
+  const historyReports = activityData?.history ?? history;
+  const isActivityLoading = (isDataViewOpen || isHistoryOpen) && !activityData;
 
   const isTodayFlow = activeBizDate === today;
   const primarySummary = isTodayFlow ? selectedSummary : null;
@@ -830,6 +857,11 @@ export function VideoSubmitPanel({
             <DialogTitle>数据查看</DialogTitle>
           </DialogHeader>
 
+          {isActivityLoading ? (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              加载填报记录...
+            </div>
+          ) : (
           <div className="space-y-4">
             <SubmissionCalendar
               today={today}
@@ -981,6 +1013,7 @@ export function VideoSubmitPanel({
             </div>
             ) : null}
           </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -1039,7 +1072,11 @@ export function VideoSubmitPanel({
           <DialogHeader>
             <DialogTitle>历史记录</DialogTitle>
           </DialogHeader>
-          {!history || history.length === 0 ? (
+          {isActivityLoading ? (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              加载历史记录...
+            </div>
+          ) : !historyReports || historyReports.length === 0 ? (
             <EmptyState
               icon={History}
               title="暂无历史记录"
@@ -1047,7 +1084,7 @@ export function VideoSubmitPanel({
             />
           ) : (
             <HistoryList
-              history={history.map((report) => ({
+              history={historyReports.map((report) => ({
                 ...report,
                 content: report.content ?? null,
                 follower_convert: report.follower_convert ?? null,

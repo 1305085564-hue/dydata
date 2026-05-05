@@ -4,6 +4,7 @@ import { AppShell, AppShellHero } from "@/components/app-shell";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { VideoSubmitPanel } from "./video-submit-panel";
 import { loadDashboardPageData } from "@/lib/loaders/dashboard-page";
+import { measureAsync } from "@/lib/perf";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -13,10 +14,12 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const data = await loadDashboardPageData({
-    supabase,
-    userId: user.id,
-  });
+  const data = await measureAsync("dashboard.pageData", () =>
+    loadDashboardPageData({
+      supabase,
+      userId: user.id,
+    }),
+  );
 
   return (
     <AppShell width="wide" className="dashboard-shell pb-24 md:pb-6">

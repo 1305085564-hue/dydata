@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { shiftDateOnly } from "@/lib/loaders/shared";
+import { measureAsync } from "@/lib/perf";
 
 export async function GET() {
   const supabase = await createClient();
@@ -19,7 +20,7 @@ export async function GET() {
 
   try {
     const [accountsResult, historyResult, teamHistoryResult, profilesResult] =
-      await Promise.all([
+      await measureAsync("dashboard.trend.queries", () => Promise.all([
         supabase
           .from("accounts")
           .select("id")
@@ -43,7 +44,7 @@ export async function GET() {
         supabase
           .from("profiles")
           .select("id, status"),
-      ]);
+      ]));
 
     const accountIds = (accountsResult.data ?? []).map((a) => a.id);
     const activeUserIds = (profilesResult.data ?? [])

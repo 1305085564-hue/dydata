@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { shiftDateOnly } from "@/lib/loaders/shared";
+import { measureAsync } from "@/lib/perf";
 
 export async function GET() {
   const supabase = await createClient();
@@ -17,14 +18,14 @@ export async function GET() {
   const monthAgo = shiftDateOnly(new Date(), -30);
 
   try {
-    const [accountsResult, leaderboardResult] = await Promise.all([
+    const [accountsResult, leaderboardResult] = await measureAsync("dashboard.leaderboard.queries", () => Promise.all([
       supabase
         .from("accounts")
         .select("id, content_direction")
         .eq("profile_id", userId)
         .order("created_at", { ascending: true }),
       supabase.rpc("get_leaderboard_rows", { since_date: monthAgo }),
-    ]);
+    ]));
 
     const accountIds = (accountsResult.data ?? []).map((a) => a.id);
     const ownContentDirections = Array.from(

@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "import:reports": "npx tsx scripts/import-daily-reports.ts"
+    "import:reports": "npx tsx scripts/import-daily-reports.ts",
+    "perf:ttfb": "node scripts/measure-ttfb.mjs",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -36,6 +38,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

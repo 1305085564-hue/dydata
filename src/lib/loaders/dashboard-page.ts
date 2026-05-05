@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
+import type { DashboardActivityReport } from "@/lib/loaders/dashboard-activity";
 import {
   getExemptionStateForDate,
   type ExemptionGrantLike,
@@ -14,11 +15,6 @@ type DashboardAccountRow = {
   id: string;
   name: string;
   content_direction: string | null;
-};
-
-type DashboardHistoryRow = Omit<TodaySubmissionReportLike, "account_id"> & {
-  id: string;
-  account_id: string;
 };
 
 type ProfileWithExemptionRow = {
@@ -183,7 +179,7 @@ export interface DashboardPageData {
   today: string;
   isExternalUser: boolean;
   monthSubmittedDates: string[];
-  monthReports: DashboardHistoryRow[];
+  monthReports: DashboardActivityReport[];
   userId: string;
   userDisplayName: string;
   accounts: Array<DashboardAccountRow & { display_name: string }>;
@@ -191,7 +187,7 @@ export interface DashboardPageData {
   accountDisplayNameMap: Record<string, string>;
   ownContentDirections: string[];
   todayReports: TodaySubmissionReportLike[];
-  history: DashboardHistoryRow[];
+  history: DashboardActivityReport[];
   hasPendingExemption: boolean;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -243,18 +239,12 @@ export async function loadDashboardPageData({
   }));
 
   const today = formatDateOnly(new Date());
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  const monthStartDate = formatDateOnly(monthStart);
   const accountIds = displayAccounts.map((account) => account.id);
   const ownContentDirections = uniqueNonEmpty(displayAccounts.map((account) => account.content_direction));
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
 
   const [
     { data: rawTodayReports },
-    { data: history },
-    { data: monthDateRows },
-    { data: monthHistory },
     userExemptionGrants,
     hasPendingExemption,
   ] = await Promise.all([
@@ -266,37 +256,6 @@ export async function loadDashboardPageData({
           )
           .in("account_id", accountIds)
           .eq("report_date", today)
-          .order("uploaded_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
-    accountIds.length
-      ? supabase
-          .from("daily_reports")
-          .select(
-            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
-          )
-          .in("account_id", accountIds)
-          .order("report_date", { ascending: false })
-          .order("uploaded_at", { ascending: false })
-          .limit(30)
-      : Promise.resolve({ data: [] }),
-    accountIds.length
-      ? supabase
-          .from("daily_reports")
-          .select("report_date")
-          .in("account_id", accountIds)
-          .gte("report_date", monthStartDate)
-          .lte("report_date", today)
-      : Promise.resolve({ data: [] }),
-    accountIds.length
-      ? supabase
-          .from("daily_reports")
-          .select(
-            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
-          )
-          .in("account_id", accountIds)
-          .gte("report_date", monthStartDate)
-          .lte("report_date", today)
-          .order("report_date", { ascending: false })
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [] }),
     loadUserExemptionGrants(supabase, userId),
@@ -324,16 +283,8 @@ export async function loadDashboardPageData({
   return {
     today,
     isExternalUser: false,
-    monthSubmittedDates: Array.from(
-      new Set(
-        ((monthDateRows ?? []) as Array<{ report_date: string | null }>)
-          .map((report) => report.report_date)
-          .filter((reportDate): reportDate is string => Boolean(reportDate)),
-      ),
-    ),
-    monthReports: ((monthHistory ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
-      (report): report is DashboardHistoryRow => typeof report.account_id === "string",
-    ),
+    monthSubmittedDates: [],
+    monthReports: [],
     userId,
     userDisplayName,
     accounts: displayAccounts,
@@ -341,9 +292,7 @@ export async function loadDashboardPageData({
     accountDisplayNameMap,
     ownContentDirections,
     todayReports,
-    history: ((history ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
-      (report): report is DashboardHistoryRow => typeof report.account_id === "string",
-    ),
+    history: [],
     hasPendingExemption,
     userExemptionProfile,
     userExemptionGrants,
@@ -351,7 +300,7 @@ export async function loadDashboardPageData({
       totalAccounts: displayAccounts.length,
       submittedCount: submittedCountForSummary,
       pendingCount: pendingCountForSummary,
-      historyCount: (history ?? []).length,
+      historyCount: 0,
     },
   };
 }
