@@ -25,7 +25,6 @@ import {
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
-import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import { DashboardForm, type DashboardReportData } from "./dashboard-form";
 import {
   getDashboardMetricGridClass,
@@ -44,10 +43,17 @@ import {
 } from "./video-submit-panel-state";
 import { VideoTagReviewCard } from "./video-tag-review-card";
 import { cn } from "@/lib/utils";
+import type { ResultTrendDatum } from "@/components/charts/result-trend";
+import type { InteractionTrendDatum } from "@/components/charts/interaction-trend";
 
 type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;
   account_id: string;
+};
+
+type AsyncTrendData = {
+  结果趋势: ResultTrendDatum[];
+  互动趋势: InteractionTrendDatum[];
 };
 
 type DashboardActionCard = {
@@ -67,8 +73,6 @@ interface VideoSubmitPanelProps {
   todayReports: TodaySubmissionReportLike[];
   monthReports: MonthReport[];
   history: MonthReport[];
-  trendData: DashboardPageData["trendData"];
-  leaderboardData: Parameters<typeof Leaderboard>[0]["data"];
   accountIds: string[];
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
@@ -133,8 +137,6 @@ export function VideoSubmitPanel({
   todayReports,
   monthReports,
   history,
-  trendData,
-  leaderboardData,
   accountIds,
   ownContentDirections,
   accountDisplayNameMap,
@@ -161,6 +163,32 @@ export function VideoSubmitPanel({
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
   const [pendingBackfillDate, setPendingBackfillDate] = useState<string | null>(null);
   const [pendingFocusDate, setPendingFocusDate] = useState<string | null>(null);
+  const [trendData, setTrendData] = useState<AsyncTrendData | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<Parameters<typeof Leaderboard>[0]["data"] | null>(null);
+  const [asyncAccountIds, setAsyncAccountIds] = useState<string[]>(accountIds);
+  const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>(ownContentDirections);
+
+  useEffect(() => {
+    if (!isTrendViewOpen || trendData) return;
+    fetch("/api/dashboard/trend")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.trendData) setTrendData(data.trendData);
+      })
+      .catch(() => {});
+  }, [isTrendViewOpen, trendData]);
+
+  useEffect(() => {
+    if (!isLeaderboardOpen || leaderboardData) return;
+    fetch("/api/dashboard/leaderboard")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.leaderboardData) setLeaderboardData(data.leaderboardData);
+        if (data.accountIds) setAsyncAccountIds(data.accountIds);
+        if (data.ownContentDirections) setAsyncOwnContentDirections(data.ownContentDirections);
+      })
+      .catch(() => {});
+  }, [isLeaderboardOpen, leaderboardData]);
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? accounts[0] ?? null,
@@ -961,20 +989,26 @@ export function VideoSubmitPanel({
           <DialogHeader>
             <DialogTitle>趋势查看</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ResultTrend
-              data={trendData.结果趋势}
-              personalLabel="我的数据"
-              teamAverageLabel="团队 P70"
-              emptyText="提交满两天后，可查看结果趋势。"
-            />
-            <InteractionTrend
-              data={trendData.互动趋势}
-              personalLabel="我的质量分"
-              teamAverageLabel="团队 P70"
-              emptyText="提交满两天后，可查看互动质量趋势。"
-            />
-          </div>
+          {!trendData ? (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              {"加载趋势数据..."}
+            </div>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <ResultTrend
+                data={trendData.结果趋势}
+                personalLabel="我的数据"
+                teamAverageLabel="团队 P70"
+                emptyText="提交满两天后，可查看结果趋势。"
+              />
+              <InteractionTrend
+                data={trendData.互动趋势}
+                personalLabel="我的质量分"
+                teamAverageLabel="团队 P70"
+                emptyText="提交满两天后，可查看互动质量趋势。"
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -983,14 +1017,20 @@ export function VideoSubmitPanel({
           <DialogHeader>
             <DialogTitle>排行榜</DialogTitle>
           </DialogHeader>
-          <Leaderboard
-            data={leaderboardData}
-            ownAccountIds={accountIds}
-            ownContentDirections={ownContentDirections}
-            currentDate={today}
-            defaultRange="week"
-            defaultCompact
-          />
+          {!leaderboardData ? (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              {"加载排行榜数据..."}
+            </div>
+          ) : (
+            <Leaderboard
+              data={leaderboardData}
+              ownAccountIds={asyncAccountIds}
+              ownContentDirections={asyncOwnContentDirections}
+              currentDate={today}
+              defaultRange="week"
+              defaultCompact
+            />
+          )}
         </DialogContent>
       </Dialog>
 

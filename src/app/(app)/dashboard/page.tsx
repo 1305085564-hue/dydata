@@ -34,8 +34,6 @@ export default async function DashboardPage() {
             todayReports={data.todayReports}
             monthReports={data.monthReports}
             history={data.history}
-            trendData={data.trendData}
-            leaderboardData={data.leaderboardData}
             accountIds={data.accountIds}
             ownContentDirections={data.ownContentDirections}
             accountDisplayNameMap={data.accountDisplayNameMap}

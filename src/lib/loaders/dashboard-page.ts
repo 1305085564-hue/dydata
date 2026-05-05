@@ -1,6 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AccountLeaderboardRow } from "@/types";
-import { build个人趋势数据 } from "@/lib/趋势图";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
 import {
   getExemptionStateForDate,
@@ -8,7 +6,7 @@ import {
   type ExemptionProfileLike,
 } from "@/lib/豁免";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
-import { formatDateOnly, getSafeAccountDisplayName, shiftDateOnly, uniqueNonEmpty } from "./shared";
+import { formatDateOnly, getSafeAccountDisplayName, uniqueNonEmpty } from "./shared";
 
 type DashboardSupabase = SupabaseClient;
 
@@ -194,8 +192,6 @@ export interface DashboardPageData {
   ownContentDirections: string[];
   todayReports: TodaySubmissionReportLike[];
   history: DashboardHistoryRow[];
-  leaderboardData: AccountLeaderboardRow[];
-  trendData: ReturnType<typeof build个人趋势数据>;
   hasPendingExemption: boolean;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
@@ -253,14 +249,10 @@ export async function loadDashboardPageData({
   const accountIds = displayAccounts.map((account) => account.id);
   const ownContentDirections = uniqueNonEmpty(displayAccounts.map((account) => account.content_direction));
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
-  const monthAgo = shiftDateOnly(new Date(), -30);
 
   const [
     { data: rawTodayReports },
     { data: history },
-    { data: leaderboardRows },
-    { data: teamHistory },
-    { data: activeProfiles },
     { data: monthDateRows },
     { data: monthHistory },
     userExemptionGrants,
@@ -287,12 +279,6 @@ export async function loadDashboardPageData({
           .order("uploaded_at", { ascending: false })
           .limit(30)
       : Promise.resolve({ data: [] }),
-    supabase.rpc("get_leaderboard_rows", { since_date: monthAgo }),
-    supabase
-      .from("daily_reports")
-      .select("report_date, user_id, play_count, follower_gain, likes, comments, shares, favorites")
-      .gte("report_date", monthAgo),
-    supabase.from("profiles").select("id, status"),
     accountIds.length
       ? supabase
           .from("daily_reports")
@@ -321,33 +307,6 @@ export async function loadDashboardPageData({
     (report) => typeof report.account_id === "string",
   );
   const submittedAccountIds = new Set(todayReports.map((report) => report.account_id).filter(Boolean));
-  const activeUserIds = (activeProfiles ?? [])
-    .filter((profile) => (profile.status ?? "active") === "active")
-    .map((profile) => profile.id);
-
-  const trendData = build个人趋势数据(
-    ((history ?? []) as DashboardHistoryRow[]).map((report) => ({
-      report_date: report.report_date,
-      user_id: userId,
-      play_count: report.play_count,
-      follower_gain: report.follower_gain,
-      likes: report.likes,
-      comments: report.comments,
-      shares: report.shares,
-      favorites: report.favorites,
-    })),
-    (teamHistory ?? []).map((report) => ({
-      report_date: report.report_date,
-      user_id: report.user_id,
-      play_count: report.play_count,
-      follower_gain: report.follower_gain,
-      likes: report.likes,
-      comments: report.comments,
-      shares: report.shares,
-      favorites: report.favorites,
-    })),
-    activeUserIds,
-  );
 
   const todayExemptionState = getExemptionStateForDate(
     userExemptionProfile,
@@ -385,8 +344,6 @@ export async function loadDashboardPageData({
     history: ((history ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
       (report): report is DashboardHistoryRow => typeof report.account_id === "string",
     ),
-    leaderboardData: (leaderboardRows ?? []) as AccountLeaderboardRow[],
-    trendData,
     hasPendingExemption,
     userExemptionProfile,
     userExemptionGrants,
