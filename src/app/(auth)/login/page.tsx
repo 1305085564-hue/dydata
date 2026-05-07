@@ -4,6 +4,7 @@ import { getLoginNotice } from "@/lib/auth-password";
 import { createClient } from "@/lib/supabase/server";
 
 import { LoginForm } from "./login-form";
+import { getPostLoginRedirectPath } from "./post-login-redirect";
 
 type LoginFormState = {
   error: string | null;
@@ -49,7 +50,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       return { error: "未找到账号资料，请联系管理员。", email };
     }
 
-    redirect(profile.role === "admin" || profile.role === "owner" ? "/admin" : "/dashboard");
+    redirect(getPostLoginRedirectPath(profile.role));
   }
 
   const params = await searchParams;

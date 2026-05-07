@@ -5,9 +5,7 @@ import {
   Activity,
   AlertCircle,
   ArrowUpRight,
-  Bell,
   CalendarDays,
-  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -18,7 +16,6 @@ import {
   LayoutDashboard,
   Layers,
   Loader2,
-  PenLine,
   RefreshCw,
   Target,
   TrendingUp,
@@ -29,7 +26,6 @@ import {
 import { toast } from "sonner";
 
 import {
-  getMyReviewQueueAction,
   getMyTodaySopStatusAction,
   getSopMatrixAction,
   reviewSopCheckpointAction,
@@ -145,23 +141,8 @@ function getLatestSubmission(member: SopMemberStatus, checkpoint?: SopCheckpoint
   return submissions.slice().sort((left, right) => right.submitted_at.localeCompare(left.submitted_at))[0] ?? null;
 }
 
-function wordCount(text: string) {
-  return text.trim().length;
-}
-
 function checkpointLabel(checkpoint: SopCheckpoint) {
   return MATRIX_CHECKPOINTS.find((item) => item.id === checkpoint)?.label ?? checkpoint;
-}
-
-function defaultScores(score = 8): SopReviewScores {
-  return {
-    HOOK: score,
-    VIEWPOINT: score,
-    COMPLIANCE: score,
-    PERFORMANCE_HOOK: score,
-    YESTERDAY_REVIEW: score,
-    CTA: score,
-  };
 }
 
 function DashboardWorkspaceHeader({
@@ -198,7 +179,7 @@ function DashboardWorkspaceHeader({
   const tabs: Array<{ key: WorkspaceTab; label: string }> = [
     { key: "FLOW", label: "今日流程" },
     ...(userRole !== "member" ? [{ key: "REVIEW" as WorkspaceTab, label: "审核中心" }] : []),
-    { key: "MATRIX", label: "全域矩阵" },
+    ...(userRole !== "member" ? [{ key: "MATRIX" as WorkspaceTab, label: "全域矩阵" }] : []),
   ];
 
   function openDatePicker() {
@@ -430,7 +411,6 @@ function AlertCenter({
 
 interface ProductionControlSystemProps {
   initialMine: SopMemberStatus | null;
-  initialQueue: SopMemberStatus[];
   initialMatrix: SopMemberStatus[];
   today: string;
   userDisplayName: string;
@@ -450,7 +430,6 @@ interface ProductionControlSystemProps {
 
 export function ProductionControlSystem({
   initialMine,
-  initialQueue,
   initialMatrix,
   today,
   userDisplayName,
@@ -471,10 +450,8 @@ export function ProductionControlSystem({
   const [activeCheckpoint, setActiveCheckpoint] = useState<SopCheckpoint>("DATA_REPORT");
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [activeBizDate, setActiveBizDate] = useState(today);
-  const [selectedReview, setSelectedReview] = useState<{ memberId: string; checkpoint: SopCheckpoint } | null>(null);
   const pendingDashboardActionRef = useRef<string | null>(null);
   const [mine, setMine] = useState(initialMine);
-  const [queue, setQueue] = useState(initialQueue);
   const [matrix, setMatrix] = useState(initialMatrix);
   const [isPending, startTransition] = useTransition();
   const [alerts, setAlerts] = useState<DashboardAlertLike[]>([]);
@@ -529,25 +506,20 @@ export function ProductionControlSystem({
         ? getSopMatrixAction({ statusDate: today })
         : Promise.resolve({ data: null });
 
-      const [mineResult, sharedResult, memberQueueResult] = await Promise.all([
+      const [mineResult, sharedResult] = await Promise.all([
         getMyTodaySopStatusAction({ statusDate: today }),
         sharedPromise,
-        isAdminOrOwner ? Promise.resolve({ data: null }) : getMyReviewQueueAction({ statusDate: today }),
       ]);
 
       if (mineResult.data) setMine(mineResult.data);
 
       if (isAdminOrOwner && sharedResult.data) {
-        setQueue(sharedResult.data);
         setMatrix(sharedResult.data);
-      } else if (!isAdminOrOwner && memberQueueResult.data) {
-        setQueue(memberQueueResult.data);
       }
     });
   };
 
-  const openReviewTarget = (memberId: string, checkpoint: SopCheckpoint) => {
-    setSelectedReview({ memberId, checkpoint });
+  const openReviewTarget = () => {
     setActiveTab("REVIEW");
   };
 
@@ -666,16 +638,12 @@ export function ProductionControlSystem({
           userRole === "admin" || userRole === "owner" ? (
             <LeaderDashboard today={today} userRole={userRole} />
           ) : (
-            <ReviewConsole
-              key={`${selectedReview?.memberId ?? "queue"}-${selectedReview?.checkpoint ?? "script"}`}
-              queue={queue}
-              selectedReview={selectedReview}
-              onReviewed={refreshSop}
-              isPending={isPending}
-            />
+            null
           )
         )}
-        {activeTab === "MATRIX" && <GlobalMatrix rows={matrix} onOpenTarget={openReviewTarget} />}
+        {activeTab === "MATRIX" && (userRole === "admin" || userRole === "owner") && (
+          <GlobalMatrix rows={matrix} onOpenTarget={openReviewTarget} />
+        )}
       </main>
     </div>
   );
@@ -992,260 +960,6 @@ function QuickExemptionButton({
       triggerVariant="button"
       triggerTitle={hasPending ? "审批中" : "申请豁免"}
     />
-  );
-}
-
-function ReviewConsole({
-  queue,
-  selectedReview,
-  onReviewed,
-  isPending,
-}: {
-  queue: SopMemberStatus[];
-  selectedReview: { memberId: string; checkpoint: SopCheckpoint } | null;
-  onReviewed: () => void;
-  isPending: boolean;
-}) {
-  const sortedQueue = useMemo(
-    () =>
-      queue
-        .slice()
-        .sort(
-          (left, right) =>
-            Number(PRODUCTION_CHECKPOINTS.some((checkpoint) => Boolean(getLatestSubmission(right, checkpoint.id)))) -
-            Number(PRODUCTION_CHECKPOINTS.some((checkpoint) => Boolean(getLatestSubmission(left, checkpoint.id)))),
-        ),
-    [queue],
-  );
-  const [activeId, setActiveId] = useState(selectedReview?.memberId ?? sortedQueue[0]?.userId ?? "");
-  const [activeCheckpoint, setActiveCheckpoint] = useState<SopCheckpoint>(selectedReview?.checkpoint ?? "SCRIPT");
-  const activeUser = sortedQueue.find((item) => item.userId === activeId) ?? sortedQueue[0] ?? null;
-  const scriptSubmission = activeUser ? getLatestSubmission(activeUser, "SCRIPT") : null;
-  const topicSubmission = activeUser ? getLatestSubmission(activeUser, "TOPIC") : null;
-  const videoSubmission = activeUser ? getLatestSubmission(activeUser, "VIDEO") : null;
-  const activeSubmission = activeUser ? getLatestSubmission(activeUser, activeCheckpoint) : null;
-  const [scores, setScores] = useState<SopReviewScores>(() => defaultScores(8));
-  const [comment, setComment] = useState("");
-  const [isReviewing, startReview] = useTransition();
-  const averageScore = Object.values(scores).reduce((sum, score) => sum + score, 0) / REVIEW_DIMENSIONS.length;
-
-  const applyPreset = (score: number) => setScores(defaultScores(score));
-
-  const submitReview = (forceReject = false) => {
-    if (!activeSubmission) {
-      toast.error("当前没有可审核内容");
-      return;
-    }
-
-    startReview(async () => {
-      const nextScores = forceReject && averageScore >= 6 ? defaultScores(5) : scores;
-      const result = await reviewSopCheckpointAction({
-        submissionId: activeSubmission.id,
-        scores: nextScores,
-        rejectionReason: forceReject || averageScore < 6 ? comment || "请按组长反馈修改脚本" : comment,
-      });
-
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-
-      toast.success(forceReject || averageScore < 6 ? "已打回" : "已通过");
-      onReviewed();
-    });
-  };
-
-  return (
-    <div className="flex h-[760px] min-h-[680px] gap-6">
-      <div className="flex w-64 shrink-0 flex-col gap-4">
-        <div className="flex items-end justify-between px-2">
-          <div>
-            <h3 className="text-xl font-black italic tracking-tight text-zinc-900">待审队列</h3>
-            <p className="mt-0.5 text-[10px] font-bold uppercase text-zinc-400">{sortedQueue.length} Pending Syncs</p>
-          </div>
-          <Filter size={16} className="text-zinc-300" />
-        </div>
-        <div className="flex-1 space-y-1.5 overflow-y-auto pr-2">
-          {sortedQueue.length === 0 ? (
-            <div className="rounded-2xl border border-zinc-100 bg-white p-5 text-sm font-bold text-zinc-400">
-              当前没有可审核成员
-            </div>
-          ) : null}
-          {sortedQueue.map((item) => {
-            const script = getLatestSubmission(item, "SCRIPT");
-            const status = script?.review_status ?? item.statuses.SCRIPT;
-            return (
-              <button
-                key={item.userId}
-                onClick={() => setActiveId(item.userId)}
-                className={cn(
-                  "group w-full cursor-pointer rounded-xl border px-4 py-3 text-left transition-all",
-                  activeUser?.userId === item.userId
-                    ? "translate-x-2 border-zinc-900 bg-zinc-900 text-white shadow-xl"
-                    : "border-zinc-100 bg-white text-zinc-500 hover:border-zinc-300",
-                )}
-              >
-                <div className="mb-1 flex items-center justify-between">
-                  <span className={cn("text-[10px] font-black", activeUser?.userId === item.userId ? "text-zinc-500" : "text-zinc-300")}>
-                    {item.userId.slice(0, 8)}
-                  </span>
-                  <StatusBadge status={status} minimal />
-                </div>
-                  <p className="text-[13px] font-black tracking-tight">{item.userName}</p>
-                  <div className="mt-2 flex gap-1">
-                    {PRODUCTION_CHECKPOINTS.map((checkpoint) => (
-                      <span
-                        key={checkpoint.id}
-                        className={cn(
-                          "h-1.5 flex-1 rounded-full",
-                          STATUS_THEME[item.statuses[checkpoint.id]].dot,
-                        )}
-                      />
-                    ))}
-                  </div>
-                </button>
-              );
-            })}
-        </div>
-      </div>
-
-      <div className="relative flex flex-1 flex-col overflow-hidden rounded-[40px] border border-zinc-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/30 px-10 py-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-sm font-black text-white">
-              {activeUser?.userName.slice(-1) ?? "-"}
-            </div>
-            <div>
-              <h4 className="text-lg font-black tracking-tight text-zinc-900">
-                {activeUser?.userName ?? "未选择成员"} · {checkpointLabel(activeCheckpoint)}审核
-              </h4>
-              <div className="mt-0.5 flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                <span>{wordCount(scriptSubmission?.script_text ?? "")} WORDS</span>
-                <div className="h-1 w-1 rounded-full bg-zinc-300" />
-                <span>ID: #{activeSubmission?.id.slice(0, 8) ?? "EMPTY"}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => submitReview(true)}
-              disabled={isReviewing || isPending || !activeSubmission}
-              className="rounded-xl border-2 border-zinc-200 px-6 py-2 text-[11px] font-black uppercase text-zinc-500 transition-all hover:bg-[#FEE4E2] hover:text-[#B42318] disabled:opacity-50"
-            >
-              驳回反馈
-            </button>
-            <button
-              onClick={() => submitReview(false)}
-              disabled={isReviewing || isPending || !activeSubmission}
-              className="rounded-xl bg-zinc-900 px-8 py-2 text-[11px] font-black uppercase text-white shadow-xl hover:scale-[1.03] disabled:opacity-50"
-            >
-              通过节点
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto bg-white p-8 lg:p-16">
-          <div className="mx-auto max-w-3xl space-y-12">
-            <div className="flex flex-wrap gap-2">
-              {PRODUCTION_CHECKPOINTS.map((checkpoint) => (
-                <button
-                  key={checkpoint.id}
-                  onClick={() => setActiveCheckpoint(checkpoint.id)}
-                  className={cn(
-                    "rounded-xl border px-4 py-2 text-[11px] font-black transition-all",
-                    activeCheckpoint === checkpoint.id
-                      ? "border-zinc-900 bg-zinc-900 text-white shadow-xl"
-                      : "border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50",
-                  )}
-                >
-                  {checkpoint.label}
-                </button>
-              ))}
-            </div>
-            <div className="rounded-r-2xl border-l-4 border-zinc-900 bg-zinc-50/50 py-2 pl-6">
-              <h5 className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">选题核心</h5>
-              <p className="text-lg font-bold italic leading-relaxed text-zinc-800">
-                {topicSubmission?.topic_text || "当前成员还没有提交选题。"}
-              </p>
-            </div>
-            <div className="space-y-6">
-              <h5 className="flex items-center gap-2 border-b border-zinc-100 pb-2 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-300">
-                <PenLine size={14} className="text-zinc-900" /> Script Content
-              </h5>
-              {activeCheckpoint === "VIDEO" ? (
-                videoSubmission?.video_url ? (
-                  <a
-                    href={videoSubmission.video_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-2xl bg-zinc-900 px-6 py-4 text-sm font-black text-white shadow-xl hover:scale-[1.02]"
-                  >
-                    打开抖音视频链接 <ArrowUpRight size={16} />
-                  </a>
-                ) : (
-                  <p className="text-[18px] font-bold leading-[1.8] text-zinc-400">当前还没有提交成片链接。</p>
-                )
-              ) : (
-                <article className="max-w-none whitespace-pre-wrap text-[18px] font-normal leading-[1.8] text-zinc-700">
-                  {activeCheckpoint === "TOPIC"
-                    ? topicSubmission?.topic_text || "没有可审核选题。"
-                    : scriptSubmission?.script_text || "没有可审核脚本。达人提交 SCRIPT 卡点后，这里会展示 1000-1300 字正文。"}
-                </article>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-zinc-200 bg-white/90 px-6 py-6 backdrop-blur-md lg:px-10">
-          <div className="mx-auto flex max-w-5xl flex-col gap-6 xl:flex-row xl:items-end xl:gap-12">
-            <div className="grid flex-1 gap-5 md:grid-cols-3">
-              {REVIEW_DIMENSIONS.map((dimension) => (
-                <div key={dimension.key} className="space-y-3">
-                  <div className="flex items-end justify-between px-1 text-[11px] font-black uppercase text-zinc-400">
-                    <span>{dimension.short}</span>
-                    <span className="italic text-zinc-900">{scores[dimension.key]} / 10</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={10}
-                    value={scores[dimension.key]}
-                    onChange={(event) =>
-                      setScores((current) => ({ ...current, [dimension.key]: Number(event.target.value) }))
-                    }
-                    className="w-full accent-zinc-900"
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="w-full space-y-3 xl:w-80">
-              <div className="flex gap-2">
-                {[6, 7, 8].map((score) => (
-                  <button
-                    key={score}
-                    onClick={() => applyPreset(score)}
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-[10px] font-black text-zinc-500 hover:bg-zinc-100"
-                  >
-                    一键 {score} 分
-                  </button>
-                ))}
-              </div>
-              <div className="relative">
-                <textarea
-                  value={comment}
-                  onChange={(event) => setComment(event.target.value)}
-                  className="h-20 w-full resize-none rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-[12px] italic text-zinc-600 transition-all focus:border-zinc-900 focus:bg-white focus:outline-none"
-                  placeholder="输入协作批注..."
-                />
-                <div className="absolute bottom-3 right-3 text-zinc-200">
-                  <PenLine size={14} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -1708,9 +1422,6 @@ function ReviewDetailModal({
 /* ── 组长日报 ── */
 
 function LeaderReport({ today, userRole }: { today: string; userRole: "admin" | "owner" }) {
-  const [report, setReport] = useState<{
-    topic_feedback: string | null; opening_feedback: string | null; script_feedback: string | null; video_feedback: string | null; submitted_at: string | null;
-  } | null>(null);
   const [fields, setFields] = useState({ topic: "", opening: "", script: "", video: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1727,7 +1438,6 @@ function LeaderReport({ today, userRole }: { today: string; userRole: "admin" | 
         if (!active || !data.ok) return;
         const myReport = data.reports?.[0]?.report ?? data.reports?.[0] ?? null;
         if (myReport) {
-          setReport(myReport);
           setFields({
             topic: myReport.topic_feedback ?? "",
             opening: myReport.opening_feedback ?? "",
@@ -1828,7 +1538,12 @@ function OwnerReportList({ today }: { today: string }) {
     return () => { active = false; };
   }, [today]);
 
-  const toggle = (id: string) => setExpanded((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  const toggle = (id: string) => setExpanded((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
 
   if (loading || groups.length === 0) return null;
 

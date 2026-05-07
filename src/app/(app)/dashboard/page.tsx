@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 import { loadDashboardPageData } from "@/lib/loaders/dashboard-page";
 import { measureAsync } from "@/lib/perf";
-import { loadMyReviewQueue, loadMyTodaySopStatus, loadSopMatrix } from "@/lib/sop/service";
+import { loadMyTodaySopStatus, loadSopMatrix } from "@/lib/sop/service";
 import { DashboardContent } from "./dashboard-content";
 import type { SopMemberStatus, UserRole } from "@/types";
 
@@ -16,17 +16,16 @@ async function safeLoadSopData(today: string, role: UserRole) {
     ? loadSopMatrix(today).catch(() => [] as SopMemberStatus[])
     : Promise.resolve(null);
 
-  const [mine, shared, memberQueue] = await Promise.all([
+  const [mine, shared] = await Promise.all([
     loadMyTodaySopStatus(today).catch(() => null),
     sharedPromise,
-    isAdminOrOwner ? Promise.resolve(null) : loadMyReviewQueue(today).catch(() => [] as SopMemberStatus[]),
   ]);
 
   if (shared) {
-    return { mine, queue: shared, matrix: shared };
+    return { mine, matrix: shared };
   }
 
-  return { mine, queue: memberQueue ?? ([] as SopMemberStatus[]), matrix: [] as SopMemberStatus[] };
+  return { mine, matrix: [] as SopMemberStatus[] };
 }
 
 export default async function DashboardPage() {
@@ -52,7 +51,6 @@ export default async function DashboardPage() {
       <DashboardAnimatedSection index={0}>
         <DashboardContent
           initialMine={sopData.mine}
-          initialQueue={sopData.queue}
           initialMatrix={sopData.matrix}
           today={data.today}
           userDisplayName={data.userDisplayName}

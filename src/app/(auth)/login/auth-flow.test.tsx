@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { LoginForm } from "./login-form";
+import { getPostLoginRedirectPath } from "./post-login-redirect";
 import {
   FORGOT_PASSWORD_SUCCESS_MESSAGE,
   getLoginNotice,
@@ -31,6 +32,12 @@ test("登录表单包含记住邮箱选项", () => {
 
   assert.match(html, /type="checkbox"/);
   assert.match(html, /记住邮箱/);
+});
+
+test("登录成功后所有角色都默认进入 dashboard", () => {
+  assert.equal(getPostLoginRedirectPath("owner"), "/dashboard");
+  assert.equal(getPostLoginRedirectPath("admin"), "/dashboard");
+  assert.equal(getPostLoginRedirectPath("member"), "/dashboard");
 });
 
 test("登录页提示文案会按 query 参数返回", () => {

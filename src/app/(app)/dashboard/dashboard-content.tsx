@@ -12,7 +12,6 @@ type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
 
 interface DashboardContentProps {
   initialMine: SopMemberStatus | null;
-  initialQueue: SopMemberStatus[];
   initialMatrix: SopMemberStatus[];
   today: string;
   userDisplayName: string;

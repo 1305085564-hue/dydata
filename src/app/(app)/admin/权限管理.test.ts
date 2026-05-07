@@ -7,6 +7,7 @@ import {
   getChangedAdminPermissions,
   getPermissionManagerCapabilities,
   hasAdminPermissionChanges,
+  isProfileWriteApplied,
   resetMembersToBaseline,
   type PermissionManagerMember,
 } from "./权限管理";
@@ -206,6 +207,12 @@ test("移除目标规则会拦住自己与越权目标", () => {
     }),
     false,
   );
+});
+
+test("权限管理写入必须确认真实命中目标行", () => {
+  assert.equal(isProfileWriteApplied({ id: "member-1" }), true);
+  assert.equal(isProfileWriteApplied(null), false);
+  assert.equal(isProfileWriteApplied({ id: null }), false);
 });
 
 test("取消会恢复到当前基线快照", () => {

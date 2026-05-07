@@ -7,6 +7,7 @@ import {
   SOP_REVIEW_CHECKPOINTS,
   applyCheckpointStatus,
   buildReviewDecision,
+  canAccessSopManagementView,
   canReadGroupSop,
   canReadSopStatus,
   canReviewCheckpoint,
@@ -494,6 +495,11 @@ function requireReadableGroup(actor: SopProfileAccess, groupId: string) {
   if (!access.allowed) throw new Error("无权限查看该小组");
 }
 
+function requireSopManagementView(actor: SopProfileAccess, message = "无权限查看审核中心") {
+  const access = canAccessSopManagementView(actor);
+  if (!access.allowed) throw new Error(message);
+}
+
 function resolveVisibleGroupIds(actor: SopProfileAccess, requestedGroupId?: string | null) {
   if (requestedGroupId) {
     requireReadableGroup(actor, requestedGroupId);
@@ -567,7 +573,8 @@ export async function loadSopStatuses(input: { statusDate?: string; groupId?: st
   const service = createAdminClient();
   const actor = await requireActor(service);
 
-  if (actor.role === "member" && resolveActorGroupIds(actor).length === 0) {
+  if (actor.role === "member") {
+    if (input.groupId) throw new Error("无权限查看该小组");
     const profile = await getProfile(service, actor.userId);
     return loadStatusesForProfiles(service, [profile], statusDate);
   }
@@ -591,6 +598,7 @@ export async function loadGroupSopStatuses(groupId: string, statusDate = todayIs
 export async function loadMyReviewQueue(statusDate = todayIso()) {
   const service = createAdminClient();
   const actor = await requireActor(service);
+  requireSopManagementView(actor, "无权限查看审核中心");
 
   if (actor.role === "owner") return loadSopStatuses({ statusDate });
 
@@ -767,6 +775,7 @@ export async function updateSopCheckpointStatus(input: {
 export async function loadSopMatrix(statusDate = todayIso()) {
   const service = createAdminClient();
   const actor = await requireActor(service);
+  requireSopManagementView(actor, "无权限查看全员矩阵");
 
   if (actor.role === "owner") return loadSopStatuses({ statusDate });
 
@@ -797,6 +806,7 @@ export async function loadLeaderBoard(input: { statusDate?: string; groupId?: st
   const statusDate = input.statusDate ?? todayIso();
   const service = createAdminClient();
   const actor = await requireActor(service);
+  requireSopManagementView(actor, "无权限查看审核中心");
   const groupIds = resolveVisibleGroupIds(actor, input.groupId);
 
   if (groupIds && groupIds.length === 0) {
@@ -981,6 +991,15 @@ export async function loadSopAlerts(input: { statusDate?: string; groupId?: stri
   const statusDate = input.statusDate ?? todayIso();
   const service = createAdminClient();
   const actor = await requireActor(service);
+
+  if (actor.role === "member") {
+    if (input.groupId) throw new Error("无权限查看该小组");
+    const profile = await getProfile(service, actor.userId);
+    const members = await loadStatusesForProfiles(service, [profile], statusDate);
+    const reports = await loadReportsForTrend(service, [profile.id], statusDate);
+    return buildSopAlertsForProfiles([profile], members, reports, statusDate);
+  }
+
   const groupIds = resolveVisibleGroupIds(actor, input.groupId);
 
   if (groupIds && groupIds.length === 0) return [] as SopAlert[];
@@ -988,6 +1007,15 @@ export async function loadSopAlerts(input: { statusDate?: string; groupId?: stri
   const profiles = await listMemberProfiles(service, groupIds);
   const members = await loadStatusesForProfiles(service, profiles, statusDate);
   const reports = await loadReportsForTrend(service, profiles.map((profile) => profile.id), statusDate);
+  return buildSopAlertsForProfiles(profiles, members, reports, statusDate);
+}
+
+function buildSopAlertsForProfiles(
+  profiles: ProfileRow[],
+  members: SopMemberStatus[],
+  reports: DailyReportMetricRow[],
+  statusDate: string,
+) {
   const alerts: SopAlert[] = [];
 
   for (const member of members) {

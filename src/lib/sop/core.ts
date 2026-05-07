@@ -153,7 +153,7 @@ export function canSubmitOwnCheckpoint(actor: SopProfileAccess, targetUserId: st
 export function canReviewCheckpoint(actor: SopProfileAccess, target: SopTargetProfile): SopAccessDecision {
   if (actor.role === "owner") return { allowed: true, scope: "global" };
   if (actor.role === "admin" && target.groupId && actor.groupId === target.groupId) return { allowed: true, scope: "group" };
-  if (target.groupId && actor.ledGroupIds.includes(target.groupId)) return { allowed: true, scope: "group" };
+  if (actor.role === "admin" && target.groupId && actor.ledGroupIds.includes(target.groupId)) return { allowed: true, scope: "group" };
   return { allowed: false, scope: "denied" };
 }
 
@@ -161,14 +161,20 @@ export function canReadSopStatus(actor: SopProfileAccess, target: SopTargetProfi
   if (actor.role === "owner") return { allowed: true, scope: "global" };
   if (actor.userId === target.userId) return { allowed: true, scope: "self" };
   if (actor.role === "admin" && target.groupId && actor.groupId === target.groupId) return { allowed: true, scope: "group" };
-  if (target.groupId && actor.ledGroupIds.includes(target.groupId)) return { allowed: true, scope: "group" };
+  if (actor.role === "admin" && target.groupId && actor.ledGroupIds.includes(target.groupId)) return { allowed: true, scope: "group" };
   return { allowed: false, scope: "denied" };
 }
 
 export function canReadGroupSop(actor: SopProfileAccess, groupId: string): SopAccessDecision {
   if (actor.role === "owner") return { allowed: true, scope: "global" };
   if (actor.role === "admin" && actor.groupId === groupId) return { allowed: true, scope: "group" };
-  if (actor.ledGroupIds.includes(groupId)) return { allowed: true, scope: "group" };
+  if (actor.role === "admin" && actor.ledGroupIds.includes(groupId)) return { allowed: true, scope: "group" };
+  return { allowed: false, scope: "denied" };
+}
+
+export function canAccessSopManagementView(actor: SopProfileAccess): SopAccessDecision {
+  if (actor.role === "owner") return { allowed: true, scope: "global" };
+  if (actor.role === "admin") return { allowed: true, scope: "group" };
   return { allowed: false, scope: "denied" };
 }
 

@@ -5,6 +5,7 @@ import {
   applyCheckpointStatus,
   buildSopMatrixRows,
   buildReviewDecision,
+  canAccessSopManagementView,
   canTransitionCheckpointStatus,
   canReadGroupSop,
   canReadSopStatus,
@@ -89,6 +90,13 @@ test("权限判断区分达人本人、组长小组、owner/admin 全局", () =>
   };
   const leader = {
     userId: "leader-a",
+    role: "admin" as const,
+    teamId: "team-1",
+    groupId: "group-1",
+    ledGroupIds: ["group-1"],
+  };
+  const memberListedAsLeader = {
+    userId: "leader-b",
     role: "member" as const,
     teamId: "team-1",
     groupId: "group-1",
@@ -117,14 +125,53 @@ test("权限判断区分达人本人、组长小组、owner/admin 全局", () =>
   assert.deepEqual(canReadSopStatus(member, target), { allowed: true, scope: "self" });
   assert.deepEqual(canReadSopStatus(leader, target), { allowed: true, scope: "group" });
   assert.equal(canReadSopStatus(sameGroupMember, target).allowed, false);
+  assert.equal(canReadSopStatus(memberListedAsLeader, target).allowed, false);
   assert.deepEqual(canReadSopStatus(owner, otherTarget), { allowed: true, scope: "global" });
 
   assert.deepEqual(canReviewCheckpoint(leader, target), { allowed: true, scope: "group" });
   assert.equal(canReviewCheckpoint(leader, otherTarget).allowed, false);
   assert.equal(canReviewCheckpoint(sameGroupMember, target).allowed, false);
+  assert.equal(canReviewCheckpoint(memberListedAsLeader, target).allowed, false);
   assert.deepEqual(canReadGroupSop(leader, "group-1"), { allowed: true, scope: "group" });
   assert.equal(canReadGroupSop(sameGroupMember, "group-1").allowed, false);
+  assert.equal(canReadGroupSop(memberListedAsLeader, "group-1").allowed, false);
   assert.equal(canReadGroupSop(leader, "group-2").allowed, false);
+});
+
+test("SOP 管理视图只允许 admin/owner 访问", () => {
+  const member = {
+    userId: "user-a",
+    role: "member" as const,
+    teamId: "team-1",
+    groupId: "group-1",
+    ledGroupIds: [],
+  };
+  const leaderByGroup = {
+    userId: "leader-a",
+    role: "member" as const,
+    teamId: "team-1",
+    groupId: "group-1",
+    ledGroupIds: ["group-1"],
+  };
+  const admin = {
+    userId: "admin-a",
+    role: "admin" as const,
+    teamId: "team-1",
+    groupId: "group-1",
+    ledGroupIds: [],
+  };
+  const owner = {
+    userId: "owner-a",
+    role: "owner" as const,
+    teamId: null,
+    groupId: null,
+    ledGroupIds: [],
+  };
+
+  assert.deepEqual(canAccessSopManagementView(member), { allowed: false, scope: "denied" });
+  assert.deepEqual(canAccessSopManagementView(leaderByGroup), { allowed: false, scope: "denied" });
+  assert.deepEqual(canAccessSopManagementView(admin), { allowed: true, scope: "group" });
+  assert.deepEqual(canAccessSopManagementView(owner), { allowed: true, scope: "global" });
 });
 
 test("矩阵聚合按成员生成 5 卡点状态，并限制默认 24 人", () => {

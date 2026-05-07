@@ -30,7 +30,7 @@ import {
   type ReviewDecision,
 } from "@/lib/豁免流程";
 import type { Permissions, UserRole } from "@/types";
-import { canRemoveMemberTarget } from "./权限管理";
+import { canRemoveMemberTarget, isProfileWriteApplied } from "./权限管理";
 
 async function writeAuditLog(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -600,18 +600,22 @@ export async function updatePermissions(
   if (perm.role !== "owner") return { error: "仅创始人可操作" };
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
   if (targetUserId === perm.userId) return { error: "不能修改自己的权限" };
 
-  const { data: target } = await supabase.from("profiles").select("role").eq("id", targetUserId).single();
+  const { data: target } = await adminSupabase.from("profiles").select("role").eq("id", targetUserId).single();
   if (target?.role !== "admin") return { error: "只能修改管理员的权限" };
 
-  const { error } = await supabase
+  const { data: updatedProfile, error } = await adminSupabase
     .from("profiles")
     .update({ permissions: newPermissions })
-    .eq("id", targetUserId);
+    .eq("id", targetUserId)
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
+  if (!isProfileWriteApplied(updatedProfile)) return { error: "权限更新未生效，请刷新后重试" };
 
   await writeAuditLog(supabase, perm.userId, "update_permissions", targetUserId, JSON.stringify(newPermissions));
 
@@ -626,8 +630,9 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
   if (targetUserId === perm.userId) return { error: "不能移除自己" };
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
-  const { data: target } = await supabase.from("profiles").select("role, name").eq("id", targetUserId).single();
+  const { data: target } = await adminSupabase.from("profiles").select("role, name").eq("id", targetUserId).single();
   if (!target) return { error: "用户不存在" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
@@ -638,21 +643,23 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
     return { error: perm.role === "admin" ? "管理员只能移除成员" : "不能移除该用户" };
   }
 
-  const adminSupabase = createAdminClient();
   const { error: banError } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
     ban_duration: "876000h",
   });
   if (banError) return { error: banError.message };
 
-  const { error } = await supabase
+  const { data: updatedProfile, error } = await adminSupabase
     .from("profiles")
     .update({ role: "member", permissions: {} })
-    .eq("id", targetUserId);
+    .eq("id", targetUserId)
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
+  if (!isProfileWriteApplied(updatedProfile)) return { error: "成员移除未生效，请刷新后重试" };
 
   const teamId = await getProfileTeamId(supabase, targetUserId);
-  await supabase.from("member_change_log").insert({
+  await adminSupabase.from("member_change_log").insert({
     user_id: targetUserId,
     team_id: teamId,
     action_type: "remove",
@@ -678,7 +685,8 @@ export async function resetMemberPassword(
   if (normalizedPassword.length < 6) return { error: "密码至少需要 6 位。" };
 
   const supabase = await createClient();
-  const { data: target } = await supabase.from("profiles").select("role, name").eq("id", targetUserId).single();
+  const adminSupabase = createAdminClient();
+  const { data: target } = await adminSupabase.from("profiles").select("role, name").eq("id", targetUserId).single();
   if (!target) return { error: "用户不存在" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
@@ -689,7 +697,6 @@ export async function resetMemberPassword(
     return { error: perm.role === "admin" ? "管理员只能重置成员密码" : "不能重置该用户密码" };
   }
 
-  const adminSupabase = createAdminClient();
   const { error } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
     password: normalizedPassword,
   });
@@ -714,20 +721,24 @@ export async function changeRole(
   if (newRole !== "member" && newRole !== "admin") return { error: "无效角色" };
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
-  const { data: target } = await supabase.from("profiles").select("role, name").eq("id", targetUserId).single();
+  const { data: target } = await adminSupabase.from("profiles").select("role, name").eq("id", targetUserId).single();
   if (!target) return { error: "用户不存在" };
   if (target.role === "owner") return { error: "不能修改其他创始人" };
 
   const updateData: { role: string; permissions?: Record<string, never> } = { role: newRole };
   if (newRole === "member") updateData.permissions = {};
 
-  const { error } = await supabase
+  const { data: updatedProfile, error } = await adminSupabase
     .from("profiles")
     .update(updateData)
-    .eq("id", targetUserId);
+    .eq("id", targetUserId)
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
+  if (!isProfileWriteApplied(updatedProfile)) return { error: "角色更新未生效，请刷新后重试" };
 
   await writeAuditLog(supabase, perm.userId, "change_role", targetUserId, `${target.name}: ${target.role} → ${newRole}`);
 

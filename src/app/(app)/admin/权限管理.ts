@@ -29,6 +29,10 @@ export interface RemoveMemberTargetInput {
   targetRole: UserRole;
 }
 
+export interface AdminProfileWriteResult {
+  id?: string | null;
+}
+
 export function getPermissionManagerCapabilities(
   role: UserRole,
   permissions: Permissions,
@@ -60,6 +64,10 @@ export function canRemoveMemberTarget({
   if (targetRole === "owner") return false;
   if (actorRole === "owner") return true;
   return actorRole === "admin" && targetRole === "member";
+}
+
+export function isProfileWriteApplied(result: AdminProfileWriteResult | null | undefined) {
+  return Boolean(result?.id);
 }
 
 function cloneMember(member: PermissionManagerMember): PermissionManagerMember {
