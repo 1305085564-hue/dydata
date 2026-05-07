@@ -5,7 +5,7 @@ import { loadProfilesWithExemptionFallback } from "@/app/(app)/admin/资料加�
 import { getUserPermissions } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getTeamMeta } from "@/lib/teams";
+import { getTeamMeta, getTeamOptions } from "@/lib/teams";
 import type { Permissions, UserRole } from "@/types";
 
 import { shiftDateOnly } from "./shared";
@@ -114,33 +114,40 @@ export async function loadAdminModulesData({
       adminSupabase
         .from("profiles")
         .select(
-          "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, created_at"
+          "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, team_id, created_at"
         )
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
       adminSupabase
         .from("profiles")
-        .select("id, name, role, status, permissions, created_at")
+        .select("id, name, role, status, permissions, team_id, created_at")
         .order("created_at", { ascending: true }) as never,
   });
 
-  const authUsersResult = await adminSupabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
+  const [authUsersResult, teams] = await Promise.all([
+    adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    getTeamOptions(),
+  ]);
   const authUserById = new Map(
     (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]),
   );
   const authEmailByUserId = new Map(
     (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser.email ?? null]),
   );
+  const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
 
-  const hydratedAllProfiles = (allProfiles ?? []).map((profile) => ({
-    ...profile,
-    email: authEmailByUserId.get(profile.id) ?? null,
-    team_name: getTeamMeta(authUserById.get(profile.id)?.user_metadata).teamName,
-    permissions: (profile.permissions ?? null) as Permissions | null,
-  })) as AdminModulesData["allProfiles"];
+  const hydratedAllProfiles = (allProfiles ?? []).map((profile) => {
+    const metadata = authUserById.get(profile.id)?.user_metadata ?? {};
+    const metadataTeamName = getTeamMeta(metadata).teamName;
+    const dbTeamName = profile.team_id ? (teamNameById.get(profile.team_id) ?? null) : null;
+
+    return {
+      ...profile,
+      email: authEmailByUserId.get(profile.id) ?? null,
+      team_name: dbTeamName ?? metadataTeamName,
+      permissions: (profile.permissions ?? null) as Permissions | null,
+    };
+  }) as AdminModulesData["allProfiles"];
 
   const { data: auditLogs } = await supabase
     .from("audit_logs")
