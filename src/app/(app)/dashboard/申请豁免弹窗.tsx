@@ -105,7 +105,7 @@ function ExemptionModal({
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"
-            : "h-8 border-primary/20 px-3 text-xs font-medium text-primary shadow-sm transition-all hover:border-primary/40 hover:bg-primary/5",
+            : "h-8 border-primary/20 px-3 text-xs font-medium text-zinc-900 shadow-sm transition-all hover:border-primary/40 hover:bg-zinc-900/5",
           triggerClassName,
         )}
       >
@@ -132,7 +132,7 @@ function ExemptionModal({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[1.75rem] border-none bg-white/95 p-0 shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-xl sm:max-w-4xl">
           <DialogHeader className="px-6 pb-2 pt-6">
-            <DialogTitle className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">
+            <DialogTitle className="text-xl font-bold tracking-tight text-[var(--color-text-zinc-900)]">
               选择豁免日期
             </DialogTitle>
           </DialogHeader>
@@ -164,14 +164,14 @@ function ExemptionModal({
             <div className="flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">已选豁免日期</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-zinc-900)]">已选豁免日期</p>
                   {selectedDates.length > 0 ? (
-                    <div className="rounded-[1rem] bg-primary/5 p-4 ring-1 ring-primary/20">
+                    <div className="rounded-[1rem] bg-zinc-900/5 p-4 ring-1 ring-primary/20">
                       <div className="flex flex-wrap gap-2">
                         {selectedDates.map((date) => (
                           <span
                             key={date}
-                            className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary ring-1 ring-primary/15"
+                            className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-primary/15"
                           >
                             {date}
                           </span>
@@ -186,11 +186,11 @@ function ExemptionModal({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  <p className="text-sm font-semibold text-[var(--color-text-zinc-900)]">
                     申请原因 <span className="text-rose-500">*</span>
                   </p>
                   <textarea
-                    className="h-[120px] w-full resize-none rounded-[1rem] border border-black/10 bg-white px-4 py-3 text-sm shadow-sm transition-all placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                    className="h-[120px] w-full resize-none rounded-[1rem] border border-black/10 bg-white px-4 py-3 text-sm shadow-sm transition-all placeholder:text-muted-foreground focus:border-zinc-400 focus:outline-none focus:ring-4 focus:ring-zinc-200"
                     maxLength={100}
                     placeholder="请简述豁免原因，如：外出拍摄、周末双休、账号限流等（最多100字）"
                     value={reason}
@@ -208,7 +208,7 @@ function ExemptionModal({
                   type="button"
                   onClick={handleSubmit}
                   disabled={isPending}
-                  className="h-11 rounded-[12px] bg-primary px-8 text-white shadow-[0_8px_16px_-6px_rgba(0,122,255,0.4)] transition-all hover:bg-primary/90 active:scale-[0.98]"
+                  className="h-11 rounded-[12px] bg-zinc-900 px-8 text-white shadow-[0_8px_16px_-6px_rgba(0,122,255,0.4)] transition-all hover:bg-zinc-900/90 active:scale-[0.98]"
                 >
                   {isPending ? "提交中..." : "提交申请"}
                 </Button>

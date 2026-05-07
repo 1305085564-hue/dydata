@@ -3,14 +3,51 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { build团队趋势数据 } from "@/lib/趋势图";
+import {
+  filterVisibleTeamManagementProfiles,
+  isIgnoredTeamManagementUser,
+  resolveTeamManagementAccess,
+  type TeamManagementAccess,
+  type TeamManagementGroup,
+  type TeamManagementProfile,
+} from "@/lib/team-management";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
 import { loadProfilesWithExemptionFallback } from "@/app/(app)/admin/资料加载";
 import type { ExemptionRequestRow } from "@/app/(app)/admin/豁免申请列表";
-import type { Permissions, UserRole } from "@/types";
+import type { ExemptionCategory, ExemptType, Permissions, UserRole, UserStatus } from "@/types";
 import { shiftDateOnly } from "./shared";
 
-type AdminSupabase = SupabaseClient<any, "public", any>;
+type AdminSupabase = SupabaseClient;
+type AdminProfileRow = TeamManagementProfile & {
+  status: UserStatus;
+  permissions?: Permissions | null;
+  created_at?: string;
+  exempt_type: ExemptType | null;
+  exempt_start_date: string | null;
+  exempt_end_date: string | null;
+  exempt_reason: string | null;
+  exemption_category?: ExemptionCategory | null;
+  teams?: unknown;
+};
+type AdminReportRow = Record<string, unknown>;
+type AuditLogRow = {
+  id: string;
+  created_at: string;
+  user_id: string | null;
+  action: string;
+  target?: string;
+  detail?: string;
+  user_name?: string;
+};
+type InviteCodeRow = {
+  id: string;
+  code: string;
+  used: boolean;
+  used_by: string | null;
+  expires_at: string | null;
+  created_at: string;
+};
 
 async function loadPendingExemptionRequests(supabase: AdminSupabase) {
   const primary = await supabase
@@ -42,7 +79,7 @@ export interface AdminPageData {
   queryDate: string;
   perm: { role: UserRole; permissions: Permissions };
   permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
-  profiles: any[];
+  profiles: AdminProfileRow[];
   accountRows: Array<{
     id: string;
     name: string;
@@ -53,18 +90,25 @@ export interface AdminPageData {
   }>;
   submittedProfileIds: string[];
   submittedAccountIds: string[];
-  fullReports: any[];
+  fullReports: AdminReportRow[];
   avgPlayBySubmitter: Record<string, number>;
   dayCountBySubmitter: Record<string, number>;
   avgPlayByAccount: Record<string, number>;
   dayCountByAccount: Record<string, number>;
-  allProfiles: any[];
+  allProfiles: AdminProfileRow[];
   teams: TeamOption[];
-  logsWithNames: any[];
+  teamManagement: {
+    access: TeamManagementAccess;
+    teams: TeamOption[];
+    groups: TeamManagementGroup[];
+    profiles: TeamManagementProfile[];
+    leaderCandidates: TeamManagementProfile[];
+  };
+  logsWithNames: AuditLogRow[];
   exemptionRequests: ExemptionRequestRow[];
-  inviteCodes: any[];
+  inviteCodes: InviteCodeRow[];
   trendData: ReturnType<typeof build团队趋势数据>;
-  topSummaryCards: Array<{ label: string; value: number; hint: string; icon: any }>;
+  topSummaryCards: Array<{ label: string; value: number; hint: string; icon: unknown }>;
   quickActions: Array<{ label: string; description: string; href?: string }>;
   summary: {
     totalProfiles: number;
@@ -89,14 +133,16 @@ export async function loadAdminPageData({
   const permissionManagerCapabilities = getPermissionManagerCapabilities(perm.role, perm.permissions);
   const queryDate = searchDate || new Date().toISOString().split("T")[0];
 
+  const adminSupabase = createAdminClient();
+
   const { data: profiles } = await loadProfilesWithExemptionFallback({
     loadWithExemption: async () =>
-      supabase
+      adminSupabase
         .from("profiles")
         .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
-      supabase
+      adminSupabase
         .from("profiles")
         .select("id, name, role, status")
         .order("created_at", { ascending: true }),
@@ -171,13 +217,12 @@ export async function loadAdminPageData({
     dayCountByAccount[accountId] = count;
   }
 
-  const adminSupabase = createAdminClient();
   const teams = await getTeamOptions();
   const { data: allProfiles } = await loadProfilesWithExemptionFallback({
     loadWithExemption: async () =>
       adminSupabase
         .from("profiles")
-        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, created_at")
+        .select("id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, team_id, group_id, created_at")
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
       adminSupabase
@@ -186,15 +231,87 @@ export async function loadAdminPageData({
         .order("created_at", { ascending: true }),
   });
 
+  const [authUsersResult, groupsResult] = await Promise.all([
+    adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    adminSupabase
+      .from("groups")
+      .select("id, name, team_id, leader_user_id")
+      .order("name", { ascending: true }),
+  ]);
+
+  const authUserById = new Map((authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]));
+  const authEmailByUserId = new Map((authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser.email ?? null]));
+  const teamIdByName = new Map(teams.map((team) => [team.name, team.id]));
+  const hydratedProfiles = ((allProfiles ?? []) as AdminProfileRow[]).map((profile) => {
+    const metadata = authUserById.get(profile.id)?.user_metadata ?? {};
+    const metadataTeamId = typeof metadata.team_id === "string" ? metadata.team_id : null;
+    const metadataTeamName = typeof metadata.team_name === "string" ? metadata.team_name : null;
+    const fallbackTeamId = metadataTeamId ?? (metadataTeamName ? teamIdByName.get(metadataTeamName) ?? null : null);
+
+    return {
+      ...profile,
+      role: profile.role as UserRole,
+      status: profile.status ?? "active",
+      exempt_type: profile.exempt_type ?? null,
+      exempt_start_date: profile.exempt_start_date ?? null,
+      exempt_end_date: profile.exempt_end_date ?? null,
+      exempt_reason: profile.exempt_reason ?? null,
+      exemption_category: profile.exemption_category ?? null,
+      permissions: (profile.permissions ?? {}) as Permissions,
+      team_id: profile.team_id ?? fallbackTeamId ?? null,
+      group_id: profile.group_id ?? null,
+      email: authEmailByUserId.get(profile.id) ?? null,
+    };
+  });
+  const groups = ((groupsResult.data ?? []) as TeamManagementGroup[]).map((group) => ({
+    id: group.id,
+    name: group.name,
+    team_id: group.team_id ?? null,
+    leader_user_id: group.leader_user_id ?? null,
+  }));
+  const actorProfile =
+    hydratedProfiles.find((profile) => profile.id === perm.userId) ??
+    ({
+      id: perm.userId,
+      name: "",
+      role: perm.role,
+      permissions: perm.permissions,
+      team_id: null,
+      group_id: null,
+    } satisfies TeamManagementProfile);
+  const teamManagementAccess = resolveTeamManagementAccess(actorProfile, groups);
+  const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(teamManagementAccess, hydratedProfiles, groups);
+  const visibleTeamIds =
+    teamManagementAccess.teamIds === null
+      ? new Set(teams.map((team) => team.id))
+      : new Set(teamManagementAccess.teamIds);
+  const visibleTeams = teams.filter(
+    (team) =>
+      visibleTeamIds.has(team.id) ||
+      visibleTeamManagementProfiles.some((profile) => profile.team_id === team.id),
+  );
+  const visibleGroups = groups.filter((group) => {
+    if (!teamManagementAccess.canView) return false;
+    if (teamManagementAccess.groupIds) return teamManagementAccess.groupIds.includes(group.id);
+    if (teamManagementAccess.teamIds === null) return true;
+    return Boolean(group.team_id && teamManagementAccess.teamIds.includes(group.team_id));
+  });
+  const leaderCandidates = hydratedProfiles
+    .filter((profile) => profile.role === "admin" && profile.permissions?.manage_members !== true)
+    .filter((profile) => Boolean(profile.team_id))
+    .filter((profile) => !isIgnoredTeamManagementUser(profile));
+
   const [{ data: auditLogs }, { data: pendingRequests }, { data: inviteCodes }] = await Promise.all([
     supabase.from("audit_logs").select("id, created_at, user_id, action, target, detail").order("created_at", { ascending: false }).limit(50),
     loadPendingExemptionRequests(supabase),
     supabase.from("invite_codes").select("id, code, used, used_by, expires_at, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
 
-  const profileMap = new Map((allProfiles ?? []).map((profile) => [profile.id, profile.name]));
+  const profileMap = new Map(hydratedProfiles.map((profile) => [profile.id, profile.name]));
   const logsWithNames = (auditLogs ?? []).map((log) => ({
     ...log,
+    target: log.target ?? undefined,
+    detail: log.detail ?? undefined,
     user_name: profileMap.get(log.user_id) ?? undefined,
   }));
   const exemptionRequests: ExemptionRequestRow[] = (pendingRequests ?? []).map((request) => ({
@@ -234,9 +351,9 @@ export async function loadAdminPageData({
     activeUserIds,
   );
 
-  const totalProfiles = (allProfiles ?? []).length;
-  const activeProfilesCount = (allProfiles ?? []).filter((profile) => (profile.status ?? "active") === "active").length;
-  const exemptProfilesCount = (allProfiles ?? []).filter((profile) => profile.status === "exempt").length;
+  const totalProfiles = hydratedProfiles.length;
+  const activeProfilesCount = hydratedProfiles.filter((profile) => (profile.status ?? "active") === "active").length;
+  const exemptProfilesCount = hydratedProfiles.filter((profile) => profile.status === "exempt").length;
   const todayReportCount = (dateReports ?? []).length;
   const pendingRequestCount = exemptionRequests.length;
   const inviteCodeCount = (inviteCodes ?? []).length;
@@ -246,7 +363,7 @@ export async function loadAdminPageData({
     queryDate,
     perm,
     permissionManagerCapabilities,
-    profiles: profiles ?? [],
+    profiles: (profiles ?? []) as AdminProfileRow[],
     accountRows,
     submittedProfileIds,
     submittedAccountIds,
@@ -255,8 +372,15 @@ export async function loadAdminPageData({
     dayCountBySubmitter,
     avgPlayByAccount,
     dayCountByAccount,
-    allProfiles: allProfiles ?? [],
+    allProfiles: hydratedProfiles,
     teams,
+    teamManagement: {
+      access: teamManagementAccess,
+      teams: visibleTeams,
+      groups: visibleGroups,
+      profiles: visibleTeamManagementProfiles,
+      leaderCandidates,
+    },
     logsWithNames,
     exemptionRequests,
     inviteCodes: inviteCodes ?? [],

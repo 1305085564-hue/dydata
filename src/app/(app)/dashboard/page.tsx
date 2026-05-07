@@ -1,10 +1,33 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AppShell, AppShellHero } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
-import { VideoSubmitPanel } from "./video-submit-panel";
 import { loadDashboardPageData } from "@/lib/loaders/dashboard-page";
 import { measureAsync } from "@/lib/perf";
+import { loadMyReviewQueue, loadMyTodaySopStatus, loadSopMatrix } from "@/lib/sop/service";
+import { DashboardContent } from "./dashboard-content";
+import type { SopMemberStatus, UserRole } from "@/types";
+
+async function safeLoadSopData(today: string, role: UserRole) {
+  const isAdminOrOwner = role === "admin" || role === "owner";
+
+  // owner/admin 的 review queue 和 sop matrix 数据来源完全相同，只查一次
+  const sharedPromise = isAdminOrOwner
+    ? loadSopMatrix(today).catch(() => [] as SopMemberStatus[])
+    : Promise.resolve(null);
+
+  const [mine, shared, memberQueue] = await Promise.all([
+    loadMyTodaySopStatus(today).catch(() => null),
+    sharedPromise,
+    isAdminOrOwner ? Promise.resolve(null) : loadMyReviewQueue(today).catch(() => [] as SopMemberStatus[]),
+  ]);
+
+  if (shared) {
+    return { mine, queue: shared, matrix: shared };
+  }
+
+  return { mine, queue: memberQueue ?? ([] as SopMemberStatus[]), matrix: [] as SopMemberStatus[] };
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -20,31 +43,32 @@ export default async function DashboardPage() {
       userId: user.id,
     }),
   );
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const userRole = ((profile?.role as UserRole | undefined) ?? "member") as UserRole;
+  const sopData = await safeLoadSopData(data.today, userRole);
 
   return (
-    <AppShell width="wide" className="dashboard-shell pb-24 md:pb-6">
+    <AppShell width="full" className="dashboard-shell max-w-none pb-24 md:pb-10">
       <DashboardAnimatedSection index={0}>
-        <AppShellHero
-          eyebrow="Daily Submission"
-          title="优先完成今天的数据填报"
-          description="首页聚焦当天填报主流程，先把今天的数据补齐，再按需查看趋势、排行榜和历史记录。"
-        >
-          <VideoSubmitPanel
-            accounts={data.accounts}
-            userId={data.userId}
-            userDisplayName={data.userDisplayName}
-            today={data.today}
-            todayReports={data.todayReports}
-            monthReports={data.monthReports}
-            history={data.history}
-            accountIds={data.accountIds}
-            ownContentDirections={data.ownContentDirections}
-            accountDisplayNameMap={data.accountDisplayNameMap}
-            hasPendingExemption={data.hasPendingExemption}
-            userExemptionProfile={data.userExemptionProfile}
-            userExemptionGrants={data.userExemptionGrants}
-          />
-        </AppShellHero>
+        <DashboardContent
+          initialMine={sopData.mine}
+          initialQueue={sopData.queue}
+          initialMatrix={sopData.matrix}
+          today={data.today}
+          userDisplayName={data.userDisplayName}
+          userRole={userRole}
+          accounts={data.accounts}
+          userId={data.userId}
+          todayReports={data.todayReports}
+          monthReports={data.monthReports}
+          history={data.history}
+          accountIds={data.accountIds}
+          ownContentDirections={data.ownContentDirections}
+          accountDisplayNameMap={data.accountDisplayNameMap}
+          hasPendingExemption={data.hasPendingExemption}
+          userExemptionProfile={data.userExemptionProfile}
+          userExemptionGrants={data.userExemptionGrants}
+        />
       </DashboardAnimatedSection>
     </AppShell>
   );

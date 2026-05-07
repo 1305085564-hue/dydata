@@ -122,7 +122,7 @@ export function SubmissionSlotCard({
       hover={!isProcessing}
       className={cn(
         "relative overflow-hidden border-2 bg-white/75 transition-colors duration-300",
-        isHighlighted ? "border-[color:var(--color-primary)] ring-4 ring-[color:rgba(0,122,255,0.15)]" : "border-transparent",
+        isHighlighted ? "border-zinc-900 ring-4 ring-zinc-900/10" : "border-transparent",
         isWarning && "ring-2 ring-[color:rgba(255,149,0,0.28)]",
         isError && "ring-2 ring-[color:rgba(255,59,48,0.28)]",
         isSuccess && "ring-2 ring-[color:rgba(52,199,89,0.24)]"
@@ -132,7 +132,7 @@ export function SubmissionSlotCard({
         variants={isError ? shakeVariants : undefined}
         initial={isError ? "initial" : undefined}
         animate={isError ? "animate" : undefined}
-        className="flex items-stretch min-h-[140px]"
+        className="flex flex-col sm:flex-row items-stretch"
       >
         <input
           ref={inputRef}
@@ -148,8 +148,8 @@ export function SubmissionSlotCard({
           }}
         />
 
-        {/* 左侧：完全撑满的图片区域 (约45%) */}
-        <div className="w-[45%] flex-shrink-0 relative border-r border-black/5 bg-black/[0.03]">
+        {/* 左侧：1:1 正方形截图槽位 */}
+        <div className="w-full sm:w-[45%] aspect-square sm:aspect-auto sm:min-h-[180px] flex-shrink-0 relative border-b sm:border-b-0 sm:border-r border-black/5 bg-zinc-50">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -170,7 +170,7 @@ export function SubmissionSlotCard({
                   {title}
                 </span>
                 {required ? (
-                  <span className="rounded bg-white/90 backdrop-blur-md px-1 py-0.5 text-[9px] font-bold text-[var(--color-primary)] shadow-sm">
+                  <span className="rounded-full bg-white/90 backdrop-blur-md px-1.5 py-0.5 text-[9px] font-bold text-zinc-900 shadow-sm">
                     必传
                   </span>
                 ) : (
@@ -180,10 +180,10 @@ export function SubmissionSlotCard({
                 )}
               </div>
               <span className={cn(
-                "rounded backdrop-blur-md px-1.5 py-0.5 text-[9px] font-medium shadow-sm transition-colors",
-                isSuccess ? "bg-[var(--color-success)]/90 text-white" :
-                isError ? "bg-[var(--color-danger)]/90 text-white" :
-                isWarning ? "bg-[var(--color-warning)]/90 text-white" :
+                "rounded-full backdrop-blur-md px-2 py-0.5 text-[9px] font-bold shadow-sm transition-colors",
+                isSuccess ? "bg-emerald-600/90 text-white ring-1 ring-emerald-400/30 shadow-[0_0_8px_rgba(16,185,129,0.25)]" :
+                isError ? "bg-[#B42318]/90 text-white ring-1 ring-red-400/30 shadow-[0_0_8px_rgba(180,35,24,0.25)]" :
+                isWarning ? "bg-[#EAB308]/90 text-white ring-1 ring-amber-400/30 shadow-[0_0_8px_rgba(234,179,8,0.25)]" :
                 "bg-black/50 text-white/90"
               )}>
                 {getStatusText(status)}
@@ -228,15 +228,15 @@ export function SubmissionSlotCard({
                   <div className="flex flex-col items-center gap-2 w-full max-w-[100px]">
                     <div className="w-full h-[4px] bg-black/10 rounded-full overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] relative">
                       <div
-                        className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
+                        className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-zinc-600 to-zinc-900 rounded-full"
                         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                       />
                     </div>
-                    <p className="text-[10px] font-medium text-[var(--color-primary)] bg-white/90 px-1.5 py-0.5 rounded shadow-sm">AI正在解析... {Math.floor(Math.min(99, progress))}%</p>
+                    <p className="text-[10px] font-medium text-zinc-900 bg-white/90 px-1.5 py-0.5 rounded shadow-sm">AI正在解析... {Math.floor(Math.min(99, progress))}%</p>
                   </div>
                 ) : (
                   <>
-                    <div className="flex size-10 items-center justify-center rounded-[var(--radius-lg)] bg-black/5 group-hover:bg-[var(--color-primary)]/10 transition-colors text-[var(--color-primary)]">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-zinc-100 group-hover:bg-zinc-200 transition-colors text-zinc-500">
                       <UploadCloud className="size-5" />
                     </div>
                     <p className="text-[10px] font-medium text-black/50 px-2 text-center leading-tight">
@@ -255,7 +255,7 @@ export function SubmissionSlotCard({
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: SPRING_EASE }}
-                  className="absolute right-2 top-2 z-20 flex size-5 items-center justify-center rounded-full bg-[var(--color-success)] text-white shadow-sm ring-2 ring-white"
+                  className="absolute right-2 top-2 z-20 flex size-5 items-center justify-center rounded-full bg-[var(--color-success)] text-white shadow-sm ring-2 ring-white animate-[glow-green_2.4s_ease-in-out_infinite]"
                 >
                   <Check className="size-3" />
                 </motion.div>
@@ -264,8 +264,8 @@ export function SubmissionSlotCard({
           </button>
         </div>
 
-        {/* 右侧：说明与识别结果区 (约55%) */}
-        <div className="w-[55%] flex flex-col relative bg-white/40 p-3">
+        {/* 右侧：说明与识别结果区 */}
+        <div className="flex-1 sm:w-[55%] flex flex-col relative bg-white/40 p-3">
           {/* 顶部描述与删除按钮 */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <p className="text-[10px] text-[var(--color-text-secondary)] leading-snug flex-1 pr-6">{description}</p>
@@ -301,7 +301,7 @@ export function SubmissionSlotCard({
             ) : null}
 
             {ocrSummary && ocrSummary.length > 0 ? (
-              <div className="flex-1 rounded-[var(--radius-md)] bg-[color:rgba(0,122,255,0.04)] px-2.5 py-2 text-[11px] text-[var(--color-text-primary)] border border-[color:rgba(0,122,255,0.08)] overflow-hidden flex flex-col max-h-[120px]">
+              <div className="flex-1 rounded-[var(--radius-md)] bg-zinc-50 px-2.5 py-2 text-[11px] text-[var(--color-text-primary)] border border-zinc-200 overflow-hidden flex flex-col max-h-[120px]">
                 <div className="font-semibold text-[var(--color-text-secondary)] mb-1 shrink-0 text-[9px] uppercase tracking-wider">AI 识别结果</div>
                 <ul className="space-y-0.5 overflow-y-auto pr-1 flex-1 min-h-0 custom-scrollbar">
                   {ocrSummary.map((item) => (

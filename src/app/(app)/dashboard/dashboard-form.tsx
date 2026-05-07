@@ -143,7 +143,7 @@ export function DashboardForm({
     <div className="relative">
       {showSuccess && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[1.5rem] bg-background/78 backdrop-blur-md">
-          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-[1.75rem] bg-white/78 px-8 py-7 shadow-[0_20px_60px_-28px_rgba(16,185,129,0.48)] dark:bg-emerald-950/55">
+          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-[1.75rem] bg-white/78 px-8 py-7 shadow-[0_20px_60px_-28px_rgba(6,118,71,0.48)] dark:bg-[#067647]/55">
             <div className="relative flex h-20 w-20 items-center justify-center">
               <div className="absolute inset-0 animate-ping rounded-full bg-green-100 opacity-30" />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
@@ -226,8 +226,8 @@ export function DashboardForm({
                     <span
                       className={
                         existingData
-                          ? "rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
-                          : "rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+                          ? "rounded-full bg-[#D1FADF] px-2 py-0.5 text-[#067647] dark:bg-[#067647]/15 dark:text-[#ABEFC6]"
+                          : "rounded-full bg-[#FEF9C3] px-2 py-0.5 text-[#92400E] dark:bg-[#CA8A04]/15 dark:text-[#FDE68A]"
                       }
                     >
                       {existingData ? "今日可修改" : "今日待提交"}
@@ -314,7 +314,7 @@ export function DashboardForm({
                     </p>
                   </div>
                   <div
-                    className={`${getDashboardMetricGridClass("primary")} rounded-[1.5rem] border border-primary/10 bg-primary/6 p-4 shadow-sm backdrop-blur-xl sm:p-5`}
+                    className={`${getDashboardMetricGridClass("primary")} rounded-[1.5rem] border border-zinc-200 bg-zinc-900/6 p-4 shadow-sm backdrop-blur-xl sm:p-5`}
                   >
                     <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                       <Label htmlFor="play_count">播放量</Label>
@@ -326,7 +326,7 @@ export function DashboardForm({
                         min={0}
                         placeholder="32100"
                         required
-                        className="h-12 rounded-xl border-primary/10 bg-background text-lg font-semibold"
+                        className="h-12 rounded-xl border-zinc-200 bg-background text-lg font-semibold"
                         value={ocrValues.play_count}
                         onChange={(e) => updateOcrValue("play_count", e.target.value)}
                       />
@@ -339,7 +339,7 @@ export function DashboardForm({
                         type="number"
                         min={0}
                         required
-                        className="h-12 rounded-xl border-primary/10 bg-background text-lg font-semibold"
+                        className="h-12 rounded-xl border-zinc-200 bg-background text-lg font-semibold"
                         value={ocrValues.follower_gain}
                         onChange={(e) => updateOcrValue("follower_gain", e.target.value)}
                       />
@@ -540,7 +540,7 @@ export function DashboardForm({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="size-4 text-primary" />
+                      <CheckCircle2 className="size-4 text-zinc-900" />
                       <span>补充完成后再提交</span>
                     </div>
                     <p className="text-xs leading-5 text-muted-foreground">
@@ -575,7 +575,7 @@ export function DashboardForm({
             <div className="dashboard-surface dashboard-surface-panel rounded-[1.25rem] border px-4 py-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="size-4 text-primary" />
+                  <CheckCircle2 className="size-4 text-zinc-900" />
                   <span>检查完整数据后再提交，提交后可在历史记录继续修改</span>
                 </div>
                 <Button

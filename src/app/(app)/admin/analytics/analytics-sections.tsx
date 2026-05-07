@@ -108,7 +108,7 @@ export function AnalyticsSections({
                   <div
                     className={cn(
                       "flex size-10 items-center justify-center rounded-2xl bg-slate-100/80 font-black text-slate-400 transition-colors duration-300",
-                      isExpanded && "bg-blue-50 text-blue-500",
+                      isExpanded && "bg-zinc-100 text-zinc-900",
                     )}
                   >
                     {index + 1}
@@ -121,7 +121,7 @@ export function AnalyticsSections({
                 <div
                   className={cn(
                     "flex size-10 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-all duration-300 group-hover:bg-slate-100",
-                    isExpanded && "rotate-180 bg-blue-50 text-blue-500 group-hover:bg-blue-100",
+                    isExpanded && "rotate-180 bg-zinc-100 text-zinc-900 group-hover:bg-zinc-200",
                   )}
                 >
                   <ChevronDown className="size-5" />

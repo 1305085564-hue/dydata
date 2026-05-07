@@ -6,6 +6,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getTeamMeta, getTeamOptions } from "@/lib/teams";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import {
+  canAccessTeam,
+  canAssignMemberToGroup,
+  canManageGroup,
+  canUseLeaderCandidate,
+  resolveTeamManagementAccess,
+  type TeamManagementGroup,
+  type TeamManagementProfile,
+} from "@/lib/team-management";
+import {
   formatExemptionDetail,
   type ExemptionFormValues,
 } from "@/lib/豁免";
@@ -49,6 +58,87 @@ async function getProfileTeamId(
   }
 
   return getTeamMeta(data.user?.user_metadata).teamId;
+}
+
+function isMissingProfileTeamColumnError(error: { message?: string } | null | undefined) {
+  return Boolean(
+    error?.message &&
+      (error.message.includes("profiles.team_id") ||
+        error.message.includes("profiles.group_id") ||
+        error.message.includes("column profiles.team_id does not exist") ||
+        error.message.includes("column profiles.group_id does not exist") ||
+        error.message.includes("Could not find the 'team_id' column of 'profiles'") ||
+        error.message.includes("Could not find the 'group_id' column of 'profiles'")),
+  );
+}
+
+async function loadTeamManagementContext(perm: { userId: string; role: UserRole; permissions: Permissions }) {
+  const adminSupabase = createAdminClient();
+  const [profilesResult, fallbackProfilesResult, groupsResult] = await Promise.all([
+    adminSupabase
+      .from("profiles")
+      .select("id, name, role, status, permissions, team_id, group_id")
+      .order("created_at", { ascending: true }),
+    adminSupabase
+      .from("profiles")
+      .select("id, name, role, status, permissions")
+      .order("created_at", { ascending: true }),
+    adminSupabase
+      .from("groups")
+      .select("id, name, team_id, leader_user_id")
+      .order("name", { ascending: true }),
+  ]);
+
+  if (profilesResult.error && !isMissingProfileTeamColumnError(profilesResult.error)) {
+    throw new Error(profilesResult.error.message);
+  }
+  if (groupsResult.error) {
+    throw new Error(groupsResult.error.message);
+  }
+
+  const rawProfiles = profilesResult.error ? fallbackProfilesResult.data ?? [] : profilesResult.data ?? [];
+  const authUsersResult = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const authUserById = new Map((authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]));
+  const teams = await getTeamOptions();
+  const teamIdByName = new Map(teams.map((team) => [team.name, team.id]));
+  const profiles = (rawProfiles as TeamManagementProfile[]).map((profile) => {
+    const metadata = authUserById.get(profile.id)?.user_metadata ?? {};
+    const metadataTeamId = typeof metadata.team_id === "string" ? metadata.team_id : null;
+    const metadataTeamName = typeof metadata.team_name === "string" ? metadata.team_name : null;
+    const fallbackTeamId = metadataTeamId ?? (metadataTeamName ? teamIdByName.get(metadataTeamName) ?? null : null);
+
+    return {
+      ...profile,
+      role: profile.role as UserRole,
+      permissions: (profile.permissions ?? {}) as Permissions,
+      team_id: profile.team_id ?? fallbackTeamId ?? null,
+      group_id: profile.group_id ?? null,
+      email: authUserById.get(profile.id)?.email ?? null,
+    };
+  });
+  const groups = ((groupsResult.data ?? []) as TeamManagementGroup[]).map((group) => ({
+    id: group.id,
+    name: group.name,
+    team_id: group.team_id ?? null,
+    leader_user_id: group.leader_user_id ?? null,
+  }));
+  const actor =
+    profiles.find((profile) => profile.id === perm.userId) ??
+    ({
+      id: perm.userId,
+      name: "",
+      role: perm.role,
+      permissions: perm.permissions,
+      team_id: null,
+      group_id: null,
+    } satisfies TeamManagementProfile);
+
+  return {
+    adminSupabase,
+    profiles,
+    groups,
+    access: resolveTeamManagementAccess(actor, groups),
+  };
 }
 
 async function syncProfileExemptionProjection(
@@ -669,5 +759,149 @@ export async function createTeam(teamName: string): Promise<{ error?: string }> 
 
   revalidatePath("/admin");
   revalidatePath("/register");
+  return {};
+}
+
+export async function createGroup(input: {
+  teamId: string;
+  name: string;
+  leaderUserId: string;
+}): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+
+  const normalizedName = input.name.trim();
+  if (!normalizedName) return { error: "请输入组名" };
+  if (!input.teamId || !input.leaderUserId) return { error: "请选择团队和组长" };
+
+  try {
+    const { adminSupabase, profiles, groups, access } = await loadTeamManagementContext(perm);
+    if (!access.canEditGroups || !canAccessTeam(access, input.teamId)) return { error: "无权限" };
+
+    const leader = profiles.find((profile) => profile.id === input.leaderUserId);
+    if (!leader || !canUseLeaderCandidate(access, leader, input.teamId)) return { error: "组长必须是本团队非负责人的管理员" };
+
+    if (groups.some((group) => group.team_id === input.teamId && group.name === normalizedName)) {
+      return { error: "该团队下已有同名组" };
+    }
+
+    const { error } = await adminSupabase.from("groups").insert({
+      team_id: input.teamId,
+      name: normalizedName,
+      leader_user_id: input.leaderUserId,
+    });
+    if (error) return { error: error.message };
+
+    const supabase = await createClient();
+    await writeAuditLog(supabase, perm.userId, "create_group", input.teamId, `${normalizedName}|leader=${leader.name}`);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "创建组失败" };
+  }
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function updateGroup(input: {
+  groupId: string;
+  name: string;
+  leaderUserId: string;
+}): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+
+  const normalizedName = input.name.trim();
+  if (!input.groupId || !normalizedName || !input.leaderUserId) return { error: "请完整填写组信息" };
+
+  try {
+    const { adminSupabase, profiles, groups, access } = await loadTeamManagementContext(perm);
+    const group = groups.find((item) => item.id === input.groupId);
+    if (!group) return { error: "分组不存在" };
+    if (!canManageGroup(access, group)) return { error: "无权限" };
+    if (!group.team_id) return { error: "分组缺少团队归属" };
+
+    const leader = profiles.find((profile) => profile.id === input.leaderUserId);
+    if (!leader || !canUseLeaderCandidate(access, leader, group.team_id)) return { error: "组长必须是本团队非负责人的管理员" };
+    if (groups.some((item) => item.id !== group.id && item.team_id === group.team_id && item.name === normalizedName)) {
+      return { error: "该团队下已有同名组" };
+    }
+
+    const { error } = await adminSupabase
+      .from("groups")
+      .update({ name: normalizedName, leader_user_id: input.leaderUserId })
+      .eq("id", input.groupId);
+    if (error) return { error: error.message };
+
+    const supabase = await createClient();
+    await writeAuditLog(supabase, perm.userId, "update_group", input.groupId, `${normalizedName}|leader=${leader.name}`);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "更新组失败" };
+  }
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function assignMembersToGroup(input: {
+  groupId: string;
+  memberIds: string[];
+}): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+
+  const memberIds = Array.from(new Set(input.memberIds.filter(Boolean)));
+  if (!input.groupId || memberIds.length === 0) return { error: "请选择组员" };
+
+  try {
+    const { adminSupabase, profiles, groups, access } = await loadTeamManagementContext(perm);
+    const group = groups.find((item) => item.id === input.groupId);
+    if (!group) return { error: "分组不存在" };
+    if (!canManageGroup(access, group)) return { error: "无权限" };
+
+    const members = memberIds.map((memberId) => profiles.find((profile) => profile.id === memberId));
+    if (members.some((member) => !member || !canAssignMemberToGroup(access, member, group))) {
+      return { error: "只能分配本团队普通成员" };
+    }
+
+    const { error } = await adminSupabase
+      .from("profiles")
+      .update({ group_id: group.id })
+      .in("id", memberIds);
+    if (error) return { error: error.message };
+
+    const supabase = await createClient();
+    await writeAuditLog(supabase, perm.userId, "assign_group_members", group.id, `count=${memberIds.length}`);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "分配组员失败" };
+  }
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function removeMemberFromGroup(memberId: string): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (!memberId) return { error: "请选择成员" };
+
+  try {
+    const { adminSupabase, profiles, access } = await loadTeamManagementContext(perm);
+    const member = profiles.find((profile) => profile.id === memberId);
+    if (!member) return { error: "成员不存在" };
+    if (!canAssignMemberToGroup(access, member, null)) return { error: "无权限" };
+
+    const { error } = await adminSupabase
+      .from("profiles")
+      .update({ group_id: null })
+      .eq("id", memberId);
+    if (error) return { error: error.message };
+
+    const supabase = await createClient();
+    await writeAuditLog(supabase, perm.userId, "remove_group_member", memberId, member.name);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "移除组员失败" };
+  }
+
+  revalidatePath("/admin");
   return {};
 }

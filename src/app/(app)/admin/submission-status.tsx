@@ -247,7 +247,7 @@ export function SubmissionStatus({
         <div className="flex flex-wrap items-center justify-center gap-1">
           <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="h-8 px-3 text-xs">上一页</Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-xs${p === page ? " bg-[#007AFF] hover:bg-[#0066DD] border-[#007AFF]" : ""}`}>{p}</Button>
+            <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-xs${p === page ? " bg-zinc-950 hover:bg-zinc-800 border-zinc-950" : ""}`}>{p}</Button>
           ))}
           <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="h-8 px-3 text-xs">下一页</Button>
         </div>
@@ -257,35 +257,35 @@ export function SubmissionStatus({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card className="card-elevated bg-gradient-to-br from-blue-50 to-white border-blue-100">
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
+        <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-xs font-medium text-blue-400 uppercase tracking-wide">{summary.totalLabel}</p>
-            <p className="text-3xl font-bold text-blue-700 mt-1">
+            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{summary.totalLabel}</p>
+            <p className="text-3xl font-black text-zinc-950 mt-1">
               <AnimatedNumber value={summary.totalActive} />
             </p>
           </CardContent>
         </Card>
-        <Card className="card-elevated bg-gradient-to-br from-green-50 to-white border-green-100">
+        <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-xs font-medium text-green-400 uppercase tracking-wide">已提交</p>
-            <p className="text-3xl font-bold text-green-600 mt-1">
+            <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">已提交</p>
+            <p className="text-3xl font-black text-zinc-950 mt-1">
               <AnimatedNumber value={summary.submittedCount} />
             </p>
           </CardContent>
         </Card>
-        <Card className="card-elevated bg-gradient-to-br from-orange-50 to-white border-orange-100">
+        <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-xs font-medium text-orange-400 uppercase tracking-wide">待提交</p>
-            <p className="text-3xl font-bold text-orange-500 mt-1">
+            <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">待提交</p>
+            <p className="text-3xl font-black text-zinc-950 mt-1">
               <AnimatedNumber value={summary.unsubmittedCount} />
             </p>
           </CardContent>
         </Card>
-        <Card className="card-elevated bg-gradient-to-br from-violet-50 to-white border-violet-100">
+        <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-xs font-medium text-violet-400 uppercase tracking-wide">提交率</p>
-            <p className="text-3xl font-bold text-violet-600 mt-1">
+            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">提交率</p>
+            <p className="text-3xl font-black text-zinc-950 mt-1">
               <AnimatedNumber value={summary.submitRate} format={(n) => `${n}%`} />
             </p>
           </CardContent>

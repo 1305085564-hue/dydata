@@ -52,6 +52,18 @@
 4. `select` 只查询实际存在且已执行 migration 的字段。
 5. 不要靠反复改代码碰运气，先定位根因。
 
+## 前端协作
+- 多批次前端改动默认走 Gemini + Codex 联动：Gemini 先出分批方案 → 我把关纠偏 → Gemini 按确认方案执行 → Codex 审代码 → 再决定补问题还是进下一轮
+- 标准文档：`docs/前端-Gemini-Codex联动流程.md`
+
+## Skill 使用
+- 前端页面、UI、布局、样式、交互类任务，先默认用 `frontend-skill`，不要一上来直接写代码
+- 需要落代码时，再接 `frontend-design`
+- 涉及动效、入场、悬停、展开收起、滚动表现时，补 `motion` 和 `interaction-design`
+- 前端逻辑、状态、性能、组件拆分、重渲染问题，优先看 `react-patterns`
+- 改完前端后，必须做真实浏览器验收；需要时用 `browser-testing-with-devtools`，再按需补 `responsiveness-check`
+- 只要是完整页面或明显的 UI 重构，先把 skill 路由说清楚，再开始动手
+
 ## Git SSH 固定规则
 - 这个仓库默认只使用 SSH remote：`git@github.com:1305085564-hue/dydata.git`
 - 未经用户明确同意，不允许把 remote 改成 HTTPS

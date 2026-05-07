@@ -868,7 +868,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               </SelectContent>
             </Select>
             {!screenshotsRequired ? (
-              <p className="text-[11px] text-amber-600">当前状态下截图可选。</p>
+              <p className="text-[11px] text-[#92400E]">当前状态下截图可选。</p>
             ) : null}
           </div>
           <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>
@@ -1015,8 +1015,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         <div className="space-y-6">
           {/* 第一行：截图槽位区 & 指标分组区 */}
           <MotionCard className="border-none bg-white/68 shadow-sm backdrop-blur-sm">
-            <div className="grid items-start gap-6 p-5 xl:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] xl:gap-0">
-            <div className="flex min-w-0 flex-col gap-6 xl:border-r xl:border-black/6 xl:pr-6">
+            <div className="grid items-start gap-6 p-5 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] lg:gap-0">
+            <div className="flex min-w-0 flex-col gap-6 lg:border-r lg:border-black/6 lg:pr-6">
               <motion.div ref={slotsSectionRef} variants={itemVariants}>
                 <截图槽位区
                   slots={slots}
@@ -1034,7 +1034,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               </motion.div>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-6 xl:pl-6">
+            <div className="flex min-w-0 flex-col gap-6 lg:pl-6">
               <motion.div ref={metricsSectionRef} variants={itemVariants}>
                 <指标分组区
                   fields={fields}
@@ -1051,8 +1051,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           {/* 第二行：视频链接等元数据信息 & 文案提取区 */}
           <motion.div ref={metaSectionRef} variants={itemVariants}>
             <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm">
-              <div className="grid items-stretch gap-6 p-5 xl:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] xl:gap-0">
-                <div className="min-w-0 space-y-4 xl:border-r xl:border-black/6 xl:pr-6">
+              <div className="grid items-stretch gap-6 p-5 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] lg:gap-0">
+                <div className="min-w-0 space-y-4 lg:border-r lg:border-black/6 lg:pr-6">
                   <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors">
                     <Label htmlFor="video_url">抖音视频链接</Label>
                     <Input

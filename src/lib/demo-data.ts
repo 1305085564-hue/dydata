@@ -62,7 +62,7 @@ type DemoActionHistory = {
 
 export const DEMO_VIEWER = {
   id: "demo-viewer",
-  name: "演示访客",
+  name: "阿禅",
   focusProfileId: "demo-profile-01",
   role: "owner" as const,
 };
@@ -97,8 +97,66 @@ function pick<T>(items: T[], index: number) {
   return items[index % items.length];
 }
 
+function buildDemoReportMetrics(account: DemoAccount, accountIndex: number, dayIndex: number) {
+  const isFocusProfile = account.profile_id === DEMO_VIEWER.focusProfileId;
+  const isPrimaryFocusAccount = account.id === "demo-account-01";
+
+  if (isFocusProfile) {
+    const recencyBoost = (29 - dayIndex) * 750;
+    const playBase = isPrimaryFocusAccount ? 228000 : 214000;
+    const playCount = Math.round(playBase + recencyBoost + (dayIndex % 5) * 1800);
+    const likeRate = 2.95 + (isPrimaryFocusAccount ? 0.18 : 0.08) + (dayIndex % 4) * 0.04;
+    const commentRate = 0.38 + (isPrimaryFocusAccount ? 0.05 : 0.03) + (dayIndex % 3) * 0.015;
+    const shareRate = 0.24 + (isPrimaryFocusAccount ? 0.04 : 0.02) + (dayIndex % 5) * 0.012;
+    const favoriteRate = 0.34 + (isPrimaryFocusAccount ? 0.05 : 0.03) + (dayIndex % 4) * 0.02;
+    const followerRate = 0.095 + (isPrimaryFocusAccount ? 0.018 : 0.01) + (dayIndex % 4) * 0.004;
+    const completionRate5s = clamp(56 + (isPrimaryFocusAccount ? 2.5 : 1.5) - dayIndex * 0.18, 40, 82);
+    const completionRate = clamp(36 + (isPrimaryFocusAccount ? 2.2 : 1.4) - dayIndex * 0.11, 26, 60);
+    const publishedHour = twoDigits((accountIndex % 8) + 8);
+    const uploadedHour = twoDigits((accountIndex % 7) + 12);
+
+    return {
+      playCount,
+      likeRate,
+      commentRate,
+      shareRate,
+      favoriteRate,
+      followerRate,
+      completionRate5s,
+      completionRate,
+      publishedHour,
+      uploadedHour,
+    };
+  }
+
+  const qualityBase = 0.75 + (accountIndex % 5) * 0.08 + (29 - dayIndex) * 0.008;
+  const playCount = Math.round(48000 + accountIndex * 13500 + qualityBase * 42000 + (dayIndex % 6) * 3800);
+  const likeRate = 2.2 + (accountIndex % 4) * 0.45;
+  const commentRate = 0.28 + (accountIndex % 3) * 0.07;
+  const shareRate = 0.18 + (accountIndex % 5) * 0.04;
+  const favoriteRate = 0.3 + (accountIndex % 4) * 0.05;
+  const followerRate = 0.06 + (accountIndex % 5) * 0.01;
+  const completionRate5s = clamp(48 + (accountIndex % 6) * 4 - dayIndex * 0.2, 34, 78);
+  const completionRate = clamp(28 + (accountIndex % 5) * 3.3 - dayIndex * 0.12, 18, 52);
+  const publishedHour = twoDigits((accountIndex % 8) + 8);
+  const uploadedHour = twoDigits((accountIndex % 7) + 12);
+
+  return {
+    playCount,
+    likeRate,
+    commentRate,
+    shareRate,
+    favoriteRate,
+    followerRate,
+    completionRate5s,
+    completionRate,
+    publishedHour,
+    uploadedHour,
+  };
+}
+
 const profileNames = [
-  "赵安",
+  "阿禅",
   "林夏",
   "周越",
   "顾诚",
@@ -142,7 +200,7 @@ export const demoAccounts: DemoAccount[] = demoProfiles.flatMap((profile, index)
   const baseAccount: DemoAccount = {
     id: `demo-account-${String(index + 1).padStart(2, "0")}`,
     profile_id: profile.id,
-    name: `${profile.name}的数据号`,
+    name: index === 0 ? `${profile.name}主号` : `${profile.name}的数据号`,
     ownerName: profile.name,
     content_direction: pick(directions, index),
     presentation_format: pick(formats, index),
@@ -171,17 +229,8 @@ export const demoReports: DemoDailyReport[] = Array.from({ length: 30 }).flatMap
   const reportDate = formatDate(shiftDays(baseDate, -dayIndex));
 
   return demoAccounts.map((account, accountIndex) => {
-    const qualityBase = 0.75 + ((accountIndex % 5) * 0.08) + ((29 - dayIndex) * 0.008);
-    const playCount = Math.round(48000 + accountIndex * 13500 + qualityBase * 42000 + (dayIndex % 6) * 3800);
-    const likeRate = 2.2 + (accountIndex % 4) * 0.45;
-    const commentRate = 0.28 + (accountIndex % 3) * 0.07;
-    const shareRate = 0.18 + (accountIndex % 5) * 0.04;
-    const favoriteRate = 0.3 + (accountIndex % 4) * 0.05;
-    const followerRate = 0.06 + (accountIndex % 5) * 0.01;
-    const completionRate5s = clamp(48 + (accountIndex % 6) * 4 - dayIndex * 0.2, 34, 78);
-    const completionRate = clamp(28 + (accountIndex % 5) * 3.3 - dayIndex * 0.12, 18, 52);
-    const publishedHour = twoDigits((accountIndex % 8) + 8);
-    const uploadedHour = twoDigits((accountIndex % 7) + 12);
+    const metrics = buildDemoReportMetrics(account, accountIndex, dayIndex);
+    const { playCount, likeRate, commentRate, shareRate, favoriteRate, followerRate, completionRate5s, completionRate, publishedHour, uploadedHour } = metrics;
     const publishedAt = new Date(`${reportDate}T${publishedHour}:30:00.000Z`);
     const uploadedAt = new Date(`${reportDate}T${uploadedHour}:10:00.000Z`);
     const title = `${pick(topics, dayIndex + accountIndex)} ${String(dayIndex + 1).padStart(2, "0")}`;
@@ -474,7 +523,7 @@ export const demoActionHistory: DemoActionHistory[] = [
     id: "demo-action-2",
     adminName: "演示管理员",
     actionType: "diagnosis",
-    description: "分析赵安昨日视频掉点原因",
+    description: "分析阿禅昨日视频掉点原因",
     result: "success",
     createdAt: `${DEMO_CURRENT_DATE}T09:18:00.000Z`,
   },
@@ -704,12 +753,12 @@ export function getDemoGrowthPageData() {
   ];
 
   return {
-    profileName: demoProfiles[0]?.name ?? "赵安",
+    profileName: demoProfiles[0]?.name ?? "阿禅",
     statusCards: buildStatusCards(myRecentReports, myPreviousReports) as StatusCardItem[],
     capabilityCards,
     weakBenchmarkCards: weakestCards,
     pkPanel: {
-      leftName: demoProfiles[0]?.name ?? "赵安",
+      leftName: demoProfiles[0]?.name ?? "阿禅",
       rightName: "林夏",
       rows: pkRows,
     },

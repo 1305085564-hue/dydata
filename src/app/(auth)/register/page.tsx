@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getTeamOptions } from "@/lib/teams";
 import { createClient } from "@/lib/supabase/server";
+import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 
 import { RegisterForm } from "./register-form";
 
@@ -78,10 +79,23 @@ export default async function RegisterPage() {
     const { error: profileError } = await supabase.from("profiles").insert({
       id: userId,
       name,
+      role: "member",
+      team_id: selectedTeam.id,
+      permissions: {},
     });
 
     if (profileError) {
       return { error: "创建资料失败，请联系管理员检查 profiles 表权限。" };
+    }
+
+    try {
+      await ensureDefaultDashboardAccount({
+        adminSupabase: supabase as never,
+        profileId: userId,
+        preferredName: name,
+      });
+    } catch {
+      return { error: "创建默认账号失败，请联系管理员检查 accounts 表权限。" };
     }
 
     const { error: updateInviteError } = await supabase

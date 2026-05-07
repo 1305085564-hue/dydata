@@ -455,7 +455,7 @@ export function PermissionManager({
                       size="sm"
                       variant={page === pmPage ? "default" : "outline"}
                       onClick={() => setPmPage(page)}
-                      className={`h-8 w-8 p-0 text-xs${page === pmPage ? " bg-[#007AFF] hover:bg-[#0066DD] border-[#007AFF]" : ""}`}
+                      className={`h-8 w-8 p-0 text-xs${page === pmPage ? " bg-zinc-950 hover:bg-zinc-800 border-zinc-950" : ""}`}
                     >
                       {page}
                     </Button>

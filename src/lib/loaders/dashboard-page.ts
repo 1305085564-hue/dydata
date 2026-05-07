@@ -6,6 +6,7 @@ import {
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
+import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { formatDateOnly, getSafeAccountDisplayName, uniqueNonEmpty } from "./shared";
 
@@ -217,6 +218,18 @@ export async function loadDashboardPageData({
 
   const accounts = accountsResult.data;
   const userDisplayName = profile?.name?.trim() || "当前用户";
+
+  if (!accounts || accounts.length === 0) {
+    try {
+      await ensureDefaultDashboardAccount({
+        adminSupabase: supabase as never,
+        profileId: userId,
+        preferredName: userDisplayName,
+      });
+    } catch {
+      // 兜底失败就继续空态，让前端明确提示“联系管理员分配账号”
+    }
+  }
   const userExemptionProfile: ExemptionProfileLike = {
     id: userId,
     status: profile?.status === "exempt" ? "exempt" : "active",

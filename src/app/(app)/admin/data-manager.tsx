@@ -448,7 +448,7 @@ export function DataManager({
                   size="sm"
                   variant="ghost"
                   onClick={() => setContentDialog({ title: report.title, content: report.content ?? "" })}
-                  className="h-7 text-xs text-blue-500 hover:text-blue-600"
+                  className="h-7 text-xs text-zinc-600 hover:text-zinc-900"
                 >
                   查看
                 </Button>
@@ -543,7 +543,7 @@ export function DataManager({
             size="sm"
             variant="ghost"
             onClick={() => setContentDialog({ title: report.title, content: report.content ?? "" })}
-            className="h-7 w-full justify-start text-xs text-blue-500"
+            className="h-7 w-full justify-start text-xs text-zinc-600"
           >
             查看文案
           </Button>

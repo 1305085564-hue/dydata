@@ -110,8 +110,8 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
                     variant="outline"
                     className={
                       reviewStatus === "可信"
-                        ? "border-emerald-200 bg-emerald-500/10 text-emerald-700"
-                        : "border-amber-200 bg-amber-500/10 text-amber-700"
+                        ? "border-[#ABEFC6] bg-[#067647]/10 text-[#067647]"
+                        : "border-[#FDE68A] bg-[#CA8A04]/10 text-[#92400E]"
                     }
                   >
                     {reviewStatus}

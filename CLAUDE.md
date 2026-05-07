@@ -44,12 +44,19 @@
 4. select 只查实际用到的字段，× 查未执行 migration 的列
 5. × 反复改代码碰运气 → 先定位根因再动手
 
+## 前端协作
+- 多批次前端改动默认走 Gemini + Codex 联动：Gemini 先出分批方案 → 我把关纠偏 → Gemini 按确认方案执行 → Codex 审代码 → 再决定补问题还是进下一轮
+- 标准文档：`docs/前端-Gemini-Codex联动流程.md`
+
 ## 日志规则
 - 每次完成一个任务/修复/功能后，追加记录到 `~/.claude/memory/日志/YYYY-MM-DD.md`
 - 格式：`- [HH:MM] 简述做了什么（一行，关键改动+结果）`
 - 当天文件不存在就新建，已存在就追加
 - 遇到坑/踩雷也记一条，方便复盘
 - 这是硬规则，不能省略
+
+## Skill 优先
+- 执行任何任务前，强制对照可用 skill 列表匹配最佳 skill；匹配成功必须先调用 skill 再行动，未匹配或不确定时暂停询问，禁止绕过 skill 直接编码。
 
 ## 关键规则
 - git config user.email = 1305085564@qq.com（Vercel Hobby 要求）
@@ -58,21 +65,6 @@
 - cron 接口兼容 CRON_SECRET ?? REMIND_SECRET
 - 中文组件名内部用英文 PascalCase，导出时再用中文别名
 - 表单切换用 key 重建组件，× 用 useEffect 同步 props
-
-## OpenClaw / API 10 备忘
-- OpenClaw 的 API 10 = 官网订阅线，当前正确模型标识是 `openai-codex/gpt-5.4`
-- × 把 API 10 误判成 `api1/gpt-5.4`；两者名字一样但渠道完全不同
-- × 在 `~/.openclaw/openclaw.json` 里新增 `openai-codex-oauth.authProfile` 这种自定义结构；当前版本会直接 config invalid
-- API 10 正确 provider 形态：`provider=openai-codex`、`api=openai-codex-responses`、`baseUrl=https://chatgpt.com/backend-api`
-- OAuth 凭证不写在 provider 里，走 `~/.openclaw/agents/main/agent/auth-profiles.json`
-- API 10 不走中转站，依赖本机代理直连官方；如果报 `fetch failed` / `network connection error`，先查代理，不要先怀疑 api1
-- macOS LaunchAgent 需要显式带：
-- `HTTP_PROXY=http://127.0.0.1:7890`
-- `HTTPS_PROXY=http://127.0.0.1:7890`
-- `ALL_PROXY=http://127.0.0.1:7890`
-- `NO_PROXY=localhost,127.0.0.1,::1`
-- `NODE_USE_ENV_PROXY=1`
-- 只看默认模型不够，旧会话可能保留 `providerOverride`；判断是否真的切过去，要看“新开会话 + gateway 日志 + models status”
 
 ## 踩坑记录
 - **组件 API 误用**：使用项目封装的 UI 组件（如 Dialog）前，必须点进源码查看 Props 定义，本项目 DialogTrigger 接收 `render={...}` 透传，而不是标准的 Radix `asChild`。

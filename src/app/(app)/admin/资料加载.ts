@@ -64,6 +64,8 @@ function isMissingExemptionColumnError(error: QueryErrorLike | null) {
     "profiles.exempt_end_date",
     "profiles.exempt_reason",
     "profiles.exemption_category",
+    "profiles.team_id",
+    "profiles.group_id",
   ].some((column) => error.message.includes(column));
 }
 

@@ -1,5 +1,5 @@
 :root {
-  --color-bg: #f4f6fb;
+  --color-bg: #F9F9FB;
   --color-surface: #ffffff;
   --color-primary: #0a84ff;
   --color-success: #34c759;
@@ -32,9 +32,9 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.25, 0, 0, 1);
 
-  --glass-bg: color-mix(in srgb, white 82%, #f4f7ff);
+  --glass-bg: color-mix(in srgb, white 82%, #f4f4f5);
   --glass-blur: blur(24px);
-  --nav-bg: color-mix(in srgb, white 78%, #f3f5fb);
+  --nav-bg: color-mix(in srgb, white 78%, #f4f4f5);
   --nav-blur: blur(18px);
 }
 

@@ -17,6 +17,7 @@ import { AdminPanelLauncher } from "./admin-panel-launcher";
 import { InviteCodeManager } from "./generate-invite-button";
 import { SubmissionStatus } from "./submission-status";
 import { TeamManager } from "./team-manager";
+import { TeamGroupManager } from "./team-group-manager";
 import { ActionHub } from "./components/action-hub";
 import { SystemLogTicker } from "./components/system-log-ticker";
 import { MetricCardsRow } from "./components/metric-cards";
@@ -180,6 +181,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </DashboardAnimatedSection>
 
         <div className="mb-8 grid gap-6 lg:grid-cols-2">
+          {data.teamManagement.access.canView ? (
+            <DashboardAnimatedSection index={1} className="lg:col-span-2">
+              <AppShellSection title="团队与分组" description="管理组长、组员归属和负责人直管成员。">
+                <TeamGroupManager
+                  access={data.teamManagement.access}
+                  teams={data.teamManagement.teams}
+                  groups={data.teamManagement.groups}
+                  profiles={data.teamManagement.profiles}
+                  leaderCandidates={data.teamManagement.leaderCandidates}
+                />
+              </AppShellSection>
+            </DashboardAnimatedSection>
+          ) : null}
+
           <DashboardAnimatedSection index={1} className="lg:col-span-2">
             <AppShellSection title="提交状态检查" description="先处理谁没交，再做后续管理动作。">
               <SubmissionStatus

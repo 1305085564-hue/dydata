@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, FilePenLine, History, PencilLine, TrendingUp, Trophy } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarDays, Check, ChevronDown, FilePenLine, History, Lock, PencilLine } from "lucide-react";
 import { motion } from "framer-motion";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
-import { Label } from "@/components/ui/label";
 import type { Video, VideoTagReviewDimension } from "@/types";
 import {
   getExemptionDatesForMonth,
@@ -31,7 +30,6 @@ import {
   getDashboardStatusClass,
   getDashboardSurfaceClass,
 } from "./dashboard-visuals";
-import { 申请豁免弹窗 } from "./申请豁免弹窗";
 import { HistoryList } from "./history-list";
 import { VideoSubmitForm } from "./video-submit-form";
 import {
@@ -43,6 +41,7 @@ import {
 } from "./video-submit-panel-state";
 import { VideoTagReviewCard } from "./video-tag-review-card";
 import { cn } from "@/lib/utils";
+import { CheckpointTracker, type CheckpointStatus } from "./checkpoint-tracker";
 import type { ResultTrendDatum } from "@/components/charts/result-trend";
 import type { InteractionTrendDatum } from "@/components/charts/interaction-trend";
 
@@ -62,15 +61,6 @@ type AsyncActivityData = {
   history: MonthReport[];
 };
 
-type DashboardActionCard = {
-  key: string;
-  title: string;
-  description: string;
-  icon: typeof Eye;
-  tone: "primary" | "success" | "warning" | "neutral";
-  onClick: () => void;
-};
-
 interface VideoSubmitPanelProps {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
   userId: string;
@@ -85,6 +75,11 @@ interface VideoSubmitPanelProps {
   hasPendingExemption?: boolean;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
+  embeddedChrome?: boolean;
+  selectedAccountId?: string;
+  onSelectedAccountChange?: (accountId: string) => void;
+  activeBizDate?: string;
+  onActiveBizDateChange?: (date: string) => void;
 }
 
 function toDashboardReportData(report: MonthReport): DashboardReportData {
@@ -146,14 +141,21 @@ export function VideoSubmitPanel({
   accountIds,
   ownContentDirections,
   accountDisplayNameMap,
-  hasPendingExemption = false,
   userExemptionProfile,
   userExemptionGrants,
+  embeddedChrome = false,
+  selectedAccountId: controlledSelectedAccountId,
+  onSelectedAccountChange,
+  activeBizDate: controlledActiveBizDate,
+  onActiveBizDateChange,
 }: VideoSubmitPanelProps) {
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
-  const [activeBizDate, setActiveBizDate] = useState(today);
+  const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
+  const [activeCheckpointId, setActiveCheckpointId] = useState(1);
   const [isDataViewOpen, setIsDataViewOpen] = useState(false);
   const [isTrendViewOpen, setIsTrendViewOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -174,6 +176,22 @@ export function VideoSubmitPanel({
   const [asyncAccountIds, setAsyncAccountIds] = useState<string[]>(accountIds);
   const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>(ownContentDirections);
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
+  const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
+  const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
+  const setSelectedAccountId = useCallback(
+    (accountId: string) => {
+      setInternalSelectedAccountId(accountId);
+      onSelectedAccountChange?.(accountId);
+    },
+    [onSelectedAccountChange],
+  );
+  const setActiveBizDate = useCallback(
+    (date: string) => {
+      setInternalActiveBizDate(date);
+      onActiveBizDateChange?.(date);
+    },
+    [onActiveBizDateChange],
+  );
 
   useEffect(() => {
     if (!isTrendViewOpen || trendData) return;
@@ -213,6 +231,21 @@ export function VideoSubmitPanel({
       .catch(() => {});
   }, [activityData, isDataViewOpen, isHistoryOpen]);
 
+  useEffect(() => {
+    if (!embeddedChrome) return;
+
+    function handleExternalAction(event: Event) {
+      const action = (event as CustomEvent<{ key?: string }>).detail?.key;
+      if (action === "data-view") setIsDataViewOpen(true);
+      if (action === "trend-view") setIsTrendViewOpen(true);
+      if (action === "leaderboard") setIsLeaderboardOpen(true);
+      if (action === "history") setIsHistoryOpen(true);
+    }
+
+    window.addEventListener("dydata-dashboard-action", handleExternalAction);
+    return () => window.removeEventListener("dydata-dashboard-action", handleExternalAction);
+  }, [embeddedChrome]);
+
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? accounts[0] ?? null,
     [accounts, selectedAccountId],
@@ -247,6 +280,21 @@ export function VideoSubmitPanel({
     () => (selectedAccount ? getTodaySubmissionSummary(mergedTodayReports, selectedAccount.id) : null),
     [mergedTodayReports, selectedAccount],
   );
+
+  const checkpoints = useMemo(() => {
+    const isDataReported = mergedTodayReports.some((report) => report.account_id === selectedAccountId);
+    const now = new Date();
+    const isLate = !isDataReported && (now.getHours() > 11 || (now.getHours() === 11 && now.getMinutes() >= 15));
+    const dataStatus: CheckpointStatus = isDataReported ? "done" : isLate ? "late" : "pending";
+
+    return [
+      { id: 1, name: "数据上报", time: "11:00", status: dataStatus },
+      { id: 2, name: "早盘早会", time: "11:15", status: "idle" as CheckpointStatus, isPlaceholder: true },
+      { id: 3, name: "选题第一关", time: "15:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
+      { id: 4, name: "文案第二关", time: "18:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
+      { id: 5, name: "审片发布", time: "20:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
+    ];
+  }, [mergedTodayReports, selectedAccountId]);
 
   const monthExemptionDates = useMemo(
     () => getExemptionDatesForMonth(userExemptionProfile, today, userExemptionGrants),
@@ -318,44 +366,6 @@ export function VideoSubmitPanel({
     [activeBizDate, activeDateReport, activeExemptionState, today],
   );
   const shouldShowBlockedStateCard = activeDateStatus.state === "waive" || activeDateStatus.state === "leave";
-  const actionCards = useMemo<DashboardActionCard[]>(
-    () => [
-      {
-        key: "data-view",
-        title: "数据查看",
-        description: "查看日历状态与当天详情",
-        icon: Eye,
-        tone: "primary",
-        onClick: () => setIsDataViewOpen(true),
-      },
-      {
-        key: "trend-view",
-        title: "趋势查看",
-        description: "快速查看近期趋势变化",
-        icon: TrendingUp,
-        tone: "success",
-        onClick: () => setIsTrendViewOpen(true),
-      },
-      {
-        key: "leaderboard",
-        title: "排行榜",
-        description: "查看当前账号表现排名",
-        icon: Trophy,
-        tone: "warning",
-        onClick: () => setIsLeaderboardOpen(true),
-      },
-      {
-        key: "history",
-        title: "历史记录",
-        description: "查看并编辑最近填报记录",
-        icon: History,
-        tone: "neutral",
-        onClick: () => setIsHistoryOpen(true),
-      },
-    ],
-    [],
-  );
-
   useEffect(() => {
     if (!pendingBackfillDate || isDataViewOpen) return;
     if (activeBizDate !== pendingBackfillDate || primaryMode !== "backfill") return;
@@ -388,10 +398,26 @@ export function VideoSubmitPanel({
 
   function resetPanelForAccount(accountId: string) {
     setSelectedAccountId(accountId);
+    setIsAccountMenuOpen(false);
     setRequestedMode(null);
     setActiveBizDate(today);
     setLastSubmittedVideoId(null);
     setLastAiTags([]);
+  }
+
+  function selectBizDate(date: string) {
+    if (!date) return;
+    setActiveBizDate(date);
+    setRequestedMode(null);
+  }
+
+  function openDatePicker() {
+    if (dateInputRef.current?.showPicker) {
+      dateInputRef.current.showPicker();
+      return;
+    }
+
+    dateInputRef.current?.focus();
   }
 
   function handleSubmitted(
@@ -527,207 +553,137 @@ export function VideoSubmitPanel({
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="space-y-5"
       >
-        <div className="app-shell-metric-strip dashboard-action-strip" aria-label="快捷功能入口">
-          {actionCards.map((action) => {
-            const Icon = action.icon;
-
-            return (
-              <button
-                key={action.key}
-                type="button"
-                className="app-shell-metric dashboard-top-action-card"
-                data-tone={action.tone}
-                onClick={action.onClick}
-              >
-                <div className="dashboard-top-action-card-head">
-                  <span className="dashboard-top-action-icon">
-                    <Icon className="size-4" />
-                  </span>
-                  <div className="dashboard-top-action-title">{action.title}</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="app-shell-metric-hint">{action.description}</div>
-                </div>
-              </button>
-            );
-          })}
-          <申请豁免弹窗
-            hasPending={hasPendingExemption}
-            today={today}
-            submittedDates={submittedDates}
-            waiveDates={monthExemptionDates.waiveDates}
-            leaveDates={monthExemptionDates.leaveDates}
-            initialSelectedDates={activeBizDate ? [activeBizDate] : []}
-            triggerClassName="app-shell-metric dashboard-top-action-card"
-            triggerVariant="card"
-            triggerTitle={hasPendingExemption ? "申请审批中" : "申请豁免"}
-            triggerDescription={hasPendingExemption ? "当前有申请正在等待审批" : "发起免交或请假申请"}
-          />
-        </div>
-
-        <Card className={`${getDashboardSurfaceClass("hero")} overflow-hidden rounded-[1.75rem] border-0`}>
-          <CardHeader className="space-y-5 border-b border-border/45 bg-background/20 px-5 pb-5 pt-5 sm:px-6 sm:pt-6">
-            <div className="space-y-5">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="space-y-2">
-                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                    填报设置
+        <Card className={cn(
+          embeddedChrome
+            ? "mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl"
+            : `${getDashboardSurfaceClass("hero")} mx-auto max-w-6xl overflow-hidden rounded-[2rem] border-0 shadow-xl`,
+        )}>
+          {!embeddedChrome ? (
+          <CardHeader className="space-y-0 border-b border-border/45 bg-background/25 p-0">
+            <div className="space-y-6 px-6 py-7 sm:px-8 sm:py-8">
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+                <div className="min-w-0">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-900">
+                    SOP Control Pipeline
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-lg font-semibold text-foreground">
-                        {userDisplayName || "当前登录人"}
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-[11px] font-medium text-primary"
-                      >
-                        {accounts.length} 个账号
-                      </Badge>
-                    </div>
-                    <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                      点击账号卡片即可切换下方的数据填报内容，日期选择仍可用于查看或补交指定日期的数据。
-                    </p>
-                  </div>
+                  <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">DYData 数据填报</h2>
+                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    以 5 个关键时间卡点推进今日内容生产，第一步先完成昨日数据上报。
+                  </p>
                 </div>
 
-                <div className="dashboard-date-panel">
-                  <Label
-                    htmlFor="dashboard-biz-date"
-                    className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
-                  >
-                    填报日期
-                  </Label>
-                  <input
-                    id="dashboard-biz-date"
-                    type="date"
-                    value={activeBizDate}
-                    max={today}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (!value) return;
-                      setActiveBizDate(value);
-                      setRequestedMode(null);
-                    }}
-                    className="dashboard-date-input"
-                  />
-                </div>
-              </div>
-
-              <div className="dashboard-account-grid" role="list" aria-label="账号切换列表">
-                {accountCards.map(({ account, summary, todayStatus }) => {
-                  const isSelected = account.id === selectedAccountId;
-
-                  return (
+                <div className="flex min-w-0 items-start justify-start lg:justify-end">
+                  <div className={cn("relative", embeddedChrome && "hidden")}>
                     <button
-                      key={account.id}
                       type="button"
-                      role="listitem"
-                      aria-pressed={isSelected}
-                      data-selected={isSelected ? "true" : "false"}
-                      className={cn("dashboard-account-card", isSelected && "dashboard-account-card-selected")}
-                      onClick={() => resetPanelForAccount(account.id)}
+                      onClick={() => setIsAccountMenuOpen((open) => !open)}
+                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200 bg-white/90 px-3 py-2 text-left shadow-sm backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+                      aria-expanded={isAccountMenuOpen}
+                      aria-haspopup="listbox"
                     >
-                      <div className="dashboard-account-card-header">
-                        <div className="space-y-1">
-                          <div className="dashboard-account-card-name">{account.display_name}</div>
-                          {account.content_direction ? (
-                            <div className="dashboard-account-card-direction">{account.content_direction}</div>
-                          ) : null}
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            "dashboard-account-status",
-                            todayStatus.tone === "submitted"
-                              ? "dashboard-account-status-submitted"
-                              : todayStatus.tone === "leave"
-                                ? "dashboard-account-status-leave"
-                                : "dashboard-account-status-pending",
-                          )}
-                        >
-                          {todayStatus.state === "submitted"
-                            ? "今日已交"
-                            : todayStatus.state === "waive"
-                              ? "今日免交"
-                              : todayStatus.state === "leave"
-                                ? "今日请假"
-                                : "今日待提交"}
-                        </Badge>
-                      </div>
-
-                      <div className="dashboard-account-card-footer">
-                        <span className="dashboard-account-card-note">
-                          {summary?.uploadedAt
-                            ? `最近提交 ${summary.uploadedAt}`
-                            : todayStatus.state === "waive"
-                              ? "今日已按免交处理"
-                              : todayStatus.state === "leave"
-                                ? "今日已按请假处理"
-                                : "点击后直接切换到该账号填报"}
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-xs font-black text-white shadow-sm">
+                        {userDisplayName.slice(0, 1) || "用"}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-black leading-tight text-zinc-900">{userDisplayName}</span>
+                        <span className="mt-0.5 block truncate text-[11px] font-bold text-zinc-400">
+                          {selectedAccount?.display_name ?? "未选择账号"}
                         </span>
-                        <span className="dashboard-account-card-current">
-                          {isSelected ? "当前选中" : "点击切换"}
-                        </span>
-                      </div>
+                      </span>
+                      <ChevronDown className={cn("size-4 shrink-0 text-zinc-400 transition-transform", isAccountMenuOpen && "rotate-180")} />
                     </button>
-                  );
-                })}
+
+                    {isAccountMenuOpen ? (
+                      <div
+                        role="listbox"
+                        className="absolute right-0 top-[calc(100%+8px)] z-40 w-64 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-2 shadow-2xl shadow-zinc-900/10"
+                      >
+                        <div className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">切换账号</div>
+                        <div className="max-h-72 space-y-1 overflow-y-auto">
+                          {accountCards.map(({ account }) => {
+                            const isSelected = account.id === selectedAccountId;
+
+                            return (
+                              <button
+                                key={account.id}
+                                type="button"
+                                role="option"
+                                aria-selected={isSelected}
+                                onClick={() => resetPanelForAccount(account.id)}
+                                className={cn(
+                                  "flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left transition-all",
+                                  isSelected ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950",
+                                )}
+                              >
+                                <span className="min-w-0">
+                                  <span className="block truncate text-sm font-black">{account.display_name}</span>
+                                  <span className={cn("mt-0.5 block truncate text-[11px] font-bold", isSelected ? "text-white/55" : "text-zinc-400")}>
+                                    {account.content_direction ?? "未设置方向"}
+                                  </span>
+                                </span>
+                                {isSelected ? <Check className="size-4 shrink-0" /> : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
-              {false ? <div className="dashboard-action-grid">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="dashboard-action-button"
-                  onClick={() => setIsDataViewOpen(true)}
-                >
-                  <Eye className="size-[18px]" />
-                  <span>数据查看</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="dashboard-action-button"
-                  onClick={() => setIsTrendViewOpen(true)}
-                >
-                  <TrendingUp className="size-[18px]" />
-                  <span>趋势查看</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="dashboard-action-button"
-                  onClick={() => setIsLeaderboardOpen(true)}
-                >
-                  <Trophy className="size-[18px]" />
-                  <span>排行榜</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="dashboard-action-button"
-                  onClick={() => setIsHistoryOpen(true)}
-                >
-                  <History className="size-[18px]" />
-                  <span>历史记录</span>
-                </Button>
-                <申请豁免弹窗
-                  hasPending={hasPendingExemption}
-                  today={today}
-                  submittedDates={submittedDates}
-                  waiveDates={monthExemptionDates.waiveDates}
-                  leaveDates={monthExemptionDates.leaveDates}
-                  triggerClassName="dashboard-action-button"
+              <div className="rounded-[1.75rem] border border-white/70 bg-white/72 px-4 py-4 shadow-sm backdrop-blur-xl">
+                <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-100 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-400">Today</div>
+                    <button
+                      type="button"
+                      onClick={openDatePicker}
+                      className="group inline-flex items-center gap-2 rounded-2xl px-0 py-1 text-left transition-all hover:opacity-80"
+                      aria-label="选择填报日期"
+                    >
+                      <span className="text-2xl font-black tabular-nums tracking-tight text-rose-500 sm:text-3xl">
+                        {activeBizDate}
+                      </span>
+                      <CalendarDays className="size-5 text-rose-400 transition-transform group-hover:-translate-y-0.5" />
+                    </button>
+                    <input
+                      ref={dateInputRef}
+                      type="date"
+                      value={activeBizDate}
+                      max={today}
+                      onChange={(event) => selectBizDate(event.target.value)}
+                      className="sr-only"
+                      tabIndex={-1}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="text-xs font-bold text-zinc-400">
+                    {activeBizDate === today ? "今日填报" : "历史补填"}
+                  </div>
+                </div>
+                <CheckpointTracker
+                  checkpoints={checkpoints}
+                  activeId={activeCheckpointId}
+                  onCheckpointClick={(id) => {
+                    setActiveCheckpointId(id);
+                    if (id === 1) setActiveBizDate(today);
+                  }}
                 />
-              </div> : null}
+              </div>
             </div>
           </CardHeader>
+          ) : null}
 
-          <CardContent className="space-y-4 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+          <CardContent className={cn(
+            "min-h-[520px] space-y-7 px-5 py-6 sm:px-8 sm:py-8",
+            embeddedChrome ? "bg-white" : "bg-white/25",
+          )}>
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
+            {activeCheckpointId === 1 ? (
+              <>
             {primarySummary && isPrimarySummaryMode ? (
-              <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-emerald-950 sm:p-5`}>
+              <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-[#067647] sm:p-5`}>
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
@@ -740,7 +696,7 @@ export function VideoSubmitPanel({
                       <div className="text-lg font-semibold text-foreground sm:text-xl">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
-                      <div className="text-xs leading-5 text-emerald-800/80">
+                      <div className="text-xs leading-5 text-[#067647]/80">
                         提交时间：{primarySummary.uploadedAt || "暂无"}
                         <span className="mx-2">·</span>
                         发布时间：{primarySummary.publishedAt || "暂无"}
@@ -803,8 +759,8 @@ export function VideoSubmitPanel({
                 className={cn(
                   "rounded-[1.5rem] p-4 text-sm sm:p-5",
                   activeDateStatus.state === "waive"
-                    ? `${getDashboardSurfaceClass("success")} text-emerald-950`
-                    : "rounded-[1.5rem] border border-amber-200 bg-amber-50/80 text-amber-950",
+                    ? `${getDashboardSurfaceClass("success")} text-[#067647]`
+                    : "rounded-[1.5rem] border border-[#FDE68A] bg-[#FEF9C3]/80 text-[#92400E]",
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -847,6 +803,27 @@ export function VideoSubmitPanel({
                 }}
               />
             ) : null}
+              </>
+            ) : (
+              <motion.div
+                key={`checkpoint-placeholder-${activeCheckpointId}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center rounded-[2rem] border-4 border-dashed border-slate-100 bg-slate-50/50 px-6 py-20 text-center"
+              >
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-slate-200 shadow-xl">
+                  <Lock className="size-10" />
+                </div>
+                <h4 className="text-xl font-black uppercase tracking-tight text-slate-800">
+                  卡点 {activeCheckpointId} 记录模块
+                </h4>
+                <p className="mt-2 max-w-xs text-[10px] font-bold uppercase leading-relaxed tracking-widest text-slate-400">
+                  目前暂为线下执行环节
+                  <br />
+                  <span className="text-zinc-900">Phase 2: 全量数据实时同步开发中</span>
+                </p>
+              </motion.div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -879,7 +856,7 @@ export function VideoSubmitPanel({
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-text-tertiary)]">
                     Daily Detail
                   </p>
-                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-zinc-900)]">
                     {activeBizDate} 的提交情况
                   </h3>
                   <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
@@ -895,17 +872,17 @@ export function VideoSubmitPanel({
               </div>
 
               {activeDateStatus.state === "submitted" && activeDateReport ? (
-                <div className="mt-4 rounded-[1.25rem] border border-emerald-200/70 bg-emerald-50/75 p-4">
+                <div className="mt-4 rounded-[1.25rem] border border-[#ABEFC6]/70 bg-[#D1FADF]/75 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs text-emerald-700">
+                        <p className="text-xs text-[#067647]">
                           {accounts.find((account) => account.id === activeDateReport.account_id)?.display_name ?? "当前账号"}
                         </p>
                         <h4 className="text-base font-semibold text-foreground">
                           {activeDateReport.title?.trim() || "未填写视频标题"}
                         </h4>
-                        <p className="mt-1 text-xs text-emerald-800/80">
+                        <p className="mt-1 text-xs text-[#067647]/80">
                           提交时间：{activeDateReport.uploaded_at || "暂无"}
                         </p>
                       </div>
@@ -955,15 +932,15 @@ export function VideoSubmitPanel({
                   className={cn(
                     "mt-4 rounded-[1.25rem] border p-4",
                     activeDateStatus.state === "waive"
-                      ? "border-emerald-200 bg-emerald-50/75"
-                      : "border-amber-200 bg-amber-50/80",
+                      ? "border-[#ABEFC6] bg-[#D1FADF]/75"
+                      : "border-[#FDE68A] bg-[#FEF9C3]/80",
                   )}
                 >
                   <div className="space-y-2">
                     <p
                       className={cn(
                         "text-sm font-semibold",
-                        activeDateStatus.state === "waive" ? "text-emerald-700" : "text-amber-700",
+                        activeDateStatus.state === "waive" ? "text-[#067647]" : "text-[#92400E]",
                       )}
                     >
                       这一天已标记为{activeDateStatus.label}
@@ -971,7 +948,7 @@ export function VideoSubmitPanel({
                     <p
                       className={cn(
                         "text-sm leading-6",
-                        activeDateStatus.state === "waive" ? "text-emerald-900/75" : "text-amber-900/75",
+                        activeDateStatus.state === "waive" ? "text-[#067647]/75" : "text-[#92400E]/75",
                       )}
                     >
                       {activeDateStatus.description}
