@@ -37,13 +37,13 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId }: 
               whileTap={{ scale: 0.98 }}
               onClick={() => onCheckpointClick(checkpoint.id)}
               className={cn(
-                "group relative z-10 flex min-w-0 items-center gap-3 rounded-[1.25rem] px-3 py-3 text-left outline-none transition-all",
+                "group relative z-10 flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-left outline-none transition-all",
                 isActive ? "bg-white/95 shadow-sm ring-1 ring-zinc-200" : "bg-white/40 hover:bg-white/75",
               )}
             >
               <div
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] border-2 bg-background text-muted-foreground shadow-sm transition-all duration-300",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 bg-background text-muted-foreground shadow-sm transition-all duration-300",
                   checkpoint.status === "done" && "border-[#067647] bg-[#067647] text-white shadow-[#D1FADF]",
                   checkpoint.status === "pending" && "animate-pulse border-[#FDE68A] bg-[#FEF9C3] text-[#92400E] shadow-[#FEF9C3]",
                   checkpoint.status === "late" && "border-[#B42318] bg-[#B42318] text-white shadow-[#FEE4E2]",

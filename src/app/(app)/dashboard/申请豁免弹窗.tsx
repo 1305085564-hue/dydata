@@ -130,7 +130,7 @@ function ExemptionModal({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[1.75rem] border-none bg-white/95 p-0 shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-xl sm:max-w-4xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border-none bg-white/95 p-0 shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-xl sm:max-w-4xl">
           <DialogHeader className="px-6 pb-2 pt-6">
             <DialogTitle className="text-xl font-bold tracking-tight text-[var(--color-text-zinc-900)]">
               选择豁免日期
@@ -147,7 +147,7 @@ function ExemptionModal({
                 </span>
               </p>
 
-              <div className="relative overflow-hidden rounded-[1.5rem] bg-slate-50/50 p-1 ring-1 ring-black/5">
+              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 p-1 ring-1 ring-black/5">
                 <SubmissionCalendar
                   today={today}
                   submittedDates={submittedDates}

@@ -142,7 +142,7 @@ function Skeleton() {
   return (
     <div className="grid gap-3">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="animate-pulse rounded-[16px] border border-zinc-200 bg-white p-4">
+        <div key={index} className="animate-pulse rounded-xl border border-zinc-200 bg-white p-4">
           <div className="h-3 w-24 rounded bg-[var(--color-border)]" />
           <div className="mt-3 h-3 w-full rounded bg-[var(--color-border)]" />
           <div className="mt-2 h-3 w-4/5 rounded bg-[var(--color-border)]" />
@@ -156,10 +156,13 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
   const blocks = buildBlocks({ insightState, advice, noData });
 
   return (
-    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
-      <div className="space-y-4">
+    <div className="space-y-4">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Action Plan</p>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-zinc-200" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Action Plan</span>
+            <div className="h-px flex-1 bg-zinc-200" />
+          </div>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">下一轮先怎么改</h2>
           <p className="text-sm leading-6 text-zinc-500">
             {noData
@@ -177,7 +180,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
             {blocks.map((block) => {
               const Icon = block.icon;
               return (
-                <div key={block.key} className={`rounded-[16px] border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-4 border-l-zinc-950 rounded-l-none" : ""}`}>
+                <div key={block.key} className={`rounded-xl border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-4 border-l-[#D97757] rounded-l-none" : ""}`}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
                       <Icon className="size-4" />
@@ -197,12 +200,11 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
         ) : null}
 
         {insightState.status === "error" && !noData ? (
-          <div className="rounded-[14px] border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
+          <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
             单条视频复盘请求失败：{insightState.message}
           </div>
         ) : null}
       </div>
-    </div>
   );
 }
 

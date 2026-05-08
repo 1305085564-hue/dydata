@@ -79,13 +79,13 @@ function ShellHeader({
 }
 
 export function AppShell({ children, className, width = "wide" }: AppShellProps) {
-  return <div className={cn("app-shell-frame space-y-6 sm:space-y-8", widthMap[width], className)}>{children}</div>
+  return <div className={cn("app-shell-frame min-h-screen space-y-5 sm:space-y-6 bg-[#F9F9FB]", widthMap[width], className)}>{children}</div>
 }
 
 export function AppShellHero({ children, className, bodyClassName, ...props }: AppShellHeroProps) {
   return (
-    <section className={cn("app-shell-hero overflow-hidden rounded-[2rem] border border-zinc-200 bg-white", className)}>
-      <div className={cn("space-y-5 p-5 sm:p-6 lg:p-7", bodyClassName)}>
+    <section className={cn("app-shell-hero overflow-hidden rounded-2xl border border-zinc-200 bg-white", className)}>
+      <div className={cn("space-y-4 p-5 sm:p-6 lg:p-7", bodyClassName)}>
         <ShellHeader {...props} />
         {children ? <div className="space-y-4">{children}</div> : null}
       </div>
@@ -95,7 +95,7 @@ export function AppShellHero({ children, className, bodyClassName, ...props }: A
 
 export function AppShellSection({ children, className, bodyClassName, divider = false, ...props }: AppShellSectionProps) {
   return (
-    <section className={cn("app-shell-section overflow-hidden rounded-[2rem] border border-zinc-200 bg-white", className)}>
+    <section className={cn("app-shell-section overflow-hidden rounded-2xl border border-zinc-200 bg-white", className)}>
       <div className={cn("space-y-4 p-5 sm:p-6", bodyClassName)}>
         <ShellHeader {...props} />
         {divider ? <div className="app-shell-section-divider" aria-hidden /> : null}

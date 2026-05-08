@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, X } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import ActionDetailDrawer from "./action-detail-drawer";
 import { cn } from "@/lib/utils";
 
@@ -49,19 +49,33 @@ export function getHistoryErrorMessage(errorMessage: string) {
   return errorMessage;
 }
 
-function resultLabel(result: string) {
+function dotColor(result: string) {
   switch (result) {
     case "success":
-      return { label: "成功", color: "text-emerald-700", border: "border-emerald-200", bg: "bg-emerald-50" };
+      return "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]";
     case "failed":
-      return { label: "失败", color: "text-red-700", border: "border-red-200", bg: "bg-red-50" };
+      return "bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]";
     case "cancelled":
-      return { label: "中止", color: "text-zinc-500", border: "border-zinc-200", bg: "bg-zinc-50" };
+      return "bg-zinc-300";
     case "pending_confirm":
-      return { label: "待确认", color: "text-amber-700", border: "border-amber-200", bg: "bg-amber-50" };
+      return "bg-amber-500 shadow-[0_0_0_3px_rgba(234,179,8,0.12)] animate-pulse";
     default:
-      return { label: result.substring(0,4).toUpperCase(), color: "text-zinc-500", border: "border-zinc-200", bg: "bg-zinc-50" };
+      return "bg-zinc-300";
   }
+}
+
+function timeLabel(iso: string) {
+  const date = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "刚刚";
+  if (diffMin < 60) return `${diffMin}m`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d`;
+  return date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
 }
 
 function SidebarContent({
@@ -92,19 +106,29 @@ function SidebarContent({
   const canLoadMore = records.length < total;
 
   return (
-    <div className="flex h-full flex-col text-sm">
-      {/* Filters */}
-      <div className="border-b border-zinc-200 p-2.5 space-y-2.5 shrink-0">
+    <div className="flex h-full flex-col">
+      {/* Header — Claude style */}
+      <div className="shrink-0 px-3 pt-3 pb-2">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+            History
+          </span>
+          <span className="text-[10px] tabular-nums text-zinc-400">{total}</span>
+        </div>
+      </div>
+
+      {/* Filter chips */}
+      <div className="shrink-0 px-3 pb-2.5">
         <div className="flex flex-wrap gap-1">
           {FILTERS.map((item) => (
             <button
               key={item.value}
               onClick={() => onChangeFilter(item.value)}
               className={cn(
-                "px-1.5 py-0.5 text-[10px] font-semibold tracking-wider rounded-md transition-all border",
+                "rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors",
                 filter === item.value
-                  ? "bg-zinc-950 text-white border-zinc-950"
-                  : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950"
+                  ? "bg-[#D97757] text-white"
+                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
               )}
             >
               {item.label}
@@ -114,72 +138,71 @@ function SidebarContent({
       </div>
 
       {/* Records */}
-      <div className="flex-1 overflow-y-auto p-1.5 custom-scrollbar relative">
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2">
         {loading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-xs text-zinc-400 gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
-            <span>同步中...</span>
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-[11px] text-zinc-400">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
+            <span className="tracking-wide">同步中</span>
           </div>
         ) : error ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
-            <div className="text-xs text-red-600">{error}</div>
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+            <Search className="h-3.5 w-3.5 text-zinc-300" />
+            <div className="text-[11px] text-zinc-500">{error}</div>
             <button
               onClick={onRetry}
-              className="px-3 py-1 text-xs border border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-md transition-colors"
+              className="mt-1 rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
             >
               重新同步
             </button>
           </div>
         ) : records.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-xs text-zinc-400">
-            暂无记录
+          <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-10 text-center">
+            <span className="inline-flex h-1 w-1 rounded-full bg-zinc-300" />
+            <div className="text-[11px] italic tracking-wide text-zinc-400">暂无记录</div>
           </div>
         ) : (
-          <div className="space-y-0.5">
+          <div className="space-y-px">
             {records.map((record) => {
-              const badge = resultLabel(record.result);
+              const selected = selectedId === record.id;
               return (
                 <button
                   key={record.id}
                   onClick={() => onSelect(record.id)}
                   className={cn(
-                    "w-full text-left p-2 rounded-lg transition-all group",
-                    selectedId === record.id
-                      ? "bg-zinc-100"
-                      : "hover:bg-zinc-50"
+                    "group w-full rounded-lg px-2 py-1.5 text-left transition-colors",
+                    selected
+                      ? "bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] ring-1 ring-zinc-200"
+                      : "hover:bg-white/60"
                   )}
                 >
-                  <div className="flex items-start justify-between gap-1.5">
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[11px] font-medium text-zinc-900 group-hover:text-zinc-950 transition-colors">
-                        {record.description}
-                      </div>
-                      <div className="mt-1 flex items-center gap-1.5 text-[10px] text-zinc-400">
-                        <span>{record.adminName.substring(0, 8)}</span>
-                        <span>·</span>
-                        <span>{new Date(record.createdAt).toLocaleTimeString("en-GB", { hour12: false, hour: "2-digit", minute: "2-digit" })}</span>
-                      </div>
-                    </div>
-                    <div className={cn(
-                      "px-1 py-0.5 text-[9px] font-bold rounded border shrink-0 leading-none",
-                      badge.color, badge.border, badge.bg
-                    )}>
-                      {badge.label}
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn("h-1 w-1 shrink-0 rounded-full", dotColor(record.result))} />
+                    <span
+                      className={cn(
+                        "flex-1 truncate text-[11.5px] leading-tight tracking-tight",
+                        selected ? "font-semibold text-zinc-950" : "font-medium text-zinc-700 group-hover:text-zinc-950"
+                      )}
+                    >
+                      {record.description}
+                    </span>
+                    <span className="shrink-0 text-[9px] tabular-nums text-zinc-400">
+                      {timeLabel(record.createdAt)}
+                    </span>
                   </div>
                 </button>
               );
             })}
+
             {canLoadMore && (
               <button
                 onClick={onLoadMore}
                 disabled={loadingMore}
-                className="w-full mt-1.5 py-1.5 text-[11px] border border-dashed border-zinc-200 text-zinc-400 hover:text-zinc-700 hover:border-zinc-300 transition-colors rounded-lg flex items-center justify-center gap-1.5"
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] text-zinc-400 transition-colors hover:bg-white/60 hover:text-zinc-700 disabled:opacity-50"
               >
                 {loadingMore ? (
-                  <><Loader2 className="h-3 w-3 animate-spin" /> 加载中...</>
+                  <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  `更多 [${records.length}/${total}]`
+                  <span className="tracking-[0.2em] uppercase">Load more</span>
                 )}
               </button>
             )}
@@ -197,56 +220,51 @@ export default function HistorySidebar({
   mobileOpen = false,
   onMobileOpenChange,
 }: HistorySidebarProps) {
-  const [records, setRecords] = useState<ActionRecord[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<ActionType>("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [records, setRecords] = useState<ActionRecord[]>([]);
   const [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState<ActionType>("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [hasShownErrorToast, setHasShownErrorToast] = useState(false);
 
   const fetchHistory = useCallback(
-    async (options?: { append?: boolean }) => {
-      const append = options?.append ?? false;
-      const nextOffset = append ? records.length : 0;
-
-      if (append) {
-        setLoadingMore(true);
-      } else {
+    async ({ append }: { append?: boolean } = {}) => {
+      if (append) setLoadingMore(true);
+      else {
         setLoading(true);
+        setError(null);
+        setHasShownErrorToast(false);
       }
-      setError(null);
 
       try {
-        const params = new URLSearchParams({
-          limit: String(PAGE_SIZE),
-          offset: String(nextOffset),
-        });
-        if (filter !== "all") {
-          params.set("actionType", filter);
+        const params = new URLSearchParams();
+        if (filter !== "all") params.set("actionType", filter);
+        params.set("limit", String(PAGE_SIZE));
+        if (append) params.set("offset", String(records.length));
+
+        const response = await fetch(`/api/admin/ai-assistant/history?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          throw new Error(data.error || "获取历史失败");
         }
 
-        const res = await fetch(`/api/admin/ai-assistant/history?${params.toString()}`);
-        const data = await res.json();
-
-        if (!res.ok || data.error) {
-          throw new Error(data.error || "Failed to fetch logs");
-        }
-
-        setRecords((prev) => (append ? [...prev, ...(data.actions || [])] : data.actions || []));
+        const rows = (data.records || []) as ActionRecord[];
+        setRecords((prev) => (append ? [...prev, ...rows] : rows));
         setTotal(data.total || 0);
       } catch (err) {
-        const rawMessage = err instanceof Error ? err.message : "Fetch error";
-        const message = getHistoryErrorMessage(rawMessage);
-        setError(message);
-        if (!hasShownErrorToast) {
-          toast.error(`LOG_SYS_ERR: ${message}`);
+        const raw = err instanceof Error ? err.message : "获取历史失败";
+        const friendly = getHistoryErrorMessage(raw);
+        setError(friendly);
+        if (!hasShownErrorToast && !append) {
+          toast.error(friendly);
           setHasShownErrorToast(true);
         }
       } finally {
-        setLoading(false);
-        setLoadingMore(false);
+        if (append) setLoadingMore(false);
+        else setLoading(false);
       }
     },
     [filter, records.length, hasShownErrorToast]
@@ -259,9 +277,11 @@ export default function HistorySidebar({
   if (mobile) {
     return (
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-white border border-zinc-200 rounded-2xl shadow-lg overflow-hidden text-zinc-950">
-          <DialogHeader className="px-4 py-3 border-b border-zinc-200 bg-zinc-50 shrink-0 flex flex-row items-center justify-between">
-            <DialogTitle className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">操作历史</DialogTitle>
+        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-[#F9F9FB] border border-zinc-200 rounded-2xl shadow-lg overflow-hidden">
+          <DialogHeader className="px-4 py-3 border-b border-zinc-200 bg-white shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
+              操作历史
+            </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
             <SidebarContent

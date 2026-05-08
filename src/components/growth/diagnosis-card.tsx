@@ -244,7 +244,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
             <motion.article
               key={item.key}
               variants={itemVariants}
-              className="group flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-[1px] hover:shadow-md"
+              className="group flex flex-col rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-[1px] hover:shadow-md"
             >
               {/* 头部 */}
               <div className="flex items-start justify-between gap-2">
@@ -279,7 +279,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
 
               {/* 下一步动作 — 底部按钮 */}
               <div className="mt-auto pt-3">
-                <div className="flex items-start gap-2 rounded-xl border-l-4 border-l-zinc-950 bg-zinc-50 p-3">
+                <div className={`flex items-start gap-2 rounded-xl border-l-4 p-3 ${isWeak ? "border-l-[#D97757] bg-[#D97757]/[0.03]" : "border-l-[#067647] bg-[#067647]/[0.03]"}`}>
                   <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-zinc-500" />
                   <p className="text-[13px] leading-relaxed text-zinc-800">{item.action}</p>
                 </div>
@@ -289,7 +289,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
         })}
 
         {diagnosisItems.length === 0 ? (
-          <div className="col-span-2 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+          <div className="col-span-2 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
             团队数据不足，暂时还不能给出有效对标。
           </div>
         ) : null}

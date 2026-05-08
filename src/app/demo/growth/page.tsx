@@ -53,12 +53,16 @@ export default function DemoGrowthPage() {
       </AppShellSection>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <GrowthPkPanel
-          leftName={data.pkPanel.leftName}
-          rightName={data.pkPanel.rightName}
-          rows={data.pkPanel.rows}
-        />
-        <ScriptBreakdown title="文案拆解" data={data.scriptBreakdown} />
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
+          <GrowthPkPanel
+            leftName={data.pkPanel.leftName}
+            rightName={data.pkPanel.rightName}
+            rows={data.pkPanel.rows}
+          />
+        </div>
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
+          <ScriptBreakdown title="文案拆解" data={data.scriptBreakdown} />
+        </div>
       </div>
 
       <AppShellSection

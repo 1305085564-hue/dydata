@@ -50,7 +50,7 @@ function Row({ row, leftName, rightName }: { row: GrowthPkRow; leftName: string;
   const tied = row.leftValue === row.rightValue;
 
   return (
-    <motion.div variants={itemVariants} className="rounded-[12px] border border-zinc-200 bg-white p-4">
+    <motion.div variants={itemVariants} className="rounded-xl border border-zinc-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm font-medium text-zinc-950">{row.label}</span>
         <WinBadge leftLeads={leftLeads} tied={tied} />
@@ -75,16 +75,19 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
   const total = rows.length;
 
   return (
-    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
-      <div className="space-y-4">
+    <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">PK Compare</p>
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-200" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">PK Compare</span>
+              <div className="h-px flex-1 bg-zinc-200" />
+            </div>
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">PK 对比</h2>
             <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{leftName} vs {rightName}</p>
           </div>
           {total > 0 && (
-            <div className="shrink-0 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-center shadow-sm">
+            <div className="shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-center shadow-sm">
               <div className="text-base font-semibold tabular-nums text-zinc-950">
                 {winCount}/{total}
               </div>
@@ -93,7 +96,7 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
           )}
         </div>
         {!rows.length ? (
-          <div className="rounded-[14px] border border-dashed border-zinc-200 bg-white p-4 text-sm text-zinc-500">
+          <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4 text-sm text-zinc-500">
             请先选择对比对象
           </div>
         ) : (
@@ -110,6 +113,5 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
           </motion.div>
         )}
       </div>
-    </div>
   );
 }

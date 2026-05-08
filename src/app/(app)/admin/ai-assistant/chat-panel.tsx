@@ -4,7 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, Sparkles, RefreshCw, ArrowUp, PanelLeft, Bot, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Loader2,
+  RefreshCw,
+  ArrowUp,
+  AtSign,
+  Command,
+  History,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+} from "lucide-react";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
 import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
@@ -45,15 +56,29 @@ type ChatPanelProps = {
   actorRole: "admin" | "owner";
   onHistoryRefresh: () => void;
   onOpenHistory: () => void;
-  sidebarCollapsed?: boolean;
-  onToggleSidebar?: () => void;
 };
 
 const SHORTCUTS = [
-  { label: "查询未填报人员", text: "查询最近三天未填报人员" },
-  { label: "修改成员权限", text: "将张三权限修改为管理员" },
-  { label: "诊断权限异常", text: "为什么王五没有内容管理权限" },
-  { label: "重跑复盘任务", text: "重跑昨天李四的次日复盘任务" },
+  {
+    title: "未填报人员",
+    hint: "查询最近三天未填报日报的员工",
+    text: "查询最近三天未填报人员",
+  },
+  {
+    title: "调整权限",
+    hint: "修改指定成员的管理权限",
+    text: "将张三权限修改为管理员",
+  },
+  {
+    title: "诊断异常",
+    hint: "分析为什么某员工看不到某模块",
+    text: "为什么王五没有内容管理权限",
+  },
+  {
+    title: "重跑任务",
+    hint: "手动触发某天的次日复盘任务",
+    text: "重跑昨天李四的次日复盘任务",
+  },
 ];
 
 function createId() {
@@ -71,7 +96,12 @@ function normalizeAssistantMessage(payload: {
   return {
     id: createId(),
     role: "assistant",
-    type: responseType === "confirmation" ? "confirmation" : responseType === "result" ? "result" : "text",
+    type:
+      responseType === "confirmation"
+        ? "confirmation"
+        : responseType === "result"
+          ? "result"
+          : "text",
     content: response?.answer ?? "",
     details: response?.details,
     actionId: payload.actionId,
@@ -89,7 +119,9 @@ function buildConfirmResultMessage(options: {
   const { actionId, conversationId, confirmed, data } = options;
   const response = data.response;
   const isSuccess = confirmed ? data.success !== false : true;
-  const content = response?.answer ?? (confirmed ? "Execution completed successfully." : "Execution aborted by user.");
+  const content =
+    response?.answer ??
+    (confirmed ? "Execution completed successfully." : "Execution aborted by user.");
 
   return {
     id: createId(),
@@ -104,54 +136,66 @@ function buildConfirmResultMessage(options: {
 
 function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-sm max-w-none text-zinc-950 prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-xl prose-pre:bg-zinc-50 prose-pre:border prose-pre:border-zinc-200 prose-pre:p-3 prose-code:rounded-md prose-code:bg-zinc-100 prose-code:text-zinc-950 prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-zinc-200 prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-td:border prose-td:border-zinc-200 prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-zinc-500 prose-strong:text-zinc-950">
+    <div className="prose prose-sm max-w-none text-zinc-800 prose-headings:text-zinc-950 prose-headings:font-black prose-headings:tracking-tight prose-p:my-2 prose-p:leading-[1.75] prose-pre:my-3 prose-pre:rounded-xl prose-pre:bg-zinc-950 prose-pre:text-zinc-100 prose-pre:border prose-pre:border-zinc-900 prose-pre:p-3.5 prose-pre:text-[12.5px] prose-code:rounded-md prose-code:bg-zinc-100 prose-code:text-zinc-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[12.5px] prose-code:font-medium prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-zinc-200 prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-th:text-[11px] prose-th:uppercase prose-th:tracking-wider prose-th:text-zinc-500 prose-th:font-semibold prose-td:border prose-td:border-zinc-200 prose-td:px-3 prose-td:py-2 prose-td:text-[13px] prose-ul:my-2 prose-ul:pl-5 prose-ol:my-2 prose-ol:pl-5 prose-li:my-0.5 prose-a:text-zinc-900 prose-a:underline prose-a:decoration-zinc-300 prose-a:underline-offset-4 hover:prose-a:decoration-zinc-900 prose-strong:text-zinc-950 prose-strong:font-semibold">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );
 }
 
-function AiAvatar() {
-  return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-zinc-950">
-      <Sparkles className="h-3.5 w-3.5 text-white" />
-    </div>
-  );
-}
-
-function StatusBadge({ type }: { type: Message["type"] }) {
+function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "result") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-700">
-        <CheckCircle2 className="h-3 w-3" />
-        执行成功
+      <span className="inline-flex items-center gap-1.5">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-30" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600 shadow-[0_0_0_3px_rgba(5,150,105,0.08)]" />
+        </span>
+        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          Approved
+        </span>
       </span>
     );
   }
   if (type === "error") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-red-700">
-        <XCircle className="h-3 w-3" />
-        执行异常
+      <span className="inline-flex items-center gap-1.5">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-50" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600 shadow-[0_0_0_3px_rgba(220,38,38,0.08)]" />
+        </span>
+        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-red-700">
+          Rejected
+        </span>
       </span>
     );
   }
   if (type === "confirmation") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-700">
-        <AlertTriangle className="h-3 w-3" />
-        待确认
+      <span className="inline-flex items-center gap-1.5">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(234,179,8,0.12)]" />
+        </span>
+        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+          Pending
+        </span>
       </span>
     );
   }
-  return null;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex h-1.5 w-1.5 rounded-full bg-zinc-300" />
+      <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+        Answered
+      </span>
+    </span>
+  );
 }
 
 export default function ChatPanel({
   actorRole,
   onHistoryRefresh,
   onOpenHistory,
-  sidebarCollapsed,
-  onToggleSidebar,
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -169,7 +213,7 @@ export default function ChatPanel({
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 56), 200)}px`;
+    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 48), 200)}px`;
   }, [input]);
 
   const hasMessages = messages.length > 0;
@@ -197,12 +241,7 @@ export default function ChatPanel({
 
     setMessages((prev) => [
       ...prev,
-      {
-        id: createId(),
-        role: "user",
-        type: "text",
-        content: text,
-      },
+      { id: createId(), role: "user", type: "text", content: text },
     ]);
     setInput("");
     setLoading(true);
@@ -211,7 +250,10 @@ export default function ChatPanel({
       const res = await fetch("/api/admin/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, conversationId }),
+        body: JSON.stringify({
+          message: text,
+          conversationId,
+        }),
       });
 
       const data = await res.json();
@@ -284,83 +326,155 @@ export default function ChatPanel({
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {!hasMessages ? (
-          /* Empty State */
-          <div className="flex h-full flex-col items-center justify-center px-4">
-            <div className="flex max-w-md flex-col items-center text-center">
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
-                <Bot className="h-5 w-5 text-zinc-300" />
+          /* Empty State — Claude Cowork 居中欢迎 */
+          <div className="flex min-h-full flex-col items-center justify-center px-6 py-16">
+            <div className="w-full max-w-[640px]">
+              {/* Hero */}
+              <div className="mb-10 flex flex-col items-center text-center">
+                <div className="relative mb-6 flex h-14 w-14 items-center justify-center">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-700 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.3)]" />
+                  <Sparkles className="relative h-6 w-6 text-white" strokeWidth={1.75} />
+                </div>
+                <h1 className="text-[26px] font-black leading-tight tracking-tight text-zinc-950">
+                  你想处理点什么？
+                </h1>
+                <p className="mt-3 max-w-md text-[13px] leading-relaxed text-zinc-500">
+                  输入指令或自然语言，我会直接查询、修改或诊断系统数据。
+                  <br />
+                  <span className="italic text-zinc-400">
+                    敏感操作会先请求确认，所有动作都会记录到历史。
+                  </span>
+                </p>
               </div>
-              <h3 className="text-lg font-black tracking-tight text-zinc-900">
-                AI 管理助手
-              </h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-zinc-500">
-                已连接系统数据库，随时可以进行查询、配置修改和异常诊断。支持自然语言指令，需要敏感操作时会请求确认。
-              </p>
 
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {/* Shortcuts grid */}
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {SHORTCUTS.map((shortcut) => (
                   <button
-                    key={shortcut.label}
+                    key={shortcut.title}
                     type="button"
                     onClick={() => sendMessage(shortcut.text)}
-                    className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-600 transition hover:border-zinc-900 hover:text-zinc-900"
+                    className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:shadow-md active:translate-y-0"
                   >
-                    {shortcut.label}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 transition-colors group-hover:bg-emerald-500" />
+                          <div className="text-[13px] font-semibold tracking-tight text-zinc-950">
+                            {shortcut.title}
+                          </div>
+                        </div>
+                        <div className="mt-1.5 line-clamp-2 text-[11.5px] leading-relaxed text-zinc-500">
+                          {shortcut.hint}
+                        </div>
+                      </div>
+                      <div className="mt-0.5 text-zinc-300 transition-colors group-hover:text-zinc-600">
+                        <ArrowUp className="h-3.5 w-3.5 rotate-45" />
+                      </div>
+                    </div>
                   </button>
                 ))}
+              </div>
+
+              {/* Tiny command hint */}
+              <div className="mt-8 flex items-center justify-center gap-4 text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                <span className="flex items-center gap-1.5">
+                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[9px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                    Enter
+                  </kbd>
+                  <span>发送</span>
+                </span>
+                <span className="h-3 w-px bg-zinc-200" />
+                <span className="flex items-center gap-1.5">
+                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[9px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                    ⇧ Enter
+                  </kbd>
+                  <span>换行</span>
+                </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 pb-4">
-            {messageList.map((msg) => {
-              const isUser = msg.role === "user";
-              const isConfirming = confirmingActionId === msg.actionId;
+          <div className="mx-auto max-w-[768px] px-6 pb-6 pt-10">
+            <div className="space-y-8">
+              {messageList.map((msg) => {
+                const isUser = msg.role === "user";
+                const isConfirming = confirmingActionId === msg.actionId;
 
-              if (isUser) {
-                return (
-                  <div key={msg.id} className="flex justify-end animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-zinc-950 px-5 py-3.5 text-[15px] leading-relaxed text-white shadow-sm">
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
-                    </div>
-                  </div>
-                );
-              }
-
-              /* AI message */
-              return (
-                <div key={msg.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <AiAvatar />
-                  <div className="min-w-0 flex-1 space-y-3">
-                    {/* Meta */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-bold text-zinc-900">AI 助手</span>
-                      <StatusBadge type={msg.type} />
-                    </div>
-
-                    {/* Content */}
-                    <div className="text-[15px] leading-relaxed text-zinc-700">
-                      {msg.content && <MarkdownContent content={msg.content} />}
-                    </div>
-
-                    {/* Details */}
-                    {msg.details && (
-                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                        <AssistantDetailSections details={msg.details} />
+                if (isUser) {
+                  return (
+                    <div
+                      key={msg.id}
+                      className="flex justify-end animate-in fade-in slide-in-from-bottom-1 duration-300"
+                    >
+                      <div className="max-w-[82%] rounded-[14px] rounded-tr-[4px] bg-zinc-950 px-4 py-3 text-[14px] leading-[1.7] text-zinc-50 shadow-[0_2px_6px_-2px_rgba(0,0,0,0.25)]">
+                        <p className="whitespace-pre-wrap tracking-[0.005em]">
+                          {msg.content}
+                        </p>
                       </div>
-                    )}
+                    </div>
+                  );
+                }
 
-                    {/* Retry */}
+                /* AI message — Claude+DYData 增强版 */
+                return (
+                  <div
+                    key={msg.id}
+                    className="group animate-in fade-in slide-in-from-bottom-1 duration-300"
+                  >
+                    {/* Meta line */}
+                    <div className="mb-2 flex items-center gap-2.5">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950">
+                        <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2} />
+                      </div>
+                      <span className="text-[11px] font-bold tracking-tight text-zinc-950">
+                        AI 助手
+                      </span>
+                      <span className="h-3 w-px bg-zinc-200" />
+                      <StatusDot type={msg.type} />
+                    </div>
+
+                    {/* Content bubble (Claude+DYData 轻卡片) */}
+                    <div
+                      className={cn(
+                        "rounded-2xl border px-5 py-4 transition-colors",
+                        msg.type === "result"
+                          ? "border-emerald-100 bg-[#F6FDF9]"
+                          : msg.type === "error"
+                            ? "border-red-100 bg-[#FEF9F9]"
+                            : msg.type === "confirmation"
+                              ? "border-amber-100 bg-[#FEFCF3]"
+                              : "border-zinc-100 bg-[#FAFAFB]"
+                      )}
+                    >
+                      {msg.content && <MarkdownContent content={msg.content} />}
+
+                      {msg.details && (
+                        <div
+                          className={cn(
+                            "mt-3 rounded-xl border bg-white p-3",
+                            msg.type === "result"
+                              ? "border-emerald-100"
+                              : msg.type === "error"
+                                ? "border-red-100"
+                                : "border-zinc-200"
+                          )}
+                        >
+                          <AssistantDetailSections details={msg.details} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Retry bar */}
                     {msg.retryable && (
-                      <div>
+                      <div className="mt-2">
                         <button
                           onClick={() => handleRetry(msg.requestText)}
-                          disabled={loading}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-500 transition hover:border-zinc-900 hover:text-zinc-900 disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm active:translate-y-0"
                         >
                           <RefreshCw className="h-3 w-3" />
                           重试
@@ -368,48 +482,53 @@ export default function ChatPanel({
                       </div>
                     )}
 
-                    {/* Confirmation Card */}
+                    {/* Confirmation card */}
                     {msg.type === "confirmation" && msg.toolCall && (
-                      <ConfirmCard
-                        actorRole={actorRole}
-                        data={msg.toolCall}
-                        submitting={isConfirming}
-                        onConfirm={() => handleConfirm(msg, true)}
-                        onCancel={() => handleConfirm(msg, false)}
-                      />
+                      <div className="mt-3">
+                        <ConfirmCard
+                          actorRole={actorRole}
+                          data={msg.toolCall}
+                          submitting={isConfirming}
+                          onConfirm={() => handleConfirm(msg, true)}
+                          onCancel={() => handleConfirm(msg, false)}
+                        />
+                      </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {/* Loading */}
-            {loading && (
-              <div className="flex gap-3">
-                <AiAvatar />
-                <div className="flex items-center gap-2 py-3">
-                  <div className="flex space-x-1.5">
-                    <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.3s]" />
-                    <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.15s]" />
-                    <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce" />
+              {/* Loading */}
+              {loading && (
+                <div className="flex items-center gap-2.5 animate-in fade-in duration-200">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950">
+                    <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2} />
                   </div>
-                  <span className="text-[13px] text-zinc-400">处理中...</span>
+                  <div className="flex items-center gap-1.5 px-0.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.3s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.15s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-bounce" />
+                  </div>
+                  <span className="text-[11px] italic tracking-wide text-zinc-400">
+                    正在处理
+                  </span>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div ref={bottomRef} className="h-4" />
+              <div ref={bottomRef} className="h-1" />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="shrink-0 border-t border-zinc-200 bg-white px-4 py-3">
-        <div className="mx-auto max-w-3xl">
+      {/* Input Area — Claude Cowork 风格 */}
+      <div className="shrink-0 bg-[#FAFAFB] px-6 pb-5 pt-2">
+        <div className="mx-auto max-w-[768px]">
           <div
             className={cn(
-              "relative flex items-end gap-2 rounded-2xl border bg-[#F9F9FB] p-2 transition",
-              "focus-within:border-zinc-900 focus-within:bg-white focus-within:shadow-md"
+              "group relative flex items-end gap-1.5 rounded-[20px] border bg-white px-2.5 py-2 transition-all",
+              "border-zinc-200",
+              "focus-within:border-zinc-950 focus-within:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.06)]"
             )}
           >
             <textarea
@@ -417,11 +536,11 @@ export default function ChatPanel({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="输入指令或自然语言查询..."
+              placeholder="输入 / 作为命令，或自然语言描述你的需求"
               rows={1}
               disabled={loading}
               className={cn(
-                "max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 py-2.5 text-[15px] leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400",
+                "max-h-[200px] min-h-[40px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.6] tracking-wide text-zinc-950 outline-none placeholder:text-zinc-400",
                 loading && "cursor-not-allowed opacity-60"
               )}
             />
@@ -429,32 +548,43 @@ export default function ChatPanel({
               onClick={() => sendMessage(input)}
               disabled={!canSend}
               className={cn(
-                "mb-1 mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition",
+                "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-all",
                 !canSend
-                  ? "bg-zinc-200 text-zinc-400"
-                  : "bg-zinc-950 text-white hover:-translate-y-[1px] hover:shadow-lg active:translate-y-0"
+                  ? "bg-zinc-100 text-zinc-400"
+                  : "bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
               )}
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <ArrowUp className="h-4 w-4" />
+                <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
               )}
             </button>
           </div>
-          <div className="mt-1.5 flex items-center justify-between px-1">
-            <span className="text-[11px] text-zinc-400">
-              Enter 发送 · Shift+Enter 换行
-            </span>
+
+          {/* Footer hints — Claude style tiny row */}
+          <div className="mt-2 flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
-              {/* Mobile history trigger */}
               <button
                 onClick={onOpenHistory}
-                className="lg:hidden text-[11px] text-zinc-400 hover:text-zinc-600 transition-colors"
+                className="lg:hidden inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-zinc-700"
               >
-                查看历史
+                <History className="h-3 w-3" />
+                <span>历史</span>
               </button>
-              <span className="text-[11px] text-zinc-400">{input.length} 字</span>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+              <span className="flex items-center gap-1 normal-case tracking-wide">
+                <AtSign className="h-2.5 w-2.5" />
+                引用
+              </span>
+              <span className="hidden sm:flex items-center gap-1 normal-case tracking-wide">
+                <Command className="h-2.5 w-2.5" />
+                快捷键
+              </span>
+              <span className="tabular-nums normal-case tracking-normal text-zinc-300">
+                {input.length}
+              </span>
             </div>
           </div>
         </div>

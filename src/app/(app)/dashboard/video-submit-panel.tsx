@@ -540,7 +540,7 @@ export function VideoSubmitPanel({
 
   if (!accounts.length) {
     return (
-      <div className="overflow-hidden rounded-3xl border border-[#FDE68A] bg-[#FEFCE8] shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#FDE68A] bg-[#FEFCE8] shadow-sm">
         <div className="px-6 py-5 text-sm text-[#92400E]">
           当前没有可提交的数据账号，请联系管理员分配账号后再继续操作。
         </div>
@@ -557,7 +557,7 @@ export function VideoSubmitPanel({
         className="space-y-5"
       >
         <Card className={cn(
-          "mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm",
+          "mx-auto max-w-6xl overflow-hidden rounded-2xl border border-zinc-200 bg-white",
         )}>
           {!embeddedChrome ? (
           <CardHeader className="space-y-0 border-b border-zinc-200 bg-[#F9F9FB] p-0">
@@ -633,7 +633,7 @@ export function VideoSubmitPanel({
                 </div>
               </div>
 
-              <div className="rounded-[1.75rem] border border-zinc-200 bg-[#F9F9FB] px-4 py-4 shadow-sm">
+              <div className="rounded-2xl border border-zinc-200 bg-[#F9F9FB] px-4 py-4 shadow-sm">
                 <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-100 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
                   <div className="space-y-1">
                     <div className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-400">Today</div>
@@ -693,7 +693,7 @@ export function VideoSubmitPanel({
             {activeCheckpointId === 1 ? (
               <>
             {primarySummary && isPrimarySummaryMode ? (
-              <div className="rounded-[1.5rem] border border-[#ABEFC6] bg-[#ECFDF3] p-4 text-sm text-[#067647] sm:p-5">
+              <div className="rounded-2xl border border-[#ABEFC6] bg-[#ECFDF3] p-4 text-sm text-[#067647] sm:p-5">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
@@ -777,10 +777,10 @@ export function VideoSubmitPanel({
             {selectedAccount && shouldShowBlockedStateCard ? (
               <div
                 className={cn(
-                  "rounded-[1.5rem] p-4 text-sm sm:p-5",
+                  "rounded-2xl p-4 text-sm sm:p-5",
                   activeDateStatus.state === "waive"
                     ? `${getDashboardSurfaceClass("success")} text-[#067647]`
-                    : "rounded-[1.5rem] border border-[#FDE68A] bg-[#FEF9C3]/80 text-[#92400E]",
+                    : "rounded-2xl border border-[#FDE68A] bg-[#FEF9C3]/80 text-[#92400E]",
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -829,7 +829,7 @@ export function VideoSubmitPanel({
                 key={`checkpoint-placeholder-${activeCheckpointId}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center rounded-[2rem] border-4 border-dashed border-slate-100 bg-slate-50/50 px-6 py-20 text-center"
+                className="flex flex-col items-center rounded-2xl border-4 border-dashed border-slate-100 bg-slate-50/50 px-6 py-20 text-center"
               >
                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-slate-200 shadow-xl">
                   <Lock className="size-10" />
@@ -870,7 +870,7 @@ export function VideoSubmitPanel({
             />
 
             {false ? (
-            <div className="rounded-[1.75rem] border border-white/70 bg-white/82 p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-5">
+            <div className="rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-text-tertiary)]">
@@ -892,7 +892,7 @@ export function VideoSubmitPanel({
               </div>
 
               {activeDateStatus.state === "submitted" && activeDateReport ? (
-                <div className="mt-4 rounded-[1.25rem] border border-[#ABEFC6]/70 bg-[#D1FADF]/75 p-4">
+                <div className="mt-4 rounded-2xl border border-[#ABEFC6]/70 bg-[#D1FADF]/75 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-3">
                       <div>
@@ -950,7 +950,7 @@ export function VideoSubmitPanel({
               ) : shouldShowBlockedStateCard ? (
                 <div
                   className={cn(
-                    "mt-4 rounded-[1.25rem] border p-4",
+                    "mt-4 rounded-2xl border p-4",
                     activeDateStatus.state === "waive"
                       ? "border-[#ABEFC6] bg-[#D1FADF]/75"
                       : "border-[#FDE68A] bg-[#FEF9C3]/80",
@@ -979,14 +979,14 @@ export function VideoSubmitPanel({
                   </div>
                 </div>
               ) : activeDateStatus.state === "future" ? (
-                <div className="mt-4 rounded-[1.25rem] border border-slate-200 bg-slate-50/80 p-4">
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-slate-700">这一天还未到</p>
                     <p className="text-sm leading-6 text-slate-600">{activeDateStatus.description}</p>
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 rounded-[1.25rem] border border-rose-200 bg-rose-50/75 p-4">
+                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50/75 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-rose-700">

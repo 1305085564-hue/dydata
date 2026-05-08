@@ -77,7 +77,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
 
   if (!capabilityCards.length) {
     return (
-      <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">六维能力</h2>
         <p className="mt-2 text-sm leading-6 text-zinc-500">数据不足，先连续提交数据后再看能力分布。</p>
       </div>
@@ -126,7 +126,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
       </div>
 
       {/* 雷达图 */}
-      <div className="flex items-center justify-center" style={{ maxHeight: 280 }}>
+      <div className="flex items-center justify-center" style={{ maxHeight: 240 }}>
         <svg
           viewBox="-55 -45 410 380"
           className="w-full max-w-[380px]"

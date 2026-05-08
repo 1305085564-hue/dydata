@@ -1,9 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
-import { Copy, AlertTriangle, CheckCircle2, XCircle, Terminal, Loader2 } from "lucide-react";
+import { Copy, CheckCircle2, XCircle, Terminal, Loader2 } from "lucide-react";
 import AssistantDetailSections from "./assistant-detail-sections";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +28,6 @@ type ConfirmCardProps = {
 function formatContent(value: unknown) {
   if (value == null) return "";
   if (typeof value === "string") return value;
-
   try {
     return JSON.stringify(value, null, 2);
   } catch {
@@ -32,71 +35,95 @@ function formatContent(value: unknown) {
   }
 }
 
-export default function ConfirmCard({ actorRole, data, submitting = false, onConfirm, onCancel }: ConfirmCardProps) {
+export default function ConfirmCard({
+  actorRole,
+  data,
+  submitting = false,
+  onConfirm,
+  onCancel,
+}: ConfirmCardProps) {
   const debug = data.debug;
 
   return (
-    <div className="my-2 border border-red-200 bg-red-50 text-zinc-950 rounded-2xl overflow-hidden text-sm relative animate-in slide-in-from-bottom-2 duration-300">
+    <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_4px_16px_-8px_rgba(0,0,0,0.08)]">
+      {/* Amber status rail */}
+      <div className="absolute left-0 top-0 h-full w-[3px] bg-amber-400" />
 
-      {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-red-100 bg-red-50 px-4 py-3">
-         <div className="flex items-center gap-2 text-red-700 font-semibold text-sm">
-            <AlertTriangle className="h-4 w-4" />
-            <span>操作确认</span>
-         </div>
-         <div className="text-xs text-zinc-500 bg-white px-2 py-1 rounded-lg border border-zinc-200">
-            {data.toolName}
-         </div>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3 pl-6">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-50" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(234,179,8,0.12)]" />
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-700">
+            Authorization Required
+          </span>
+        </div>
+        <code className="rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
+          {data.toolName}
+        </code>
       </div>
 
-      <div className="p-5 space-y-5">
-        {/* Message area */}
-        <div className="space-y-2">
-          <p className="text-foreground">
+      {/* Body */}
+      <div className="space-y-4 px-5 py-4 pl-6">
+        {/* Message */}
+        <div className="space-y-2.5">
+          <p className="text-[14px] leading-relaxed tracking-[0.005em] text-zinc-800">
             {data.confirmationMessage || `系统将执行: ${data.toolName}`}
           </p>
           {data.confirmationReason && (
-            <p className="text-sm text-red-700/80 border-l-2 border-red-300 pl-3 py-1 bg-red-50 rounded-r-md">
-              {data.confirmationReason}
-            </p>
+            <div className="rounded-lg border border-amber-100 bg-[#FEFCF3] px-3 py-2">
+              <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+                Reason
+              </div>
+              <p className="mt-1 text-[12.5px] italic leading-relaxed text-amber-900/80">
+                {data.confirmationReason}
+              </p>
+            </div>
           )}
         </div>
 
-        {/* Payload / Details */}
+        {/* Details */}
         {data.details && (
-          <div className="bg-white border border-zinc-200 rounded-xl p-4">
-             <AssistantDetailSections details={data.details} />
+          <div className="rounded-xl border border-zinc-200 bg-[#FAFAFB] p-3">
+            <div className="mb-2 text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+              Payload
+            </div>
+            <AssistantDetailSections details={data.details} />
           </div>
         )}
 
         {/* Debug (Owner only) */}
         {actorRole === "owner" && debug && (
-          <Collapsible className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-            <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50 transition-colors cursor-pointer">
-              <Terminal className="h-4 w-4" />
-              调试信息
+          <Collapsible className="overflow-hidden rounded-xl border border-zinc-200 bg-[#FAFAFB]">
+            <CollapsibleTrigger className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:bg-white hover:text-zinc-900">
+              <Terminal className="h-3 w-3" />
+              Debug
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 border-t border-border/50 p-4">
+            <CollapsibleContent className="space-y-3 border-t border-zinc-200 p-3">
               {debug.backupSql && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>回滚 SQL</span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                    <span>Rollback SQL</span>
                     <button
-                      className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+                      className="inline-flex items-center gap-1 normal-case text-zinc-400 transition-colors hover:text-zinc-900"
                       onClick={() => navigator.clipboard.writeText(debug.backupSql || "")}
                     >
-                      <Copy className="h-3.5 w-3.5" /> 复制
+                      <Copy className="h-3 w-3" /> 复制
                     </button>
                   </div>
-                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-emerald-600 dark:text-emerald-400 border border-border/50">
+                  <pre className="overflow-x-auto rounded-lg border border-zinc-900/40 bg-zinc-950 p-2.5 text-[11px] leading-relaxed text-emerald-300">
                     {debug.backupSql}
                   </pre>
                 </div>
               )}
               {debug.toolParams && (
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">参数</div>
-                  <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs text-muted-foreground border border-border/50">
+                <div className="space-y-1.5">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+                    Parameters
+                  </div>
+                  <pre className="overflow-x-auto rounded-lg border border-zinc-900/40 bg-zinc-950 p-2.5 text-[11px] leading-relaxed text-zinc-200">
                     {formatContent(debug.toolParams)}
                   </pre>
                 </div>
@@ -105,37 +132,42 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
           </Collapsible>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-           <Button
-             variant="outline"
-             size="sm"
-             onClick={onCancel}
-             disabled={submitting}
-             className="h-9 border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950"
-           >
-             <XCircle className="h-4 w-4 mr-2" />
-             取消
-           </Button>
-           <Button
-             variant="default"
-             size="sm"
-             onClick={onConfirm}
-             disabled={submitting}
-             className="h-9 bg-zinc-950 text-white hover:bg-zinc-800"
-           >
-             {submitting ? (
-               <span className="flex items-center gap-2">
-                 <Loader2 className="h-4 w-4 animate-spin" />
-                 处理中...
-               </span>
-             ) : (
-               <>
-                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                 确认执行
-               </>
-             )}
-           </Button>
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCancel}
+            disabled={submitting}
+            className={cn(
+              "h-8 border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 shadow-none",
+              "hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-white hover:text-zinc-900 hover:shadow-sm active:translate-y-0"
+            )}
+          >
+            <XCircle className="mr-1.5 h-3 w-3" />
+            取消
+          </Button>
+          <Button
+            size="sm"
+            onClick={onConfirm}
+            disabled={submitting}
+            className={cn(
+              "h-8 bg-[#D97757] px-3 text-[12px] font-medium text-white shadow-sm",
+              "hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
+            )}
+          >
+            {submitting ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                处理中
+              </span>
+            ) : (
+              <>
+                <CheckCircle2 className="mr-1.5 h-3 w-3" />
+                确认执行
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>

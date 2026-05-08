@@ -7,7 +7,7 @@ import { StatusCardGrid } from "@/components/growth/status-card-grid";
 import { ScriptBreakdown } from "@/components/growth/script-breakdown";
 import { GrowthActionPlanPanel } from "@/components/growth/growth-action-plan-panel";
 import { GrowthPkPanel } from "@/components/growth/growth-pk-panel";
-import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
+import { AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
 
 import type { AdviceSections, GrowthDimensionCard, GrowthPkRow, ScriptBreakdownData, StatusCardItem, WeakBenchmarkCard } from "@/lib/growth-page";
 import type { MetricsReport } from "@/lib/metrics";
@@ -59,50 +59,30 @@ export function GrowthClientShell({
         title="成长分析总览"
         description="先看能力分布和诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。"
         meta={
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs sm:text-sm text-zinc-950">
-            <Sparkles className="size-3.5" />
-            {reportCount >= 3 ? "已满足最小样本要求" : reportCount > 0 ? "虚拟数据预览中，再提交真实数据替换" : "虚拟数据预览中，提交数据后替换"}
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-950">
+              <Sparkles className="size-3.5" />
+              {reportCount >= 3 ? "已满足最小样本要求" : reportCount > 0 ? "虚拟数据预览中，再提交真实数据替换" : "虚拟数据预览中，提交数据后替换"}
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-[11px] text-zinc-500">
+              <span>分析主体 · {profileName || "当前账号"}</span>
+              <span className="text-zinc-300">·</span>
+              <span>{accountCount} 个账号</span>
+              <span className="text-zinc-300">·</span>
+              <span>{reportCount} 条样本</span>
+              <span className="text-zinc-300">·</span>
+              <span>最弱 {summary.weakestDimension ?? "待积累"}</span>
+            </div>
           </div>
         }
       >
-        <AppShellMetricStrip
-          columns={4}
-          items={[
-            {
-              label: "分析主体",
-              value: profileName || "当前账号",
-              hint: "当前成长视角",
-              tone: "primary",
-            },
-            {
-              label: "账号数量",
-              value: `${accountCount} 个`,
-              hint: "参与分析的账号",
-              tone: "neutral",
-            },
-            {
-              label: "近 30 天样本",
-              value: `${reportCount} 条`,
-              hint: reportCount >= 3 ? "可生成完整分析" : "含虚拟数据预览",
-              tone: reportCount >= 3 ? "success" : "warning",
-            },
-            {
-              label: "当前最弱项",
-              value: summary.weakestDimension ?? "待积累",
-              hint: "优先优化这个维度",
-              tone: summary.weakestDimension ? "warning" : "neutral",
-            },
-          ]}
-        />
-        <div className="pt-2">
-          <StatusCardGrid items={statusCards} />
-        </div>
+        <StatusCardGrid items={statusCards} />
       </AppShellHero>
 
       {/* 左右分栏：能力档案 + 诊断任务 */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(360px,0.4fr)_minmax(0,1fr)]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(360px,0.4fr)_minmax(0,1fr)]">
         {/* 左栏：六维雷达 */}
-        <section className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+        <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-2">
             <div>
               <h2 className="text-lg font-bold tracking-tight text-zinc-950">能力分布</h2>
@@ -117,7 +97,7 @@ export function GrowthClientShell({
         </section>
 
         {/* 右栏：诊断建议 */}
-        <section className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+        <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
           <div className="mb-4">
             <h2 className="text-lg font-bold tracking-tight text-zinc-950">诊断与行动</h2>
             <p className="mt-1 text-sm text-zinc-500">结合团队均值，先明确当前最该动的地方。</p>
@@ -134,7 +114,7 @@ export function GrowthClientShell({
       ) : null}
 
       {/* 底部双栏：文案拆解 + AI洞察 */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <AppShellSection title="文案拆解" description="先定位问题发生在开头、中段还是结尾。">
           <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
         </AppShellSection>

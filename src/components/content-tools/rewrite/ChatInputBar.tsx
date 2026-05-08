@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Sparkles, ArrowUp } from 'lucide-react';
+import { ArrowUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputBarProps {
@@ -23,7 +23,6 @@ export function ChatInputBar({
 }: ChatInputBarProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -37,13 +36,16 @@ export function ChatInputBar({
       ? `输入原文，按「${activeFixedModeName}」改写...`
       : '输入原文开始改写...';
 
+  const canSend = inputText.trim() && !isSending;
+
   return (
-    <div className="shrink-0 border-t border-zinc-200 bg-white px-4 py-3">
+    <div className="shrink-0 bg-[#FAFAFB] px-4 pb-4 pt-2">
       <div className="mx-auto max-w-3xl">
         <div
           className={cn(
-            'relative flex items-end gap-2 rounded-2xl border bg-[#F9F9FB] p-2 transition',
-            'focus-within:border-zinc-900 focus-within:bg-white focus-within:shadow-md'
+            'group relative flex items-end gap-2 rounded-[20px] border bg-white px-3 py-2.5 transition-all',
+            'focus-within:border-zinc-950 focus-within:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.06)]',
+            isSending ? 'border-zinc-200' : 'border-zinc-200 hover:border-zinc-300'
           )}
         >
           <textarea
@@ -53,40 +55,41 @@ export function ChatInputBar({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
-                onSend();
+                if (canSend) onSend();
               }
             }}
             disabled={isSending}
             placeholder={placeholder}
             rows={1}
             className={cn(
-              'max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 py-2.5 text-[15px] leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400',
+              'max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.7] tracking-[0.005em] text-zinc-900 outline-none placeholder:text-zinc-400',
               isSending && 'cursor-not-allowed opacity-60'
             )}
           />
           <button
             type="button"
             onClick={onSend}
-            disabled={!inputText.trim() || isSending}
+            disabled={!canSend}
             className={cn(
-              'mb-1 mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition',
-              !inputText.trim() || isSending
-                ? 'bg-zinc-200 text-zinc-400'
-                : 'bg-zinc-950 text-white hover:-translate-y-[1px] hover:shadow-lg active:translate-y-0'
+              'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-all',
+              canSend
+                ? 'bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0'
+                : 'bg-zinc-100 text-zinc-400'
             )}
+            title={canSend ? '发送' : '输入内容后可发送'}
           >
             {isSending ? (
-              <Sparkles className="h-4 w-4 animate-pulse" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ArrowUp className="h-4 w-4" />
+              <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
             )}
           </button>
         </div>
-        <div className="mt-1.5 flex items-center justify-between px-1">
-          <span className="text-[11px] text-zinc-400">
+        <div className="mt-1.5 flex items-center justify-between px-2">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
             Enter 发送 · Shift+Enter 换行
           </span>
-          <span className="text-[11px] text-zinc-400">{inputText.length} 字</span>
+          <span className="text-[10px] text-zinc-400 tabular-nums">{inputText.length} 字</span>
         </div>
       </div>
     </div>

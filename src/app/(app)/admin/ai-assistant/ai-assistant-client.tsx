@@ -1,74 +1,81 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { History, PanelLeftClose, PanelLeft } from "lucide-react";
+import { PanelLeftClose, PanelLeft, Plus } from "lucide-react";
 import ChatPanel from "./chat-panel";
 import HistorySidebar from "./history-sidebar";
+import { cn } from "@/lib/utils";
 
- type Props = {
+type Props = {
   actorRole: "admin" | "owner";
 };
 
 export default function AIAssistantClient({ actorRole }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(true);
+  const [sessionKey, setSessionKey] = useState(0);
 
-  const refreshHistory = () => setRefreshKey((value) => value + 1);
+  const refreshHistory = () => setRefreshKey((v) => v + 1);
+  const startNewSession = () => setSessionKey((v) => v + 1);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[#F9F9FB]">
-      {/* Left sidebar - 200px, collapsible */}
-      <aside
-        className={
-          sidebarCollapsed
-            ? "hidden lg:flex w-0 overflow-hidden border-r border-zinc-200 bg-white transition-all duration-300"
-            : "hidden lg:flex w-[200px] shrink-0 flex-col border-r border-zinc-200 bg-white transition-all duration-300"
-        }
-      >
-        <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2.5">
-          <div className="flex items-center gap-1.5">
-            <History className="h-3.5 w-3.5 text-zinc-400" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              操作历史
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F9F9FB]">
+      {/* Top bar */}
+      <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-[#F9F9FB] px-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setHistoryOpen((v) => !v)}
+            className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+            title={historyOpen ? "收起历史" : "展开历史"}
+          >
+            {historyOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeft className="h-3.5 w-3.5" />}
+          </button>
+          <div className="flex items-center gap-2 px-1">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              AI Workstation
             </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={() => setSidebarCollapsed(true)}
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
-            title="收起侧边栏"
+            onClick={startNewSession}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm active:translate-y-0"
+            title="开启新对话"
           >
-            <PanelLeftClose className="h-3.5 w-3.5" />
+            <Plus className="h-3 w-3" />
+            <span className="tracking-wide">新对话</span>
           </button>
         </div>
-        <div className="flex-1 overflow-hidden">
+      </header>
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Left: History */}
+        <aside
+          className={cn(
+            "relative hidden shrink-0 flex-col border-r border-zinc-200 bg-[#F9F9FB] transition-[width] duration-300 ease-out lg:flex",
+            historyOpen ? "w-[200px]" : "w-0 overflow-hidden"
+          )}
+        >
           <HistorySidebar actorRole={actorRole} refreshKey={refreshKey} />
-        </div>
-      </aside>
+        </aside>
 
-      {/* Collapsed sidebar trigger */}
-      {sidebarCollapsed && (
-        <div className="hidden lg:flex flex-col items-center border-r border-zinc-200 bg-white py-3 px-1">
-          <button
-            onClick={() => setSidebarCollapsed(false)}
-            className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
-            title="展开侧边栏"
-          >
-            <PanelLeft className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+        {/* Center: Chat */}
+        <main className="relative flex min-w-0 flex-1 flex-col bg-[#FAFAFB]">
+          <ChatPanel
+            key={sessionKey}
+            actorRole={actorRole}
+            onHistoryRefresh={refreshHistory}
+            onOpenHistory={() => setMobileHistoryOpen(true)}
+          />
+        </main>
 
-      {/* Main chat area */}
-      <div className="flex min-w-0 flex-1 flex-col bg-white">
-        <ChatPanel
-          actorRole={actorRole}
-          onHistoryRefresh={refreshHistory}
-          onOpenHistory={() => setMobileHistoryOpen(true)}
-          sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebar={() => setSidebarCollapsed((v) => !v)}
-        />
+
       </div>
 
       {/* Mobile Drawer */}

@@ -20,8 +20,10 @@ export default async function RewritePage() {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] w-full">
-      <RewriteWorkbench />
+    <div className="-mx-4 -mt-[calc(var(--app-top-offset)+1.25rem)] sm:-mx-6 h-[100dvh] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] overflow-hidden">
+      <div className="h-full w-full pt-[var(--app-top-offset)]">
+        <RewriteWorkbench />
+      </div>
     </div>
   )
 }

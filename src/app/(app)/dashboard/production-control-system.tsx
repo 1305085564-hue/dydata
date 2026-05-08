@@ -719,8 +719,9 @@ function WorkflowDashboard({
 
   return (
     <div className="mx-auto max-w-6xl space-y-10">
-      <div className="relative flex justify-between px-2">
-        <div className="absolute left-0 top-5 z-0 h-[2px] w-full bg-zinc-200" />
+      <div className="rounded-2xl bg-[#FAFAFB] p-6">
+        <div className="relative flex justify-between px-2">
+          <div className="absolute left-0 top-5 z-0 h-[2px] w-full bg-zinc-300" />
         {MATRIX_CHECKPOINTS.map((cp, idx) => {
           const Icon = cp.icon;
           const status = statuses[cp.id];
@@ -742,7 +743,7 @@ function WorkflowDashboard({
                       : isOverdue
                         ? "border-[#B42318] bg-[#B42318] text-white shadow-lg animate-pulse"
                         : isActive
-                          ? "scale-110 border-zinc-900 bg-white text-zinc-900 shadow-xl ring-4 ring-white"
+                          ? "scale-110 border-[#D97757] bg-[#D97757] text-white shadow-sm ring-4 ring-[#D97757]/10"
                           : isPendingStatus
                             ? "border-[#FDE68A] bg-[#FEF9C3] text-[#92400E]"
                             : "border-zinc-100 bg-white text-zinc-300",
@@ -761,14 +762,13 @@ function WorkflowDashboard({
             </button>
           );
         })}
+        </div>
       </div>
 
       {activeCheckpoint === "DATA_REPORT" ? (
-        <div className="rounded-[32px] border border-zinc-200 bg-white p-0 shadow-md">
-          {dataReport}
-        </div>
+        <>{dataReport}</>
       ) : activeCheckpoint === "MORNING_REVIEW" ? (
-        <div className="rounded-[32px] border border-zinc-200 bg-white p-10 text-center shadow-md">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-10 text-center shadow-md">
           <StatusBadge status={statuses.MORNING_REVIEW} />
           <h3 className="mt-4 text-2xl font-black tracking-tight text-zinc-900">早会复盘</h3>
           <p className="mx-auto mt-2 max-w-xl text-sm font-bold leading-6 text-zinc-500">
@@ -785,7 +785,7 @@ function WorkflowDashboard({
       ) : (
       <div className="mt-10 grid grid-cols-12 gap-10">
         <div className="col-span-12 lg:col-span-8">
-          <div className="space-y-8 rounded-[32px] border border-zinc-200 bg-white p-6 shadow-md sm:p-10">
+          <div className="space-y-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-md sm:p-10">
             <div className="flex items-center justify-between">
               <div className="space-y-1.5">
                 <StatusBadge status={activeStatus} />
@@ -850,7 +850,7 @@ function WorkflowDashboard({
         </div>
 
         <div className="col-span-12 lg:col-span-4">
-          <div className="h-full rounded-[32px] border border-zinc-200 bg-white p-8 shadow-sm">
+          <div className="h-full rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
             <h4 className="mb-8 border-b border-zinc-100 pb-4 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">
               Notifications
             </h4>
@@ -983,7 +983,7 @@ function GlobalMatrix({
           </div>
           <h2 className="text-4xl font-black tracking-tighter text-zinc-900">全域生产矩阵</h2>
         </div>
-        <div className="flex items-center gap-5 rounded-[24px] border-2 border-zinc-200 bg-white px-8 py-3 shadow-lg">
+        <div className="flex items-center gap-5 rounded-2xl border-2 border-zinc-200 bg-white px-8 py-3 shadow-lg">
           <div className="text-center">
             <span className="mb-1 block text-[10px] font-black uppercase text-zinc-400">产出率</span>
             <span className="text-2xl font-black italic text-zinc-900">{matrixRate(rows)}%</span>
@@ -1001,7 +1001,7 @@ function GlobalMatrix({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[40px] border border-zinc-200 bg-white shadow-2xl">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] border-collapse text-left">
             <thead>
@@ -1231,7 +1231,7 @@ function LeaderDashboard({ today, userRole }: { today: string; userRole: "admin"
         </div>
       )}
 
-      <div className="overflow-hidden rounded-[24px] border border-zinc-200 bg-white">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
@@ -1326,7 +1326,7 @@ function ReviewDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[32px] border border-zinc-200 bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-zinc-100 px-8 py-5">
           <h3 className="text-lg font-black tracking-tight text-zinc-900">
             {checkpointLabel(submission.checkpoint as SopCheckpoint)}审核

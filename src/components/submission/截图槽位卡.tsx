@@ -6,7 +6,6 @@ import { useRef, useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MotionCard } from "@/components/ui/motion-card";
 import { SPRING_EASE, shakeVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { NETWORK_RETRY_MESSAGE, OCR_FAIL_MESSAGE } from "./截图上传错误";
@@ -118,22 +117,19 @@ export function SubmissionSlotCard({
   }, [isProcessing, status]);
 
   return (
-    <MotionCard
-      hover={!isProcessing}
+    <motion.div
+      variants={isError ? shakeVariants : undefined}
+      initial={isError ? "initial" : undefined}
+      animate={isError ? "animate" : undefined}
       className={cn(
-        "relative overflow-hidden border bg-white transition-colors duration-300 rounded-2xl",
+        "relative overflow-hidden rounded-xl border bg-white transition-all duration-200",
         isHighlighted ? "border-zinc-950 ring-2 ring-zinc-950/8" : "border-zinc-200",
-        isWarning && "ring-2 ring-[#EAB308]/25",
-        isError && "ring-2 ring-[#B42318]/20",
-        isSuccess && "ring-2 ring-[#067647]/18"
+        isWarning && "border-[#EAB308] ring-1 ring-[#EAB308]/50",
+        isError && "border-[#B42318] ring-1 ring-[#B42318]/50",
+        isSuccess && "border-[#067647] ring-1 ring-[#067647]/50"
       )}
     >
-      <motion.div
-        variants={isError ? shakeVariants : undefined}
-        initial={isError ? "initial" : undefined}
-        animate={isError ? "animate" : undefined}
-        className="flex flex-col sm:flex-row items-stretch"
-      >
+      <div className="flex flex-col sm:flex-row items-stretch">
         <input
           ref={inputRef}
           type="file"
@@ -149,7 +145,7 @@ export function SubmissionSlotCard({
         />
 
         {/* 左侧：1:1 正方形截图槽位 */}
-        <div className="w-full sm:w-[45%] aspect-square sm:aspect-auto sm:min-h-[180px] flex-shrink-0 relative border-b sm:border-b-0 sm:border-r border-zinc-200 bg-[#F4F4F5]">
+        <div className="w-full sm:w-[45%] aspect-square sm:aspect-auto sm:min-h-[180px] flex-shrink-0 relative border-b sm:border-b-0 sm:border-r border-zinc-100 bg-[#FAFAFB]">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -320,8 +316,8 @@ export function SubmissionSlotCard({
             ) : null}
           </div>
         </div>
-      </motion.div>
-    </MotionCard>
+      </div>
+    </motion.div>
   );
 }
 

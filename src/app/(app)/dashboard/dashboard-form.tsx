@@ -142,8 +142,8 @@ export function DashboardForm({
   return (
     <div className="relative">
       {showSuccess && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[1.5rem] bg-background/78 backdrop-blur-md">
-          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-[1.75rem] bg-white/78 px-8 py-7 shadow-[0_20px_60px_-28px_rgba(6,118,71,0.48)] dark:bg-[#067647]/55">
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/78 backdrop-blur-md">
+          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-2xl bg-white/78 px-8 py-7 shadow-[0_20px_60px_-28px_rgba(6,118,71,0.48)] dark:bg-[#067647]/55">
             <div className="relative flex h-20 w-20 items-center justify-center">
               <div className="absolute inset-0 animate-ping rounded-full bg-green-100 opacity-30" />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
@@ -176,7 +176,7 @@ export function DashboardForm({
         <div className="dashboard-form-layout">
           <div className="dashboard-form-column">
             <Card
-              className={`${getDashboardSurfaceClass("hero")} card-elevated dashboard-form-import-card overflow-hidden rounded-[1.5rem] border-0`}
+              className={`${getDashboardSurfaceClass("hero")} card-elevated dashboard-form-import-card overflow-hidden rounded-2xl border-0`}
             >
               <CardContent className="space-y-4 px-5 py-5 sm:px-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -240,7 +240,7 @@ export function DashboardForm({
 
           <div className="dashboard-form-column">
             <Card
-              className={`${getDashboardSurfaceClass("panel")} glass-card card-elevated dashboard-form-entry-card rounded-[1.5rem] border-0`}
+              className={`${getDashboardSurfaceClass("panel")} glass-card card-elevated dashboard-form-entry-card rounded-2xl border-0`}
             >
               <CardContent className="space-y-6 px-5 py-5 sm:px-6">
                 <div className="space-y-1.5">
@@ -314,7 +314,7 @@ export function DashboardForm({
                     </p>
                   </div>
                   <div
-                    className={`${getDashboardMetricGridClass("primary")} rounded-[1.5rem] border border-zinc-200 bg-zinc-900/6 p-4 shadow-sm backdrop-blur-xl sm:p-5`}
+                    className={`${getDashboardMetricGridClass("primary")} rounded-2xl border border-zinc-200 bg-zinc-900/6 p-4 shadow-sm backdrop-blur-xl sm:p-5`}
                   >
                     <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                       <Label htmlFor="play_count">播放量</Label>
@@ -572,7 +572,7 @@ export function DashboardForm({
           </>
         ) : (
           <div className="dashboard-form-inline-action">
-            <div className="dashboard-surface dashboard-surface-panel rounded-[1.25rem] border px-4 py-3">
+            <div className="dashboard-surface dashboard-surface-panel rounded-xl border px-4 py-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="size-4 text-zinc-900" />

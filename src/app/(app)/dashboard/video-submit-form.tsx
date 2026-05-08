@@ -1017,47 +1017,30 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         animate="visible"
         className="space-y-5 pb-[140px] md:pb-[180px]"
       >
-        <div className="space-y-6">
-          {/* 第一行：截图槽位区 & 指标分组区 */}
-          <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-            <div className="grid items-start gap-6 p-5 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] lg:gap-0">
-            <div className="flex min-w-0 flex-col gap-6 lg:border-r lg:border-zinc-200 lg:pr-6">
-              <motion.div ref={slotsSectionRef} variants={itemVariants}>
-                <截图槽位区
-                  slots={slots}
-                  onSelectFile={handleSlotUpload}
-                  onDelete={(role) => setDeleteTargetRole(role)}
-                  onRetry={handleSlotRetry}
-                  screenshotsRequired={screenshotsRequired}
-                  focusedRole={focusedRole}
-                  issueCount={
-                    issueSummary.missingRequiredSlots.length +
-                    issueSummary.failedRequiredSlots.length +
-                    issueSummary.pendingSlotConfirmations.length
-                  }
-                />
-              </motion.div>
-            </div>
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] lg:gap-0">
+          {/* 左侧列：截图槽位区 + 视频信息 */}
+          <div className="flex min-w-0 flex-col gap-6 lg:border-r lg:border-zinc-200 lg:pr-6">
+            <motion.div ref={slotsSectionRef} variants={itemVariants}>
+              <截图槽位区
+                slots={slots}
+                onSelectFile={handleSlotUpload}
+                onDelete={(role) => setDeleteTargetRole(role)}
+                onRetry={handleSlotRetry}
+                screenshotsRequired={screenshotsRequired}
+                focusedRole={focusedRole}
+                issueCount={
+                  issueSummary.missingRequiredSlots.length +
+                  issueSummary.failedRequiredSlots.length +
+                  issueSummary.pendingSlotConfirmations.length
+                }
+              />
+            </motion.div>
 
-            <div className="flex min-w-0 flex-col gap-6 lg:pl-6">
-              <motion.div ref={metricsSectionRef} variants={itemVariants}>
-                <指标分组区
-                  fields={fields}
-                  onFieldChange={updateField}
-                  onFocusField={handleFieldFocus}
-                  onBlurField={handleFieldBlur}
-                  anomalyStatus={meta.anomalyStatus}
-                />
-              </motion.div>
-            </div>
-          </div>
-          </div>
+            <hr className="border-zinc-100" />
 
-          {/* 第二行：视频链接等元数据信息 & 文案提取区 */}
-          <motion.div ref={metaSectionRef} variants={itemVariants}>
-            <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-              <div className="grid items-stretch gap-6 p-5 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] lg:gap-0">
-                <div className="min-w-0 space-y-4 lg:border-r lg:border-zinc-200 lg:pr-6">
+            <motion.div ref={metaSectionRef} variants={itemVariants}>
+
+              <div className="min-w-0 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="video_url" className="text-zinc-500 text-sm">抖音视频链接</Label>
                     <Input
@@ -1220,24 +1203,40 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex min-h-[18rem] min-w-0 flex-col space-y-2 rounded-xl border border-transparent transition-colors data-[missing=true]:border-[#FECDCA] data-[missing=true]:bg-[#FEF3F2]/60 data-[missing=true]:p-3 xl:pl-6" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
-                  <Label htmlFor="content" className="text-zinc-500 text-sm">文案 <span className="text-[#B42318]">*</span></Label>
-                  <textarea
-                    id="content"
-                    value={meta.content}
-                    onChange={(event) => updateMeta("content", event.target.value)}
-                    placeholder="粘贴视频文案"
-                    className="min-h-[14rem] w-full flex-1 resize-none rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm leading-6 tracking-wide outline-none focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30 xl:min-h-0"
-                  />
-                  {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                    <p className="text-xs font-medium text-[#B42318]">必填，仍未填写文案</p>
-                  ) : null}
-                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
+
+          {/* 右侧列：指标分组 + 文案 */}
+          <div className="flex min-w-0 flex-col h-full lg:pl-6">
+            <motion.div ref={metricsSectionRef} variants={itemVariants} className="shrink-0">
+              <指标分组区
+                fields={fields}
+                onFieldChange={updateField}
+                onFocusField={handleFieldFocus}
+                onBlurField={handleFieldBlur}
+                anomalyStatus={meta.anomalyStatus}
+              />
+            </motion.div>
+
+            <hr className="my-6 border-zinc-100" />
+
+            <motion.div variants={itemVariants} className="flex flex-1 flex-col min-h-0">
+              <div className="flex flex-1 flex-col space-y-2 rounded-xl border border-transparent transition-colors data-[missing=true]:border-[#FECDCA] data-[missing=true]:bg-[#FEF3F2]/60 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
+                <Label htmlFor="content" className="text-zinc-500 text-sm shrink-0">文案 <span className="text-[#B42318]">*</span></Label>
+                <textarea
+                  id="content"
+                  value={meta.content}
+                  onChange={(event) => updateMeta("content", event.target.value)}
+                  placeholder="粘贴视频文案"
+                  className="min-h-0 w-full flex-1 resize-none rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm leading-6 tracking-wide outline-none focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
+                />
+                {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
+                  <p className="text-xs font-medium text-[#B42318] shrink-0">必填，仍未填写文案</p>
+                ) : null}
+              </div>
+            </motion.div>
+          </div>
         </div>
 
         <motion.div variants={itemVariants} className="hidden">

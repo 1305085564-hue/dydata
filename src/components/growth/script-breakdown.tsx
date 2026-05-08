@@ -46,14 +46,14 @@ function EmptyReasonBlock({ data }: { data: ScriptBreakdownData }) {
   const reasonText = data.state === "fallback" ? "已拿到原始文案，但还没有结构化拆解结果。" : "当前没有上传文案，暂时无法生成真实拆解。";
 
   return (
-    <div className="rounded-[18px] border border-dashed border-zinc-200 bg-white p-4">
+    <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
         <FileSearch className="size-4 text-zinc-500" />
         为什么这里没有真实内容
       </div>
       <p className="mt-2 text-sm leading-6 text-zinc-500">{reasonText}</p>
       {data.rawText ? (
-        <div className="mt-3 rounded-[14px] border border-zinc-200 bg-zinc-50 p-3">
+        <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
           <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">当前拿到的原始文案</div>
           <p className="text-sm leading-6 text-zinc-950">{data.rawText}</p>
         </div>
@@ -64,7 +64,7 @@ function EmptyReasonBlock({ data }: { data: ScriptBreakdownData }) {
 
 function DemoReferenceBlock() {
   return (
-    <div className="rounded-[18px] border border-dashed border-zinc-200 bg-zinc-50 p-4">
+    <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
           <Lightbulb className="size-4 text-zinc-950" />
@@ -77,7 +77,7 @@ function DemoReferenceBlock() {
 
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {DEMO_SEGMENTS.map((segment) => (
-          <div key={segment.id} className="rounded-[14px] border border-zinc-200 bg-white p-3">
+          <div key={segment.id} className="rounded-xl border border-zinc-200 bg-white p-3">
             <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone])} variant="outline">
               {segment.label}
             </Badge>
@@ -107,10 +107,13 @@ export function ScriptBreakdown({
     isStructured && !expanded ? data.segments.slice(0, maxVisibleSegments) : isStructured ? data.segments : [];
 
   return (
-    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
-      <div className="space-y-4">
+    <div className="space-y-4">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Script Breakdown</p>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-zinc-200" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Script Breakdown</span>
+            <div className="h-px flex-1 bg-zinc-200" />
+          </div>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">{title}</h2>
           <p className="text-sm leading-6 text-zinc-500">先看开头、中段、结尾分别出了什么问题，再决定文案怎么改。</p>
         </div>
@@ -124,7 +127,7 @@ export function ScriptBreakdown({
                   type="button"
                   variants={itemVariants}
                   onClick={() => onSegmentSelect?.({ startSec: segment.startSec, endSec: segment.endSec })}
-                  className="rounded-[16px] border border-zinc-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-[1px] hover:shadow-md active:scale-[0.97]"
+                  className="rounded-xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-[1px] hover:shadow-md active:scale-[0.97]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone as SegmentTone])} variant="outline">
@@ -143,7 +146,7 @@ export function ScriptBreakdown({
 
             {hasMoreSegments ? (
               <div className="flex justify-center">
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-xl px-4" onClick={() => setExpanded((prev) => !prev)}>
+                <Button type="button" variant="outline" size="sm" className="h-11 rounded-lg px-4" onClick={() => setExpanded((prev) => !prev)}>
                   {expanded ? (
                     <>
                       <ChevronUp className="size-4" />
@@ -167,12 +170,11 @@ export function ScriptBreakdown({
         )}
 
         {!isStructured ? (
-          <div className="flex items-center gap-2 rounded-[14px] border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
+          <div className="flex items-center gap-2 rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
             <Sparkles className="size-3.5" />
             这里展示的是示例拆解格式，真实上传后会按同样结构输出。
           </div>
         ) : null}
       </div>
-    </div>
   );
 }
