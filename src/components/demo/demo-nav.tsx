@@ -16,11 +16,7 @@ const demoNavItems = [
     label: "成长分析",
     match: (pathname: string) => pathname === "/demo/growth",
   },
-  {
-    href: "/demo/analytics",
-    label: "爆款分析",
-    match: (pathname: string) => pathname === "/demo/analytics",
-  },
+
   {
     href: "/demo/admin/content",
     label: "内容管理",

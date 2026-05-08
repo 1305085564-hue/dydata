@@ -39,17 +39,22 @@ test("管理员保留真实 team_id 且可查看全部成员", () => {
   assert.equal(context.isDemoFallback, false);
 });
 
-test("成员只能访问 /admin/analytics，不能访问其他管理后台页面", () => {
-  assert.equal(canAccessAdminPath("/admin/analytics", "member"), true);
-  assert.equal(canAccessAdminPath("/admin/analytics/details", "member"), true);
+test("成员不能访问任何管理后台页面", () => {
+  assert.equal(canAccessAdminPath("/admin/analytics", "member"), false);
+  assert.equal(canAccessAdminPath("/admin/analytics/details", "member"), false);
   assert.equal(canAccessAdminPath("/admin", "member"), false);
   assert.equal(canAccessAdminPath("/admin/videos", "member"), false);
 });
 
 test("导航权限区分成员与管理员入口", () => {
   assert.deepEqual(getNavigationAccess("member"), {
-    showAnalytics: true,
+    showAnalytics: false,
     showAdmin: false,
+  });
+
+  assert.deepEqual(getNavigationAccess("admin"), {
+    showAnalytics: true,
+    showAdmin: true,
   });
 
   assert.deepEqual(getNavigationAccess("owner"), {

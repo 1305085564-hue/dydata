@@ -25,9 +25,9 @@ export function getNavItems(input: { showAnalytics: boolean; showAdmin: boolean 
 
   if (input.showAnalytics) {
     items.push({
-      href: "/analytics",
-      label: "爆款分析",
-      match: (pathname) => pathname === "/analytics",
+      href: "/admin/analytics",
+      label: "经营分析",
+      match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
     });
   }
 

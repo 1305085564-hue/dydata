@@ -40,7 +40,6 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isDashboardRoute = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
-  const isAnalyticsRoute = pathname === "/analytics" || pathname.startsWith("/analytics/");
   const isAuthRoute = pathname === "/login" || pathname === "/register";
 
   // AI 功能区已合并到 AI 渠道，旧链接重定向
@@ -48,7 +47,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/ai-channels", request.url));
   }
 
-  if (!user && (isDashboardRoute || isAdminRoute || isAnalyticsRoute)) {
+  if (!user && (isDashboardRoute || isAdminRoute)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -74,5 +73,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/analytics/:path*", "/analytics", "/login", "/register"],
+  matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/login", "/register"],
 };

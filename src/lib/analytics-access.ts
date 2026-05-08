@@ -62,13 +62,12 @@ export function buildAnalyticsAccessContext({ userId, role, teamId, demoTeamId }
 }
 
 export function canAccessAdminPath(pathname: string, role: UserRole) {
-  if (role === "admin" || role === "owner") return true;
-  return pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/");
+  return role === "admin" || role === "owner";
 }
 
 export function getNavigationAccess(role: UserRole): NavigationAccess {
   return {
-    showAnalytics: true,
+    showAnalytics: role === "admin" || role === "owner",
     showAdmin: role === "admin" || role === "owner",
   };
 }
