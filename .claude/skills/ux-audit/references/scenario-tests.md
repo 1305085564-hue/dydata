@@ -1,0 +1,336 @@
+# Scenario Tests
+
+Eight structured tests that go beyond page-by-page evaluation. Each simulates a real-world situation that exposes problems traditional QA misses. Run all eight during an exhaustive audit.
+
+---
+
+## 1. First Contact
+
+**Premise**: You just started this job. Nobody has shown you the app. Figure it out — then prove you understand it by writing a 2-minute plain-English guide a colleague could follow.
+
+**How to run**:
+
+1. Navigate to the app's entry point (login page or dashboard).
+2. Do NOT read any CLAUDE.md, README, or source code. No insider knowledge.
+3. Try to answer these questions purely from using the app:
+   - What is this app for?
+   - What are the main things I can do?
+   - Where do I start?
+   - How do I do the most common task?
+4. For each of the main threads, write a short plain-English guide:
+   ```
+   "To [accomplish task], go to [section], click [button], fill in [fields],
+    then click [action]. You'll see [confirmation]. The [thing] will appear
+    in [location]."
+   ```
+5. Evaluate what you just wrote.
+
+**What to report**:
+- **Time to first value**: How many clicks/pages before you accomplished something real?
+- **Self-explanatory score**: Could you figure out the app without help? (1–5 scale)
+- **Missing onboarding**: Is there a welcome screen, guided tour, or empty-state guidance? Or just a blank dashboard?
+- **Terminology barriers**: Any labels or section names you didn't understand?
+- **Dead ends**: Places where you got stuck with no indication of what to do next?
+- **Threads that were easy to explain**: These are well-designed workflows — preserve them.
+- **Threads that required caveats**: "But first you need to..." or "Make sure you don't..." signals friction.
+- **Threads you couldn't explain**: Where you had to say "then you kind of need to figure out..." — that's a comprehension failure.
+- **Jargon you had to translate**: Words in the app that you replaced with plain language in your explanation.
+- **Steps you had to invent**: Things the app doesn't guide you through.
+
+**Output**: Include the actual written explanations in the report. They double as draft user documentation — and the gaps map directly to UX improvements.
+
+**Severity guide**: If a new user can't figure out the primary task within 5 minutes of clicking around, that's **High**. If a thread can't be explained in under 5 steps without caveats, that's **Medium**. If a thread can't be explained at all, **High**.
+
+---
+
+## 2. Interrupted Workflow
+
+**Premise**: Real users don't work in uninterrupted sessions. They start something, get a phone call, close the laptop, come back hours later.
+
+**How to run**:
+1. Start a multi-step task (creating a record, filling a long form, configuring settings).
+2. Get halfway through — don't finish.
+3. Simulate interruption:
+   - Navigate away to a completely different section
+   - Close the tab and reopen the app from the URL bar
+   - Refresh the page mid-form
+   - Open a different page in the same tab, then hit back
+4. Try to resume the task.
+
+**What to report**:
+
+| Interruption | Data preserved? | Could resume? | Notes |
+|-------------|----------------|---------------|-------|
+| Navigate away mid-form | Y/N | Y/N | |
+| Close tab + reopen | Y/N | Y/N | |
+| Page refresh | Y/N | Y/N | |
+| Back button | Y/N | Y/N | |
+
+Also check:
+- **Draft/autosave**: Does the app save partial work? Is there a "drafts" or "recent" section?
+- **Return navigation**: Is there a "continue where you left off" or "recently viewed" feature?
+- **Warning on abandon**: Does it warn before losing unsaved work?
+- **Session persistence**: After reopening, are you still logged in? Does the app remember your last location?
+
+**Severity guide**: Losing form data silently is **Critical**. No way to find where you left off is **High**. No warning when abandoning work is **High**.
+
+---
+
+## 3. Wrong Turn Recovery
+
+**Premise**: Users click the wrong thing constantly. How forgiving is the app?
+
+**How to run**:
+1. For each main section, deliberately go to the wrong place:
+   - Click Policies when you meant Clients
+   - Open the wrong record from a list
+   - Start creating the wrong type of item
+   - Apply wrong filters to a list
+2. Try to recover — get back to what you actually wanted to do.
+
+**What to report**:
+
+| Wrong turn | Recovery method | Steps to recover | Context lost? |
+|-----------|----------------|-----------------|---------------|
+| Wrong nav section | back/nav click/breadcrumb | [count] | Y/N — what was lost |
+| Wrong record opened | back to list/browser back | [count] | filters lost? scroll position? |
+| Wrong form started | cancel/back/close | [count] | any data lost from previous work? |
+| Wrong filter applied | clear/reset/undo | [count] | other filters preserved? |
+
+Also evaluate:
+- **Cancel safety**: Does cancelling a form always work without side effects?
+- **Undo availability**: Can you undo any action? Which ones are irreversible?
+- **Navigation memory**: When you go back to a list, are filters/sort/scroll preserved?
+- **Confirmation dialogs**: Do destructive actions have confirmations? Are they clear about what will happen?
+
+**Severity guide**: Losing work because of a wrong turn is **Critical**. More than 3 clicks to recover from a wrong nav click is **High**. Lost filter state is **Medium**.
+
+---
+
+## 4. Returning User
+
+**Premise**: Day one is about discovery. Day two is about efficiency. The user is back — is the app faster this time? Can they see what needs attention?
+
+**How to run**:
+
+*Part A — efficiency*
+
+1. After completing the full walkthrough (you've used the app extensively), repeat the main workflow threads from the beginning.
+2. Measure the difference:
+   - Is it faster the second time?
+   - Are there shortcuts you can now use?
+   - Does the app remember your preferences?
+   - Can you skip steps that were necessary the first time?
+
+*Part B — what changed*
+
+3. Now look at the dashboard or landing page after the walkthrough has created/modified data.
+4. Try to answer: what happened since the last time I was here?
+5. Check for these signals:
+
+| Signal | Present? | Useful? |
+|--------|----------|---------|
+| Activity feed / recent activity | Y/N | Helpful / Noise / Missing |
+| Notification badges/counts | Y/N | Accurate / Stale / Missing |
+| "New since last visit" indicators | Y/N | |
+| Modified/updated timestamps | Y/N | Visible or buried? |
+| Assigned-to-me / needs-attention view | Y/N | |
+
+**What to report**:
+
+| Thread | First time (clicks) | Second time (clicks) | Improvement | Shortcuts found |
+|--------|-------------------|---------------------|-------------|-----------------|
+| [Thread 1] | [count] | [count] | faster/same/slower | [list] |
+
+Plus:
+- **Recent items**: Does the app surface recently viewed/edited items?
+- **Defaults**: Does it remember last choices (filters, sort order, selected view)?
+- **Keyboard shortcuts**: Are there any? Are they discoverable?
+- **Bulk operations**: For repeat tasks, can you do them in batch?
+- **Search**: Can you jump directly instead of navigating?
+- **Bookmarkable deep links**: Can you save links to specific records/views?
+- **Awareness score**: On a 1–5 scale, how quickly could a returning user understand what needs attention?
+- **Notification quality**: Do notifications tell you what to do, or just that something happened?
+- **Staleness risk**: Could a user miss something important because there's no alert or indicator?
+- **Team awareness**: In a multi-user app, can you see what colleagues did?
+
+**Power user friction** — things that are fine on day one but maddening on day 100:
+- Confirmation dialogs you can't skip ("Are you sure?" for routine operations)
+- Mandatory fields that are always the same value
+- No way to duplicate a record (have to re-enter everything)
+- Pagination that resets when you navigate back
+
+**Severity guide**: No improvement between first and second use is **High** — the app doesn't learn from the user. Missing search on a data-heavy app is **High**. No way to tell what changed since last visit on a team app is **High**. Dashboard showing static content instead of actionable status is **Medium**.
+
+---
+
+## 5. Keyboard Only
+
+**Premise**: Unplug the mouse. A power user, an accessibility user, or anyone on a long flight with a dead trackpad — can they still use the app?
+
+**How to run**:
+1. Do not touch the mouse/trackpad. At all. Don't use it to scroll, don't hover. Pure keyboard.
+2. Attempt each main thread end to end using only:
+   - `Tab` / `Shift+Tab` — focus navigation
+   - `Enter` / `Space` — activate
+   - Arrow keys — menus, selects, lists
+   - `Escape` — close dialogs
+   - Any documented app-specific shortcuts
+3. For each thread, note whether it can be completed and what breaks.
+
+**What to report**:
+
+| Thread | Completable? | Blockers |
+|--------|--------------|----------|
+| [Thread 1] | Y/N/Partially | [what stopped you] |
+
+Also evaluate:
+- **Focus visibility**: Is the focused element always clearly visible? Or is the focus ring invisible, or clipped, or missing entirely?
+- **Tab order**: Is it logical (top-to-bottom, left-to-right, or matches visual grouping)? Or does it jump around?
+- **Focus traps**: Do modals trap focus correctly? Does Escape close them?
+- **Skip links**: Is there a "skip to main content" for keyboard users bypassing nav?
+- **Click-only elements**: Are there buttons or controls that only respond to mouse click, not keyboard?
+- **Custom components**: Custom dropdowns, date pickers, drag-and-drop — do they have keyboard equivalents?
+- **Shortcut discovery**: Is there a `?` shortcut sheet? Or are shortcuts undocumented?
+- **Shortcut conflicts**: Do app shortcuts conflict with browser defaults (Cmd+K, Cmd+S, etc.)?
+
+**Severity guide**: Any thread that can't complete keyboard-only is **High** (higher if accessibility is a stated requirement). Missing focus indicators is **High**. Focus traps that don't release on Escape is **High**. No keyboard equivalent for a common action (drag-to-reorder, etc.) is **Medium**.
+
+---
+
+## 6. Heavy Data
+
+**Premise**: The app works fine with 5 demo records. Real users have hundreds or thousands. Does it still work?
+
+**How to run**:
+1. If you can seed the database with 500+ records, do it. If not, use the heaviest real account available.
+2. For each list/table view:
+   - Does it load in under 2 seconds?
+   - Does it virtualise or render all rows?
+   - Does scrolling stay smooth (60fps feel) or does it jank?
+   - Does the page memory balloon?
+3. Test search:
+   - Search for something that matches 1 result — found quickly?
+   - Search for something that matches 100 results — is the result set useful?
+   - Search for something that matches 0 results — is the empty state helpful?
+   - Search with typos — is there fuzzy matching or did it fail silently?
+4. Test filters:
+   - Apply a filter that matches many records — does the count update? Does the URL reflect the filter?
+   - Apply a filter that matches nothing — helpful empty state?
+   - Apply multiple filters — are they combined (AND) intuitively? Can you see which are active?
+5. Test pagination:
+   - Navigate to page 50 directly (if page-jumping is supported)
+   - Change items-per-page — does the selection persist?
+   - Deep link to page 50 — does it load directly, or redirect to page 1?
+
+**What to report**:
+
+| Area | At 500 records | At 1000+ records |
+|------|----------------|------------------|
+| List load time | [sec] | [sec] |
+| Scroll smoothness | Smooth / Janky | Smooth / Janky |
+| Search responsiveness | Instant / Slow / Broken | — |
+| Filter narrowing | Useful / Overwhelming | — |
+| Pagination | Works / Slow / Broken | — |
+
+Plus:
+- **Sort stability**: When sorting by a column, does the order survive navigation and refresh?
+- **Bulk selection**: Can you select all filtered records, or only the current page? Is that clear?
+- **Export**: Can you export the current filtered view? All records? Does it time out or fail silently?
+- **Infinite scroll**: If used, can you get back to where you were after clicking into a detail? Or does it reset?
+
+**Severity guide**: List that doesn't virtualise at 1000+ rows is **High** (performance degrades, memory issues). Search returning irrelevant top results on common terms is **High**. Pagination that resets selection/state on every page change is **Medium**. Filter UI that doesn't show which filters are active is **Medium**.
+
+---
+
+## 7. Destructive Confidence
+
+**Premise**: The high-stakes moments — delete, send, publish, pay, share. Does the app keep the user safe?
+
+**How to run**:
+1. Inventory every destructive or irreversible action in the app:
+   - Delete (record, file, comment, account)
+   - Send (email, invitation, notification)
+   - Publish / make public
+   - Pay / charge
+   - Share (external link, give access)
+   - Archive / deactivate
+   - Bulk operations on any of the above
+2. For each one:
+   - Is there a confirmation dialog? What does it say?
+   - Does the confirmation specify *what* will happen ("Delete Jenny O'Brien. 3 policies will also be removed. This cannot be undone.") or is it vague ("Are you sure?")?
+   - Is the destructive button visually distinguished (red, warning icon)?
+   - Is there an undo option after the action?
+   - If no undo, is there a time window ("Deleted. Restore within 30 days.")?
+3. For the bulk variants:
+   - Does the confirmation say how many items will be affected?
+   - Can you see which items you're about to act on?
+   - Is there a way to undo a bulk action?
+
+**Ask the user before running** this scenario — destructive testing on a real account can cause damage. Use a test account if possible.
+
+**What to report**:
+
+| Action | Confirmation quality | Destructive styling | Undo available | Severity |
+|--------|---------------------|---------------------|----------------|----------|
+| Delete client | [copy / specific? / count?] | Y/N | Y/N (time window) | |
+| Send invoice | [copy] | Y/N | Y/N | |
+| Publish page | [copy] | Y/N | Y/N | |
+| Bulk delete | [copy / count shown?] | Y/N | Y/N | |
+
+Plus:
+- **Side-effect disclosure**: Does the app warn about cascading deletes, linked records, revoked access?
+- **Fatigue risk**: If you trigger a destructive action 10 times in a row, do you stop reading the confirmation? Is the confirmation pattern the same every time, making it easy to click through mindlessly?
+- **Accidental trigger surface**: How easy is it to hit a destructive action by mistake? Is it next to a similar-looking safe action?
+
+**Severity guide**: Destructive action with no confirmation is **Critical**. Confirmation without specifics ("Are you sure?" with no context) is **High**. Destructive button styled identically to safe buttons is **High**. No undo and no time window for irreversible actions is **High**. Bulk delete without count/preview is **High**.
+
+---
+
+## 8. Second User
+
+**Premise**: Most apps have roles — admin vs viewer, staff vs client, owner vs guest. The primary user experience is tested exhaustively. What about the others?
+
+**How to run**:
+1. Identify every role/permission level the app supports.
+2. Log in as a non-primary role (viewer, client, read-only, restricted).
+3. Walk the main threads as that role.
+4. Specifically check:
+   - **Denied pages**: Are they gracefully blocked (meaningful error, redirect to a page you can access) or do you see a broken page, blank screen, or raw error?
+   - **Denied actions**: Are destructive/edit buttons hidden? Disabled with tooltip? Or visible-and-clickable but failing with a cryptic error?
+   - **Denied data**: Can you see records you shouldn't? Search results leaking internal records?
+   - **Error messages**: "You don't have permission to do that" — does it say *why* or *who to ask*?
+   - **Empty states**: Do they differ by role? A client sees "No invoices yet" but an admin sees "No invoices yet — add one"?
+
+**What to report**:
+
+| Role | Threads completable | Broken pages | Leaked data | Error message quality |
+|------|---------------------|--------------|-------------|----------------------|
+| [Viewer] | [list] | [list] | [list] | [assessment] |
+| [Client] | [list] | [list] | [list] | [assessment] |
+
+Plus:
+- **Wayfinding for restricted users**: Does the nav show items they can't access? Does it clearly mark them, hide them, or tease them?
+- **Permissions UX**: If a user has mixed permissions (can view some records but not others), does the UI communicate that cleanly?
+- **Request-access flows**: If a user hits a permission wall, is there a "request access from [owner]" option?
+- **Impersonation**: If staff can act on behalf of clients, is the switch visually obvious so they don't accidentally act as the wrong user?
+
+**Severity guide**: Broken page on permission denied (blank, raw stack trace, 500) is **Critical**. Leaked data visible to wrong role is **Critical**. Destructive button visible-and-clickable-but-failing for a restricted user is **High**. Confusing or absent error messages on denial is **High**. Nav showing items the user can't use without indication is **Medium**.
+
+---
+
+## Running the Battery
+
+Recommended order:
+
+1. **First Contact** — do this first, while you still have fresh eyes.
+2. **Thread traversal** — follow the main threads (already in the main audit flow).
+3. **Interrupted Workflow** — test mid-workflow during thread traversal.
+4. **Wrong Turn Recovery** — test after you know the right paths.
+5. **Heavy Data** — seed volume, rerun list/search/filter tests.
+6. **Returning User** — repeat threads, measure improvement, check the dashboard.
+7. **Keyboard Only** — unplug the mouse, re-walk the threads.
+8. **Destructive Confidence** — ask the user before running. Use a test account if possible.
+9. **Second User** — log out, log in as a restricted role.
+
+The First Contact output goes directly into the report and doubles as user documentation draft. The Destructive Confidence and Second User results often surface the highest-severity findings in the whole audit.

@@ -50,7 +50,10 @@ export function TeamGroupManager({
   const router = useRouter();
   const [selectedTeamId, setSelectedTeamId] = useState(teams[0]?.id ?? "");
   const teamGroups = useMemo(
-    () => groups.filter((group) => group.team_id === selectedTeamId),
+    () =>
+      groups
+        .filter((group) => group.team_id === selectedTeamId)
+        .sort((a, b) => a.name.localeCompare(b.name, "zh-CN")),
     [groups, selectedTeamId],
   );
   const [selectedGroupId, setSelectedGroupId] = useState(teamGroups[0]?.id ?? NO_GROUP);
@@ -59,11 +62,25 @@ export function TeamGroupManager({
     : teamGroups[0]?.id ?? NO_GROUP;
   const currentGroup = teamGroups.find((group) => group.id === effectiveSelectedGroupId) ?? null;
   const teamMembers = profiles.filter((profile) => profile.team_id === selectedTeamId);
-  const groupMembers = currentGroup
-    ? teamMembers.filter((profile) => profile.group_id === currentGroup.id)
-    : [];
+  const groupMembers = useMemo(() => {
+    if (!currentGroup) return [];
+    const members = teamMembers.filter((profile) => profile.group_id === currentGroup.id);
+    return members.sort((a, b) => {
+      if (a.id === currentGroup.leader_user_id) return -1;
+      if (b.id === currentGroup.leader_user_id) return 1;
+      return a.name.localeCompare(b.name, "zh-CN");
+    });
+  }, [currentGroup, teamMembers]);
   const directMembers = teamMembers.filter((profile) => profile.role === "member" && !profile.group_id);
   const assignableMembers = teamMembers.filter((profile) => profile.role === "member");
+  const unassignedMembers = useMemo(
+    () => assignableMembers.filter((m) => !m.group_id),
+    [assignableMembers],
+  );
+  const assignedMembers = useMemo(
+    () => assignableMembers.filter((m) => m.group_id),
+    [assignableMembers],
+  );
   const currentLeaderCandidates = leaderCandidates.filter((profile) => profile.team_id === selectedTeamId);
   const [newGroupName, setNewGroupName] = useState("");
   const [newLeaderId, setNewLeaderId] = useState("");
@@ -73,7 +90,9 @@ export function TeamGroupManager({
   const [isPending, startTransition] = useTransition();
 
   function changeTeam(teamId: string) {
-    const nextGroups = groups.filter((group) => group.team_id === teamId);
+    const nextGroups = groups
+      .filter((group) => group.team_id === teamId)
+      .sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
     const nextGroup = nextGroups[0] ?? null;
     setSelectedTeamId(teamId);
     setSelectedGroupId(nextGroup?.id ?? NO_GROUP);
@@ -184,6 +203,18 @@ export function TeamGroupManager({
     });
   }
 
+  function getMemberGroupLabel(member: TeamManagementProfile) {
+    if (!member.group_id) return "未分配";
+    if (member.group_id === currentGroup?.id) return "当前组";
+    const group = groups.find((g) => g.id === member.group_id);
+    return group?.name ?? "未知分组";
+  }
+
+  const selectedTeamName = teams.find((t) => t.id === selectedTeamId)?.name;
+  const selectedGroupName = teamGroups.find((g) => g.id === effectiveSelectedGroupId)?.name;
+  const newLeaderName = currentLeaderCandidates.find((c) => c.id === newLeaderId)?.name;
+  const editLeaderName = currentLeaderCandidates.find((c) => c.id === editLeaderId)?.name;
+
   if (!access.canView) return null;
 
   return (
@@ -198,7 +229,9 @@ export function TeamGroupManager({
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
             <SelectTrigger className="h-10 w-full bg-background/80 sm:w-48">
-              <SelectValue placeholder="选择团队" />
+              <SelectValue placeholder="选择团队">
+                {selectedTeamName ?? undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {teams.map((team) => (
@@ -210,7 +243,9 @@ export function TeamGroupManager({
           </Select>
           <Select value={effectiveSelectedGroupId} onValueChange={handleGroupChange}>
             <SelectTrigger className="h-10 w-full bg-background/80 sm:w-48">
-              <SelectValue placeholder="选择分组" />
+              <SelectValue placeholder="选择分组">
+                {selectedGroupName ?? (effectiveSelectedGroupId === NO_GROUP ? "暂无分组" : undefined)}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {teamGroups.length > 0 ? (
@@ -299,7 +334,9 @@ export function TeamGroupManager({
                 <Label>组长</Label>
                 <Select value={newLeaderId} onValueChange={handleNewLeaderChange}>
                   <SelectTrigger className="h-10 w-full bg-background/80">
-                    <SelectValue placeholder="选择组长" />
+                    <SelectValue placeholder="选择组长">
+                      {newLeaderName ?? undefined}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {currentLeaderCandidates.length > 0 ? (
@@ -344,7 +381,9 @@ export function TeamGroupManager({
                     <Label>更换组长</Label>
                     <Select value={editLeaderId} onValueChange={handleEditLeaderChange}>
                       <SelectTrigger className="h-10 w-full bg-background/80">
-                        <SelectValue placeholder="选择组长" />
+                        <SelectValue placeholder="选择组长">
+                          {editLeaderName ?? undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {currentLeaderCandidates.length > 0 ? (
@@ -411,24 +450,62 @@ export function TeamGroupManager({
                         分配选中
                       </Button>
                     </div>
-                    <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                      {assignableMembers.map((member) => (
-                        <label
-                          key={member.id}
-                          className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Checkbox
-                              checked={checkedMemberIds.includes(member.id)}
-                              onCheckedChange={(checked) => toggleMember(member.id, checked === true)}
-                            />
-                            {member.name}
-                          </span>
-                          <Badge variant={member.group_id === currentGroup.id ? "success" : "neutral"}>
-                            {member.group_id === currentGroup.id ? "已在本组" : member.group_id ? "其他组" : "直管"}
-                          </Badge>
-                        </label>
-                      ))}
+                    <div className="max-h-72 space-y-4 overflow-y-auto pr-1">
+                      {/* 未分配成员 */}
+                      {unassignedMembers.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium text-[var(--color-text-secondary)]">未分配</div>
+                          {unassignedMembers.map((member) => (
+                            <label
+                              key={member.id}
+                              className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={checkedMemberIds.includes(member.id)}
+                                  onCheckedChange={(checked) => toggleMember(member.id, checked === true)}
+                                />
+                                {member.name}
+                              </span>
+                              <Badge variant="neutral">未分配</Badge>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 已分配成员 */}
+                      {assignedMembers.length > 0 && (
+                        <div className="space-y-2">
+                          {unassignedMembers.length > 0 && (
+                            <div className="border-t border-slate-200/60 pt-2">
+                              <div className="text-xs font-medium text-[var(--color-text-secondary)]">已分配</div>
+                            </div>
+                          )}
+                          {assignedMembers.map((member) => (
+                            <label
+                              key={member.id}
+                              className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={checkedMemberIds.includes(member.id)}
+                                  onCheckedChange={(checked) => toggleMember(member.id, checked === true)}
+                                />
+                                {member.name}
+                              </span>
+                              <Badge
+                                variant={member.group_id === currentGroup.id ? "success" : "neutral"}
+                              >
+                                {getMemberGroupLabel(member)}
+                              </Badge>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {unassignedMembers.length === 0 && assignedMembers.length === 0 && (
+                        <p className="text-sm text-[var(--color-text-secondary)]">无可分配成员。</p>
+                      )}
                     </div>
                   </div>
                 ) : null}

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart2, Sparkles, Target, TrendingUp } from "lucide-react";
+import { Sparkles, Target, TrendingUp } from "lucide-react";
 import { 六维雷达面板 } from "@/components/growth/六维雷达面板";
 import { DiagnosisCard } from "@/components/growth/diagnosis-card";
 import { StatusCardGrid } from "@/components/growth/status-card-grid";
@@ -8,7 +8,7 @@ import { ScriptBreakdown } from "@/components/growth/script-breakdown";
 import { GrowthActionPlanPanel } from "@/components/growth/growth-action-plan-panel";
 import { GrowthPkPanel } from "@/components/growth/growth-pk-panel";
 import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
-import { EmptyState } from "@/components/ui/empty-state";
+
 import type { AdviceSections, GrowthDimensionCard, GrowthPkRow, ScriptBreakdownData, StatusCardItem, WeakBenchmarkCard } from "@/lib/growth-page";
 import type { MetricsReport } from "@/lib/metrics";
 
@@ -52,8 +52,6 @@ export function GrowthClientShell({
   teamMembers = [],
   summary,
 }: GrowthClientShellProps) {
-  const hasEnoughData = summary.hasEnoughData;
-
   return (
     <AppShell width="wide" className="pb-12">
       <AppShellHero
@@ -63,7 +61,7 @@ export function GrowthClientShell({
         meta={
           <div className="glass-chip glass-panel text-xs sm:text-sm text-primary">
             <Sparkles className="size-3.5" />
-            {hasEnoughData ? "已满足最小样本要求" : `再提交 ${3 - reportCount} 天即可解锁完整分析`}
+            {reportCount >= 3 ? "已满足最小样本要求" : reportCount > 0 ? "虚拟数据预览中，再提交真实数据替换" : "虚拟数据预览中，提交数据后替换"}
           </div>
         }
       >
@@ -85,8 +83,8 @@ export function GrowthClientShell({
             {
               label: "近 30 天样本",
               value: `${reportCount} 条`,
-              hint: hasEnoughData ? "可生成完整分析" : "样本还在累积",
-              tone: hasEnoughData ? "success" : "warning",
+              hint: reportCount >= 3 ? "可生成完整分析" : "含虚拟数据预览",
+              tone: reportCount >= 3 ? "success" : "warning",
             },
             {
               label: "当前最弱项",
@@ -98,17 +96,7 @@ export function GrowthClientShell({
         />
       </AppShellHero>
 
-      {!hasEnoughData ? (
-        <AppShellSection eyebrow="Activation" title="先完成连续提交" description="成长分析需要连续样本，样本够了再看诊断会更准。">
-          <EmptyState
-            icon={BarChart2}
-            title="连续提交 3 天后解锁分析"
-            description={`当前已有 ${reportCount} 条数据，再提交 ${3 - reportCount} 天即可解锁成长分析`}
-            className="py-16"
-          />
-        </AppShellSection>
-      ) : (
-        <div className="space-y-8">
+      <div className="space-y-8">
           <AppShellSection
             eyebrow="Performance Snapshot"
             title="先看结果变化"
@@ -147,7 +135,6 @@ export function GrowthClientShell({
             </AppShellSection>
           </div>
         </div>
-      )}
     </AppShell>
   );
 }
