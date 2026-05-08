@@ -25,8 +25,6 @@ const loadModulesPanel = () =>
   import("./modules/modules-modal-panel").then((module) => module.ModulesModalPanel);
 const loadAiChannelsPanel = () =>
   import("./ai-channels/ai-channels-client").then((module) => module.default);
-const loadAiFeaturesPanel = () =>
-  import("./ai-features/ai-features-client").then((module) => module.default);
 const loadAiRewritePanel = () =>
   import("./ai-rewrite/ai-rewrite-client").then((module) => module.default);
 
@@ -42,10 +40,6 @@ const AiChannelsPanel = dynamic(loadAiChannelsPanel, {
   ssr: false,
   loading: () => <PanelSkeleton />,
 });
-const AiFeaturesPanel = dynamic(loadAiFeaturesPanel, {
-  ssr: false,
-  loading: () => <PanelSkeleton />,
-});
 const AiRewritePanel = dynamic(loadAiRewritePanel, {
   ssr: false,
   loading: () => <PanelSkeleton />,
@@ -55,7 +49,6 @@ const panelPreloaders: Record<Exclude<AdminPanelKey, "overview">, () => Promise<
   analytics: loadAnalyticsPanel,
   modules: loadModulesPanel,
   "ai-channels": loadAiChannelsPanel,
-  "ai-features": loadAiFeaturesPanel,
   "ai-rewrite": loadAiRewritePanel,
 };
 
@@ -194,7 +187,6 @@ export function AdminPanelLauncher({
                   {activePanel === "analytics" ? <AnalyticsPanel initialPreset="30d" /> : null}
                   {activePanel === "modules" ? <ModulesPanel initialDate={initialDate} /> : null}
                   {activePanel === "ai-channels" ? <AiChannelsPanel /> : null}
-                  {activePanel === "ai-features" ? <AiFeaturesPanel /> : null}
                   {activePanel === "ai-rewrite" ? <AiRewritePanel /> : null}
                 </div>
               </div>

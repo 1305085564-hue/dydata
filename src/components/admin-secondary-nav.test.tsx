@@ -7,7 +7,7 @@ import { AdminSecondaryNav, getAdminSecondaryNavItems } from "./admin-secondary-
 test("后台二级导航为管理员输出完整入口", () => {
   assert.deepEqual(
     getAdminSecondaryNavItems({ canManageAdmin: true }).map((item) => item.label),
-    ["中控总览", "经营分析", "AI 渠道", "AI 功能区", "文案改写配置", "功能模块"],
+    ["中控总览", "经营分析", "AI 功能区", "文案改写配置", "功能模块"],
   );
 });
 
@@ -20,11 +20,11 @@ test("后台二级导航对 member 只保留经营分析", () => {
 
 test("后台二级导航会标记当前激活入口并渲染说明", () => {
   const html = renderToStaticMarkup(
-    <AdminSecondaryNav pathname="/admin/ai-features" canManageAdmin />,
+    <AdminSecondaryNav pathname="/admin/ai-channels" canManageAdmin />,
   );
 
   assert.match(html, /后台二级导航/);
   assert.match(html, /AI 功能区/);
-  assert.match(html, /统一配置 AI 功能开关与可用范围/);
+  assert.match(html, /管理模型渠道、优先级切换、功能开关与提示词配置/);
   assert.match(html, /aria-current="page"/);
 });

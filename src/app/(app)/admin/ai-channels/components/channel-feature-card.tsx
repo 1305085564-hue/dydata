@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AiChannelRow, AiFeatureCardItem } from "./types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -110,6 +111,16 @@ export function ChannelFeatureCard({
                 </motion.span>
               )}
             </AnimatePresence>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[var(--color-text-secondary)] hidden sm:inline">启用</span>
+            <Switch
+              checked={feature.is_enabled}
+              onClick={(e) => e.stopPropagation()}
+              onCheckedChange={(checked) => onPatch({ is_enabled: checked })}
+              aria-label={`${feature.metadata.title} 启用开关`}
+            />
           </div>
 
           <Button

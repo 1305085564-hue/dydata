@@ -6,7 +6,6 @@ import {
   Gauge,
   Settings2,
   Sparkles,
-  Waypoints,
 } from "lucide-react";
 
 import type { UserRole } from "@/types";
@@ -16,7 +15,6 @@ export type AdminPanelKey =
   | "overview"
   | "analytics"
   | "ai-channels"
-  | "ai-features"
   | "ai-rewrite"
   | "modules";
 
@@ -56,21 +54,11 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
   {
     href: "/admin/ai-channels",
     panel: "ai-channels",
-    label: "AI 渠道",
-    description: "管理模型渠道、优先级切换与渠道健康状态。",
-    icon: Waypoints,
-    tone: "warning",
-    match: (pathname) => pathname === "/admin/ai-channels" || pathname.startsWith("/admin/ai-channels/"),
-    requiresOwner: true,
-  },
-  {
-    href: "/admin/ai-features",
-    panel: "ai-features",
     label: "AI 功能区",
-    description: "统一配置 AI 功能开关、模型、渠道和提示词。",
+    description: "管理模型渠道、优先级切换、功能开关与提示词配置。",
     icon: Sparkles,
-    tone: "neutral",
-    match: (pathname) => pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/"),
+    tone: "warning",
+    match: (pathname) => pathname === "/admin/ai-channels" || pathname.startsWith("/admin/ai-channels/") || pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/"),
     requiresOwner: true,
   },
   {

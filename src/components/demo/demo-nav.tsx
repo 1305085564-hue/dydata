@@ -37,8 +37,7 @@ const demoNavItems = [
     match: (pathname: string) =>
       pathname === "/demo/admin" ||
       pathname.startsWith("/demo/admin/analytics") ||
-      pathname.startsWith("/demo/admin/ai-channels") ||
-      pathname.startsWith("/demo/admin/ai-features"),
+      pathname.startsWith("/demo/admin/ai-channels"),
   },
 ];
 

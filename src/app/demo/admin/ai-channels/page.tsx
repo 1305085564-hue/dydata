@@ -11,8 +11,8 @@ export default function DemoAIChannelsPage() {
   return (
     <AppShell width="wide" className="pb-8">
       <AppShellHero
-        eyebrow="Demo AI Channel Console"
-        title="AI 渠道管理"
+        eyebrow="Demo AI Feature Console"
+        title="AI 功能区"
         description="渠道优先级、熔断状态和健康信息全部可见，但新增、恢复、测试操作一律锁定。"
         meta={<DemoModeChip />}
       >
@@ -20,8 +20,8 @@ export default function DemoAIChannelsPage() {
       </AppShellHero>
 
       <AppShellSection
-        eyebrow="Channel Settings"
-        title="渠道配置面板"
+        eyebrow="Feature Settings"
+        title="功能配置面板"
         description="保持正式站的表格和状态信息密度，让外部访客可以直接评价后台配置区。"
       >
         <div className="overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[var(--shadow-card)]">

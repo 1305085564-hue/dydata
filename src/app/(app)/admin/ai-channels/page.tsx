@@ -26,9 +26,9 @@ export default async function AIChannelsPage() {
   return (
     <AppShell width="wide" className="pb-8">
       <AppShellHero
-        eyebrow="AI Channel Console"
-        title="AI 渠道管理"
-        description="维护渠道优先级、健康状态和熔断恢复，保证 AI 调用稳定。"
+        eyebrow="AI Feature Console"
+        title="AI 功能区"
+        description="统一管理 AI 渠道、功能开关、模型绑定和提示词配置。"
       >
         <AdminSecondaryNav pathname="/admin/ai-channels" canManageAdmin panelBasePath="/admin" userRole="owner" />
       </AppShellHero>
