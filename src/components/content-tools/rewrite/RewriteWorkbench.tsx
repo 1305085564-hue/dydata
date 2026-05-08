@@ -82,7 +82,7 @@ export function RewriteWorkbench() {
   return (
     <div className="flex h-full w-full overflow-hidden bg-[#F9F9FB]">
       {/* 左侧窄边栏 — 历史记录 */}
-      <aside className="hidden lg:flex w-[180px] shrink-0 flex-col border-r border-zinc-200 bg-white">
+      <aside className="hidden lg:flex w-[200px] shrink-0 flex-col border-r border-zinc-200 bg-white">
         <RewriteHistory
           conversations={state.conversations}
           currentConversationId={state.currentConversationId}

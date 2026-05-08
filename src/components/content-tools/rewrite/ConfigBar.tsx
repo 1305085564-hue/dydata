@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, SlidersHorizontal, Check, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BootstrapPayload } from '../types';
@@ -37,13 +37,25 @@ export function ConfigBar({
   onLengthChange,
 }: ConfigBarProps) {
   const [expanded, setExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const modelLabel = bootstrap.modelViews.find((m) => m.id === selectedModelViewId)?.label ?? '默认模型';
   const modeLabel = bootstrap.modes.find((m) => m.id === selectedModeId)?.name ?? '无附加模式';
   const lengthLabel = bootstrap.lengthPresets.find((l) => l.id === selectedLengthId)?.name ?? '默认字数';
 
+  useEffect(() => {
+    if (!expanded) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setExpanded(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [expanded]);
+
   return (
-    <div className="shrink-0 border-b border-zinc-200 bg-white">
+    <div ref={containerRef} className="relative shrink-0 border-b border-zinc-200 bg-white">
       {/* 摘要条 — 始终显示 */}
       <div className="flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2">
@@ -79,12 +91,12 @@ export function ConfigBar({
         </button>
       </div>
 
-      {/* 展开的配置面板 */}
+      {/* 弹出配置面板 — 右上角浮层 */}
       {expanded && (
-        <div className="border-t border-zinc-100 px-4 py-4">
-          <div className="mx-auto max-w-2xl space-y-4">
+        <div className="absolute right-3 top-full z-50 mt-1 w-[440px] rounded-2xl border border-zinc-200 bg-white p-5 shadow-lg">
+          <div className="space-y-5">
             {/* 固定套餐 */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">改写套餐</p>
               <div className="grid grid-cols-2 gap-2">
                 {bootstrap.fixedModes.map((fixedMode) => {
