@@ -36,15 +36,15 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
   const debug = data.debug;
 
   return (
-    <div className="my-4 border border-[#B42318]/20 bg-[#FEF3F2] text-zinc-950 rounded-xl overflow-hidden text-sm relative shadow-sm animate-in slide-in-from-bottom-2 duration-300">
+    <div className="my-2 border border-red-200 bg-red-50 text-zinc-950 rounded-2xl overflow-hidden text-sm relative animate-in slide-in-from-bottom-2 duration-300">
 
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-[#B42318]/10 bg-[#FEF3F2] px-4 py-3">
-         <div className="flex items-center gap-2 text-[#B42318] font-semibold text-sm">
+      <div className="flex items-center justify-between border-b border-red-100 bg-red-50 px-4 py-3">
+         <div className="flex items-center gap-2 text-red-700 font-semibold text-sm">
             <AlertTriangle className="h-4 w-4" />
-            <span>执行确认</span>
+            <span>操作确认</span>
          </div>
-         <div className="text-xs text-zinc-500 bg-white px-2 py-1 rounded-md">
+         <div className="text-xs text-zinc-500 bg-white px-2 py-1 rounded-lg border border-zinc-200">
             {data.toolName}
          </div>
       </div>
@@ -56,7 +56,7 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
             {data.confirmationMessage || `系统将执行: ${data.toolName}`}
           </p>
           {data.confirmationReason && (
-            <p className="text-sm text-[#B42318]/80 border-l-2 border-[#B42318]/30 pl-3 py-1 bg-[#FEF3F2] rounded-r-md">
+            <p className="text-sm text-red-700/80 border-l-2 border-red-300 pl-3 py-1 bg-red-50 rounded-r-md">
               {data.confirmationReason}
             </p>
           )}
@@ -64,7 +64,7 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
 
         {/* Payload / Details */}
         {data.details && (
-          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm">
+          <div className="bg-white border border-zinc-200 rounded-xl p-4">
              <AssistantDetailSections details={data.details} />
           </div>
         )}
@@ -72,7 +72,7 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
         {/* Debug (Owner only) */}
         {actorRole === "owner" && debug && (
           <Collapsible className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-            <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50 transition-colors">
+            <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50 transition-colors cursor-pointer">
               <Terminal className="h-4 w-4" />
               调试信息
             </CollapsibleTrigger>
@@ -112,7 +112,7 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
              size="sm"
              onClick={onCancel}
              disabled={submitting}
-             className="text-muted-foreground h-9"
+             className="h-9 border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950"
            >
              <XCircle className="h-4 w-4 mr-2" />
              取消
@@ -122,7 +122,7 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
              size="sm"
              onClick={onConfirm}
              disabled={submitting}
-             className="h-9 bg-zinc-950 text-white hover:bg-zinc-800 shadow-sm"
+             className="h-9 bg-zinc-950 text-white hover:bg-zinc-800"
            >
              {submitting ? (
                <span className="flex items-center gap-2">

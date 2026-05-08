@@ -20,14 +20,5 @@ export default async function AIAssistantPage() {
     redirect("/dashboard");
   }
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">AI Assistant</p>
-        <h1 className="text-2xl font-black tracking-tight text-zinc-950">后台 AI 助手</h1>
-        <p className="mt-1 text-sm text-zinc-500">集中处理问答、操作确认和历史记录</p>
-      </div>
-      <AIAssistantClient actorRole={profile.role} />
-    </div>
-  );
+  return <AIAssistantClient actorRole={profile.role} />;
 }

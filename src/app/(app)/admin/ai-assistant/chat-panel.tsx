@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, Terminal, TerminalSquare, RefreshCw, Send, ChevronRight, Zap } from "lucide-react";
+import { Loader2, Sparkles, RefreshCw, ArrowUp, PanelLeft, Bot, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
 import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
@@ -45,13 +45,15 @@ type ChatPanelProps = {
   actorRole: "admin" | "owner";
   onHistoryRefresh: () => void;
   onOpenHistory: () => void;
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 };
 
-const EXAMPLES = [
-  "/query 最近三天未填报人员",
-  "/modify 将张三权限修改为管理员",
-  "/retry 重跑昨天李四的次日复盘任务",
-  "/diagnose 为什么王五没有内容管理权限",
+const SHORTCUTS = [
+  { label: "查询未填报人员", text: "查询最近三天未填报人员" },
+  { label: "修改成员权限", text: "将张三权限修改为管理员" },
+  { label: "诊断权限异常", text: "为什么王五没有内容管理权限" },
+  { label: "重跑复盘任务", text: "重跑昨天李四的次日复盘任务" },
 ];
 
 function createId() {
@@ -102,13 +104,55 @@ function buildConfirmResultMessage(options: {
 
 function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-sm max-w-none text-zinc-950 prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-sm prose-pre:bg-zinc-50 prose-pre:border prose-pre:border-zinc-200 prose-pre:p-3 prose-code:rounded-sm prose-code:bg-zinc-100 prose-code:text-zinc-950 prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-zinc-200 prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-td:border prose-td:border-zinc-200 prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-zinc-500 prose-strong:text-zinc-950">
+    <div className="prose prose-sm max-w-none text-zinc-950 prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-xl prose-pre:bg-zinc-50 prose-pre:border prose-pre:border-zinc-200 prose-pre:p-3 prose-code:rounded-md prose-code:bg-zinc-100 prose-code:text-zinc-950 prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-zinc-200 prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-td:border prose-td:border-zinc-200 prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-zinc-500 prose-strong:text-zinc-950">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );
 }
 
-export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }: ChatPanelProps) {
+function AiAvatar() {
+  return (
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-zinc-950">
+      <Sparkles className="h-3.5 w-3.5 text-white" />
+    </div>
+  );
+}
+
+function StatusBadge({ type }: { type: Message["type"] }) {
+  if (type === "result") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-700">
+        <CheckCircle2 className="h-3 w-3" />
+        执行成功
+      </span>
+    );
+  }
+  if (type === "error") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-red-700">
+        <XCircle className="h-3 w-3" />
+        执行异常
+      </span>
+    );
+  }
+  if (type === "confirmation") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-amber-700">
+        <AlertTriangle className="h-3 w-3" />
+        待确认
+      </span>
+    );
+  }
+  return null;
+}
+
+export default function ChatPanel({
+  actorRole,
+  onHistoryRefresh,
+  onOpenHistory,
+  sidebarCollapsed,
+  onToggleSidebar,
+}: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -124,9 +168,8 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-
-    textarea.style.height = "24px";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 56), 200)}px`;
   }, [input]);
 
   const hasMessages = messages.length > 0;
@@ -181,7 +224,7 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
     } catch (error) {
       const rawMessage = error instanceof Error ? error.message : "Request failed";
       const message = getAiAssistantErrorMessage(rawMessage);
-      appendErrorMessage(`ERR: ${message}`, text);
+      appendErrorMessage(message, text);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -223,158 +266,197 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
         }),
       ]);
       onHistoryRefresh();
-      if (confirmed) toast.success("Execution completed");
+      if (confirmed) toast.success("执行完成");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Confirmation failed";
-      appendErrorMessage(`EXEC_ERR: ${errorMessage}`);
-      toast.error(confirmed ? "Execution failed" : "Abort failed");
+      appendErrorMessage(errorMessage);
+      toast.error(confirmed ? "执行失败" : "取消失败");
     } finally {
       setConfirmingActionId(null);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       sendMessage(input);
     }
   };
 
   return (
-    <div className="flex h-full flex-col  text-sm">
-      <div className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar">
+    <div className="flex h-full flex-col">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {!hasMessages ? (
-          <div className="flex flex-col h-full justify-center max-w-2xl mx-auto opacity-80 animate-in fade-in duration-700">
-             <div className="mb-8 border-l-2 border-zinc-950 pl-4 py-1">
-               <h2 className="text-xl font-bold text-foreground tracking-wide uppercase mb-2">AI 分析工作台</h2>
-               <p className="text-muted-foreground text-sm">
-                 已连接系统数据库，随时可以进行查询、配置修改和异常诊断。
-               </p>
-             </div>
-             
-             <div className="space-y-3">
-               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-widest border-b border-border pb-2 mb-4">建议指令</div>
-               {EXAMPLES.map((ex, i) => (
-                 <div 
-                   key={ex} 
-                   className="group flex items-center gap-3 cursor-pointer p-2 hover:bg-zinc-50 rounded-sm transition-colors animate-in slide-in-from-bottom-2"
-                   style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
-                   onClick={() => sendMessage(ex)}
-                 >
-                   <ChevronRight className="h-4 w-4 text-zinc-500 group-hover:text-zinc-950" />
-                   <span className="text-foreground group-hover:text-foreground">{ex}</span>
-                 </div>
-               ))}
-             </div>
+          /* Empty State */
+          <div className="flex h-full flex-col items-center justify-center px-4">
+            <div className="flex max-w-md flex-col items-center text-center">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
+                <Bot className="h-5 w-5 text-zinc-300" />
+              </div>
+              <h3 className="text-lg font-black tracking-tight text-zinc-900">
+                AI 管理助手
+              </h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-zinc-500">
+                已连接系统数据库，随时可以进行查询、配置修改和异常诊断。支持自然语言指令，需要敏感操作时会请求确认。
+              </p>
+
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {SHORTCUTS.map((shortcut) => (
+                  <button
+                    key={shortcut.label}
+                    type="button"
+                    onClick={() => sendMessage(shortcut.text)}
+                    className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-600 transition hover:border-zinc-900 hover:text-zinc-900"
+                  >
+                    {shortcut.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="space-y-6 max-w-4xl mx-auto w-full pb-4">
-            {messageList.map((msg, index) => {
+          <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 pb-4">
+            {messageList.map((msg) => {
               const isUser = msg.role === "user";
               const isConfirming = confirmingActionId === msg.actionId;
 
-              return (
-                <div 
-                  key={msg.id} 
-                  className={cn(
-                    "flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300",
-                    isUser ? "items-start" : "items-start"
-                  )}
-                >
-                  {isUser ? (
-                    <div className="flex items-start gap-2 w-full">
-                       <span className="text-zinc-950 mt-1 flex-shrink-0">{`> [USER]`}</span>
-                       <div className="text-foreground mt-1 whitespace-pre-wrap">{msg.content}</div>
+              if (isUser) {
+                return (
+                  <div key={msg.id} className="flex justify-end animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-zinc-950 px-5 py-3.5 text-[15px] leading-relaxed text-white shadow-sm">
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
                     </div>
-                  ) : (
-                    <div className="flex flex-col w-full pl-6 border-l border-border/80 mt-2 py-1">
-                       <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground mb-2 uppercase">
-                          <TerminalSquare className="h-3.5 w-3.5" />
-                          <span>系统回复</span>
-                          {msg.type === "result" && <span className="text-zinc-950 border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 rounded-sm">执行结果</span>}
-                          {msg.type === "error" && <span className="text-destructive border border-red-900/50 bg-red-950/30 px-1.5 py-0.5 rounded-sm">执行异常</span>}
-                       </div>
-                       
-                       <div className="text-foreground">
-                         {msg.content && <MarkdownContent content={msg.content} />}
-                         {msg.details && <div className="mt-3 bg-zinc-50 border border-zinc-200 rounded-sm p-3"><AssistantDetailSections details={msg.details} /></div>}
-                       </div>
-                       
-                       {msg.retryable && (
-                         <div className="mt-4">
-                            <button 
-                              onClick={() => handleRetry(msg.requestText)} 
-                              disabled={loading}
-                              className="text-xs flex items-center gap-1.5 text-muted-foreground hover:text-foreground border border-border hover:border-border px-3 py-1.5 rounded-sm transition-colors"
-                            >
-                              <RefreshCw className="h-3 w-3" />
-                              重试请求
-                            </button>
-                         </div>
-                       )}
+                  </div>
+                );
+              }
 
-                       {msg.type === "confirmation" && msg.toolCall && (
-                         <div className="mt-2">
-                           <ConfirmCard
-                             actorRole={actorRole}
-                             data={msg.toolCall}
-                             submitting={isConfirming}
-                             onConfirm={() => handleConfirm(msg, true)}
-                             onCancel={() => handleConfirm(msg, false)}
-                           />
-                         </div>
-                       )}
+              /* AI message */
+              return (
+                <div key={msg.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <AiAvatar />
+                  <div className="min-w-0 flex-1 space-y-3">
+                    {/* Meta */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-bold text-zinc-900">AI 助手</span>
+                      <StatusBadge type={msg.type} />
                     </div>
-                  )}
+
+                    {/* Content */}
+                    <div className="text-[15px] leading-relaxed text-zinc-700">
+                      {msg.content && <MarkdownContent content={msg.content} />}
+                    </div>
+
+                    {/* Details */}
+                    {msg.details && (
+                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                        <AssistantDetailSections details={msg.details} />
+                      </div>
+                    )}
+
+                    {/* Retry */}
+                    {msg.retryable && (
+                      <div>
+                        <button
+                          onClick={() => handleRetry(msg.requestText)}
+                          disabled={loading}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-500 transition hover:border-zinc-900 hover:text-zinc-900 disabled:opacity-50"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          重试
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Confirmation Card */}
+                    {msg.type === "confirmation" && msg.toolCall && (
+                      <ConfirmCard
+                        actorRole={actorRole}
+                        data={msg.toolCall}
+                        submitting={isConfirming}
+                        onConfirm={() => handleConfirm(msg, true)}
+                        onCancel={() => handleConfirm(msg, false)}
+                      />
+                    )}
+                  </div>
                 </div>
               );
             })}
-            
+
+            {/* Loading */}
             {loading && (
-              <div className="flex flex-col w-full pl-6 border-l border-border/80 py-2 animate-pulse">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                  <Zap className="h-3.5 w-3.5 text-zinc-950" />
-                  <span>处理请求中</span>
-                </div>
-                <div className="flex items-center gap-2 mt-2 text-muted-foreground text-sm">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span className="typewriter-effect">分析意图并调用所需模块...</span>
+              <div className="flex gap-3">
+                <AiAvatar />
+                <div className="flex items-center gap-2 py-3">
+                  <div className="flex space-x-1.5">
+                    <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.3s]" />
+                    <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.15s]" />
+                    <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce" />
+                  </div>
+                  <span className="text-[13px] text-zinc-400">处理中...</span>
                 </div>
               </div>
             )}
-            
+
             <div ref={bottomRef} className="h-4" />
           </div>
         )}
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-background border-t border-border">
-        <div className="max-w-4xl mx-auto relative flex items-end gap-2 bg-background border border-zinc-200 rounded-sm focus-within:border-zinc-950/20 focus-within:ring-1 focus-within:ring-zinc-950/10 transition-all">
-          <div className="absolute left-3 bottom-2.5 text-zinc-950 font-bold">
-            {`>`}
-          </div>
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="输入指令或自然语言查询（例如：查询最近三天未填报人员）..."
-            className="flex-1 max-h-32 min-h-[44px] w-full resize-none bg-transparent py-3 pl-8 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none custom-scrollbar"
-            rows={1}
-            disabled={loading}
-          />
-          <button
-            onClick={() => sendMessage(input)}
-            disabled={!canSend}
-            className="mb-2 mr-2 p-2 rounded-xl bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:hover:bg-zinc-950 transition-all hover:-translate-y-[1px] hover:shadow-lg"
+      <div className="shrink-0 border-t border-zinc-200 bg-white px-4 py-3">
+        <div className="mx-auto max-w-3xl">
+          <div
+            className={cn(
+              "relative flex items-end gap-2 rounded-2xl border bg-[#F9F9FB] p-2 transition",
+              "focus-within:border-zinc-900 focus-within:bg-white focus-within:shadow-md"
+            )}
           >
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="max-w-4xl mx-auto mt-2 text-[10px] text-muted-foreground flex justify-between uppercase tracking-widest">
-           <span>Enter 发送，Shift+Enter 换行</span>
-           <span>连接状态: 正常</span>
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="输入指令或自然语言查询..."
+              rows={1}
+              disabled={loading}
+              className={cn(
+                "max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 py-2.5 text-[15px] leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400",
+                loading && "cursor-not-allowed opacity-60"
+              )}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!canSend}
+              className={cn(
+                "mb-1 mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition",
+                !canSend
+                  ? "bg-zinc-200 text-zinc-400"
+                  : "bg-zinc-950 text-white hover:-translate-y-[1px] hover:shadow-lg active:translate-y-0"
+              )}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowUp className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between px-1">
+            <span className="text-[11px] text-zinc-400">
+              Enter 发送 · Shift+Enter 换行
+            </span>
+            <div className="flex items-center gap-3">
+              {/* Mobile history trigger */}
+              <button
+                onClick={onOpenHistory}
+                className="lg:hidden text-[11px] text-zinc-400 hover:text-zinc-600 transition-colors"
+              >
+                查看历史
+              </button>
+              <span className="text-[11px] text-zinc-400">{input.length} 字</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
