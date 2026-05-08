@@ -4,7 +4,7 @@ export type NavItem = {
   match: (pathname: string) => boolean;
 };
 
-export function getNavItems(input: { showAnalytics: boolean; showAdmin: boolean }): NavItem[] {
+export function getNavItems(input: { showAdmin: boolean }): NavItem[] {
   const items: NavItem[] = [
     {
       href: "/dashboard",
@@ -23,27 +23,12 @@ export function getNavItems(input: { showAnalytics: boolean; showAdmin: boolean 
     },
   ];
 
-  if (input.showAnalytics) {
-    items.push({
-      href: "/admin/analytics",
-      label: "经营分析",
-      match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
-    });
-  }
-
   if (input.showAdmin) {
-    items.push(
-      {
-        href: "/admin/content",
-        label: "内容管理",
-        match: (pathname) => pathname.startsWith("/admin/content"),
-      },
-      {
-        href: "/admin",
-        label: "后台管理",
-        match: (pathname) => pathname === "/admin",
-      }
-    );
+    items.push({
+      href: "/admin",
+      label: "后台管理",
+      match: (pathname) => pathname === "/admin" || pathname.startsWith("/admin/"),
+    });
   }
 
   return items;

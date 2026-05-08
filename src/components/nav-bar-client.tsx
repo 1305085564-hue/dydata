@@ -26,7 +26,6 @@ interface NavBarClientProps {
   name: string;
   role: string;
   showAdmin: boolean;
-  showAnalytics: boolean;
   accounts?: Account[];
 }
 
@@ -36,10 +35,10 @@ function roleLabel(role: string) {
   return "MEMBER";
 }
 
-export function NavBarClient({ name, role, showAdmin, showAnalytics, accounts = [] }: NavBarClientProps) {
+export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarClientProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const navItems = useMemo(() => getNavItems({ showAnalytics, showAdmin }), [showAdmin, showAnalytics]);
+  const navItems = useMemo(() => getNavItems({ showAdmin }), [showAdmin]);
   const initial = name?.trim()?.slice(0, 1)?.toUpperCase() || "?";
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 

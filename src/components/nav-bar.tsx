@@ -44,7 +44,6 @@ export async function NavBar() {
       name={profile?.name ?? user.email ?? ""}
       role={role}
       showAdmin={navigation.showAdmin}
-      showAnalytics={navigation.showAnalytics}
       accounts={displayAccounts}
     />
   );
