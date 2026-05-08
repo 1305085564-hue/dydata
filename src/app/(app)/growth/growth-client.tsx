@@ -59,7 +59,7 @@ export function GrowthClientShell({
         title="成长分析总览"
         description="先看能力分布和诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。"
         meta={
-          <div className="glass-chip glass-panel text-xs sm:text-sm text-primary">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs sm:text-sm text-zinc-950">
             <Sparkles className="size-3.5" />
             {reportCount >= 3 ? "已满足最小样本要求" : reportCount > 0 ? "虚拟数据预览中，再提交真实数据替换" : "虚拟数据预览中，提交数据后替换"}
           </div>
@@ -101,7 +101,7 @@ export function GrowthClientShell({
             eyebrow="Performance Snapshot"
             title="先看结果变化"
             description="这组数字先回答最近 7 天是变好还是变差。"
-            meta={<div className="glass-chip glass-panel"><TrendingUp className="size-3.5" /> 最近 7 天 vs 上一个 7 天</div>}
+            meta={<div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500"><TrendingUp className="size-3.5" /> 最近 7 天 vs 上一个 7 天</div>}
           >
             <StatusCardGrid items={statusCards} />
           </AppShellSection>
@@ -110,7 +110,7 @@ export function GrowthClientShell({
             eyebrow="Capability Map"
             title="再看能力分布"
             description="六维能力和弱项对标放在一起，看清差距来自哪里。"
-            meta={<div className="glass-chip glass-panel"><Target className="size-3.5 text-warning" /> 当前最弱项：{summary.weakestDimension ?? "待积累"}</div>}
+            meta={<div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500"><Target className="size-3.5 text-[#EAB308]" /> 当前最弱项：{summary.weakestDimension ?? "待积累"}</div>}
           >
             <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
           </AppShellSection>

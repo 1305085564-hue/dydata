@@ -85,7 +85,7 @@ function 骨架卡片() {
       {[0, 1, 2].map((item) => (
         <Card
           key={item}
-          className="overflow-hidden rounded-xl border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] shadow-[0_18px_48px_-32px_rgba(15,23,42,0.28)]"
+          className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
         >
           <CardHeader className="space-y-3 border-b border-border/70 pb-4">
             <div className="h-4 w-24 animate-pulse rounded bg-muted" />
@@ -193,7 +193,7 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
             return (
               <Card
                 key={section.key}
-                className="overflow-hidden rounded-xl border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] shadow-[0_18px_48px_-32px_rgba(15,23,42,0.28)]"
+                className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
               >
                 <CardHeader className="border-b border-border/70 pb-4">
                   <CardTitle className="text-[15px] font-semibold text-foreground sm:text-base">

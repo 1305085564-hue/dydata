@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MotionCard } from "@/components/ui/motion-card";
+
 
 type InsightResult = {
   diagnosis: string;
@@ -51,7 +51,7 @@ const SECTIONS: SectionDef[] = [
   {
     key: "cause",
     title: "归因",
-    tone: "border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary)]/10",
+    tone: "border-zinc-200 bg-zinc-50",
   },
   {
     key: "rewrite",
@@ -92,13 +92,13 @@ export function GrowthInsightPanel() {
   }, []);
 
   return (
-    <MotionCard className="border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="space-y-4 p-5 sm:p-6">
+    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+      <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">AI Review</p>
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">昨日复盘洞察</h2>
-            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">AI Review</p>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">昨日复盘洞察</h2>
+            <p className="text-sm leading-6 text-zinc-500">
               {state.status === "ok" && state.cached ? "已缓存结果" : "AI 自动分析昨日视频数据"}
             </p>
           </div>
@@ -108,24 +108,24 @@ export function GrowthInsightPanel() {
 
         {state.status === "no_data" && (
           <div className="space-y-3">
-            <div className="rounded-[12px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-3">
-              <span className="text-xs text-[var(--color-text-secondary)]">暂无昨日视频数据，以下为示范参考</span>
+            <div className="rounded-[12px] border border-dashed border-zinc-200 bg-zinc-50 p-3">
+              <span className="text-xs text-zinc-500">暂无昨日视频数据，以下为示范参考</span>
             </div>
-            <div className="rounded-[12px] border border-dashed border-[color:var(--color-warning)]/40 bg-[color:var(--color-warning)]/5 p-4">
-              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">诊断 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
-              <p className="text-sm leading-6 text-[var(--color-text-primary)]">昨日视频《如何3天涨粉1000》2s跳出率偏高（38%），说明开头钩子吸引力不足，用户在前2秒未被留住。</p>
+            <div className="rounded-[12px] border border-dashed border-[#EAB308]/30 bg-[#FEFCE8] p-4">
+              <div className="mb-2 text-sm font-semibold text-zinc-950">诊断 <span className="ml-1 text-xs font-normal text-zinc-500">示范数据</span></div>
+              <p className="text-sm leading-6 text-zinc-950">昨日视频《如何3天涨粉1000》2s跳出率偏高（38%），说明开头钩子吸引力不足，用户在前2秒未被留住。</p>
             </div>
-            <div className="rounded-[12px] border border-dashed border-[color:var(--color-danger)]/30 bg-[color:rgba(255,59,48,0.04)] p-4">
-              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">案发现场 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
-              <p className="text-sm leading-6 text-[var(--color-text-primary)]">播放12.5万，完播率41%，中段完播稳定，但转粉率0.3%低于团队均值（0.8%）。</p>
+            <div className="rounded-[12px] border border-dashed border-[#B42318]/20 bg-[#FEF3F2] p-4">
+              <div className="mb-2 text-sm font-semibold text-zinc-950">案发现场 <span className="ml-1 text-xs font-normal text-zinc-500">示范数据</span></div>
+              <p className="text-sm leading-6 text-zinc-950">播放12.5万，完播率41%，中段完播稳定，但转粉率0.3%低于团队均值（0.8%）。</p>
             </div>
-            <div className="rounded-[12px] border border-dashed border-[color:var(--color-primary)]/30 bg-[color:var(--color-primary)]/5 p-4">
-              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">归因 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
-              <p className="text-sm leading-6 text-[var(--color-text-primary)]">开头3秒直接进入内容讲解，缺少悬念或冲突设置，导致跳出率高；结尾无明确CTA，转粉路径不清晰。</p>
+            <div className="rounded-[12px] border border-dashed border-zinc-200 bg-zinc-50 p-4">
+              <div className="mb-2 text-sm font-semibold text-zinc-950">归因 <span className="ml-1 text-xs font-normal text-zinc-500">示范数据</span></div>
+              <p className="text-sm leading-6 text-zinc-950">开头3秒直接进入内容讲解，缺少悬念或冲突设置，导致跳出率高；结尾无明确CTA，转粉路径不清晰。</p>
             </div>
-            <div className="rounded-[12px] border border-dashed border-[color:var(--color-success)]/30 bg-[color:var(--color-success)]/5 p-4">
-              <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">改写建议 <span className="ml-1 text-xs font-normal text-[var(--color-text-secondary)]">示范数据</span></div>
-              <blockquote className="border-l-2 border-[color:var(--color-success)] pl-3 text-sm leading-6 text-[var(--color-text-primary)]">
+            <div className="rounded-[12px] border border-dashed border-[#067647]/20 bg-[#ECFDF3] p-4">
+              <div className="mb-2 text-sm font-semibold text-zinc-950">改写建议 <span className="ml-1 text-xs font-normal text-zinc-500">示范数据</span></div>
+              <blockquote className="border-l-2 border-[#067647] pl-3 text-sm leading-6 text-zinc-950">
                 开头改为：「你知道为什么大多数人涨粉失败吗？」（悬念问句）{"\n"}
                 结尾加：「点击主页，看完整涨粉方法论」（明确CTA）
               </blockquote>
@@ -134,8 +134,8 @@ export function GrowthInsightPanel() {
         )}
 
         {state.status === "error" && (
-          <div className="rounded-[12px] border border-[color:var(--color-danger)]/20 bg-[color:rgba(255,59,48,0.06)] p-4">
-            <p className="text-sm text-[var(--color-danger)]">{state.message}</p>
+          <div className="rounded-[12px] border border-[#B42318]/20 bg-[#FEF3F2] p-4">
+            <p className="text-sm text-[#B42318]">{state.message}</p>
           </div>
         )}
 
@@ -143,13 +143,13 @@ export function GrowthInsightPanel() {
           <div className="grid gap-3">
             {SECTIONS.map(({ key, title, tone, isCode }) => (
               <div key={key} className={`rounded-[12px] border p-4 ${tone}`}>
-                <div className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">{title}</div>
+                <div className="mb-2 text-sm font-semibold text-zinc-950">{title}</div>
                 {isCode ? (
-                  <blockquote className="border-l-2 border-[color:var(--color-success)] pl-3 text-sm leading-6 text-[var(--color-text-primary)] whitespace-pre-wrap break-words">
+                  <blockquote className="border-l-2 border-[#067647] pl-3 text-sm leading-6 text-zinc-950 whitespace-pre-wrap break-words">
                     {state.insight[key]}
                   </blockquote>
                 ) : (
-                  <p className="text-sm leading-6 text-[var(--color-text-primary)] whitespace-pre-wrap break-words">
+                  <p className="text-sm leading-6 text-zinc-950 whitespace-pre-wrap break-words">
                     {state.insight[key]}
                   </p>
                 )}
@@ -158,6 +158,6 @@ export function GrowthInsightPanel() {
           </div>
         )}
       </div>
-    </MotionCard>
+    </div>
   );
 }

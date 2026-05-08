@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, FileSearch, Lightbulb, Sparkles } from "lucide-react";
 import { useState } from "react";
 
-import { MotionCard } from "@/components/ui/motion-card";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { containerVariants, itemVariants } from "@/lib/animations";
@@ -18,7 +18,7 @@ const toneMap = {
   warning: "border-[color:var(--color-warning)]/20 bg-[color:var(--color-warning)]/10 text-[var(--color-warning)]",
   success: "border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/10 text-[var(--color-success)]",
   danger: "border-[color:var(--color-danger)]/20 bg-[color:var(--color-danger)]/10 text-[var(--color-danger)]",
-  neutral: "border-[var(--color-border)] bg-[rgba(255,255,255,0.7)] text-[var(--color-text-secondary)]",
+  neutral: "border-zinc-200 bg-white text-zinc-500",
 } as const;
 
 const DEMO_SEGMENTS = [
@@ -46,16 +46,16 @@ function EmptyReasonBlock({ data }: { data: ScriptBreakdownData }) {
   const reasonText = data.state === "fallback" ? "已拿到原始文案，但还没有结构化拆解结果。" : "当前没有上传文案，暂时无法生成真实拆解。";
 
   return (
-    <div className="rounded-[18px] border border-dashed border-[var(--color-border)] bg-[rgba(255,255,255,0.72)] p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-        <FileSearch className="size-4 text-[var(--color-text-secondary)]" />
+    <div className="rounded-[18px] border border-dashed border-zinc-200 bg-white p-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
+        <FileSearch className="size-4 text-zinc-500" />
         为什么这里没有真实内容
       </div>
-      <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">{reasonText}</p>
+      <p className="mt-2 text-sm leading-6 text-zinc-500">{reasonText}</p>
       {data.rawText ? (
-        <div className="mt-3 rounded-[14px] border border-white/70 glass-panel p-3">
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">当前拿到的原始文案</div>
-          <p className="text-sm leading-6 text-[var(--color-text-primary)]">{data.rawText}</p>
+        <div className="mt-3 rounded-[14px] border border-zinc-200 bg-zinc-50 p-3">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">当前拿到的原始文案</div>
+          <p className="text-sm leading-6 text-zinc-950">{data.rawText}</p>
         </div>
       ) : null}
     </div>
@@ -64,24 +64,24 @@ function EmptyReasonBlock({ data }: { data: ScriptBreakdownData }) {
 
 function DemoReferenceBlock() {
   return (
-    <div className="rounded-[18px] border border-dashed border-[color:var(--color-primary)]/25 bg-[color:var(--color-primary)]/5 p-4">
+    <div className="rounded-[18px] border border-dashed border-zinc-200 bg-zinc-50 p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-          <Lightbulb className="size-4 text-[var(--color-primary)]" />
+        <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
+          <Lightbulb className="size-4 text-zinc-950" />
           示例拆解参考
         </div>
-        <span className="rounded-full border border-[color:var(--color-primary)]/20 glass-panel px-2.5 py-1 text-[11px] font-semibold text-[var(--color-primary)]">
+        <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-950">
           示例内容
         </span>
       </div>
 
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {DEMO_SEGMENTS.map((segment) => (
-          <div key={segment.id} className="rounded-[14px] border border-white/70 glass-panel p-3">
+          <div key={segment.id} className="rounded-[14px] border border-zinc-200 bg-white p-3">
             <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone])} variant="outline">
               {segment.label}
             </Badge>
-            <p className="mt-3 text-sm leading-6 text-[var(--color-text-primary)]">{segment.content}</p>
+            <p className="mt-3 text-sm leading-6 text-zinc-950">{segment.content}</p>
           </div>
         ))}
       </div>
@@ -107,12 +107,12 @@ export function ScriptBreakdown({
     isStructured && !expanded ? data.segments.slice(0, maxVisibleSegments) : isStructured ? data.segments : [];
 
   return (
-    <MotionCard className="border-white/70 glass-panel backdrop-blur-[16px]">
-      <div className="space-y-4 p-5 sm:p-6">
+    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+      <div className="space-y-4">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Script Breakdown</p>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">{title}</h2>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看开头、中段、结尾分别出了什么问题，再决定文案怎么改。</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Script Breakdown</p>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">{title}</h2>
+          <p className="text-sm leading-6 text-zinc-500">先看开头、中段、结尾分别出了什么问题，再决定文案怎么改。</p>
         </div>
 
         {isStructured ? (
@@ -124,19 +124,19 @@ export function ScriptBreakdown({
                   type="button"
                   variants={itemVariants}
                   onClick={() => onSegmentSelect?.({ startSec: segment.startSec, endSec: segment.endSec })}
-                  className="rounded-[16px] border border-white/75 glass-panel p-4 text-left shadow-[var(--shadow-light)] transition-transform duration-[var(--duration-fast)] ease-[var(--ease-spring)] hover:-translate-y-[2px] hover:shadow-[var(--shadow-card-hover)] active:scale-[0.97]"
+                  className="rounded-[16px] border border-zinc-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-[1px] hover:shadow-md active:scale-[0.97]"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone as SegmentTone])} variant="outline">
                       {segment.label}
                     </Badge>
                     {segment.startSec !== undefined || segment.endSec !== undefined ? (
-                      <span className="text-xs text-[var(--color-text-secondary)]">
+                      <span className="text-xs text-zinc-500">
                         {segment.startSec ?? 0}s - {segment.endSec ?? "--"}s
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-[var(--color-text-primary)]">{segment.content}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-950">{segment.content}</p>
                 </motion.button>
               ))}
             </motion.div>
@@ -167,12 +167,12 @@ export function ScriptBreakdown({
         )}
 
         {!isStructured ? (
-          <div className="flex items-center gap-2 rounded-[14px] border border-dashed border-[var(--color-border)] bg-[rgba(255,255,255,0.65)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
+          <div className="flex items-center gap-2 rounded-[14px] border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
             <Sparkles className="size-3.5" />
             这里展示的是示例拆解格式，真实上传后会按同样结构输出。
           </div>
         ) : null}
       </div>
-    </MotionCard>
+    </div>
   );
 }

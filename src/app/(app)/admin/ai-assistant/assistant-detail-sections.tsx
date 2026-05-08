@@ -12,7 +12,7 @@ export default function AssistantDetailSections({ details }: Props) {
   return (
     <div className="mt-3 space-y-3">
       {details.sections.map((section, index) => (
-        <div key={`${section.title}-${index}`} className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+        <div key={`${section.title}-${index}`} className="rounded-xl border border-zinc-200 bg-white p-3">
           <div className="mb-2 text-sm font-medium">{section.title}</div>
           {section.kind === "fields" ? (
             <div className="grid gap-2 sm:grid-cols-2">
@@ -50,7 +50,7 @@ export default function AssistantDetailSections({ details }: Props) {
                 </thead>
                 <tbody>
                   {section.rows.map((row, rowIndex) => (
-                    <tr key={`${section.title}-row-${rowIndex}`} className="border-t border-border/60">
+                    <tr key={`${section.title}-row-${rowIndex}`} className="border-t border-zinc-200">
                       {row.map((cell, cellIndex) => (
                         <td key={`${section.title}-${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top">
                           {cell}
@@ -66,7 +66,7 @@ export default function AssistantDetailSections({ details }: Props) {
       ))}
 
       {details.nextSteps?.length ? (
-        <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-3">
+        <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-3">
           <div className="mb-2 text-sm font-medium">下一步</div>
           <ul className="space-y-1 text-sm text-muted-foreground">
             {details.nextSteps.map((item, index) => (

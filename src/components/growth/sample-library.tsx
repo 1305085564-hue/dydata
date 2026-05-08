@@ -136,8 +136,8 @@ function 样本卡({
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-border/70 glass-panel px-3.5 py-3 text-sm leading-6 text-muted-foreground shadow-[0_1px_2px_rgba(15,23,42,0.03)] dark:glass-panel">
-          <span className="font-semibold text-foreground">推荐理由：</span>
+        <div className="rounded-2xl border border-zinc-200 bg-white px-3.5 py-3 text-sm leading-6 text-zinc-500">
+          <span className="font-semibold text-zinc-950">推荐理由：</span>
           {sample.推荐理由}
         </div>
       </div>
@@ -159,20 +159,20 @@ export function SampleLibrary({
   return (
     <Card
       className={cn(
-        "card-elevated overflow-hidden rounded-[16px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.9))] shadow-[0_18px_48px_-32px_rgba(15,23,42,0.28)] backdrop-blur dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.7))]",
+        "overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm",
         className
       )}
     >
       <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5">
-            <h2 className="text-[15px] font-semibold text-foreground sm:text-base">学习样本库</h2>
-            <p className="text-sm leading-6 text-muted-foreground">
+            <h2 className="text-[15px] font-semibold text-zinc-950 sm:text-base">学习样本库</h2>
+            <p className="text-sm leading-6 text-zinc-500">
               把标杆样本和你自己的历史最佳放到同一个观察面板里，先抄最弱指标对应的动作。
             </p>
           </div>
 
-          <div className="hidden items-center gap-1 rounded-full border border-border/70 bg-background/75 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:inline-flex">
+          <div className="hidden items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 p-1 sm:inline-flex">
             <Button
               variant={视图 === "list" ? "secondary" : "ghost"}
               size="sm"

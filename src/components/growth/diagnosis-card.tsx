@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, LineChart, ShieldCheck, Users } from "lucide-react";
 
-import { MotionCard } from "@/components/ui/motion-card";
+
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { calcRates, parsePercentText, type MetricsReport } from "@/lib/metrics";
 
@@ -241,36 +241,36 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
   const diagnosisItems = buildDiagnosisItems(myReports, teamReports);
 
   return (
-    <MotionCard className={`border-white/70 glass-panel backdrop-blur-[16px] ${className ?? ""}`}>
-      <div className="space-y-4 p-5 sm:p-6">
+    <div className={`rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6 ${className ?? ""}`}>
+      <div className="space-y-4">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Diagnosis Brief</p>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">诊断建议</h2>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看问题，再找对标，再决定下一步先改哪一个动作。</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Diagnosis Brief</p>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">诊断建议</h2>
+          <p className="text-sm leading-6 text-zinc-500">先看问题，再找对标，再决定下一步先改哪一个动作。</p>
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">重点项</div>
-          <div className="text-xs text-[var(--color-text-secondary)]">
+          <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">重点项</div>
+          <div className="text-xs text-zinc-500">
             {myReports.length === 0 ? "示例内容 / 示范数据" : `最多展示 ${diagnosisItems.length} 项`}
           </div>
         </div>
 
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-3 lg:grid-cols-2">
           {diagnosisItems.map((item) => {
-            const toneClass = item.tone === "weak" ? "border-orange-200/70 bg-orange-50/70" : "border-emerald-200/70 bg-emerald-50/70";
-            const badgeClass = item.tone === "weak" ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400";
+            const toneClass = item.tone === "weak" ? "border-[#EAB308]/20 bg-[#FEFCE8]" : "border-[#067647]/20 bg-[#ECFDF3]";
+            const badgeClass = item.tone === "weak" ? "bg-[#FEFCE8] text-[#B45309]" : "bg-[#ECFDF3] text-[#067647]";
 
             return (
               <motion.article key={item.key} variants={itemVariants} className={`rounded-[18px] border p-4 ${toneClass}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-                      {item.tone === "weak" ? <AlertTriangle className="size-4 text-orange-600" /> : <ShieldCheck className="size-4 text-emerald-600" />}
+                    <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
+                      {item.tone === "weak" ? <AlertTriangle className="size-4 text-[#EAB308]" /> : <ShieldCheck className="size-4 text-[#067647]" />}
                       <span>问题名：{item.title}</span>
                     </div>
                     {myReports.length === 0 ? (
-                      <div className="text-[11px] font-medium text-[var(--color-text-secondary)]">示例内容</div>
+                      <div className="text-[11px] font-medium text-zinc-500">示例内容</div>
                     ) : null}
                   </div>
                   <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClass}`}>
@@ -278,25 +278,25 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                   </span>
                 </div>
 
-                <div className="mt-4 grid gap-3 text-sm text-[var(--color-text-primary)]">
-                  <div className="rounded-[14px] border border-white/60 glass-panel p-3">
-                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                <div className="mt-4 grid gap-3 text-sm text-zinc-950">
+                  <div className="rounded-[14px] border border-zinc-200 bg-white p-3">
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                       <LineChart className="size-3.5" />
                       数据证据
                     </div>
                     <p className="leading-6">{item.evidence}</p>
                   </div>
 
-                  <div className="rounded-[14px] border border-white/60 glass-panel p-3">
-                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                  <div className="rounded-[14px] border border-zinc-200 bg-white p-3">
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                       <Users className="size-3.5" />
                       {item.benchmarkLabel}
                     </div>
                     <p className="leading-6">{item.benchmarkReason}</p>
                   </div>
 
-                  <div className="rounded-r-[14px] border-l-4 border-blue-500 bg-blue-50/50 p-3 dark:border-blue-400 dark:bg-blue-500/10">
-                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                  <div className="rounded-r-[14px] border-l-4 border-zinc-950 bg-zinc-50 p-3">
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                       <ArrowRight className="size-3.5" />
                       下一步动作
                     </div>
@@ -308,12 +308,12 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
           })}
 
           {diagnosisItems.length === 0 ? (
-            <div className="rounded-[16px] border border-dashed border-[var(--color-border)] bg-[var(--color-border)]/10 p-4 text-sm text-[var(--color-text-secondary)]">
+            <div className="rounded-[16px] border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
               团队数据不足，暂时还不能给出有效对标。
             </div>
           ) : null}
         </motion.div>
       </div>
-    </MotionCard>
+    </div>
   );
 }

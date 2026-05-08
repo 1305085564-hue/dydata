@@ -55,7 +55,7 @@ function resultStatus(result?: string) {
     case "cancelled":
       return { icon: <AlertTriangle className="h-4 w-4" />, text: "ABORTED", classes: "text-zinc-500 bg-zinc-50 border-zinc-200" };
     case "pending_confirm":
-      return { icon: <Loader2 className="h-4 w-4 animate-spin" />, text: "PENDING_AUTH", classes: "text-amber-500 bg-amber-950/30 border-amber-900" };
+      return { icon: <Loader2 className="h-4 w-4 animate-spin" />, text: "PENDING_AUTH", classes: "text-[#B45309] bg-[#FEFCE8] border-[#EAB308]/30" };
     default:
       return { icon: <Terminal className="h-4 w-4" />, text: result?.toUpperCase() || "UNKNOWN", classes: "text-zinc-500 bg-zinc-50 border-zinc-200" };
   }
@@ -121,7 +121,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <div className="text-destructive text-sm mb-2">{error}</div>
+              <div className="text-[#B42318] text-sm mb-2">{error}</div>
             </div>
           ) : detail ? (
             <>
@@ -164,8 +164,8 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               </div>
 
               {detail.errorMessage && (
-                <div className="bg-destructive/5 border-l-2 border-destructive/50 p-3 rounded-r-sm">
-                   <div className="text-xs text-destructive font-medium mb-1">系统报错</div>
+                <div className="bg-[#FEF3F2] border-l-2 border-[#B42318]/50 p-3 rounded-r-sm">
+                   <div className="text-xs text-[#B42318] font-medium mb-1">系统报错</div>
                    <div className="text-sm text-foreground whitespace-pre-wrap">{detail.errorMessage}</div>
                 </div>
               )}
@@ -211,7 +211,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                             <Copy className="h-3 w-3" /> 复制
                           </button>
                         </div>
-                        <pre className="p-3 text-[11px] text-amber-500/80 overflow-x-auto whitespace-pre-wrap">
+                        <pre className="p-3 text-[11px] text-[#B45309]/80 overflow-x-auto whitespace-pre-wrap">
                           {detail.backupSql}
                         </pre>
                       </CollapsibleContent>

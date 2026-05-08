@@ -102,9 +102,9 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
 
   if (!capabilityCards.length) {
     return (
-      <div className="rounded-[28px] border border-white/70 glass-panel p-5 shadow-[var(--shadow-card)] backdrop-blur-[16px]">
-        <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
-        <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">数据不足，先连续提交数据后再看能力分布。</p>
+      <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">六维能力</h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-500">数据不足，先连续提交数据后再看能力分布。</p>
       </div>
     );
   }
@@ -123,26 +123,26 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
   const weakCard = weakBenchmarkCards.find((c) => c.dimension === capabilityCards[weakIndex]?.name);
 
   return (
-    <div className="rounded-[28px] border border-white/70 glass-panel p-5 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-6">
+    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Capability Radar</p>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">六维能力</h2>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">先看能力强弱分布，再决定优先补哪一段内容短板。</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Capability Radar</p>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">六维能力</h2>
+          <p className="text-sm leading-6 text-zinc-500">先看能力强弱分布，再决定优先补哪一段内容短板。</p>
         </div>
-        <div className="flex items-center gap-2.5 rounded-2xl border border-white/80 glass-panel px-3 py-2 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 shadow-sm">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full bg-[var(--color-primary)]" />
+            <span className="inline-block h-2 w-2 rounded-full bg-zinc-950" />
             我
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full bg-[var(--color-warning)]" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[#EAB308]" />
             {compareLabel}
           </span>
           <select
             value={comparePersonId}
             onChange={(e) => setComparePersonId(e.target.value)}
-            className="ml-1 rounded-xl border border-white/80 bg-white px-2.5 py-1 text-[11px] text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-primary/30"
+            className="ml-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950/10"
           >
             <option value="">团队 P80</option>
             {teamMembers.map((m) => (
@@ -173,14 +173,14 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                   onClick={() => setActiveIndex(isActive ? null : i)}
                   className={cn(
                     "rounded-lg px-2 py-1.5 text-left transition-colors",
-                    isActive ? "bg-blue-50" : "hover:bg-slate-50",
+                    isActive ? "bg-zinc-50" : "hover:bg-zinc-50",
                   )}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="w-[4.6rem] shrink-0 text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {dimIcons[card.name] ?? "·"} {card.name}
                     </span>
-                    <div className="h-[7px] flex-1 max-w-[44%] rounded-full bg-gray-100">
+                    <div className="h-[7px] flex-1 max-w-[44%] rounded-full bg-zinc-100">
                       <div
                         className={cn("h-full rounded-full transition-all", barColor)}
                         style={{ width: hasData ? `${score}%` : "0%" }}
@@ -197,25 +197,25 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
 
           {/* 最强 / 最弱 */}
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3">
-              <p className="text-[11px] font-medium text-rose-400">最强 · {capabilityCards[strongIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-rose-600">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+              <p className="text-[11px] font-medium text-zinc-400">最强 · {capabilityCards[strongIndex]?.name}</p>
+              <p className="mt-0.5 text-sm font-semibold text-zinc-950">
                 {strongCard && strongCard.state === "benchmark"
                   ? `${strongCard.personName} — ${strongCard.metricText}`
                   : strongCard?.state === "self_best"
                     ? `你 — ${strongCard.metricText}`
                     : `得分 ${myScores[strongIndex]}`}
               </p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">
+              <p className="mt-0.5 line-clamp-2 text-[11px] text-zinc-500">
                 {strongCard?.snippet || "继续保持，这是你的核心优势维度。"}
               </p>
             </div>
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
-              <p className="text-[11px] font-medium text-emerald-500">最弱 · {capabilityCards[weakIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-emerald-600">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+              <p className="text-[11px] font-medium text-zinc-400">最弱 · {capabilityCards[weakIndex]?.name}</p>
+              <p className="mt-0.5 text-sm font-semibold text-zinc-950">
                 你 — {capabilityCards[weakIndex]?.metricText ?? `${myScores[weakIndex]} 分`}
               </p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">
+              <p className="mt-0.5 line-clamp-2 text-[11px] text-zinc-500">
                 {weakCard?.snippet ||
                   `${capabilityCards[weakIndex]?.name}低于团队基准，建议优先针对此项做单点优化。`}
               </p>
@@ -248,16 +248,16 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
             {/* 对比区域 */}
             <polygon
               points={buildPolygonPoints(compareScores, 100)}
-              fill="rgba(251,146,60,0.08)"
-              stroke="#ea580c"
+              fill="rgba(161,161,170,0.08)"
+              stroke="#a1a1aa"
               strokeWidth="2"
               strokeDasharray="6,4"
             />
             {/* 我的区域 */}
             <polygon
               points={buildPolygonPoints(myScores, 100)}
-              fill="rgba(59,130,246,0.12)"
-              stroke="#3b82f6"
+              fill="rgba(9,9,11,0.08)"
+              stroke="#09090B"
               strokeWidth="2.5"
             />
             {/* 对比数据点 */}
@@ -266,7 +266,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
               const { x, y } = polarToXY(r, i);
               const dimName = capabilityCards[i]?.name ?? `维度${i + 1}`;
               return (
-                <circle key={`cmp-${i}`} cx={x} cy={y} r={3.5} fill="#ea580c" stroke="white" strokeWidth="1.5">
+                <circle key={`cmp-${i}`} cx={x} cy={y} r={3.5} fill="#a1a1aa" stroke="white" strokeWidth="1.5">
                   <title>{`${dimName}（${compareLabel}）: ${score}分`}</title>
                 </circle>
               );
@@ -283,7 +283,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                   cx={x}
                   cy={y}
                   r={isActive ? 6 : 4}
-                  fill={isActive ? "#2563eb" : "#3b82f6"}
+                  fill={isActive ? "#09090B" : "#52525b"}
                   stroke="white"
                   strokeWidth="1.5"
                 >
@@ -302,7 +302,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                   textAnchor={labelAnchors[i]}
                   fontSize="13"
                   fontWeight="600"
-                  fill="#64748b"
+                  fill="#71717A"
                 >
                   {card.name}
                 </text>

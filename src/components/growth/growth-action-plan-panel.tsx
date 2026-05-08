@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardList, Eye, Lightbulb, PencilLine } from "lucide-react";
 
-import { MotionCard } from "@/components/ui/motion-card";
+
 import type { AdviceSections } from "@/lib/growth-page";
 
 type InsightResult = {
@@ -62,7 +62,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "reference",
         title: "参考示例",
         content: DEMO_CONTENT.reference,
-        toneClass: "border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary)]/10",
+        toneClass: "border-zinc-200 bg-zinc-50",
         badge: "示例内容",
         icon: ClipboardList,
       },
@@ -78,7 +78,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "action",
         title: "下一步动作",
         content: DEMO_CONTENT.action,
-        toneClass: "border-[var(--color-border)] bg-[rgba(255,255,255,0.75)]",
+        toneClass: "border-zinc-200 bg-white",
         badge: "示例内容",
         icon: CheckCircle2,
       },
@@ -115,7 +115,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "reference",
       title: "参考示例",
       content: reference,
-      toneClass: "border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary)]/10",
+      toneClass: "border-zinc-200 bg-zinc-50",
       badge: advice.source === "error" ? "示例内容" : undefined,
       icon: ClipboardList,
     },
@@ -131,7 +131,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "action",
       title: "下一步动作",
       content: action,
-      toneClass: "border-[var(--color-border)] bg-[rgba(255,255,255,0.75)]",
+      toneClass: "border-zinc-200 bg-white",
       badge: advice.source === "error" ? "示例内容" : undefined,
       icon: CheckCircle2,
     },
@@ -142,7 +142,7 @@ function Skeleton() {
   return (
     <div className="grid gap-3">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="animate-pulse rounded-[16px] border border-[var(--color-border)] bg-[rgba(255,255,255,0.72)] p-4">
+        <div key={index} className="animate-pulse rounded-[16px] border border-zinc-200 bg-white p-4">
           <div className="h-3 w-24 rounded bg-[var(--color-border)]" />
           <div className="mt-3 h-3 w-full rounded bg-[var(--color-border)]" />
           <div className="mt-2 h-3 w-4/5 rounded bg-[var(--color-border)]" />
@@ -156,12 +156,12 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
   const blocks = buildBlocks({ insightState, advice, noData });
 
   return (
-    <MotionCard className="border-white/70 glass-panel backdrop-blur-[16px]">
-      <div className="space-y-4 p-5 sm:p-6">
+    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+      <div className="space-y-4">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Action Plan</p>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">下一轮先怎么改</h2>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Action Plan</p>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">下一轮先怎么改</h2>
+          <p className="text-sm leading-6 text-zinc-500">
             {noData
               ? "当前没有真实数据，先看一次完整示例，知道这里以后会给你什么。"
               : insightState.status === "ok" && insightState.cached
@@ -177,19 +177,19 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
             {blocks.map((block) => {
               const Icon = block.icon;
               return (
-                <div key={block.key} className={`rounded-[16px] border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-4 border-l-blue-500 rounded-l-none dark:border-l-blue-400" : ""}`}>
+                <div key={block.key} className={`rounded-[16px] border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-4 border-l-zinc-950 rounded-l-none" : ""}`}>
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
                       <Icon className="size-4" />
                       {block.title}
                     </div>
                     {block.badge ? (
-                      <span className="rounded-full border border-white/60 glass-panel px-2.5 py-1 text-[11px] font-semibold text-[var(--color-text-secondary)]">
+                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
                         {block.badge}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[var(--color-text-primary)]">{block.content}</p>
+                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-950">{block.content}</p>
                 </div>
               );
             })}
@@ -197,12 +197,12 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
         ) : null}
 
         {insightState.status === "error" && !noData ? (
-          <div className="rounded-[14px] border border-dashed border-[var(--color-border)] bg-[rgba(255,255,255,0.65)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
+          <div className="rounded-[14px] border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
             单条视频复盘请求失败：{insightState.message}
           </div>
         ) : null}
       </div>
-    </MotionCard>
+    </div>
   );
 }
 

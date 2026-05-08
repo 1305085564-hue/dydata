@@ -81,10 +81,10 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
 
 function StatusIndicator({ status }: { status: "healthy" | "circuit" | "disabled" }) {
   if (status === "healthy") {
-    return <div className="size-2 shrink-0 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" title="健康" />;
+    return <div className="size-2 shrink-0 rounded-full bg-[#067647]" title="健康" />;
   }
   if (status === "circuit") {
-    return <div className="size-2 shrink-0 rounded-full bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)] animate-pulse" title="熔断中" />;
+    return <div className="size-2 shrink-0 rounded-full bg-[#B42318] animate-pulse" title="熔断中" />;
   }
   return <div className="size-2 shrink-0 rounded-full bg-zinc-400" title="已禁用" />;
 }

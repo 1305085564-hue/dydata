@@ -36,11 +36,11 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
   const debug = data.debug;
 
   return (
-    <div className="my-4 border border-destructive/20 bg-destructive/5 text-foreground rounded-xl overflow-hidden text-sm relative shadow-sm animate-in slide-in-from-bottom-2 duration-300">
+    <div className="my-4 border border-[#B42318]/20 bg-[#FEF3F2] text-zinc-950 rounded-xl overflow-hidden text-sm relative shadow-sm animate-in slide-in-from-bottom-2 duration-300">
 
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-destructive/10 bg-destructive/5 px-4 py-3">
-         <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
+      <div className="flex items-center justify-between border-b border-[#B42318]/10 bg-[#FEF3F2] px-4 py-3">
+         <div className="flex items-center gap-2 text-[#B42318] font-semibold text-sm">
             <AlertTriangle className="h-4 w-4" />
             <span>执行确认</span>
          </div>
@@ -56,7 +56,7 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
             {data.confirmationMessage || `系统将执行: ${data.toolName}`}
           </p>
           {data.confirmationReason && (
-            <p className="text-sm text-destructive/80 border-l-2 border-destructive/30 pl-3 py-1 bg-destructive/5 rounded-r-md">
+            <p className="text-sm text-[#B42318]/80 border-l-2 border-[#B42318]/30 pl-3 py-1 bg-[#FEF3F2] rounded-r-md">
               {data.confirmationReason}
             </p>
           )}
@@ -118,11 +118,11 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
              取消
            </Button>
            <Button
-             variant="destructive"
+             variant="default"
              size="sm"
              onClick={onConfirm}
              disabled={submitting}
-             className="h-9 shadow-sm"
+             className="h-9 bg-zinc-950 text-white hover:bg-zinc-800 shadow-sm"
            >
              {submitting ? (
                <span className="flex items-center gap-2">

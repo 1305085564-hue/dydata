@@ -102,7 +102,7 @@ function buildConfirmResultMessage(options: {
 
 function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-sm prose-invert max-w-none text-foreground prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-sm prose-pre:bg-background prose-pre:border prose-pre:border-border prose-pre:p-3 prose-code:rounded-sm prose-code:bg-muted prose-code:text-zinc-950 prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-zinc-500 prose-strong:text-foreground">
+    <div className="prose prose-sm max-w-none text-zinc-950 prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-sm prose-pre:bg-zinc-50 prose-pre:border prose-pre:border-zinc-200 prose-pre:p-3 prose-code:rounded-sm prose-code:bg-zinc-100 prose-code:text-zinc-950 prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-zinc-200 prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-td:border prose-td:border-zinc-200 prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-zinc-500 prose-strong:text-zinc-950">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );
@@ -245,7 +245,7 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
       <div className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar">
         {!hasMessages ? (
           <div className="flex flex-col h-full justify-center max-w-2xl mx-auto opacity-80 animate-in fade-in duration-700">
-             <div className="mb-8 border-l-2 border-primary pl-4 py-1">
+             <div className="mb-8 border-l-2 border-zinc-950 pl-4 py-1">
                <h2 className="text-xl font-bold text-foreground tracking-wide uppercase mb-2">AI 分析工作台</h2>
                <p className="text-muted-foreground text-sm">
                  已连接系统数据库，随时可以进行查询、配置修改和异常诊断。
@@ -367,7 +367,7 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
           <button
             onClick={() => sendMessage(input)}
             disabled={!canSend}
-            className="mb-2 mr-2 p-1.5 rounded-sm text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50 disabled:opacity-50 disabled:hover:text-zinc-500 disabled:hover:bg-transparent transition-colors"
+            className="mb-2 mr-2 p-2 rounded-xl bg-zinc-950 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:hover:bg-zinc-950 transition-all hover:-translate-y-[1px] hover:shadow-lg"
           >
             <Send className="h-4 w-4" />
           </button>

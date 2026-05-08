@@ -58,7 +58,7 @@ function resultLabel(result: string) {
     case "cancelled":
       return { label: "中止", color: "text-zinc-500", border: "border-zinc-200", bg: "bg-zinc-50" };
     case "pending_confirm":
-      return { label: "待确认", color: "text-amber-500", border: "border-amber-900", bg: "bg-amber-950/30" };
+      return { label: "待确认", color: "text-[#B45309]", border: "border-[#EAB308]/30", bg: "bg-[#FEFCE8]" };
     default:
       return { label: result.substring(0,4).toUpperCase(), color: "text-zinc-500", border: "border-zinc-200", bg: "bg-zinc-50" };
   }
@@ -158,7 +158,7 @@ function SidebarContent({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-xs text-zinc-950 font-medium group-hover:text-zinc-950 transition-colors">{record.description}</div>
-                      <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-500">
                         <span className="text-muted-foreground">{record.adminName.substring(0, 8)}</span>
                         <span>{new Date(record.createdAt).toLocaleTimeString("en-GB", { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' })}</span>
                       </div>
