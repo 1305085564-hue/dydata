@@ -36,12 +36,12 @@ interface VideoListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  删稿: "border-red-200 bg-red-50 text-red-700",
-  限流: "border-red-200 bg-red-50 text-red-700",
-  投流: "border-amber-200 bg-amber-50 text-amber-700",
-  活动干预: "border-amber-200 bg-amber-50 text-amber-700",
-  "未满24h": "border-slate-200 bg-slate-100 text-slate-600",
+  正常: "border-[#A7F3D0] bg-[#ECFDF3] text-[#067647]",
+  删稿: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
+  限流: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
+  投流: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
+  活动干预: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
+  "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
 };
 
 function formatDateTime(value: string | null) {
@@ -179,19 +179,19 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
     <div className="space-y-5">
       <VideoFilters profiles={profiles} accounts={accounts} onFilter={setFilters} />
 
-      <div className="overflow-x-auto rounded-[28px] border border-border/60 bg-background/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl">
+      <div className="overflow-x-auto rounded-[2rem] border border-zinc-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4">视频标题</TableHead>
-              <TableHead>账号</TableHead>
-              <TableHead>负责人</TableHead>
-              <TableHead>发布时间</TableHead>
-              <TableHead>24h播放量</TableHead>
-              <TableHead>互动率(%)</TableHead>
-              <TableHead>涨粉</TableHead>
-              <TableHead>状态</TableHead>
-              <TableHead className="px-4 text-right">操作</TableHead>
+            <TableRow className="border-b border-zinc-200 bg-zinc-50">
+              <TableHead className="px-4 text-[11px] uppercase tracking-wider text-zinc-500">视频标题</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">账号</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">负责人</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">发布时间</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">24h播放量</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">互动率(%)</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">涨粉</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">状态</TableHead>
+              <TableHead className="px-4 text-right text-[11px] uppercase tracking-wider text-zinc-500">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -202,28 +202,28 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                 const showPatchButton = shouldShowPatch24hButton(video, snapshot);
 
                 return (
-                  <TableRow key={video.id}>
+                  <TableRow key={video.id} className="hover:bg-zinc-50">
                     <TableCell className="max-w-[280px] px-4 align-top whitespace-normal">
                       <div className="space-y-1">
-                        <div className="line-clamp-2 font-medium text-foreground">
+                        <div className="line-clamp-2 font-medium text-zinc-950">
                           {video.video_title?.trim() || "未命名视频"}
                         </div>
-                        <div className="text-xs text-muted-foreground">{video.id.slice(0, 8)}</div>
+                        <div className="text-xs text-zinc-500">{video.id.slice(0, 8)}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{video.accounts.name}</TableCell>
-                    <TableCell>{video.profiles.name}</TableCell>
-                    <TableCell>{formatDateTime(video.published_at)}</TableCell>
-                    <TableCell>{formatNumber(snapshot?.play_count)}</TableCell>
-                    <TableCell>{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
-                    <TableCell>{formatNumber(snapshot?.follower_gain)}</TableCell>
+                    <TableCell className="text-sm text-zinc-500">{video.accounts.name}</TableCell>
+                    <TableCell className="text-sm text-zinc-500">{video.profiles.name}</TableCell>
+                    <TableCell className="text-sm text-zinc-500">{formatDateTime(video.published_at)}</TableCell>
+                    <TableCell className="text-sm">{formatNumber(snapshot?.play_count)}</TableCell>
+                    <TableCell className="text-sm">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
+                    <TableCell className="text-sm">{formatNumber(snapshot?.follower_gain)}</TableCell>
                     <TableCell>
                       <div className="space-y-2">
                         <Badge variant="outline" className={statusClassName[video.anomaly_status]}>
                           {video.anomaly_status}
                         </Badge>
                         {tags.some((tag) => getTagReviewStatus(tag.confidence) === "待确认") ? (
-                          <Badge variant="outline" className="border-amber-200 bg-amber-500/10 text-amber-700">
+                          <Badge variant="outline" className="border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]">
                             标签待确认
                           </Badge>
                         ) : null}
@@ -234,7 +234,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                         {showPatchButton ? (
                           <Button
                             variant="secondary"
-                            className="rounded-2xl"
+                            className="rounded-xl bg-zinc-950 text-white hover:bg-zinc-800"
                             onClick={() => setPatchingVideoId(video.id)}
                           >
                             补录24h数据
@@ -242,7 +242,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                         ) : null}
                         <Button
                           variant="outline"
-                          className="rounded-2xl bg-muted/40"
+                          className="rounded-xl border-zinc-200 text-zinc-700 hover:bg-zinc-50"
                           onClick={() => setSelectedVideoId(video.id)}
                         >
                           查看详情
@@ -254,7 +254,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="px-4 py-16 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={9} className="px-4 py-16 text-center text-sm text-zinc-500">
                   当前筛选条件下暂无视频数据。
                 </TableCell>
               </TableRow>

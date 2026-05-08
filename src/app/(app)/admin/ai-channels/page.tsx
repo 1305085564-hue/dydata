@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AdminSecondaryNav, AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
 import AIChannelsClient from "./ai-channels-client";
 
 export default async function AIChannelsPage() {
@@ -24,21 +23,13 @@ export default async function AIChannelsPage() {
   }
 
   return (
-    <AppShell width="wide" className="pb-8">
-      <AppShellHero
-        eyebrow="AI Feature Console"
-        title="AI 功能区"
-        description="统一管理 AI 渠道、功能开关、模型绑定和提示词配置。"
-      >
-        <AdminSecondaryNav pathname="/admin/ai-channels" canManageAdmin panelBasePath="/admin" userRole="owner" />
-      </AppShellHero>
-      <AppShellSection
-        eyebrow="Channel Settings"
-        title="渠道配置面板"
-        description="建议先看健康状态，再做新增、编辑和恢复操作。"
-      >
-        <AIChannelsClient />
-      </AppShellSection>
-    </AppShell>
+    <div className="space-y-8">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">AI Channels</p>
+        <h1 className="text-2xl font-black tracking-tight text-zinc-950">AI 功能区</h1>
+        <p className="mt-1 text-sm text-zinc-500">管理模型渠道、优先级切换、功能开关与提示词配置</p>
+      </div>
+      <AIChannelsClient />
+    </div>
   );
 }

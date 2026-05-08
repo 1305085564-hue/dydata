@@ -82,11 +82,11 @@ export function ChannelDetailForm({
   const statusMeta = channel ? getStatusMeta(channel) : null;
 
   return (
-    <Card className="rounded-[24px] border border-white/70 bg-white/78 shadow-[var(--shadow-card)] backdrop-blur-[16px] overflow-hidden">
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between border-b border-border/40 bg-muted/20 px-6 py-4 gap-4">
+    <Card className="rounded-[2rem] border border-zinc-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between border-b border-zinc-200 bg-zinc-50 px-6 py-4 gap-4">
         {/* Left: Title & Toggle */}
         <div className="flex flex-wrap items-center gap-4">
-          <h2 className="text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-950">
             {channel ? channel.name : "新增渠道"}
           </h2>
           {channel && (
@@ -115,7 +115,7 @@ export function ChannelDetailForm({
                 size="sm"
                 onClick={() => onTest(channel.id, "text")}
                 disabled={isTestingText || !channel.is_enabled}
-                className="rounded-xl h-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/50 whitespace-nowrap"
+                className="rounded-xl h-8 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 whitespace-nowrap"
               >
                 {isTestingText ? <Loader2 className="mr-1.5 size-3.5 animate-spin shrink-0" /> : <Activity className="mr-1.5 size-3.5 shrink-0" />}
                 测文本
@@ -125,7 +125,7 @@ export function ChannelDetailForm({
                 size="sm"
                 onClick={() => onTest(channel.id, "ocr")}
                 disabled={isTestingOcr || !channel.is_enabled}
-                className="rounded-xl h-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/50 whitespace-nowrap"
+                className="rounded-xl h-8 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 whitespace-nowrap"
               >
                 {isTestingOcr ? <Loader2 className="mr-1.5 size-3.5 animate-spin shrink-0" /> : <ImageIcon className="mr-1.5 size-3.5 shrink-0" />}
                 测 OCR
@@ -198,7 +198,7 @@ export function ChannelDetailForm({
                   value={form.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                   placeholder="例如: api7, 官方直连"
-                  className="rounded-xl border-border/60 bg-white/50 focus-visible:bg-white"
+                  className="rounded-xl border-zinc-200 bg-zinc-50 focus-visible:bg-white"
                 />
               </div>
 
@@ -209,7 +209,7 @@ export function ChannelDetailForm({
                   value={form.base_url}
                   onChange={(e) => handleChange("base_url", e.target.value)}
                   placeholder="https://api.example.com"
-                  className="rounded-xl border-border/60 bg-white/50 focus-visible:bg-white font-mono text-sm"
+                  className="rounded-xl border-zinc-200 bg-zinc-50 focus-visible:bg-white font-mono text-sm"
                 />
               </div>
             </div>
@@ -222,7 +222,7 @@ export function ChannelDetailForm({
                 value={form.api_key}
                 onChange={(e) => handleChange("api_key", e.target.value)}
                 placeholder={channel ? "留空则保持当前密钥" : "sk-..."}
-                className="rounded-xl border-border/60 bg-white/50 focus-visible:bg-white font-mono text-sm"
+                className="rounded-xl border-zinc-200 bg-zinc-50 focus-visible:bg-white font-mono text-sm"
               />
               {channel && (
                 <p className="text-[11px] text-[var(--color-text-tertiary)]">
@@ -239,7 +239,7 @@ export function ChannelDetailForm({
                   value={form.model}
                   onChange={(e) => handleChange("model", e.target.value)}
                   placeholder="留空使用全局配置"
-                  className="rounded-xl border-border/60 bg-white/50 focus-visible:bg-white font-mono text-sm"
+                  className="rounded-xl border-zinc-200 bg-zinc-50 focus-visible:bg-white font-mono text-sm"
                 />
               </div>
               <div className="space-y-2">
@@ -250,7 +250,7 @@ export function ChannelDetailForm({
                   min={1}
                   value={form.priority}
                   onChange={(e) => handleChange("priority", e.target.value)}
-                  className="rounded-xl border-border/60 bg-white/50 focus-visible:bg-white"
+                  className="rounded-xl border-zinc-200 bg-zinc-50 focus-visible:bg-white"
                 />
               </div>
             </div>
@@ -292,9 +292,9 @@ export function ChannelDetailForm({
           )}
 
           {!channel && (
-            <div className="sm:col-span-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/30 p-8 text-center text-sm text-[var(--color-text-secondary)] min-h-[160px]">
+            <div className="sm:col-span-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 p-8 text-center text-sm text-zinc-500 min-h-[160px]">
               <CheckCircle2 className="mb-2 size-8 text-muted-foreground/40" />
-              <p className="mt-1 font-medium text-[var(--color-text-primary)]">保存基本信息后</p>
+              <p className="mt-1 font-medium text-zinc-950">保存基本信息后</p>
               <p className="mt-1 opacity-80 text-xs">即可测试连通性并配置功能接管</p>
             </div>
           )}

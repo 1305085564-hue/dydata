@@ -48,8 +48,8 @@ export function ChannelFeatureCard({
   };
 
   const stateStyles = isExpanded
-    ? "border-primary/20 bg-white/60 shadow-sm"
-    : "border-border/40 bg-white/40 hover:bg-white/60 hover:-translate-y-0.5 transition-all duration-300";
+    ? "border-zinc-200 bg-white shadow-sm ring-1 ring-zinc-950/10"
+    : "border-zinc-200 bg-white hover:bg-zinc-50 transition-all duration-300";
 
   return (
     <div
@@ -73,15 +73,15 @@ export function ChannelFeatureCard({
         aria-controls={`feature-config-${feature.id}`}
       >
         <div className="flex items-center gap-3">
-          <h4 className="text-sm font-medium text-[var(--color-text-primary)]">
+          <h4 className="text-sm font-medium text-zinc-950">
             {feature.metadata.title}
           </h4>
-          <div className="h-4 w-px bg-border/60 hidden sm:block" />
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className={cn("px-1.5 py-0.5 rounded-md text-center sm:text-left", isBoundToCurrent ? "bg-primary/10 text-primary font-medium" : "text-[var(--color-text-secondary)]")}>
+            <span className={cn("px-1.5 py-0.5 rounded-md text-center sm:text-left", isBoundToCurrent ? "bg-zinc-100 text-zinc-950 font-medium" : "text-zinc-500")}>
               渠道: {feature.channel_name || "默认自动（failover）"}
             </span>
-            <span className="text-[var(--color-text-tertiary)] px-1.5 py-0.5 text-center sm:text-left">
+            <span className="text-zinc-400 px-1.5 py-0.5 text-center sm:text-left">
               模型: {feature.model.trim() || "跟随渠道默认模型"}
             </span>
           </div>
@@ -114,7 +114,7 @@ export function ChannelFeatureCard({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--color-text-secondary)] hidden sm:inline">启用</span>
+            <span className="text-xs text-zinc-500 hidden sm:inline">启用</span>
             <Switch
               checked={feature.is_enabled}
               onClick={(e) => e.stopPropagation()}
@@ -126,7 +126,7 @@ export function ChannelFeatureCard({
           <Button
             variant="ghost"
             size="icon"
-            className="size-6 rounded-full text-muted-foreground hover:bg-black/5 shrink-0"
+            className="size-6 rounded-full text-zinc-500 hover:bg-zinc-100 shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               onToggleExpand();
@@ -153,11 +153,11 @@ export function ChannelFeatureCard({
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="border-t border-border/20 bg-muted/10 p-4 space-y-4">
+            <div className="border-t border-zinc-200 bg-zinc-50 p-4 space-y-4">
               <div className="space-y-2">
                 <Label
                   htmlFor={`feature-channel-${feature.id}`}
-                  className="text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]"
+                  className="text-[11px] font-medium uppercase tracking-wider text-zinc-400"
                 >
                   指定渠道
                 </Label>
@@ -171,7 +171,7 @@ export function ChannelFeatureCard({
                 >
                   <SelectTrigger
                     id={`feature-channel-${feature.id}`}
-                    className="h-8 rounded-lg border-border/40 bg-white/50 text-xs shadow-sm transition-colors focus-visible:bg-white"
+                    className="h-8 rounded-lg border-zinc-200 bg-white text-xs shadow-sm transition-colors focus-visible:bg-white"
                   >
                     <SelectValue />
                   </SelectTrigger>
@@ -184,7 +184,7 @@ export function ChannelFeatureCard({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-[var(--color-text-tertiary)]">
+                <p className="text-[11px] text-zinc-400">
                   留空则使用系统自动分配（failover）逻辑
                 </p>
               </div>
@@ -192,7 +192,7 @@ export function ChannelFeatureCard({
               <div className="space-y-2">
                 <Label
                   htmlFor={`feature-model-${feature.id}`}
-                  className="text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]"
+                  className="text-[11px] font-medium uppercase tracking-wider text-zinc-400"
                 >
                   指定模型
                 </Label>
@@ -201,9 +201,9 @@ export function ChannelFeatureCard({
                   value={feature.model}
                   onChange={(e) => onPatch({ model: e.target.value })}
                   placeholder="留空则跟随渠道默认模型"
-                  className="rounded-lg border-border/40 bg-white/50 focus-visible:bg-white h-8 text-xs shadow-sm transition-colors"
+                  className="rounded-lg border-zinc-200 bg-white focus-visible:bg-white h-8 text-xs shadow-sm transition-colors"
                 />
-                <p className="text-[11px] text-[var(--color-text-tertiary)]">
+                <p className="text-[11px] text-zinc-400">
                   当前：{feature.model.trim() || "跟随渠道默认模型"}
                 </p>
               </div>
@@ -211,7 +211,7 @@ export function ChannelFeatureCard({
               <div className="space-y-2">
                 <Label
                   htmlFor={`feature-system-prompt-${feature.id}`}
-                  className="text-[11px] font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]"
+                  className="text-[11px] font-medium uppercase tracking-wider text-zinc-400"
                 >
                   系统提示词 (System Prompt)
                 </Label>
@@ -220,7 +220,7 @@ export function ChannelFeatureCard({
                   value={feature.system_prompt}
                   onChange={(e) => onPatch({ system_prompt: e.target.value })}
                   placeholder="留空则使用该功能默认提示词"
-                  className="min-h-[80px] resize-y rounded-lg border-border/40 bg-white/50 focus-visible:bg-white text-xs shadow-sm transition-colors"
+                  className="min-h-[80px] resize-y rounded-lg border-zinc-200 bg-white focus-visible:bg-white text-xs shadow-sm transition-colors"
                 />
               </div>
             </div>

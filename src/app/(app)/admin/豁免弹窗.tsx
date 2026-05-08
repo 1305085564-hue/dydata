@@ -52,11 +52,17 @@ const CATEGORY_LABELS: Record<ExemptionFormValues["category"], string> = {
   leave: "请假",
 };
 
-export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialogProps) {
+export function ExemptionDialog({
+  open,
+  profile,
+  onOpenChange,
+}: ExemptionDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showPermanentConfirm, setShowPermanentConfirm] = useState(false);
-  const [fallbackYesterday] = useState(() => new Date(Date.now() - 86400000).toISOString().slice(0, 10));
+  const [fallbackYesterday] = useState(() =>
+    new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+  );
 
   const initialValues = useMemo<ExemptionFormValues>(() => {
     if (!profile) {
@@ -76,7 +82,8 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     };
   }, [profile]);
 
-  const [formValues, setFormValues] = useState<ExemptionFormValues>(initialValues);
+  const [formValues, setFormValues] =
+    useState<ExemptionFormValues>(initialValues);
 
   useEffect(() => {
     setFormValues(initialValues);
@@ -89,7 +96,10 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
     }
   }, [open]);
 
-  function updateField<K extends keyof ExemptionFormValues>(key: K, value: ExemptionFormValues[K]) {
+  function updateField<K extends keyof ExemptionFormValues>(
+    key: K,
+    value: ExemptionFormValues[K],
+  ) {
     setFormValues((current) => ({
       ...current,
       [key]: value,
@@ -105,9 +115,14 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
       mode,
       category: current.category,
       reason: current.reason ?? "",
-      date: mode === "yesterday" ? current.date ?? current.startDate ?? current.endDate ?? "" : undefined,
-      startDate: mode === "range" ? current.startDate ?? current.date ?? "" : undefined,
-      endDate: mode === "range" ? current.endDate ?? current.date ?? "" : undefined,
+      date:
+        mode === "yesterday"
+          ? current.date ?? current.startDate ?? current.endDate ?? ""
+          : undefined,
+      startDate:
+        mode === "range" ? current.startDate ?? current.date ?? "" : undefined,
+      endDate:
+        mode === "range" ? current.endDate ?? current.date ?? "" : undefined,
     }));
   }
 
@@ -129,7 +144,9 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
         return;
       }
 
-      feedbackToast.success(`${profile.name}已更新为${CATEGORY_LABELS[formValues.category]} ${MODE_LABELS[formValues.mode]}`);
+      feedbackToast.success(
+        `${profile.name}已更新为${CATEGORY_LABELS[formValues.category]} ${MODE_LABELS[formValues.mode]}`,
+      );
       onOpenChange(false);
     });
   }
@@ -164,11 +181,16 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
 
   return (
     <Dialog open={open} onOpenChange={closeDialog}>
-      <DialogContent className="sm:max-w-md" showCloseButton={!isPending}>
+      <DialogContent
+        className="sm:max-w-md rounded-[2rem] border border-zinc-200 bg-white shadow-lg"
+        showCloseButton={!isPending}
+      >
         <DialogHeader>
           <DialogTitle>设置豁免</DialogTitle>
           <DialogDescription>
-            {profile ? `为 ${profile.name} 设置正常、昨日豁免、多日豁免或永久豁免。` : ""}
+            {profile
+              ? `为 ${profile.name} 设置正常、昨日豁免、多日豁免或永久豁免。`
+              : ""}
           </DialogDescription>
         </DialogHeader>
 
@@ -177,11 +199,18 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
             <label className="text-sm font-medium">申请语义</label>
             <Select
               value={formValues.category}
-              onValueChange={(value) => updateField("category", value as ExemptionFormValues["category"])}
+              onValueChange={(value) =>
+                updateField(
+                  "category",
+                  value as ExemptionFormValues["category"],
+                )
+              }
               disabled={isPending}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue>{CATEGORY_LABELS[formValues.category]}</SelectValue>
+              <SelectTrigger className="w-full rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10">
+                <SelectValue>
+                  {CATEGORY_LABELS[formValues.category]}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="waive">免交</SelectItem>
@@ -192,8 +221,12 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
 
           <div className="space-y-2">
             <label className="text-sm font-medium">日期模式</label>
-            <Select value={formValues.mode} onValueChange={handleModeChange} disabled={isPending}>
-              <SelectTrigger className="w-full">
+            <Select
+              value={formValues.mode}
+              onValueChange={handleModeChange}
+              disabled={isPending}
+            >
+              <SelectTrigger className="w-full rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10">
                 <SelectValue>{MODE_LABELS[formValues.mode]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -213,6 +246,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
                 value={formValues.date ?? fallbackYesterday}
                 onChange={(e) => updateField("date", e.target.value)}
                 disabled={isPending}
+                className="rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
               />
             </div>
           )}
@@ -226,6 +260,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
                   value={formValues.startDate ?? ""}
                   onChange={(e) => updateField("startDate", e.target.value)}
                   disabled={isPending}
+                  className="rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
                 />
               </div>
               <div className="space-y-2">
@@ -235,6 +270,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
                   value={formValues.endDate ?? ""}
                   onChange={(e) => updateField("endDate", e.target.value)}
                   disabled={isPending}
+                  className="rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
                 />
               </div>
             </div>
@@ -247,7 +283,7 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
               onChange={(e) => updateField("reason", e.target.value)}
               disabled={isPending}
               rows={3}
-              className="flex min-h-20 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50"
+              className="flex min-h-20 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:opacity-50"
               placeholder="可选，建议写明原因"
             />
           </div>
@@ -256,16 +292,30 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
         <DialogFooter className="gap-2 sm:justify-between">
           <div>
             {profile && profile.exempt_type && (
-              <Button variant="outline" onClick={handleClearClick} disabled={isPending}>
+              <Button
+                variant="outline"
+                onClick={handleClearClick}
+                disabled={isPending}
+                className="rounded-xl border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+              >
                 清除豁免
               </Button>
             )}
           </div>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+              className="rounded-xl border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+            >
               取消
             </Button>
-            <Button onClick={handleSaveClick} disabled={isPending}>
+            <Button
+              onClick={handleSaveClick}
+              disabled={isPending}
+              className="rounded-xl bg-zinc-950 text-white hover:bg-zinc-800"
+            >
               保存
             </Button>
           </div>
@@ -274,7 +324,9 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
       <ConfirmDialog
         open={showClearConfirm}
         title="确认清除豁免"
-        description={profile ? `确定清除 ${profile.name} 的豁免状态并恢复为正常吗？` : ""}
+        description={
+          profile ? `确定清除 ${profile.name} 的豁免状态并恢复为正常吗？` : ""
+        }
         confirmText="确认清除"
         destructive
         loading={isPending}
@@ -284,7 +336,9 @@ export function ExemptionDialog({ open, profile, onOpenChange }: ExemptionDialog
       <ConfirmDialog
         open={showPermanentConfirm}
         title="确认设置永久豁免"
-        description={profile ? `确定将 ${profile.name} 设置为永久豁免吗？` : ""}
+        description={
+          profile ? `确定将 ${profile.name} 设置为永久豁免吗？` : ""
+        }
         confirmText="确认设置"
         loading={isPending}
         onConfirm={submitExemption}

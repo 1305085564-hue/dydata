@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { cn } from "@/lib/utils";
 import { PERMISSION_KEYS, PERMISSION_LABELS } from "@/types";
 import type { Permissions, UserRole } from "@/types";
 import { updatePermissions, changeRole, removeMember, resetMemberPassword } from "./actions";
@@ -259,16 +260,16 @@ export function PermissionManager({
   return (
     <div className="space-y-6">
       {filteredMembers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">暂无可管理成员</p>
+        <p className="text-sm text-zinc-500">暂无可管理成员</p>
       ) : (
         <>
-          <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3">
+          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-zinc-500">
                 成员筛选：当前显示 {filteredMembers.length} / {visibleMembers.length} 人
               </p>
               <div className="flex items-center gap-2">
-                <Label htmlFor="team-filter" className="text-sm">
+                <Label htmlFor="team-filter" className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   团队
                 </Label>
                 <Select
@@ -279,7 +280,7 @@ export function PermissionManager({
                     setPmShowAll(false);
                   }}
                 >
-                  <SelectTrigger id="team-filter" className="h-10 w-[150px]">
+                  <SelectTrigger id="team-filter" className="h-10 w-[150px] bg-white border-zinc-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -294,7 +295,7 @@ export function PermissionManager({
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Label htmlFor="member-search" className="text-sm sm:w-20">
+              <Label htmlFor="member-search" className="text-xs font-semibold uppercase tracking-wider text-zinc-400 sm:w-20">
                 搜索成员
               </Label>
               <Input
@@ -306,27 +307,34 @@ export function PermissionManager({
                   setPmShowAll(false);
                 }}
                 placeholder="输入姓名、邮箱或团队"
-                className="h-10 sm:max-w-xs"
+                className="h-10 rounded-xl bg-white border-zinc-200 sm:max-w-xs"
               />
             </div>
           </div>
 
           {capabilities.canEditPermissions ? (
-            <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
+            <div
+              className={cn(
+                "flex flex-col gap-3 rounded-xl p-3 sm:flex-row sm:items-center sm:justify-between",
+                hasPermissionChanges
+                  ? "bg-amber-50 border border-amber-200"
+                  : "bg-zinc-50 border border-zinc-200"
+              )}
+            >
+              <p className="text-sm text-zinc-500">
                 {hasPermissionChanges ? "有未保存更改" : "管理员权限支持批量勾选后统一保存"}
               </p>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  className="h-11 md:h-8"
+                  className="h-10 rounded-xl border-zinc-200"
                   onClick={handleCancelPermissions}
                   disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
                 >
                   取消
                 </Button>
                 <Button
-                  className="h-11 md:h-8"
+                  className="h-10 rounded-xl bg-zinc-950 text-white hover:-translate-y-[1px] hover:shadow-lg"
                   onClick={handleSavePermissions}
                   disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
                 >
@@ -336,19 +344,26 @@ export function PermissionManager({
             </div>
           ) : null}
 
-          <div className="space-y-4">
+          <div className="space-y-0">
             {pagedMembers.map((member) => (
-              <div key={member.id} className="rounded-lg border p-4 space-y-3">
+              <div key={member.id} className="py-4 border-b border-zinc-100 last:border-b-0">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="font-medium">{member.name}</span>
-                      <Badge variant={member.role === "admin" ? "default" : "secondary"}>
-                        {member.role === "admin" ? "管理员" : "成员"}
-                      </Badge>
-                      <Badge variant="outline">{getTeamLabel(member.teamName)}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{member.email || "未记录邮箱"}</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="font-medium text-zinc-950">{member.name}</span>
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        member.role === "admin"
+                          ? "bg-zinc-950 text-white"
+                          : "bg-zinc-100 text-zinc-600"
+                      )}
+                    >
+                      {member.role === "admin" ? "管理员" : "成员"}
+                    </span>
+                    <span className="inline-flex items-center rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs text-zinc-500">
+                      {getTeamLabel(member.teamName)}
+                    </span>
+                    <span className="text-sm text-zinc-500">{member.email || "未记录邮箱"}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -361,9 +376,9 @@ export function PermissionManager({
                     }) ? (
                       <>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="h-11 sm:h-10"
+                          className="h-9 text-zinc-500 hover:text-zinc-950"
                           onClick={() =>
                             openPasswordResetDialog(
                               member.id,
@@ -379,9 +394,9 @@ export function PermissionManager({
                           重置密码
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="h-11 sm:h-10 text-muted-foreground hover:text-destructive hover:border-destructive"
+                          className="h-9 text-zinc-500 hover:text-[#B42318]"
                           onClick={() =>
                             setRemoveTarget({ memberId: member.id, memberName: member.name })
                           }
@@ -404,7 +419,7 @@ export function PermissionManager({
                           isChangingRole || isSavingPermissions || isRemoving || isResettingPassword
                         }
                       >
-                        <SelectTrigger className="h-11 w-full sm:h-10 sm:w-28">
+                        <SelectTrigger className="h-9 w-full sm:w-28 bg-white border-zinc-200">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -417,7 +432,7 @@ export function PermissionManager({
                 </div>
 
                 {member.role === "admin" && capabilities.canEditPermissions ? (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 bg-zinc-50 rounded-xl p-3">
                     {PERMISSION_KEYS.map((key) => (
                       <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
                         <Checkbox
@@ -427,7 +442,7 @@ export function PermissionManager({
                           }
                           disabled={isSavingPermissions || isChangingRole}
                         />
-                        {PERMISSION_LABELS[key]}
+                        <span className="text-zinc-700">{PERMISSION_LABELS[key]}</span>
                       </label>
                     ))}
                   </div>
@@ -445,7 +460,7 @@ export function PermissionManager({
                     size="sm"
                     disabled={pmPage === 1}
                     onClick={() => setPmPage((page) => page - 1)}
-                    className="h-8 px-3 text-xs"
+                    className="h-8 px-3 text-xs rounded-xl border-zinc-200"
                   >
                     上一页
                   </Button>
@@ -455,7 +470,12 @@ export function PermissionManager({
                       size="sm"
                       variant={page === pmPage ? "default" : "outline"}
                       onClick={() => setPmPage(page)}
-                      className={`h-8 w-8 p-0 text-xs${page === pmPage ? " bg-zinc-950 hover:bg-zinc-800 border-zinc-950" : ""}`}
+                      className={cn(
+                        "h-8 w-8 p-0 text-xs rounded-xl",
+                        page === pmPage
+                          ? "bg-zinc-950 hover:bg-zinc-800 text-white border-zinc-950"
+                          : "border-zinc-200"
+                      )}
                     >
                       {page}
                     </Button>
@@ -465,7 +485,7 @@ export function PermissionManager({
                     size="sm"
                     disabled={pmPage === totalPages}
                     onClick={() => setPmPage((page) => page + 1)}
-                    className="h-8 px-3 text-xs"
+                    className="h-8 px-3 text-xs rounded-xl border-zinc-200"
                   >
                     下一页
                   </Button>
@@ -474,7 +494,7 @@ export function PermissionManager({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-muted-foreground h-8"
+                className="text-xs text-zinc-500 h-8"
                 onClick={() => {
                   setPmShowAll((value) => !value);
                   if (pmShowAll) setPmPage(1);
@@ -497,7 +517,7 @@ export function PermissionManager({
           }
         }}
       >
-        <DialogContent showCloseButton={!isResettingPassword}>
+        <DialogContent className="rounded-[2rem] bg-white border border-zinc-200 shadow-lg" showCloseButton={!isResettingPassword}>
           <DialogHeader>
             <DialogTitle>重置密码</DialogTitle>
             <DialogDescription>
@@ -508,7 +528,7 @@ export function PermissionManager({
           </DialogHeader>
           <div className="space-y-4">
             {passwordResetTarget ? (
-              <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500">
                 <p>{passwordResetTarget.memberEmail || "未记录邮箱"}</p>
                 <p>{getTeamLabel(passwordResetTarget.teamName)}</p>
               </div>
@@ -523,6 +543,7 @@ export function PermissionManager({
                 placeholder="至少 6 位"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
+                className="rounded-xl bg-white border-zinc-200"
               />
             </div>
             <div className="space-y-2">
@@ -535,12 +556,14 @@ export function PermissionManager({
                 placeholder="再次输入新密码"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
+                className="rounded-xl bg-white border-zinc-200"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="bg-white border-zinc-200">
             <Button
               variant="outline"
+              className="rounded-xl border-zinc-200"
               onClick={() => {
                 setPasswordResetTarget(null);
                 setNewPassword("");
@@ -550,7 +573,11 @@ export function PermissionManager({
             >
               取消
             </Button>
-            <Button onClick={handleResetPassword} disabled={isResettingPassword}>
+            <Button
+              className="rounded-xl bg-zinc-950 text-white hover:-translate-y-[1px] hover:shadow-lg"
+              onClick={handleResetPassword}
+              disabled={isResettingPassword}
+            >
               {isResettingPassword ? "提交中..." : "确认重置"}
             </Button>
           </DialogFooter>
@@ -570,6 +597,7 @@ export function PermissionManager({
         confirmText="确认调整"
         destructive={roleChangeTarget?.role === "member"}
         loading={isChangingRole}
+        className="rounded-[2rem] bg-white border border-zinc-200 shadow-lg"
         onConfirm={confirmRoleChange}
         onOpenChange={(open) => {
           if (!open) setRoleChangeTarget(null);
@@ -583,6 +611,7 @@ export function PermissionManager({
         confirmText="确认移除"
         destructive
         loading={isRemoving}
+        className="rounded-[2rem] bg-white border border-zinc-200 shadow-lg"
         onConfirm={handleRemoveMember}
         onOpenChange={(open) => {
           if (!open) setRemoveTarget(null);

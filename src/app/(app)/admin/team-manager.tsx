@@ -47,19 +47,26 @@ export function TeamManager({ teams }: TeamManagerProps) {
             value={teamName}
             onChange={(event) => setTeamName(event.target.value)}
             placeholder="例如：上海一部"
-            className="h-10"
+            className="h-10 rounded-xl bg-white border-zinc-200"
           />
         </div>
-        <Button onClick={handleCreate} disabled={isPending || !teamName.trim()} className="h-10">
+        <Button
+          onClick={handleCreate}
+          disabled={isPending || !teamName.trim()}
+          className="h-10 bg-zinc-950 text-white rounded-xl hover:-translate-y-[1px] hover:shadow-lg"
+        >
           {isPending ? "创建中..." : "新增团队"}
         </Button>
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">当前团队</p>
+        <p className="text-sm font-medium text-zinc-950">当前团队</p>
         <div className="flex flex-wrap gap-2">
           {teams.map((team) => (
-            <Badge key={team.id} variant="outline" className="rounded-full px-3 py-1">
+            <Badge
+              key={team.id}
+              className="rounded-full px-3 py-1 border-zinc-200 bg-zinc-50 text-zinc-700"
+            >
               {team.name}
             </Badge>
           ))}

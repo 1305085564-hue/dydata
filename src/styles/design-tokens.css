@@ -2,13 +2,13 @@
   --color-bg: #F9F9FB;
   --color-surface: #ffffff;
   --color-primary: #0a84ff;
-  --color-success: #34c759;
-  --color-danger: #ff3b30;
-  --color-warning: #ff9500;
-  --color-text-primary: #1d1d1f;
-  --color-text-secondary: #63636a;
-  --color-text-tertiary: #9898a1;
-  --color-border: rgba(17, 24, 39, 0.08);
+  --color-success: #067647;
+  --color-danger: #B42318;
+  --color-warning: #EAB308;
+  --color-text-primary: #09090B;
+  --color-text-secondary: #71717A;
+  --color-text-tertiary: #A1A1AA;
+  --color-border: #E4E4E7;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -32,10 +32,28 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.25, 0, 0, 1);
 
+  /* 旧 glass token — admin 页面不再使用，保留供 dashboard 等旧页面兼容 */
   --glass-bg: color-mix(in srgb, white 82%, #f4f4f5);
   --glass-blur: blur(24px);
   --nav-bg: color-mix(in srgb, white 78%, #f4f4f5);
   --nav-blur: blur(18px);
+
+  /* Admin 专用 token — Studio Minimalist V1.0 */
+  --admin-bg: #F9F9FB;
+  --admin-surface: #ffffff;
+  --admin-border: #E4E4E7;
+  --admin-text-primary: #09090B;
+  --admin-text-secondary: #71717A;
+  --admin-text-tertiary: #A1A1AA;
+  --admin-action: #09090B;
+  --admin-success: #067647;
+  --admin-success-bg: #ECFDF3;
+  --admin-warning: #EAB308;
+  --admin-warning-bg: #FEFCE8;
+  --admin-danger: #B42318;
+  --admin-danger-bg: #FEF3F2;
+  --admin-info: #444CE7;
+  --admin-info-bg: #EEF4FF;
 }
 
 .dark {
@@ -64,7 +82,7 @@
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-card);
   }
-  
+
   .glass-nav {
     background-color: var(--nav-bg);
     backdrop-filter: var(--nav-blur);

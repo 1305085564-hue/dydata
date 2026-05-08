@@ -102,7 +102,7 @@ function buildConfirmResultMessage(options: {
 
 function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-sm prose-invert max-w-none text-foreground prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-sm prose-pre:bg-background prose-pre:border prose-pre:border-border prose-pre:p-3 prose-code:rounded-sm prose-code:bg-muted prose-code:text-primary prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-muted/50 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-blue-400 prose-strong:text-foreground">
+    <div className="prose prose-sm prose-invert max-w-none text-foreground prose-p:my-1.5 prose-pre:my-2 prose-pre:rounded-sm prose-pre:bg-background prose-pre:border prose-pre:border-border prose-pre:p-3 prose-code:rounded-sm prose-code:bg-muted prose-code:text-zinc-950 prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-ul:my-1.5 prose-ul:list-square prose-ul:pl-4 prose-ol:my-1.5 prose-a:text-zinc-500 prose-strong:text-foreground">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );
@@ -257,11 +257,11 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
                {EXAMPLES.map((ex, i) => (
                  <div 
                    key={ex} 
-                   className="group flex items-center gap-3 cursor-pointer p-2 hover:bg-muted/50 rounded-sm transition-colors animate-in slide-in-from-bottom-2"
+                   className="group flex items-center gap-3 cursor-pointer p-2 hover:bg-zinc-50 rounded-sm transition-colors animate-in slide-in-from-bottom-2"
                    style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
                    onClick={() => sendMessage(ex)}
                  >
-                   <ChevronRight className="h-4 w-4 text-primary/80 group-hover:text-primary" />
+                   <ChevronRight className="h-4 w-4 text-zinc-500 group-hover:text-zinc-950" />
                    <span className="text-foreground group-hover:text-foreground">{ex}</span>
                  </div>
                ))}
@@ -283,7 +283,7 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
                 >
                   {isUser ? (
                     <div className="flex items-start gap-2 w-full">
-                       <span className="text-primary mt-1 flex-shrink-0">{`> [USER]`}</span>
+                       <span className="text-zinc-950 mt-1 flex-shrink-0">{`> [USER]`}</span>
                        <div className="text-foreground mt-1 whitespace-pre-wrap">{msg.content}</div>
                     </div>
                   ) : (
@@ -291,13 +291,13 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
                        <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground mb-2 uppercase">
                           <TerminalSquare className="h-3.5 w-3.5" />
                           <span>系统回复</span>
-                          {msg.type === "result" && <span className="text-blue-400 border border-blue-900/50 bg-blue-950/30 px-1.5 py-0.5 rounded-sm">执行结果</span>}
+                          {msg.type === "result" && <span className="text-zinc-950 border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 rounded-sm">执行结果</span>}
                           {msg.type === "error" && <span className="text-destructive border border-red-900/50 bg-red-950/30 px-1.5 py-0.5 rounded-sm">执行异常</span>}
                        </div>
                        
                        <div className="text-foreground">
                          {msg.content && <MarkdownContent content={msg.content} />}
-                         {msg.details && <div className="mt-3 bg-background/40 border border-border/80 rounded-sm p-3"><AssistantDetailSections details={msg.details} /></div>}
+                         {msg.details && <div className="mt-3 bg-zinc-50 border border-zinc-200 rounded-sm p-3"><AssistantDetailSections details={msg.details} /></div>}
                        </div>
                        
                        {msg.retryable && (
@@ -333,7 +333,7 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
             {loading && (
               <div className="flex flex-col w-full pl-6 border-l border-border/80 py-2 animate-pulse">
                 <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-                  <Zap className="h-3.5 w-3.5 text-primary" />
+                  <Zap className="h-3.5 w-3.5 text-zinc-950" />
                   <span>处理请求中</span>
                 </div>
                 <div className="flex items-center gap-2 mt-2 text-muted-foreground text-sm">
@@ -350,8 +350,8 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
 
       {/* Input Area */}
       <div className="p-4 bg-background border-t border-border">
-        <div className="max-w-4xl mx-auto relative flex items-end gap-2 bg-background border border-border rounded-sm focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all">
-          <div className="absolute left-3 bottom-2.5 text-primary font-bold">
+        <div className="max-w-4xl mx-auto relative flex items-end gap-2 bg-background border border-zinc-200 rounded-sm focus-within:border-zinc-950/20 focus-within:ring-1 focus-within:ring-zinc-950/10 transition-all">
+          <div className="absolute left-3 bottom-2.5 text-zinc-950 font-bold">
             {`>`}
           </div>
           <textarea
@@ -367,7 +367,7 @@ export default function ChatPanel({ actorRole, onHistoryRefresh, onOpenHistory }
           <button
             onClick={() => sendMessage(input)}
             disabled={!canSend}
-            className="mb-2 mr-2 p-1.5 rounded-sm text-muted-foreground hover:text-primary hover:bg-muted disabled:opacity-50 disabled:hover:text-muted-foreground disabled:hover:bg-transparent transition-colors"
+            className="mb-2 mr-2 p-1.5 rounded-sm text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50 disabled:opacity-50 disabled:hover:text-zinc-500 disabled:hover:bg-transparent transition-colors"
           >
             <Send className="h-4 w-4" />
           </button>

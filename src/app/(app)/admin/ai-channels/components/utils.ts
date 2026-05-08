@@ -50,7 +50,7 @@ export function getStatusMeta(channel: AiChannelRow) {
     return {
       label: "已禁用",
       variant: "outline" as const,
-      className: "border-border/70 bg-muted/70 text-muted-foreground",
+      className: "border-zinc-200 bg-zinc-50 text-zinc-500",
     };
   }
 

@@ -52,15 +52,15 @@ export function getHistoryErrorMessage(errorMessage: string) {
 function resultLabel(result: string) {
   switch (result) {
     case "success":
-      return { label: "成功", color: "text-primary", border: "border-primary/30", bg: "bg-primary/10" };
+      return { label: "成功", color: "text-zinc-950", border: "border-zinc-200", bg: "bg-zinc-100" };
     case "failed":
       return { label: "失败", color: "text-destructive", border: "border-destructive/30", bg: "bg-destructive/10" };
     case "cancelled":
-      return { label: "中止", color: "text-muted-foreground", border: "border-border", bg: "bg-muted/50" };
+      return { label: "中止", color: "text-zinc-500", border: "border-zinc-200", bg: "bg-zinc-50" };
     case "pending_confirm":
       return { label: "待确认", color: "text-amber-500", border: "border-amber-900", bg: "bg-amber-950/30" };
     default:
-      return { label: result.substring(0,4).toUpperCase(), color: "text-muted-foreground", border: "border-border", bg: "bg-muted/50" };
+      return { label: result.substring(0,4).toUpperCase(), color: "text-zinc-500", border: "border-zinc-200", bg: "bg-zinc-50" };
   }
 }
 
@@ -99,7 +99,7 @@ function SidebarContent({
           <input 
             type="text" 
             placeholder="搜索记录..." 
-            className="w-full w-full bg-background/50 border border-border rounded-md py-1.5 pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+            className="w-full bg-white border border-zinc-200 rounded-md py-1.5 pl-8 pr-3 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-950/10 transition-all"
           />
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -109,9 +109,9 @@ function SidebarContent({
               onClick={() => onChangeFilter(item.value)}
               className={cn(
                 "px-2 py-0.5 text-[10px] font-semibold tracking-wider rounded-sm transition-all border",
-                filter === item.value 
-                  ? "bg-primary text-primary-foreground border-primary" 
-                  : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                filter === item.value
+                  ? "bg-zinc-950 text-white border-zinc-950"
+                  : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-950"
               )}
             >
               {item.label}
@@ -123,7 +123,7 @@ function SidebarContent({
       <div className="flex-1 overflow-y-auto p-2 custom-scrollbar relative">
         {loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-xs text-muted-foreground gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
             <span>同步记录中...</span>
           </div>
         ) : error ? (
@@ -152,12 +152,12 @@ function SidebarContent({
                     "w-full text-left p-2 transition-all border-l-2 relative group",
                     selectedId === record.id 
                       ? "bg-muted border-primary" 
-                      : "bg-transparent border-transparent hover:bg-muted/50 hover:border-border"
+                      : "bg-transparent border-transparent hover:bg-zinc-50 hover:border-zinc-200"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs text-foreground font-medium group-hover:text-primary transition-colors">{record.description}</div>
+                      <div className="truncate text-xs text-zinc-950 font-medium group-hover:text-zinc-950 transition-colors">{record.description}</div>
                       <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
                         <span className="text-muted-foreground">{record.adminName.substring(0, 8)}</span>
                         <span>{new Date(record.createdAt).toLocaleTimeString("en-GB", { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' })}</span>
@@ -177,7 +177,7 @@ function SidebarContent({
               <button 
                 onClick={onLoadMore} 
                 disabled={loadingMore}
-                className="w-full mt-2 py-2 text-xs border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors rounded-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                className="w-full mt-2 py-2 text-xs border border-dashed border-zinc-200 text-zinc-500 hover:text-zinc-950 hover:border-zinc-950/20 transition-colors rounded-sm uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {loadingMore ? (
                   <><Loader2 className="h-3 w-3 animate-spin" /> 加载中...</>
@@ -262,9 +262,9 @@ export default function HistorySidebar({
   if (mobile) {
     return (
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-background/95 backdrop-blur-xl border-border rounded-md overflow-hidden text-foreground ">
-          <DialogHeader className="px-4 py-3 border-b border-border bg-background/80 shrink-0 flex flex-row items-center justify-between">
-            <DialogTitle className="text-sm font-semibold uppercase tracking-wider text-foreground">历史记录</DialogTitle>
+        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-white border border-zinc-200 rounded-[2rem] shadow-sm overflow-hidden text-zinc-950">
+          <DialogHeader className="px-4 py-3 border-b border-zinc-200 bg-zinc-50 shrink-0 flex flex-row items-center justify-between">
+            <DialogTitle className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">历史记录</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-hidden">
             <SidebarContent

@@ -49,15 +49,15 @@ function formatJson(value: unknown) {
 function resultStatus(result?: string) {
   switch (result) {
     case "success":
-      return { icon: <CheckCircle2 className="h-4 w-4" />, text: "SUCCESS", classes: "text-primary bg-primary/10 border-primary/30" };
+      return { icon: <CheckCircle2 className="h-4 w-4" />, text: "SUCCESS", classes: "text-zinc-950 bg-zinc-100 border-zinc-200" };
     case "failed":
       return { icon: <XCircle className="h-4 w-4" />, text: "FAILED", classes: "text-destructive bg-destructive/10 border-destructive/30" };
     case "cancelled":
-      return { icon: <AlertTriangle className="h-4 w-4" />, text: "ABORTED", classes: "text-muted-foreground bg-muted/50 border-border" };
+      return { icon: <AlertTriangle className="h-4 w-4" />, text: "ABORTED", classes: "text-zinc-500 bg-zinc-50 border-zinc-200" };
     case "pending_confirm":
       return { icon: <Loader2 className="h-4 w-4 animate-spin" />, text: "PENDING_AUTH", classes: "text-amber-500 bg-amber-950/30 border-amber-900" };
     default:
-      return { icon: <Terminal className="h-4 w-4" />, text: result?.toUpperCase() || "UNKNOWN", classes: "text-muted-foreground bg-muted/50 border-border" };
+      return { icon: <Terminal className="h-4 w-4" />, text: result?.toUpperCase() || "UNKNOWN", classes: "text-zinc-500 bg-zinc-50 border-zinc-200" };
   }
 }
 
@@ -102,11 +102,11 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
 
   return (
     <Dialog open={!!id} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border text-foreground  p-0 overflow-hidden shadow-2xl">
-        <DialogHeader className="px-5 py-4 border-b border-border bg-background/80">
+      <DialogContent className="max-w-2xl bg-white border border-zinc-200 shadow-sm text-zinc-950 p-0 overflow-hidden">
+        <DialogHeader className="px-5 py-4 border-b border-zinc-200 bg-zinc-50">
           <DialogTitle className="flex items-center justify-between text-sm uppercase tracking-wider text-foreground">
             <span className="flex items-center gap-2">
-              <Terminal className="h-4 w-4 text-primary" />
+              <Terminal className="h-4 w-4 text-zinc-950" />
               操作详情
             </span>
             {detail?.id && <span className="text-[10px] text-muted-foreground">ID: {detail.id.substring(0,8)}</span>}
@@ -116,7 +116,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
         <div className="p-5 overflow-y-auto max-h-[80vh] custom-scrollbar space-y-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-950" />
               <div className="text-xs tracking-widest uppercase">加载数据中...</div>
             </div>
           ) : error ? (
@@ -126,7 +126,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
           ) : detail ? (
             <>
               {/* Header Info */}
-              <div className="flex flex-col gap-4 border border-border bg-muted/20 rounded-sm p-4">
+              <div className="flex flex-col gap-4 border border-zinc-200 bg-zinc-50 rounded-sm p-4">
                 <div className="flex justify-between items-start gap-4">
                   <div className="space-y-1">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest">操作描述</div>
@@ -172,7 +172,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
 
               {detail.aiReasoning && (
                 <div className="space-y-2">
-                   <div className="text-[10px] text-primary uppercase tracking-widest font-bold">AI 推理过程</div>
+                   <div className="text-[10px] text-zinc-950 uppercase tracking-widest font-bold">AI 推理过程</div>
                    <div className="bg-background border border-border rounded-sm p-3 text-sm text-muted-foreground leading-relaxed">
                       {detail.aiReasoning}
                    </div>
@@ -186,11 +186,11 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                   
                   {detail.toolParams !== undefined && detail.toolParams !== null && (
                     <Collapsible className="border border-border rounded-sm overflow-hidden bg-background" defaultOpen>
-                      <CollapsibleTrigger className="flex w-full justify-between items-center bg-muted/50 px-3 py-2 text-xs hover:bg-muted transition-colors">
+                      <CollapsibleTrigger className="flex w-full justify-between items-center bg-zinc-50 px-3 py-2 text-xs hover:bg-zinc-100 transition-colors">
                         <span className="text-muted-foreground">调用参数</span>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
-                        <pre className="p-3 text-[11px] text-primary overflow-x-auto">
+                        <pre className="p-3 text-[11px] text-zinc-950 overflow-x-auto">
                           {formatJson(detail.toolParams)}
                         </pre>
                       </CollapsibleContent>
@@ -199,7 +199,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
 
                   {detail.backupSql && (
                     <Collapsible className="border border-border rounded-sm overflow-hidden bg-background">
-                      <CollapsibleTrigger className="flex w-full justify-between items-center bg-muted/50 px-3 py-2 text-xs hover:bg-muted transition-colors">
+                      <CollapsibleTrigger className="flex w-full justify-between items-center bg-zinc-50 px-3 py-2 text-xs hover:bg-zinc-100 transition-colors">
                         <span className="text-muted-foreground">回滚 SQL</span>
                       </CollapsibleTrigger>
                       <CollapsibleContent>

@@ -404,23 +404,23 @@ export default function AIChannelsClient() {
     <div className="w-full space-y-6 px-4 py-4 sm:px-6 lg:px-8">
       {/* 极简顶部导航 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-        <h1 className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">AI 功能区</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-950">AI 功能区</h1>
         <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[var(--color-text-secondary)]">
-          <Link href="/admin" className="flex items-center gap-1.5 hover:text-[var(--color-text-primary)] transition-colors">
+          <Link href="/admin" className="flex items-center gap-1.5 hover:text-zinc-950 transition-colors">
             返回总控台
           </Link>
           <div className="h-3.5 w-px bg-border/60" />
-          <Link href="/admin/ai-rewrite" className="flex items-center gap-1.5 hover:text-[var(--color-text-primary)] transition-colors">
+          <Link href="/admin/ai-rewrite" className="flex items-center gap-1.5 hover:text-zinc-950 transition-colors">
             文案改写配置
           </Link>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center rounded-[24px] border border-white/70 bg-white/78 shadow-[var(--shadow-card)] backdrop-blur-[16px]">
+        <div className="flex h-64 items-center justify-center rounded-[2rem] border border-zinc-200 bg-white shadow-sm">
           <div className="flex flex-col items-center gap-4 text-[var(--color-text-secondary)]">
-            <div className="size-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-            <p className="font-medium text-[var(--color-text-primary)]">加载数据中...</p><p className="text-xs text-[var(--color-text-secondary)]">正在获取渠道与绑定配置</p>
+            <div className="size-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
+            <p className="font-medium text-zinc-950">加载数据中...</p><p className="text-xs text-zinc-500">正在获取渠道与绑定配置</p>
           </div>
         </div>
       ) : (

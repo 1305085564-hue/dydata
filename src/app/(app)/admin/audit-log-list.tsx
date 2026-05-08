@@ -24,17 +24,35 @@ interface AuditLogListProps {
   logs: AuditLog[];
 }
 
-const ACTION_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  update_report: { label: "编辑数据", variant: "secondary" },
-  delete_report: { label: "删除数据", variant: "destructive" },
-  set_exempt: { label: "设置豁免", variant: "outline" },
-  clear_exempt: { label: "清除豁免", variant: "outline" },
-  submit_notify: { label: "提交通知", variant: "default" },
+const ACTION_STYLES: Record<
+  string,
+  { label: string; className: string }
+> = {
+  update_report: {
+    label: "编辑数据",
+    className: "bg-zinc-100 text-zinc-700 border-zinc-200",
+  },
+  delete_report: {
+    label: "删除数据",
+    className: "bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]",
+  },
+  set_exempt: {
+    label: "设置豁免",
+    className: "bg-[#FEFCE8] text-[#92400E] border-[#FDE68A]",
+  },
+  clear_exempt: {
+    label: "清除豁免",
+    className: "bg-[#ECFDF3] text-[#067647] border-[#A7F3D0]",
+  },
+  submit_notify: {
+    label: "提交通知",
+    className: "bg-[#EEF4FF] text-[#444CE7] border-[#C7D2FE]",
+  },
 };
 
 export function AuditLogList({ logs }: AuditLogListProps) {
   if (logs.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">暂无操作记录</p>;
+    return <p className="py-4 text-sm text-zinc-500">暂无操作记录</p>;
   }
 
   return (
@@ -42,26 +60,40 @@ export function AuditLogList({ logs }: AuditLogListProps) {
       <div className="hidden sm:block">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>时间</TableHead>
-              <TableHead>操作人</TableHead>
-              <TableHead>操作</TableHead>
-              <TableHead>详情</TableHead>
+            <TableRow className="border-zinc-200 hover:bg-transparent">
+              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">时间</TableHead>
+              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">操作人</TableHead>
+              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">操作</TableHead>
+              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">详情</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {logs.map((log) => {
-              const actionInfo = ACTION_LABELS[log.action] ?? { label: log.action, variant: "secondary" as const };
+              const actionInfo = ACTION_STYLES[log.action] ?? {
+                label: log.action,
+                className: "bg-zinc-100 text-zinc-700 border-zinc-200",
+              };
               return (
-                <TableRow key={log.id}>
-                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                    {new Date(log.created_at).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                <TableRow key={log.id} className="border-zinc-200 hover:bg-zinc-50">
+                  <TableCell className="whitespace-nowrap text-sm text-zinc-500">
+                    {new Date(log.created_at).toLocaleString("zh-CN", {
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </TableCell>
-                  <TableCell className="text-sm">{log.user_name ?? log.user_id.slice(0, 8)}</TableCell>
+                  <TableCell className="text-sm text-zinc-950">
+                    {log.user_name ?? log.user_id.slice(0, 8)}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={actionInfo.variant} className="text-xs">{actionInfo.label}</Badge>
+                    <Badge variant="outline" className={`text-xs ${actionInfo.className}`}>
+                      {actionInfo.label}
+                    </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground max-w-[300px] truncate">{log.detail ?? "-"}</TableCell>
+                  <TableCell className="max-w-[300px] truncate text-sm text-zinc-500">
+                    {log.detail ?? "-"}
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -69,19 +101,36 @@ export function AuditLogList({ logs }: AuditLogListProps) {
         </Table>
       </div>
 
-      <div className="sm:hidden space-y-2">
+      <div className="space-y-3 sm:hidden">
         {logs.map((log) => {
-          const actionInfo = ACTION_LABELS[log.action] ?? { label: log.action, variant: "secondary" as const };
+          const actionInfo = ACTION_STYLES[log.action] ?? {
+            label: log.action,
+            className: "bg-zinc-100 text-zinc-700 border-zinc-200",
+          };
           return (
-            <div key={log.id} className="rounded-lg border p-3 bg-background space-y-1">
+            <div
+              key={log.id}
+              className="space-y-1 rounded-xl border border-zinc-200 bg-white p-3"
+            >
               <div className="flex items-center justify-between">
-                <Badge variant={actionInfo.variant} className="text-xs">{actionInfo.label}</Badge>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(log.created_at).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                <Badge variant="outline" className={`text-xs ${actionInfo.className}`}>
+                  {actionInfo.label}
+                </Badge>
+                <span className="text-xs text-zinc-500">
+                  {new Date(log.created_at).toLocaleString("zh-CN", {
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">{log.user_name ?? log.user_id.slice(0, 8)}</p>
-              {log.detail && <p className="text-xs text-muted-foreground truncate">{log.detail}</p>}
+              <p className="text-xs text-zinc-500">
+                {log.user_name ?? log.user_id.slice(0, 8)}
+              </p>
+              {log.detail && (
+                <p className="truncate text-xs text-zinc-500">{log.detail}</p>
+              )}
             </div>
           );
         })}

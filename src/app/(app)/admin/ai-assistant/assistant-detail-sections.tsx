@@ -12,12 +12,12 @@ export default function AssistantDetailSections({ details }: Props) {
   return (
     <div className="mt-3 space-y-3">
       {details.sections.map((section, index) => (
-        <div key={`${section.title}-${index}`} className="rounded-xl border border-border/60 bg-muted/30 p-3">
+        <div key={`${section.title}-${index}`} className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
           <div className="mb-2 text-sm font-medium">{section.title}</div>
           {section.kind === "fields" ? (
             <div className="grid gap-2 sm:grid-cols-2">
               {section.items.map((item) => (
-                <div key={`${section.title}-${item.label}`} className="rounded-lg bg-background/80 px-3 py-2">
+                <div key={`${section.title}-${item.label}`} className="rounded-lg bg-white px-3 py-2">
                   <div className="text-xs text-muted-foreground">{item.label}</div>
                   <div className="mt-1 text-sm">{item.value}</div>
                 </div>
@@ -28,7 +28,7 @@ export default function AssistantDetailSections({ details }: Props) {
           {section.kind === "list" ? (
             <div className="space-y-2">
               {section.items.map((item, itemIndex) => (
-                <div key={`${section.title}-${itemIndex}`} className="rounded-lg bg-background/80 px-3 py-2">
+                <div key={`${section.title}-${itemIndex}`} className="rounded-lg bg-white px-3 py-2">
                   <div className="text-sm font-medium">{item.title}</div>
                   {item.description ? <div className="mt-1 text-sm text-muted-foreground">{item.description}</div> : null}
                 </div>
@@ -37,9 +37,9 @@ export default function AssistantDetailSections({ details }: Props) {
           ) : null}
 
           {section.kind === "table" ? (
-            <div className="overflow-x-auto rounded-lg border border-border/60 bg-background/80">
+            <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-muted/50 text-muted-foreground">
+                <thead className="bg-zinc-50 text-zinc-500">
                   <tr>
                     {section.columns.map((column) => (
                       <th key={`${section.title}-${column}`} className="whitespace-nowrap px-3 py-2 font-medium">
@@ -66,7 +66,7 @@ export default function AssistantDetailSections({ details }: Props) {
       ))}
 
       {details.nextSteps?.length ? (
-        <div className="rounded-xl border border-dashed border-border/70 bg-background/80 p-3">
+        <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-3">
           <div className="mb-2 text-sm font-medium">下一步</div>
           <ul className="space-y-1 text-sm text-muted-foreground">
             {details.nextSteps.map((item, index) => (

@@ -33,12 +33,12 @@ interface ContentListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  删稿: "border-red-200 bg-red-50 text-red-700",
-  限流: "border-red-200 bg-red-50 text-red-700",
-  投流: "border-amber-200 bg-amber-50 text-amber-700",
-  活动干预: "border-amber-200 bg-amber-50 text-amber-700",
-  "未满24h": "border-slate-200 bg-slate-100 text-slate-600",
+  正常: "border-[#A7F3D0] bg-[#ECFDF3] text-[#067647]",
+  删稿: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
+  限流: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
+  投流: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
+  活动干预: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
+  "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
 };
 
 function formatNumber(value: number | null | undefined) {
@@ -167,28 +167,28 @@ export function ContentList({
     <div className="space-y-4">
       <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
 
-      <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background">
+      <div className="overflow-x-auto rounded-[2rem] border border-zinc-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-border/40">
-              <TableHead className="w-16 text-xs">排名</TableHead>
-              <TableHead className="min-w-[200px] text-xs">标题</TableHead>
-              <TableHead className="text-xs">人员</TableHead>
-              <TableHead className="text-xs">账号</TableHead>
-              <TableHead className="text-xs">发布时间</TableHead>
-              <TableHead className="text-right text-xs">播放</TableHead>
-              <TableHead className="text-right text-xs">2s跳出</TableHead>
-              <TableHead className="text-right text-xs">5s完播</TableHead>
-              <TableHead className="text-xs">样本状态</TableHead>
-              <TableHead className="text-xs">异常状态</TableHead>
-              <TableHead className="text-xs">复盘状态</TableHead>
-              <TableHead className="text-xs"></TableHead>
+            <TableRow className="border-b border-zinc-200 bg-zinc-50">
+              <TableHead className="w-16 text-[11px] uppercase tracking-wider text-zinc-500">排名</TableHead>
+              <TableHead className="min-w-[200px] text-[11px] uppercase tracking-wider text-zinc-500">标题</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">人员</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">账号</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">发布时间</TableHead>
+              <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">播放</TableHead>
+              <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">2s跳出</TableHead>
+              <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">5s完播</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">样本状态</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">异常状态</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">复盘状态</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="py-12 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={12} className="py-12 text-center text-sm text-zinc-500">
                   暂无内容
                 </TableCell>
               </TableRow>
@@ -198,22 +198,22 @@ export function ContentList({
                 const sample = getSampleCredibility(snap?.play_count ?? null, video.anomaly_status);
                 const isReviewed = localReviewedIds.has(video.id);
                 return (
-                  <TableRow key={video.id} className="border-b border-border/30 hover:bg-muted/20">
-                    <TableCell className="py-3 text-sm font-semibold tabular-nums text-muted-foreground">
+                  <TableRow key={video.id} className="border-b border-zinc-100 hover:bg-zinc-50">
+                    <TableCell className="py-3 text-sm font-semibold tabular-nums text-zinc-400">
                       #{index + 1}
                     </TableCell>
                     <TableCell className="max-w-md py-3">
-                      <div className="line-clamp-2 text-sm font-medium text-foreground" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                      <div className="line-clamp-2 text-sm font-medium text-zinc-950" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                         {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-[var(--color-text-tertiary)]">
+                    <TableCell className="text-sm text-zinc-500">
                       {video.profiles.name}
                     </TableCell>
-                    <TableCell className="text-sm text-[var(--color-text-tertiary)]">
+                    <TableCell className="text-sm text-zinc-500">
                       {video.accounts.name}
                     </TableCell>
-                    <TableCell className="text-sm text-[var(--color-text-tertiary)]">
+                    <TableCell className="text-sm text-zinc-500">
                       {formatDateTime(video.published_at ?? video.created_at)}
                     </TableCell>
                     <TableCell className="text-right text-sm">
@@ -240,18 +240,18 @@ export function ContentList({
                     </TableCell>
                     <TableCell>
                       {isReviewed ? (
-                        <Badge variant="outline" className="border-violet-200 bg-violet-50 text-xs text-violet-700">
+                        <Badge variant="outline" className="border-[#C7D2FE] bg-[#EEF4FF] text-xs text-[#444CE7]">
                           已复盘
                         </Badge>
                       ) : (
-                        <span className="text-xs text-muted-foreground">未复盘</span>
+                        <span className="text-xs text-zinc-500">未复盘</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 rounded-lg px-3 text-xs"
+                        className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50"
                         onClick={() => setSelectedVideoId(video.id)}
                       >
                         查看复盘

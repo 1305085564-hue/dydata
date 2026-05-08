@@ -270,10 +270,10 @@ function EmptyBlock({
   onAction?: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border/70 bg-white/70 px-4 py-8 text-center">
+    <div className="rounded-2xl border border-dashed border-zinc-200 bg-white px-4 py-8 text-center">
       <div className="space-y-1">
-        <p className="text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
-        <p className="text-xs text-[var(--color-text-secondary)]">{description}</p>
+        <p className="text-sm font-medium text-zinc-950">{title}</p>
+        <p className="text-xs text-zinc-500">{description}</p>
       </div>
       {actionLabel && onAction ? (
         <Button className="mt-4" size="sm" onClick={onAction}>
@@ -296,19 +296,19 @@ function SummaryCard({
   hint: string;
 }) {
   return (
-    <Card size="sm" className="border-white/70 bg-white/85">
+    <Card size="sm" className="border-zinc-200 bg-white">
       <CardContent className="pt-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">
               {label}
             </div>
-            <div className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">
+            <div className="text-2xl font-semibold tracking-[-0.03em] text-zinc-950">
               {value}
             </div>
-            <div className="text-xs leading-5 text-[var(--color-text-secondary)]">{hint}</div>
+            <div className="text-xs leading-5 text-zinc-500">{hint}</div>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-zinc-950">
             <Icon className="size-4" />
           </div>
         </div>
@@ -831,7 +831,7 @@ export default function AIRewriteClient() {
         />
       </section>
 
-      <Card className="border-white/70 bg-white/82">
+      <Card className="border-zinc-200 bg-white">
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -846,18 +846,18 @@ export default function AIRewriteClient() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+        <CardContent className="space-y-3 text-sm leading-6 text-zinc-500">
           <p>首条消息固定走结果模式，默认只出 1 个主版本；第二轮开始固定进入正常聊天，不再回版本卡。</p>
           <p>最关键的是先把“固定套餐 → 展示模型 → 真实路线”配对好，再确认输出上限和上下文条数是否符合线上体验。</p>
         </CardContent>
       </Card>
 
-      <Card className="border-white/70 bg-white/82">
+      <Card className="border-zinc-200 bg-white">
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                <Ruler className="size-4 text-primary" />
+                <Ruler className="size-4 text-zinc-950" />
                 运行规则
               </CardTitle>
               <CardDescription className="mt-1">
@@ -871,28 +871,28 @@ export default function AIRewriteClient() {
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[1.3fr,1fr,1fr]">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-6 text-[var(--color-text-secondary)]">
-            <p className="font-medium text-[var(--color-text-primary)]">当前固定规则</p>
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-500">
+            <p className="font-medium text-zinc-950">当前固定规则</p>
             <p className="mt-2">1. 首条默认结果模式，只出 1 个主版本。</p>
             <p>2. 第二轮开始固定聊天模式，不再返回版本卡。</p>
             <p>3. 顶部强框架 / 强语感 / 展示模型 / 普通模式会自动清空并锁定。</p>
           </div>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-[var(--color-text-primary)]">输出上限</span>
+            <span className="text-sm font-medium text-zinc-950">输出上限</span>
             <Input
               value={runtimeForm.output_token_limit}
               onChange={(event) => setRuntimeForm((prev) => ({ ...prev, output_token_limit: event.target.value }))}
               inputMode="numeric"
             />
-            <p className="text-xs text-[var(--color-text-secondary)]">
+            <p className="text-xs text-zinc-500">
               现在填的是 {runtimeForm.output_token_limit || "0"} tokens，约等于{" "}
               {estimateChars(Number.parseInt(runtimeForm.output_token_limit || "0", 10) || 0)} 个汉字。
             </p>
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-[var(--color-text-primary)]">上下文条数</span>
+            <span className="text-sm font-medium text-zinc-950">上下文条数</span>
             <Input
               value={runtimeForm.context_message_limit}
               onChange={(event) =>
@@ -900,7 +900,7 @@ export default function AIRewriteClient() {
               }
               inputMode="numeric"
             />
-            <p className="text-xs text-[var(--color-text-secondary)]">
+            <p className="text-xs text-zinc-500">
               最近保留多少条历史消息。系统内部仍会额外做总长度安全截断，避免请求被拖死。
             </p>
           </label>
@@ -914,18 +914,18 @@ export default function AIRewriteClient() {
       ) : null}
 
       {isLoading ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/75 px-4 py-8 text-sm text-[var(--color-text-secondary)]">
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-8 text-sm text-zinc-500">
           <Loader2 className="size-4 animate-spin" />
           正在加载文案改写配置...
         </div>
       ) : (
         <>
-          <Card className="border-white/70 bg-white/82">
+          <Card className="border-zinc-200 bg-white">
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <Sparkles className="size-4 text-primary" />
+                    <Sparkles className="size-4 text-zinc-950" />
                     固定能力套餐
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -949,7 +949,7 @@ export default function AIRewriteClient() {
               ) : (
                 <div className="grid gap-4 xl:grid-cols-2">
                   {bundle.fixedModes.map((row) => (
-                    <Card key={row.id} size="sm" className="border-border/60 bg-white/90">
+                    <Card key={row.id} size="sm" className="border-zinc-200 bg-white">
                       <CardHeader>
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
@@ -959,22 +959,22 @@ export default function AIRewriteClient() {
                           {getStatusBadge(row.is_enabled)}
                         </div>
                       </CardHeader>
-                      <CardContent className="space-y-3 text-sm text-[var(--color-text-secondary)]">
+                      <CardContent className="space-y-3 text-sm text-zinc-500">
                         <div className="grid gap-2 text-xs">
-                          <div className="rounded-2xl bg-muted/40 px-3 py-2">
-                            <span className="font-semibold text-[var(--color-text-primary)]">key：</span>
+                          <div className="rounded-2xl bg-zinc-50 px-3 py-2">
+                            <span className="font-semibold text-zinc-950">key：</span>
                             <span className="font-mono">{row.key}</span>
                           </div>
-                          <div className="rounded-2xl bg-muted/40 px-3 py-2">
-                            <span className="font-semibold text-[var(--color-text-primary)]">绑定展示模型：</span>
+                          <div className="rounded-2xl bg-zinc-50 px-3 py-2">
+                            <span className="font-semibold text-zinc-950">绑定展示模型：</span>
                             {row.model_view?.label ?? "未绑定"}
                           </div>
-                          <div className="rounded-2xl bg-muted/40 px-3 py-2">
-                            <span className="font-semibold text-[var(--color-text-primary)]">固定字数：</span>
+                          <div className="rounded-2xl bg-zinc-50 px-3 py-2">
+                            <span className="font-semibold text-zinc-950">固定字数：</span>
                             {row.length_preset?.name ?? "跟随默认字数"}
                           </div>
                         </div>
-                        <div className="rounded-2xl border border-border/60 bg-muted/20 px-3 py-3 text-sm leading-6 text-[var(--color-text-primary)]">
+                        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm leading-6 text-zinc-950">
                           {row.fixed_prompt}
                         </div>
                         <div className="flex justify-end gap-2">
@@ -1000,12 +1000,12 @@ export default function AIRewriteClient() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/70 bg-white/82">
+          <Card className="border-zinc-200 bg-white">
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <Bot className="size-4 text-primary" />
+                    <Bot className="size-4 text-zinc-950" />
                     展示模型
                   </CardTitle>
                   <CardDescription className="mt-1">支持新增、编辑、默认项切换和启停。</CardDescription>
@@ -1040,14 +1040,14 @@ export default function AIRewriteClient() {
                   <TableBody>
                     {bundle.modelViews.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell className="font-medium text-[var(--color-text-primary)]">{row.label}</TableCell>
-                        <TableCell className="font-mono text-xs text-[var(--color-text-secondary)]">{row.key}</TableCell>
-                        <TableCell className="max-w-[320px] whitespace-normal text-sm text-[var(--color-text-secondary)]">
+                        <TableCell className="font-medium text-zinc-950">{row.label}</TableCell>
+                        <TableCell className="font-mono text-xs text-zinc-500">{row.key}</TableCell>
+                        <TableCell className="max-w-[320px] whitespace-normal text-sm text-zinc-500">
                           {row.description || "—"}
                         </TableCell>
                         <TableCell>{row.sort_order}</TableCell>
                         <TableCell>{getStatusBadge(row.is_enabled, row.is_default)}</TableCell>
-                        <TableCell className="text-xs text-[var(--color-text-secondary)]">{formatDateTime(row.updated_at)}</TableCell>
+                        <TableCell className="text-xs text-zinc-500">{formatDateTime(row.updated_at)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="outline" size="sm" onClick={() => openModelViewEditor(row)}>
@@ -1073,12 +1073,12 @@ export default function AIRewriteClient() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/70 bg-white/82">
+          <Card className="border-zinc-200 bg-white">
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <Route className="size-4 text-primary" />
+                    <Route className="size-4 text-zinc-950" />
                     真实执行路线
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -1100,8 +1100,8 @@ export default function AIRewriteClient() {
                 <EmptyBlock title="还不能配路线" description="请先新增展示模型，再挂渠道和真实模型。" />
               ) : (
                 routeGroups.map(({ modelView, routes }) => (
-                  <Card key={modelView.id} size="sm" className="border-white/70 bg-white/88">
-                    <CardHeader className="border-b border-white/70">
+                  <Card key={modelView.id} size="sm" className="border-zinc-200 bg-white">
+                    <CardHeader className="border-b border-zinc-200">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <CardTitle className="text-base">{modelView.label}</CardTitle>
@@ -1144,18 +1144,18 @@ export default function AIRewriteClient() {
                           <TableBody>
                             {routes.map((row) => (
                               <TableRow key={row.id}>
-                                <TableCell className="max-w-[220px] whitespace-normal text-sm text-[var(--color-text-secondary)]">
+                                <TableCell className="max-w-[220px] whitespace-normal text-sm text-zinc-500">
                                   {row.workflow_step ? `${row.workflow_step.name} (${row.workflow_step.step_key})` : "通用路线"}
                                 </TableCell>
                                 <TableCell>
                                   <div className="space-y-1">
-                                    <div className="font-medium text-[var(--color-text-primary)]">{row.channel?.name ?? "已丢失渠道"}</div>
-                                    <div className="text-xs text-[var(--color-text-secondary)]">
+                                    <div className="font-medium text-zinc-950">{row.channel?.name ?? "已丢失渠道"}</div>
+                                    <div className="text-xs text-zinc-500">
                                       {row.channel?.is_enabled ? "渠道已启用" : "渠道已停用"}
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell className="font-mono text-xs text-[var(--color-text-secondary)]">{row.actual_model}</TableCell>
+                                <TableCell className="font-mono text-xs text-zinc-500">{row.actual_model}</TableCell>
                                 <TableCell>{row.priority}</TableCell>
                                 <TableCell>{row.weight}</TableCell>
                                 <TableCell>{getStatusBadge(row.is_enabled)}</TableCell>
@@ -1189,12 +1189,12 @@ export default function AIRewriteClient() {
           </Card>
 
           <div className="grid gap-6 xl:grid-cols-2">
-            <Card className="border-white/70 bg-white/82">
+            <Card className="border-zinc-200 bg-white">
               <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                      <Sparkles className="size-4 text-primary" />
+                      <Sparkles className="size-4 text-zinc-950" />
                       模式
                     </CardTitle>
                     <CardDescription className="mt-1">员工可选的改写风格。</CardDescription>
@@ -1224,13 +1224,13 @@ export default function AIRewriteClient() {
                         <TableRow key={row.id}>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium text-[var(--color-text-primary)]">{row.name}</div>
-                              <div className="max-w-[260px] whitespace-normal text-xs text-[var(--color-text-secondary)]">
+                              <div className="font-medium text-zinc-950">{row.name}</div>
+                              <div className="max-w-[260px] whitespace-normal text-xs text-zinc-500">
                                 {row.description || "—"}
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-xs text-[var(--color-text-secondary)]">{row.key}</TableCell>
+                          <TableCell className="font-mono text-xs text-zinc-500">{row.key}</TableCell>
                           <TableCell>{row.sort_order}</TableCell>
                           <TableCell>{getStatusBadge(row.is_enabled, row.is_default)}</TableCell>
                           <TableCell className="text-right">
@@ -1258,12 +1258,12 @@ export default function AIRewriteClient() {
               </CardContent>
             </Card>
 
-            <Card className="border-white/70 bg-white/82">
+            <Card className="border-zinc-200 bg-white">
               <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                      <Ruler className="size-4 text-primary" />
+                      <Ruler className="size-4 text-zinc-950" />
                       字数预设
                     </CardTitle>
                     <CardDescription className="mt-1">控制输出长短的快捷预设。</CardDescription>
@@ -1298,13 +1298,13 @@ export default function AIRewriteClient() {
                         <TableRow key={row.id}>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium text-[var(--color-text-primary)]">{row.name}</div>
-                              <div className="max-w-[260px] whitespace-normal text-xs text-[var(--color-text-secondary)]">
+                              <div className="font-medium text-zinc-950">{row.name}</div>
+                              <div className="max-w-[260px] whitespace-normal text-xs text-zinc-500">
                                 {row.description || "—"}
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-xs text-[var(--color-text-secondary)]">{row.key}</TableCell>
+                          <TableCell className="font-mono text-xs text-zinc-500">{row.key}</TableCell>
                           <TableCell>{row.sort_order}</TableCell>
                           <TableCell>{getStatusBadge(row.is_enabled, row.is_default)}</TableCell>
                           <TableCell className="text-right">
@@ -1333,12 +1333,12 @@ export default function AIRewriteClient() {
             </Card>
           </div>
 
-          <Card className="border-white/70 bg-white/82">
+          <Card className="border-zinc-200 bg-white">
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <GitBranch className="size-4 text-primary" />
+                    <GitBranch className="size-4 text-zinc-950" />
                     自动流程与步骤
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -1356,8 +1356,8 @@ export default function AIRewriteClient() {
                 <EmptyBlock title="还没有自动流程" description="先补一个默认流程，自动模式才有稳定路线。" actionLabel="新增流程" onAction={() => openWorkflowEditor()} />
               ) : (
                 workflowGroups.map(({ workflow, steps }) => (
-                  <Card key={workflow.id} size="sm" className="border-white/70 bg-white/88">
-                    <CardHeader className="border-b border-white/70">
+                  <Card key={workflow.id} size="sm" className="border-zinc-200 bg-white">
+                    <CardHeader className="border-b border-zinc-200">
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
@@ -1415,13 +1415,13 @@ export default function AIRewriteClient() {
                               <TableRow key={step.id}>
                                 <TableCell>
                                   <div className="space-y-1">
-                                    <div className="font-medium text-[var(--color-text-primary)]">{step.name}</div>
-                                    <div className="max-w-[320px] whitespace-normal text-xs text-[var(--color-text-secondary)]">
+                                    <div className="font-medium text-zinc-950">{step.name}</div>
+                                    <div className="max-w-[320px] whitespace-normal text-xs text-zinc-500">
                                       {step.description || "—"}
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell className="font-mono text-xs text-[var(--color-text-secondary)]">{step.step_key}</TableCell>
+                                <TableCell className="font-mono text-xs text-zinc-500">{step.step_key}</TableCell>
                                 <TableCell>{step.model_view?.label ?? "跟随顶部展示模型"}</TableCell>
                                 <TableCell>{step.sort_order}</TableCell>
                                 <TableCell>{getStatusBadge(step.is_enabled)}</TableCell>
@@ -1484,7 +1484,7 @@ export default function AIRewriteClient() {
                   onValueChange={(value) => setField("model_view_id", value ?? "")}
                   items={modelViewItems}
                 >
-                  <SelectTrigger id="fixed-mode-model-view" className="w-full rounded-2xl bg-white/80">
+                  <SelectTrigger id="fixed-mode-model-view" className="w-full rounded-2xl bg-white">
                     <SelectValue placeholder="选择展示模型" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1503,7 +1503,7 @@ export default function AIRewriteClient() {
                   onValueChange={(value) => setField("length_preset_id", value ?? NONE_VALUE)}
                   items={lengthPresetItems}
                 >
-                  <SelectTrigger id="fixed-mode-length" className="w-full rounded-2xl bg-white/80">
+                  <SelectTrigger id="fixed-mode-length" className="w-full rounded-2xl bg-white">
                     <SelectValue placeholder="可选，不填则跟随默认" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1524,9 +1524,9 @@ export default function AIRewriteClient() {
                 <Label htmlFor="fixed-mode-sort">排序</Label>
                 <Input id="fixed-mode-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">启用</span>
+                  <span className="text-sm text-zinc-950">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1557,13 +1557,13 @@ export default function AIRewriteClient() {
                 <Label htmlFor="model-view-sort">排序</Label>
                 <Input id="model-view-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">设为默认展示模型</span>
+                  <span className="text-sm text-zinc-950">设为默认展示模型</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">启用</span>
+                  <span className="text-sm text-zinc-950">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1579,7 +1579,7 @@ export default function AIRewriteClient() {
                   onValueChange={(value) => setField("model_view_id", value ?? "")}
                   items={modelViewItems}
                 >
-                  <SelectTrigger id="route-model-view" className="w-full rounded-2xl bg-white/80">
+                  <SelectTrigger id="route-model-view" className="w-full rounded-2xl bg-white">
                     <SelectValue placeholder="选择展示模型" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1598,7 +1598,7 @@ export default function AIRewriteClient() {
                   onValueChange={(value) => setField("workflow_step_id", value ?? NONE_VALUE)}
                   items={workflowStepItems}
                 >
-                  <SelectTrigger id="route-workflow-step" className="w-full rounded-2xl bg-white/80">
+                  <SelectTrigger id="route-workflow-step" className="w-full rounded-2xl bg-white">
                     <SelectValue placeholder="可不绑步骤" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1618,7 +1618,7 @@ export default function AIRewriteClient() {
                   onValueChange={(value) => setField("channel_id", value ?? "")}
                   items={channelItems}
                 >
-                  <SelectTrigger id="route-channel" className="w-full rounded-2xl bg-white/80">
+                  <SelectTrigger id="route-channel" className="w-full rounded-2xl bg-white">
                     <SelectValue placeholder="选择渠道" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1642,9 +1642,9 @@ export default function AIRewriteClient() {
                 <Label htmlFor="route-weight">权重</Label>
                 <Input id="route-weight" value={textField("weight")} onChange={(e) => setField("weight", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3 md:col-span-2">
+              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 md:col-span-2">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">启用这条路线</span>
+                  <span className="text-sm text-zinc-950">启用这条路线</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1673,13 +1673,13 @@ export default function AIRewriteClient() {
                 <Label htmlFor="mode-sort">排序</Label>
                 <Input id="mode-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">设为默认</span>
+                  <span className="text-sm text-zinc-950">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">启用</span>
+                  <span className="text-sm text-zinc-950">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1708,13 +1708,13 @@ export default function AIRewriteClient() {
                 <Label htmlFor="length-sort">排序</Label>
                 <Input id="length-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">设为默认</span>
+                  <span className="text-sm text-zinc-950">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">启用</span>
+                  <span className="text-sm text-zinc-950">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1739,13 +1739,13 @@ export default function AIRewriteClient() {
                 <Label htmlFor="workflow-sort">排序</Label>
                 <Input id="workflow-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">设为默认</span>
+                  <span className="text-sm text-zinc-950">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">启用</span>
+                  <span className="text-sm text-zinc-950">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1761,7 +1761,7 @@ export default function AIRewriteClient() {
                   onValueChange={(value) => setField("workflow_id", value ?? "")}
                   items={workflowItems}
                 >
-                  <SelectTrigger id="step-workflow" className="w-full rounded-2xl bg-white/80">
+                  <SelectTrigger id="step-workflow" className="w-full rounded-2xl bg-white">
                     <SelectValue placeholder="选择流程" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1780,7 +1780,7 @@ export default function AIRewriteClient() {
                   onValueChange={(value) => setField("model_view_id", value ?? NONE_VALUE)}
                   items={optionalModelViewItems}
                 >
-                  <SelectTrigger id="step-model-view" className="w-full rounded-2xl bg-white/80">
+                  <SelectTrigger id="step-model-view" className="w-full rounded-2xl bg-white">
                     <SelectValue placeholder="可不绑定" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1813,9 +1813,9 @@ export default function AIRewriteClient() {
                 <Label htmlFor="step-sort">排序</Label>
                 <Input id="step-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-[var(--color-text-primary)]">启用</span>
+                  <span className="text-sm text-zinc-950">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>

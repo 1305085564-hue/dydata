@@ -359,13 +359,18 @@
 
   .app-shell-surface,
   .app-shell-hero,
-  .app-shell-section,
   .app-shell-metric-strip,
   .app-shell-panel {
     border: 1px solid color-mix(in srgb, var(--color-border) 76%, white);
     box-shadow: var(--shadow-card);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
+  }
+
+  .app-shell-section {
+    border: 1px solid color-mix(in srgb, var(--color-border) 76%, white);
+    box-shadow: var(--shadow-card);
+    background: var(--color-surface);
   }
 
   .app-shell-surface {
@@ -375,8 +380,7 @@
 
   .app-shell-hero {
     border-radius: 1.75rem;
-    background:
-      linear-gradient(145deg, color-mix(in srgb, white 84%, var(--primary)) 0%, color-mix(in srgb, white 96%, var(--background)) 100%);
+    background: var(--color-surface);
   }
 
   .app-shell-section {
@@ -645,11 +649,9 @@
   }
 
   .admin-subnav-link-active {
-    border-color: color-mix(in srgb, var(--primary) 24%, white);
-    background: color-mix(in srgb, var(--primary) 10%, white);
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent),
-      var(--shadow-medium);
+    border-color: var(--color-border);
+    background: #f4f4f5;
+    box-shadow: var(--shadow-light);
   }
 
   .admin-subnav-link-head {
@@ -678,18 +680,21 @@
 
   .dark .app-shell-surface,
   .dark .app-shell-hero,
-  .dark .app-shell-section,
   .dark .app-shell-metric-strip,
   .dark .app-shell-panel {
     border-color: color-mix(in srgb, var(--color-border) 84%, transparent);
     background: color-mix(in srgb, var(--glass-bg) 92%, transparent);
   }
 
+  .dark .app-shell-section {
+    border-color: color-mix(in srgb, var(--color-border) 84%, transparent);
+    background: var(--color-surface);
+  }
+
   .dark .app-shell-hero {
     background: linear-gradient(145deg, rgba(20, 24, 31, 0.92) 0%, rgba(20, 24, 31, 0.74) 100%);
   }
 
-  .dark .app-shell-section,
   .dark .app-shell-panel {
     background: color-mix(in srgb, var(--glass-bg) 92%, transparent);
   }
@@ -734,8 +739,8 @@
   }
 
   .dark .admin-subnav-link-active {
-    border-color: color-mix(in srgb, var(--primary) 38%, transparent);
-    background: color-mix(in srgb, var(--primary) 16%, transparent);
+    border-color: var(--color-border);
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .dark .admin-subnav-link-icon {

@@ -20,6 +20,7 @@ interface ConfirmDialogProps {
   cancelText?: string;
   destructive?: boolean;
   loading?: boolean;
+  className?: string;
   onConfirm: () => Promise<void> | void;
   onOpenChange: (open: boolean) => void;
 }
@@ -32,6 +33,7 @@ export function ConfirmDialog({
   cancelText = "取消",
   destructive = false,
   loading = false,
+  className,
   onConfirm,
   onOpenChange,
 }: ConfirmDialogProps) {
@@ -50,16 +52,21 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={!pending}>
+      <DialogContent className={className} showCloseButton={!pending}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+        <DialogFooter className="bg-white border-zinc-200">
+          <Button variant="outline" className="rounded-xl border-zinc-200" onClick={() => onOpenChange(false)} disabled={pending}>
             {cancelText}
           </Button>
-          <Button variant={destructive ? "destructive" : "default"} onClick={handleConfirm} disabled={pending}>
+          <Button
+            variant={destructive ? "destructive" : "default"}
+            className={destructive ? "rounded-xl" : "rounded-xl bg-zinc-950 text-white hover:-translate-y-[1px] hover:shadow-lg"}
+            onClick={handleConfirm}
+            disabled={pending}
+          >
             {pending ? "处理中..." : confirmText}
           </Button>
         </DialogFooter>

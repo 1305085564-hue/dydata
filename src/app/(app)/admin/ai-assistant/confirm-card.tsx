@@ -44,7 +44,7 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
             <AlertTriangle className="h-4 w-4" />
             <span>执行确认</span>
          </div>
-         <div className="text-xs text-muted-foreground bg-background/50 px-2 py-1 rounded-md">
+         <div className="text-xs text-zinc-500 bg-white px-2 py-1 rounded-md">
             {data.toolName}
          </div>
       </div>
@@ -64,15 +64,15 @@ export default function ConfirmCard({ actorRole, data, submitting = false, onCon
 
         {/* Payload / Details */}
         {data.details && (
-          <div className="bg-background/50 border border-border/50 rounded-xl p-4 shadow-sm">
+          <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm">
              <AssistantDetailSections details={data.details} />
           </div>
         )}
 
         {/* Debug (Owner only) */}
         {actorRole === "owner" && debug && (
-          <Collapsible className="rounded-xl border border-border/50 bg-background/30 overflow-hidden">
-            <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+          <Collapsible className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
+            <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50 transition-colors">
               <Terminal className="h-4 w-4" />
               调试信息
             </CollapsibleTrigger>

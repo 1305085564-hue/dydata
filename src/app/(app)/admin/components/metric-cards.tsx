@@ -27,11 +27,11 @@ export interface MetricCardProps {
 export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "neutral" }: MetricCardProps) {
   const Icon = iconMap[icon] ?? Activity;
   const toneClasses = {
-    primary: "text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20",
-    warning: "text-[var(--color-warning)] bg-[var(--color-warning)]/10 border-[var(--color-warning)]/20",
-    success: "text-[var(--color-success)] bg-[var(--color-success)]/10 border-[var(--color-success)]/20",
-    danger: "text-[var(--color-danger)] bg-[var(--color-danger)]/10 border-[var(--color-danger)]/20",
-    neutral: "text-[var(--color-text-secondary)] bg-[var(--color-surface)]/40 border-[var(--color-border)]/50",
+    primary: "text-zinc-950 bg-zinc-100 border-zinc-200",
+    warning: "text-amber-600 bg-amber-50 border-amber-200",
+    success: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    danger: "text-red-700 bg-red-50 border-red-200",
+    neutral: "text-zinc-500 bg-zinc-50 border-zinc-200",
   };
 
   const isClickable = !!onClick;
@@ -40,8 +40,8 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
     <div 
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--glass-bg)] p-5 shadow-[var(--shadow-card)] transition-all duration-300",
-        isClickable && "cursor-pointer hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)] hover:border-[var(--color-primary)]/30 group"
+        "relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300",
+        isClickable && "cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:border-zinc-300 group"
       )}
     >
       <div className="flex items-start justify-between">
@@ -60,13 +60,13 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
           </div>
           <p className="mt-2 text-xs text-[var(--color-text-tertiary)]">{hint}</p>
         </div>
-        <div className={cn("rounded-xl p-2.5 transition-colors", toneClasses[tone], isClickable && "group-hover:bg-[var(--color-primary)] group-hover:text-white")}>
+        <div className={cn("rounded-xl p-2.5 transition-colors", toneClasses[tone], isClickable && "group-hover:bg-zinc-950 group-hover:text-white")}>
           <Icon className="size-5" />
         </div>
       </div>
       
       {/* 底部微型火花线占位符 - 由于不引入新库，用 CSS 渐变模拟 */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[var(--color-primary)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-950/10 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }
