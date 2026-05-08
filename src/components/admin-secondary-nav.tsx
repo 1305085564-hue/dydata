@@ -5,6 +5,7 @@ import {
   Blocks,
   Gauge,
   Settings2,
+  ShieldAlert,
   Sparkles,
 } from "lucide-react";
 
@@ -16,7 +17,8 @@ export type AdminPanelKey =
   | "analytics"
   | "ai-channels"
   | "ai-rewrite"
-  | "modules";
+  | "modules"
+  | "violations";
 
 export interface AdminSecondaryNavItem {
   href: string;
@@ -28,6 +30,7 @@ export interface AdminSecondaryNavItem {
   match: (pathname: string) => boolean;
   requiresAdmin?: boolean;
   requiresOwner?: boolean;
+  requiresViolationPermission?: boolean;
   hideWhenPrefixed?: boolean;
 }
 
@@ -73,6 +76,16 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     hideWhenPrefixed: true,
   },
   {
+    href: "/admin/violations",
+    panel: "violations",
+    label: "违规复核",
+    description: "审核员工提交的违规/非违规案例。",
+    icon: ShieldAlert,
+    tone: "warning",
+    match: (pathname) => pathname === "/admin/violations" || pathname.startsWith("/admin/violations/"),
+    requiresViolationPermission: true,
+  },
+  {
     href: "/admin/modules",
     panel: "modules",
     label: "功能模块",
@@ -86,11 +99,15 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
 
 export function getAdminSecondaryNavItems(options: {
   canManageAdmin: boolean;
+  canManageViolations?: boolean;
   userRole?: UserRole | null;
 }) {
   return ADMIN_SECONDARY_NAV_ITEMS.filter((item) => {
     if (item.requiresOwner) {
       return options.userRole === "owner";
+    }
+    if (item.requiresViolationPermission) {
+      return options.userRole === "owner" || options.canManageViolations === true;
     }
 
     return !item.requiresAdmin || options.canManageAdmin;
@@ -100,6 +117,7 @@ export function getAdminSecondaryNavItems(options: {
 interface AdminSecondaryNavProps {
   pathname: string;
   canManageAdmin: boolean;
+  canManageViolations?: boolean;
   className?: string;
   hrefPrefix?: string;
   panelBasePath?: string;
@@ -120,6 +138,7 @@ function getCardClassName(active: boolean) {
 export function AdminSecondaryNav({
   pathname,
   canManageAdmin,
+  canManageViolations,
   className,
   hrefPrefix = "",
   panelBasePath,
@@ -129,7 +148,7 @@ export function AdminSecondaryNav({
   onItemSelect,
   onItemPreload,
 }: AdminSecondaryNavProps) {
-  const items = getAdminSecondaryNavItems({ canManageAdmin, userRole }).filter(
+  const items = getAdminSecondaryNavItems({ canManageAdmin, canManageViolations, userRole }).filter(
     (item) => !(hrefPrefix && item.hideWhenPrefixed),
   );
 

@@ -50,6 +50,7 @@ const panelPreloaders: Record<Exclude<AdminPanelKey, "overview">, () => Promise<
   modules: loadModulesPanel,
   "ai-channels": loadAiChannelsPanel,
   "ai-rewrite": loadAiRewritePanel,
+  violations: () => Promise.resolve(),
 };
 
 function PanelSkeleton() {
@@ -69,6 +70,7 @@ interface AdminPanelLauncherProps {
   initialPanel: AdminPanelKey | null;
   userRole: UserRole;
   canManageAdmin: boolean;
+  canManageViolations?: boolean;
   initialDate: string;
   overviewContent: ReactNode;
 }
@@ -85,12 +87,13 @@ export function AdminPanelLauncher({
   initialPanel,
   userRole,
   canManageAdmin,
+  canManageViolations,
   initialDate,
   overviewContent,
 }: AdminPanelLauncherProps) {
   const items = useMemo(
-    () => getAdminSecondaryNavItems({ canManageAdmin, userRole }),
-    [canManageAdmin, userRole],
+    () => getAdminSecondaryNavItems({ canManageAdmin, canManageViolations, userRole }),
+    [canManageAdmin, canManageViolations, userRole],
   );
   const [activePanel, setActivePanel] = useState<AdminPanelKey | null>(
     sanitizePanel(initialPanel, items),
@@ -118,6 +121,10 @@ export function AdminPanelLauncher({
   }
 
   function openPanel(item: AdminSecondaryNavItem) {
+    if (item.panel === "violations") {
+      window.location.href = item.href;
+      return;
+    }
     setActivePanel(item.panel);
     updateUrl(item.panel, activePanel ? "replace" : "push");
   }
@@ -139,6 +146,7 @@ export function AdminPanelLauncher({
       <AdminSecondaryNav
         pathname="/admin"
         canManageAdmin={canManageAdmin}
+        canManageViolations={canManageViolations}
         userRole={userRole}
         renderMode="button"
         activePanel={activePanel}

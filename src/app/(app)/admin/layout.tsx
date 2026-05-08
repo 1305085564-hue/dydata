@@ -15,7 +15,7 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, role")
+    .select("name, role, permissions")
     .eq("id", user.id)
     .single();
 
@@ -23,6 +23,7 @@ export default async function AdminLayout({
     <div className="flex min-h-[100dvh] bg-[#F9F9FB]">
       <AdminSidebar
         userRole={profile?.role ?? "member"}
+        permissions={profile?.permissions ?? {}}
         userName={profile?.name ?? user.email ?? ""}
       />
       <main className="flex-1 overflow-y-auto">

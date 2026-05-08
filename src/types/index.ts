@@ -13,6 +13,7 @@ export const PERMISSION_KEYS = [
   "view_analytics",
   "view_audit_log",
   "manage_members",
+  "manage_violations",
 ] as const;
 
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];
@@ -27,6 +28,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   view_analytics: "数据分析",
   view_audit_log: "查看操作日志",
   manage_members: "管理成员状态",
+  manage_violations: "违规话术复核",
 };
 
 export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
@@ -37,6 +39,7 @@ export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
   view_analytics: true,
   view_audit_log: false,
   manage_members: false,
+  manage_violations: false,
 };
 
 export interface Profile {
@@ -246,6 +249,47 @@ export interface AdviceAction {
   reviewed_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// === 违规话术系统 V1 ===
+
+export type ViolationCategory = "下粉" | "直播" | "短视频" | "其他";
+export type ViolationStatus = "submitted" | "verified" | "rejected" | "archived";
+export type ViolationRiskLevel = "high" | "medium" | "low";
+
+export interface ViolationCase {
+  id: string;
+  created_at: string;
+  submitted_by: string;
+  script_text: string;
+  is_violation: boolean;
+  category: ViolationCategory;
+  account_id: string | null;
+  account_name_snapshot: string | null;
+  team_id: string | null;
+  scene_description: string | null;
+  screenshot_paths: string[];
+  result: string | null;
+  tags: string[];
+  pass_count: number;
+  fail_count: number;
+  status: ViolationStatus;
+  risk_level: ViolationRiskLevel | null;
+  admin_conclusion: string | null;
+  suggested_action: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  is_deleted: boolean;
+}
+
+export interface ViolationTestRecord {
+  id: string;
+  case_id: string;
+  tested_by: string;
+  tested_at: string;
+  account_id: string | null;
+  passed: boolean;
+  note: string | null;
 }
 
 // === 达人团队 SOP V1-P0 ===

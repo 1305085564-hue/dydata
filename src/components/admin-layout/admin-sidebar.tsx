@@ -13,10 +13,12 @@ import {
   Sparkles,
   Video,
   FileText,
+  ShieldAlert,
   X,
 } from "lucide-react";
 
-import type { UserRole } from "@/types";
+import type { Permissions, UserRole } from "@/types";
+import { hasPermission } from "@/lib/permission-utils";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -24,6 +26,7 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   requiresOwner?: boolean;
+  requiresPermission?: keyof Permissions;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -31,15 +34,17 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/analytics", label: "经营分析", icon: BarChart3 },
   { href: "/admin/content", label: "内容管理", icon: FileText },
   { href: "/admin/videos", label: "视频管理", icon: Video },
+  { href: "/admin/violations", label: "违规复核", icon: ShieldAlert, requiresPermission: "manage_violations" },
   { href: "/admin/modules", label: "功能模块", icon: Blocks },
   { href: "/admin/ai-assistant", label: "AI助手", icon: Bot },
   { href: "/admin/ai-channels", label: "AI功能区", icon: Sparkles, requiresOwner: true },
   { href: "/admin/ai-rewrite", label: "文案改写", icon: Pencil, requiresOwner: true },
 ];
 
-function getVisibleNavItems(userRole: UserRole | null | undefined): NavItem[] {
+function getVisibleNavItems(userRole: UserRole | null | undefined, permissions: Permissions): NavItem[] {
   return NAV_ITEMS.filter((item) => {
     if (item.requiresOwner) return userRole === "owner";
+    if (item.requiresPermission) return hasPermission(userRole ?? "member", permissions, item.requiresPermission);
     return true;
   });
 }
@@ -57,13 +62,14 @@ function getRoleLabel(role: UserRole | null | undefined): string {
 
 interface AdminSidebarProps {
   userRole: UserRole | null | undefined;
+  permissions?: Permissions | null;
   userName: string;
 }
 
-export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
+export function AdminSidebar({ userRole, permissions, userName }: AdminSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const items = getVisibleNavItems(userRole);
+  const items = getVisibleNavItems(userRole, permissions ?? {});
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";

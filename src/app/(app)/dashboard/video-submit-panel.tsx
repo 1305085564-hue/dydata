@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Check, ChevronDown, FilePenLine, History, Lock, PencilLine } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, FilePenLine, History, Lock, PencilLine, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
@@ -178,6 +178,9 @@ export function VideoSubmitPanel({
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
+  const violationSubmitHref = selectedAccountId
+    ? `/violations/submit?account_id=${encodeURIComponent(selectedAccountId)}&prefill=1`
+    : "/violations/submit";
   const setSelectedAccountId = useCallback(
     (accountId: string) => {
       setInternalSelectedAccountId(accountId);
@@ -656,8 +659,20 @@ export function VideoSubmitPanel({
                       aria-hidden="true"
                     />
                   </div>
-                  <div className="text-xs font-bold text-zinc-400">
-                    {activeBizDate === today ? "今日填报" : "历史补填"}
+                  <div className="flex flex-col gap-2 sm:items-end">
+                    <div className="text-xs font-bold text-zinc-400">
+                      {activeBizDate === today ? "今日填报" : "历史补填"}
+                    </div>
+                    <a href={violationSubmitHref}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 rounded-full border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
+                      >
+                        <ShieldAlert className="size-4 text-amber-600" />
+                        收录违规
+                      </Button>
+                    </a>
                   </div>
                 </div>
                 <CheckpointTracker
@@ -723,6 +738,16 @@ export function VideoSubmitPanel({
                   </div>
 
                   <div className="flex shrink-0 flex-col gap-2 lg:w-[190px]">
+                    <a href={violationSubmitHref}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 w-full rounded-2xl border-zinc-200 bg-white text-zinc-950 transition-all hover:-translate-y-[1px] hover:bg-zinc-50 hover:shadow-md"
+                      >
+                        <ShieldAlert className="size-4 text-amber-600" />
+                        收录违规
+                      </Button>
+                    </a>
                     <Button
                       type="button"
                       variant="outline"

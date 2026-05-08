@@ -17,6 +17,11 @@ export function getNavItems(input: { showAdmin: boolean }): NavItem[] {
       match: (pathname) => pathname === "/growth",
     },
     {
+      href: "/violations",
+      label: "违规库",
+      match: (pathname) => pathname.startsWith("/violations"),
+    },
+    {
       href: "/content-tools/rewrite",
       label: "AI助手",
       match: (pathname) => pathname === "/content-tools/rewrite",

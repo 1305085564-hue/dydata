@@ -11,6 +11,7 @@ test("管理员导航包含后台管理入口", () => {
     [
       { href: "/dashboard", label: "数据填报" },
       { href: "/growth", label: "成长分析" },
+      { href: "/violations", label: "违规库" },
       { href: "/content-tools/rewrite", label: "AI助手" },
       { href: "/admin", label: "后台管理" },
     ]
@@ -22,6 +23,6 @@ test("非管理员看不到后台管理入口", () => {
 
   assert.deepEqual(
     items.map((item) => item.href),
-    ["/dashboard", "/growth", "/content-tools/rewrite"]
+    ["/dashboard", "/growth", "/violations", "/content-tools/rewrite"]
   );
 });
