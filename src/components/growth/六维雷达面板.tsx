@@ -45,34 +45,9 @@ const LABEL_OFFSET = 22;
 const labelAnchors = ["middle", "start", "start", "middle", "end", "end"] as const;
 const labelDyAdjust = [-6, 4, 4, 10, 4, 4];
 
-// ─── 维度图标 ─────────────────────────────────────────────────
-const dimIcons: Record<string, string> = {
-  开头留人: "🎯",
-  中段跳出: "📉",
-  整体完播: "⏱",
-  增长转化: "📈",
-  互动吸引: "💬",
-  话题爆点: "🔥",
-};
-
 // ─── 分数换算 ─────────────────────────────────────────────────
 function ratingToScore(card: GrowthDimensionCard): number {
   return card.rating.label === "强" ? 85 : card.rating.label === "中" ? 65 : 40;
-}
-
-// ─── 颜色规则（强/绿=好>=80，黄=警告50-79，弱/红=差<50，灰=无数据） ──
-function scoreToBarColor(score: number, hasData: boolean): string {
-  if (!hasData) return "bg-[var(--color-border)]";
-  if (score >= 80) return "bg-[var(--color-success)]";
-  if (score >= 50) return "bg-[var(--color-warning)]";
-  return "bg-[var(--color-danger)]";
-}
-
-function scoreToTextColor(score: number, hasData: boolean): string {
-  if (!hasData) return "text-[var(--color-text-tertiary)]";
-  if (score >= 80) return "text-[var(--color-success)]";
-  if (score >= 50) return "text-[var(--color-warning)]";
-  return "text-[var(--color-danger)]";
 }
 
 // ─── P80 基准分 ───────────────────────────────────────────────
@@ -123,192 +98,137 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
   const weakCard = weakBenchmarkCards.find((c) => c.dimension === capabilityCards[weakIndex]?.name);
 
   return (
-    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Capability Radar</p>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">六维能力</h2>
-          <p className="text-sm leading-6 text-zinc-500">先看能力强弱分布，再决定优先补哪一段内容短板。</p>
-        </div>
-        <div className="flex items-center gap-2.5 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-500 shadow-sm">
-          <span className="flex items-center gap-1.5">
+    <div className="space-y-4">
+      {/* 图例 + 对比选择器 */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+          <span className="flex items-center gap-1">
             <span className="inline-block h-2 w-2 rounded-full bg-zinc-950" />
             我
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full bg-[#EAB308]" />
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full bg-zinc-300" />
             {compareLabel}
           </span>
-          <select
-            value={comparePersonId}
-            onChange={(e) => setComparePersonId(e.target.value)}
-            className="ml-1 rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950/10"
-          >
-            <option value="">团队 P80</option>
-            {teamMembers.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
         </div>
+        <select
+          value={comparePersonId}
+          onChange={(e) => setComparePersonId(e.target.value)}
+          className="rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-950 outline-none hover:border-zinc-300 focus:border-zinc-900"
+        >
+          <option value="">团队 P80</option>
+          {teamMembers.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div className="flex flex-col gap-4 lg:grid lg:items-center lg:gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      {/* 雷达图 */}
+      <div className="flex items-center justify-center" style={{ maxHeight: 280 }}>
+        <svg
+          viewBox="-55 -45 410 380"
+          className="w-full max-w-[380px]"
+          aria-label="六维能力雷达图"
+        >
+          {/* 网格 */}
+          {Array.from({ length: LEVELS }, (_, level) => (
+            <polygon
+              key={level}
+              points={buildGridPolygon(level + 1)}
+              fill="none"
+              stroke="#E4E4E7"
+              strokeWidth="1"
+            />
+          ))}
+          {/* 轴线 */}
+          {Array.from({ length: DIMS }, (_, i) => {
+            const { x, y } = polarToXY(MAX_RADIUS, i);
+            return <line key={i} x1={CENTER} y1={CENTER} x2={x} y2={y} stroke="#E4E4E7" strokeWidth="1" />;
+          })}
+          {/* 对比区域 */}
+          <polygon
+            points={buildPolygonPoints(compareScores, 100)}
+            fill="rgba(228,228,231,0.3)"
+            stroke="#A1A1AA"
+            strokeWidth="1.5"
+            strokeDasharray="6,4"
+          />
+          {/* 我的区域 */}
+          <polygon
+            points={buildPolygonPoints(myScores, 100)}
+            fill="rgba(9,9,11,0.05)"
+            stroke="#09090B"
+            strokeWidth="2"
+          />
+          {/* 对比数据点 */}
+          {compareScores.map((score, i) => {
+            const r = (Math.min(score, 100) / 100) * MAX_RADIUS;
+            const { x, y } = polarToXY(r, i);
+            const dimName = capabilityCards[i]?.name ?? `维度${i + 1}`;
+            return (
+              <circle key={`cmp-${i}`} cx={x} cy={y} r={3} fill="#A1A1AA" stroke="white" strokeWidth="1.5">
+                <title>{`${dimName}（${compareLabel}）: ${score}分`}</title>
+              </circle>
+            );
+          })}
+          {/* 我的数据点（可点击） */}
+          {myScores.map((score, i) => {
+            const r = (Math.min(score, 100) / 100) * MAX_RADIUS;
+            const { x, y } = polarToXY(r, i);
+            const isActive = activeIndex === i;
+            const dimName = capabilityCards[i]?.name ?? `维度${i + 1}`;
+            return (
+              <circle
+                key={`my-${i}`}
+                cx={x}
+                cy={y}
+                r={isActive ? 6 : 4}
+                fill={isActive ? "#09090B" : "#52525B"}
+                stroke="white"
+                strokeWidth="1.5"
+                className="cursor-pointer transition-all"
+                onClick={() => setActiveIndex(isActive ? null : i)}
+              >
+                <title>{`${dimName}: ${score}分`}</title>
+              </circle>
+            );
+          })}
+          {/* 轴标签 */}
+          {capabilityCards.map((card, i) => {
+            const { x, y } = polarToXY(MAX_RADIUS + LABEL_OFFSET, i);
+            const isActive = activeIndex === i;
+            return (
+              <text
+                key={i}
+                x={x}
+                y={y + labelDyAdjust[i]}
+                textAnchor={labelAnchors[i]}
+                fontSize="12"
+                fontWeight={isActive ? 700 : 600}
+                fill={isActive ? "#09090B" : "#71717A"}
+                className="cursor-pointer"
+                onClick={() => setActiveIndex(isActive ? null : i)}
+              >
+                {card.name}
+              </text>
+            );
+          })}
+        </svg>
+      </div>
 
-        {/* ── 左列 ── */}
-        <div>
-          {/* 六维进度条 */}
-          <div className="flex flex-col gap-2.5">
-            {capabilityCards.map((card, i) => {
-              const score = myScores[i];
-              const hasData = score > 0;
-              const barColor = scoreToBarColor(score, hasData);
-              const textColor = scoreToTextColor(score, hasData);
-              const isActive = activeIndex === i;
-              return (
-                <button
-                  key={card.key}
-                  type="button"
-                  onClick={() => setActiveIndex(isActive ? null : i)}
-                  className={cn(
-                    "rounded-lg px-2 py-1.5 text-left transition-colors",
-                    isActive ? "bg-zinc-50" : "hover:bg-zinc-50",
-                  )}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-[4.6rem] shrink-0 text-[13px] font-semibold text-[var(--color-text-primary)]">
-                      {dimIcons[card.name] ?? "·"} {card.name}
-                    </span>
-                    <div className="h-[7px] flex-1 max-w-[44%] rounded-full bg-zinc-100">
-                      <div
-                        className={cn("h-full rounded-full transition-all", barColor)}
-                        style={{ width: hasData ? `${score}%` : "0%" }}
-                      />
-                    </div>
-                    <span className={cn("w-8 shrink-0 text-right text-sm font-bold tabular-nums", textColor)}>
-                      {hasData ? score : "—"}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* 最强 / 最弱 */}
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-              <p className="text-[11px] font-medium text-zinc-400">最强 · {capabilityCards[strongIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-zinc-950">
-                {strongCard && strongCard.state === "benchmark"
-                  ? `${strongCard.personName} — ${strongCard.metricText}`
-                  : strongCard?.state === "self_best"
-                    ? `你 — ${strongCard.metricText}`
-                    : `得分 ${myScores[strongIndex]}`}
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-zinc-500">
-                {strongCard?.snippet || "继续保持，这是你的核心优势维度。"}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-              <p className="text-[11px] font-medium text-zinc-400">最弱 · {capabilityCards[weakIndex]?.name}</p>
-              <p className="mt-0.5 text-sm font-semibold text-zinc-950">
-                你 — {capabilityCards[weakIndex]?.metricText ?? `${myScores[weakIndex]} 分`}
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-zinc-500">
-                {weakCard?.snippet ||
-                  `${capabilityCards[weakIndex]?.name}低于团队基准，建议优先针对此项做单点优化。`}
-              </p>
-            </div>
-          </div>
+      {/* 最强 / 最弱 — 极简标签 */}
+      <div className="flex items-center justify-center gap-3">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#067647]" />
+          <span className="text-zinc-500">最强</span>
+          <span className="font-semibold text-zinc-900">{capabilityCards[strongIndex]?.name}</span>
         </div>
-
-        {/* ── 右列：雷达图（紧凑viewBox，图形撑满） ── */}
-        <div className="flex items-center justify-center max-h-[300px]">
-          <svg
-            viewBox="-55 -45 410 380"
-            className="w-full max-w-[420px] max-h-full"
-            aria-label="六维能力雷达图"
-          >
-            {/* 网格 */}
-            {Array.from({ length: LEVELS }, (_, level) => (
-              <polygon
-                key={level}
-                points={buildGridPolygon(level + 1)}
-                fill="none"
-                stroke="#e2e8f0"
-                strokeWidth="1"
-              />
-            ))}
-            {/* 轴线 */}
-            {Array.from({ length: DIMS }, (_, i) => {
-              const { x, y } = polarToXY(MAX_RADIUS, i);
-              return <line key={i} x1={CENTER} y1={CENTER} x2={x} y2={y} stroke="#e2e8f0" strokeWidth="1" />;
-            })}
-            {/* 对比区域 */}
-            <polygon
-              points={buildPolygonPoints(compareScores, 100)}
-              fill="rgba(161,161,170,0.08)"
-              stroke="#a1a1aa"
-              strokeWidth="2"
-              strokeDasharray="6,4"
-            />
-            {/* 我的区域 */}
-            <polygon
-              points={buildPolygonPoints(myScores, 100)}
-              fill="rgba(9,9,11,0.08)"
-              stroke="#09090B"
-              strokeWidth="2.5"
-            />
-            {/* 对比数据点 */}
-            {compareScores.map((score, i) => {
-              const r = (Math.min(score, 100) / 100) * MAX_RADIUS;
-              const { x, y } = polarToXY(r, i);
-              const dimName = capabilityCards[i]?.name ?? `维度${i + 1}`;
-              return (
-                <circle key={`cmp-${i}`} cx={x} cy={y} r={3.5} fill="#a1a1aa" stroke="white" strokeWidth="1.5">
-                  <title>{`${dimName}（${compareLabel}）: ${score}分`}</title>
-                </circle>
-              );
-            })}
-            {/* 我的数据点 */}
-            {myScores.map((score, i) => {
-              const r = (Math.min(score, 100) / 100) * MAX_RADIUS;
-              const { x, y } = polarToXY(r, i);
-              const isActive = activeIndex === i;
-              const dimName = capabilityCards[i]?.name ?? `维度${i + 1}`;
-              return (
-                <circle
-                  key={`my-${i}`}
-                  cx={x}
-                  cy={y}
-                  r={isActive ? 6 : 4}
-                  fill={isActive ? "#09090B" : "#52525b"}
-                  stroke="white"
-                  strokeWidth="1.5"
-                >
-                  <title>{`${dimName}: ${score}分`}</title>
-                </circle>
-              );
-            })}
-            {/* 轴标签 */}
-            {capabilityCards.map((card, i) => {
-              const { x, y } = polarToXY(MAX_RADIUS + LABEL_OFFSET, i);
-              return (
-                <text
-                  key={i}
-                  x={x}
-                  y={y + labelDyAdjust[i]}
-                  textAnchor={labelAnchors[i]}
-                  fontSize="13"
-                  fontWeight="600"
-                  fill="#71717A"
-                >
-                  {card.name}
-                </text>
-              );
-            })}
-          </svg>
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#B42318]" />
+          <span className="text-zinc-500">最弱</span>
+          <span className="font-semibold text-zinc-900">{capabilityCards[weakIndex]?.name}</span>
         </div>
       </div>
     </div>

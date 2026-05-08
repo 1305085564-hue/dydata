@@ -1,8 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowRight, LineChart, ShieldCheck, Users } from "lucide-react";
-
+import { AlertTriangle, ArrowRight, ShieldCheck } from "lucide-react";
 
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { calcRates, parsePercentText, type MetricsReport } from "@/lib/metrics";
@@ -40,19 +39,10 @@ const DIM_LABELS: Record<DimKey, string> = {
 const WEAK_ADVICE: Record<DimKey, string> = {
   播放量: "发布时间优先压到 18:00-21:00，再把标题前 5 个字改成更直给的关键词。",
   涨粉: "结尾固定一条关注理由，口播和字幕同步出现，不要只留空泛 CTA。",
-  点赞: "在情绪最高点插一句互动提问，逼用户做“同意 / 不同意”的选择。",
+  点赞: "在情绪最高点插一句互动提问，逼用户做'同意 / 不同意'的选择。",
   完播率: "砍掉铺垫句，把结论前置到前 10 秒，中段只留一个核心转折。",
   "5s完播率": "开头 3 秒先给冲突或反常识，不要先讲背景。",
   "2s跳出率": "首帧直接上人物动作或结果画面，第一句从结论说起。",
-};
-
-const WEAK_FOCUS: Record<DimKey, string> = {
-  播放量: "选题抓法和发布时间",
-  涨粉: "结尾 CTA 和主页承接",
-  点赞: "互动提问和情绪点",
-  完播率: "结构节奏和信息密度",
-  "5s完播率": "开头钩子设计",
-  "2s跳出率": "首帧和第一句吸引力",
 };
 
 const STRONG_ADVICE: Record<DimKey, string> = {
@@ -148,28 +138,28 @@ function buildExampleItems(): DiagnosisItem[] {
       key: "demo-hook",
       title: "开头留人偏弱",
       tone: "weak",
-      evidence: "示范数据：5秒完播率 28%，团队均值 41%，前3秒留人偏弱。",
+      evidence: "5秒完播率 28%，团队均值 41%，前3秒留人偏弱。",
       benchmarkLabel: "该学谁 / 为什么：参考 小林",
-      benchmarkReason: "示例内容：同题材账号首句直接抛冲突，5秒完播率稳定在 46% 左右。",
-      action: "下一步动作：先把第一句改成结论前置 + 悬念问句，再连续验证 3 条。",
+      benchmarkReason: "同题材账号首句直接抛冲突，5秒完播率稳定在 46% 左右。",
+      action: "先把第一句改成结论前置 + 悬念问句，再连续验证 3 条。",
     },
     {
       key: "demo-growth",
       title: "增长转化偏弱",
       tone: "weak",
-      evidence: "示范数据：单条涨粉 9，团队均值 16，结尾转化动作不够明确。",
+      evidence: "单条涨粉 9，团队均值 16，结尾转化动作不够明确。",
       benchmarkLabel: "该学谁 / 为什么：参考 阿周",
-      benchmarkReason: "示例内容：对方结尾会重复一句“主页看完整版”，转粉路径更清楚。",
-      action: "下一步动作：把结尾 CTA 固定成 1 句口播 + 1 句字幕，不要临场发挥。",
+      benchmarkReason: "对方结尾会重复一句'主页看完整版'，转粉路径更清楚。",
+      action: "把结尾 CTA 固定成 1 句口播 + 1 句字幕，不要临场发挥。",
     },
     {
       key: "demo-like",
       title: "互动吸引暂时领先",
       tone: "strong",
-      evidence: "示范数据：点赞率 8.2%，高于团队均值 6.1%，第二名已追到 7.8%。",
+      evidence: "点赞率 8.2%，高于团队均值 6.1%，第二名已追到 7.8%。",
       benchmarkLabel: "该盯谁 / 为什么：盯住 第二名账号",
-      benchmarkReason: "示例内容：对方评论区提问更密，互动链路已经很接近你。",
-      action: "下一步动作：保留现有情绪点，在第 15 秒补一个互动提问，继续拉开差距。",
+      benchmarkReason: "对方评论区提问更密，互动链路已经很接近你。",
+      action: "保留现有情绪点，在第 15 秒补一个互动提问，继续拉开差距。",
     },
   ];
 }
@@ -206,7 +196,7 @@ function buildDiagnosisItems(myReports: MetricsReport[], teamReports: MetricsRep
         evidence: `你的 ${item.label} ${fmt(item.dim, item.selfAvg)}，团队均值 ${fmt(item.dim, item.teamAvg)}，差距 ${(item.gapPct * 100).toFixed(0)}%。`,
         benchmarkLabel: benchmark ? `该学谁 / 为什么：参考 ${benchmark.name}` : "该学谁 / 为什么：先看团队均值以上样本",
         benchmarkReason: benchmark
-          ? `${benchmark.name} 这项做到 ${fmt(item.dim, benchmark.avg)}，更值得直接抄他的${WEAK_FOCUS[item.dim]}。`
+          ? `${benchmark.name} 这项做到 ${fmt(item.dim, benchmark.avg)}，更值得直接抄。`
           : `当前没找到足够稳定的对标人，先复盘团队里 ${item.label} 高于均值的作品。`,
         action: WEAK_ADVICE[item.dim],
       };
@@ -241,79 +231,69 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
   const diagnosisItems = buildDiagnosisItems(myReports, teamReports);
 
   return (
-    <div className={`rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6 ${className ?? ""}`}>
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Diagnosis Brief</p>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">诊断建议</h2>
-          <p className="text-sm leading-6 text-zinc-500">先看问题，再找对标，再决定下一步先改哪一个动作。</p>
-        </div>
+    <div className={className}>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid gap-3 lg:grid-cols-2"
+      >
+        {diagnosisItems.map((item) => {
+          const isWeak = item.tone === "weak";
+          return (
+            <motion.article
+              key={item.key}
+              variants={itemVariants}
+              className="group flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-[1px] hover:shadow-md"
+            >
+              {/* 头部 */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {isWeak ? (
+                    <AlertTriangle className="size-4 shrink-0 text-[#EAB308]" />
+                  ) : (
+                    <ShieldCheck className="size-4 shrink-0 text-[#067647]" />
+                  )}
+                  <h3 className="text-sm font-bold text-zinc-950">{item.title}</h3>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    isWeak
+                      ? "bg-[#FEFCE8] text-[#B45309]"
+                      : "bg-[#ECFDF3] text-[#067647]"
+                  }`}
+                >
+                  {isWeak ? "优先处理" : "继续放大"}
+                </span>
+              </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">重点项</div>
-          <div className="text-xs text-zinc-500">
-            {myReports.length === 0 ? "示例内容 / 示范数据" : `最多展示 ${diagnosisItems.length} 项`}
+              {/* 数据证据 */}
+              <p className="mt-3 text-[13px] leading-relaxed text-zinc-600">
+                {item.evidence}
+              </p>
+
+              {/* 对标信息 — 压缩为一行小字 */}
+              <p className="mt-1 text-[11px] text-zinc-400">
+                {item.benchmarkLabel} · {item.benchmarkReason}
+              </p>
+
+              {/* 下一步动作 — 底部按钮 */}
+              <div className="mt-auto pt-3">
+                <div className="flex items-start gap-2 rounded-xl border-l-4 border-l-zinc-950 bg-zinc-50 p-3">
+                  <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-zinc-500" />
+                  <p className="text-[13px] leading-relaxed text-zinc-800">{item.action}</p>
+                </div>
+              </div>
+            </motion.article>
+          );
+        })}
+
+        {diagnosisItems.length === 0 ? (
+          <div className="col-span-2 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+            团队数据不足，暂时还不能给出有效对标。
           </div>
-        </div>
-
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-3 lg:grid-cols-2">
-          {diagnosisItems.map((item) => {
-            const toneClass = item.tone === "weak" ? "border-[#EAB308]/20 bg-[#FEFCE8]" : "border-[#067647]/20 bg-[#ECFDF3]";
-            const badgeClass = item.tone === "weak" ? "bg-[#FEFCE8] text-[#B45309]" : "bg-[#ECFDF3] text-[#067647]";
-
-            return (
-              <motion.article key={item.key} variants={itemVariants} className={`rounded-[18px] border p-4 ${toneClass}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
-                      {item.tone === "weak" ? <AlertTriangle className="size-4 text-[#EAB308]" /> : <ShieldCheck className="size-4 text-[#067647]" />}
-                      <span>问题名：{item.title}</span>
-                    </div>
-                    {myReports.length === 0 ? (
-                      <div className="text-[11px] font-medium text-zinc-500">示例内容</div>
-                    ) : null}
-                  </div>
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClass}`}>
-                    {item.tone === "weak" ? "优先处理" : "继续放大"}
-                  </span>
-                </div>
-
-                <div className="mt-4 grid gap-3 text-sm text-zinc-950">
-                  <div className="rounded-[14px] border border-zinc-200 bg-white p-3">
-                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      <LineChart className="size-3.5" />
-                      数据证据
-                    </div>
-                    <p className="leading-6">{item.evidence}</p>
-                  </div>
-
-                  <div className="rounded-[14px] border border-zinc-200 bg-white p-3">
-                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      <Users className="size-3.5" />
-                      {item.benchmarkLabel}
-                    </div>
-                    <p className="leading-6">{item.benchmarkReason}</p>
-                  </div>
-
-                  <div className="rounded-r-[14px] border-l-4 border-zinc-950 bg-zinc-50 p-3">
-                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      <ArrowRight className="size-3.5" />
-                      下一步动作
-                    </div>
-                    <p className="leading-6">{item.action}</p>
-                  </div>
-                </div>
-              </motion.article>
-            );
-          })}
-
-          {diagnosisItems.length === 0 ? (
-            <div className="rounded-[16px] border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
-              团队数据不足，暂时还不能给出有效对标。
-            </div>
-          ) : null}
-        </motion.div>
-      </div>
+        ) : null}
+      </motion.div>
     </div>
   );
 }

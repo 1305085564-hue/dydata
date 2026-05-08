@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Target, TrendingUp } from "lucide-react";
+import { Sparkles, Target } from "lucide-react";
 import { 六维雷达面板 } from "@/components/growth/六维雷达面板";
 import { DiagnosisCard } from "@/components/growth/diagnosis-card";
 import { StatusCardGrid } from "@/components/growth/status-card-grid";
@@ -54,8 +54,8 @@ export function GrowthClientShell({
 }: GrowthClientShellProps) {
   return (
     <AppShell width="wide" className="pb-12">
+      {/* 顶层数据仪 — 合并 Hero + Performance Snapshot */}
       <AppShellHero
-        eyebrow="Growth Analysis"
         title="成长分析总览"
         description="先看能力分布和诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。"
         meta={
@@ -94,47 +94,55 @@ export function GrowthClientShell({
             },
           ]}
         />
+        <div className="pt-2">
+          <StatusCardGrid items={statusCards} />
+        </div>
       </AppShellHero>
 
-      <div className="space-y-8">
-          <AppShellSection
-            eyebrow="Performance Snapshot"
-            title="先看结果变化"
-            description="这组数字先回答最近 7 天是变好还是变差。"
-            meta={<div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500"><TrendingUp className="size-3.5" /> 最近 7 天 vs 上一个 7 天</div>}
-          >
-            <StatusCardGrid items={statusCards} />
-          </AppShellSection>
-
-          <AppShellSection
-            eyebrow="Capability Map"
-            title="再看能力分布"
-            description="六维能力和弱项对标放在一起，看清差距来自哪里。"
-            meta={<div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500"><Target className="size-3.5 text-[#EAB308]" /> 当前最弱项：{summary.weakestDimension ?? "待积累"}</div>}
-          >
-            <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
-          </AppShellSection>
-
-          {pkPanel ? (
-            <AppShellSection eyebrow="Peer Battle" title="同标签对比" description="和最接近你的对手对比，优先找能直接复制的差距。">
-              <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} />
-            </AppShellSection>
-          ) : null}
-
-          <AppShellSection eyebrow="Diagnosis" title="诊断建议" description="结合团队均值，先明确当前最该动的地方。">
-            <DiagnosisCard myReports={myReports} teamReports={teamReports} />
-          </AppShellSection>
-
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-            <AppShellSection eyebrow="Script Review" title="文案拆解" description="先定位问题发生在开头、中段还是结尾。">
-              <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
-            </AppShellSection>
-
-            <AppShellSection eyebrow="Action Plan" title="AI 洞察与行动建议" description="把结论、证据、示例和动作收成一套。">
-              <GrowthActionPlanPanel advice={advice} noData={myReports.length === 0} />
-            </AppShellSection>
+      {/* 左右分栏：能力档案 + 诊断任务 */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(360px,0.4fr)_minmax(0,1fr)]">
+        {/* 左栏：六维雷达 */}
+        <section className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-zinc-950">能力分布</h2>
+              <p className="mt-1 text-sm text-zinc-500">看清六维差距来自哪里。</p>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-500">
+              <Target className="size-3.5 text-[#EAB308]" />
+              最弱：{summary.weakestDimension ?? "待积累"}
+            </div>
           </div>
-        </div>
+          <六维雷达面板 capabilityCards={capabilityCards} weakBenchmarkCards={weakBenchmarkCards} teamMembers={teamMembers} />
+        </section>
+
+        {/* 右栏：诊断建议 */}
+        <section className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold tracking-tight text-zinc-950">诊断与行动</h2>
+            <p className="mt-1 text-sm text-zinc-500">结合团队均值，先明确当前最该动的地方。</p>
+          </div>
+          <DiagnosisCard myReports={myReports} teamReports={teamReports} />
+        </section>
+      </div>
+
+      {/* Peer Battle */}
+      {pkPanel ? (
+        <AppShellSection title="同标签对比" description="和最接近你的对手对比，优先找能直接复制的差距。">
+          <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} />
+        </AppShellSection>
+      ) : null}
+
+      {/* 底部双栏：文案拆解 + AI洞察 */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+        <AppShellSection title="文案拆解" description="先定位问题发生在开头、中段还是结尾。">
+          <ScriptBreakdown title="文案拆解" data={scriptBreakdown} />
+        </AppShellSection>
+
+        <AppShellSection title="AI 洞察与行动建议" description="把结论、证据、示例和动作收成一套。">
+          <GrowthActionPlanPanel advice={advice} noData={myReports.length === 0} />
+        </AppShellSection>
+      </div>
     </AppShell>
   );
 }
