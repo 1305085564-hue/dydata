@@ -3,8 +3,9 @@
 import React from 'react';
 import { useRewriteLogic } from './useRewriteLogic';
 import { RewriteHistory } from './RewriteHistory';
-import { RewriteInput } from './RewriteInput';
 import { RewriteOutput } from './RewriteOutput';
+import { ConfigBar } from './ConfigBar';
+import { ChatInputBar } from './ChatInputBar';
 import type { Conversation, Message, BootstrapPayload } from '../types';
 
 function getConversationTag(conversation: Conversation) {
@@ -51,13 +52,13 @@ export function RewriteWorkbench() {
 
   if (state.errorState) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
-        <div className="max-w-sm rounded-2xl border border-slate-200 bg-background p-8 text-center shadow-sm">
+      <div className="flex h-full items-center justify-center bg-[#F9F9FB]">
+        <div className="max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-xl">
             ⚠️
           </div>
-          <h3 className="mb-2 text-[15px] font-bold text-slate-900">{state.errorState.title}</h3>
-          <p className="text-[13px] text-slate-500">{state.errorState.message}</p>
+          <h3 className="mb-2 text-[15px] font-bold text-zinc-900">{state.errorState.title}</h3>
+          <p className="text-[13px] text-zinc-500">{state.errorState.message}</p>
         </div>
       </div>
     );
@@ -65,22 +66,23 @@ export function RewriteWorkbench() {
 
   if (state.loading || !state.bootstrap) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4 w-full max-w-sm px-6">
-          <div className="flex space-x-2 w-full justify-center opacity-60">
-            <div className="h-2 w-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-            <div className="h-2 w-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-            <div className="h-2 w-2 bg-slate-400 rounded-full animate-bounce"></div>
+      <div className="flex h-full items-center justify-center bg-[#F9F9FB]">
+        <div className="flex flex-col items-center gap-3 w-full max-w-sm px-6">
+          <div className="flex space-x-1.5">
+            <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.3s]" />
+            <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.15s]" />
+            <div className="h-2 w-2 rounded-full bg-zinc-300 animate-bounce" />
           </div>
-          <span className="text-sm font-medium tracking-wide text-slate-500">正在进入工作台</span>
+          <span className="text-[13px] font-medium text-zinc-400">正在进入工作台...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden bg-background text-foreground shadow-sm border border-slate-200/60 rounded-xl">
-      <aside className="hidden lg:block w-[260px] shrink-0 border-r border-slate-200/80 bg-slate-50/50">
+    <div className="flex h-full w-full overflow-hidden bg-[#F9F9FB]">
+      {/* 左侧窄边栏 — 历史记录 */}
+      <aside className="hidden lg:flex w-[180px] shrink-0 flex-col border-r border-zinc-200 bg-white">
         <RewriteHistory
           conversations={state.conversations}
           currentConversationId={state.currentConversationId}
@@ -91,30 +93,27 @@ export function RewriteWorkbench() {
         />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col md:flex-row md:divide-x md:divide-slate-200/80">
-        <section className="flex w-full md:w-[380px] shrink-0 flex-col lg:w-[420px]">
-          <RewriteInput
-            bootstrap={state.bootstrap}
-            isChatStage={state.isChatStage}
-            activeFixedMode={state.activeFixedMode}
-            customControlsLocked={state.customControlsLocked}
-            interactionControlsDisabled={state.interactionControlsDisabled}
-            selectedFixedModeId={state.selectedFixedModeId}
-            selectedModelViewId={state.selectedModelViewId}
-            selectedModeId={state.selectedModeId}
-            selectedLengthId={state.selectedLengthId}
-            inputText={state.inputText}
-            isSending={state.isSending}
-            onToggleFixedMode={actions.handleToggleFixedMode}
-            onModelViewChange={actions.setSelectedModelViewId}
-            onModeChange={actions.setSelectedModeId}
-            onLengthChange={actions.setSelectedLengthId}
-            onInputChange={actions.setInputText}
-            onSend={(text) => actions.handleSend(text)}
-          />
-        </section>
+      {/* 主对话区 */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* 顶部配置摘要 */}
+        <ConfigBar
+          bootstrap={state.bootstrap}
+          isChatStage={state.isChatStage}
+          activeFixedMode={state.activeFixedMode}
+          customControlsLocked={state.customControlsLocked}
+          interactionControlsDisabled={state.interactionControlsDisabled}
+          selectedFixedModeId={state.selectedFixedModeId}
+          selectedModelViewId={state.selectedModelViewId}
+          selectedModeId={state.selectedModeId}
+          selectedLengthId={state.selectedLengthId}
+          onToggleFixedMode={actions.handleToggleFixedMode}
+          onModelViewChange={actions.setSelectedModelViewId}
+          onModeChange={actions.setSelectedModeId}
+          onLengthChange={actions.setSelectedLengthId}
+        />
 
-        <section className="flex min-w-0 flex-1 flex-col bg-background">
+        {/* 对话流区域 */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <RewriteOutput
             bootstrap={state.bootstrap}
             messages={state.messages}
@@ -128,7 +127,17 @@ export function RewriteWorkbench() {
             getMessageResponseMode={getMessageResponseMode}
             getMessageDisplayMeta={getMessageDisplayMeta}
           />
-        </section>
+        </div>
+
+        {/* 底部固定输入框 */}
+        <ChatInputBar
+          inputText={state.inputText}
+          isSending={state.isSending}
+          isChatStage={state.isChatStage}
+          activeFixedModeName={state.activeFixedMode?.name ?? null}
+          onInputChange={actions.setInputText}
+          onSend={() => actions.handleSend()}
+        />
       </div>
     </div>
   );
