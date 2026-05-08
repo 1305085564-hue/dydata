@@ -36,7 +36,7 @@ const RETENTION_ITEMS: MetricItem[] = [
   { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%" },
 ];
 
-const DIVIDER = <div className="my-2 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />;
+const DIVIDER = <div className="my-2 h-px bg-zinc-200" />;
 
 export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlurField, anomalyStatus }: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
@@ -45,16 +45,16 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
     <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">指标录入</h3>
-          <p className="text-sm text-[var(--color-text-secondary)]">
+          <h3 className="text-base font-black tracking-tight text-zinc-950">指标录入</h3>
+          <p className="text-sm text-zinc-500">
             填写核心业务数据、互动数据和留存转化数据。
           </p>
         </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-4">
-        <div className="rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">核心数据</p>
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400">核心数据</p>
             <div className="grid grid-cols-3 gap-3">
               {CORE_ITEMS.map((item, index) => (
                 <指标输入卡
@@ -76,8 +76,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
           {DIVIDER}
 
-          <div className="rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">互动数据</p>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400">互动数据</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {INTERACTION_ITEMS.map((item, index) => (
                 <指标输入卡
@@ -96,8 +96,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
           {DIVIDER}
 
-          <div className={retentionOptional ? "rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] opacity-50" : "rounded-[1.15rem] border border-black/6 bg-white/60 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"}>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className={retentionOptional ? "rounded-2xl border border-zinc-200 bg-white p-4 opacity-50" : "rounded-2xl border border-zinc-200 bg-white p-4"}>
+            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400">
               完播留存{retentionOptional && <span className="ml-1 normal-case">（可选）</span>}
             </p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

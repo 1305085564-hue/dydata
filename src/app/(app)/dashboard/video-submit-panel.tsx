@@ -537,11 +537,11 @@ export function VideoSubmitPanel({
 
   if (!accounts.length) {
     return (
-      <Card className="overflow-hidden rounded-3xl border-orange-200 bg-orange-50/80 shadow-sm backdrop-blur-sm">
-        <CardContent className="px-6 py-5 text-sm text-orange-700">
+      <div className="overflow-hidden rounded-3xl border border-[#FDE68A] bg-[#FEFCE8] shadow-sm">
+        <div className="px-6 py-5 text-sm text-[#92400E]">
           当前没有可提交的数据账号，请联系管理员分配账号后再继续操作。
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -554,12 +554,10 @@ export function VideoSubmitPanel({
         className="space-y-5"
       >
         <Card className={cn(
-          embeddedChrome
-            ? "mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-xl"
-            : `${getDashboardSurfaceClass("hero")} mx-auto max-w-6xl overflow-hidden rounded-[2rem] border-0 shadow-xl`,
+          "mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm",
         )}>
           {!embeddedChrome ? (
-          <CardHeader className="space-y-0 border-b border-border/45 bg-background/25 p-0">
+          <CardHeader className="space-y-0 border-b border-zinc-200 bg-[#F9F9FB] p-0">
             <div className="space-y-6 px-6 py-7 sm:px-8 sm:py-8">
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                 <div className="min-w-0">
@@ -577,7 +575,7 @@ export function VideoSubmitPanel({
                     <button
                       type="button"
                       onClick={() => setIsAccountMenuOpen((open) => !open)}
-                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200 bg-white/90 px-3 py-2 text-left shadow-sm backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200 bg-white px-3 py-2 text-left shadow-sm transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:shadow-md"
                       aria-expanded={isAccountMenuOpen}
                       aria-haspopup="listbox"
                     >
@@ -632,7 +630,7 @@ export function VideoSubmitPanel({
                 </div>
               </div>
 
-              <div className="rounded-[1.75rem] border border-white/70 bg-white/72 px-4 py-4 shadow-sm backdrop-blur-xl">
+              <div className="rounded-[1.75rem] border border-zinc-200 bg-[#F9F9FB] px-4 py-4 shadow-sm">
                 <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-100 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
                   <div className="space-y-1">
                     <div className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-400">Today</div>
@@ -675,25 +673,22 @@ export function VideoSubmitPanel({
           </CardHeader>
           ) : null}
 
-          <CardContent className={cn(
-            "min-h-[520px] space-y-7 px-5 py-6 sm:px-8 sm:py-8",
-            embeddedChrome ? "bg-white" : "bg-white/25",
-          )}>
+          <CardContent className="min-h-[520px] space-y-7 px-5 py-6 sm:px-8 sm:py-8 bg-white">
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
             {activeCheckpointId === 1 ? (
               <>
             {primarySummary && isPrimarySummaryMode ? (
-              <div className={`${getDashboardSurfaceClass("success")} rounded-[1.5rem] p-4 text-sm text-[#067647] sm:p-5`}>
+              <div className="rounded-[1.5rem] border border-[#ABEFC6] bg-[#ECFDF3] p-4 text-sm text-[#067647] sm:p-5">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                      <span className={getDashboardStatusClass("submitted")}>
-                        <FilePenLine className="size-4" />
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#067647] px-2.5 py-1 text-[10px] font-bold text-white">
+                        <FilePenLine className="size-3.5" />
                         今日数据已提交
                       </span>
                     </div>
                     <div className="space-y-1.5">
-                      <div className="text-lg font-semibold text-foreground sm:text-xl">
+                      <div className="text-lg font-semibold text-zinc-950 sm:text-xl">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
                       <div className="text-xs leading-5 text-[#067647]/80">
@@ -702,27 +697,27 @@ export function VideoSubmitPanel({
                         发布时间：{primarySummary.publishedAt || "暂无"}
                       </div>
                     </div>
-                    <div className={getDashboardMetricGridClass("secondary")}>
-                      <div className="dashboard-metric-card">
-                        <div className="text-xs text-muted-foreground">播放量</div>
-                        <div className="text-sm font-semibold text-foreground">{primarySummary.playCount ?? "--"}</div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <div className="rounded-xl border border-[#ABEFC6]/60 bg-white p-3">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-zinc-500">播放量</div>
+                        <div className="mt-1 text-sm font-semibold text-zinc-950">{primarySummary.playCount ?? "--"}</div>
                       </div>
-                      <div className="dashboard-metric-card">
-                        <div className="text-xs text-muted-foreground">互动总量</div>
-                        <div className="text-sm font-semibold text-foreground">
+                      <div className="rounded-xl border border-[#ABEFC6]/60 bg-white p-3">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-zinc-500">互动总量</div>
+                        <div className="mt-1 text-sm font-semibold text-zinc-950">
                           {(primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
                             (primarySummary.shares ?? 0) +
                             (primarySummary.favorites ?? 0)}
                         </div>
                       </div>
-                      <div className="dashboard-metric-card">
-                        <div className="text-xs text-muted-foreground">涨粉</div>
-                        <div className="text-sm font-semibold text-foreground">{primarySummary.followerGain ?? "--"}</div>
+                      <div className="rounded-xl border border-[#ABEFC6]/60 bg-white p-3">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-zinc-500">涨粉</div>
+                        <div className="mt-1 text-sm font-semibold text-zinc-950">{primarySummary.followerGain ?? "--"}</div>
                       </div>
-                      <div className="dashboard-metric-card">
-                        <div className="text-xs text-muted-foreground">完播率</div>
-                        <div className="text-sm font-semibold text-foreground">{primarySummary.completionRate ?? "--"}</div>
+                      <div className="rounded-xl border border-[#ABEFC6]/60 bg-white p-3">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-zinc-500">完播率</div>
+                        <div className="mt-1 text-sm font-semibold text-zinc-950">{primarySummary.completionRate ?? "--"}</div>
                       </div>
                     </div>
                   </div>
@@ -731,7 +726,7 @@ export function VideoSubmitPanel({
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-12 rounded-2xl bg-white/70"
+                      className="h-12 rounded-2xl border-zinc-200 bg-white text-zinc-950 hover:bg-zinc-50 hover:-translate-y-[1px] transition-all"
                       onClick={() => setRequestedMode("editToday")}
                     >
                       <PencilLine className="size-4" />
@@ -773,12 +768,12 @@ export function VideoSubmitPanel({
                       <div className="text-lg font-semibold text-foreground sm:text-xl">
                         {activeBizDate} 已标记为{activeDateStatus.label}
                       </div>
-                      <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                      <p className="text-sm leading-6 text-zinc-500">
                         {activeDateStatus.description}
                       </p>
                     </div>
                     {activeExemptionState.reason ? (
-                      <p className="text-sm text-[var(--color-text-secondary)]">
+                      <p className="text-sm text-zinc-500">
                         原因：{activeExemptionState.reason}
                       </p>
                     ) : null}

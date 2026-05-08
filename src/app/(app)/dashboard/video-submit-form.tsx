@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { getDefaultPublishedAtValue } from "@/lib/日报";
 import type {
@@ -843,7 +844,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   }, []);
 
   const mobileSubmitBar = (
-    <div className="fixed inset-x-0 bottom-0 z-[100] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] border-t border-black/5 bg-white/92 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur-[18px] md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-zinc-200 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 md:hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-2">
           <p className="text-xs text-[var(--color-text-secondary)]">
             {canActuallySubmit
@@ -851,12 +852,12 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单后提交"}
           </p>
           <div className="grid gap-1.5">
-            <Label className="text-xs font-medium text-[var(--color-text-secondary)]">视频状态</Label>
+            <Label className="text-xs font-medium text-zinc-500">视频状态</Label>
             <Select
               value={meta.anomalyStatus}
               onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
             >
-              <SelectTrigger className="h-10 rounded-[var(--radius-lg)] bg-white text-sm">
+              <SelectTrigger className="h-10 rounded-xl bg-white text-sm border-zinc-200">
                 <SelectValue placeholder="请选择视频状态" />
               </SelectTrigger>
               <SelectContent>
@@ -873,7 +874,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           </div>
           <div className={`grid gap-2 ${onCancel ? "grid-cols-2" : "grid-cols-1"}`}>
             {onCancel ? (
-              <Button type="button" variant="outline" className="h-11 rounded-[10px] px-2 text-xs" onClick={onCancel}>
+              <Button type="button" variant="outline" className="h-11 rounded-xl px-2 text-xs border-zinc-200 text-zinc-700 hover:bg-zinc-50" onClick={onCancel}>
                 取消
               </Button>
             ) : null}
@@ -882,7 +883,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               form="video-submit-form"
               disabled={isSubmitting || !canActuallySubmit}
               title={canActuallySubmit ? undefined : issueSummary.reason || submitCheck.reason || undefined}
-              className="h-11 rounded-[10px] px-2 text-xs"
+              className="h-11 rounded-xl px-2 text-xs bg-zinc-950 text-white hover:bg-zinc-800 hover:-translate-y-[1px] hover:shadow-lg transition-all active:translate-y-0 disabled:bg-zinc-200 disabled:text-zinc-400 disabled:shadow-none disabled:hover:translate-y-0"
             >
               {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : initialSummary ? "保存修改" : "提交今日"}
             </Button>
@@ -893,19 +894,23 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
   const desktopSubmitBar = (
     <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[95] hidden justify-center px-4 md:flex">
-      <div className="pointer-events-auto flex min-h-[60px] w-auto max-w-[min(720px,calc(100vw-2rem))] items-center justify-between gap-4 rounded-[20px] border border-white/50 bg-white/90 px-4 py-3 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.04)] backdrop-blur-[20px] backdrop-saturate-[180%] transition-all hover:shadow-[0_18px_34px_-8px_rgba(0,0,0,0.12)]">
+      <div className="pointer-events-auto flex min-h-[60px] w-auto max-w-[min(720px,calc(100vw-2rem))] items-center justify-between gap-4 rounded-[20px] border border-zinc-200 bg-white px-5 py-3 shadow-lg transition-all hover:shadow-xl hover:-translate-y-[1px]">
         <div className="flex min-w-0 items-center gap-3">
           {canActuallySubmit ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <div className="flex size-[18px] items-center justify-center rounded-full bg-[#ECFDF3] text-[#067647]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
           ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <div className="flex size-[18px] items-center justify-center rounded-full bg-[#FEF3F2] text-[#B42318]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            </div>
           )}
           <div className="flex min-w-0 flex-col justify-center">
-            <p className="text-[13px] font-semibold leading-tight text-[var(--color-text-primary)]">
-              {canActuallySubmit ? "Ready" : "Needs Work"}
+            <p className="text-[13px] font-semibold leading-tight text-zinc-950">
+              {canActuallySubmit ? "已就绪" : "待完善"}
             </p>
-            <p className="mt-0.5 max-w-[170px] truncate text-[10px] font-medium leading-tight text-[var(--color-text-secondary)]">
-              {canActuallySubmit ? "Submit today" : issueHintText || issueSummary.reason || submitCheck.reason || "Complete the form"}
+            <p className="mt-0.5 max-w-[170px] truncate text-[10px] font-medium leading-tight text-zinc-500">
+              {canActuallySubmit ? "可提交今日数据" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单"}
             </p>
           </div>
         </div>
@@ -915,7 +920,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               value={meta.anomalyStatus}
               onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
             >
-              <SelectTrigger className="h-10 rounded-full border-black/5 bg-[#f8fafc] px-3 text-[13px] font-medium shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] transition-all hover:bg-white focus:ring-2 focus:ring-primary/20">
+              <SelectTrigger className="h-10 rounded-full border-zinc-200 bg-[#F4F4F5] px-3 text-[13px] font-medium transition-all hover:bg-white focus:ring-1 focus:ring-zinc-950/10">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -929,8 +934,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           </div>
           <div className="flex items-center gap-2">
             {onCancel ? (
-              <Button type="button" variant="ghost" className="h-10 rounded-full bg-[#f1f5f9] px-4 text-[13px] font-semibold text-[var(--color-text-main)] hover:bg-black/5" onClick={onCancel}>
-                Cancel
+              <Button type="button" variant="ghost" className="h-10 rounded-full bg-[#F4F4F5] px-4 text-[13px] font-semibold text-zinc-700 hover:bg-zinc-200" onClick={onCancel}>
+                取消
               </Button>
             ) : null}
             <Button
@@ -938,7 +943,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               form="video-submit-form"
               disabled={isSubmitting || !canActuallySubmit}
               title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
-              className="h-10 rounded-full bg-[var(--color-primary)] px-5 text-[13px] font-bold text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all hover:-translate-y-0.5 hover:bg-[#1d4ed8] hover:shadow-[0_6px_20px_rgba(37,99,235,0.5)] active:translate-y-0 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:hover:translate-y-0"
+              className="h-10 rounded-full bg-zinc-950 px-5 text-[13px] font-bold text-white shadow-md transition-all hover:-translate-y-[2px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0 disabled:bg-zinc-200 disabled:text-zinc-400 disabled:shadow-none disabled:hover:translate-y-0"
             >
               {submitButtonLabel}
             </Button>
@@ -950,11 +955,11 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
   if (!account) {
     return (
-      <MotionCard className="border-none bg-white/70">
-        <div className="p-6 text-sm text-[var(--color-text-secondary)]">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+        <div className="text-sm text-zinc-500">
           请先选择一个视频账号，再填写提交信息。
         </div>
-      </MotionCard>
+      </div>
     );
   }
 
@@ -963,7 +968,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       <AnimatePresence>{isSubmitted ? <提交成功卡 bizDate={meta.bizDate} /> : null}</AnimatePresence>
 
       <Dialog open={deleteTargetRole !== null} onOpenChange={(open) => !open && setDeleteTargetRole(null)}>
-        <DialogContent className="max-w-md rounded-[20px] border-none bg-white/75 p-0 shadow-[0_20px_60px_rgba(0,0,0,0.2)] backdrop-blur-[40px]">
+        <DialogContent className="max-w-md rounded-[20px] border-none bg-white p-0 shadow-xl">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>确认删除截图？</DialogTitle>
             <DialogDescription>删除后需要重新上传并识别该槽位截图。</DialogDescription>
@@ -1014,9 +1019,9 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       >
         <div className="space-y-6">
           {/* 第一行：截图槽位区 & 指标分组区 */}
-          <MotionCard className="border-none bg-white/68 shadow-sm backdrop-blur-sm">
+          <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
             <div className="grid items-start gap-6 p-5 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] lg:gap-0">
-            <div className="flex min-w-0 flex-col gap-6 lg:border-r lg:border-black/6 lg:pr-6">
+            <div className="flex min-w-0 flex-col gap-6 lg:border-r lg:border-zinc-200 lg:pr-6">
               <motion.div ref={slotsSectionRef} variants={itemVariants}>
                 <截图槽位区
                   slots={slots}
@@ -1046,64 +1051,64 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               </motion.div>
             </div>
           </div>
-          </MotionCard>
+          </div>
 
           {/* 第二行：视频链接等元数据信息 & 文案提取区 */}
           <motion.div ref={metaSectionRef} variants={itemVariants}>
-            <MotionCard className="border-none bg-white/70 shadow-sm backdrop-blur-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
               <div className="grid items-stretch gap-6 p-5 lg:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] lg:gap-0">
-                <div className="min-w-0 space-y-4 lg:border-r lg:border-black/6 lg:pr-6">
-                  <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors">
-                    <Label htmlFor="video_url">抖音视频链接</Label>
+                <div className="min-w-0 space-y-4 lg:border-r lg:border-zinc-200 lg:pr-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="video_url" className="text-zinc-500 text-sm">抖音视频链接</Label>
                     <Input
                       id="video_url"
                       value={meta.videoUrl}
                       onChange={(event) => updateMeta("videoUrl", event.target.value)}
                       placeholder="https://www.douyin.com/video/..."
-                      className="h-11 rounded-[var(--radius-lg)] bg-white shadow-sm"
+                      className="h-11 rounded-xl bg-white border-zinc-200 tracking-wide focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
                     />
                   </div>
-                  <div className="space-y-2 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
-                    <Label htmlFor="video_title">视频标题 <span className="text-red-500">*</span></Label>
+                  <div className="space-y-2 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#FECDCA] data-[missing=true]:bg-[#FEF3F2]/60 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
+                    <Label htmlFor="video_title" className="text-zinc-500 text-sm">视频标题 <span className="text-[#B42318]">*</span></Label>
                     <Input
                       id="video_title"
                       value={meta.videoTitle}
                       onChange={(event) => updateMeta("videoTitle", event.target.value)}
                       placeholder="输入视频标题"
-                      className="h-11 rounded-[var(--radius-lg)] bg-white shadow-sm"
+                      className="h-11 rounded-xl bg-white border-zinc-200 tracking-wide focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
                     />
                     {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
-                      <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写视频标题</p>
+                      <p className="text-xs font-medium text-[#B42318]">必填，仍未填写视频标题</p>
                     ) : null}
                   </div>
 
-                  <div ref={topicTagSectionRef} className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.topicTagMissing)}>
-                    <Label>话题标签 <span className="text-red-500">*</span></Label>
+                  <div ref={topicTagSectionRef} className="space-y-3 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#FECDCA] data-[missing=true]:bg-[#FEF3F2]/60 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.topicTagMissing)}>
+                    <Label className="text-zinc-500 text-sm">话题标签 <span className="text-[#B42318]">*</span></Label>
                     <div className="flex gap-3">
                       {(["干货", "复盘"] as const).map((tag) => (
                         <button
                           key={tag}
                           type="button"
                           onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
-                          className={[
-                            "flex-1 h-11 rounded-[var(--radius-lg)] border text-sm font-medium transition-all shadow-sm",
+                          className={cn(
+                            "flex-1 h-11 rounded-xl border text-sm font-medium transition-all",
                             meta.topicTag === tag
-                              ? "border-[#007AFF] bg-[#007AFF] text-white"
-                              : "border-black/10 bg-white text-[var(--color-text-primary)] hover:border-[#007AFF]/50",
-                          ].join(" ")}
+                              ? "border-zinc-950 bg-zinc-950 text-white shadow-md hover:bg-zinc-800 hover:-translate-y-[1px]"
+                              : "border-zinc-200 bg-white text-zinc-950 hover:border-zinc-400 hover:bg-zinc-50"
+                          )}
                         >
                           {tag}
                         </button>
                       ))}
                     </div>
                     {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
-                      <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未选择话题标签</p>
+                      <p className="text-xs font-medium text-[#B42318]">必填，仍未选择话题标签</p>
                     ) : null}
                   </div>
 
-                  <div className="space-y-3 rounded-[var(--radius-xl)] border border-transparent p-0 transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("contentKeywords"))}>
-                    <Label>
-                      内容标签 <span className="text-red-500">*</span> <span className="text-xs font-normal text-[var(--color-text-secondary)]">最多3个</span>
+                  <div className="space-y-3 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#FECDCA] data-[missing=true]:bg-[#FEF3F2]/60 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("contentKeywords"))}>
+                    <Label className="text-zinc-500 text-sm">
+                      内容标签 <span className="text-[#B42318]">*</span> <span className="text-xs font-normal text-zinc-400">最多3个</span>
                     </Label>
                     {keywordSuggestions.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
@@ -1119,12 +1124,12 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                                 updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
                               }
                             }}
-                            className={[
-                              "rounded-full border px-3 py-1 text-xs transition-all shadow-sm",
+                            className={cn(
+                              "rounded-full border px-3 py-1 text-xs transition-all",
                               meta.contentKeywords.includes(kw)
-                                ? "border-[#007AFF] bg-[#007AFF] text-white"
-                                : "border-black/10 bg-white text-[var(--color-text-secondary)] hover:border-[#007AFF]/50 disabled:opacity-40",
-                            ].join(" ")}
+                                ? "border-zinc-950 bg-zinc-950 text-white"
+                                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-400 disabled:opacity-40"
+                            )}
                           >
                             {kw}
                           </button>
@@ -1136,13 +1141,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                         {meta.contentKeywords.map((kw) => (
                           <span
                             key={kw}
-                            className="flex items-center gap-1 rounded-full border border-[#007AFF] bg-[#007AFF]/8 px-3 py-1 text-xs text-[#007AFF]"
+                            className="flex items-center gap-1 rounded-full border border-zinc-950 bg-zinc-50 px-3 py-1 text-xs text-zinc-950"
                           >
                             {kw}
                             <button
                               type="button"
                               onClick={() => updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw))}
-                              className="ml-0.5 opacity-70 hover:opacity-100"
+                              className="ml-0.5 opacity-60 hover:opacity-100 transition-opacity"
                             >
                               ×
                             </button>
@@ -1166,7 +1171,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                         }}
                         placeholder={meta.contentKeywords.length >= 3 ? "最多3个标签" : "输入后按空格或回车添加"}
                         disabled={meta.contentKeywords.length >= 3}
-                        className="h-9 rounded-[var(--radius-lg)] bg-white text-sm shadow-sm"
+                        className="h-9 rounded-xl bg-white text-sm border-zinc-200 tracking-wide focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
                       />
                       <Button
                         type="button"
@@ -1179,19 +1184,19 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                             setKeywordInput("");
                           }
                         }}
-                        className="h-9 rounded-[var(--radius-lg)] px-3 text-sm shadow-sm"
+                        className="h-9 rounded-xl px-3 text-sm border-zinc-200 text-zinc-700 hover:bg-zinc-50"
                       >
                         添加
                       </Button>
                     </div>
                     {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("contentKeywords") ? (
-                      <p className="text-xs font-medium text-[var(--color-danger)]">必填，至少添加 1 个内容标签</p>
+                      <p className="text-xs font-medium text-[#B42318]">必填，至少添加 1 个内容标签</p>
                     ) : null}
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="published_at">发布时间</Label>
+                      <Label htmlFor="published_at" className="text-zinc-500 text-sm">发布时间</Label>
                       <Input
                         id="published_at"
                         type="datetime-local"
@@ -1205,50 +1210,54 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                           });
                           setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
                         }}
-                        className="h-11 rounded-[var(--radius-lg)] bg-white shadow-sm"
+                        className="h-11 rounded-xl bg-white border-zinc-200 tracking-wide focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>上传时间</Label>
-                      <div className="flex h-11 items-center rounded-[var(--radius-lg)] border border-black/8 bg-[color:rgba(255,255,255,0.7)] px-3 text-sm text-[var(--color-text-secondary)] shadow-sm">
+                      <Label className="text-zinc-500 text-sm">上传时间</Label>
+                      <div className="flex h-11 items-center rounded-xl border border-zinc-200 bg-[#F9F9FB] px-3 text-sm text-zinc-500">
                         {meta.uploadedAt}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex min-h-[18rem] min-w-0 flex-col space-y-2 rounded-[var(--radius-xl)] border border-transparent transition-colors data-[missing=true]:border-[color:rgba(255,59,48,0.24)] data-[missing=true]:bg-[color:rgba(255,59,48,0.04)] data-[missing=true]:p-3 xl:pl-6" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
-                  <Label htmlFor="content">文案 <span className="text-red-500">*</span></Label>
+                <div className="flex min-h-[18rem] min-w-0 flex-col space-y-2 rounded-xl border border-transparent transition-colors data-[missing=true]:border-[#FECDCA] data-[missing=true]:bg-[#FEF3F2]/60 data-[missing=true]:p-3 xl:pl-6" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
+                  <Label htmlFor="content" className="text-zinc-500 text-sm">文案 <span className="text-[#B42318]">*</span></Label>
                   <textarea
                     id="content"
                     value={meta.content}
                     onChange={(event) => updateMeta("content", event.target.value)}
                     placeholder="粘贴视频文案"
-                    className="min-h-[14rem] w-full flex-1 resize-none rounded-[var(--radius-lg)] border border-black/8 bg-white px-4 py-3 text-sm leading-6 shadow-sm outline-none focus:ring-2 focus:ring-[color:rgba(0,122,255,0.16)] xl:min-h-0"
+                    className="min-h-[14rem] w-full flex-1 resize-none rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm leading-6 tracking-wide outline-none focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30 xl:min-h-0"
                   />
                   {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                    <p className="text-xs font-medium text-[var(--color-danger)]">必填，仍未填写文案</p>
+                    <p className="text-xs font-medium text-[#B42318]">必填，仍未填写文案</p>
                   ) : null}
                 </div>
               </div>
-            </MotionCard>
+            </div>
           </motion.div>
         </div>
 
         <motion.div variants={itemVariants} className="hidden">
           {/* FAB 悬浮操作条 */}
-          <div className="rounded-full pointer-events-auto bg-white/85 backdrop-blur-[20px] backdrop-saturate-[180%] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08),0_8px_10px_-6px_rgba(0,0,0,0.04)] border border-white/50 py-4 px-6 min-h-[72px] flex items-center justify-between gap-8 transition-all hover:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.12)] w-max">
+          <div className="rounded-full pointer-events-auto bg-white border border-zinc-200 shadow-lg py-4 px-6 min-h-[72px] flex items-center justify-between gap-8 transition-all hover:shadow-xl hover:-translate-y-[1px] w-max">
             <div className="flex items-center gap-3">
                 {canActuallySubmit ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  <div className="flex size-5 items-center justify-center rounded-full bg-[#ECFDF3] text-[#067647]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </div>
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  <div className="flex size-5 items-center justify-center rounded-full bg-[#FEF3F2] text-[#B42318]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  </div>
                 )}
                 <div className="flex flex-col justify-center">
-                  <p className="text-[14px] font-semibold text-[var(--color-text-primary)] leading-tight">
-                    {canActuallySubmit ? "一切就绪" : "待完善信息"}
+                  <p className="text-[14px] font-semibold text-zinc-950 leading-tight">
+                    {canActuallySubmit ? "已就绪" : "待完善"}
                   </p>
-                  <p className="text-[11px] font-medium text-[var(--color-text-secondary)] truncate max-w-[200px] leading-tight mt-0.5">
+                  <p className="text-[11px] font-medium text-zinc-500 truncate max-w-[200px] leading-tight mt-0.5">
                     {canActuallySubmit ? "可提交今日数据" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单"}
                   </p>
                 </div>
@@ -1259,7 +1268,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     value={meta.anomalyStatus}
                     onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
                   >
-                    <SelectTrigger className="h-11 rounded-full bg-[#f8fafc] shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] border-black/5 hover:bg-white text-[14px] font-medium transition-all focus:ring-2 focus:ring-primary/20">
+                    <SelectTrigger className="h-11 rounded-full bg-[#F4F4F5] border-zinc-200 text-[14px] font-medium transition-all hover:bg-white focus:ring-1 focus:ring-zinc-950/10">
                       <SelectValue placeholder="请选择状态" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1273,7 +1282,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 </div>
                 <div className="flex items-center gap-2">
                   {onCancel ? (
-                    <Button type="button" variant="ghost" className="h-11 rounded-full px-5 hover:bg-black/5 font-semibold text-[14px] text-[var(--color-text-main)] bg-[#f1f5f9]" onClick={onCancel}>
+                    <Button type="button" variant="ghost" className="h-11 rounded-full px-5 font-semibold text-[14px] text-zinc-700 bg-[#F4F4F5] hover:bg-zinc-200" onClick={onCancel}>
                       取消
                     </Button>
                   ) : null}
@@ -1281,7 +1290,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     type="submit"
                     disabled={isSubmitting || !canActuallySubmit}
                     title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
-                    className="h-11 rounded-full px-7 font-bold text-[14px] transition-all bg-[var(--color-primary)] text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(37,99,235,0.5)] hover:bg-[#1d4ed8] active:translate-y-0 disabled:shadow-none disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:translate-y-0"
+                    className="h-11 rounded-full px-7 font-bold text-[14px] transition-all bg-zinc-950 text-white shadow-md hover:-translate-y-[2px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0 disabled:shadow-none disabled:bg-zinc-200 disabled:text-zinc-400 disabled:hover:translate-y-0"
                   >
                     {submitButtonLabel}
                   </Button>

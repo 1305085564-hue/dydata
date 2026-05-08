@@ -800,7 +800,7 @@ function WorkflowDashboard({
                   value={topicText}
                   onChange={(event) => setTopicText(event.target.value)}
                   className={cn(
-                    "w-full resize-none rounded-2xl border-2 border-zinc-100 bg-zinc-50 p-5 text-sm font-bold leading-relaxed text-zinc-800 shadow-inner transition-all placeholder:text-zinc-300 focus:border-zinc-300 focus:bg-white focus:outline-none",
+                    "w-full resize-none rounded-2xl border border-zinc-200 bg-white p-5 text-sm font-bold leading-relaxed text-zinc-800 tracking-wide transition-all placeholder:text-zinc-400 focus:border-zinc-950/30 focus:ring-1 focus:ring-zinc-950/10 focus:outline-none",
                     activeCheckpoint === "TOPIC" ? "h-56 text-lg" : "h-24",
                   )}
                   placeholder="写选题核心，例如：为什么说今天的反弹不是安全信号？"
@@ -811,7 +811,7 @@ function WorkflowDashboard({
                 <textarea
                   value={scriptText}
                   onChange={(event) => setScriptText(event.target.value)}
-                  className="h-80 w-full resize-none rounded-2xl border-2 border-zinc-100 bg-zinc-50 p-8 text-lg font-medium italic leading-relaxed text-zinc-800 shadow-inner transition-all placeholder:text-zinc-300 focus:border-zinc-300 focus:bg-white focus:outline-none"
+                  className="h-80 w-full resize-none rounded-2xl border border-zinc-200 bg-white p-8 text-lg font-medium italic leading-relaxed text-zinc-800 tracking-wide transition-all placeholder:text-zinc-400 focus:border-zinc-950/30 focus:ring-1 focus:ring-zinc-950/10 focus:outline-none"
                   placeholder="请在此输入 1000-1300 字的脚本详情..."
                 />
               ) : null}
@@ -820,7 +820,7 @@ function WorkflowDashboard({
                 <input
                   value={videoUrl}
                   onChange={(event) => setVideoUrl(event.target.value)}
-                  className="rounded-2xl border-2 border-zinc-100 bg-zinc-50 px-5 py-5 text-base font-bold text-zinc-800 shadow-inner transition-all placeholder:text-zinc-300 focus:border-zinc-300 focus:bg-white focus:outline-none"
+                  className="rounded-2xl border border-zinc-200 bg-white px-5 py-5 text-base font-bold text-zinc-800 tracking-wide transition-all placeholder:text-zinc-400 focus:border-zinc-950/30 focus:ring-1 focus:ring-zinc-950/10 focus:outline-none"
                   placeholder="粘贴抖音成片链接，审核中心可直接跳转"
                 />
               ) : null}
