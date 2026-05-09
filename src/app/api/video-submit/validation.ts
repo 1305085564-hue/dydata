@@ -1,4 +1,5 @@
 import type { SubmissionAssetMeta } from "@/types";
+import { SCRIPT_FORMATS, type ScriptFormat } from "@/lib/conversion-hub/types";
 import {
   normalizeDateOnly,
   normalizeInteger,
@@ -38,6 +39,8 @@ export interface VideoSubmitValidationResult {
     anomaly_status: string;
     topic_tag: string | null;
     content_keywords: string[];
+    script_text: string | null;
+    script_format: ScriptFormat;
     assets: SubmissionAssetMeta[];
     metrics: VideoSubmitValidationMetrics;
   };
@@ -81,6 +84,12 @@ function normalizeMetrics(value: unknown): VideoSubmitValidationMetrics {
   };
 }
 
+function normalizeScriptFormat(value: unknown): ScriptFormat {
+  return typeof value === "string" && SCRIPT_FORMATS.includes(value as ScriptFormat)
+    ? (value as ScriptFormat)
+    : "oral";
+}
+
 export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidationOutcome {
   if (!body || typeof body !== "object") {
     return { ok: false, error: "请求体格式不正确" };
@@ -115,6 +124,8 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       anomaly_status: normalizeOptionalText(payload.anomaly_status) ?? "正常",
       topic_tag: normalizeOptionalText(payload.topic_tag),
       content_keywords: keywords,
+      script_text: normalizeOptionalText(payload.script_text),
+      script_format: normalizeScriptFormat(payload.script_format),
       assets: normalizeSubmissionAssets(payload.assets),
       metrics: normalizeMetrics(payload.metrics),
     },

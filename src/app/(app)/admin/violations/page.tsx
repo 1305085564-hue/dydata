@@ -78,6 +78,7 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
       "id, created_at, submitted_by, script_text, is_violation, category, account_name_snapshot, team_id, scene_description, result, pass_count, fail_count, status, risk_level, admin_conclusion, suggested_action, reviewed_at, is_deleted",
     )
     .eq("is_deleted", false)
+    .eq("purpose", "violation")
     .order("created_at", { ascending: false })
     .limit(80);
 

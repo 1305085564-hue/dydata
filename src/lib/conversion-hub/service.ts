@@ -1,0 +1,372 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Permissions, UserRole } from "@/types";
+
+import { buildScriptHash, type CreateUsageRecordPayload, type CreateViolationEventPayload } from "./validation";
+
+export type ConversionHubResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; status: number; code: "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "VALIDATION_ERROR" | "SERVER_ERROR"; message: string };
+
+type AccountRow = {
+  id: string;
+  name: string | null;
+  profile_id: string;
+};
+
+type ProfileRow = {
+  id: string;
+  role: UserRole;
+  permissions: Permissions;
+  team_id: string | null;
+};
+
+function toServerError(message: string): ConversionHubResult<never> {
+  return { ok: false, status: 500, code: "SERVER_ERROR", message };
+}
+
+function hasViolationPermission(profile: ProfileRow) {
+  if (profile.role === "owner") return true;
+  return profile.role === "admin" && profile.permissions.manage_violations === true;
+}
+
+async function getProfile(supabase: SupabaseClient, userId: string): Promise<ConversionHubResult<ProfileRow>> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, role, permissions, team_id")
+    .eq("id", userId)
+    .single();
+
+  if (error || !data) {
+    return toServerError("用户资料不存在");
+  }
+
+  return {
+    ok: true,
+    data: {
+      id: data.id as string,
+      role: data.role as UserRole,
+      permissions: (data.permissions ?? {}) as Permissions,
+      team_id: (data.team_id ?? null) as string | null,
+    },
+  };
+}
+
+async function getOwnedAccount(
+  supabase: SupabaseClient,
+  userId: string,
+  accountId: string | null,
+): Promise<ConversionHubResult<AccountRow | null>> {
+  if (!accountId) {
+    return { ok: true, data: null };
+  }
+
+  const { data, error } = await supabase
+    .from("accounts")
+    .select("id, name, profile_id")
+    .eq("id", accountId)
+    .single();
+
+  if (error || !data) {
+    return { ok: false, status: 403, code: "FORBIDDEN", message: "account_id 不属于当前用户" };
+  }
+
+  const account = {
+    id: data.id as string,
+    name: (data.name ?? null) as string | null,
+    profile_id: data.profile_id as string,
+  };
+
+  if (account.profile_id !== userId) {
+    return { ok: false, status: 403, code: "FORBIDDEN", message: "account_id 不属于当前用户" };
+  }
+
+  return { ok: true, data: account };
+}
+
+async function getDailyReportAccountId(
+  supabase: SupabaseClient,
+  userId: string,
+  dailyReportId: string | null,
+): Promise<ConversionHubResult<string | null>> {
+  if (!dailyReportId) {
+    return { ok: true, data: null };
+  }
+
+  const { data, error } = await supabase
+    .from("daily_reports")
+    .select("id, user_id, account_id")
+    .eq("id", dailyReportId)
+    .single();
+
+  if (error || !data) {
+    return { ok: false, status: 404, code: "NOT_FOUND", message: "日报记录不存在" };
+  }
+
+  if (data.user_id !== userId) {
+    return { ok: false, status: 403, code: "FORBIDDEN", message: "daily_report_id 不属于当前用户" };
+  }
+
+  return { ok: true, data: (data.account_id ?? null) as string | null };
+}
+
+async function assertOpenCase(supabase: SupabaseClient, caseId: string): Promise<ConversionHubResult<string>> {
+  const { data, error } = await supabase
+    .from("violation_cases")
+    .select("id, status, is_deleted")
+    .eq("id", caseId)
+    .eq("is_deleted", false)
+    .single();
+
+  if (error || !data) {
+    return { ok: false, status: 404, code: "NOT_FOUND", message: "话术案例不存在" };
+  }
+
+  if (data.status === "archived") {
+    return { ok: false, status: 409, code: "CONFLICT", message: "已归档案例不能追加使用记录" };
+  }
+
+  return { ok: true, data: data.id as string };
+}
+
+async function findOrCreateConversionCase(
+  supabase: SupabaseClient,
+  params: {
+    userId: string;
+    teamId: string | null;
+    account: AccountRow | null;
+    scriptText: string;
+    scriptFormat: string;
+  },
+): Promise<ConversionHubResult<string>> {
+  const scriptHash = buildScriptHash(params.scriptText);
+
+  const existing = await supabase
+    .from("violation_cases")
+    .select("id, status")
+    .eq("purpose", "conversion")
+    .eq("script_hash", scriptHash)
+    .eq("is_deleted", false)
+    .neq("status", "archived")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing.error) {
+    return toServerError("查询话术案例失败");
+  }
+
+  if (existing.data?.id) {
+    return { ok: true, data: existing.data.id as string };
+  }
+
+  const { data, error } = await supabase
+    .from("violation_cases")
+    .insert({
+      submitted_by: params.userId,
+      script_text: params.scriptText,
+      is_violation: false,
+      category: "下粉",
+      account_id: params.account?.id ?? null,
+      account_name_snapshot: params.account?.name ?? null,
+      team_id: params.teamId,
+      status: "verified",
+      purpose: "conversion",
+      script_format: params.scriptFormat,
+      script_hash: scriptHash,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    return toServerError("创建话术案例失败");
+  }
+
+  return { ok: true, data: data.id as string };
+}
+
+async function insertUsageRecord(
+  supabase: SupabaseClient,
+  userId: string,
+  payload: CreateUsageRecordPayload,
+): Promise<ConversionHubResult<unknown>> {
+  const profile = await getProfile(supabase, userId);
+  if (!profile.ok) return profile;
+
+  const reportAccountId = await getDailyReportAccountId(supabase, userId, payload.daily_report_id);
+  if (!reportAccountId.ok) return reportAccountId;
+
+  const effectiveAccountId = payload.account_id ?? reportAccountId.data;
+  const account = await getOwnedAccount(supabase, userId, effectiveAccountId);
+  if (!account.ok) return account;
+
+  let caseId = payload.case_id;
+
+  if (caseId) {
+    const openCase = await assertOpenCase(supabase, caseId);
+    if (!openCase.ok) return openCase;
+    caseId = openCase.data;
+  } else if (payload.script_text) {
+    const createdCase = await findOrCreateConversionCase(supabase, {
+      userId,
+      teamId: profile.data.team_id,
+      account: account.data,
+      scriptText: payload.script_text,
+      scriptFormat: payload.script_format,
+    });
+    if (!createdCase.ok) return createdCase;
+    caseId = createdCase.data;
+  }
+
+  if (!caseId) {
+    return { ok: false, status: 422, code: "VALIDATION_ERROR", message: "case_id 或 script_text 至少提供一个" };
+  }
+
+  const { data, error } = await supabase
+    .from("script_usage_records")
+    .insert({
+      case_id: caseId,
+      recorded_by: userId,
+      account_id: account.data?.id ?? null,
+      account_name_snapshot: account.data?.name ?? null,
+      team_id: profile.data.team_id,
+      used_at: payload.used_at,
+      views: payload.views,
+      follows: payload.follows,
+      source: payload.source,
+      daily_report_id: payload.daily_report_id,
+      note: payload.note,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    return toServerError("创建话术使用记录失败");
+  }
+
+  return { ok: true, data };
+}
+
+export async function createUsageRecordForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  payload: CreateUsageRecordPayload,
+) {
+  return insertUsageRecord(supabase, userId, payload);
+}
+
+export async function replaceDailyReportUsageRecord(
+  supabase: SupabaseClient,
+  userId: string,
+  payload: CreateUsageRecordPayload,
+) {
+  if (!payload.daily_report_id) {
+    return { ok: false as const, status: 422, code: "VALIDATION_ERROR" as const, message: "daily_report_id 为必填项" };
+  }
+
+  const previous = await supabase
+    .from("script_usage_records")
+    .select("id, case_id, recorded_by, account_id, account_name_snapshot, team_id, used_at, views, follows, source, daily_report_id, note, created_at, updated_at")
+    .eq("daily_report_id", payload.daily_report_id);
+
+  if (previous.error) {
+    return toServerError("读取旧话术使用记录失败");
+  }
+
+  const deleteResult = await supabase
+    .from("script_usage_records")
+    .delete()
+    .eq("daily_report_id", payload.daily_report_id);
+
+  if (deleteResult.error) {
+    return toServerError("清理旧话术使用记录失败");
+  }
+
+  const inserted = await insertUsageRecord(supabase, userId, payload);
+  if (inserted.ok) {
+    return inserted;
+  }
+
+  const previousRows = previous.data ?? [];
+  if (previousRows.length > 0) {
+    await supabase.from("script_usage_records").insert(previousRows);
+  }
+
+  return inserted;
+}
+
+export async function clearDailyReportUsageRecords(
+  supabase: SupabaseClient,
+  userId: string,
+  dailyReportId: string,
+) {
+  const reportAccountId = await getDailyReportAccountId(supabase, userId, dailyReportId);
+  if (!reportAccountId.ok) return reportAccountId;
+
+  const { error } = await supabase
+    .from("script_usage_records")
+    .delete()
+    .eq("daily_report_id", dailyReportId)
+    .eq("recorded_by", userId);
+
+  if (error) {
+    return toServerError("清理旧话术使用记录失败");
+  }
+
+  return { ok: true as const, data: null };
+}
+
+export async function createViolationEventForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  payload: CreateViolationEventPayload,
+) {
+  const profile = await getProfile(supabase, userId);
+  if (!profile.ok) return profile;
+
+  const account = await getOwnedAccount(supabase, userId, payload.account_id);
+  if (!account.ok) return account;
+
+  if (payload.case_id) {
+    const openCase = await assertOpenCase(supabase, payload.case_id);
+    if (!openCase.ok) return openCase;
+  }
+
+  const invalidScreenshotPath = payload.screenshot_paths.find(
+    (path) => !path.startsWith(`${userId}/`) || path.includes(".."),
+  );
+
+  if (invalidScreenshotPath) {
+    return { ok: false as const, status: 422, code: "VALIDATION_ERROR" as const, message: "screenshot_paths 包含无效路径" };
+  }
+
+  const { data, error } = await supabase
+    .from("violation_events")
+    .insert({
+      case_id: payload.case_id,
+      account_id: account.data?.id,
+      event_type: payload.event_type,
+      occurred_at: payload.occurred_at,
+      platform_notice: payload.platform_notice,
+      screenshot_paths: payload.screenshot_paths,
+      suspected_reason: payload.suspected_reason,
+      appeal_status: payload.appeal_status,
+      appeal_result: payload.appeal_result,
+      recovered_at: payload.recovered_at,
+      reported_by: userId,
+      note: payload.note,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    return toServerError("创建违规事件失败");
+  }
+
+  return { ok: true as const, data };
+}
+
+export async function canSeeAllUsageRecords(supabase: SupabaseClient, userId: string) {
+  const profile = await getProfile(supabase, userId);
+  return profile.ok && hasViolationPermission(profile.data);
+}

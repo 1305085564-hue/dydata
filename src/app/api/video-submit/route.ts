@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { callAiJson } from "@/lib/ai/client";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
+import { replaceDailyReportUsageRecord } from "@/lib/conversion-hub/service";
 import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 import { validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
@@ -386,6 +388,26 @@ export async function POST(request: NextRequest) {
     if (insertManualTagError) {
       await rollbackSafely(rollbackActions);
       return NextResponse.json({ error: insertManualTagError.message }, { status: 500 });
+    }
+  }
+
+  if (normalized.metrics.follower_convert > 0 && normalized.script_text) {
+    const usageRecordResult = await replaceDailyReportUsageRecord(createAdminClient(), user.id, {
+      case_id: null,
+      script_text: normalized.script_text,
+      script_format: normalized.script_format,
+      account_id: normalized.account_id,
+      used_at: normalized.biz_date,
+      views: normalized.metrics.play_count,
+      follows: normalized.metrics.follower_convert,
+      source: "daily_report",
+      daily_report_id: persistedReport.id,
+      note: null,
+    });
+
+    if (!usageRecordResult.ok) {
+      await rollbackSafely(rollbackActions);
+      return NextResponse.json({ error: usageRecordResult.message }, { status: usageRecordResult.status });
     }
   }
 

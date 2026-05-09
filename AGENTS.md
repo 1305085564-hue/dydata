@@ -55,6 +55,7 @@
 ## 前端协作
 - 多批次前端改动默认走 Gemini + Codex 联动：Gemini 先出分批方案 → 我把关纠偏 → Gemini 按确认方案执行 → Codex 审代码 → 再决定补问题还是进下一轮
 - 标准文档：`docs/前端-Gemini-Codex联动流程.md`
+- **美学规范**：`docs/阿禅美学标准-V1.md` 是 `~/.claude/memory/阿禅美学标准-V1.md` 的软连接，任何前端页面、UI 重构、样式改造都须对照此规范。修订只改主文件，项目内与 `~/.openclaw/shared-memory/` 两处均为软连接，自动同步。
 
 ## Skill 使用
 - 前端页面、UI、布局、样式、交互类任务，先默认用 `frontend-skill`，不要一上来直接写代码

@@ -36,6 +36,7 @@ export async function GET(
     )
     .eq("id", id)
     .eq("is_deleted", false)
+    .eq("purpose", "violation")
     .single();
 
   if (error || !data) {
@@ -66,6 +67,7 @@ export async function DELETE(
     .update({ is_deleted: true })
     .eq("id", id)
     .eq("is_deleted", false)
+    .eq("purpose", "violation")
     .select("id")
     .single();
 

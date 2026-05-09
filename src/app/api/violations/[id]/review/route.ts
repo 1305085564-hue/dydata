@@ -54,6 +54,7 @@ export async function PATCH(
     })
     .eq("id", id)
     .eq("is_deleted", false)
+    .eq("purpose", "violation")
     .select("*")
     .single();
 

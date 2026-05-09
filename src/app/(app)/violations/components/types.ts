@@ -82,3 +82,26 @@ export type ViolationDetailResponse = {
   error?: string;
 };
 
+export type ScriptFormatLite = "oral" | "visual" | "mixed";
+
+export type ConversionCase = {
+  id: string;
+  script_text: string;
+  script_format: ScriptFormatLite | string | null;
+  total_views: number | null;
+  total_follows: number | null;
+  usage_count: number | null;
+  weighted_conversion_rate: number | null;
+  created_at: string;
+};
+
+export type TopScriptEntry = {
+  id: string;
+  script_text: string;
+  total_views: number | null;
+  total_follows: number | null;
+  usage_count: number | null;
+  weighted_conversion_rate: number | null;
+};
+
+

@@ -44,6 +44,7 @@ export async function POST(
     .select("id, status, is_deleted")
     .eq("id", id)
     .eq("is_deleted", false)
+    .eq("purpose", "violation")
     .single();
 
   if (caseError || !currentCase) {

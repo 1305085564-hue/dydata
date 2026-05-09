@@ -35,6 +35,7 @@ import type {
 } from "@/types";
 import { 提交成功卡 } from "@/components/submission/提交成功卡";
 import { 指标分组区 } from "@/components/submission/指标分组区";
+import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
 import {
   areSubmissionScreenshotsRequired,
@@ -412,6 +413,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(null);
+  const [scriptText, setScriptText] = useState("");
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
@@ -463,6 +465,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     setIsSubmitted(false);
     setDeleteTargetRole(null);
     setKeywordInput("");
+    setScriptText("");
     setFocusedRole(null);
   }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today]);
 
@@ -757,6 +760,11 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       return;
     }
 
+    if (parseMetric(fields.follower_convert.value) > 0 && !scriptText.trim()) {
+      feedbackToast.error("导粉数 > 0 时，请填写导粉话术文案");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -783,6 +791,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           topic_tag: meta.topicTag || null,
           content_keywords: meta.contentKeywords,
           assets: buildAssets(slots),
+          script_text: parseMetric(fields.follower_convert.value) > 0 ? scriptText.trim() || null : null,
           metrics: {
             play_count: parseMetric(fields.play_count.value),
             likes: parseMetric(fields.likes.value),
@@ -1218,6 +1227,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 anomalyStatus={meta.anomalyStatus}
               />
             </motion.div>
+
+            <导粉话术采集区
+              visible={parseMetric(fields.follower_convert.value) > 0}
+              value={scriptText}
+              onChange={setScriptText}
+              hasAttemptedSubmit={hasAttemptedSubmit}
+            />
 
             <hr className="my-6 border-zinc-100" />
 

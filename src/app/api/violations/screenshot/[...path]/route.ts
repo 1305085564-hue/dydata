@@ -32,6 +32,7 @@ export async function GET(
     .select("id")
     .contains("screenshot_paths", [objectPath])
     .eq("is_deleted", false)
+    .eq("purpose", "violation")
     .limit(1);
 
   if (caseError) {

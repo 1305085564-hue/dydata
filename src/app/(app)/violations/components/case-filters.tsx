@@ -1,60 +1,168 @@
+"use client";
+
 import { Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { VIOLATION_CATEGORIES } from "./format";
 
+type PerspectiveKey = "violation" | "conversion";
+
+type ChipOption = {
+  value: string;
+  label: string;
+};
+
+const VIOLATION_STATUS_OPTIONS: ChipOption[] = [
+  { value: "all", label: "全部" },
+  { value: "verified_violation", label: "已确认违规" },
+  { value: "verified_safe", label: "已确认可用" },
+  { value: "submitted", label: "待验证" },
+  { value: "rejected", label: "已驳回" },
+];
+
+const CATEGORY_OPTIONS: ChipOption[] = [
+  { value: "all", label: "全部" },
+  ...VIOLATION_CATEGORIES.map((item) => ({ value: item, label: item })),
+];
+
+const FORMAT_OPTIONS: ChipOption[] = [
+  { value: "all", label: "全部" },
+  { value: "oral", label: "口播" },
+  { value: "visual", label: "画面" },
+  { value: "mixed", label: "混合" },
+];
+
+const MIN_USAGE_OPTIONS: ChipOption[] = [
+  { value: "3", label: "≥3 次" },
+  { value: "5", label: "≥5 次" },
+  { value: "10", label: "≥10 次" },
+];
+
+export type CaseFiltersProps = {
+  perspective: PerspectiveKey;
+  status?: string;
+  category?: string;
+  query?: string;
+  format?: string;
+  minUsage?: string;
+};
+
+function chipClass(active: boolean, tone: "orange" | "green" = "orange") {
+  const base =
+    "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold transition-colors select-none";
+  if (active) {
+    return tone === "orange"
+      ? `${base} border-[#D97757] bg-[#D97757] text-white shadow-sm`
+      : `${base} border-[#067647] bg-[#067647] text-white shadow-sm`;
+  }
+  return `${base} border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900`;
+}
+
 export function CaseFilters({
-  status,
-  category,
-  query,
-}: {
-  status: string;
-  category: string;
-  query: string;
-}) {
+  perspective,
+  status = "all",
+  category = "all",
+  query = "",
+  format = "all",
+  minUsage = "3",
+}: CaseFiltersProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+  const [input, setInput] = useState(query);
+
+  // 同步 URL 参数（例如切换视角时）
+  useEffect(() => {
+    setInput(query);
+  }, [query]);
+
+  const tone = perspective === "violation" ? "orange" : "green";
+
+  const buildHref = useCallback(
+    (patch: Record<string, string | undefined>) => {
+      const next = new URLSearchParams(searchParams?.toString() ?? "");
+      next.set("perspective", perspective);
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined || v === "" || v === "all") {
+          next.delete(k);
+        } else {
+          next.set(k, v);
+        }
+      }
+      return `/violations?${next.toString()}`;
+    },
+    [perspective, searchParams],
+  );
+
+  const pushPatch = useCallback(
+    (patch: Record<string, string | undefined>) => {
+      startTransition(() => {
+        router.replace(buildHref(patch));
+      });
+    },
+    [buildHref, router],
+  );
+
+  // 搜索 debounce
+  useEffect(() => {
+    if (input === query) return;
+    const handle = window.setTimeout(() => {
+      pushPatch({ q: input.trim() || undefined });
+    }, 350);
+    return () => window.clearTimeout(handle);
+  }, [input, query, pushPatch]);
+
+  const groups = useMemo(() => {
+    if (perspective === "violation") {
+      return [
+        { key: "status", label: "状态", options: VIOLATION_STATUS_OPTIONS, value: status },
+        { key: "category", label: "分类", options: CATEGORY_OPTIONS, value: category },
+      ];
+    }
+    return [
+      { key: "format", label: "脚本格式", options: FORMAT_OPTIONS, value: format },
+      { key: "minUsage", label: "最低使用", options: MIN_USAGE_OPTIONS, value: minUsage },
+    ];
+  }, [perspective, status, category, format, minUsage]);
+
   return (
-    <form className="grid gap-3 rounded-[1.5rem] border border-zinc-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_180px_180px]">
+    <div className="rounded-[1.5rem] border border-zinc-200 bg-white p-4 shadow-sm">
       <label className="relative block">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
         <Input
           name="q"
-          defaultValue={query}
-          placeholder="搜索话术内容"
-          className="h-11 rounded-2xl border-zinc-200 bg-zinc-50 pl-9"
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          placeholder={perspective === "conversion" ? "搜索转化话术内容" : "搜索话术内容"}
+          className="h-11 rounded-2xl border-zinc-200 bg-zinc-50 pl-9 focus-visible:border-zinc-300 focus-visible:ring-0"
         />
       </label>
-      <Select name="status" defaultValue={status || "all"}>
-        <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-          <SelectValue placeholder="全部状态" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">全部状态</SelectItem>
-          <SelectItem value="verified_violation">已确认违规</SelectItem>
-          <SelectItem value="verified_safe">已确认可用</SelectItem>
-          <SelectItem value="submitted">待验证</SelectItem>
-          <SelectItem value="rejected">已驳回</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select name="category" defaultValue={category || "all"}>
-        <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-          <SelectValue placeholder="全部分类" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">全部分类</SelectItem>
-          {VIOLATION_CATEGORIES.map((item) => (
-            <SelectItem key={item} value={item}>
-              {item}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </form>
+
+      <div className="mt-4 space-y-3">
+        {groups.map((group) => (
+          <div key={group.key} className="flex flex-wrap items-center gap-2">
+            <span className="min-w-[60px] text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+              {group.label}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {group.options.map((option) => {
+                const active = (group.value ?? "all") === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => pushPatch({ [group.key]: option.value })}
+                    className={chipClass(active, tone)}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
-

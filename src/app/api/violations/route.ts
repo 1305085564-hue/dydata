@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
       `,
       { count: "exact" },
     )
-    .eq("is_deleted", false);
+    .eq("is_deleted", false)
+    .eq("purpose", "violation");
 
   if (status) {
     if (!isViolationStatus(status)) {

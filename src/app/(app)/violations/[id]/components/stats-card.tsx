@@ -1,0 +1,65 @@
+import { cn } from "@/lib/utils";
+
+interface StatsCardProps {
+  label: string;
+  value: string;
+  hint?: string | null;
+  tone?: "default" | "positive" | "negative" | "accent";
+  icon?: React.ReactNode;
+  className?: string;
+}
+
+const TONE_CLASS: Record<NonNullable<StatsCardProps["tone"]>, { value: string; hint: string }> = {
+  default: {
+    value: "text-zinc-950",
+    hint: "text-zinc-500",
+  },
+  positive: {
+    value: "text-[#067647]",
+    hint: "text-[#067647]/80",
+  },
+  negative: {
+    value: "text-[#B42318]",
+    hint: "text-[#B42318]/80",
+  },
+  accent: {
+    value: "text-[#D97757]",
+    hint: "text-[#D97757]/80",
+  },
+};
+
+export function StatsCard({
+  label,
+  value,
+  hint = null,
+  tone = "default",
+  icon,
+  className,
+}: StatsCardProps) {
+  const toneClass = TONE_CLASS[tone];
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:border-zinc-300",
+        className,
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+          {label}
+        </span>
+        {icon ? <span className="text-zinc-400">{icon}</span> : null}
+      </div>
+      <div className={cn("mt-3 text-3xl font-black leading-none tracking-tight", toneClass.value)}>
+        {value}
+      </div>
+      {hint ? (
+        <div className={cn("mt-2 text-xs font-medium", toneClass.hint)}>{hint}</div>
+      ) : null}
+    </div>
+  );
+}
+
+export function StatsGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{children}</div>;
+}
