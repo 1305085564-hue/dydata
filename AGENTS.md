@@ -51,6 +51,12 @@
 3. 遇到 RLS 问题时，优先检查 helper、policy `USING`、service role 调用链路。
 4. `select` 只查询实际存在且已执行 migration 的字段。
 5. 不要靠反复改代码碰运气，先定位根因。
+6. Next.js RSC 组件传递类型如果少了必填 props，跨 agent 修改时会导致连锁 TS 错误，需保证共用类型定义的稳定性。
+7. React 严格模式下 hooks 依赖规则校验严格，如果必须在 useEffect 里 setState，需加 `// eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect` 注释避免 lint 阻断部署。
+8. 调用项目内封装的 headless 组件（基于 Radix/Base-ui）前，花 10 秒看一眼 `components/ui/xxx.tsx` 的类型定义和实际结构，避免 asChild/render 等 Props 被魔改。
+9. 开发 Focus、Hover 或选中联动反馈时，检查目标区块在所有 `if-else` 和状态分支（折叠、加载中、空占位）的表现，确保反馈不断裂。
+10. Claude Code 启动时如果 cwd 是家目录，先读 `~/.claude/memory/MEMORY.md` 找活跃项目指针，不要直接说"不知道哪个项目"。
+11. 动 UI 前先读目标页面的设计文档（产品定位、能力边界、信息架构）。视觉标准可共享，功能模块必须按各页面独立定位设计。前端传到 request body 的字段如果后端不接收（grep 无命中），立刻删，这是错搬/幽灵功能的危险信号。
 
 ## 前端协作
 - 多批次前端改动默认走 Gemini + Codex 联动：Gemini 先出分批方案 → 我把关纠偏 → Gemini 按确认方案执行 → Codex 审代码 → 再决定补问题还是进下一轮
@@ -97,3 +103,37 @@
 
 6. 长程一致性
 多轮任务中，每推进一个节点主动回顾初始约束，确保不偏离。
+
+## AI 协作体系
+
+### 多工具角色分工
+
+| 工具 | 角色 | 职责边界 |
+|------|------|---------|
+| Claude Code | 主导 | 决策、规划、调度、复杂逻辑 |
+| Codex (GPT-5.4) | 执行+审查 | 代码编写、代码审查、补丁 |
+| Kimi (K2.6) | 前端执行 | 只接前端实现，不负责规划和复杂思考 |
+| 小龙虾 (OpenClaw) | 规划顾问 | 内容策略、提示词、创意 |
+
+### 记忆入口层级
+
+- **项目级权威**：本文件（`AGENTS.md`）——所有工具优先读取
+- **Claude Code 全局记忆**：`~/.claude/memory/MEMORY.md` ——跨项目长期知识、API配置、故障手册
+- **日志统一写**：`~/.claude/memory/日志/YYYY-MM-DD.md` ——关键链路和持续项目只维护一份主日志
+
+### 日志规则
+
+- 关键链路和持续项目，只维护一份主日志
+- Kimi、Codex、小龙虾都只认这一份日志，不单独维护第二份
+- 补充日志入口保留为历史映射，但不再作为独立日志层
+
+### 全局记忆索引
+
+| 文件 | 内容 |
+|------|------|
+| `~/.claude/memory/MEMORY.md` | 全局索引总目录 |
+| `~/.claude/memory/纠错记录.md` | 踩坑教训与排查方法论 |
+| `~/.claude/memory/领域-协作/协作规则.md` | 四工具协作详细规则 |
+| `~/.claude/memory/领域-协作/关键链路日志统一写主日志.md` | 日志统一策略 |
+| `~/.claude/memory/Kimi子代理.md` | Kimi 前端执行入口配置 |
+| `~/.claude/memory/领域-工具链/全局配置文件分工.md` | 主文件+镜像文件双轨维护规则 |
