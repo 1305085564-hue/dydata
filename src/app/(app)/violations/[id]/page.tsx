@@ -180,7 +180,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100">
           <div
-            className="h-full rounded-full bg-zinc-950 transition-[width] duration-500"
+            className="h-full rounded-full bg-[#D97757] transition-[width] duration-500"
             style={{ width: `${rate ?? 0}%` }}
           />
         </div>

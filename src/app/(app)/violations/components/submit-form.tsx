@@ -546,7 +546,7 @@ export function SubmitForm({
           type="submit"
           disabled={isSubmitting || isUploading}
           className={cn(
-            "h-11 rounded-2xl bg-zinc-950 px-6 text-white hover:bg-zinc-800",
+            "h-11 rounded-2xl bg-zinc-900 px-6 text-white hover:bg-zinc-800",
             isSubmitting && "animate-pulse",
           )}
         >

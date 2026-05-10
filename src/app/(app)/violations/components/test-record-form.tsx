@@ -68,7 +68,7 @@ export function TestRecordForm({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button className="h-11 rounded-2xl bg-zinc-950 text-white hover:bg-zinc-800" />}>
+      <DialogTrigger render={<Button variant="outline" className="h-11 rounded-2xl border-zinc-300 text-zinc-700 hover:bg-zinc-50" />}>
         <Plus className="size-4" />
         我也测了
       </DialogTrigger>
@@ -118,7 +118,7 @@ export function TestRecordForm({
             <Button type="button" variant="outline" className="rounded-2xl" onClick={() => setOpen(false)}>
               取消
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="rounded-2xl bg-zinc-950 text-white hover:bg-zinc-800">
+            <Button type="submit" disabled={isSubmitting} className="rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800">
               {isSubmitting ? "提交中..." : "提交记录"}
             </Button>
           </div>

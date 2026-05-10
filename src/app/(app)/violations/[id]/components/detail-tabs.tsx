@@ -37,7 +37,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
       <div
         role="tablist"
         aria-label="详情切换"
-        className="flex items-center gap-1 border-b border-zinc-200 px-2 py-2"
+        className="flex items-center gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-2"
       >
         {tabs.map((tab) => {
           const isActive = active === tab.key;
@@ -51,7 +51,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
               className={cn(
                 "relative inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors",
                 isActive
-                  ? "bg-zinc-950 text-white"
+                  ? "bg-white text-zinc-800 shadow-sm"
                   : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
               )}
             >
@@ -60,7 +60,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
                 <span
                   className={cn(
                     "rounded-full px-1.5 text-[11px] font-semibold",
-                    isActive ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-500",
+                    isActive ? "bg-zinc-100 text-zinc-600" : "bg-zinc-100 text-zinc-500",
                   )}
                 >
                   {tab.count}
