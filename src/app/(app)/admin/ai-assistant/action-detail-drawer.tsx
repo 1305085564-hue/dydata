@@ -63,28 +63,28 @@ function resultMeta(result?: string) {
       return {
         icon: <CheckCircle2 className="h-3 w-3" />,
         text: "APPROVED",
-        dot: "bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]",
+        dot: "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white",
         text_cls: "text-[#6FAA7D]",
       };
     case "failed":
       return {
         icon: <XCircle className="h-3 w-3" />,
         text: "REJECTED",
-        dot: "bg-[#C9604D] shadow-[0_0_0_3px_rgba(201,96,77,0.15)]",
+        dot: "h-2 w-2 bg-[#C9604D] ring-1 ring-white animate-pulse",
         text_cls: "text-red-700",
       };
     case "cancelled":
       return {
         icon: <AlertTriangle className="h-3 w-3" />,
         text: "ABORTED",
-        dot: "bg-zinc-400",
+        dot: "h-1.5 w-1.5 bg-zinc-200",
         text_cls: "text-zinc-500",
       };
     case "pending_confirm":
       return {
         icon: <Skeleton className="h-3 w-3 rounded-full" />,
         text: "PENDING",
-        dot: "bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)] animate-pulse",
+        dot: "h-2 w-2 bg-[#D97757] ring-1 ring-white",
         text_cls: "text-[#B88448]",
       };
     default:
@@ -176,7 +176,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
             </div>
             {detail?.result && (
               <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#FAFAFB] px-2.5 py-1">
-                <span className={cn("inline-flex h-1.5 w-1.5 rounded-full", status.dot)} />
+                <span className={cn("inline-flex rounded-full", status.dot)} />
                 <span
                   className={cn(
                     "text-[9px] font-semibold uppercase tracking-[0.25em]",

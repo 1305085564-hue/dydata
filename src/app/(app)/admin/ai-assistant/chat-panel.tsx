@@ -146,10 +146,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "result") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D] opacity-30" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]" />
-        </span>
+        <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
         <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#6FAA7D]">
           Approved
         </span>
@@ -159,10 +156,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "error") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C9604D] opacity-50" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600 shadow-[0_0_0_3px_rgba(220,38,38,0.08)]" />
-        </span>
+        <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
         <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-red-700">
           Rejected
         </span>
@@ -172,10 +166,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "confirmation") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D99E55] opacity-60" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)]" />
-        </span>
+        <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
         <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
           Pending
         </span>
@@ -184,7 +175,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
   }
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="inline-flex h-1.5 w-1.5 rounded-full bg-zinc-300" />
+      <span className="inline-flex h-1.5 w-1.5 rounded-full bg-zinc-200" />
       <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
         Answered
       </span>

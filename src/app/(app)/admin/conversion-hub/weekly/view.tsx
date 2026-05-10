@@ -88,7 +88,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
           </div>
           {confirmedAt ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-3 py-1.5 text-xs font-medium text-[#6FAA7D]">
-              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+              <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
               已确认
             </span>
           ) : null}

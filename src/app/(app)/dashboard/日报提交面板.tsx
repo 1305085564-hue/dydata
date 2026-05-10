@@ -26,7 +26,7 @@ function DashboardSubmitPanel({ accounts, today, todayReports }: Props) {
     return (
       <div className="space-y-3">
         <p className="mt-1 inline-flex items-center gap-2 text-[13px] text-zinc-500">
-          <span className="inline-block size-1.5 rounded-full bg-[#D99E55]" />
+          <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
           暂无可用账号，请联系管理员
         </p>
         <section className="rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-4 sm:p-5">
@@ -46,12 +46,12 @@ function DashboardSubmitPanel({ accounts, today, todayReports }: Props) {
       <p className="mt-1 inline-flex items-center gap-2 text-[13px] text-zinc-500">
         {currentReport ? (
           <>
-            <span className="inline-block size-1.5 rounded-full bg-[#6FAA7D]" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
             <span>{accountName} 今日已提交</span>
           </>
         ) : (
           <>
-            <span className="inline-block size-1.5 rounded-full bg-[#D99E55]" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
             <span>{accountName} 今日未提交</span>
           </>
         )}

@@ -81,12 +81,12 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
 
 function StatusIndicator({ status }: { status: "healthy" | "circuit" | "disabled" }) {
   if (status === "healthy") {
-    return <div className="size-2 shrink-0 rounded-full bg-[#6FAA7D]" title="健康" />;
+    return <div className="h-2 w-2 shrink-0 rounded-full bg-[#6FAA7D] ring-1 ring-white" title="健康" />;
   }
   if (status === "circuit") {
-    return <div className="size-2 shrink-0 rounded-full bg-[#C9604D]" title="熔断中" />;
+    return <div className="h-2 w-2 shrink-0 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" title="熔断中" />;
   }
-  return <div className="size-2 shrink-0 rounded-full bg-zinc-400" title="已禁用" />;
+  return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-200" title="已禁用" />;
 }
 
 function Badge({ count }: { count: number }) {

@@ -155,7 +155,7 @@ export function RewriteOutput({
                     </span>
                     {isStreaming && (
                       <span className="inline-flex items-center gap-1 text-[10px] text-[#8A6A2F]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55] animate-pulse" />
+                        <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                         <span className="uppercase tracking-[0.25em]">Generating</span>
                       </span>
                     )}

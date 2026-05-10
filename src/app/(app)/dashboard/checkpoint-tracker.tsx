@@ -78,7 +78,7 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId }: 
               {isActive ? (
                 <motion.div
                   layoutId="dashboard-active-checkpoint"
-                  className="absolute right-3 top-2 h-2 w-2 rounded-full bg-[#D97757]"
+                  className="absolute right-3 top-2 h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white"
                 />
               ) : null}
             </motion.button>

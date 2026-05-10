@@ -91,7 +91,7 @@ export function RewriteInput({
                     )}
                   >
                     <div className="flex items-start gap-3">
-                      <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', active ? 'bg-[#D97757]' : 'bg-zinc-300')} />
+                      <span className={cn('mt-1.5 shrink-0 rounded-full', active ? 'h-2 w-2 bg-[#D97757] ring-1 ring-white' : 'h-1.5 w-1.5 bg-zinc-200')} />
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[14px] font-semibold">{fixedMode.name}</span>
@@ -124,7 +124,7 @@ export function RewriteInput({
               </div>
             ) : customControlsLocked ? (
               <div className="mb-4 flex items-start gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[12px] leading-[1.7] text-zinc-500">
-                <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#D99E55]" />
+                <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[#D97757] ring-1 ring-white" />
                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-400" />
                 <span>{activeFixedMode?.name} 已锁定普通模型、普通模式和字数配置。取消按钮选择后恢复自定义。</span>
               </div>

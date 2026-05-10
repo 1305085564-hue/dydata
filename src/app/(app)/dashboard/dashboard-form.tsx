@@ -232,8 +232,8 @@ export function DashboardForm({
                       <span
                         className={
                           existingData
-                            ? "inline-block size-1.5 rounded-full bg-[#6FAA7D]"
-                            : "inline-block size-1.5 rounded-full bg-[#D99E55]"
+                            ? "inline-block h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white"
+                            : "inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white"
                         }
                       />
                       {existingData ? "今日可修改" : "今日待提交"}

@@ -53,15 +53,15 @@ export function getHistoryErrorMessage(errorMessage: string) {
 function dotColor(result: string) {
   switch (result) {
     case "success":
-      return "bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]";
+      return "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white";
     case "failed":
-      return "bg-[#C9604D] shadow-[0_0_0_3px_rgba(201,96,77,0.15)]";
+      return "h-2 w-2 bg-[#C9604D] ring-1 ring-white animate-pulse";
     case "cancelled":
-      return "bg-zinc-300";
+      return "h-1.5 w-1.5 bg-zinc-200";
     case "pending_confirm":
-      return "bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)] animate-pulse";
+      return "h-2 w-2 bg-[#D97757] ring-1 ring-white";
     default:
-      return "bg-zinc-300";
+      return "h-1.5 w-1.5 bg-zinc-200";
   }
 }
 
@@ -177,7 +177,7 @@ function SidebarContent({
                   )}
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className={cn("h-1 w-1 shrink-0 rounded-full", dotColor(record.result))} />
+                    <span className={cn("shrink-0 rounded-full", dotColor(record.result))} />
                     <span
                       className={cn(
                         "flex-1 truncate text-[11.5px] leading-tight tracking-tight",

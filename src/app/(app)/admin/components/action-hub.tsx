@@ -87,10 +87,10 @@ export function ActionHub({
                 >
                   <div className="mt-1.5 flex-shrink-0">
                     <div
-                      className={`size-2 rounded-full ${
+                      className={`rounded-full ${
                         effectivePendingCount > 0
-                          ? "bg-[#D99E55] animate-pulse"
-                          : "bg-[#6FAA7D]"
+                          ? "h-2 w-2 bg-[#D97757] ring-1 ring-white animate-pulse"
+                          : "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white"
                       }`}
                     />
                   </div>
@@ -136,7 +136,7 @@ export function ActionHub({
 
             <div className="group flex items-start gap-3 border-b border-zinc-100 py-3 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 last:border-b-0">
               <div className="mt-1.5 flex-shrink-0">
-                <div className="size-2 rounded-full bg-[#D99E55]" />
+                <div className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">

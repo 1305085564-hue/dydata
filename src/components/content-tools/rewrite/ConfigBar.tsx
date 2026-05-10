@@ -104,7 +104,7 @@ export function ConfigBar({
                         {fixedMode.name}
                       </span>
                       {active && (
-                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#D97757]" />
+                        <span className="inline-flex h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                       )}
                     </div>
                     <p className="mt-1 text-[11px] leading-[1.7] text-zinc-500">

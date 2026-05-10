@@ -53,10 +53,7 @@ export default function ConfirmCard({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3 pl-6">
         <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D99E55] opacity-50" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)]" />
-          </span>
+          <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#B88448]">
             Authorization Required
           </span>

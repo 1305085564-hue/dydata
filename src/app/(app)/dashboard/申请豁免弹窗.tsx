@@ -188,7 +188,7 @@ function ExemptionModal({
                 <div className="space-y-2">
                   <p className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-800">
                     申请原因
-                    <span className="inline-block size-1.5 rounded-full bg-[#D97757]" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                   </p>
                   <textarea
                     className="h-[120px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-800 shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
