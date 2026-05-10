@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI 对比测试实验室 | Contrast Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      /* 当前默认配色 */
+      --bg-base: #F9F9FB;
+      --text-primary: #18181B;
+      --text-secondary: #52525B;
+      --text-tertiary: #A1A1AA;
+      --border-subtle: #E4E4E7;
+      --card-bg: #FFFFFF;
+    }
+
+    .theme-a {
+      --bg-base: #FAF9F7;
+      --text-primary: #57534E;
+      --text-secondary: #78716C;
+      --text-tertiary: #A8A29E;
+      --border-subtle: #E7E5E4;
+      --card-bg: #FFFFFF;
+    }
+
+    .theme-b {
+      --bg-base: #F4F4F5;
+      --text-primary: #3F3F46;
+      --text-secondary: #52525B;
+      --text-tertiary: #A1A1AA;
+      --border-subtle: #D4D4D8;
+      --card-bg: #FAFAFA;
+    }
+
+    .theme-azen {
+      /* 阿禅美学 V1.1 */
+      --bg-base: #F4F4F5;
+      --text-primary: #3F3F46;
+      --text-secondary: #52525B;
+      --text-tertiary: #A1A1AA;
+      --border-subtle: #E4E4E7;
+      --card-bg: #FFFFFF;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+      transition: background-color 0.6s ease, color 0.6s ease;
+    }
+
+    .lab-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-subtle);
+      transition: background-color 0.6s ease, border-color 0.6s ease;
+    }
+
+    .text-p { color: var(--text-primary); }
+    .text-s { color: var(--text-secondary); }
+    .text-t { color: var(--text-tertiary); }
+    .border-sub { border-color: var(--border-subtle); }
+
+    /* ===== 方向 C：低饱和度实色 + 物理微动效 ===== */
+    .btn-c {
+      background-color: #B4A594;
+      color: #FFFFFF;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .btn-c:hover {
+      background-color: #A69482;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(180, 165, 148, 0.28), 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .btn-c:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .btn-c-secondary {
+      background-color: #94A3B8;
+      color: #FFFFFF;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .btn-c-secondary:hover {
+      background-color: #7A8BA3;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(148, 163, 184, 0.28), 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .btn-c-secondary:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .btn-c-danger {
+      background-color: #C4A0A0;
+      color: #FFFFFF;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .btn-c-danger:hover {
+      background-color: #B08A8A;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(196, 160, 160, 0.28), 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .btn-c-danger:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    /* ===== 方向 D：浅色背景透出 + 细边框 ===== */
+    .btn-d {
+      background-color: #FFF1EB;
+      color: #C25E3A;
+      border: 1px solid #FDBFA3;
+      transition: all 0.2s ease;
+    }
+    .btn-d:hover {
+      background-color: #FFE8DE;
+      border-color: #F4A88A;
+      box-shadow: 0 1px 3px rgba(194, 94, 58, 0.08);
+    }
+    .btn-d:active {
+      background-color: #FFDCD0;
+    }
+
+    .btn-d-secondary {
+      background-color: #F1F5F9;
+      color: #475569;
+      border: 1px solid #CBD5E1;
+      transition: all 0.2s ease;
+    }
+    .btn-d-secondary:hover {
+      background-color: #E2E8F0;
+      border-color: #94A3B8;
+    }
+    .btn-d-secondary:active {
+      background-color: #D1D5DB;
+    }
+
+    .btn-d-danger {
+      background-color: #FEF2F2;
+      color: #B91C1C;
+      border: 1px solid #FECACA;
+      transition: all 0.2s ease;
+    }
+    .btn-d-danger:hover {
+      background-color: #FEE2E2;
+      border-color: #FCA5A5;
+    }
+    .btn-d-danger:active {
+      background-color: #FECACA;
+    }
+
+    /* 切换按钮的活跃态 */
+    .toggle-active {
+      ring-width: 2px;
+      ring-offset-width: 2px;
+    }
+
+    /* 平滑滚动 */
+    html { scroll-behavior: smooth; }
+
+    /* 当前原始配色覆盖 */
+    .theme-default {
+      --bg-base: #F9F9FB;
+      --text-primary: #18181B;
+      --text-secondary: #52525B;
+      --text-tertiary: #A1A1AA;
+      --border-subtle: #E4E4E7;
+      --card-bg: #FFFFFF;
+    }
+
+    /* ===== 方向 E：纯粹中性灰阶 + 物理光影 ===== */
+    .btn-e-primary {
+      background-color: #D97757;
+      color: #FFFFFF;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+    .btn-e-primary:hover {
+      background-color: #C25E3A;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(217, 119, 87, 0.25);
+    }
+    .btn-e-secondary {
+      background-color: transparent;
+      color: #3F3F46;
+      border: 1px solid #D4D4D8;
+      transition: all 0.2s ease;
+    }
+    .btn-e-secondary:hover {
+      background-color: #F4F4F5;
+      border-color: #A1A1AA;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .card-e {
+      background-color: #FFFFFF;
+      border: 1px solid #E4E4E7;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .card-e:hover {
+      background-color: #F4F4F5;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .list-e {
+      background-color: transparent;
+      border-bottom: 1px solid #E4E4E7;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .list-e:hover {
+      background-color: #F4F4F5;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    /* ===== 方向 F：白金线框与幽灵高亮 ===== */
+    .tab-f {
+      background-color: transparent;
+      color: #3F3F46;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .tab-f.active {
+      background-color: #FFFFFF;
+      color: #D97757;
+      border: 1px solid #D97757;
+      box-shadow: 0 0 0 1px rgba(217, 119, 87, 0.06), 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .tab-f:hover:not(.active) {
+      background-color: #F4F4F5;
+      color: #18181B;
+    }
+    .card-f {
+      background-color: #FFFFFF;
+      border: 1px solid #E4E4E7;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .card-f:hover {
+      border-color: #D4D4D8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .card-f.active {
+      background-color: #FFFFFF;
+      border: 1px solid #D97757;
+      box-shadow: 0 0 0 1px rgba(217, 119, 87, 0.08), 0 2px 8px rgba(217, 119, 87, 0.06);
+    }
+    .card-f-traditional {
+      background-color: #FFF7ED;
+      border: 1px solid #FDBA74;
+      color: #C2410C;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .card-f-traditional:hover {
+      background-color: #FFEDD5;
+      box-shadow: 0 2px 8px rgba(251, 146, 60, 0.12);
+    }
+    /* ===== 测试三：信息密度与呼吸感 ===== */
+    .density-a { --d-pad: 0.375rem; --d-gap: 0.375rem; --d-text: 0.75rem; --d-rounded: 0.375rem; }
+    .density-b { --d-pad: 0.625rem; --d-gap: 0.75rem; --d-text: 0.8125rem; --d-rounded: 0.5rem; }
+    .density-c { --d-pad: 1.25rem; --d-gap: 1.5rem; --d-text: 0.9375rem; --d-rounded: 0.75rem; }
+
+    /* ===== 测试四：图标性格与笔触 ===== */
+    .icon-stroke-a { stroke-width: 1.5; }
+    .icon-stroke-b { stroke-width: 2; }
+    .icon-stroke-c { stroke-width: 1.5; transition: all 0.2s ease; }
+    .icon-stroke-c.active { stroke-width: 2.5; fill: currentColor; }
+
+    /* ===== 测试五：表单与输入框的物理形态 ===== */
+    .input-a {
+      background-color: #F4F4F5;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .input-a:focus {
+      background-color: #FFFFFF;
+      border-color: #D4D4D8;
+      box-shadow: 0 0 0 3px rgba(217,119,87,0.08);
+      outline: none;
+    }
+    .input-b {
+      background-color: #FFFFFF;
+      border: 1px solid #E4E4E7;
+      transition: all 0.2s ease;
+    }
+    .input-b:focus {
+      border-color: #D97757;
+      box-shadow: 0 0 0 3px rgba(217,119,87,0.08);
+      outline: none;
+    }
+    .input-c {
+      background-color: transparent;
+      border: none;
+      border-bottom: 1px solid #D4D4D8;
+      border-radius: 0;
+      transition: all 0.2s ease;
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .input-c:focus {
+      border-bottom-color: #D97757;
+      box-shadow: 0 1px 0 0 #D97757;
+      outline: none;
+    }
+
+    /* ===== 测试六：悬浮层与阴影切割 ===== */
+    .modal-a {
+      background: white;
+      border: 1px solid #D4D4D8;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .modal-b {
+      background: white;
+      border: none;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .modal-c {
+      background: white;
+      border: 1px solid #E4E4E7;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.05);
+    }
+
+    /* ===== 阿禅美学 V2 示范组件 ===== */
+    .v2-card {
+      background: #FAFAFA;
+      border: 1px solid #F0F0F1;
+      transition: all 0.2s ease;
+    }
+    .v2-card:hover {
+      border-color: #E4E4E7;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .v2-btn-primary {
+      background-color: #D97757;
+      color: #FFFFFF;
+      border: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .v2-btn-primary:hover {
+      background-color: #C86848;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(217, 119, 87, 0.18);
+    }
+    .v2-btn-secondary {
+      background-color: transparent;
+      color: #3F3F46;
+      border: 1px solid #E4E4E7;
+      transition: all 0.2s ease;
+    }
+    .v2-btn-secondary:hover {
+      background-color: rgba(228, 228, 231, 0.5);
+      border-color: #D4D4D8;
+      transform: translateY(-1px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .v2-input {
+      background-color: rgba(244, 244, 245, 0.7);
+      border: 1px solid transparent;
+      color: #27272A;
+      transition: all 0.2s ease;
+    }
+    .v2-input:focus {
+      background-color: #FFFFFF;
+      border-color: #E4E4E7;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      outline: none;
+    }
+    .v2-input::placeholder { color: #A1A1AA; }
+    .v2-list-item {
+      background: transparent;
+      border-bottom: 1px solid #F4F4F5;
+      transition: all 0.15s ease 0.05s;
+      cursor: pointer;
+    }
+    .v2-list-item:hover {
+      background-color: #F4F4F5;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .v2-dropdown {
+      background: #FFFFFF;
+      border: 1px solid #E4E4E7;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .v2-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .v2-guide-line {
+      width: 2px;
+      border-radius: 1px;
+    }
+
+    /* ===== 暖米纸本风格 (Warm Paper) ===== */
+    .paper-card {
+      background: #FAF9F7;
+      border: 1px solid #E8E4DE;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      transition: all 0.25s ease;
+    }
+    .paper-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .paper-btn-primary {
+      background-color: #D97757;
+      color: #FFFFFF;
+      border: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .paper-btn-primary:hover {
+      background-color: #C25E3A;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(217, 119, 87, 0.2);
+    }
+    .paper-btn-secondary {
+      background-color: transparent;
+      color: #57534E;
+      border: 1px solid #D6D0C8;
+      transition: all 0.2s ease;
+    }
+    .paper-btn-secondary:hover {
+      background-color: #F0EBE3;
+      border-color: #C4BDB3;
+    }
+    .paper-guide-line {
+      width: 2px;
+      border-radius: 1px;
+      background-color: #D97757;
+    }
+    .paper-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #D99E55;
+    }
+    .paper-metric {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    /* ===== 纸本仪表 V2 风格 (Paper Instrument) ===== */
+    .pi-card {
+      background: #FAF9F7;
+      border: 1px solid #E7E5E4;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      transition: all 0.25s ease;
+    }
+    .pi-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .pi-btn-primary {
+      background-color: #D97757;
+      color: #FFFFFF;
+      border: 1px solid #B8502E;
+      transition: all 0.25s ease;
+    }
+    .pi-btn-primary:hover {
+      background-color: #B8502E;
+      transform: translateY(-1px);
+    }
+    .pi-btn-secondary {
+      background-color: transparent;
+      color: #44403C;
+      border: 1px solid #E7E5E4;
+      transition: all 0.2s ease;
+    }
+    .pi-btn-secondary:hover {
+      background-color: #F5F5EF;
+      border-color: #D6D3D1;
+    }
+    .pi-guide-line {
+      width: 2px;
+      border-radius: 1px;
+      background-color: #D97757;
+    }
+    .pi-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #D99E55;
+      border: 2px solid #FBFBF8;
+      box-sizing: content-box;
+    }
+    .pi-status-pulse {
+      animation: pi-pulse 2s ease-in-out infinite;
+    }
+    @keyframes pi-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .pi-metric {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased theme-default" id="appBody">
+
+  <!-- 固定顶部切换栏 -->
+  <header class="sticky top-0 z-50 backdrop-blur-md lab-card border-b" style="background-color: rgba(255,255,255,0.85);">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold" style="background: linear-gradient(135deg, #D97757, #B4A594);">CL</div>
+        <div>
+          <h1 class="text-sm font-semibold text-p">对比测试实验室</h1>
+          <p class="text-xs text-t">Contrast Lab</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-t mr-2 hidden sm:inline">全局底色：</span>
+        <button onclick="setTheme('default')" id="btn-default" class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all border-sub text-s hover:opacity-80">
+          当前原始
+        </button>
+        <button onclick="setTheme('a')" id="btn-a" class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all border-sub text-s hover:opacity-80">
+          方向 A · 暖沙
+        </button>
+        <button onclick="setTheme('b')" id="btn-b" class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all border-sub text-s hover:opacity-80">
+          方向 B · 中性灰
+        </button>
+        <button onclick="setTheme('azen')" id="btn-azen" class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all border-sub text-s hover:opacity-80">
+          阿禅 V1.1
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-12 space-y-16">
+
+    <!-- 阿禅美学 V2 示范面板 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border" style="background: rgba(217,119,87,0.08); color: #D97757; border-color: rgba(217,119,87,0.2);">V2 REF</span>
+          <h2 class="text-xl font-semibold text-p tracking-tight">阿禅美学 V2 · 示范面板</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          以下组件严格遵循《阿禅美学标准 V2》执行。观察排版如何替代边框、色彩如何被压缩到极小的面积、以及物理交互的灰阶表达。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- 左列：数据卡片 + 列表 + 状态 -->
+        <div class="space-y-6">
+          <!-- 数据卡片：排版替代边框 -->
+          <div class="v2-card rounded-2xl p-6">
+            <div class="flex items-center gap-3 mb-5">
+              <span class="v2-guide-line h-5 self-stretch" style="background-color: #D97757;"></span>
+              <div>
+                <p class="text-xs text-zinc-400 tracking-wide">本周 GMV 达成率</p>
+                <p class="text-2xl tracking-tight tabular-nums" style="color: #27272A; font-weight: 600;">87.4%</p>
+              </div>
+            </div>
+            <div class="h-1.5 rounded-full overflow-hidden mb-4" style="background-color: #F0F0F1;">
+              <div class="h-full rounded-full" style="width: 87.4%; background: linear-gradient(90deg, #D97757, #E8A88A);"></div>
+            </div>
+            <p class="leading-relaxed" style="color: #71717A; font-size: 13px;">
+              较上周环比下降 3.2 个百分点。直播间平均停留时长提升至 4分12秒，粉丝转化路径优化初见成效。
+            </p>
+            <div class="mt-6 pt-6 flex items-center gap-4">
+              <span class="v2-status-dot" style="background-color: #22C55E;"></span>
+              <span class="text-xs" style="color: #A1A1AA;">数据正常 · 2 小时前更新</span>
+            </div>
+          </div>
+
+          <!-- 列表交互：灰阶 + 微位移 -->
+          <div class="v2-card rounded-2xl p-2">
+            <div class="px-4 py-3 flex items-center justify-between">
+              <span class="text-xs font-medium tracking-wide" style="color: #A1A1AA;">待办事项</span>
+              <span class="text-xs" style="color: #D97757;">3 项</span>
+            </div>
+            <div class="v2-list-item px-4 py-3 flex items-center justify-between rounded-lg">
+              <div class="flex items-center gap-3">
+                <span class="v2-status-dot" style="background-color: #D97757;"></span>
+                <span style="color: #52525B; font-size: 13px;">审核短视频脚本</span>
+              </div>
+              <span class="text-xs tabular-nums" style="color: #A1A1AA;">14:00</span>
+            </div>
+            <div class="v2-list-item px-4 py-3 flex items-center justify-between rounded-lg">
+              <div class="flex items-center gap-3">
+                <span class="v2-status-dot" style="background-color: #F59E0B;"></span>
+                <span style="color: #52525B; font-size: 13px;">确认明日排班表</span>
+              </div>
+              <span class="text-xs tabular-nums" style="color: #A1A1AA;">16:30</span>
+            </div>
+            <div class="v2-list-item px-4 py-3 flex items-center justify-between rounded-lg" style="border-bottom: none;">
+              <div class="flex items-center gap-3">
+                <span class="v2-status-dot" style="background-color: #A1A1AA;"></span>
+                <span style="color: #52525B; font-size: 13px;">导出周报数据</span>
+              </div>
+              <span class="text-xs" style="color: #A1A1AA;">明日</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右列：按钮层级 + 输入框 + 下拉菜单 -->
+        <div class="space-y-6">
+          <!-- 按钮层级：主按钮唯一彩色 -->
+          <div class="v2-card rounded-2xl p-6">
+            <p class="text-xs font-medium tracking-wide mb-4" style="color: #A1A1AA;">按钮层级</p>
+            <div class="space-y-3">
+              <div class="flex gap-3">
+                <button class="v2-btn-primary px-5 py-2 rounded-lg text-sm tracking-tight" style="font-weight: 500;">发布日报</button>
+                <button class="v2-btn-secondary px-5 py-2 rounded-lg text-sm tracking-tight" style="font-weight: 500;">保存草稿</button>
+              </div>
+              <div class="flex gap-2">
+                <button class="v2-btn-secondary px-3 py-1.5 rounded-md text-xs" style="font-weight: 500;">导出</button>
+                <button class="v2-btn-secondary px-3 py-1.5 rounded-md text-xs" style="font-weight: 500;">筛选</button>
+                <button class="v2-btn-secondary px-3 py-1.5 rounded-md text-xs" style="font-weight: 500;">刷新</button>
+              </div>
+            </div>
+            <p class="text-xs mt-4 leading-relaxed" style="color: #A1A1AA;">
+              规则：仅主按钮允许使用暖橙色；次级按钮永远保持灰阶交互，hover 时通过背景加深与微抬升体现反馈。
+            </p>
+          </div>
+
+          <!-- 输入框：柔和灰底无边框 -->
+          <div class="v2-card rounded-2xl p-6">
+            <p class="text-xs font-medium tracking-wide mb-4" style="color: #A1A1AA;">表单输入（点击体验 Focus）</p>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs mb-1.5" style="color: #A1A1AA;">直播间成交额</label>
+                <input type="text" value="128,450" class="v2-input w-full px-3 py-2 rounded-lg tabular-nums" style="font-weight: 400; font-size: 13px;">
+              </div>
+              <div>
+                <label class="block text-xs mb-1.5" style="color: #A1A1AA;">成交件数</label>
+                <input type="text" value="342" class="v2-input w-full px-3 py-2 rounded-lg tabular-nums" style="font-weight: 400; font-size: 13px;">
+              </div>
+              <div>
+                <label class="block text-xs mb-1.5" style="color: #A1A1AA;">备注说明</label>
+                <textarea rows="2" class="v2-input w-full px-3 py-2 rounded-lg resize-none" style="font-weight: 400; font-size: 13px;">今日爆款为春季新款连衣裙，单场售出 89 件。</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 悬浮层：1px 边框切割 -->
+          <div class="v2-card rounded-2xl p-6">
+            <p class="text-xs font-medium tracking-wide mb-4" style="color: #A1A1AA;">下拉菜单 · 物理切割</p>
+            <div class="relative inline-block">
+              <button class="v2-btn-secondary px-4 py-2 rounded-lg text-sm" style="font-weight: 500;">更多操作 ▾</button>
+              <div class="v2-dropdown absolute top-full left-0 mt-1.5 w-48 rounded-xl py-1.5 z-10">
+                <div class="px-3 py-2 hover:bg-zinc-50 cursor-pointer" style="color: #52525B; font-size: 13px;">编辑数据</div>
+                <div class="px-3 py-2 hover:bg-zinc-50 cursor-pointer" style="color: #52525B; font-size: 13px;">复制链接</div>
+                <div class="px-3 py-2 hover:bg-zinc-50 cursor-pointer" style="color: #52525B; font-size: 13px;">查看历史</div>
+                <div style="border-top: 1px solid #F4F4F5; margin: 4px 0;"></div>
+                <div class="px-3 py-2 hover:bg-zinc-50 cursor-pointer" style="color: #EF4444; font-size: 13px;">删除项目</div>
+              </div>
+            </div>
+            <p class="text-xs mt-4 leading-relaxed" style="color: #A1A1AA;">
+              规则：悬浮层不使用大面积弥散阴影，仅靠 1px 边框配合极弱阴影完成物理切割。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试一：底色与对比度温度 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 01</span>
+          <h2 class="text-xl font-semibold text-p">底色与对比度温度</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          通过顶部全局切换，观察不同底色下大段文字、卡片层级、边界的阅读舒适度。方向 A 偏向纸张暖感，方向 B 偏向冷峻克制。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- 阅读体验模拟 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center gap-2 mb-6">
+            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+            <h3 class="text-sm font-medium text-p">数据日报摘要</h3>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-baseline justify-between">
+              <span class="text-sm font-medium text-p">本周 GMV 达成率</span>
+              <span class="text-lg font-semibold text-p">87.4%</span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background-color: var(--border-subtle);">
+              <div class="h-full rounded-full" style="width: 87.4%; background: linear-gradient(90deg, #D97757, #E8A88A);"></div>
+            </div>
+            <p class="text-sm text-s leading-relaxed mt-4">
+              较上周环比下降 3.2 个百分点，主要受大盘流量波动影响。直播间平均停留时长提升至 4分12秒，
+              粉丝转化路径优化初见成效。建议下周重点关注晚高峰时段的排品策略，同时加强短视频引流力度。
+            </p>
+            <div class="pt-4 border-t border-sub flex items-center gap-4 text-xs text-t">
+              <span>更新于 2 小时前</span>
+              <span>来源：经营分析系统</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 表单输入模拟 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center gap-2 mb-6">
+            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+            <h3 class="text-sm font-medium text-p">数据填报</h3>
+          </div>
+          <div class="space-y-5">
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">直播间成交额 (元)</label>
+              <input type="text" value="128,450" readonly
+                class="w-full px-3 py-2 rounded-lg text-sm border-sub border bg-transparent text-p outline-none focus:ring-2 focus:ring-orange-200">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">成交件数</label>
+              <input type="text" value="342" readonly
+                class="w-full px-3 py-2 rounded-lg text-sm border-sub border bg-transparent text-p outline-none focus:ring-2 focus:ring-orange-200">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">备注说明</label>
+              <textarea readonly rows="3"
+                class="w-full px-3 py-2 rounded-lg text-sm border-sub border bg-transparent text-p outline-none focus:ring-2 focus:ring-orange-200 resize-none">今日爆款为春季新款连衣裙，单场售出 89 件。</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试二：温柔的视觉强调方式 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 02</span>
+          <h2 class="text-xl font-semibold text-p">温柔的视觉强调方式</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          方向 C 使用低饱和度莫兰迪实色 + 悬停时的物理位移与阴影；方向 D 使用极浅色背景透出 + 1px 细边框。两组按钮并排展示，鼠标悬停感受差异。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- 方向 C -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" style="background-color: #B4A594;"></span>
+              <h3 class="text-sm font-medium text-p">方向 C · 莫兰迪实色 + 动效</h3>
+            </div>
+            <span class="text-xs text-t">Muted Solid + Kinetic</span>
+          </div>
+
+          <div class="space-y-6">
+            <!-- 主按钮组 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">主要操作</p>
+              <div class="flex flex-wrap gap-3">
+                <button class="btn-c px-5 py-2.5 rounded-lg text-sm font-medium">保存修改</button>
+                <button class="btn-c-secondary px-5 py-2.5 rounded-lg text-sm font-medium">导出报表</button>
+                <button class="btn-c-danger px-5 py-2.5 rounded-lg text-sm font-medium">删除条目</button>
+              </div>
+            </div>
+
+            <!-- 小按钮组 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">次要操作 / 图标按钮</p>
+              <div class="flex flex-wrap gap-2">
+                <button class="btn-c px-3 py-1.5 rounded-md text-xs font-medium">确认</button>
+                <button class="btn-c-secondary px-3 py-1.5 rounded-md text-xs font-medium">筛选</button>
+                <button class="btn-c px-3 py-1.5 rounded-md text-xs font-medium">+ 新建</button>
+              </div>
+            </div>
+
+            <!-- 卡片示例 -->
+            <div class="mt-4 p-4 rounded-xl border-sub border">
+              <p class="text-xs text-t mb-3">列表卡片交互示例（悬停查看）</p>
+              <div class="btn-c px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-between cursor-pointer">
+                <span>查看月度经营分析详情</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方向 D -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" style="background-color: #FFF1EB; border: 1px solid #FDBFA3;"></span>
+              <h3 class="text-sm font-medium text-p">方向 D · 浅色透出 + 细边框</h3>
+            </div>
+            <span class="text-xs text-t">Tinted Surface + Border</span>
+          </div>
+
+          <div class="space-y-6">
+            <!-- 主按钮组 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">主要操作</p>
+              <div class="flex flex-wrap gap-3">
+                <button class="btn-d px-5 py-2.5 rounded-lg text-sm font-medium">保存修改</button>
+                <button class="btn-d-secondary px-5 py-2.5 rounded-lg text-sm font-medium">导出报表</button>
+                <button class="btn-d-danger px-5 py-2.5 rounded-lg text-sm font-medium">删除条目</button>
+              </div>
+            </div>
+
+            <!-- 小按钮组 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">次要操作 / 图标按钮</p>
+              <div class="flex flex-wrap gap-2">
+                <button class="btn-d px-3 py-1.5 rounded-md text-xs font-medium">确认</button>
+                <button class="btn-d-secondary px-3 py-1.5 rounded-md text-xs font-medium">筛选</button>
+                <button class="btn-d px-3 py-1.5 rounded-md text-xs font-medium">+ 新建</button>
+              </div>
+            </div>
+
+            <!-- 卡片示例 -->
+            <div class="mt-4 p-4 rounded-xl border-sub border">
+              <p class="text-xs text-t mb-3">列表卡片交互示例（悬停查看）</p>
+              <div class="btn-d px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-between cursor-pointer">
+                <span>查看月度经营分析详情</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 混合场景：表格 + 分页 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 03</span>
+          <h2 class="text-xl font-semibold text-p">复杂场景：数据表格</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          表格是后台系统最高频的组件。下方表格左右两侧分别应用方向 C 和方向 D 的操作按钮，观察在密集数据环境下哪种强调方式更"不抢戏"。
+        </p>
+      </div>
+
+      <div class="lab-card rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-sub" style="background-color: rgba(0,0,0,0.02);">
+                <th class="text-left px-6 py-3.5 text-xs font-medium text-t">日期</th>
+                <th class="text-left px-6 py-3.5 text-xs font-medium text-t">主播</th>
+                <th class="text-right px-6 py-3.5 text-xs font-medium text-t">GMV</th>
+                <th class="text-right px-6 py-3.5 text-xs font-medium text-t">订单数</th>
+                <th class="text-center px-6 py-3.5 text-xs font-medium text-t">方向 C 操作</th>
+                <th class="text-center px-6 py-3.5 text-xs font-medium text-t">方向 D 操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-sub hover:bg-black/[0.02] transition-colors">
+                <td class="px-6 py-3.5 text-p">05-08</td>
+                <td class="px-6 py-3.5 text-p">小美</td>
+                <td class="px-6 py-3.5 text-p text-right">¥45,230</td>
+                <td class="px-6 py-3.5 text-s text-right">156</td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-c px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-d px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+              </tr>
+              <tr class="border-b border-sub hover:bg-black/[0.02] transition-colors">
+                <td class="px-6 py-3.5 text-p">05-07</td>
+                <td class="px-6 py-3.5 text-p">阿杰</td>
+                <td class="px-6 py-3.5 text-p text-right">¥82,100</td>
+                <td class="px-6 py-3.5 text-s text-right">298</td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-c px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-d px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+              </tr>
+              <tr class="border-b border-sub hover:bg-black/[0.02] transition-colors">
+                <td class="px-6 py-3.5 text-p">05-06</td>
+                <td class="px-6 py-3.5 text-p">Lisa</td>
+                <td class="px-6 py-3.5 text-p text-right">¥12,580</td>
+                <td class="px-6 py-3.5 text-s text-right">45</td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-c px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-d px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+              </tr>
+              <tr class="hover:bg-black/[0.02] transition-colors">
+                <td class="px-6 py-3.5 text-p">05-05</td>
+                <td class="px-6 py-3.5 text-p">小美</td>
+                <td class="px-6 py-3.5 text-p text-right">¥67,400</td>
+                <td class="px-6 py-3.5 text-s text-right">210</td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-c px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+                <td class="px-6 py-3.5 text-center">
+                  <button class="btn-d px-3 py-1 rounded text-xs font-medium">编辑</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="px-6 py-4 border-t border-sub flex items-center justify-between">
+          <span class="text-xs text-t">共 47 条记录</span>
+          <div class="flex items-center gap-2">
+            <button class="btn-c-secondary px-3 py-1.5 rounded text-xs font-medium">上一页</button>
+            <button class="btn-d-secondary px-3 py-1.5 rounded text-xs font-medium">下一页</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试四：方向 E + 方向 F -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 04</span>
+          <h2 class="text-xl font-semibold text-p">高阶克制：灰阶动效 vs 幽灵线框</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          阿禅美学 V1.1 核心原则：禁用彩色作为次级交互反馈，只保留物理光影与幽灵线框。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- 方向 E -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-zinc-400"></span>
+              <h3 class="text-sm font-medium text-p">方向 E · 纯粹中性灰阶 + 物理光影</h3>
+            </div>
+            <span class="text-xs text-t">Monochromatic Kinetic</span>
+          </div>
+
+          <div class="space-y-6">
+            <!-- 按钮层级 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">按钮层级（仅主按钮允许彩色）</p>
+              <div class="flex flex-wrap gap-3">
+                <button class="btn-e-primary px-5 py-2.5 rounded-lg text-sm font-medium">发布日报</button>
+                <button class="btn-e-secondary px-5 py-2.5 rounded-lg text-sm font-medium">保存草稿</button>
+                <button class="btn-e-secondary px-5 py-2.5 rounded-lg text-sm font-medium">取消</button>
+              </div>
+            </div>
+
+            <!-- 卡片列表 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">卡片列表（悬停查看物理浮起）</p>
+              <div class="card-e rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-p">05-08 数据日报</p>
+                  <p class="text-xs text-t mt-0.5">GMV ¥45,230 · 成交 156 单</p>
+                </div>
+                <svg class="w-4 h-4 text-t" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+              <div class="card-e rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-p">05-07 数据日报</p>
+                  <p class="text-xs text-t mt-0.5">GMV ¥82,100 · 成交 298 单</p>
+                </div>
+                <svg class="w-4 h-4 text-t" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+              <div class="card-e rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-p">05-06 数据日报</p>
+                  <p class="text-xs text-t mt-0.5">GMV ¥12,580 · 成交 45 单</p>
+                </div>
+                <svg class="w-4 h-4 text-t" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+            </div>
+
+            <!-- 列表项 -->
+            <div class="space-y-0">
+              <p class="text-xs text-t mb-2">行列表（悬停查看灰底 + 微抬升）</p>
+              <div class="list-e px-4 py-3 flex items-center justify-between rounded-lg">
+                <span class="text-sm text-p">主播排期表</span>
+                <span class="text-xs text-t">已发布</span>
+              </div>
+              <div class="list-e px-4 py-3 flex items-center justify-between rounded-lg">
+                <span class="text-sm text-p">商品库存预警</span>
+                <span class="text-xs text-t">3 条待处理</span>
+              </div>
+              <div class="list-e px-4 py-3 flex items-center justify-between rounded-lg">
+                <span class="text-sm text-p">粉丝增长分析</span>
+                <span class="text-xs text-t">已归档</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方向 F -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full border" style="border-color: #D97757;"></span>
+              <h3 class="text-sm font-medium text-p">方向 F · 白金线框与幽灵高亮</h3>
+            </div>
+            <span class="text-xs text-t">Ghost Outline</span>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Tabs 对比 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">Tab 激活态（点击切换感受）</p>
+              <div class="flex gap-2 p-1 rounded-xl" style="background-color: #F4F4F5;">
+                <button class="tab-f active px-4 py-2 rounded-lg text-sm font-medium flex-1" onclick="switchTab(this)">日报</button>
+                <button class="tab-f px-4 py-2 rounded-lg text-sm font-medium flex-1" onclick="switchTab(this)">周报</button>
+                <button class="tab-f px-4 py-2 rounded-lg text-sm font-medium flex-1" onclick="switchTab(this)">月报</button>
+              </div>
+              <p class="text-xs text-t mt-2">特性：选中项保持纯白底 + 1px 暖橙边框 + 极微弱同色外发光</p>
+            </div>
+
+            <!-- 卡片选中对比 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">卡片选中态对比（点击卡片切换）</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="card-f active rounded-xl p-4 text-center" onclick="toggleCardF(this)">
+                  <p class="text-sm font-medium" style="color: #D97757;">方案 A</p>
+                  <p class="text-xs text-t mt-1">幽灵线框高亮</p>
+                </div>
+                <div class="card-f rounded-xl p-4 text-center" onclick="toggleCardF(this)">
+                  <p class="text-sm font-medium text-p">方案 B</p>
+                  <p class="text-xs text-t mt-1">未选中态</p>
+                </div>
+              </div>
+              <p class="text-xs text-t mt-2">白色背景上，只有 1px 的暖橙色线条界定选中区域，色彩面积压缩到极限。</p>
+            </div>
+
+            <!-- 传统 vs 幽灵 对比 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">对比：传统铺色高亮 vs 幽灵线框</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="card-f-traditional rounded-xl p-4 text-center">
+                  <p class="text-sm font-medium">传统方式</p>
+                  <p class="text-xs mt-1">bg-orange-50 + orange 边框</p>
+                </div>
+                <div class="card-f active rounded-xl p-4 text-center">
+                  <p class="text-sm font-medium" style="color: #D97757;">幽灵方式</p>
+                  <p class="text-xs text-t mt-1">bg-white + 1px 暖橙线</p>
+                </div>
+              </div>
+              <p class="text-xs text-t mt-2">右侧「幽灵方式」在白纸上如同精密水笔勾勒，左侧传统方式则像荧光笔涂抹。</p>
+            </div>
+
+            <!-- 标记/徽章 -->
+            <div class="space-y-3">
+              <p class="text-xs text-t mb-2">状态标记</p>
+              <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border" style="border-color: #D97757; color: #D97757; box-shadow: 0 0 0 1px rgba(217,119,87,0.06);">
+                  <span class="w-1.5 h-1.5 rounded-full" style="background-color: #D97757;"></span>
+                  进行中
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-zinc-200 text-zinc-500">
+                  <span class="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+                  已完成
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-zinc-200 text-zinc-500">
+                  <span class="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+                  待审核
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试三：信息密度与呼吸感 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 03</span>
+          <h2 class="text-xl font-semibold text-p">信息密度与呼吸感</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          同一组信息在三种密度下的呈现差异。观察一屏内信息量与视觉压迫感的平衡。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- 方向 A：高密度 -->
+        <div class="lab-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-p">方向 A · 高密度</h3>
+            <span class="text-xs text-t">Bloomberg</span>
+          </div>
+          <div class="density-a space-y-1">
+            <div class="flex items-center justify-between p-1.5 rounded hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">GMV 达成率</span>
+              <span class="font-semibold text-p">87.4%</span>
+            </div>
+            <div class="flex items-center justify-between p-1.5 rounded hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">成交件数</span>
+              <span class="font-semibold text-p">342</span>
+            </div>
+            <div class="flex items-center justify-between p-1.5 rounded hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">场均观看</span>
+              <span class="font-semibold text-p">4m12s</span>
+            </div>
+            <div class="flex items-center justify-between p-1.5 rounded hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">粉丝新增</span>
+              <span class="font-semibold text-p">+128</span>
+            </div>
+            <div class="flex items-center justify-between p-1.5 rounded hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">退货率</span>
+              <span class="font-semibold text-p">3.2%</span>
+            </div>
+            <div class="flex gap-1.5 mt-2">
+              <button class="px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-600">导出</button>
+              <button class="px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-600">筛选</button>
+              <button class="px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-600">刷新</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方向 B：均衡 -->
+        <div class="lab-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-p">方向 B · 均衡</h3>
+            <span class="text-xs text-t">Linear</span>
+          </div>
+          <div class="density-b space-y-2">
+            <div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">GMV 达成率</span>
+              <span class="font-semibold text-p">87.4%</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">成交件数</span>
+              <span class="font-semibold text-p">342</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">场均观看</span>
+              <span class="font-semibold text-p">4m12s</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">粉丝新增</span>
+              <span class="font-semibold text-p">+128</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">退货率</span>
+              <span class="font-semibold text-p">3.2%</span>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 text-zinc-600">导出</button>
+              <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 text-zinc-600">筛选</button>
+              <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 text-zinc-600">刷新</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方向 C：留白 -->
+        <div class="lab-card rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-p">方向 C · 文档化留白</h3>
+            <span class="text-xs text-t">Notion</span>
+          </div>
+          <div class="density-c space-y-4">
+            <div class="flex items-center justify-between p-4 rounded-xl hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">GMV 达成率</span>
+              <span class="font-semibold text-p">87.4%</span>
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-xl hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">成交件数</span>
+              <span class="font-semibold text-p">342</span>
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-xl hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">场均观看</span>
+              <span class="font-semibold text-p">4m12s</span>
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-xl hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">粉丝新增</span>
+              <span class="font-semibold text-p">+128</span>
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-xl hover:bg-black/[0.02]" style="font-size: var(--d-text);">
+              <span class="text-p">退货率</span>
+              <span class="font-semibold text-p">3.2%</span>
+            </div>
+            <div class="flex gap-3 mt-4">
+              <button class="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 text-zinc-600">导出</button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 text-zinc-600">筛选</button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 text-zinc-600">刷新</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试四：图标性格与笔触 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 04</span>
+          <h2 class="text-xl font-semibold text-p">图标性格与笔触</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          同一组图标在不同描边粗细下的视觉硬度对比。方向 C 可点击切换 active 状态（线框变实心）。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- 方向 A：极细 -->
+        <div class="lab-card rounded-2xl p-8 text-center">
+          <h3 class="text-sm font-medium text-p mb-2">方向 A · 极细精密</h3>
+          <p class="text-xs text-t mb-6">strokeWidth={1.5}</p>
+          <div class="flex justify-center gap-6">
+            <svg class="w-6 h-6 text-p icon-stroke-a" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-a" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-a" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-a" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+        </div>
+
+        <!-- 方向 B：标准 -->
+        <div class="lab-card rounded-2xl p-8 text-center">
+          <h3 class="text-sm font-medium text-p mb-2">方向 B · 标准稳定</h3>
+          <p class="text-xs text-t mb-6">strokeWidth={2}</p>
+          <div class="flex justify-center gap-6">
+            <svg class="w-6 h-6 text-p icon-stroke-b" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-b" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-b" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-b" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+        </div>
+
+        <!-- 方向 C：混合 -->
+        <div class="lab-card rounded-2xl p-8 text-center">
+          <h3 class="text-sm font-medium text-p mb-2">方向 C · 混合状态</h3>
+          <p class="text-xs text-t mb-6">点击图标切换 active（线框→实心）</p>
+          <div class="flex justify-center gap-6">
+            <svg class="w-6 h-6 text-p icon-stroke-c cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="this.classList.toggle('active')"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-c cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="this.classList.toggle('active')"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-c cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="this.classList.toggle('active')"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg class="w-6 h-6 text-p icon-stroke-c cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="this.classList.toggle('active')"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试五：表单与输入框的物理形态 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 05</span>
+          <h2 class="text-xl font-semibold text-p">表单与输入框的物理形态</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          同一组输入框在三种物理形态下的表现。观察焦点状态下的视觉反馈差异。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- 方向 A：凹陷式 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-sm font-medium text-p">方向 A · 凹陷式物理槽</h3>
+            <span class="text-xs text-t">Inset Groove</span>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">直播间成交额</label>
+              <input type="text" value="128,450" class="input-a w-full px-3 py-2 rounded-lg text-sm text-p" readonly>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">成交件数</label>
+              <input type="text" value="342" class="input-a w-full px-3 py-2 rounded-lg text-sm text-p" readonly>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">备注</label>
+              <textarea rows="2" class="input-a w-full px-3 py-2 rounded-lg text-sm text-p resize-none" readonly>今日爆款为春季新款连衣裙</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方向 B：白底线框 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-sm font-medium text-p">方向 B · 经典白底线框</h3>
+            <span class="text-xs text-t">Outlined Box</span>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">直播间成交额</label>
+              <input type="text" value="128,450" class="input-b w-full px-3 py-2 rounded-lg text-sm text-p" readonly>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">成交件数</label>
+              <input type="text" value="342" class="input-b w-full px-3 py-2 rounded-lg text-sm text-p" readonly>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">备注</label>
+              <textarea rows="2" class="input-b w-full px-3 py-2 rounded-lg text-sm text-p resize-none" readonly>今日爆款为春季新款连衣裙</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方向 C：幽灵底线 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-sm font-medium text-p">方向 C · 幽灵底线</h3>
+            <span class="text-xs text-t">Ghost Underline</span>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">直播间成交额</label>
+              <input type="text" value="128,450" class="input-c w-full py-2 text-sm text-p" readonly>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">成交件数</label>
+              <input type="text" value="342" class="input-c w-full py-2 text-sm text-p" readonly>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-s mb-1.5">备注</label>
+              <textarea rows="2" class="input-c w-full py-2 text-sm text-p resize-none" readonly>今日爆款为春季新款连衣裙</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试六：悬浮层与阴影切割 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">TEST 06</span>
+          <h2 class="text-xl font-semibold text-p">悬浮层与阴影切割</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          同一浮层内容在三种「从背景中浮出」的方式下的质感差异。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- 方向 A：锐利切割 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-sm font-medium text-p">方向 A · 锐利切割</h3>
+            <span class="text-xs text-t">Vercel</span>
+          </div>
+          <div class="relative h-48 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #F4F4F5, #E4E4E7);">
+            <div class="modal-a rounded-xl p-4 w-56">
+              <p class="text-sm font-medium text-p mb-1">操作确认</p>
+              <p class="text-xs text-s mb-3">确定要导出当前数据吗？</p>
+              <div class="flex gap-2">
+                <button class="flex-1 py-1.5 rounded-md text-xs font-medium bg-zinc-900 text-white">确认</button>
+                <button class="flex-1 py-1.5 rounded-md text-xs font-medium border border-zinc-200 text-zinc-600">取消</button>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-t mt-3">强 1px 边框切割，阴影极弱。工业感、精确感。</p>
+        </div>
+
+        <!-- 方向 B：柔和弥散 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-sm font-medium text-p">方向 B · 柔和弥散</h3>
+            <span class="text-xs text-t">Apple</span>
+          </div>
+          <div class="relative h-48 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #F4F4F5, #E4E4E7);">
+            <div class="modal-b rounded-xl p-4 w-56">
+              <p class="text-sm font-medium text-p mb-1">操作确认</p>
+              <p class="text-xs text-s mb-3">确定要导出当前数据吗？</p>
+              <div class="flex gap-2">
+                <button class="flex-1 py-1.5 rounded-md text-xs font-medium bg-zinc-900 text-white">确认</button>
+                <button class="flex-1 py-1.5 rounded-md text-xs font-medium bg-zinc-100 text-zinc-600">取消</button>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-t mt-3">无边框，大面积弥散阴影。柔和、悬浮、有机感。</p>
+        </div>
+
+        <!-- 方向 C：物理硬阴影 -->
+        <div class="lab-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-sm font-medium text-p">方向 C · 物理硬阴影</h3>
+            <span class="text-xs text-t">Brutalist</span>
+          </div>
+          <div class="relative h-48 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #F4F4F5, #E4E4E7);">
+            <div class="modal-c rounded-xl p-4 w-56">
+              <p class="text-sm font-medium text-p mb-1">操作确认</p>
+              <p class="text-xs text-s mb-3">确定要导出当前数据吗？</p>
+              <div class="flex gap-2">
+                <button class="flex-1 py-1.5 rounded-md text-xs font-medium bg-zinc-900 text-white">确认</button>
+                <button class="flex-1 py-1.5 rounded-md text-xs font-medium border border-zinc-200 text-zinc-600">取消</button>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-t mt-3">实色偏移阴影，像桌上的厚卡纸。物理感、复古现代。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试七：光感实验室 (Luminous Lab Protocol) -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border" style="background: rgba(217,158,85,0.08); color: #D99E55; border-color: rgba(217,158,85,0.2);">TEST 07</span>
+          <h2 class="text-xl font-semibold text-p tracking-tight">光感实验室 · AI 剧本审核与执行看板</h2>
+        </div>
+        <p class="text-sm text-s max-w-2xl leading-relaxed">
+          色彩即光源、材质厚度与折射、动态呼吸感。观察颜色如何以"光"的形式从白瓷材质缝隙中透出来。
+        </p>
+      </div>
+
+      <div class="max-w-3xl mx-auto">
+        <!-- 主卡片 -->
+        <div class="luminous-card rounded-2xl p-8 relative">
+          <!-- 头部：标题 + 状态灯 -->
+          <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <span class="luminous-guide-line h-6 self-stretch"></span>
+              <div>
+                <p class="text-xs text-zinc-400 tracking-wide">AI 剧本审核与执行看板</p>
+                <p class="text-lg tracking-tight font-semibold text-zinc-800">春季新款连衣裙 · 脚本 v3.2</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 px-2.5 py-1 rounded-full border border-zinc-200/60 bg-zinc-50/50">
+              <span class="luminous-status"></span>
+              <span class="text-[11px] font-medium text-zinc-500 tracking-wide">生成中</span>
+            </div>
+          </div>
+
+          <!-- AI 改写建议 -->
+          <div class="mb-6">
+            <p class="text-[13px] leading-relaxed text-zinc-600">
+              建议将开场话术从"大家好今天推荐一款裙子"改为场景化切入："刚才后台收到一条私信，有位粉丝说上周买的同款已经收到了三个 compliments"。同时把价格锚点提前到第 15 秒，配合"仅剩 47 件"的库存紧迫感，预计可将转化率提升 12-18%。
+            </p>
+          </div>
+
+          <!-- 数据对比 -->
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="rounded-xl p-4" style="background: rgba(244,244,245,0.4); border: 1px solid rgba(228,228,231,0.4);">
+              <p class="text-[11px] text-zinc-400 tracking-wide mb-1">当前脚本转化率</p>
+              <p class="text-2xl font-semibold tracking-tight text-zinc-800 luminous-metric">4.2%</p>
+              <p class="text-[11px] text-zinc-400 mt-1">场均成交 156 单</p>
+            </div>
+            <div class="rounded-xl p-4" style="background: rgba(244,244,245,0.4); border: 1px solid rgba(228,228,231,0.4);">
+              <p class="text-[11px] text-zinc-400 tracking-wide mb-1">AI 预测转化率</p>
+              <p class="text-2xl font-semibold tracking-tight luminous-metric" style="color: #D97757;">5.8%</p>
+              <p class="text-[11px] text-zinc-400 mt-1">预计成交 218 单 <span style="color: #22C55E;">▲ +39.7%</span></p>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="flex items-center justify-between pt-4" style="border-top: 1px solid rgba(228,228,231,0.4);">
+            <div class="flex items-center gap-3">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" style="box-shadow: 0 0 4px rgba(34,197,94,0.3);"></span>
+              <span class="text-[11px] text-zinc-400">数据基于最近 7 场直播</span>
+            </div>
+            <div class="flex gap-3">
+              <button class="luminous-btn-secondary px-4 py-2 rounded-lg text-[13px] font-medium">查看详情</button>
+              <button class="luminous-btn-primary px-5 py-2 rounded-lg text-[13px] font-medium">应用改写</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 风格说明 -->
+        <div class="mt-6 grid md:grid-cols-3 gap-4">
+          <div class="luminous-card rounded-xl p-4">
+            <p class="text-[11px] font-medium text-zinc-400 tracking-wide mb-2">色彩即光源</p>
+            <p class="text-[13px] text-zinc-600 leading-relaxed">
+              暖橙按钮不是贴上去的色块，而是发光体。Hover 时光晕扩散增强，像台灯被调亮了一档。
+            </p>
+          </div>
+          <div class="luminous-card rounded-xl p-4">
+            <p class="text-[11px] font-medium text-zinc-400 tracking-wide mb-2">材质厚度与折射</p>
+            <p class="text-[13px] text-zinc-600 leading-relaxed">
+              卡片使用内阴影模拟白瓷的物理厚度。边缘捕捉到微弱环境光，产生"透亮"的高级感。
+            </p>
+          </div>
+          <div class="luminous-card rounded-xl p-4">
+            <p class="text-[11px] font-medium text-zinc-400 tracking-wide mb-2">动态呼吸感</p>
+            <p class="text-[13px] text-zinc-600 leading-relaxed">
+              "生成中"状态灯不是静态死点，而是有呼吸韵律的光源，暗示系统正在"活着"运转。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 测试八：美学标准对比 — 四方向候选灵魂 2×2 -->
+    <section>
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border" style="background: rgba(100,100,100,0.08); color: #52525B; border-color: rgba(100,100,100,0.2);">TEST 08</span>
+          <h2 class="text-xl font-semibold text-p tracking-tight">四方向候选灵魂 · 2×2 对比矩阵</h2>
+        </div>
+        <p class="text-sm text-s max-w-3xl leading-relaxed">
+          相同的 AI 剧本审核卡片，四种美学语言并排。左上：V2 旧版克制灰阶；右上：光感实验室白瓷光源；左下：暖米纸本手作质感；右下：纸本仪表 V2 定稿（珐琅镶嵌 + Stone 暖灰系）。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- A · 克制灰阶 -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-2 h-2 rounded-full bg-zinc-400"></span>
+            <h3 class="text-sm font-medium text-p">A · 克制灰阶（V2 旧版）</h3>
+          </div>
+          <div class="v2-card rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+              <div class="flex items-center gap-3">
+                <span class="v2-guide-line h-5 self-stretch" style="background-color: #D97757;"></span>
+                <div>
+                  <p class="text-xs text-zinc-400 tracking-wide">AI 剧本审核与执行看板</p>
+                  <p class="text-lg tracking-tight font-semibold text-zinc-800">春季新款连衣裙 · 脚本 v3.2</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 px-2.5 py-1 rounded-full border border-zinc-200 bg-zinc-50">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="text-[11px] font-medium text-zinc-500 tracking-wide">生成中</span>
+              </div>
+            </div>
+            <p class="leading-relaxed mb-5" style="color: #71717A; font-size: 13px;">
+              建议将开场话术从"大家好今天推荐一款裙子"改为场景化切入："刚才后台收到一条私信，有位粉丝说上周买的同款已经收到了三个 compliments"。同时把价格锚点提前到第 15 秒，配合"仅剩 47 件"的库存紧迫感，预计可将转化率提升 12-18%。
+            </p>
+            <div class="grid grid-cols-2 gap-3 mb-5">
+              <div class="rounded-xl p-3 border border-zinc-100 bg-zinc-50/50">
+                <p class="text-[11px] text-zinc-400 tracking-wide mb-1">当前脚本转化率</p>
+                <p class="text-xl font-semibold tracking-tight text-zinc-800 tabular-nums">4.2%</p>
+                <p class="text-[11px] text-zinc-400 mt-1">场均成交 156 单</p>
+              </div>
+              <div class="rounded-xl p-3 border border-zinc-100 bg-zinc-50/50">
+                <p class="text-[11px] text-zinc-400 tracking-wide mb-1">AI 预测转化率</p>
+                <p class="text-xl font-semibold tracking-tight tabular-nums" style="color: #D97757;">5.8%</p>
+                <p class="text-[11px] text-zinc-400 mt-1">预计成交 218 单 <span class="text-emerald-500">▲ +39.7%</span></p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-4" style="border-top: 1px solid #F4F4F5;">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="text-[11px] text-zinc-400">数据基于最近 7 场直播</span>
+              </div>
+              <div class="flex gap-2">
+                <button class="v2-btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">查看详情</button>
+                <button class="v2-btn-primary px-4 py-1.5 rounded-lg text-xs font-medium">应用改写</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- B · 白瓷光源 -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-2 h-2 rounded-full" style="background-color: #D99E55; box-shadow: 0 0 6px rgba(217, 158, 85, 0.4);"></span>
+            <h3 class="text-sm font-medium text-p">B · 白瓷光源（光感实验室）</h3>
+          </div>
+          <div class="luminous-card rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+              <div class="flex items-center gap-3">
+                <span class="luminous-guide-line h-5 self-stretch"></span>
+                <div>
+                  <p class="text-xs text-zinc-400 tracking-wide">AI 剧本审核与执行看板</p>
+                  <p class="text-lg tracking-tight font-semibold text-zinc-800">春季新款连衣裙 · 脚本 v3.2</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 px-2.5 py-1 rounded-full border border-zinc-200/60 bg-zinc-50/50">
+                <span class="luminous-status"></span>
+                <span class="text-[11px] font-medium text-zinc-500 tracking-wide">生成中</span>
+              </div>
+            </div>
+            <p class="leading-relaxed mb-5" style="color: #71717A; font-size: 13px;">
+              建议将开场话术从"大家好今天推荐一款裙子"改为场景化切入："刚才后台收到一条私信，有位粉丝说上周买的同款已经收到了三个 compliments"。同时把价格锚点提前到第 15 秒，配合"仅剩 47 件"的库存紧迫感，预计可将转化率提升 12-18%。
+            </p>
+            <div class="grid grid-cols-2 gap-3 mb-5">
+              <div class="rounded-xl p-3" style="background: rgba(244,244,245,0.4); border: 1px solid rgba(228,228,231,0.4);">
+                <p class="text-[11px] text-zinc-400 tracking-wide mb-1">当前脚本转化率</p>
+                <p class="text-xl font-semibold tracking-tight text-zinc-800 luminous-metric">4.2%</p>
+                <p class="text-[11px] text-zinc-400 mt-1">场均成交 156 单</p>
+              </div>
+              <div class="rounded-xl p-3" style="background: rgba(244,244,245,0.4); border: 1px solid rgba(228,228,231,0.4);">
+                <p class="text-[11px] text-zinc-400 tracking-wide mb-1">AI 预测转化率</p>
+                <p class="text-xl font-semibold tracking-tight luminous-metric" style="color: #D97757;">5.8%</p>
+                <p class="text-[11px] text-zinc-400 mt-1">预计成交 218 单 <span style="color: #22C55E;">▲ +39.7%</span></p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-4" style="border-top: 1px solid rgba(228,228,231,0.4);">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" style="box-shadow: 0 0 4px rgba(34,197,94,0.3);"></span>
+                <span class="text-[11px] text-zinc-400">数据基于最近 7 场直播</span>
+              </div>
+              <div class="flex gap-2">
+                <button class="luminous-btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">查看详情</button>
+                <button class="luminous-btn-primary px-4 py-1.5 rounded-lg text-xs font-medium">应用改写</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- C · 暖米纸本 -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-2 h-2 rounded-full" style="background-color: #D97757;"></span>
+            <h3 class="text-sm font-medium text-p">C · 暖米纸本（手作质感）</h3>
+          </div>
+          <div class="paper-card rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+              <div class="flex items-center gap-3">
+                <span class="paper-guide-line h-5 self-stretch"></span>
+                <div>
+                  <p class="text-xs tracking-wide" style="color: #A8A29E;">AI 剧本审核与执行看板</p>
+                  <p class="text-lg tracking-tight font-semibold" style="color: #44403C;">春季新款连衣裙 · 脚本 v3.2</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 px-2.5 py-1 rounded-full" style="border: 1px solid #E8E4DE; background: #F0EBE3;">
+                <span class="paper-status"></span>
+                <span class="text-[11px] font-medium tracking-wide" style="color: #A8A29E;">生成中</span>
+              </div>
+            </div>
+            <p class="leading-relaxed mb-5" style="color: #78716C; font-size: 13px;">
+              建议将开场话术从"大家好今天推荐一款裙子"改为场景化切入："刚才后台收到一条私信，有位粉丝说上周买的同款已经收到了三个 compliments"。同时把价格锚点提前到第 15 秒，配合"仅剩 47 件"的库存紧迫感，预计可将转化率提升 12-18%。
+            </p>
+            <div class="grid grid-cols-2 gap-3 mb-5">
+              <div class="rounded-xl p-3" style="background: #F0EBE3; border: 1px solid #E8E4DE;">
+                <p class="text-[11px] tracking-wide mb-1" style="color: #A8A29E;">当前脚本转化率</p>
+                <p class="text-xl font-semibold tracking-tight paper-metric" style="color: #44403C;">4.2%</p>
+                <p class="text-[11px] mt-1" style="color: #A8A29E;">场均成交 156 单</p>
+              </div>
+              <div class="rounded-xl p-3" style="background: #F0EBE3; border: 1px solid #E8E4DE;">
+                <p class="text-[11px] tracking-wide mb-1" style="color: #A8A29E;">AI 预测转化率</p>
+                <p class="text-xl font-semibold tracking-tight paper-metric" style="color: #D97757;">5.8%</p>
+                <p class="text-[11px] mt-1" style="color: #A8A29E;">预计成交 218 单 <span style="color: #22C55E;">▲ +39.7%</span></p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-4" style="border-top: 1px solid #E8E4DE;">
+              <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="text-[11px]" style="color: #A8A29E;">数据基于最近 7 场直播</span>
+              </div>
+              <div class="flex gap-2">
+                <button class="paper-btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">查看详情</button>
+                <button class="paper-btn-primary px-4 py-1.5 rounded-lg text-xs font-medium">应用改写</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- D · 纸本仪表 V2 定稿 -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-2 h-2 rounded-full" style="background-color: #D97757; border: 1px solid #FBFBF8; box-sizing: content-box;"></span>
+            <h3 class="text-sm font-medium text-p">D · 纸本仪表 V2 定稿（推荐）</h3>
+          </div>
+          <div class="pi-card rounded-2xl p-6">
+            <div class="flex items-start justify-between mb-5">
+              <div class="flex items-center gap-3">
+                <span class="pi-guide-line h-5 self-stretch"></span>
+                <div>
+                  <p class="text-xs tracking-wide" style="color: #A8A29E;">AI 剧本审核与执行看板</p>
+                  <p class="text-lg tracking-tight font-semibold" style="color: #44403C;">春季新款连衣裙 · 脚本 v3.2</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 px-2.5 py-1 rounded-full" style="border: 1px solid #E7E5E4; background: #F5F5EF;">
+                <span class="pi-status pi-status-pulse"></span>
+                <span class="text-[11px] font-medium tracking-wide" style="color: #A8A29E;">生成中</span>
+              </div>
+            </div>
+            <p class="leading-relaxed mb-5" style="color: #78716C; font-size: 13px;">
+              建议将开场话术从"大家好今天推荐一款裙子"改为场景化切入："刚才后台收到一条私信，有位粉丝说上周买的同款已经收到了三个 compliments"。同时把价格锚点提前到第 15 秒，配合"仅剩 47 件"的库存紧迫感，预计可将转化率提升 12-18%。
+            </p>
+            <div class="grid grid-cols-2 gap-3 mb-5">
+              <div class="rounded-xl p-3" style="background: #F5F5EF; border: 1px solid #E7E5E4;">
+                <p class="text-[11px] tracking-wide mb-1" style="color: #A8A29E;">当前脚本转化率</p>
+                <p class="text-xl font-semibold tracking-tight pi-metric" style="color: #44403C;">4.2%</p>
+                <p class="text-[11px] mt-1" style="color: #A8A29E;">场均成交 156 单</p>
+              </div>
+              <div class="rounded-xl p-3" style="background: #F5F5EF; border: 1px solid #E7E5E4;">
+                <p class="text-[11px] tracking-wide mb-1" style="color: #A8A29E;">AI 预测转化率</p>
+                <p class="text-xl font-semibold tracking-tight pi-metric" style="color: #D97757;">5.8%</p>
+                <p class="text-[11px] mt-1" style="color: #A8A29E;">预计成交 218 单 <span style="color: #22C55E;">▲ +39.7%</span></p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-4" style="border-top: 1px solid #E7E5E4;">
+              <div class="flex items-center gap-2">
+                <span class="pi-status" style="background-color: #6FAA7D;"></span>
+                <span class="text-[11px]" style="color: #A8A29E;">数据基于最近 7 场直播</span>
+              </div>
+              <div class="flex gap-2">
+                <button class="pi-btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">查看详情</button>
+                <button class="pi-btn-primary px-4 py-1.5 rounded-lg text-xs font-medium">应用改写</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 差异维度对比 -->
+      <div class="mt-8 grid md:grid-cols-2 gap-4">
+        <div class="lab-card rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">排版 & 骨架</span>
+          </div>
+          <div class="space-y-3 text-sm text-zinc-600">
+            <p><strong class="text-zinc-800">A 克制灰阶：</strong>排版即界面。用 gap/padding 替代 border，信息层级靠字号和字距建立。</p>
+            <p><strong class="text-zinc-800">B 白瓷光源：</strong>同样的排版骨架，但卡片带有内阴影折射，边缘更"透亮"。</p>
+            <p><strong class="text-zinc-800">C 暖米纸本：</strong>墨字落在牛皮纸上。文字偏暖褐（stone），像手作杂志的排版呼吸感。</p>
+            <p><strong class="text-zinc-800">D 纸本仪表 V2：</strong>Stone 全局迁移 + 7 档字号阶梯。正文 13px/22px，Eyebrow 10px 宽字距。</p>
+          </div>
+        </div>
+
+        <div class="lab-card rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-t px-2 py-0.5 rounded border-sub border">色彩 & 材质</span>
+          </div>
+          <div class="space-y-3 text-sm text-zinc-600">
+            <p><strong class="text-zinc-800">A 克制灰阶：</strong>彩色只存在于 2px 导轨和状态点。按钮是实心暖橙，hover 靠位移体现。</p>
+            <p><strong class="text-zinc-800">B 白瓷光源：</strong>彩色是"光源"。按钮自带环境色漫反射，hover 时光晕扩散增强。</p>
+            <p><strong class="text-zinc-800">C 暖米纸本：</strong>暖橙是"印章"。印在暖米底上天然和谐，不需要光晕也能一眼识别。</p>
+            <p><strong class="text-zinc-800">D 纸本仪表 V2：</strong>彩色"镶嵌"不裸贴。状态点有 1px #FBFBF8 外圈描边（珐琅镶嵌），按钮有 1px #C96442 深边收边。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 备注区 -->
+    <section class="pb-12">
+      <div class="lab-card rounded-2xl p-8">
+        <h3 class="text-sm font-medium text-p mb-4">使用说明</h3>
+        <ul class="space-y-2 text-sm text-s">
+          <li class="flex items-start gap-2">
+            <span class="text-t mt-0.5">1.</span>
+            <span>点击顶部「全局底色」切换按钮，观察测试一与测试三在不同背景下的阅读舒适度差异。</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-t mt-0.5">2.</span>
+            <span>将鼠标悬停在测试二的按钮上，感受方向 C 的「物理下沉」与方向 D 的「色彩呼吸」。</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-t mt-0.5">3.</span>
+            <span>测试三的表格中，方向 C 和方向 D 的按钮成对出现，方便在密集信息环境下直接对比视觉噪音。</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-t mt-0.5">4.</span>
+            <span>测试四方向 E：只有「发布日报」是暖橙色，其余所有交互仅靠灰阶 + 位移体现。滑动鼠标感受「板块在微微浮动」。</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-t mt-0.5">5.</span>
+            <span>测试四方向 F：点击 Tab 和卡片切换选中态，观察幽灵线框（1px 暖橙边框 + 微弱阴影）与传统铺色高亮的质感差异。</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-t mt-0.5">6.</span>
+            <span>测试三观察三种密度的「一屏信息量」与「视觉压迫感」；测试四点击图标切换 active 感受线框→实心的体积变化；测试五点击输入框感受焦点状态的差异；测试六直接对比三种浮层的「浮出方式」。</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function setTheme(theme) {
+      const body = document.getElementById('appBody');
+      body.classList.remove('theme-default', 'theme-a', 'theme-b', 'theme-azen');
+      body.classList.add('theme-' + theme);
+
+      // 更新按钮活跃态
+      ['default', 'a', 'b', 'azen'].forEach(t => {
+        const btn = document.getElementById('btn-' + t);
+        if (!btn) return;
+        if (t === theme) {
+          btn.style.backgroundColor = 'var(--text-primary)';
+          btn.style.color = 'var(--bg-base)';
+          btn.style.borderColor = 'transparent';
+        } else {
+          btn.style.backgroundColor = 'transparent';
+          btn.style.color = 'var(--text-secondary)';
+          btn.style.borderColor = 'var(--border-subtle)';
+        }
+      });
+    }
+
+    function switchTab(clicked) {
+      const parent = clicked.parentElement;
+      parent.querySelectorAll('.tab-f').forEach(tab => tab.classList.remove('active'));
+      clicked.classList.add('active');
+    }
+
+    function toggleCardF(clicked) {
+      clicked.classList.toggle('active');
+    }
+
+    // 初始化
+    setTheme('default');
+  </script>
+</body>
+</html>

@@ -587,7 +587,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     feedbackToast.success("截图上传成功", {
       duration: 2000,
       className:
-        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
     });
 
     try {
@@ -703,7 +703,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       feedbackToast.success("识别完成", {
         duration: 2200,
         className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
       });
     } catch (error) {
       const message = toSlotUploadErrorMessage(error);
@@ -834,7 +834,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       feedbackToast.success("数据提交成功", {
         duration: 2000,
         className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
       });
       cancelTimeoutRef.current = window.setTimeout(() => {
         onCancel?.();
@@ -1008,7 +1008,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 feedbackToast.success("删除成功", {
                   duration: 2000,
                   className:
-                    "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+                    "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
                 });
               }}
             >

@@ -236,7 +236,7 @@ export function ConversionHubOverview({ stats }: Props) {
               <Link
                 key={href}
                 href={href}
-                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:translate-y-0 active:scale-[0.99]"
+                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:translate-y-0 active:translate-y-0"
               >
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 transition-colors group-hover:bg-[#D97757] group-hover:text-white">
                   <Icon className="size-5" />

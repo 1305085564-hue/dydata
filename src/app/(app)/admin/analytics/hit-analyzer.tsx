@@ -622,7 +622,7 @@ export function HitAnalyzer({
   };
 
   const renderScatterChart = (className?: string) => (
-    <div className={cn("h-full w-full rounded-2xl border border-white/70 bg-white p-2 shadow-inner", className)}>
+    <div className={cn("h-full w-full rounded-2xl border border-zinc-200 bg-white p-2 shadow-inner", className)}>
       {scatterData.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 18, right: 18, bottom: 14, left: 0 }}>
@@ -979,7 +979,7 @@ export function HitAnalyzer({
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="rounded-[24px] border border-white/70 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">Focused Sample</p>
@@ -1057,7 +1057,7 @@ export function HitAnalyzer({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[24px] border border-white/70 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">维度说明</p>
               <div className="mt-4 space-y-3 text-sm text-zinc-600">
                 <div className="rounded-2xl bg-zinc-50 p-3">
@@ -1075,7 +1075,7 @@ export function HitAnalyzer({
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/70 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">数据摘要</p>
                 {scatterSummary ? (

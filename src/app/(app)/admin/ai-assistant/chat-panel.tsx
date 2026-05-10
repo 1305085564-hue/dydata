@@ -402,7 +402,7 @@ export default function ChatPanel({
                       key={msg.id}
                       className="flex justify-end animate-in fade-in slide-in-from-bottom-1 duration-300"
                     >
-                      <div className="max-w-[82%] rounded-[14px] rounded-tr-[4px] bg-zinc-950 px-4 py-3 text-[14px] leading-[1.7] text-zinc-50 shadow-[0_2px_6px_-2px_rgba(0,0,0,0.25)]">
+                      <div className="max-w-[82%] rounded-[14px] rounded-tr-[4px] bg-zinc-950 px-4 py-3 text-[14px] leading-[1.7] text-zinc-50 shadow-sm">
                         <p className="whitespace-pre-wrap tracking-[0.005em]">
                           {msg.content}
                         </p>

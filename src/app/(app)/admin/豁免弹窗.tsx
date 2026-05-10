@@ -314,7 +314,7 @@ export function ExemptionDialog({
             <Button
               onClick={handleSaveClick}
               disabled={isPending}
-              className="rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800"
+              className="rounded-[10px] bg-[#D97757] text-white hover:bg-[#C96442]"
             >
               保存
             </Button>

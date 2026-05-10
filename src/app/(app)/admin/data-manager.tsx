@@ -411,7 +411,7 @@ export function DataManager({
                 size="sm"
                 disabled={isPending}
                 onClick={() => handleSave(report.id)}
-                className="h-8 bg-zinc-900 text-xs text-white hover:bg-zinc-800"
+                className="h-8 bg-white border border-zinc-200 text-xs text-zinc-800 hover:bg-zinc-50"
               >
                 保存
               </Button>
@@ -600,7 +600,7 @@ export function DataManager({
             size="sm"
             disabled={isPending}
             onClick={() => handleSave(report.id)}
-            className="h-8 bg-zinc-900 text-xs text-white hover:bg-zinc-800"
+            className="h-8 bg-white border border-zinc-200 text-xs text-zinc-800 hover:bg-zinc-50"
           >
             保存
           </Button>

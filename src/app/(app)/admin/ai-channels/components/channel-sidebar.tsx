@@ -69,7 +69,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
         <Button
           onClick={onAddClick}
           variant="default"
-          className="w-full justify-start gap-2 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800"
+          className="w-full justify-start gap-2 rounded-xl bg-white border border-zinc-200 text-zinc-800 hover:bg-zinc-50"
         >
           <Plus className="size-4 stroke-[1.5]" />
           添加渠道

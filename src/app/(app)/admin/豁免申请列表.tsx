@@ -100,7 +100,7 @@ function RequestRow({
             size="sm"
             disabled={isPending}
             onClick={() => handle("approved")}
-            className="rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800"
+            className="rounded-[10px] bg-[#D97757] text-white hover:bg-[#C96442]"
           >
             批准
           </Button>

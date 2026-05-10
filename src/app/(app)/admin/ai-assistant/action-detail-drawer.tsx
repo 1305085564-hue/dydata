@@ -155,7 +155,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
 
   return (
     <Dialog open={!!id} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-0 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.12)]">
+      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-0 shadow-sm">
         <DialogHeader className="relative shrink-0 border-b border-zinc-200 bg-white px-6 pb-4 pt-5">
           <div className="absolute left-0 top-0 h-full w-[3px] bg-zinc-300" />
           <div className="flex items-start justify-between gap-4">

@@ -334,7 +334,7 @@ function PersonRankCard({
               title="综合爆款率"
               value={`${person.hitRate.toFixed(1)}%`}
               width={hitRateWidth}
-              barClassName="bg-[linear-gradient(90deg,var(--color-primary)_0%,var(--color-primary-light,var(--color-primary))_100%)]"
+              barClassName="bg-[#D97757]"
               toneClassName="bg-zinc-50"
               description="蓝条改为纵向紧凑展示"
             />
@@ -342,7 +342,7 @@ function PersonRankCard({
               title="互动粘性"
               value={`${person.engagementRate.toFixed(2)}%`}
               width={engagementWidth}
-              barClassName="bg-[linear-gradient(90deg,#fbbf24_0%,#f59e0b_100%)]"
+              barClassName="bg-[#D99E55]"
               toneClassName="bg-zinc-50"
               description="黄条堆叠在下方"
             />
