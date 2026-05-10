@@ -1,12 +1,13 @@
 "use client";
 
-import { ChevronDown, Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { ChevronDown, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { AiChannelRow, AiFeatureCardItem } from "./types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,13 +49,13 @@ export function ChannelFeatureCard({
   };
 
   const stateStyles = isExpanded
-    ? "border-zinc-200 bg-white shadow-sm ring-1 ring-zinc-950/10"
-    : "border-zinc-200 bg-white hover:bg-zinc-50 transition-all duration-300";
+    ? "border-zinc-200 bg-white shadow-sm"
+    : "border-zinc-200 bg-white hover:bg-zinc-50 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-xl border transition-all duration-300",
+        "flex flex-col overflow-hidden rounded-xl border transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
         stateStyles
       )}
     >
@@ -91,23 +92,23 @@ export function ChannelFeatureCard({
           <div className="flex items-center justify-end min-w-[70px]">
             <AnimatePresence mode="popLayout">
               {saveState === "pending" && (
-                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-amber-600">
-                  <Clock className="size-3" />待保存
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-[#D99E55]">
+                  <Clock className="size-3 stroke-[1.5]" />待保存
                 </motion.span>
               )}
               {saveState === "saving" && (
-                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-amber-500">
-                  <Loader2 className="size-3 animate-spin" />保存中
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-[#D99E55]">
+                  <Skeleton className="size-3 rounded-full" />保存中
                 </motion.span>
               )}
               {saveState === "saved" && (
-                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-emerald-500">
-                  <CheckCircle2 className="size-3" />已保存
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-[#6FAA7D]">
+                  <CheckCircle2 className="size-3 stroke-[1.5]" />已保存
                 </motion.span>
               )}
               {saveState === "error" && (
-                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-destructive">
-                  <AlertCircle className="size-3" />保存失败
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[11px] text-[#C9604D]">
+                  <AlertCircle className="size-3 stroke-[1.5]" />保存失败
                 </motion.span>
               )}
             </AnimatePresence>

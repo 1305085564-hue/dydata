@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  Loader2,
   RefreshCw,
   ArrowUp,
   AtSign,
@@ -16,6 +15,7 @@ import {
   AlertTriangle,
   XCircle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
 import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
@@ -136,7 +136,7 @@ function buildConfirmResultMessage(options: {
 
 function MarkdownContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-sm max-w-none text-zinc-800 prose-headings:text-zinc-950 prose-headings:font-black prose-headings:tracking-tight prose-p:my-2 prose-p:leading-[1.75] prose-pre:my-3 prose-pre:rounded-xl prose-pre:bg-zinc-950 prose-pre:text-zinc-100 prose-pre:border prose-pre:border-zinc-900 prose-pre:p-3.5 prose-pre:text-[12.5px] prose-code:rounded-md prose-code:bg-zinc-100 prose-code:text-zinc-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[12.5px] prose-code:font-medium prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-zinc-200 prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-th:text-[11px] prose-th:uppercase prose-th:tracking-wider prose-th:text-zinc-500 prose-th:font-semibold prose-td:border prose-td:border-zinc-200 prose-td:px-3 prose-td:py-2 prose-td:text-[13px] prose-ul:my-2 prose-ul:pl-5 prose-ol:my-2 prose-ol:pl-5 prose-li:my-0.5 prose-a:text-zinc-900 prose-a:underline prose-a:decoration-zinc-300 prose-a:underline-offset-4 hover:prose-a:decoration-zinc-900 prose-strong:text-zinc-950 prose-strong:font-semibold">
+    <div className="prose prose-sm max-w-none text-zinc-800 prose-headings:text-zinc-800 prose-headings:font-semibold prose-headings:tracking-tight prose-p:my-2 prose-p:leading-[1.75] prose-pre:my-3 prose-pre:rounded-xl prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:border prose-pre:border-zinc-900 prose-pre:p-3.5 prose-pre:text-[12.5px] prose-code:rounded-md prose-code:bg-zinc-100 prose-code:text-zinc-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[12.5px] prose-code:font-medium prose-code:before:content-none prose-code:after:content-none prose-table:w-full prose-table:overflow-x-auto prose-table:border-collapse prose-th:border prose-th:border-zinc-200 prose-th:px-3 prose-th:py-2 prose-th:bg-zinc-50 prose-th:text-[11px] prose-th:uppercase prose-th:tracking-wider prose-th:text-zinc-500 prose-th:font-semibold prose-td:border prose-td:border-zinc-200 prose-td:px-3 prose-td:py-2 prose-td:text-[13px] prose-ul:my-2 prose-ul:pl-5 prose-ol:my-2 prose-ol:pl-5 prose-li:my-0.5 prose-a:text-zinc-800 prose-a:underline prose-a:decoration-zinc-300 prose-a:underline-offset-4 hover:prose-a:decoration-zinc-800 prose-strong:text-zinc-800 prose-strong:font-semibold">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );
@@ -147,10 +147,10 @@ function StatusDot({ type }: { type: Message["type"] }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-30" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600 shadow-[0_0_0_3px_rgba(5,150,105,0.08)]" />
+          <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D] opacity-30" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]" />
         </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#6FAA7D]">
           Approved
         </span>
       </span>
@@ -160,7 +160,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-50" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C9604D] opacity-50" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600 shadow-[0_0_0_3px_rgba(220,38,38,0.08)]" />
         </span>
         <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-red-700">
@@ -173,10 +173,10 @@ function StatusDot({ type }: { type: Message["type"] }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(234,179,8,0.12)]" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D99E55] opacity-60" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)]" />
         </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
           Pending
         </span>
       </span>
@@ -339,7 +339,7 @@ export default function ChatPanel({
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-700 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.3)]" />
                   <Sparkles className="relative h-6 w-6 text-white" strokeWidth={1.75} />
                 </div>
-                <h1 className="text-[26px] font-black leading-tight tracking-tight text-zinc-950">
+                <h1 className="text-[24px] font-semibold leading-tight tracking-tight text-zinc-800">
                   你想处理点什么？
                 </h1>
                 <p className="mt-3 max-w-md text-[13px] leading-relaxed text-zinc-500">
@@ -358,12 +358,12 @@ export default function ChatPanel({
                     key={shortcut.title}
                     type="button"
                     onClick={() => sendMessage(shortcut.text)}
-                    className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:shadow-md active:translate-y-0"
+                    className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:shadow-sm active:translate-y-0"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 transition-colors group-hover:bg-emerald-500" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 transition-colors group-hover:bg-[#6FAA7D]" />
                           <div className="text-[13px] font-semibold tracking-tight text-zinc-950">
                             {shortcut.title}
                           </div>
@@ -443,11 +443,11 @@ export default function ChatPanel({
                       className={cn(
                         "rounded-2xl border px-5 py-4 transition-colors",
                         msg.type === "result"
-                          ? "border-emerald-100 bg-[#F6FDF9]"
+                          ? "border-zinc-200 bg-[#F6F9F7]"
                           : msg.type === "error"
                             ? "border-red-100 bg-[#FEF9F9]"
                             : msg.type === "confirmation"
-                              ? "border-amber-100 bg-[#FEFCF3]"
+                              ? "border-zinc-200 bg-[#FBF6EC]"
                               : "border-zinc-100 bg-[#FAFAFB]"
                       )}
                     >
@@ -458,7 +458,7 @@ export default function ChatPanel({
                           className={cn(
                             "mt-3 rounded-xl border bg-white p-3",
                             msg.type === "result"
-                              ? "border-emerald-100"
+                              ? "border-zinc-200"
                               : msg.type === "error"
                                 ? "border-red-100"
                                 : "border-zinc-200"
@@ -474,7 +474,7 @@ export default function ChatPanel({
                       <div className="mt-2">
                         <button
                           onClick={() => handleRetry(msg.requestText)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm active:translate-y-0"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-800 hover:shadow-sm active:translate-y-0"
                         >
                           <RefreshCw className="h-3 w-3" />
                           重试
@@ -526,7 +526,7 @@ export default function ChatPanel({
         <div className="mx-auto max-w-[768px]">
           <div
             className={cn(
-              "group relative flex items-end gap-1.5 rounded-[20px] border bg-white px-2.5 py-2 transition-all",
+              "group relative flex items-end gap-1.5 rounded-[20px] border bg-white px-2.5 py-2 transition-colors",
               "border-zinc-200",
               "focus-within:border-zinc-950 focus-within:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.06)]"
             )}
@@ -548,14 +548,14 @@ export default function ChatPanel({
               onClick={() => sendMessage(input)}
               disabled={!canSend}
               className={cn(
-                "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-all",
+                "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors",
                 !canSend
                   ? "bg-zinc-100 text-zinc-400"
                   : "bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
               )}
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Skeleton className="h-4 w-4 rounded" />
               ) : (
                 <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
               )}

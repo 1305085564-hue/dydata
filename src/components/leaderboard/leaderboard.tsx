@@ -360,11 +360,11 @@ function TagStack({
 function RankBadge({ rank }: { rank: number }) {
   const badgeClass =
     rank === 1
-      ? "bg-amber-100 text-amber-700 ring-amber-200"
+      ? "bg-zinc-100 text-[#D99E55] ring-amber-200"
       : rank === 2
         ? "bg-slate-100 text-slate-700 ring-slate-200"
         : rank === 3
-          ? "bg-orange-100 text-orange-700 ring-orange-200"
+          ? "bg-zinc-100 text-[#C9604D] ring-orange-200"
           : "bg-muted text-muted-foreground ring-border";
 
   return (
@@ -389,8 +389,8 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
-          : "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400"
+          ? "bg-zinc-50 text-emerald-600 dark:bg-zinc-100/15 dark:text-emerald-400"
+          : "bg-zinc-50 text-red-600 dark:bg-zinc-100/15 dark:text-red-400"
       )}
     >
       <TrendingUp className="size-3.5" />

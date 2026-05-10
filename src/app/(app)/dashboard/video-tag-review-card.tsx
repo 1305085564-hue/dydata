@@ -18,6 +18,7 @@ import {
   getTagReviewStatus,
   type NormalizedAiTagSuggestion,
 } from "@/lib/video-tags";
+import { cn } from "@/lib/utils";
 
 type Props = {
   videoId: string;
@@ -90,11 +91,11 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
   }
 
   return (
-    <Card className="rounded-[28px] border-border/60 bg-background/90 shadow-sm backdrop-blur-md">
+    <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <CardContent className="space-y-5 px-6 py-6 sm:px-7">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">AI 推荐标签</h3>
-          <p className="text-sm text-muted-foreground">提交成功后可立即确认或微调，低置信度标签会标记为待确认。</p>
+          <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">AI 推荐标签</h3>
+          <p className="text-[13px] leading-[1.7] text-zinc-500">提交成功后可立即确认或微调，低置信度标签会标记为待确认。</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
@@ -103,17 +104,23 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
             const reviewStatus = getTagReviewStatus(tag?.confidence ?? null);
 
             return (
-              <div key={dimension} className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4">
+              <div key={dimension} className="space-y-3 rounded-xl border border-zinc-200 bg-[#FAFAFB] p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-medium text-foreground">{dimension}</div>
+                  <div className="text-[13px] font-medium text-zinc-800">{dimension}</div>
                   <Badge
                     variant="outline"
                     className={
                       reviewStatus === "可信"
-                        ? "border-[#ABEFC6] bg-[#067647]/10 text-[#067647]"
-                        : "border-[#FDE68A] bg-[#CA8A04]/10 text-[#92400E]"
+                        ? "border-zinc-200 bg-white text-[#6FAA7D]"
+                        : "border-zinc-200 bg-white text-[#D99E55]"
                     }
                   >
+                    <span
+                      className={cn(
+                        "mr-1.5 inline-block size-1.5 rounded-full",
+                        reviewStatus === "可信" ? "bg-[#6FAA7D]" : "bg-[#D99E55]",
+                      )}
+                    />
                     {reviewStatus}
                   </Badge>
                 </div>
@@ -122,7 +129,7 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
                   value={selection[dimension] || tag?.tag_value || ""}
                   onValueChange={(value) => updateSelection(dimension, value)}
                 >
-                  <SelectTrigger className="h-11 rounded-2xl bg-background/80">
+                  <SelectTrigger className="h-11 rounded-lg bg-white">
                     <SelectValue placeholder={`选择${dimension}`} />
                   </SelectTrigger>
                   <SelectContent>
@@ -134,9 +141,14 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
                   </SelectContent>
                 </Select>
 
-                <div className="space-y-1 text-xs text-muted-foreground">
+                <div className="space-y-1 text-[12px] leading-[1.7] text-zinc-500">
                   <div>来源：AI</div>
-                  <div>置信度：{tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}</div>
+                  <div>
+                    置信度：
+                    <span className="tabular-nums text-zinc-800">
+                      {tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}
+                    </span>
+                  </div>
                   <div className="line-clamp-3">理由：{tag?.reason || "-"}</div>
                 </div>
               </div>
@@ -145,10 +157,10 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" className="h-11 rounded-2xl px-6" onClick={onSkipped} disabled={isSaving}>
+          <Button type="button" variant="outline" className="h-11 rounded-[10px] px-6" onClick={onSkipped} disabled={isSaving}>
             跳过
           </Button>
-          <Button type="button" className="h-11 rounded-2xl px-6" onClick={handleConfirm} disabled={isSaving}>
+          <Button type="button" className="h-11 rounded-[10px] px-6" onClick={handleConfirm} disabled={isSaving}>
             {isSaving ? "确认中..." : "一键确认标签"}
           </Button>
         </div>

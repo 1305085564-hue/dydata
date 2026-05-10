@@ -42,12 +42,12 @@ interface VideoDetailDialogProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  删稿: "border-red-200 bg-red-50 text-red-700",
-  限流: "border-red-200 bg-red-50 text-red-700",
-  投流: "border-amber-200 bg-amber-50 text-amber-700",
-  活动干预: "border-amber-200 bg-amber-50 text-amber-700",
-  "未满24h": "border-slate-200 bg-slate-100 text-slate-600",
+  正常: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  删稿: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
+  限流: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
+  投流: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  活动干预: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  "未满24h": "border-zinc-200 bg-zinc-100 text-zinc-600",
 };
 
 function formatDateTime(value: string | null) {
@@ -163,14 +163,14 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl rounded-[32px] border-border/60 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl sm:max-w-4xl">
+      <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 shadow-sm sm:max-w-4xl">
         <DialogHeader className="border-b border-border/60 px-6 py-5 sm:px-7">
           <DialogTitle className="text-xl font-semibold tracking-tight">视频详情</DialogTitle>
         </DialogHeader>
 
         {video ? (
           <div className="max-h-[80vh] space-y-6 overflow-y-auto px-6 py-6 sm:px-7">
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
                   <div className="text-lg font-semibold text-foreground">
@@ -219,7 +219,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
               </div>
             </section>
 
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-base font-semibold text-foreground">核心计算指标</div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-2xl bg-background/80 p-4">
@@ -249,7 +249,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
               </div>
             </section>
 
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-base font-semibold text-foreground">标签信息</div>
                 <Button type="button" variant="outline" className="rounded-2xl bg-background/80" onClick={handleSaveTags} disabled={isSaving}>
@@ -268,8 +268,8 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
                           variant="outline"
                           className={
                             status === "可信"
-                              ? "border-emerald-200 bg-emerald-500/10 text-emerald-700"
-                              : "border-amber-200 bg-amber-500/10 text-amber-700"
+                              ? "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                              : "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]"
                           }
                         >
                           {status}
@@ -308,7 +308,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
               </div>
             </section>
 
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-base font-semibold text-foreground">快照明细</div>
               {snapshot ? (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

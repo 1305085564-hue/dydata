@@ -36,9 +36,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">Business Analytics</p>
-        <h1 className="text-2xl font-black tracking-tight text-zinc-950">经营分析</h1>
-        <p className="mt-1 text-sm text-zinc-500">查看经营数据、视频表现与趋势，快速定位重点信号</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Business Analytics</p>
+        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">经营分析</h1>
+        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">查看经营数据、视频表现与趋势，快速定位重点信号</p>
       </div>
       <AnalyticsPageHeader preset={data.range.preset} from={data.range.from} to={data.range.to} />
       <AnalyticsContent

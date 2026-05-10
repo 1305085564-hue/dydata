@@ -29,13 +29,13 @@ interface Props {
 const TONE_STYLES: Record<DecisionBucket["tone"], { border: string; badge: string; title: string }> = {
   success: {
     border: "border-zinc-200",
-    badge: "bg-[#067647]/10 text-[#067647]",
-    title: "text-[#067647]",
+    badge: "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+    title: "text-[#6FAA7D]",
   },
   info: {
     border: "border-zinc-200",
-    badge: "bg-[#444CE7]/10 text-[#444CE7]",
-    title: "text-[#444CE7]",
+    badge: "bg-zinc-100 text-zinc-700",
+    title: "text-zinc-700",
   },
   neutral: {
     border: "border-zinc-200",
@@ -44,8 +44,8 @@ const TONE_STYLES: Record<DecisionBucket["tone"], { border: string; badge: strin
   },
   danger: {
     border: "border-zinc-200",
-    badge: "bg-[#B42318]/10 text-[#B42318]",
-    title: "text-[#B42318]",
+    badge: "bg-[#C9604D]/10 text-[#C9604D]",
+    title: "text-[#C9604D]",
   },
 };
 
@@ -74,21 +74,21 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             Weekly Decision
           </p>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-950">每周四类清单</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">每周四类清单</h1>
+          <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">
             每周筛选推广 / 测试 / 废弃 / 封禁的转化话术，管理员最终确认
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-medium text-zinc-600">
+          <div className="rounded-[10px] border border-zinc-200 bg-white px-4 py-1.5 text-[12px] font-medium text-zinc-600">
             本周 · {formatWeekRange(weekStart)}
           </div>
           {confirmedAt ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#067647]/10 px-3 py-1.5 text-xs font-semibold text-[#067647]">
-              <Check className="size-3.5" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-3 py-1.5 text-xs font-medium text-[#6FAA7D]">
+              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               已确认
             </span>
           ) : null}
@@ -149,7 +149,7 @@ function BucketCard({ bucket, index }: { bucket: DecisionBucket; index: number }
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xl leading-none">{bucket.emoji}</span>
-          <h2 className={`text-base font-bold ${tone.title}`}>{bucket.label}</h2>
+          <h2 className={`text-[16px] font-semibold ${tone.title}`}>{bucket.label}</h2>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone.badge}`}>
             {bucket.entries.length} 条
           </span>
@@ -166,7 +166,7 @@ function BucketCard({ bucket, index }: { bucket: DecisionBucket; index: number }
             <Link
               key={entry.id}
               href={`/violations/${entry.id}`}
-              className="block rounded-lg border border-zinc-200 bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm"
+              className="block rounded-lg border border-zinc-200 bg-white p-3 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm"
             >
               <p className="line-clamp-2 text-sm leading-snug text-zinc-800">{entry.script_text}</p>
               {entry.reason ? (
@@ -197,7 +197,7 @@ function EmptyState({
       <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-zinc-50">
         <Inbox className="size-7 text-zinc-400" />
       </div>
-      <h3 className="mt-4 text-base font-bold text-zinc-950">本周暂无决策草稿</h3>
+      <h3 className="mt-4 text-[16px] font-semibold text-zinc-800">本周暂无决策草稿</h3>
       <p className="mx-auto mt-1.5 max-w-md text-xs text-zinc-500">
         周起：{weekStart}。AI 每周草稿接口待后端实现，届时会在此自动生成四类话术候选。
       </p>

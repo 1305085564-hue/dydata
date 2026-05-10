@@ -56,12 +56,12 @@ const panelPreloaders: Record<Exclude<AdminPanelKey, "overview">, () => Promise<
 function PanelSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-16 animate-pulse rounded-[20px] bg-slate-100/80" />
+      <div className="h-16 rounded-xl bg-zinc-100 animate-pulse" />
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="h-56 animate-pulse rounded-[24px] bg-slate-100/80" />
-        <div className="h-56 animate-pulse rounded-[24px] bg-slate-100/80" />
+        <div className="h-56 rounded-xl bg-zinc-100 animate-pulse" />
+        <div className="h-56 rounded-xl bg-zinc-100 animate-pulse" />
       </div>
-      <div className="h-80 animate-pulse rounded-[28px] bg-slate-100/80" />
+      <div className="h-80 rounded-xl bg-zinc-100 animate-pulse" />
     </div>
   );
 }
@@ -155,27 +155,27 @@ export function AdminPanelLauncher({
       />
 
       <Dialog open={Boolean(activePanel)} onOpenChange={(open) => (!open ? closePanel() : null)}>
-        <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-[96dvh] sm:w-[calc(100vw-24px)] sm:max-w-none sm:rounded-[var(--radius-dialog)] 2xl:w-[min(100vw-32px,1880px)]">
+        <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-[96dvh] sm:w-[calc(100vw-24px)] sm:max-w-none sm:rounded-2xl 2xl:w-[min(100vw-32px,1880px)]">
           {activeItem ? (
             <>
-              <div className="border-b border-[var(--color-border)]/50 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(245,248,255,0.95))] px-5 py-5 sm:px-6 lg:px-7">
+              <div className="border-b border-zinc-200 bg-white px-5 py-5 sm:px-6 lg:px-7">
                 <DialogHeader className="gap-3 pr-10">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-2">
-                      <DialogTitle className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">
+                      <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">
                         管理员中控台
                       </DialogTitle>
-                      <DialogDescription className="max-w-3xl text-sm leading-6 text-[var(--color-text-secondary)]">
+                      <DialogDescription className="max-w-3xl text-[13px] leading-[1.7] text-zinc-500">
                         在同一个工作台里切换模块，不跳页、不改顶部标题，直接处理当前后台任务。
                       </DialogDescription>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full border border-primary/15 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary">
+                      <span className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] font-medium text-zinc-500">
                         当前模块：{activeItem.label}
                       </span>
                       <Link
                         href={activeItem.href}
-                        className="inline-flex items-center rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] shadow-[var(--shadow-light)]"
+                        className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0"
                       >
                         打开独立页面
                       </Link>
@@ -186,9 +186,9 @@ export function AdminPanelLauncher({
 
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6 lg:px-7">
                 <div className="mx-auto w-full max-w-[1760px]">
-                  <div className="mb-4 rounded-[22px] border border-white/80 bg-white/86 px-4 py-3 shadow-[var(--shadow-light)]">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{activeItem.label}</p>
-                    <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">{activeItem.description}</p>
+                  <div className="mb-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+                    <p className="text-[13px] font-semibold text-zinc-800">{activeItem.label}</p>
+                    <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">{activeItem.description}</p>
                   </div>
 
                   {activePanel === "overview" ? overviewContent : null}

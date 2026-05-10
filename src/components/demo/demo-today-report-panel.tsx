@@ -61,7 +61,7 @@ export function DemoTodayReportPanel({ accounts, reportsByAccountId }: Props) {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">{account.display_name}</p>
-                  <Badge variant="outline" className="rounded-full border-emerald-500/20 bg-emerald-500/8 text-emerald-700">
+                  <Badge variant="outline" className="rounded-full border-zinc-200/20 bg-zinc-100/8 text-[#6FAA7D]">
                     已预置
                   </Badge>
                 </div>

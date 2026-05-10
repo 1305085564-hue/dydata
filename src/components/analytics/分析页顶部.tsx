@@ -49,7 +49,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
   }
 
   return (
-    <section className="rounded-2xl border border-white/70 bg-white/82 p-3 shadow-[var(--shadow-light)] backdrop-blur-[18px] sm:p-4">
+    <section className="rounded-2xl border border-white/70 bg-white/82 p-3 shadow-[var(--shadow-light)] sm:p-4">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="space-y-1">
@@ -69,7 +69,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/75 bg-white/72 p-3 backdrop-blur-[12px]">
+        <div className="rounded-xl border border-white/75 bg-white/72 p-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-2">
               <p className="text-xs font-semibold tracking-[0.08em] text-[var(--color-text-secondary)]">快捷时间切换</p>
@@ -80,7 +80,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
                     size="sm"
                     variant={preset === option.value ? "default" : "outline"}
                     className={cn(
-                      "h-7 rounded-full px-3 text-xs transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] active:scale-[0.97]",
+                      "h-7 rounded-full px-3 text-xs transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)]]]",
                       preset === option.value
                         ? "border-transparent shadow-[var(--shadow-light)]"
                         : "border-white/70 bg-white/88 text-[var(--color-text-secondary)]",
@@ -119,7 +119,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
 
               <Link
                 href={getExportHref()}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-primary/15 bg-primary px-4 text-xs font-medium text-primary-foreground transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.02] hover:brightness-105 active:scale-[0.97]"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-primary/15 bg-primary px-4 text-xs font-medium text-primary-foreground transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)]] hover:brightness-105]"
               >
                 <Download className="size-3.5" />
                 导出数据

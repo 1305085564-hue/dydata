@@ -41,22 +41,22 @@ export function AddAccountDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button type="button" variant="outline" size="sm" className="h-10 rounded-xl" />
+          <Button type="button" variant="outline" size="sm" className="h-10 rounded-[10px]" />
         }
       >
-        <Plus className="size-4" />
+        <Plus className="size-4 stroke-[1.5]" />
         添加账号
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>添加新账号</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">添加新账号</DialogTitle>
+          <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">
             一个用户可以管理多个账号，这里填写你自己看得懂的账号备注名，方便切换提交
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="account-name">账号备注名</Label>
+            <Label htmlFor="account-name" className="text-[13px] font-medium text-zinc-800">账号备注名</Label>
             <Input
               id="account-name"
               value={name}
@@ -67,7 +67,7 @@ export function AddAccountDialog() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="content-direction">出镜 / 图文方向（选填）</Label>
+            <Label htmlFor="content-direction" className="text-[13px] font-medium text-zinc-800">出镜 / 图文方向（选填）</Label>
             <Input
               id="content-direction"
               value={contentDirection}

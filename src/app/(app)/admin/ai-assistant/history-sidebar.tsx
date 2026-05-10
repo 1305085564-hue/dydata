@@ -8,7 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import ActionDetailDrawer from "./action-detail-drawer";
 import { cn } from "@/lib/utils";
 
@@ -52,13 +53,13 @@ export function getHistoryErrorMessage(errorMessage: string) {
 function dotColor(result: string) {
   switch (result) {
     case "success":
-      return "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]";
+      return "bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]";
     case "failed":
-      return "bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]";
+      return "bg-[#C9604D] shadow-[0_0_0_3px_rgba(201,96,77,0.15)]";
     case "cancelled":
       return "bg-zinc-300";
     case "pending_confirm":
-      return "bg-amber-500 shadow-[0_0_0_3px_rgba(234,179,8,0.12)] animate-pulse";
+      return "bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)] animate-pulse";
     default:
       return "bg-zinc-300";
   }
@@ -141,7 +142,7 @@ function SidebarContent({
       <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2">
         {loading ? (
           <div className="flex flex-col items-center justify-center gap-2 py-10 text-[11px] text-zinc-400">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
+            <Skeleton className="h-3.5 w-16 rounded" />
             <span className="tracking-wide">同步中</span>
           </div>
         ) : error ? (
@@ -200,7 +201,7 @@ function SidebarContent({
                 className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] text-zinc-400 transition-colors hover:bg-white/60 hover:text-zinc-700 disabled:opacity-50"
               >
                 {loadingMore ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Skeleton className="h-3 w-12 rounded" />
                 ) : (
                   <span className="tracking-[0.2em] uppercase">Load more</span>
                 )}
@@ -277,7 +278,7 @@ export default function HistorySidebar({
   if (mobile) {
     return (
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-[#F9F9FB] border border-zinc-200 rounded-2xl shadow-lg overflow-hidden">
+        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-[#F9F9FB] border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
           <DialogHeader className="px-4 py-3 border-b border-zinc-200 bg-white shrink-0 flex flex-row items-center justify-between">
             <DialogTitle className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
               操作历史

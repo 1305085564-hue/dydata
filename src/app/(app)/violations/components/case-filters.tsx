@@ -54,7 +54,7 @@ function chipClass(active: boolean, tone: "orange" | "green" = "orange") {
   if (active) {
     return tone === "orange"
       ? `${base} border-[#D97757] bg-[#D97757] text-white shadow-sm`
-      : `${base} border-[#067647] bg-[#067647] text-white shadow-sm`;
+      : `${base} border-[#6FAA7D] bg-[#6FAA7D] text-white shadow-sm`;
   }
   return `${base} border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900`;
 }
@@ -127,7 +127,7 @@ export function CaseFilters({
   }, [perspective, status, category, format, minUsage]);
 
   return (
-    <div className="rounded-[1.5rem] border border-zinc-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
       <label className="relative block">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
         <Input

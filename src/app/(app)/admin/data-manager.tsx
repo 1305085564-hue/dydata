@@ -267,8 +267,8 @@ export function DataManager({
     if (anomaly.type === "high") {
       return (
         <Badge
-          variant="outline"
-          className="ml-1 cursor-help border-[#FECDCA] bg-[#FEF3F2] px-1 py-0 text-[10px] text-[#B42318]"
+          variant="danger"
+          className="ml-1 cursor-help px-1 py-0 text-[10px]"
           title={tip}
         >
           暴涨
@@ -278,8 +278,8 @@ export function DataManager({
 
     return (
       <Badge
-        variant="outline"
-        className="ml-1 cursor-help border-[#FDE68A] bg-[#FEFCE8] px-1 py-0 text-[10px] text-[#B42318]"
+        variant="warning"
+        className="ml-1 cursor-help px-1 py-0 text-[10px]"
         title={tip}
       >
         暴跌
@@ -486,7 +486,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => handleDelete(report.id, report.submitter)}
-                className="h-7 text-xs text-zinc-500 hover:text-[#B42318]"
+                className="h-7 text-[12px] text-zinc-500 hover:text-[#C9604D]"
               >
                 删除
               </Button>
@@ -642,7 +642,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => handleDelete(report.id, report.submitter)}
-                className="h-7 text-xs text-zinc-500 hover:text-[#B42318]"
+                className="h-7 text-[12px] text-zinc-500 hover:text-[#C9604D]"
               >
                 删除
               </Button>
@@ -742,7 +742,7 @@ export function DataManager({
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-bold text-zinc-950">{group.profileName}</h3>
+                    <h3 className="text-[16px] font-semibold text-zinc-800">{group.profileName}</h3>
                     <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-xs text-zinc-600">
                       {group.accountCount} 个账号
                     </Badge>

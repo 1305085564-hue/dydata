@@ -5,7 +5,7 @@ import type { ConversionCase } from "./types";
 const FORMAT_META: Record<string, { label: string; className: string }> = {
   oral: {
     label: "口播",
-    className: "bg-[#444CE7]/10 text-[#444CE7]",
+    className: "bg-[#8AA8C7]/10 text-[#8AA8C7]",
   },
   visual: {
     label: "画面",
@@ -13,7 +13,7 @@ const FORMAT_META: Record<string, { label: string; className: string }> = {
   },
   mixed: {
     label: "混合",
-    className: "bg-[#067647]/10 text-[#067647]",
+    className: "bg-[#6FAA7D]/10 text-[#6FAA7D]",
   },
 };
 
@@ -50,7 +50,7 @@ export function ConversionCaseCard({ caseItem }: { caseItem: ConversionCase }) {
   return (
     <Link
       href={`/violations/${caseItem.id}`}
-      className="group relative block overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md active:scale-[0.995]"
+      className="group relative block overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md]"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -77,8 +77,8 @@ export function ConversionCaseCard({ caseItem }: { caseItem: ConversionCase }) {
             Conversion Rate
           </div>
           <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-3xl font-black tracking-tight text-[#067647]">{rate}</span>
-            <span className="text-sm font-semibold text-[#067647]/80">%</span>
+            <span className="text-3xl font-semibold tracking-tight text-[#6FAA7D]">{rate}</span>
+            <span className="text-sm font-semibold text-[#6FAA7D]/80">%</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-4 text-xs font-medium text-zinc-500">

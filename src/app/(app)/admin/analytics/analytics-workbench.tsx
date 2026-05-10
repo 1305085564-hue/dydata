@@ -126,10 +126,10 @@ export function AnalyticsWorkbench({
       <div className="space-y-3">
 
         {lockedSubmitter ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#C7D2FE] bg-[#EEF4FF] px-3 py-2 text-xs text-[#444CE7]">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
             <span className="font-medium">当前已锁定成员：</span>
-            <span className="rounded-full bg-white/90 px-3 py-1 font-semibold text-[#444CE7]">{lockedSubmitter}</span>
-            <span className="text-[#444CE7]/80">下方爆款分析、时间分析和结论卡都已同步切到该成员样本。</span>
+            <span className="rounded-[10px] bg-white px-3 py-1 font-medium text-zinc-800">{lockedSubmitter}</span>
+            <span className="text-zinc-500">下方爆款分析、时间分析和结论卡都已同步切到该成员样本。</span>
             <Button type="button" variant="outline" size="sm" className="bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50" onClick={() => setLockedSubmitter(null)}>
               清除联动
             </Button>

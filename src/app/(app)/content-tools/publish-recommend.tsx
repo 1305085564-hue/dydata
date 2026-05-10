@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Clock3, Loader2 } from "lucide-react";
+import { Clock3 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/ui/error-state";
 import {
   Select,
   SelectContent,
@@ -60,7 +62,7 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[28px] border border-border/60 bg-muted/30 p-4 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl sm:p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-5">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_140px] md:items-end">
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">账号范围</div>
@@ -72,7 +74,7 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
                 ...accounts.map((account) => ({ value: account.id, label: account.name })),
               ]}
             >
-              <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
+              <SelectTrigger className="h-11 w-full rounded-lg bg-white">
                 <SelectValue placeholder="全部账号" />
               </SelectTrigger>
               <SelectContent>
@@ -93,7 +95,7 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
               onValueChange={(value) => setDays(Number(value) as 30 | 60 | 90)}
               items={PUBLISH_DAY_OPTIONS.map((option) => ({ value: String(option), label: `近 ${option} 天` }))}
             >
-              <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
+              <SelectTrigger className="h-11 w-full rounded-lg bg-white">
                 <SelectValue placeholder="时间范围" />
               </SelectTrigger>
               <SelectContent>
@@ -106,51 +108,52 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
             </Select>
           </div>
 
-          <Button className="h-11 rounded-2xl" onClick={() => void loadRecommendations()} disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Clock3 className="size-4" />}
-            刷新推荐
+          <Button className="h-11 rounded-[10px]" onClick={() => void loadRecommendations()} disabled={loading}>
+            <Clock3 className="size-4" />
+            {loading ? "刷新中" : "刷新推荐"}
           </Button>
         </div>
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <ErrorState description={error} onRetry={() => void loadRecommendations()} />
       ) : null}
 
       {loading && !data ? (
-        <div className="glass-card-static rounded-3xl px-4 py-8 text-sm text-muted-foreground">正在分析最佳发布时间...</div>
+        <div className="space-y-3">
+          <Skeleton className="h-20 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+        </div>
       ) : null}
 
       {data ? (
         <div className="space-y-4">
-          <div className="glass-card-static rounded-3xl p-5 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm text-sm text-zinc-500">
             分析窗口 {data.windowDays} 天 · 有效样本 {data.sampleCount} 条
           </div>
 
           {data.recommendations.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
               当前范围内暂无足够发布时间数据。
             </div>
           ) : (
             <div className="grid gap-4 xl:grid-cols-2">
               {data.recommendations.map((item) => (
-                <Card key={item.dimensionLabel} className="glass-card-static border-white/60 bg-white/75">
+                <Card key={item.dimensionLabel} className="border-zinc-200 bg-white shadow-sm">
                   <CardHeader>
                     <CardDescription>推荐维度</CardDescription>
                     <CardTitle>{item.dimensionLabel}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {item.recommendedSlots.map((slot) => (
-                      <div key={`${item.dimensionLabel}-${slot.hourBlock}-${slot.weekday ?? "all"}`} className="rounded-2xl border border-border/60 bg-background/70 p-4">
+                      <div key={`${item.dimensionLabel}-${slot.hourBlock}-${slot.weekday ?? "all"}`} className="rounded-xl border border-zinc-200 bg-white p-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-medium text-foreground">
+                            <div className="text-sm font-medium text-zinc-950">
                               {slot.weekday ? `${slot.weekday} · ` : ""}
                               {slot.hourBlock}
                             </div>
-                            <div className="mt-1 text-xs text-muted-foreground">{slot.reason}</div>
+                            <div className="mt-1 text-xs text-zinc-500">{slot.reason}</div>
                           </div>
                           <div className={`rounded-full border px-2.5 py-1 text-xs ${getConfidenceTone(slot.confidence)}`}>
                             可信度 {slot.confidence}
@@ -158,16 +161,16 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
                         </div>
                         <div className="mt-4 grid gap-3 sm:grid-cols-3">
                           <div>
-                            <div className="text-xs text-muted-foreground">历史平均播放</div>
-                            <div className="mt-1 text-sm font-medium text-foreground">{formatPlayCount(slot.avgPlayCount)}</div>
+                            <div className="text-xs text-zinc-500">历史平均播放</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-950 tabular-nums">{formatPlayCount(slot.avgPlayCount)}</div>
                           </div>
                           <div>
-                            <div className="text-xs text-muted-foreground">爆款率</div>
-                            <div className="mt-1 text-sm font-medium text-foreground">{formatRatio(slot.hitRate)}</div>
+                            <div className="text-xs text-zinc-500">爆款率</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-950 tabular-nums">{formatRatio(slot.hitRate)}</div>
                           </div>
                           <div>
-                            <div className="text-xs text-muted-foreground">样本数</div>
-                            <div className="mt-1 text-sm font-medium text-foreground">{slot.sampleCount}</div>
+                            <div className="text-xs text-zinc-500">样本数</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-950 tabular-nums">{slot.sampleCount}</div>
                           </div>
                         </div>
                       </div>

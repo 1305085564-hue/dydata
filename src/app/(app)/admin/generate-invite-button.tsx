@@ -90,7 +90,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
         <Button
           onClick={handleGenerate}
           disabled={isPending}
-          className="bg-zinc-950 text-white rounded-xl hover:-translate-y-[1px] hover:shadow-lg"
+          className="bg-zinc-950 text-white rounded-[10px] hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
         >
           {isPending ? "生成中..." : `生成 ${count} 个`}
         </Button>
@@ -100,8 +100,8 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
       {codes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-zinc-950">新生成的邀请码</span>
-            <Button variant="outline" size="sm" onClick={handleCopyAll} className="rounded-xl border-zinc-200">
+            <span className="text-[13px] font-medium text-zinc-800">新生成的邀请码</span>
+            <Button variant="outline" size="sm" onClick={handleCopyAll} className="rounded-[10px] border-zinc-200">
               复制全部
             </Button>
           </div>
@@ -109,7 +109,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
             {codes.map((c) => (
               <code
                 key={c}
-                className="rounded-xl bg-zinc-100 px-3 py-2 text-sm font-mono tracking-widest cursor-pointer hover:bg-zinc-200 transition"
+                className="rounded-lg bg-zinc-100 px-3 py-2 text-[13px] font-mono tracking-widest cursor-pointer hover:bg-zinc-200 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 onClick={() => { navigator.clipboard.writeText(c); feedbackToast.success(`已复制 ${c}`); }}
               >
                 {c}
@@ -122,7 +122,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
       {/* 已有邀请码列表 */}
       {existingCodes.length > 0 && (
         <div className="space-y-2">
-          <span className="text-sm font-medium text-zinc-950">历史邀请码</span>
+          <span className="text-[13px] font-medium text-zinc-800">历史邀请码</span>
           <div className="hidden sm:block">
             <Table>
               <TableHeader>
@@ -140,23 +140,23 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
                   const expired = c.expires_at && new Date(c.expires_at) < now;
                   return (
                     <TableRow key={c.id} className={expired ? "opacity-50" : ""}>
-                      <TableCell className="font-mono tracking-wider text-sm">{c.code}</TableCell>
+                      <TableCell className="font-mono tracking-wider text-[13px]">{c.code}</TableCell>
                       <TableCell>
                         {c.used ? (
-                          <Badge className="text-xs bg-zinc-100 text-zinc-600">已使用</Badge>
+                          <Badge variant="neutral">已使用</Badge>
                         ) : expired ? (
-                          <Badge className="text-xs border-zinc-200 text-zinc-500">已过期</Badge>
+                          <Badge variant="outline">已过期</Badge>
                         ) : (
-                          <Badge className="text-xs bg-zinc-950 text-white">可用</Badge>
+                          <Badge variant="success">可用</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-zinc-500">
+                      <TableCell className="text-[13px] text-zinc-500">
                         {c.used_by ? (profileNames[c.used_by] ?? c.used_by.slice(0, 8)) : "—"}
                       </TableCell>
-                      <TableCell className="text-sm text-zinc-500">
+                      <TableCell className="text-[13px] text-zinc-500">
                         {c.expires_at ? new Date(c.expires_at).toLocaleDateString("zh-CN") : "永久"}
                       </TableCell>
-                      <TableCell className="text-sm text-zinc-500">
+                      <TableCell className="text-[13px] text-zinc-500">
                         {new Date(c.created_at).toLocaleDateString("zh-CN")}
                       </TableCell>
                       <TableCell className="text-right">
@@ -164,7 +164,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-zinc-500 hover:text-zinc-950"
+                            className="h-7 text-[12px] text-zinc-500 hover:text-zinc-800"
                             onClick={() => { navigator.clipboard.writeText(c.code); feedbackToast.success(`已复制 ${c.code}`); }}
                           >
                             复制
@@ -183,18 +183,18 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
               return (
                 <div key={c.id} className={`flex items-center justify-between rounded-xl border border-zinc-200 p-3 ${expired ? "opacity-50" : ""}`}>
                   <code
-                    className="font-mono text-sm tracking-wider cursor-pointer text-zinc-950"
+                    className="font-mono text-[13px] tracking-wider cursor-pointer text-zinc-800"
                     onClick={() => { navigator.clipboard.writeText(c.code); feedbackToast.success(`已复制 ${c.code}`); }}
                   >
                     {c.code}
                   </code>
                   <div className="flex items-center gap-2">
                     {c.used ? (
-                      <Badge className="text-xs bg-zinc-100 text-zinc-600">已使用</Badge>
+                      <Badge variant="neutral">已使用</Badge>
                     ) : expired ? (
-                      <Badge className="text-xs border-zinc-200 text-zinc-500">已过期</Badge>
+                      <Badge variant="outline">已过期</Badge>
                     ) : (
-                      <Badge className="text-xs bg-zinc-950 text-white">可用</Badge>
+                      <Badge variant="success">可用</Badge>
                     )}
                   </div>
                 </div>

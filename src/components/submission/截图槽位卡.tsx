@@ -122,11 +122,11 @@ export function SubmissionSlotCard({
       initial={isError ? "initial" : undefined}
       animate={isError ? "animate" : undefined}
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-white transition-all duration-200",
+        "relative overflow-hidden rounded-xl border bg-white transition-colors duration-200",
         isHighlighted ? "border-zinc-950 ring-2 ring-zinc-950/8" : "border-zinc-200",
         isWarning && "border-[#EAB308] ring-1 ring-[#EAB308]/50",
-        isError && "border-[#B42318] ring-1 ring-[#B42318]/50",
-        isSuccess && "border-[#067647] ring-1 ring-[#067647]/50"
+        isError && "border-[#C9604D] ring-1 ring-[#C9604D]/50",
+        isSuccess && "border-[#6FAA7D] ring-1 ring-[#6FAA7D]/50"
       )}
     >
       <div className="flex flex-col sm:flex-row items-stretch">
@@ -157,12 +157,12 @@ export function SubmissionSlotCard({
                 onSelectFile(file);
               }
             }}
-            className="group relative flex h-full w-full flex-col items-center justify-center overflow-hidden transition-all duration-300 cursor-pointer hover:bg-black/[0.03]"
+            className="group relative flex h-full w-full flex-col items-center justify-center overflow-hidden transition-colors duration-300 cursor-pointer hover:bg-black/[0.03]"
           >
             {/* 悬浮标签：标题、状态等 */}
             <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1">
               <div className="flex items-center gap-1">
-                <span className="rounded-lg bg-zinc-950/80 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white">
+                <span className="rounded-lg bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-white">
                   {title}
                 </span>
                 {required ? (
@@ -170,15 +170,15 @@ export function SubmissionSlotCard({
                     必传
                   </span>
                 ) : (
-                  <span className="rounded-lg bg-zinc-500/70 backdrop-blur-sm px-1 py-0.5 text-[9px] font-medium text-white/90">
+                  <span className="rounded-lg bg-zinc-500/70 px-1 py-0.5 text-[9px] font-medium text-white/90">
                     选传
                   </span>
                 )}
               </div>
               <span className={cn(
-                "rounded-full backdrop-blur-sm px-2 py-0.5 text-[9px] font-bold transition-colors flex items-center gap-1",
-                isSuccess ? "bg-[#067647] text-white" :
-                isError ? "bg-[#B42318] text-white" :
+                "rounded-full px-2 py-0.5 text-[9px] font-bold transition-colors flex items-center gap-1",
+                isSuccess ? "bg-[#6FAA7D] text-white" :
+                isError ? "bg-[#C9604D] text-white" :
                 isWarning ? "bg-[#EAB308] text-white" :
                 "bg-zinc-600/80 text-white/90"
               )}>
@@ -201,7 +201,7 @@ export function SubmissionSlotCard({
                       <div className="w-full h-full cursor-zoom-in relative group/img">
                         <img src={assetUrl} alt="截图预览" className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105" />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/30">
-                          <span className="bg-black/60 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm font-medium flex items-center gap-1">
+                          <span className="bg-black/60 text-white text-[10px] px-2 py-1 rounded-full font-medium flex items-center gap-1">
                             放大
                           </span>
                         </div>
@@ -210,7 +210,7 @@ export function SubmissionSlotCard({
                   />
                   <DialogContent className="max-w-4xl w-auto p-0 overflow-hidden bg-transparent border-none shadow-none" showCloseButton={false}>
                     <DialogTitle className="sr-only">截图预览放大</DialogTitle>
-                    <img src={assetUrl} alt="截图放大" className="w-full h-auto object-contain max-h-[85vh] rounded-2xl shadow-2xl" />
+                    <img src={assetUrl} alt="截图放大" className="w-full h-auto object-contain max-h-[85vh] rounded-2xl shadow-sm" />
                   </DialogContent>
                 </Dialog>
               </div>
@@ -223,12 +223,12 @@ export function SubmissionSlotCard({
 
             {/* 中心图标 (未上传或上传中) */}
             {!assetUrl || isProcessing ? (
-              <div className="relative z-10 flex flex-col items-center justify-center gap-2 transition-transform duration-300 group-hover:scale-110 w-full px-4">
+              <div className="relative z-10 flex flex-col items-center justify-center gap-2 transition-transform duration-300 group- w-full px-4">
                 {isProcessing ? (
                   <div className="flex flex-col items-center gap-2 w-full max-w-[100px]">
                     <div className="w-full h-[3px] bg-zinc-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-zinc-950 rounded-full transition-all"
+                        className="h-full bg-zinc-950 rounded-full transition-colors"
                         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                       />
                     </div>
@@ -236,7 +236,7 @@ export function SubmissionSlotCard({
                   </div>
                 ) : (
                   <>
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-white border border-zinc-200 text-zinc-400 group-hover:text-zinc-700 group-hover:border-zinc-300 transition-all shadow-sm">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-white border border-zinc-200 text-zinc-400 group-hover:text-zinc-700 group-hover:border-zinc-300 transition-colors shadow-sm">
                       <UploadCloud className="size-5" />
                     </div>
                     <p className="text-[10px] font-medium text-zinc-400 px-2 text-center leading-tight">
@@ -255,7 +255,7 @@ export function SubmissionSlotCard({
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: SPRING_EASE }}
-                  className="absolute right-2 top-2 z-20 flex size-5 items-center justify-center rounded-full bg-[#067647] text-white shadow-sm ring-2 ring-white"
+                  className="absolute right-2 top-2 z-20 flex size-5 items-center justify-center rounded-full bg-[#6FAA7D] text-white shadow-sm ring-2 ring-white"
                 >
                   <Check className="size-3" />
                 </motion.div>
@@ -271,7 +271,7 @@ export function SubmissionSlotCard({
             <p className="text-[10px] text-zinc-500 leading-snug flex-1 pr-6">{description}</p>
             {(fileName || status !== "empty") && !isProcessing ? (
               <div className="absolute right-2 top-2">
-                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full hover:bg-zinc-100 hover:text-[#B42318] text-zinc-300 transition-colors" onClick={onDelete}>
+                <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full hover:bg-zinc-100 hover:text-[#C9604D] text-zinc-300 transition-colors" onClick={onDelete}>
                   <Trash2 className="size-3.5" />
                 </Button>
               </div>
@@ -280,19 +280,19 @@ export function SubmissionSlotCard({
 
           <div className="flex flex-col gap-2 flex-1 relative">
             {isWarning ? (
-              <div className="rounded-lg bg-[#FEFCE8] px-2.5 py-1.5 text-[10px] text-[#92400E] font-medium border border-[#FEFCE8]">
+              <div className="rounded-lg bg-[#FEFCE8] px-2.5 py-1.5 text-[10px] text-[#D99E55] font-medium border border-[#FEFCE8]">
                 请确认识别结果
               </div>
             ) : null}
 
             {isError ? (
-              <div className="space-y-1.5 rounded-lg bg-[#FEF3F2] px-2.5 py-1.5 text-[10px] text-[#B42318] leading-snug border border-[#FEF3F2]">
+              <div className="space-y-1.5 rounded-lg bg-[#FEF3F2] px-2.5 py-1.5 text-[10px] text-[#C9604D] leading-snug border border-[#FEF3F2]">
                 <div>{error || OCR_FAIL_MESSAGE}</div>
                 {onRetry && error === NETWORK_RETRY_MESSAGE ? (
                   <button
                     type="button"
                     onClick={onRetry}
-                    className="inline-flex h-5 items-center rounded border border-[#B42318]/40 px-2 text-[9px] hover:bg-[#B42318]/8 transition-colors"
+                    className="inline-flex h-5 items-center rounded border border-[#C9604D]/40 px-2 text-[9px] hover:bg-[#C9604D]/8 transition-colors"
                   >
                     重试
                   </button>

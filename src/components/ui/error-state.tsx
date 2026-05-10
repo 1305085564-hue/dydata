@@ -31,23 +31,27 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-red-200/60 bg-red-50/40 px-6 py-10 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/50 px-6 py-10 text-center",
         className
       )}
     >
-      <div className="flex size-10 items-center justify-center rounded-full bg-red-100/80">
-        <AlertCircle className="size-5 text-red-500" />
+      <div className="relative flex size-2 items-center justify-center">
+        <span className="absolute inline-flex size-2 rounded-full bg-[#C9604D]" />
+        <span className="absolute inline-flex size-3 rounded-full bg-[#C9604D]/15" />
       </div>
-      <div className="space-y-1">
-        <p className="text-sm font-medium text-red-700">{title}</p>
+      <div className="mt-2 space-y-1">
+        <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold tracking-tight text-zinc-800">
+          <AlertCircle className="size-4 stroke-[1.5] text-[#C9604D]" />
+          {title}
+        </p>
         {description && (
-          <p className="text-xs text-red-500/80 leading-relaxed max-w-[240px]">{description}</p>
+          <p className="max-w-[240px] text-[12px] leading-[1.7] text-zinc-400">{description}</p>
         )}
       </div>
       <Button
         variant="outline"
         size="sm"
-        className="mt-1 rounded-xl border-red-200 text-red-600 hover:bg-red-50"
+        className="mt-1"
         onClick={handleRetry}
       >
         重试

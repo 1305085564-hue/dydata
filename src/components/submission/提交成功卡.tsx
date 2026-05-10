@@ -14,9 +14,9 @@ export function 提交成功卡({ bizDate }: SubmissionSuccessCardProps) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.92 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/12 px-4 backdrop-blur-[20px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/12 px-4"
     >
-      <div className="w-full max-w-md rounded-[20px] bg-white/88 p-6 text-center shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-[40px]">
+      <div className="w-full max-w-md rounded-[20px] bg-white/88 p-6 text-center shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[color:rgba(52,199,89,0.14)] text-[var(--color-success)]">
           <CheckCircle2 className="size-8" />
         </div>

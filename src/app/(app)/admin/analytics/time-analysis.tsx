@@ -60,15 +60,15 @@ function formatWindowRange(weekdayIndex: number, hour: number) {
 
 function getIntensityClass(value: number | null, max: number) {
   if (value === null || value === 0 || max <= 0) {
-    return "border-slate-200/80 bg-slate-50/85";
+    return "border-zinc-200 bg-zinc-50";
   }
 
   const ratio = value / max;
-  if (ratio > 0.85) return "border-rose-400/60 bg-[linear-gradient(135deg,#fb7185_0%,#e11d48_100%)] text-white shadow-[0_8px_18px_rgba(244,63,94,0.22)]";
-  if (ratio > 0.65) return "border-rose-300/70 bg-rose-300/85 text-rose-950";
-  if (ratio > 0.45) return "border-rose-200/80 bg-rose-200/85 text-rose-950";
-  if (ratio > 0.2) return "border-rose-100 bg-rose-100/85 text-rose-900";
-  return "border-orange-100 bg-orange-50/90 text-orange-900";
+  if (ratio > 0.85) return "border-[#C9604D]/60 bg-[#C9604D] text-white";
+  if (ratio > 0.65) return "border-[#C9604D]/40 bg-[#C9604D]/60 text-white";
+  if (ratio > 0.45) return "border-[#C9604D]/30 bg-[#C9604D]/30 text-zinc-800";
+  if (ratio > 0.2) return "border-[#D99E55]/30 bg-[#D99E55]/20 text-zinc-800";
+  return "border-zinc-200 bg-zinc-50 text-zinc-700";
 }
 
 function findPreferredCell(
@@ -231,7 +231,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
     <div className="space-y-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.72fr)]">
         <div className="space-y-1">
-          <h3 className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">时间维度分析</h3>
+          <h3 className="text-[16px] font-semibold tracking-tight text-zinc-800">时间维度分析</h3>
           <p className="max-w-2xl text-xs leading-5 text-[var(--color-text-secondary)]">
             保留 7 x 24 热力图结构，用播放中位数观察一周内各发布时间的表现；悬停可预览，点击可锁定右侧详情。
           </p>
@@ -239,16 +239,16 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
 
         <div
           className={cn(
-            "relative overflow-hidden rounded-xl border px-4 py-3 shadow-[0_2px_10px_rgba(225,29,72,0.06)] backdrop-blur-sm",
+            "relative overflow-hidden rounded-xl border px-4 py-3 shadow-sm ",
             recommendationMeta.hasRecommendation
-              ? "border-rose-200/60 bg-[linear-gradient(135deg,rgba(255,241,242,0.86)_0%,rgba(255,228,230,0.6)_100%)]"
-              : "border-slate-200 bg-[linear-gradient(135deg,rgba(248,250,252,0.95)_0%,rgba(241,245,249,0.86)_100%)]",
+              ? "border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50"
+              : "border-zinc-200 bg-white",
           )}
         >
           <div
             className={cn(
               "absolute -right-5 -top-5 size-20 rounded-full blur-2xl",
-              recommendationMeta.hasRecommendation ? "bg-rose-500/10" : "bg-slate-400/10",
+              recommendationMeta.hasRecommendation ? "bg-[#C9604D]/10" : "bg-zinc-200",
             )}
           />
           <div className="relative space-y-1">
@@ -256,7 +256,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               <div
                 className={cn(
                   "flex size-9 items-center justify-center rounded-full shadow-inner",
-                  recommendationMeta.hasRecommendation ? "bg-rose-100 text-rose-600" : "bg-slate-100 text-slate-500",
+                  recommendationMeta.hasRecommendation ? "bg-[#C9604D]/10 text-[#C9604D]" : "bg-zinc-100 text-zinc-500",
                 )}
               >
                 {recommendationMeta.hasRecommendation ? <Flame className="size-4" /> : <Clock3 className="size-4" />}
@@ -264,79 +264,79 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               <div>
                 <p
                   className={cn(
-                    "text-[11px] font-bold tracking-[0.18em]",
-                    recommendationMeta.hasRecommendation ? "text-rose-500" : "text-slate-500",
+                    "text-[11px] font-semibold tracking-[0.18em]",
+                    recommendationMeta.hasRecommendation ? "text-[#C9604D]" : "text-zinc-500",
                   )}
                 >
                   {recommendationMeta.hasRecommendation ? "推荐发布时间窗口" : "推荐状态"}
                 </p>
                 <p
                   className={cn(
-                    "mt-0.5 text-sm font-black tracking-tight",
-                    recommendationMeta.hasRecommendation ? "text-rose-950" : "text-slate-800",
+                    "mt-0.5 text-sm font-semibold tracking-tight",
+                    recommendationMeta.hasRecommendation ? "text-zinc-800" : "text-zinc-800",
                   )}
                 >
                   {recommendationMeta.title}
                 </p>
               </div>
             </div>
-            <p className="line-clamp-2 text-xs leading-5 text-slate-600">{recommendationMeta.description}</p>
+            <p className="line-clamp-2 text-xs leading-5 text-zinc-600">{recommendationMeta.description}</p>
           </div>
         </div>
       </div>
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
-        <section className="self-start rounded-2xl border border-white/65 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.84))] p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
+        <section className="self-start rounded-2xl border border-white/65 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.84))] p-4 shadow-[var(--shadow-card)] ">
           <div className="mb-4 grid gap-2 md:grid-cols-4">
-            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
-              <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">有效样本数</p>
-              <p className="mt-1 text-lg font-bold text-slate-950">{heatmapData.totalEligible}</p>
-              <p className="mt-0.5 truncate text-[11px] text-slate-500">已同时具备播放数据和可解析发布时间</p>
+            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
+              <p className="text-[11px] font-semibold tracking-[0.18em] text-zinc-400">有效样本数</p>
+              <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{heatmapData.totalEligible}</p>
+              <p className="mt-0.5 truncate text-[11px] text-zinc-500">已同时具备播放数据和可解析发布时间</p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
-              <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">未纳入统计数</p>
-              <p className="mt-1 text-lg font-bold text-slate-950">{excludedCount}</p>
-              <p className="mt-0.5 truncate text-[11px] text-slate-500">
+            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
+              <p className="text-[11px] font-semibold tracking-[0.18em] text-zinc-400">未纳入统计数</p>
+              <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{excludedCount}</p>
+              <p className="mt-0.5 truncate text-[11px] text-zinc-500">
                 {excludedReasons.length > 0 ? excludedReasons.join("；") : "当前无排除样本"}
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
-              <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">推荐窗口置信度</p>
-              <p className="mt-1 text-lg font-bold text-slate-950">
+            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
+              <p className="text-[11px] font-semibold tracking-[0.18em] text-zinc-400">推荐窗口置信度</p>
+              <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">
                 {recommendationMeta.confidence ? recommendationMeta.confidence : "暂无"}
               </p>
-              <p className="mt-0.5 truncate text-[11px] text-slate-500">
+              <p className="mt-0.5 truncate text-[11px] text-zinc-500">
                 {recommendationMeta.hasRecommendation && recommendationWindowStats
                   ? `基于连续 3 小时窗口内 ${recommendationWindowStats.count} 条样本推断`
                   : "未达到稳定推荐所需的最低窗口样本"}
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2 shadow-[var(--shadow-light)]">
-              <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400">最高播放中位数</p>
-              <p className="mt-1 text-lg font-bold text-slate-950">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
-              <p className="mt-0.5 truncate text-[11px] text-slate-500">用于定义热力图颜色强弱</p>
+            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
+              <p className="text-[11px] font-semibold tracking-[0.18em] text-zinc-400">最高播放中位数</p>
+              <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
+              <p className="mt-0.5 truncate text-[11px] text-zinc-500">用于定义热力图颜色强弱</p>
             </div>
           </div>
 
-          <div className="mb-4 rounded-xl border border-slate-200/80 bg-slate-50/75 p-3">
+          <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
             <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-900">推荐窗口说明</p>
-                <p className="line-clamp-2 text-xs leading-5 text-slate-600">{recommendationMeta.description}</p>
+                <p className="text-sm font-semibold text-zinc-900">推荐窗口说明</p>
+                <p className="line-clamp-2 text-xs leading-5 text-zinc-600">{recommendationMeta.description}</p>
               </div>
               {recommendationMeta.hasRecommendation ? (
-                <div className="rounded-xl border border-rose-200/80 bg-white/90 px-3 py-2 text-sm shadow-[var(--shadow-light)]">
-                  <p className="font-semibold text-slate-900">{recommendationMeta.title}</p>
-                  <p className="mt-1 text-slate-500">
+                <div className="rounded-lg border border-zinc-200 border-l-2 border-l-[#C9604D] bg-white px-3 py-2 text-[13px] shadow-sm">
+                  <p className="font-semibold text-zinc-900">{recommendationMeta.title}</p>
+                  <p className="mt-1 text-zinc-500">
                     窗口样本 {recommendationWindowStats?.count ?? 0} 条，窗口总播放{" "}
                     {formatPlayCount(recommendationWindowStats?.totalPlay ?? null)}
                   </p>
                 </div>
               ) : (
-                <div className="rounded-xl border border-slate-200/80 bg-white/90 px-4 py-3 text-sm text-slate-500 shadow-[var(--shadow-light)]">
+                <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] text-zinc-500 shadow-sm">
                   没有强推荐的原因：连续 3 小时内还没有累计到足够多的有效样本。
                 </div>
               )}
@@ -351,7 +351,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               >
                 <div />
                 {HOURS.map((hour) => (
-                  <div key={hour} className="text-center text-[11px] font-semibold text-slate-400">
+                  <div key={hour} className="text-center text-[11px] font-semibold text-zinc-400">
                     {hour % 2 === 0 ? String(hour).padStart(2, "0") : ""}
                   </div>
                 ))}
@@ -364,7 +364,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                     className="grid items-center gap-1.5"
                     style={{ gridTemplateColumns: "56px repeat(24, minmax(18px, 1fr))" }}
                   >
-                    <div className="pr-1 text-sm font-semibold text-slate-600">{day}</div>
+                    <div className="pr-1 text-sm font-semibold text-zinc-600">{day}</div>
                     {HOURS.map((hour) => {
                       const cell = heatmapData.grid[weekdayIndex][hour];
                       const isPreview =
@@ -391,19 +391,19 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                             )
                           }
                           className={cn(
-                            "group relative aspect-square min-h-5 rounded-lg border transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                            "group relative aspect-square min-h-5 rounded-lg border transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                             getIntensityClass(cell.medianPlay, heatmapData.maxMedianPlay),
-                            cell.count > 0 ? "hover:-translate-y-0.5 hover:shadow-md" : "opacity-65 hover:opacity-80",
-                            isWindowCell && "ring-1 ring-rose-300/90 ring-offset-1 ring-offset-white",
+                            cell.count > 0 ? "hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm" : "opacity-65 hover:opacity-80",
+                            isWindowCell && "ring-1 ring-[#C9604D]/30",
                             isPreview && "scale-[1.03] shadow-md",
-                            isPinned && "ring-2 ring-slate-900/70 ring-offset-2 ring-offset-white",
-                            isActive && !isPinned && "ring-2 ring-slate-400/55 ring-offset-2 ring-offset-white",
+                            isPinned && "ring-2 ring-zinc-900/70 ring-offset-2 ring-offset-white",
+                            isActive && !isPinned && "ring-2 ring-zinc-400/55 ring-offset-2 ring-offset-white",
                           )}
                           aria-pressed={isPinned}
                           aria-label={`${day}${formatHourRange(hour)}，样本 ${cell.count} 条，播放中位数 ${formatPlayCount(cell.medianPlay)}`}
                         >
                           {isPinned ? (
-                            <span className="absolute right-1 top-1 size-1.5 rounded-full bg-slate-900/75" />
+                            <span className="absolute right-1 top-1 size-1.5 rounded-full bg-zinc-900/75" />
                           ) : null}
                           <span className="sr-only">{`${day}${formatHourRange(hour)}`}</span>
                         </button>
@@ -415,39 +415,39 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-col gap-2 rounded-xl border border-slate-200/80 bg-slate-50/75 p-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+          <div className="mt-3 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-3 text-[13px] text-zinc-600">
               <div className="flex items-center gap-2">
-                <span className="inline-flex size-3 rounded bg-slate-100 ring-1 ring-slate-200" />
+                <span className="inline-flex size-3 rounded bg-zinc-100 ring-1 ring-zinc-200" />
                 低
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex size-3 rounded bg-rose-200 ring-1 ring-rose-200" />
+                <span className="inline-flex size-3 rounded bg-[#C9604D]/30" />
                 中
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex size-3 rounded bg-rose-500 ring-1 ring-rose-400" />
+                <span className="inline-flex size-3 rounded bg-[#C9604D]" />
                 高
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex size-3 rounded border-2 border-slate-900/70 bg-white" />
+                <span className="inline-flex size-3 rounded border-2 border-zinc-900 bg-white" />
                 点击锁定
               </div>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-zinc-500">
               热力颜色看播放中位数，玫瑰色描边表示它位于推荐窗口内。
             </p>
           </div>
         </section>
 
-        <aside className="space-y-2.5 self-start rounded-2xl border border-slate-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(245,247,250,0.92))] p-3 shadow-[var(--shadow-card)] backdrop-blur-[18px]">
+        <aside className="space-y-2.5 self-start rounded-2xl border border-zinc-200 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(245,247,250,0.92))] p-3 shadow-[var(--shadow-card)] ">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-slate-400">
+            <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-zinc-400">
               <MousePointer2 className="size-3.5" />
               时段详情
             </div>
             {selectedCell ? (
-              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-xs text-slate-500">
+              <div className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-500">
                 <Pin className="size-3" />
                 已锁定
               </div>
@@ -461,47 +461,47 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   className={cn(
                     "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold",
                     activeIsRecommended
-                      ? "border border-rose-200/80 bg-rose-50/90 text-rose-600"
-                      : "border border-slate-200/80 bg-slate-50 text-slate-600",
+                      ? "border border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]"
+                      : "border border-zinc-200 bg-zinc-50 text-zinc-600",
                   )}
                 >
                   {activeIsRecommended ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
                   {activeIsRecommended ? "属于推荐窗口" : "不属于推荐窗口"}
                 </div>
                 <div>
-                  <h4 className="text-lg font-black tracking-tight text-slate-950">
+                  <h4 className="text-lg font-semibold tracking-tight text-zinc-950">
                     {WEEKDAYS[activeCell.weekdayIndex]}
                   </h4>
-                  <p className="mt-0.5 text-sm text-slate-500">{formatHourRange(activeCell.hour)}</p>
+                  <p className="mt-0.5 text-[13px] text-zinc-500">{formatHourRange(activeCell.hour)}</p>
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
-                  <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">当前时段</p>
-                  <p className="mt-1 text-base font-bold text-slate-950">
+                <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+                  <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">当前时段</p>
+                  <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">
                     {WEEKDAYS[activeCell.weekdayIndex]} {formatHourRange(activeCell.hour)}
                   </p>
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
-                  <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
-                    <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">样本数</p>
-                    <p className="mt-0.5 text-lg font-bold text-slate-950">{activeSummary.count} 条</p>
+                  <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+                    <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">样本数</p>
+                    <p className="mt-0.5 text-[16px] font-semibold text-zinc-800 tabular-nums">{activeSummary.count} 条</p>
                   </div>
-                  <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
-                    <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">播放中位数</p>
-                    <p className="mt-0.5 text-lg font-bold text-slate-950">{formatPlayCount(activeSummary.medianPlay)}</p>
+                  <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+                    <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">播放中位数</p>
+                    <p className="mt-0.5 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatPlayCount(activeSummary.medianPlay)}</p>
                   </div>
-                  <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 shadow-[var(--shadow-light)]">
-                    <p className="text-[11px] font-semibold tracking-[0.16em] text-slate-400">总播放</p>
-                    <p className="mt-0.5 text-lg font-bold text-slate-950">{formatPlayCount(activeSummary.totalPlay)}</p>
+                  <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+                    <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">总播放</p>
+                    <p className="mt-0.5 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatPlayCount(activeSummary.totalPlay)}</p>
                   </div>
                 </div>
               </div>
             </>
           ) : (
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 text-sm text-slate-600">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-600">
               点击任意热力单元格查看该时段表现。
             </div>
           )}

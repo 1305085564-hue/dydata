@@ -64,10 +64,10 @@ export function RewriteOutput({
             <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-sm">
               <PenLine className="h-4 w-4 text-zinc-500" />
             </div>
-            <h2 className="text-[22px] font-black leading-tight tracking-tight text-zinc-950">
+            <h2 className="text-[20px] font-semibold leading-tight tracking-tight text-zinc-950">
               {activeFixedMode ? `${activeFixedMode.name} 就位` : '今天改哪段？'}
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-zinc-500">
+            <p className="mx-auto mt-2 max-w-md text-[13px] leading-[1.7] text-zinc-500">
               {activeFixedMode
                 ? `在下方输入原文，我按「${activeFixedMode.name}」立刻给你改写。`
                 : '首轮只出 1 个主版本，后续可继续对话微调。选中固定套餐会锁定后台绑定的模型、提示词、字数。'}
@@ -80,21 +80,21 @@ export function RewriteOutput({
                 key={shortcut.label}
                 type="button"
                 onClick={() => onSendOverride(shortcut.text)}
-                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:shadow-sm active:translate-y-0"
+                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 active:translate-y-0"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="inline-flex h-1 w-1 rounded-full bg-zinc-300 transition-colors group-hover:bg-[#D97757]" />
-                      <span className="text-[13px] font-semibold text-zinc-900">
+                      <span className="inline-flex h-1 w-1 rounded-full bg-zinc-300 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:bg-[#D97757]" />
+                      <span className="text-[13px] font-semibold text-zinc-950">
                         {shortcut.label}
                       </span>
                     </div>
-                    <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                    <p className="mt-1 text-[11px] leading-[1.7] text-zinc-500">
                       {shortcut.hint}
                     </p>
                   </div>
-                  <ArrowRight className="h-3 w-3 shrink-0 text-zinc-300 transition-all group-hover:translate-x-0.5 group-hover:text-[#D97757]" />
+                  <ArrowRight className="h-3 w-3 shrink-0 text-zinc-300 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:translate-x-0.5 group-hover:text-[#D97757]" />
                 </div>
               </button>
             ))}
@@ -124,8 +124,8 @@ export function RewriteOutput({
             if (message.role === 'system_note') {
               return (
                 <div key={message.id} className="flex justify-center">
-                  <div className="relative max-w-lg overflow-hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-[12px] leading-relaxed text-amber-900">
-                    <div className="absolute left-0 top-0 h-full w-[3px] bg-amber-500" />
+                  <div className="relative max-w-lg overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-center text-[12px] leading-[1.7] text-zinc-500">
+                    <div className="absolute left-0 top-0 h-full w-[3px] bg-[#D99E55]" />
                     <span className="pl-1">{message.content}</span>
                   </div>
                 </div>
@@ -147,16 +147,16 @@ export function RewriteOutput({
 
                 <div className="min-w-0 flex-1 space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-bold tracking-tight text-zinc-950">
+                    <span className="text-[12px] font-semibold tracking-tight text-zinc-950">
                       {responseMode === 'chat' ? '继续对话' : '改写结果'}
                     </span>
-                    <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                    <span className="rounded-md bg-zinc-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
                       {displayMeta.badge}
                     </span>
                     {isStreaming && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-amber-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.15)] animate-pulse" />
-                        <span className="uppercase tracking-[0.2em]">Generating</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] text-[#8A6A2F]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55] animate-pulse" />
+                        <span className="uppercase tracking-[0.25em]">Generating</span>
                       </span>
                     )}
                   </div>
@@ -171,27 +171,27 @@ export function RewriteOutput({
                         return (
                           <div
                             key={copyKey}
-                            className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white transition-all hover:border-zinc-300"
+                            className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300"
                           >
                             <div className="flex items-center justify-between border-b border-zinc-100 px-3.5 py-2">
-                              <h3 className="text-[12px] font-bold tracking-tight text-zinc-950">
+                              <h3 className="text-[12px] font-semibold tracking-tight text-zinc-950">
                                 {version.title || `版本 ${index + 1}`}
                               </h3>
                               <button
                                 type="button"
                                 onClick={() => onCopy(copyKey, version.content)}
                                 className={cn(
-                                  'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] transition',
+                                  'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                                   copied
-                                    ? 'bg-emerald-50 text-emerald-700'
-                                    : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-700'
+                                    ? 'bg-zinc-50 text-[#4F7F5E] ring-1 ring-zinc-200'
+                                    : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-950'
                                 )}
                               >
                                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                                 {copied ? 'Copied' : 'Copy'}
                               </button>
                             </div>
-                            <div className="px-3.5 py-3 text-[14px] leading-[1.7] text-zinc-800">
+                            <div className="px-3.5 py-3 text-[14px] leading-[1.7] text-zinc-950">
                               <p className="whitespace-pre-wrap">{version.content}</p>
                             </div>
                           </div>
@@ -200,21 +200,21 @@ export function RewriteOutput({
                     </div>
                   ) : (
                     /* Chat mode */
-                    <div className="group relative rounded-xl border border-zinc-100 bg-white/60 px-3.5 py-2.5">
+                    <div className="group relative rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5">
                       <button
                         type="button"
                         onClick={() => onCopy(message.id, chatText || '')}
                         className={cn(
-                          'absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] transition',
+                          'absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                           copiedKey === message.id
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-700'
+                            ? 'bg-zinc-50 text-[#4F7F5E] ring-1 ring-zinc-200'
+                            : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-950'
                         )}
                       >
                         {copiedKey === message.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                         {copiedKey === message.id ? 'Copied' : 'Copy'}
                       </button>
-                      <div className="text-[14px] leading-[1.7] text-zinc-800">
+                      <div className="text-[14px] leading-[1.7] text-zinc-950">
                         <p className="whitespace-pre-wrap">{chatText || '...'}</p>
                       </div>
                     </div>
@@ -222,11 +222,11 @@ export function RewriteOutput({
 
                   {/* Notes */}
                   {responseMode === 'versions' && message.structuredResult?.final?.notes?.length ? (
-                    <div className="rounded-xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                         Notes
                       </p>
-                      <ul className="mt-1.5 space-y-0.5 text-[12.5px] leading-relaxed text-zinc-600">
+                      <ul className="mt-1.5 space-y-0.5 text-[12.5px] leading-[1.7] text-zinc-500">
                         {message.structuredResult.final.notes.map((note, index) => (
                           <li key={`${message.id}-note-${index}`} className="flex gap-1.5">
                             <span className="mt-1.5 inline-flex h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
@@ -249,7 +249,7 @@ export function RewriteOutput({
                   key={`${suggestion}-${index}`}
                   type="button"
                   onClick={() => onSendOverride(suggestion)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm active:translate-y-0"
+                  className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 active:translate-y-0"
                 >
                   {suggestion}
                   <ArrowRight className="h-3 w-3 text-zinc-400" />

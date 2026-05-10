@@ -29,14 +29,14 @@ import type { UsageRecordItem } from "./components/usage-timeline";
 import type { EventItem } from "./components/event-list";
 
 const FORMAT_META: Record<string, { label: string; className: string }> = {
-  oral: { label: "口播", className: "bg-[#444CE7]/10 text-[#444CE7]" },
-  visual: { label: "画面", className: "bg-[#D97757]/10 text-[#D97757]" },
-  mixed: { label: "混合", className: "bg-[#067647]/10 text-[#067647]" },
+  oral: { label: "口播", className: "bg-zinc-100 text-[#8AA8C7]" },
+  visual: { label: "画面", className: "bg-zinc-100 text-[#D97757]" },
+  mixed: { label: "混合", className: "bg-zinc-100 text-[#6FAA7D]" },
 };
 
 const PURPOSE_META: Record<string, { label: string; className: string }> = {
-  violation: { label: "违规话术", className: "bg-[#B42318]/10 text-[#B42318]" },
-  conversion: { label: "转化话术", className: "bg-[#067647]/10 text-[#067647]" },
+  violation: { label: "违规话术", className: "bg-zinc-100 text-[#C9604D]" },
+  conversion: { label: "转化话术", className: "bg-zinc-100 text-[#6FAA7D]" },
 };
 
 type DetailRow = ViolationDetail & {
@@ -172,7 +172,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
             <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
               通过率
             </div>
-            <div className="mt-2 text-3xl font-black text-zinc-950">
+            <div className="mt-2 text-3xl font-semibold text-zinc-800">
               {rate === null ? "--" : `${rate}%`}
             </div>
           </div>
@@ -185,17 +185,17 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
           />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <div className="rounded-lg bg-emerald-50 px-3 py-2 font-semibold text-emerald-700">
+          <div className="rounded-lg bg-zinc-50 px-3 py-2 font-semibold text-[#6FAA7D]">
             通过 {passCount}
           </div>
-          <div className="rounded-lg bg-rose-50 px-3 py-2 font-semibold text-rose-700">
+          <div className="rounded-lg bg-zinc-50 px-3 py-2 font-semibold text-[#C9604D]">
             未通过 {failCount}
           </div>
         </div>
       </div>
 
       <div>
-        <h3 className="text-sm font-black text-zinc-950">同事追加测试</h3>
+        <h3 className="text-sm font-semibold text-zinc-800">同事追加测试</h3>
         <div className="mt-3 space-y-2">
           {records.length ? (
             records.map((record) => (
@@ -208,8 +208,8 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
                   <span
                     className={
                       record.passed
-                        ? "inline-flex items-center gap-1 rounded-full bg-[#067647]/10 px-2 py-0.5 text-[11px] font-semibold text-[#067647]"
-                        : "inline-flex items-center gap-1 rounded-full bg-[#B42318]/10 px-2 py-0.5 text-[11px] font-semibold text-[#B42318]"
+                        ? "inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-[#6FAA7D]"
+                        : "inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-[#C9604D]"
                     }
                   >
                     {record.passed ? "通过" : "未通过"}
@@ -285,7 +285,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           <ArrowLeft className="size-4" />
           话术库
         </Link>
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
           {error ?? "案例不存在"}
         </div>
       </div>
@@ -430,21 +430,21 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       {caseItem.admin_conclusion || caseItem.suggested_action ? (
         <section className="grid gap-3 lg:grid-cols-2">
           {caseItem.admin_conclusion ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-              <h2 className="text-xs font-black uppercase tracking-[0.18em] text-amber-900">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D99E55]">
                 管理员结论
               </h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-amber-900">
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[#D99E55]">
                 {caseItem.admin_conclusion}
               </p>
             </div>
           ) : null}
           {caseItem.suggested_action ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
-              <h2 className="text-xs font-black uppercase tracking-[0.18em] text-emerald-900">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6FAA7D]">
                 建议动作
               </h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-emerald-900">
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[#6FAA7D]">
                 {caseItem.suggested_action}
               </p>
             </div>
@@ -456,7 +456,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
         <section className="grid gap-4 lg:grid-cols-2">
           {(caseItem.screenshot_paths?.length ?? 0) > 0 ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 截图
               </h2>
               <div className="mt-4">
@@ -466,7 +466,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           ) : null}
           {caseItem.scene_description || caseItem.result ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 上下文
               </h2>
               <div className="mt-3 space-y-3 text-sm leading-7 text-zinc-600">

@@ -75,29 +75,29 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
 
   const linkClass = (href: string, active = pathname === href) =>
     cn(
-      "inline-flex h-8 shrink-0 items-center rounded-xl px-3 text-[12px] font-black transition-[background-color,color,box-shadow,border-color,transform] duration-[var(--duration-fast)] ease-[var(--ease-out)]",
+      "inline-flex h-8 shrink-0 items-center rounded-xl px-3 text-[12px] font-medium transition-[background-color,color,box-shadow,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
       active
-        ? "border border-zinc-900 bg-zinc-900 text-white shadow-lg shadow-zinc-900/10"
-        : "border border-transparent text-zinc-500 hover:-translate-y-px hover:border-zinc-200 hover:bg-white hover:text-zinc-900",
+        ? "bg-white text-zinc-800 shadow-sm"
+        : "text-zinc-500 hover:-translate-y-[1px] hover:bg-white hover:text-zinc-800 active:translate-y-0",
     );
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-40 border-b border-zinc-200 bg-white/85 shadow-sm backdrop-blur-md pt-[max(env(safe-area-inset-top),0px)]">
+    <nav className="fixed inset-x-0 top-0 z-40 border-b border-zinc-200 bg-[#FAFAFB] pt-[max(env(safe-area-inset-top),0px)]">
       <div className="mx-auto px-3 sm:px-6">
         <div className="flex min-h-[var(--app-nav-height)] items-center gap-3 px-2 py-2 sm:gap-4 sm:px-3.5">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
-              className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color,transform] duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:-translate-y-px hover:bg-zinc-50"
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-px hover:bg-zinc-50"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 text-white shadow-md">
-                <Zap size={14} className="fill-current" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-white">
+                <Zap className="size-3.5 stroke-[1.5] fill-current" />
               </div>
               <div className="hidden min-w-0 sm:block">
-                <div className="text-[13px] font-extrabold uppercase tracking-tight text-zinc-900">
+                <div className="text-[13px] font-semibold tracking-tight text-zinc-800">
                   DYData <span className="font-normal text-zinc-400">CNSL</span>
                 </div>
-                <div className="text-[10px] font-black uppercase leading-none tracking-[0.18em] text-zinc-400">
+                <div className="text-[10px] font-medium uppercase leading-none tracking-[0.25em] text-zinc-400">
                   Production OS
                 </div>
               </div>
@@ -119,28 +119,28 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
                 <button
                   type="button"
                   onClick={() => setIsAccountMenuOpen((open) => !open)}
-                  className="group flex items-center gap-2.5 rounded-2xl border border-transparent px-2 py-1.5 transition-all hover:-translate-y-px hover:border-zinc-200 hover:bg-white"
+                  className="group flex items-center gap-2.5 rounded-2xl border border-transparent px-2 py-1.5 transition-colors hover:-translate-y-px hover:border-zinc-200 hover:bg-white"
                   aria-expanded={isAccountMenuOpen}
                   aria-haspopup="listbox"
                 >
                   <div className="hidden items-center gap-2 sm:flex">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-[10px] font-black text-white shadow-md">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white ">
                       {initial}
                     </div>
                     <div className="min-w-0 flex items-center gap-1.5">
-                      <span className="max-w-24 truncate text-[12px] font-black leading-none text-zinc-900">{name}</span>
+                      <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
                       {selectedAccount && (
                         <>
                           <span className="text-[10px] text-zinc-300">|</span>
-                          <span className="max-w-28 truncate text-[11px] font-bold leading-none text-zinc-500">{selectedAccount.display_name}</span>
+                          <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
                         </>
                       )}
                     </div>
                   </div>
-                  <span className="max-w-24 truncate text-[12px] font-black text-zinc-700 sm:hidden">
+                  <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">
                     {name}
                   </span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-[10px] font-black text-white sm:hidden">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white sm:hidden">
                     {initial}
                   </div>
                   <ChevronDown
@@ -155,9 +155,9 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
                 {isAccountMenuOpen && (
                   <div
                     role="listbox"
-                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-60 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-zinc-900/10"
+                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-sm"
                   >
-                    <div className="px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                    <div className="px-2.5 py-1.5 text-[9px] font-medium uppercase tracking-[0.2em] text-zinc-400">
                       切换账号
                     </div>
                     <div className="max-h-64 space-y-0.5 overflow-y-auto">
@@ -174,24 +174,24 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
                               setIsAccountMenuOpen(false);
                             }}
                             className={cn(
-                              "flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-left transition-all",
+                              "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                               isSelected
-                                ? "bg-zinc-900 text-white"
-                                : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+                                ? "bg-zinc-50 text-zinc-800"
+                                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
                             )}
                           >
                             <span className="min-w-0">
-                              <span className="block truncate text-[12px] font-black">{account.display_name}</span>
+                              <span className="block truncate text-[13px] font-medium tracking-tight">{account.display_name}</span>
                               <span
                                 className={cn(
-                                  "mt-0.5 block truncate text-[10px] font-bold",
-                                  isSelected ? "text-white/50" : "text-zinc-400",
+                                  "mt-0.5 block truncate text-[12px]",
+                                  isSelected ? "text-zinc-500" : "text-zinc-400",
                                 )}
                               >
                                 {account.content_direction ?? "未设置方向"}
                               </span>
                             </span>
-                            {isSelected && <Check className="size-3.5 shrink-0" />}
+                            {isSelected && <Check className="size-3.5 shrink-0 stroke-[1.5] text-[#D97757]" />}
                           </button>
                         );
                       })}
@@ -202,23 +202,23 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
             ) : (
               <>
                 <div className="hidden items-center gap-2 sm:flex">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-[10px] font-black text-white shadow-md">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white ">
                     {initial}
                   </div>
                   <div className="min-w-0 flex items-center gap-1.5">
-                    <span className="max-w-24 truncate text-[12px] font-black leading-none text-zinc-900">{name}</span>
+                    <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
                     {selectedAccount && (
                       <>
                         <span className="text-[10px] text-zinc-300">|</span>
-                        <span className="max-w-28 truncate text-[11px] font-bold leading-none text-zinc-500">{selectedAccount.display_name}</span>
+                        <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
                       </>
                     )}
                   </div>
                 </div>
-                <span className="max-w-24 truncate text-[12px] font-black text-zinc-700 sm:hidden">
+                <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">
                   {name}
                 </span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-[10px] font-black text-white sm:hidden">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white sm:hidden">
                   {initial}
                 </div>
               </>
@@ -228,9 +228,9 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
                 variant="outline"
                 size="sm"
                 type="submit"
-                className="h-8 rounded-xl border-zinc-200 bg-white px-2.5 text-[11px] font-black text-zinc-500 shadow-sm hover:-translate-y-px hover:bg-zinc-900 hover:text-white sm:px-3"
+                className="h-8 px-2.5 sm:px-3"
               >
-                <LogOut size={13} />
+                <LogOut className="size-3.5 stroke-[1.5]" />
                 <span className="hidden sm:inline">退出</span>
               </Button>
             </form>

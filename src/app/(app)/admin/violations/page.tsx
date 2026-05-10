@@ -152,17 +152,17 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">Violation Review</p>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-950">违规复核</h1>
-          <p className="mt-1 text-sm text-zinc-500">确认、驳回并沉淀员工提交的违规/非违规话术案例</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Violation Review</p>
+          <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">违规复核</h1>
+          <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">确认、驳回并沉淀员工提交的违规/非违规话术案例</p>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm">
-          <span className="font-semibold text-zinc-950">{pendingCount}</span>
+        <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] shadow-sm">
+          <span className="font-semibold text-zinc-800 tabular-nums">{pendingCount}</span>
           <span className="ml-1 text-zinc-500">条待复核</span>
         </div>
       </div>
 
-      <form className="grid gap-3 rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-sm lg:grid-cols-[1fr_auto_auto]" action="/admin/violations">
+      <form className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm lg:grid-cols-[1fr_auto_auto]" action="/admin/violations">
         <input
           name="q"
           defaultValue={keyword}
@@ -200,7 +200,7 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
       </form>
 
       {error ? (
-        <section className="rounded-[2rem] border border-red-100 bg-red-50 p-6 text-sm text-red-700">
+        <section className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50 p-6 text-[13px] text-[#C9604D]">
           违规案例数据暂时无法读取：{error.message}
         </section>
       ) : (

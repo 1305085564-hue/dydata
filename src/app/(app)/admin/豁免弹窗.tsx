@@ -182,7 +182,7 @@ export function ExemptionDialog({
   return (
     <Dialog open={open} onOpenChange={closeDialog}>
       <DialogContent
-        className="sm:max-w-md rounded-[2rem] border border-zinc-200 bg-white shadow-lg"
+        className="sm:max-w-md rounded-2xl border border-zinc-200 bg-white shadow-sm"
         showCloseButton={!isPending}
       >
         <DialogHeader>
@@ -196,7 +196,7 @@ export function ExemptionDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">申请语义</label>
+            <label className="text-[13px] font-medium text-zinc-800">申请语义</label>
             <Select
               value={formValues.category}
               onValueChange={(value) =>
@@ -207,7 +207,7 @@ export function ExemptionDialog({
               }
               disabled={isPending}
             >
-              <SelectTrigger className="w-full rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10">
+              <SelectTrigger className="w-full rounded-lg border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/5">
                 <SelectValue>
                   {CATEGORY_LABELS[formValues.category]}
                 </SelectValue>
@@ -220,13 +220,13 @@ export function ExemptionDialog({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">日期模式</label>
+            <label className="text-[13px] font-medium text-zinc-800">日期模式</label>
             <Select
               value={formValues.mode}
               onValueChange={handleModeChange}
               disabled={isPending}
             >
-              <SelectTrigger className="w-full rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10">
+              <SelectTrigger className="w-full rounded-lg border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/5">
                 <SelectValue>{MODE_LABELS[formValues.mode]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -240,13 +240,13 @@ export function ExemptionDialog({
 
           {formValues.mode === "yesterday" && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">豁免日期</label>
+              <label className="text-[13px] font-medium text-zinc-800">豁免日期</label>
               <Input
                 type="date"
                 value={formValues.date ?? fallbackYesterday}
                 onChange={(e) => updateField("date", e.target.value)}
                 disabled={isPending}
-                className="rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
+                className="rounded-lg border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/5"
               />
             </div>
           )}
@@ -254,36 +254,36 @@ export function ExemptionDialog({
           {formValues.mode === "range" && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">开始日期</label>
+                <label className="text-[13px] font-medium text-zinc-800">开始日期</label>
                 <Input
                   type="date"
                   value={formValues.startDate ?? ""}
                   onChange={(e) => updateField("startDate", e.target.value)}
                   disabled={isPending}
-                  className="rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
+                  className="rounded-lg border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/5"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">结束日期</label>
+                <label className="text-[13px] font-medium text-zinc-800">结束日期</label>
                 <Input
                   type="date"
                   value={formValues.endDate ?? ""}
                   onChange={(e) => updateField("endDate", e.target.value)}
                   disabled={isPending}
-                  className="rounded-xl border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30"
+                  className="rounded-lg border-zinc-200 bg-white focus:ring-1 focus:ring-zinc-950/5"
                 />
               </div>
             </div>
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">原因</label>
+            <label className="text-[13px] font-medium text-zinc-800">原因</label>
             <textarea
               value={formValues.reason ?? ""}
               onChange={(e) => updateField("reason", e.target.value)}
               disabled={isPending}
               rows={3}
-              className="flex min-h-20 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:ring-1 focus:ring-zinc-950/10 focus:border-zinc-950/30 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:opacity-50"
+              className="flex min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:ring-1 focus:ring-zinc-950/5 focus:border-zinc-300 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:opacity-50"
               placeholder="可选，建议写明原因"
             />
           </div>
@@ -296,7 +296,7 @@ export function ExemptionDialog({
                 variant="outline"
                 onClick={handleClearClick}
                 disabled={isPending}
-                className="rounded-xl border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                className="rounded-[10px] border-zinc-200 text-zinc-700 hover:bg-zinc-50"
               >
                 清除豁免
               </Button>
@@ -307,14 +307,14 @@ export function ExemptionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="rounded-xl border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+              className="rounded-[10px] border-zinc-200 text-zinc-700 hover:bg-zinc-50"
             >
               取消
             </Button>
             <Button
               onClick={handleSaveClick}
               disabled={isPending}
-              className="rounded-xl bg-zinc-950 text-white hover:bg-zinc-800"
+              className="rounded-[10px] bg-zinc-950 text-white hover:bg-zinc-800"
             >
               保存
             </Button>

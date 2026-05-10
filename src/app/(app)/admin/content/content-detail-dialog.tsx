@@ -36,24 +36,24 @@ type SegmentState = Array<{
 }>;
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  删稿: "border-red-200 bg-red-50 text-red-700",
-  限流: "border-red-200 bg-red-50 text-red-700",
-  投流: "border-amber-200 bg-amber-50 text-amber-700",
-  活动干预: "border-amber-200 bg-amber-50 text-amber-700",
-  "未满24h": "border-slate-200 bg-slate-100 text-slate-600",
+  正常: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  删稿: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
+  限流: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
+  投流: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  活动干预: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  "未满24h": "border-zinc-200 bg-zinc-100 text-zinc-600",
 };
 
 const sampleLevelClass = {
-  insufficient: "border-red-200 bg-red-50 text-red-700",
-  partial: "border-amber-200 bg-amber-50 text-amber-700",
-  full: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  insufficient: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
+  partial: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  full: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
 };
 
 const healthClass = {
-  ok: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  warning: "border-amber-200 bg-amber-50 text-amber-700",
-  problem: "border-red-200 bg-red-50 text-red-700",
+  ok: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  warning: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  problem: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
 };
 
 function formatNumber(v: number | null | undefined) {
@@ -304,7 +304,7 @@ export function ContentDetailDialog({
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold">次日复盘</div>
                 {reviewed && (
-                  <Badge variant="outline" className="border-violet-200 bg-violet-50 text-xs text-violet-700">
+                  <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[12px] text-zinc-600">
                     已复盘
                   </Badge>
                 )}
@@ -326,7 +326,7 @@ export function ContentDetailDialog({
                   <div className="text-xs text-muted-foreground">综合诊断</div>
                   <div className="text-sm font-semibold">{reviewResult?.summary.one_line ?? "点击“一键次日复盘”生成诊断"}</div>
                   {reviewResult?.anomaly_notice && (
-                    <div className="text-xs text-amber-700">{reviewResult.anomaly_notice}</div>
+                    <div className="text-[12px] text-[#D99E55]">{reviewResult.anomaly_notice}</div>
                   )}
                 </div>
               </div>

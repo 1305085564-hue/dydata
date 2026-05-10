@@ -44,7 +44,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
     <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-base font-black tracking-tight text-zinc-950">指标录入</h3>
+          <h3 className="text-base font-semibold tracking-tight text-zinc-950">指标录入</h3>
           <p className="text-sm text-zinc-500">
             填写核心业务数据、互动数据和留存转化数据。
           </p>
@@ -79,7 +79,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 互动数据 */}
         <div className="relative pl-5">
-          <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#444CE7]" />
+          <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#8AA8C7]" />
           <div className="mb-4">
             <h3 className="text-sm font-medium text-zinc-900">互动数据</h3>
           </div>
@@ -101,7 +101,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 完播留存 */}
         <div className={cn("relative pl-5", retentionOptional && "opacity-50")}>
-          <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#067647]" />
+          <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#6FAA7D]" />
           <div className="mb-4">
             <h3 className="text-sm font-medium text-zinc-900">
               完播留存{retentionOptional && <span className="ml-1 font-normal text-zinc-500">（可选）</span>}

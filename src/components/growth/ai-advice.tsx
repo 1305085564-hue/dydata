@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ErrorState } from "@/components/ui/error-state"
 import { cn } from "@/lib/utils"
 
 type GrowthAdvicePayload = {
@@ -48,21 +50,21 @@ const 初始状态: RequestState = {
 const 卡片配置 = [
   {
     key: "diagnosis",
-    title: "🔍 诊断",
+    title: "诊断",
     toneClassName:
-      "border-orange-200/80 bg-orange-50/80 dark:border-orange-400/20 dark:bg-orange-400/10",
+      "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#D99E55]",
   },
   {
     key: "reference",
-    title: "📖 参考",
+    title: "参考",
     toneClassName:
-      "border-sky-200/80 bg-sky-50/80 dark:border-sky-400/20 dark:bg-sky-400/10",
+      "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#8AA8C7]",
   },
   {
     key: "action",
-    title: "🎯 动作",
+    title: "动作",
     toneClassName:
-      "border-emerald-200/80 bg-emerald-50/80 dark:border-emerald-400/20 dark:bg-emerald-400/10",
+      "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#6FAA7D]",
   },
 ] as const satisfies ReadonlyArray<{
   key: keyof GrowthAdviceData
@@ -85,15 +87,15 @@ function 骨架卡片() {
       {[0, 1, 2].map((item) => (
         <Card
           key={item}
-          className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
+          className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
         >
-          <CardHeader className="space-y-3 border-b border-border/70 pb-4">
-            <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+          <CardHeader className="space-y-3 border-b border-zinc-200 pb-4">
+            <Skeleton className="h-4 w-24" />
           </CardHeader>
           <CardContent className="space-y-3 pt-4">
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-4 w-4/5" />
           </CardContent>
         </Card>
       ))}
@@ -176,12 +178,7 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
       {state.status === "loading" && !state.data ? <骨架卡片 /> : null}
 
       {state.status === "error" ? (
-        <Card className="rounded-xl border border-destructive/20 bg-destructive/5 shadow-[0_12px_30px_-24px_rgba(220,38,38,0.45)]">
-          <CardContent className="flex flex-col gap-3 py-4">
-            <div className="text-sm font-medium text-destructive">AI 建议生成失败</div>
-            <p className="text-sm leading-6 text-muted-foreground">{state.error}</p>
-          </CardContent>
-        </Card>
+        <ErrorState title="AI 建议生成失败" description={state.error} />
       ) : null}
 
       {state.status === "success" ? (
@@ -193,30 +190,30 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
             return (
               <Card
                 key={section.key}
-                className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"
+                className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
               >
-                <CardHeader className="border-b border-border/70 pb-4">
-                  <CardTitle className="text-[15px] font-semibold text-foreground sm:text-base">
+                <CardHeader className="border-b border-zinc-200 pb-4">
+                  <CardTitle className="text-[13px] font-semibold text-zinc-800">
                     {section.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div
                     className={cn(
-                      "rounded-xl border px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+                      "rounded-xl border px-4 py-3",
                       section.toneClassName
                     )}
                   >
                     {isReference ? (
                       <div className="space-y-3">
-                        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground/90">
+                        <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">
                           {content}
                         </p>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-auto rounded-full px-0 text-sm font-medium text-foreground hover:bg-transparent hover:opacity-70"
+                          className="h-auto rounded-[10px] px-0 text-[13px] font-medium text-zinc-800 hover:bg-transparent hover:opacity-70"
                           onClick={() =>
                             onReferenceClick?.({
                               personName: referenceMeta?.personName,
@@ -231,7 +228,7 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
                         </Button>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground/90">
+                      <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">
                         {content}
                       </p>
                     )}

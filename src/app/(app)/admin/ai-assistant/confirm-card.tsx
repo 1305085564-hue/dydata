@@ -7,7 +7,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
-import { Copy, CheckCircle2, XCircle, Terminal, Loader2 } from "lucide-react";
+import { Copy, CheckCircle2, XCircle, Terminal } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import AssistantDetailSections from "./assistant-detail-sections";
 import { cn } from "@/lib/utils";
 
@@ -47,16 +48,16 @@ export default function ConfirmCard({
   return (
     <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_4px_16px_-8px_rgba(0,0,0,0.08)]">
       {/* Amber status rail */}
-      <div className="absolute left-0 top-0 h-full w-[3px] bg-amber-400" />
+      <div className="absolute left-0 top-0 h-full w-[3px] bg-[#D99E55]" />
 
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3 pl-6">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-50" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_0_3px_rgba(234,179,8,0.12)]" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D99E55] opacity-50" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)]" />
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-700">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#B88448]">
             Authorization Required
           </span>
         </div>
@@ -73,11 +74,11 @@ export default function ConfirmCard({
             {data.confirmationMessage || `系统将执行: ${data.toolName}`}
           </p>
           {data.confirmationReason && (
-            <div className="rounded-lg border border-amber-100 bg-[#FEFCF3] px-3 py-2">
-              <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+            <div className="rounded-lg border border-zinc-200 bg-[#FBF6EC] px-3 py-2">
+              <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
                 Reason
               </div>
-              <p className="mt-1 text-[12.5px] italic leading-relaxed text-amber-900/80">
+              <p className="mt-1 text-[12.5px] italic leading-relaxed text-[#8A6535]">
                 {data.confirmationReason}
               </p>
             </div>
@@ -113,7 +114,7 @@ export default function ConfirmCard({
                       <Copy className="h-3 w-3" /> 复制
                     </button>
                   </div>
-                  <pre className="overflow-x-auto rounded-lg border border-zinc-900/40 bg-zinc-950 p-2.5 text-[11px] leading-relaxed text-emerald-300">
+                  <pre className="overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-900 p-2.5 text-[11px] leading-relaxed text-[#D5E4D9]">
                     {debug.backupSql}
                   </pre>
                 </div>
@@ -123,7 +124,7 @@ export default function ConfirmCard({
                   <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                     Parameters
                   </div>
-                  <pre className="overflow-x-auto rounded-lg border border-zinc-900/40 bg-zinc-950 p-2.5 text-[11px] leading-relaxed text-zinc-200">
+                  <pre className="overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-900 p-2.5 text-[11px] leading-relaxed text-zinc-200">
                     {formatContent(debug.toolParams)}
                   </pre>
                 </div>
@@ -158,7 +159,7 @@ export default function ConfirmCard({
           >
             {submitting ? (
               <span className="flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Skeleton className="h-3 w-8 rounded" />
                 处理中
               </span>
             ) : (

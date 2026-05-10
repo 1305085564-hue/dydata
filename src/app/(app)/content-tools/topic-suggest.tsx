@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Sparkles, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/ui/error-state";
 import {
   Select,
   SelectContent,
@@ -59,7 +61,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[28px] border border-border/60 bg-muted/30 p-4 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl sm:p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm ring-1 ring-zinc-950/5 sm:p-5">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_140px] md:items-end">
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">账号范围</div>
@@ -71,7 +73,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
                 ...accounts.map((account) => ({ value: account.id, label: account.name })),
               ]}
             >
-              <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
+              <SelectTrigger className="h-11 w-full rounded-lg bg-white">
                 <SelectValue placeholder="全部账号" />
               </SelectTrigger>
               <SelectContent>
@@ -92,7 +94,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
               onValueChange={(value) => setDays(Number(value) as 7 | 14 | 30)}
               items={TOPIC_DAY_OPTIONS.map((option) => ({ value: String(option), label: `近 ${option} 天` }))}
             >
-              <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
+              <SelectTrigger className="h-11 w-full rounded-lg bg-white">
                 <SelectValue placeholder="时间范围" />
               </SelectTrigger>
               <SelectContent>
@@ -105,50 +107,51 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
             </Select>
           </div>
 
-          <Button className="h-11 rounded-2xl" onClick={() => void loadSuggestions()} disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            重新生成
+          <Button className="h-11 rounded-[10px]" onClick={() => void loadSuggestions()} disabled={loading}>
+            <Sparkles className="size-4" />
+            {loading ? "生成中" : "重新生成"}
           </Button>
         </div>
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <ErrorState description={error} onRetry={() => void loadSuggestions()} />
       ) : null}
 
       {loading && !data ? (
-        <div className="glass-card-static rounded-3xl px-4 py-8 text-sm text-muted-foreground">正在生成选题建议...</div>
+        <div className="space-y-3">
+          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+        </div>
       ) : null}
 
       {data ? (
         <>
           <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <div className="glass-card-static rounded-3xl p-5">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold tracking-tight">爆款依据</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
+                  <div className="mt-1 text-xs text-zinc-500">
                     样本 {data.sampleCount} 条 · 热点日期 {data.marketDate ?? "暂无"}
                   </div>
                 </div>
-                <div className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                <div className="inline-flex items-center gap-1 rounded-full bg-zinc-50 px-3 py-1 text-xs text-[#D97757] ring-1 ring-zinc-950/5">
                   <TrendingUp className="size-3.5" />
                   高播放样本
                 </div>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {data.evidenceSummary.map((item) => (
-                  <div key={item} className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+                  <div key={item} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
                     {item}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="glass-card-static rounded-3xl p-5">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold tracking-tight">使用建议</div>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <ul className="mt-3 space-y-2 text-[13px] leading-[1.7] text-zinc-500">
                 <li>• 优先挑 1 个热点题材 + 1 个历史高胜率角度组合。</li>
                 <li>• 参考视频只抄结构，不直接复刻标题或原句。</li>
                 <li>• 预期表现以“高于中位数多少倍”理解，不当作保底承诺。</li>
@@ -158,38 +161,38 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
 
           <div className="grid gap-4 xl:grid-cols-2">
             {data.suggestions.map((item) => (
-              <Card key={item.title} className="glass-card-static border-white/60 bg-white/75">
+              <Card key={item.title} className="border-zinc-200 bg-white shadow-sm">
                 <CardHeader>
                   <CardDescription>{item.category}</CardDescription>
                   <CardTitle>{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="rounded-2xl bg-muted/40 p-4">
-                    <div className="text-xs text-muted-foreground">切入角度</div>
-                    <div className="mt-1 text-sm font-medium text-foreground">{item.angle}</div>
+                  <div className="rounded-xl bg-zinc-50 p-4">
+                    <div className="text-xs text-zinc-500">切入角度</div>
+                    <div className="mt-1 text-sm font-medium text-zinc-950">{item.angle}</div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
-                      <div className="text-xs text-muted-foreground">预期表现</div>
-                      <div className="mt-1 text-sm font-medium text-foreground">{item.expectedPerformance}</div>
+                    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                      <div className="text-xs text-zinc-500">预期表现</div>
+                      <div className="mt-1 text-sm font-medium text-zinc-950">{item.expectedPerformance}</div>
                     </div>
-                    <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
-                      <div className="text-xs text-muted-foreground">数据依据</div>
-                      <div className="mt-1 text-sm text-foreground">{item.evidence}</div>
+                    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                      <div className="text-xs text-zinc-500">数据依据</div>
+                      <div className="mt-1 text-sm text-zinc-950">{item.evidence}</div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <div className="text-sm font-medium text-foreground">参考视频</div>
+                    <div className="text-sm font-medium text-zinc-950">参考视频</div>
                     {item.referenceVideos.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border/70 px-4 py-3 text-sm text-muted-foreground">
+                      <div className="rounded-xl border border-dashed border-zinc-200 px-4 py-3 text-sm text-zinc-500">
                         暂无参考视频
                       </div>
                     ) : (
                       item.referenceVideos.map((video) => (
-                        <div key={`${item.title}-${video.videoId}`} className="rounded-2xl border border-border/60 bg-background/70 p-4">
-                          <div className="text-sm font-medium text-foreground">{video.title ?? "未命名视频"}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">
+                        <div key={`${item.title}-${video.videoId}`} className="rounded-xl border border-zinc-200 bg-white p-4">
+                          <div className="text-sm font-medium text-zinc-950">{video.title ?? "未命名视频"}</div>
+                          <div className="mt-1 text-xs text-zinc-500">
                             {video.accountName ?? "未知账号"} · 24h播放 {video.playCount24h ? formatPlayCount(video.playCount24h) : "暂无"}
                             {typeof video.breakoutCoefficient === "number"
                               ? ` · 爆款系数 ${video.breakoutCoefficient.toFixed(2)}`

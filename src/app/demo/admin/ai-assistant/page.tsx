@@ -24,11 +24,11 @@ export default function DemoAIAssistantPage() {
         description="这里展示消息气泡、确认节点和历史记录布局，帮助你收集外部反馈。"
       >
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <Card className="overflow-hidden rounded-3xl border-white/70 bg-white/82 shadow-[var(--shadow-card)]">
+          <Card className="overflow-hidden rounded-2xl border-white/70 bg-white/82 shadow-[var(--shadow-card)]">
             <CardHeader className="border-b border-[var(--color-border)]">
               <CardTitle className="flex items-center justify-between gap-3 text-base">
                 <span>对话区</span>
-                <Badge variant="outline" className="rounded-full bg-amber-50 text-amber-700">
+                <Badge variant="outline" className="rounded-full bg-zinc-50 text-[#D99E55]">
                   演示只读
                 </Badge>
               </CardTitle>
@@ -61,7 +61,7 @@ export default function DemoAIAssistantPage() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden rounded-3xl border-white/70 bg-white/82 shadow-[var(--shadow-card)]">
+          <Card className="overflow-hidden rounded-2xl border-white/70 bg-white/82 shadow-[var(--shadow-card)]">
             <CardHeader className="border-b border-[var(--color-border)]">
               <CardTitle className="text-base">操作历史</CardTitle>
             </CardHeader>

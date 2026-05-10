@@ -44,10 +44,10 @@ function formatWeekRange(weekStart: string) {
 }
 
 const KPI_TONES = {
-  primary: "bg-[#D97757]/10 text-[#D97757]",
-  success: "bg-[#067647]/10 text-[#067647]",
-  danger: "bg-[#B42318]/10 text-[#B42318]",
-  info: "bg-[#444CE7]/10 text-[#444CE7]",
+  primary: "bg-zinc-100 text-[#D97757]",
+  success: "bg-zinc-100 text-[#6FAA7D]",
+  danger: "bg-zinc-100 text-[#C9604D]",
+  info: "bg-zinc-100 text-[#8AA8C7]",
 } as const;
 
 function KpiCard({
@@ -76,7 +76,7 @@ function KpiCard({
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-zinc-500">{label}</p>
-          <p className="text-3xl font-black tracking-tight text-zinc-950">{value}</p>
+          <p className="text-[24px] font-semibold tracking-tight text-zinc-800 tabular-nums">{value}</p>
           <p className="text-xs text-zinc-400">{hint}</p>
         </div>
         <div className={`rounded-xl p-2.5 ${KPI_TONES[tone]}`}>
@@ -144,17 +144,17 @@ export function ConversionHubOverview({ stats }: Props) {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             Conversion Hub
           </p>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-950">
+          <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
             转化中心 · 管理员视角
           </h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">
             审视转化话术、追踪违规风险、推进每周筛选决策
           </p>
         </div>
-        <div className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-xs font-medium text-zinc-600">
+        <div className="rounded-[10px] border border-zinc-200 bg-white px-4 py-1.5 text-[12px] font-medium text-zinc-600">
           本周 · {formatWeekRange(stats.week_start)}
         </div>
       </div>
@@ -174,7 +174,7 @@ export function ConversionHubOverview({ stats }: Props) {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-zinc-950">TOP 10 转化话术</h2>
+              <h2 className="text-[16px] font-semibold text-zinc-800">TOP 10 转化话术</h2>
               <p className="mt-0.5 text-xs text-zinc-500">按加权转化率排序，仅展示使用 ≥3 且展示 ≥1k 的话术</p>
             </div>
             <Link
@@ -199,7 +199,7 @@ export function ConversionHubOverview({ stats }: Props) {
                     href={`/violations/${row.id}`}
                     className="group flex items-start gap-3 rounded-lg border border-transparent p-2.5 transition-colors hover:border-zinc-200 hover:bg-zinc-50"
                   >
-                    <span className="mt-0.5 w-6 shrink-0 text-center text-sm font-bold text-zinc-400">
+                    <span className="mt-0.5 w-6 shrink-0 text-center text-[13px] font-medium text-zinc-400">
                       {medal ?? `#${idx + 1}`}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -210,7 +210,7 @@ export function ConversionHubOverview({ stats }: Props) {
                         <span>展示 {formatNumber(row.total_views)}</span>
                         <span>涨粉 {formatNumber(row.total_follows)}</span>
                         <span>使用 {row.usage_count}</span>
-                        <span className="font-semibold text-[#067647]">
+                        <span className="font-semibold text-[#6FAA7D]">
                           转化率 {formatRate(row.weighted_conversion_rate)}
                         </span>
                       </div>
@@ -228,7 +228,7 @@ export function ConversionHubOverview({ stats }: Props) {
           transition={{ delay: 0.4, duration: 0.4, ease: "easeOut" }}
           className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
         >
-          <h2 className="text-lg font-bold text-zinc-950">快捷入口</h2>
+          <h2 className="text-[16px] font-semibold text-zinc-800">快捷入口</h2>
           <p className="mt-0.5 text-xs text-zinc-500">直达数据分析、每周清单与原始话术库</p>
 
           <div className="mt-4 space-y-3">
@@ -236,7 +236,7 @@ export function ConversionHubOverview({ stats }: Props) {
               <Link
                 key={href}
                 href={href}
-                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:translate-y-0 active:scale-[0.99]"
+                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:translate-y-0 active:scale-[0.99]"
               >
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 transition-colors group-hover:bg-zinc-950 group-hover:text-white">
                   <Icon className="size-5" />

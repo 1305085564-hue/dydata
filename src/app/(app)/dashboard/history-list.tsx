@@ -91,12 +91,12 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
               <TableHead className="text-right">播放量</TableHead>
               <TableHead className="text-right">完播率</TableHead>
               <TableHead className="text-right">均播时长</TableHead>
-              <TableHead className="text-right hidden lg:table-cell">2s跳出</TableHead>
-              <TableHead className="text-right hidden lg:table-cell">5s完播</TableHead>
+              <TableHead className="hidden text-right lg:table-cell">2s跳出</TableHead>
+              <TableHead className="hidden text-right lg:table-cell">5s完播</TableHead>
               <TableHead className="text-right">点赞</TableHead>
               <TableHead className="text-right">评论</TableHead>
               <TableHead className="text-right">分享</TableHead>
-              <TableHead className="text-right hidden lg:table-cell">收藏</TableHead>
+              <TableHead className="hidden text-right lg:table-cell">收藏</TableHead>
               <TableHead className="w-[60px]" />
             </TableRow>
           </TableHeader>
@@ -107,24 +107,24 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 className={onReportOpen ? "cursor-pointer" : undefined}
                 onClick={onReportOpen ? () => onReportOpen(report) : undefined}
               >
-                <TableCell className="whitespace-nowrap text-muted-foreground">
+                <TableCell className="whitespace-nowrap text-zinc-500 tabular-nums">
                   {report.report_date?.slice(5)}
                 </TableCell>
-                <TableCell className="max-w-[120px] truncate text-muted-foreground">
+                <TableCell className="max-w-[120px] truncate text-zinc-500">
                   {accountDisplayNameMap[report.account_id] ?? "-"}
                 </TableCell>
-                <TableCell className="max-w-[160px] truncate">{report.title}</TableCell>
-                <TableCell className="text-right font-semibold tabular-nums">
+                <TableCell className="max-w-[160px] truncate text-zinc-800">{report.title}</TableCell>
+                <TableCell className="text-right font-semibold tabular-nums text-zinc-800">
                   {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{report.completion_rate ?? "-"}</TableCell>
-                <TableCell className="text-right tabular-nums">{report.avg_play_duration ?? "-"}</TableCell>
-                <TableCell className="text-right tabular-nums hidden lg:table-cell">{report.bounce_rate_2s ?? "-"}</TableCell>
-                <TableCell className="text-right tabular-nums hidden lg:table-cell">{report.completion_rate_5s ?? "-"}</TableCell>
-                <TableCell className="text-right tabular-nums">{report.likes}</TableCell>
-                <TableCell className="text-right tabular-nums">{report.comments}</TableCell>
-                <TableCell className="text-right tabular-nums">{report.shares}</TableCell>
-                <TableCell className="text-right tabular-nums hidden lg:table-cell">{report.favorites}</TableCell>
+                <TableCell className="text-right tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</TableCell>
+                <TableCell className="text-right tabular-nums text-zinc-800">{report.avg_play_duration ?? "-"}</TableCell>
+                <TableCell className="hidden text-right tabular-nums text-zinc-800 lg:table-cell">{report.bounce_rate_2s ?? "-"}</TableCell>
+                <TableCell className="hidden text-right tabular-nums text-zinc-800 lg:table-cell">{report.completion_rate_5s ?? "-"}</TableCell>
+                <TableCell className="text-right tabular-nums text-zinc-800">{report.likes}</TableCell>
+                <TableCell className="text-right tabular-nums text-zinc-800">{report.comments}</TableCell>
+                <TableCell className="text-right tabular-nums text-zinc-800">{report.shares}</TableCell>
+                <TableCell className="hidden text-right tabular-nums text-zinc-800 lg:table-cell">{report.favorites}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
@@ -135,7 +135,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                       setEditingReport(report);
                     }}
                   >
-                    <Pencil className="size-3.5" />
+                    <Pencil className="size-3.5 stroke-[1.5]" />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -148,18 +148,22 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
         {visible.map((report) => (
           <div
             key={report.id}
-            className={onReportOpen ? "cursor-pointer space-y-2 rounded-lg border bg-background p-4" : "space-y-2 rounded-lg border bg-background p-4"}
+            className={
+              onReportOpen
+                ? "cursor-pointer space-y-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
+                : "space-y-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
+            }
             onClick={onReportOpen ? () => onReportOpen(report) : undefined}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">{report.report_date?.slice(5)}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-[11px] text-zinc-400 tabular-nums">{report.report_date?.slice(5)}</p>
+                <p className="mt-1 text-[11px] text-zinc-400">
                   {accountDisplayNameMap[report.account_id] ?? "-"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold tabular-nums">
+                <p className="text-[13px] font-semibold tabular-nums text-zinc-800">
                   {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
                 </p>
                 <Button
@@ -171,27 +175,27 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                     setEditingReport(report);
                   }}
                 >
-                  <Pencil className="size-3.5" />
+                  <Pencil className="size-3.5 stroke-[1.5]" />
                 </Button>
               </div>
             </div>
-            <p className="truncate text-sm">{report.title}</p>
-            <div className="grid grid-cols-4 gap-2 text-xs">
+            <p className="truncate text-[13px] text-zinc-800">{report.title}</p>
+            <div className="grid grid-cols-4 gap-2 text-[11px]">
               <div>
-                <p className="text-muted-foreground">完播率</p>
-                <p className="tabular-nums">{report.completion_rate ?? "-"}</p>
+                <p className="text-zinc-400">完播率</p>
+                <p className="tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">点赞</p>
-                <p className="tabular-nums">{report.likes}</p>
+                <p className="text-zinc-400">点赞</p>
+                <p className="tabular-nums text-zinc-800">{report.likes}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">评论</p>
-                <p className="tabular-nums">{report.comments}</p>
+                <p className="text-zinc-400">评论</p>
+                <p className="tabular-nums text-zinc-800">{report.comments}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">分享</p>
-                <p className="tabular-nums">{report.shares}</p>
+                <p className="text-zinc-400">分享</p>
+                <p className="tabular-nums text-zinc-800">{report.shares}</p>
               </div>
             </div>
           </div>
@@ -209,7 +213,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>修改日报</DialogTitle>
+            <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">修改日报</DialogTitle>
           </DialogHeader>
           {editingReport && (
             <DashboardForm

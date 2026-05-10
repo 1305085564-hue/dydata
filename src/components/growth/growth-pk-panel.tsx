@@ -12,10 +12,10 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
   const inView = useInView(ref, { once: true, margin: "-40px" });
 
   return (
-    <div ref={ref} className="flex h-3 w-full overflow-hidden rounded-full bg-[color:var(--color-border)]/45">
+    <div ref={ref} className="flex h-2 w-full overflow-hidden rounded-full bg-zinc-100">
       <motion.div
         className="h-full rounded-l-full"
-        style={{ backgroundColor: leftLeads ? "#09090B" : "#a1a1aa" }}
+        style={{ backgroundColor: leftLeads ? "#27272a" : "#a1a1aa" }}
         initial={{ width: 0 }}
         animate={inView ? { width: `${leftRatio * 100}%` } : { width: 0 }}
         transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
@@ -23,7 +23,7 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
       <div className="flex flex-1 justify-end">
         <motion.div
           className="h-full rounded-r-full"
-          style={{ backgroundColor: leftLeads ? "#a1a1aa" : "#09090B" }}
+          style={{ backgroundColor: leftLeads ? "#a1a1aa" : "#27272a" }}
           initial={{ width: 0 }}
           animate={inView ? { width: `${rightRatio * 100}%` } : { width: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
@@ -34,11 +34,11 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
 }
 
 function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
-  if (tied) return <span className="text-xs text-[var(--color-text-secondary)]">持平</span>;
+  if (tied) return <span className="text-[11px] text-zinc-400">持平</span>;
   return leftLeads ? (
-    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-950">领先</span>
+    <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-800">领先</span>
   ) : (
-    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">落后</span>
+    <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-500">落后</span>
   );
 }
 
@@ -52,18 +52,18 @@ function Row({ row, leftName, rightName }: { row: GrowthPkRow; leftName: string;
   return (
     <motion.div variants={itemVariants} className="rounded-xl border border-zinc-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-medium text-zinc-950">{row.label}</span>
+        <span className="text-[13px] font-medium text-zinc-800">{row.label}</span>
         <WinBadge leftLeads={leftLeads} tied={tied} />
       </div>
       <GapBar leftRatio={leftRatio} rightRatio={rightRatio} leftLeads={leftLeads} />
-      <div className="mt-2 flex justify-between text-xs text-zinc-500">
+      <div className="mt-2 flex justify-between text-[11px] text-zinc-500">
         <span>
-          <span className="font-medium text-zinc-950">{leftName}</span>{" "}
+          <span className="font-medium text-zinc-800">{leftName}</span>{" "}
           <span className="tabular-nums">{row.leftText}</span>
         </span>
         <span>
           <span className="tabular-nums">{row.rightText}</span>{" "}
-          <span className="font-medium text-zinc-950">{rightName}</span>
+          <span className="font-medium text-zinc-800">{rightName}</span>
         </span>
       </div>
     </motion.div>
@@ -83,20 +83,20 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
               <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">PK Compare</span>
               <div className="h-px flex-1 bg-zinc-200" />
             </div>
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">PK 对比</h2>
-            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{leftName} vs {rightName}</p>
+            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">PK 对比</h2>
+            <p className="text-[13px] leading-[1.7] text-zinc-500">{leftName} vs {rightName}</p>
           </div>
           {total > 0 && (
-            <div className="shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-center shadow-sm">
-              <div className="text-base font-semibold tabular-nums text-zinc-950">
+            <div className="shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-center">
+              <div className="text-[16px] font-semibold tabular-nums text-zinc-800">
                 {winCount}/{total}
               </div>
-              <div className="text-[10px] text-zinc-500">项领先</div>
+              <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">领先</div>
             </div>
           )}
         </div>
         {!rows.length ? (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4 text-sm text-zinc-500">
+          <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4 text-[13px] text-zinc-500">
             请先选择对比对象
           </div>
         ) : (

@@ -1,22 +1,24 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 export default function AdminLoading() {
   return (
-    <div className="mx-auto max-w-5xl space-y-8 animate-pulse">
-      <div className="h-8 w-40 rounded bg-muted" />
-      <div className="rounded-xl border bg-background p-6 space-y-4">
-        <div className="h-5 w-28 rounded bg-muted" />
+    <div className="mx-auto max-w-5xl space-y-8">
+      <Skeleton className="h-8 w-40" />
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm">
+        <Skeleton className="h-5 w-28" />
         <div className="grid grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-10 rounded bg-muted" />
+            <Skeleton key={i} className="h-10" />
           ))}
         </div>
       </div>
-      <div className="rounded-xl border bg-background p-6 space-y-4">
-        <div className="h-5 w-28 rounded bg-muted" />
-        <div className="h-48 rounded bg-muted" />
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm">
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="h-48" />
       </div>
-      <div className="rounded-xl border bg-background p-6 space-y-4">
-        <div className="h-5 w-24 rounded bg-muted" />
-        <div className="h-32 rounded bg-muted" />
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-32" />
       </div>
     </div>
   );

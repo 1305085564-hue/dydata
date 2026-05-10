@@ -24,7 +24,7 @@ export default function DemoAIChannelsPage() {
         title="功能配置面板"
         description="保持正式站的表格和状态信息密度，让外部访客可以直接评价后台配置区。"
       >
-        <div className="overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[var(--shadow-card)]">
+        <div className="overflow-hidden rounded-2xl border border-white/70 bg-white/85 shadow-[var(--shadow-card)]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -48,7 +48,7 @@ export default function DemoAIChannelsPage() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={channel.is_enabled && !channel.unhealthy_until ? "rounded-full bg-emerald-50 text-emerald-700" : "rounded-full bg-amber-50 text-amber-700"}
+                      className={channel.is_enabled && !channel.unhealthy_until ? "rounded-full bg-zinc-50 text-[#6FAA7D]" : "rounded-full bg-zinc-50 text-[#D99E55]"}
                     >
                       {!channel.is_enabled ? "已禁用" : channel.unhealthy_until ? "熔断中" : "健康"}
                     </Badge>

@@ -62,7 +62,7 @@ export function PerspectiveTabs({ active }: { active: PerspectiveKey }) {
                   isActive
                     ? tab.key === "violation"
                       ? "bg-[#D97757]/10 text-[#D97757]"
-                      : "bg-[#067647]/10 text-[#067647]"
+                      : "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                     : "bg-zinc-100 text-zinc-500 group-hover:bg-zinc-200"
                 }`}
               >
@@ -79,7 +79,7 @@ export function PerspectiveTabs({ active }: { active: PerspectiveKey }) {
               <motion.div
                 layoutId="perspective-underline"
                 className={`absolute inset-x-3 -bottom-px h-[2px] rounded-full ${
-                  tab.key === "violation" ? "bg-[#D97757]" : "bg-[#067647]"
+                  tab.key === "violation" ? "bg-[#D97757]" : "bg-[#6FAA7D]"
                 }`}
                 transition={{ type: "spring", stiffness: 420, damping: 34 }}
               />

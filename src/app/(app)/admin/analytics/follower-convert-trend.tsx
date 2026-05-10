@@ -43,9 +43,9 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="glass-card-static rounded-2xl px-3 py-2.5 shadow-[var(--shadow-light)]">
-      <p className="text-xs font-semibold tracking-tight text-[var(--color-text-primary)]">{label}</p>
-      <p className="mt-1 text-xs tabular-nums text-[var(--color-primary)]">
+    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
+      <p className="text-[12px] font-medium tracking-tight text-zinc-800">{label}</p>
+      <p className="mt-1 text-[12px] tabular-nums text-[#D97757]">
         导粉：{payload[0].value.toLocaleString()}
       </p>
     </div>
@@ -93,21 +93,21 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
   }
 
   return (
-    <section className="glass-card-static p-4 sm:p-5">
-      <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-sm">
+      <div className="flex flex-col gap-4 border-b border-zinc-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">导粉趋势</h3>
-          <p className="text-xs text-muted-foreground">按最近 {preset === "7d" ? "7" : "30"} 天查看团队导粉变化</p>
+          <h3 className="text-[16px] font-semibold tracking-tight text-zinc-800">导粉趋势</h3>
+          <p className="text-[12px] text-zinc-500">按最近 {preset === "7d" ? "7" : "30"} 天查看团队导粉变化</p>
         </div>
-        <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/45 p-0.5 backdrop-blur">
+        <div className="inline-flex w-fit rounded-[10px] border border-zinc-200 bg-zinc-50 p-0.5">
           {(["7d", "30d"] as Preset[]).map((p) => (
             <Button
               key={p}
               size="sm"
               variant="ghost"
               className={cn(
-                "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.01] hover:brightness-105 active:scale-[0.98]",
-                preset === p && "bg-background text-foreground shadow-sm"
+                "h-7 rounded-[10px] px-2 text-[11px] font-medium text-zinc-500 shadow-none transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                preset === p && "bg-white text-zinc-800 shadow-sm"
               )}
               onClick={() => setPreset(p)}
             >
@@ -118,10 +118,10 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
       </div>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
-          <XAxis dataKey="date" tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }} axisLine={false} tickLine={false} />
+          <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.06)" />
+          <XAxis dataKey="date" tick={{ fontSize: 12, fill: "rgba(82,82,91,0.6)" }} axisLine={false} tickLine={false} />
           <YAxis
-            tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
+            tick={{ fontSize: 12, fill: "rgba(82,82,91,0.6)" }}
             domain={[0, yUpperBound]}
             allowDecimals={false}
             axisLine={false}
@@ -131,10 +131,10 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
           <Line
             type="monotone"
             dataKey="导粉量"
-            stroke="#3B82F6"
-            strokeWidth={2.5}
+            stroke="#D97757"
+            strokeWidth={2}
             dot={false}
-            activeDot={{ r: 5, fill: "#3B82F6", stroke: "white", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: "#D97757", stroke: "white", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

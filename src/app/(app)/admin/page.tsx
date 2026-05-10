@@ -81,13 +81,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     <div className="space-y-8">
       {/* 页面标题区 */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
           Operating Cockpit
         </p>
-        <h1 className="text-2xl font-black tracking-tight text-zinc-950">
+        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">
           管理员中控台
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">
           查看团队日报状态、关键待办和今日整体节奏
         </p>
       </div>
@@ -116,8 +116,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </div>
 
       {/* 趋势图 */}
-      <section className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-zinc-950">团队趋势总览</h2>
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">团队趋势总览</h2>
         <div className="mt-4 space-y-6">
           <ResultTrend
             data={resultTrendData}
@@ -136,8 +136,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       {/* 团队管理 */}
       {data.teamManagement.access.canView && (
-        <section className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-zinc-950">团队与分组</h2>
+        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">团队与分组</h2>
           <div className="mt-4">
             <TeamGroupManager
               access={data.teamManagement.access}
@@ -152,8 +152,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       {/* 邀请码管理 */}
       {canManageInviteModule && (
-        <section className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-zinc-950">邀请码管理</h2>
+        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">邀请码管理</h2>
           <div className="mt-4 space-y-6">
             <TeamManager teams={data.teams} />
             <InviteCodeManager

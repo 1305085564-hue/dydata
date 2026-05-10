@@ -213,7 +213,7 @@ export function AdvicePanel() {
   }
 
   if (isLoading) {
-    return <div className="rounded-lg border bg-background px-4 py-3 text-sm text-muted-foreground">建议加载中...</div>;
+    return <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] text-zinc-400">建议加载中...</div>;
   }
 
   if (adviceList.length === 0) {
@@ -226,19 +226,22 @@ export function AdvicePanel() {
         {adviceList.map((advice) => {
           const isPending = pendingId === advice.id;
           return (
-            <div key={advice.id} className="space-y-3 rounded-lg border bg-background px-4 py-4">
+            <div
+              key={advice.id}
+              className="space-y-3 rounded-xl border border-zinc-200 bg-white px-4 py-4 transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={getStatusVariant(advice.status)}>{advice.status}</Badge>
                     <Badge variant="outline">{getSourceLabel(advice.advice_source)}</Badge>
                   </div>
-                  <p className="text-sm font-medium leading-6">{getAdviceSummary(advice.advice_content)}</p>
+                  <p className="text-[13px] font-medium leading-[1.7] text-zinc-800">{getAdviceSummary(advice.advice_content)}</p>
                   {advice.evidence ? (
-                    <p className="text-xs leading-5 text-muted-foreground">来源依据：{advice.evidence}</p>
+                    <p className="text-[12px] leading-[1.7] text-zinc-500">来源依据：{advice.evidence}</p>
                   ) : null}
                 </div>
-                <span className="text-xs text-muted-foreground">{advice.created_at.slice(5, 10)}</span>
+                <span className="text-[11px] tabular-nums text-zinc-400">{advice.created_at.slice(5, 10)}</span>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -293,12 +296,12 @@ export function AdvicePanel() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>关联已执行视频</DialogTitle>
-            <DialogDescription>选择你已发布或已提交的视频，系统会把这条建议标记为已执行。</DialogDescription>
+            <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">关联已执行视频</DialogTitle>
+            <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">选择你已发布或已提交的视频，系统会把这条建议标记为已执行。</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">选择视频</p>
+            <p className="text-[13px] font-medium text-zinc-800">选择视频</p>
             <Select
               value={selectedVideoId}
               onValueChange={(value) => setSelectedVideoId(value ?? "")}

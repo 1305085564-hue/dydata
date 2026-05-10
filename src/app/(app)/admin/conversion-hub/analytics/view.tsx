@@ -47,9 +47,9 @@ const FORMAT_LABEL: Record<"oral" | "visual" | "mixed", string> = {
 };
 
 const FORMAT_STYLE: Record<"oral" | "visual" | "mixed", string> = {
-  oral: "bg-[#D97757]/10 text-[#D97757]",
-  visual: "bg-[#444CE7]/10 text-[#444CE7]",
-  mixed: "bg-[#067647]/10 text-[#067647]",
+  oral: "bg-zinc-100 text-[#D97757]",
+  visual: "bg-zinc-100 text-[#8AA8C7]",
+  mixed: "bg-zinc-100 text-[#6FAA7D]",
 };
 
 const SORT_OPTIONS: Array<{ value: SortBy; label: string }> = [
@@ -84,11 +84,11 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">
+        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
           Conversion Analytics
         </p>
-        <h1 className="text-2xl font-black tracking-tight text-zinc-950">数据分析</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">数据分析</h1>
+        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">
           TOP 20 转化话术排行榜与近 7 日违规事件趋势
         </p>
       </div>
@@ -101,7 +101,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-zinc-950">TOP 20 话术排行榜</h2>
+            <h2 className="text-[16px] font-semibold text-zinc-800">TOP 20 话术排行榜</h2>
             <p className="mt-0.5 text-xs text-zinc-500">
               转化话术，使用 ≥3 且展示 ≥1k
             </p>
@@ -144,7 +144,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                   scroll={false}
                   className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                     active
-                      ? "border-[#D97757] bg-[#D97757]/10 text-[#D97757]"
+                      ? "border-[#D97757] bg-zinc-50 text-[#D97757]"
                       : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50"
                   }`}
                 >
@@ -186,7 +186,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                         className="text-zinc-700 transition-colors hover:bg-zinc-50/60"
                       >
                         <td className="border-b border-zinc-100 px-3 py-3">
-                          <span className="font-bold text-zinc-500">
+                          <span className="font-semibold text-zinc-500">
                             {medal ?? `#${idx + 1}`}
                           </span>
                         </td>
@@ -215,7 +215,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                         <td className="border-b border-zinc-100 px-3 py-3 text-right tabular-nums">
                           {formatNumber(row.total_follows)}
                         </td>
-                        <td className="border-b border-zinc-100 px-3 py-3 text-right font-semibold tabular-nums text-[#067647]">
+                        <td className="border-b border-zinc-100 px-3 py-3 text-right font-semibold tabular-nums text-[#6FAA7D]">
                           {formatRate(row.weighted_conversion_rate)}
                         </td>
                       </motion.tr>
@@ -236,7 +236,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
       >
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-bold text-zinc-950">近 7 日违规事件趋势</h2>
+            <h2 className="text-[16px] font-semibold text-zinc-800">近 7 日违规事件趋势</h2>
             <p className="mt-0.5 text-xs text-zinc-500">数字化展示每日违规事件数量</p>
           </div>
         </div>
@@ -253,7 +253,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                 transition={{ delay: idx * 0.05, duration: 0.3, ease: "easeOut" }}
                 className={`flex flex-col items-center rounded-xl border p-3 text-center ${
                   alert
-                    ? "border-[#B42318]/30 bg-[#B42318]/5"
+                    ? "border-[#C9604D]/30 bg-zinc-50"
                     : "border-zinc-200 bg-white"
                 }`}
               >
@@ -261,8 +261,8 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                   {formatDayShort(day.date)}
                 </p>
                 <p
-                  className={`mt-2 text-2xl font-black tabular-nums ${
-                    alert ? "text-[#B42318]" : "text-zinc-950"
+                  className={`mt-2 text-[20px] font-semibold tabular-nums ${
+                    alert ? "text-[#C9604D]" : "text-zinc-800"
                   }`}
                 >
                   {day.count}
@@ -272,7 +272,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.max(4, ratio * 100)}%` }}
                     transition={{ delay: 0.1 + idx * 0.05, duration: 0.4, ease: "easeOut" }}
-                    className={`h-full ${alert ? "bg-[#B42318]" : "bg-zinc-400"}`}
+                    className={`h-full ${alert ? "bg-[#C9604D]" : "bg-zinc-400"}`}
                   />
                 </div>
               </motion.div>

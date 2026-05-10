@@ -9,6 +9,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import type { VariantProps } from "class-variance-authority";
+import { badgeVariants } from "@/components/ui/badge";
+
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
 interface AuditLog {
   id: string;
@@ -24,35 +28,17 @@ interface AuditLogListProps {
   logs: AuditLog[];
 }
 
-const ACTION_STYLES: Record<
-  string,
-  { label: string; className: string }
-> = {
-  update_report: {
-    label: "编辑数据",
-    className: "bg-zinc-100 text-zinc-700 border-zinc-200",
-  },
-  delete_report: {
-    label: "删除数据",
-    className: "bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]",
-  },
-  set_exempt: {
-    label: "设置豁免",
-    className: "bg-[#FEFCE8] text-[#92400E] border-[#FDE68A]",
-  },
-  clear_exempt: {
-    label: "清除豁免",
-    className: "bg-[#ECFDF3] text-[#067647] border-[#A7F3D0]",
-  },
-  submit_notify: {
-    label: "提交通知",
-    className: "bg-[#EEF4FF] text-[#444CE7] border-[#C7D2FE]",
-  },
+const ACTION_META: Record<string, { label: string; variant: BadgeVariant }> = {
+  update_report: { label: "编辑数据", variant: "neutral" },
+  delete_report: { label: "删除数据", variant: "danger" },
+  set_exempt: { label: "设置豁免", variant: "warning" },
+  clear_exempt: { label: "清除豁免", variant: "success" },
+  submit_notify: { label: "提交通知", variant: "accent" },
 };
 
 export function AuditLogList({ logs }: AuditLogListProps) {
   if (logs.length === 0) {
-    return <p className="py-4 text-sm text-zinc-500">暂无操作记录</p>;
+    return <p className="py-4 text-[13px] text-zinc-400">暂无操作记录</p>;
   }
 
   return (
@@ -61,21 +47,21 @@ export function AuditLogList({ logs }: AuditLogListProps) {
         <Table>
           <TableHeader>
             <TableRow className="border-zinc-200 hover:bg-transparent">
-              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">时间</TableHead>
-              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">操作人</TableHead>
-              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">操作</TableHead>
-              <TableHead className="bg-zinc-50 text-zinc-500 text-[11px] uppercase tracking-wider font-medium">详情</TableHead>
+              <TableHead>时间</TableHead>
+              <TableHead>操作人</TableHead>
+              <TableHead>操作</TableHead>
+              <TableHead>详情</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {logs.map((log) => {
-              const actionInfo = ACTION_STYLES[log.action] ?? {
+              const meta = ACTION_META[log.action] ?? {
                 label: log.action,
-                className: "bg-zinc-100 text-zinc-700 border-zinc-200",
+                variant: "neutral" as BadgeVariant,
               };
               return (
-                <TableRow key={log.id} className="border-zinc-200 hover:bg-zinc-50">
-                  <TableCell className="whitespace-nowrap text-sm text-zinc-500">
+                <TableRow key={log.id} className="border-zinc-200">
+                  <TableCell className="whitespace-nowrap text-[13px] text-zinc-500">
                     {new Date(log.created_at).toLocaleString("zh-CN", {
                       month: "2-digit",
                       day: "2-digit",
@@ -83,15 +69,13 @@ export function AuditLogList({ logs }: AuditLogListProps) {
                       minute: "2-digit",
                     })}
                   </TableCell>
-                  <TableCell className="text-sm text-zinc-950">
+                  <TableCell className="text-[13px] text-zinc-800">
                     {log.user_name ?? log.user_id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={`text-xs ${actionInfo.className}`}>
-                      {actionInfo.label}
-                    </Badge>
+                    <Badge variant={meta.variant}>{meta.label}</Badge>
                   </TableCell>
-                  <TableCell className="max-w-[300px] truncate text-sm text-zinc-500">
+                  <TableCell className="max-w-[300px] truncate text-[13px] text-zinc-500">
                     {log.detail ?? "-"}
                   </TableCell>
                 </TableRow>
@@ -103,9 +87,9 @@ export function AuditLogList({ logs }: AuditLogListProps) {
 
       <div className="space-y-3 sm:hidden">
         {logs.map((log) => {
-          const actionInfo = ACTION_STYLES[log.action] ?? {
+          const meta = ACTION_META[log.action] ?? {
             label: log.action,
-            className: "bg-zinc-100 text-zinc-700 border-zinc-200",
+            variant: "neutral" as BadgeVariant,
           };
           return (
             <div
@@ -113,10 +97,8 @@ export function AuditLogList({ logs }: AuditLogListProps) {
               className="space-y-1 rounded-xl border border-zinc-200 bg-white p-3"
             >
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className={`text-xs ${actionInfo.className}`}>
-                  {actionInfo.label}
-                </Badge>
-                <span className="text-xs text-zinc-500">
+                <Badge variant={meta.variant}>{meta.label}</Badge>
+                <span className="text-[12px] text-zinc-500">
                   {new Date(log.created_at).toLocaleString("zh-CN", {
                     month: "2-digit",
                     day: "2-digit",
@@ -125,11 +107,11 @@ export function AuditLogList({ logs }: AuditLogListProps) {
                   })}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500">
+              <p className="text-[12px] text-zinc-500">
                 {log.user_name ?? log.user_id.slice(0, 8)}
               </p>
               {log.detail && (
-                <p className="truncate text-xs text-zinc-500">{log.detail}</p>
+                <p className="truncate text-[12px] text-zinc-500">{log.detail}</p>
               )}
             </div>
           );

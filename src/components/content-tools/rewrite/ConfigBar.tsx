@@ -84,11 +84,11 @@ export function ConfigBar({
                     onClick={() => onToggleFixedMode(fixedMode.id)}
                     disabled={interactionControlsDisabled}
                     className={cn(
-                      'group relative w-full overflow-hidden rounded-xl border p-3 text-left transition-all',
+                      'group relative w-full overflow-hidden rounded-xl border p-3 text-left transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                       interactionControlsDisabled && 'cursor-not-allowed opacity-50',
                       active
-                        ? 'border-[#D97757] bg-[#FDF6F3] shadow-[0_1px_0_rgba(0,0,0,0.02)]'
-                        : 'border-zinc-200 bg-white hover:-translate-y-[1px] hover:border-zinc-300 hover:shadow-sm active:translate-y-0'
+                        ? 'border-[#D97757] bg-zinc-50 shadow-sm'
+                        : 'border-zinc-200 bg-white hover:-translate-y-[1px] hover:border-zinc-300 active:translate-y-0'
                     )}
                   >
                     {active && (
@@ -98,16 +98,16 @@ export function ConfigBar({
                       <span
                         className={cn(
                           'text-[13px] font-semibold',
-                          active ? 'text-zinc-950' : 'text-zinc-900'
+                          active ? 'text-zinc-950' : 'text-zinc-950'
                         )}
                       >
                         {fixedMode.name}
                       </span>
                       {active && (
-                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#D97757] shadow-[0_0_0_3px_rgba(217,119,87,0.15)]" />
+                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#D97757]" />
                       )}
                     </div>
-                    <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                    <p className="mt-1 text-[11px] leading-[1.7] text-zinc-500">
                       {fixedMode.description || '后台固定绑定模型与提示词'}
                     </p>
                   </button>
@@ -137,7 +137,7 @@ export function ConfigBar({
               </span>
               <div className="h-px flex-1 bg-zinc-200" />
               {customControlsLocked && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">
+                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-50 px-1.5 py-0.5 text-[9px] font-medium text-zinc-500 ring-1 ring-zinc-200">
                   <Lock className="h-2.5 w-2.5" />
                   Locked
                 </span>

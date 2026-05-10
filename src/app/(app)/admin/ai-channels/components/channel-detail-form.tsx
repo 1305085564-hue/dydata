@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, Save, Trash2, RefreshCw, ShieldAlert, Activity, Image as ImageIcon } from "lucide-react";
+import { CheckCircle2, Save, Trash2, RefreshCw, ShieldAlert, Activity, Image as ImageIcon } from "lucide-react";
 import { AiChannelRow, ChannelFormState } from "./types";
 import { formatDateTime, formatMaskedFromApi, getStatusMeta, isRecoverable } from "./utils";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -82,7 +83,7 @@ export function ChannelDetailForm({
   const statusMeta = channel ? getStatusMeta(channel) : null;
 
   return (
-    <Card className="rounded-[2rem] border border-zinc-200 bg-white shadow-sm overflow-hidden">
+    <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
       <div className="flex flex-col xl:flex-row xl:items-center justify-between border-b border-zinc-200 bg-zinc-50 px-6 py-4 gap-4">
         {/* Left: Title & Toggle */}
         <div className="flex flex-wrap items-center gap-4">
@@ -115,9 +116,9 @@ export function ChannelDetailForm({
                 size="sm"
                 onClick={() => onTest(channel.id, "text")}
                 disabled={isTestingText || !channel.is_enabled}
-                className="rounded-xl h-8 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 whitespace-nowrap"
+                className="rounded-xl h-8 text-[#6FAA7D] border-zinc-200 bg-[#6FAA7D]/10 hover:bg-[#6FAA7D]/15 whitespace-nowrap"
               >
-                {isTestingText ? <Loader2 className="mr-1.5 size-3.5 animate-spin shrink-0" /> : <Activity className="mr-1.5 size-3.5 shrink-0" />}
+                {isTestingText ? <Skeleton className="mr-1.5 size-3.5 rounded-full shrink-0" /> : <Activity className="mr-1.5 size-3.5 shrink-0" />}
                 测文本
               </Button>
               <Button
@@ -125,9 +126,9 @@ export function ChannelDetailForm({
                 size="sm"
                 onClick={() => onTest(channel.id, "ocr")}
                 disabled={isTestingOcr || !channel.is_enabled}
-                className="rounded-xl h-8 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 whitespace-nowrap"
+                className="rounded-xl h-8 text-[#6FAA7D] border-zinc-200 bg-[#6FAA7D]/10 hover:bg-[#6FAA7D]/15 whitespace-nowrap"
               >
-                {isTestingOcr ? <Loader2 className="mr-1.5 size-3.5 animate-spin shrink-0" /> : <ImageIcon className="mr-1.5 size-3.5 shrink-0" />}
+                {isTestingOcr ? <Skeleton className="mr-1.5 size-3.5 rounded-full shrink-0" /> : <ImageIcon className="mr-1.5 size-3.5 shrink-0" />}
                 测 OCR
               </Button>
 
@@ -139,7 +140,7 @@ export function ChannelDetailForm({
                   disabled={isRecovering}
                   className="rounded-xl h-8 whitespace-nowrap"
                 >
-                  {isRecovering ? <Loader2 className="mr-1.5 size-3.5 animate-spin shrink-0" /> : <RefreshCw className="mr-1.5 size-3.5 shrink-0" />}
+                  {isRecovering ? <Skeleton className="mr-1.5 size-3.5 rounded-full shrink-0" /> : <RefreshCw className="mr-1.5 size-3.5 shrink-0" />}
                   从熔断恢复
                 </Button>
               )}
@@ -160,15 +161,15 @@ export function ChannelDetailForm({
           <div className="flex items-center gap-3 pl-2 sm:border-l sm:border-border/60">
             <span className="text-sm font-medium whitespace-nowrap">
               {isSaving ? (
-                <span className="text-amber-500 flex items-center gap-1.5"><Loader2 className="size-3.5 animate-spin" />保存中...</span>
+                <span className="text-[#D99E55] flex items-center gap-1.5"><Skeleton className="size-3.5 rounded-full" />保存中...</span>
               ) : saveStatus === 'error' ? (
                 <span className="text-destructive flex items-center gap-1.5">保存失败</span>
               ) : isModified ? (
-                <span className="text-amber-600">有修改待保存</span>
+                <span className="text-[#D99E55]">有修改待保存</span>
               ) : saveStatus === 'success' ? (
-                <span className="text-emerald-500 flex items-center gap-1.5"><CheckCircle2 className="size-3.5" />已保存</span>
+                <span className="text-[#6FAA7D] flex items-center gap-1.5"><CheckCircle2 className="size-3.5" />已保存</span>
               ) : channel ? (
-                <span className="text-emerald-500 flex items-center gap-1.5"><CheckCircle2 className="size-3.5" />已保存</span>
+                <span className="text-[#6FAA7D] flex items-center gap-1.5"><CheckCircle2 className="size-3.5" />已保存</span>
               ) : (
                 <span className="text-muted-foreground text-xs">新渠道待填写</span>
               )}
@@ -176,7 +177,7 @@ export function ChannelDetailForm({
             <Button
               onClick={handleSave}
               disabled={!isModified || isSaving}
-              className={cn("rounded-xl h-8 whitespace-nowrap", isModified ? "bg-amber-600 hover:bg-amber-700 text-white" : "")}
+              className={cn("rounded-xl h-8 whitespace-nowrap", isModified ? "bg-[#D99E55] hover:bg-[#C38C47] text-white" : "")}
               size="sm"
             >
               <Save className="mr-1.5 size-3.5 shrink-0" />

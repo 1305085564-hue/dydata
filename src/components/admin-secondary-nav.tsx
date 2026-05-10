@@ -130,7 +130,7 @@ interface AdminSecondaryNavProps {
 
 function getCardClassName(active: boolean) {
   return cn(
-    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-[28px] border border-slate-200/80 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(244,248,255,0.92))] p-5 text-left shadow-[0_18px_48px_-28px_rgba(15,23,42,0.32)] backdrop-blur-[18px] transition duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_22px_60px_-28px_rgba(37,99,235,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:min-w-[240px] xl:min-w-[200px]",
+    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-slate-200/80 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(244,248,255,0.92))] p-5 text-left shadow-[0_18px_48px_-28px_rgba(15,23,42,0.32)] transition duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_22px_60px_-28px_rgba(37,99,235,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:min-w-[240px] xl:min-w-[200px]",
     active && "admin-subnav-link-active border-primary/40 bg-[linear-gradient(160deg,rgba(239,246,255,0.98),rgba(255,255,255,0.96))] shadow-[0_24px_70px_-32px_rgba(37,99,235,0.35)]",
   );
 }

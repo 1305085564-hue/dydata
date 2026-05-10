@@ -24,16 +24,16 @@ export type EventItem = {
 
 const EVENT_TYPE_STYLE: Record<string, string> = {
   限流: "bg-[#FFB547]/15 text-[#8B5A00]",
-  警告: "bg-[#F59E0B]/15 text-[#92400E]",
-  删除视频: "bg-[#B42318]/10 text-[#B42318]",
+  警告: "bg-[#F59E0B]/15 text-[#D99E55]",
+  删除视频: "bg-[#C9604D]/10 text-[#C9604D]",
   封号: "bg-[#9F1239]/10 text-[#9F1239]",
   其他: "bg-zinc-100 text-zinc-600",
 };
 
 const APPEAL_STATUS_STYLE: Record<string, string> = {
-  申诉成功: "bg-[#067647]/10 text-[#067647]",
-  申诉失败: "bg-[#B42318]/10 text-[#B42318]",
-  申诉中: "bg-[#444CE7]/10 text-[#444CE7]",
+  申诉成功: "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  申诉失败: "bg-[#C9604D]/10 text-[#C9604D]",
+  申诉中: "bg-[#8AA8C7]/10 text-[#8AA8C7]",
   未申诉: "bg-zinc-100 text-zinc-600",
 };
 
@@ -66,7 +66,7 @@ function EmptyEvents() {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="mx-auto size-8 text-[#067647]"
+        className="mx-auto size-8 text-[#6FAA7D]"
         aria-hidden="true"
       >
         <path d="M20 6 9 17l-5-5" />
@@ -129,7 +129,7 @@ function ScreenshotThumbs({
           key={path}
           type="button"
           onClick={() => onOpen(path)}
-          className="group relative size-16 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-all hover:-translate-y-0.5 hover:border-zinc-400"
+          className="group relative size-16 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-colors hover:-translate-y-0.5 hover:border-zinc-400"
           aria-label="查看截图大图"
         >
           <Image
@@ -138,7 +138,7 @@ function ScreenshotThumbs({
             fill
             unoptimized
             sizes="64px"
-            className="object-cover transition-transform group-hover:scale-[1.05]"
+            className="object-cover transition-transform group-]"
           />
         </button>
       ))}
@@ -279,7 +279,7 @@ export function EventList({ events }: { events: EventItem[] }) {
               ) : null}
 
               {event.recovered_at ? (
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#067647]/10 px-2 py-0.5 text-[11px] font-semibold text-[#067647]">
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[11px] font-semibold text-[#6FAA7D]">
                   <RefreshCw className="size-3" strokeWidth={2.25} />
                   恢复于 {formatDateTime(event.recovered_at)}
                 </div>

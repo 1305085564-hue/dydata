@@ -62,7 +62,7 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
 function 趋势空状态({ text }: { text: string }) {
   return (
     <motion.div
-      className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-border/70 bg-muted/[0.18] px-6 text-center"
+      className="flex h-full flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/70 bg-muted/[0.18] px-6 text-center"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: ANIMATION_TIMINGS.fast / 1000, ease: [0.16, 1, 0.3, 1] }}
@@ -105,7 +105,7 @@ function InteractionTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-[16px] border border-white/70 bg-[var(--glass-bg)] px-3 py-2.5 shadow-[var(--shadow-toast)] backdrop-blur-[20px]"
+      className="min-w-40 rounded-[16px] border border-white/70 bg-[var(--glass-bg)] px-3 py-2.5 shadow-[var(--shadow-toast)]"
     >
       <p className="text-[11px] font-medium tracking-[0.01em] text-foreground/70">{label}</p>
       <div className="mt-2 space-y-1.5">
@@ -174,7 +174,7 @@ export function InteractionTrend({
               size="sm"
               variant="ghost"
               className={cn(
-                "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)] hover:scale-[1.01] hover:brightness-105 active:scale-[0.98]",
+                "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)]] hover:brightness-105]",
                 range === value && "glass-panel text-foreground shadow-sm"
               )}
               onClick={() => setRange(value)}

@@ -39,7 +39,7 @@ export default function DemoDashboardPage() {
                 这里保留账号选择、截图导入、提交确认的完整位置关系，但在演示环境统一灰掉，避免产生真实数据。
               </p>
             </div>
-            <Badge variant="outline" className="rounded-full bg-amber-50 text-amber-700">
+            <Badge variant="outline" className="rounded-full bg-zinc-50 text-[#D99E55]">
               只读
             </Badge>
           </CardHeader>
@@ -134,7 +134,7 @@ export default function DemoDashboardPage() {
         title="历史记录预览"
         description="展示最近 12 条演示日报，帮助外部访客理解信息密度和查看路径。"
       >
-        <div className="overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[var(--shadow-card)]">
+        <div className="overflow-hidden rounded-2xl border border-white/70 bg-white/85 shadow-[var(--shadow-card)]">
           <Table>
             <TableHeader>
               <TableRow>

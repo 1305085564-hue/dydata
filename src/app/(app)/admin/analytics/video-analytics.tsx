@@ -117,7 +117,7 @@ function TrendTooltip({ active, payload, label }: { active?: boolean; payload?: 
   if (!active || !payload?.length || !label) return null;
 
   return (
-    <div className="rounded-2xl border border-white/60 bg-white/95 px-3 py-2 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.32)] backdrop-blur-xl">
+    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-sm">
       <p className="text-xs font-medium text-foreground">{label}</p>
       <p className="mt-1 text-xs text-muted-foreground">发布视频 {payload[0].value} 条</p>
     </div>
@@ -186,7 +186,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
             return (
               <Card
                 key={video.id}
-                className="rounded-2xl border border-white/60 bg-white/80 shadow-[0_22px_60px_-28px_rgba(15,23,42,0.28)] backdrop-blur-xl"
+                className="rounded-2xl border border-zinc-200 bg-white shadow-sm"
               >
                 <CardHeader className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -245,7 +245,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
         )}
       </div>
 
-      <Card className="rounded-2xl border border-white/60 bg-white/80 shadow-[0_22px_60px_-28px_rgba(15,23,42,0.28)] backdrop-blur-xl">
+      <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="text-base font-semibold tracking-tight">每日视频数趋势</CardTitle>
         </CardHeader>
@@ -280,7 +280,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border border-white/60 bg-white/80 shadow-[0_22px_60px_-28px_rgba(15,23,42,0.28)] backdrop-blur-xl">
+      <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="text-base font-semibold tracking-tight">视频排行榜</CardTitle>
         </CardHeader>
@@ -303,11 +303,11 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                       <div className="grid grid-cols-2 gap-1.5">
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
                           <p className="text-[9px] text-muted-foreground">24h播放</p>
-                          <p className="text-xs font-bold tabular-nums">{formatCompactNumber(video.snapshot24h.play_count)}</p>
+                          <p className="text-[12px] font-medium tabular-nums">{formatCompactNumber(video.snapshot24h.play_count)}</p>
                         </div>
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
                           <p className="text-[9px] text-muted-foreground">涨粉</p>
-                          <p className="text-xs font-bold tabular-nums">{formatCompactNumber(video.snapshot24h.follower_gain)}</p>
+                          <p className="text-[12px] font-medium tabular-nums">{formatCompactNumber(video.snapshot24h.follower_gain)}</p>
                         </div>
                       </div>
                       <p className="truncate text-[10px] text-muted-foreground">{video.accounts?.name} · {video.profiles?.name ?? "未知"}</p>

@@ -47,15 +47,15 @@ interface PersonStats {
 
 function getSuggestion(metrics: { hitRate: number; stability: number; trend: number; engagementRate: number }) {
   if (metrics.trend < -10) {
-    return { label: "重点关注", color: "text-rose-700", bgColor: "bg-rose-100/80", borderColor: "border-rose-200" };
+    return { label: "重点关注", color: "text-[#C9604D]", bgColor: "bg-[#C9604D]/10", borderColor: "border-[#C9604D]/20" };
   }
   if (metrics.hitRate >= 30 && metrics.trend >= 0) {
-    return { label: "继续放量", color: "text-emerald-700", bgColor: "bg-emerald-100/80", borderColor: "border-emerald-200" };
+    return { label: "继续放量", color: "text-[#6FAA7D]", bgColor: "bg-[#6FAA7D]/10", borderColor: "border-[#6FAA7D]/20" };
   }
   if (metrics.stability >= 15) {
-    return { label: "波动异常", color: "text-amber-700", bgColor: "bg-amber-100/80", borderColor: "border-amber-200" };
+    return { label: "波动异常", color: "text-[#D99E55]", bgColor: "bg-[#D99E55]/10", borderColor: "border-[#D99E55]/20" };
   }
-  return { label: "保持观察", color: "text-blue-700", bgColor: "bg-blue-100/80", borderColor: "border-blue-200" };
+  return { label: "保持观察", color: "text-zinc-600", bgColor: "bg-zinc-100", borderColor: "border-zinc-200" };
 }
 
 function computeP70Map(reports: Report[]): Map<string, number> {
@@ -192,10 +192,10 @@ export function PersonnelAnalysis({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
-          <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">{title}</h3>
+          <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">{title}</h3>
           <p className="text-sm text-[var(--color-text-secondary)]">改为双列紧凑卡片后，桌面端能同时看到更多成员对比。</p>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 rounded-full border border-slate-200/60 bg-slate-50/50 p-1">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-zinc-50 p-1">
           {([
             ["avgPlay", "均播表现"],
             ["hitRate", "爆款能力"],
@@ -206,8 +206,8 @@ export function PersonnelAnalysis({
               key={key}
               onClick={() => setSortBy(key)}
               className={cn(
-                "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
-                sortBy === key ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200/50" : "text-slate-500 hover:text-slate-700",
+                "rounded-[10px] px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                sortBy === key ? "bg-white text-zinc-800 shadow-sm" : "text-zinc-500 hover:text-zinc-700",
               )}
             >
               {label}
@@ -264,12 +264,12 @@ function PersonRankCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border bg-white p-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
+        "group relative overflow-hidden rounded-xl border bg-white p-3 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0",
         person.suggestion.borderColor,
-        isActive && "ring-2 ring-blue-400/70 ring-offset-2 ring-offset-white",
+        isActive && "ring-1 ring-zinc-950/5 border-zinc-400",
       )}
     >
-      <div className="pointer-events-none absolute -right-2 -top-4 text-[58px] font-black leading-none text-slate-50 transition-colors group-hover:text-blue-50/60">
+      <div className="pointer-events-none absolute -right-2 -top-4 text-[58px] font-semibold leading-none text-zinc-50 transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
         {rank}
       </div>
 
@@ -277,12 +277,12 @@ function PersonRankCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 shadow-inner">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[12px] font-medium text-zinc-600">
                 {rank}
               </div>
               <div className="min-w-0">
-                <h4 className="truncate text-sm font-bold text-slate-800">{person.name}</h4>
-                <p className="mt-0.5 text-[11px] font-medium text-slate-400">
+                <h4 className="truncate text-[13px] font-medium text-zinc-800">{person.name}</h4>
+                <p className="mt-0.5 text-[11px] font-medium text-zinc-400">
                   {isInsufficient ? "样本不足 · " : ""}已收集 {person.count} 条视频
                 </p>
               </div>
@@ -298,15 +298,15 @@ function PersonRankCard({
         </div>
 
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:grid-cols-1 2xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-          <div className="rounded-xl bg-slate-50/80 p-2">
+          <div className="rounded-lg bg-zinc-50 p-2">
             <div className="flex items-end justify-between gap-2">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">均播对比</p>
-                <p className="mt-0.5 text-base font-bold text-slate-900">{formatPlayCountCompact(person.avgPlay)}</p>
+                <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">均播对比</p>
+                <p className="mt-0.5 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatPlayCountCompact(person.avgPlay)}</p>
               </div>
               <div className="text-right">
-                <p className="text-[11px] font-medium text-slate-400">稳定性</p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-700">{person.stability.toFixed(1)}</p>
+                <p className="text-[11px] font-medium text-zinc-400">稳定性</p>
+                <p className="mt-0.5 text-[12px] font-medium text-zinc-700 tabular-nums">{person.stability.toFixed(1)}</p>
               </div>
             </div>
 
@@ -315,14 +315,14 @@ function PersonRankCard({
                 label="本周 (近7天)"
                 value={formatPlayCountCompact(person.recentAvgPlay)}
                 width={recentPlayWidth}
-                barClassName={person.trend >= 0 ? "bg-sky-500" : "bg-sky-400"}
+                barClassName={person.trend >= 0 ? "bg-[#6FAA7D]" : "bg-[#C9604D]"}
                 heightClassName="h-2"
               />
               <StackedBar
                 label="上周 (8-14天前)"
                 value={formatPlayCountCompact(person.prevAvgPlay)}
                 width={prevPlayWidth}
-                barClassName="bg-amber-400"
+                barClassName="bg-[#D99E55]"
                 heightClassName="h-1.5"
                 muted
               />
@@ -335,7 +335,7 @@ function PersonRankCard({
               value={`${person.hitRate.toFixed(1)}%`}
               width={hitRateWidth}
               barClassName="bg-[linear-gradient(90deg,var(--color-primary)_0%,var(--color-primary-light,var(--color-primary))_100%)]"
-              toneClassName="bg-blue-50/80"
+              toneClassName="bg-zinc-50"
               description="蓝条改为纵向紧凑展示"
             />
             <MetricBarCard
@@ -343,18 +343,18 @@ function PersonRankCard({
               value={`${person.engagementRate.toFixed(2)}%`}
               width={engagementWidth}
               barClassName="bg-[linear-gradient(90deg,#fbbf24_0%,#f59e0b_100%)]"
-              toneClassName="bg-amber-50/80"
+              toneClassName="bg-zinc-50"
               description="黄条堆叠在下方"
             />
           </div>
         </div>
 
         {onSelectPerson ? (
-          <div className="border-t border-slate-100 pt-2">
+          <div className="border-t border-zinc-100 pt-2">
             <button
               type="button"
               onClick={() => onSelectPerson(person.name)}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100"
             >
               查看该成员样本
             </button>
@@ -368,15 +368,15 @@ function PersonRankCard({
 function TrendBadge({ trend }: { trend: number }) {
   const icon =
     trend > 0 ? (
-      <TrendingUp className="size-3.5 text-emerald-500" />
+      <TrendingUp className="size-3.5 stroke-[1.5] text-[#6FAA7D]" />
     ) : trend < 0 ? (
-      <TrendingDown className="size-3.5 text-rose-500" />
+      <TrendingDown className="size-3.5 stroke-[1.5] text-[#C9604D]" />
     ) : (
-      <Minus className="size-3.5 text-slate-400" />
+      <Minus className="size-3.5 stroke-[1.5] text-zinc-400" />
     );
 
   return (
-    <div className="flex h-6 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+    <div className="flex h-6 items-center gap-1 rounded-[10px] bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600">
       {icon}
       <span>{formatSignedPercent(trend)}</span>
     </div>
@@ -400,12 +400,12 @@ function StackedBar({
 }) {
   return (
     <div className="space-y-1">
-      <div className={cn("flex items-center justify-between gap-2 text-[10px] font-semibold", muted ? "text-slate-400" : "text-slate-500")}>
+      <div className={cn("flex items-center justify-between gap-2 text-[10px] font-medium", muted ? "text-zinc-400" : "text-zinc-500")}>
         <span>{label}</span>
-        <span className={cn("text-slate-700", muted && "text-slate-500")}>{value}</span>
+        <span className={cn("text-zinc-700", muted && "text-zinc-500")}>{value}</span>
       </div>
       <div className={cn("w-full overflow-hidden rounded-full bg-white", heightClassName)}>
-        <div className={cn("h-full rounded-full transition-all duration-1000", barClassName)} style={{ width: `${width}%` }} />
+        <div className={cn("h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]", barClassName)} style={{ width: `${width}%` }} />
       </div>
     </div>
   );
@@ -430,14 +430,14 @@ function MetricBarCard({
     <div className={cn("rounded-xl p-2", toneClassName)}>
       <div className="flex items-end justify-between gap-2">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{title}</p>
-          <p className="mt-0.5 text-sm font-bold text-slate-900">{value}</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{title}</p>
+          <p className="mt-0.5 text-[13px] font-semibold text-zinc-800 tabular-nums">{value}</p>
         </div>
       </div>
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/90">
-        <div className={cn("h-full rounded-full transition-all duration-1000", barClassName)} style={{ width: `${width}%` }} />
+        <div className={cn("h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]", barClassName)} style={{ width: `${width}%` }} />
       </div>
-      <p className="mt-1 line-clamp-1 text-[10px] leading-4 text-slate-500">{description}</p>
+      <p className="mt-1 line-clamp-1 text-[10px] leading-4 text-zinc-500">{description}</p>
     </div>
   );
 }

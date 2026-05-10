@@ -78,8 +78,8 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
   if (!capabilityCards.length) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">六维能力</h2>
-        <p className="mt-2 text-sm leading-6 text-zinc-500">数据不足，先连续提交数据后再看能力分布。</p>
+        <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">六维能力</h2>
+        <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">数据不足，先连续提交数据后再看能力分布。</p>
       </div>
     );
   }
@@ -188,7 +188,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                 fill={isActive ? "#09090B" : "#52525B"}
                 stroke="white"
                 strokeWidth="1.5"
-                className="cursor-pointer transition-all"
+                className="cursor-pointer transition-[r,fill] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 onClick={() => setActiveIndex(isActive ? null : i)}
               >
                 <title>{`${dimName}: ${score}分`}</title>
@@ -221,14 +221,14 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
       {/* 最强 / 最弱 — 极简标签 */}
       <div className="flex items-center justify-center gap-3">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#067647]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
           <span className="text-zinc-500">最强</span>
-          <span className="font-semibold text-zinc-900">{capabilityCards[strongIndex]?.name}</span>
+          <span className="font-semibold text-zinc-800 tabular-nums">{capabilityCards[strongIndex]?.name}</span>
         </div>
         <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#B42318]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#C9604D]" />
           <span className="text-zinc-500">最弱</span>
-          <span className="font-semibold text-zinc-900">{capabilityCards[weakIndex]?.name}</span>
+          <span className="font-semibold text-zinc-800 tabular-nums">{capabilityCards[weakIndex]?.name}</span>
         </div>
       </div>
     </div>

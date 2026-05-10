@@ -101,7 +101,7 @@ export function DemoNav() {
 
 export function DemoModeChip() {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-700 shadow-[var(--shadow-light)]">
+    <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/20 bg-zinc-100/10 px-3 py-1.5 text-xs text-[#D99E55] shadow-[var(--shadow-light)]">
       <Sparkles className="size-3.5" />
       演示模式
       <span className="text-amber-500/60">|</span>

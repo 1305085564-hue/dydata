@@ -131,7 +131,7 @@ export function SubmissionCalendar({
   return (
     <section
       className={cn(
-        "rounded-[1.75rem] border border-white/70 bg-white/82 p-4 shadow-[var(--shadow-card)] backdrop-blur-[18px] sm:p-5",
+        "rounded-2xl border border-white/70 bg-white/82 p-4 shadow-[var(--shadow-card)] sm:p-5",
         className,
       )}
     >
@@ -160,24 +160,24 @@ export function SubmissionCalendar({
       )}
 
       <div className={cn("flex flex-wrap gap-2 text-xs text-[var(--color-text-secondary)]", compact ? "mt-1" : "mt-4")}>
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
-          <span className="size-2 rounded-full bg-emerald-500" />
+        <div className="inline-flex items-center gap-2 rounded-full bg-zinc-50 px-3 py-1 text-[#6FAA7D]">
+          <span className="size-2 rounded-full bg-zinc-100" />
           已交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
-          <span className="size-2 rounded-full bg-emerald-400" />
+        <div className="inline-flex items-center gap-2 rounded-full bg-zinc-50 px-3 py-1 text-[#6FAA7D]">
+          <span className="size-2 rounded-full bg-zinc-100" />
           免交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-amber-700">
-          <span className="size-2 rounded-full bg-amber-500" />
+        <div className="inline-flex items-center gap-2 rounded-full bg-zinc-50 px-3 py-1 text-[#D99E55]">
+          <span className="size-2 rounded-full bg-zinc-100" />
           请假
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-rose-700">
-          <span className="size-2 rounded-full bg-rose-500" />
+        <div className="inline-flex items-center gap-2 rounded-full bg-zinc-50 px-3 py-1 text-[#C9604D]">
+          <span className="size-2 rounded-full bg-zinc-100" />
           未交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-rose-700">
-          <span className="size-2 rounded-full bg-rose-500" />
+        <div className="inline-flex items-center gap-2 rounded-full bg-zinc-50 px-3 py-1 text-[#C9604D]">
+          <span className="size-2 rounded-full bg-zinc-100" />
           漏交
         </div>
       </div>
@@ -199,17 +199,17 @@ export function SubmissionCalendar({
               type="button"
               onClick={() => onDateSelect?.(cell.key, submittedDateSet.has(cell.key))}
               className={cn(
-                "flex aspect-square flex-col items-center justify-center rounded-[12px] border text-sm font-semibold shadow-[var(--shadow-light)] transition-all sm:aspect-auto sm:min-h-[4rem]",
+                "flex aspect-square flex-col items-center justify-center rounded-[12px] border text-sm font-semibold shadow-[var(--shadow-light)] transition-colors sm:aspect-auto sm:min-h-[4rem]",
                 onDateSelect && "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-24px_rgba(15,23,42,0.45)]",
-                cell.state === "submitted" && "border-emerald-200 bg-emerald-50 text-emerald-700",
-                cell.state === "waive" && "border-emerald-200 bg-emerald-50/80 text-emerald-700",
-                cell.state === "leave" && "border-amber-200 bg-amber-50 text-amber-700",
-                cell.state === "missing" && "border-rose-400 bg-rose-50 text-rose-600 ring-1 ring-rose-200",
-                cell.state === "unsubmitted" && "border-rose-400 bg-rose-100 text-rose-800 ring-2 ring-rose-200",
+                cell.state === "submitted" && "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+                cell.state === "waive" && "border-zinc-200 bg-zinc-50/80 text-[#6FAA7D]",
+                cell.state === "leave" && "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+                cell.state === "missing" && "border-zinc-200 bg-zinc-50 text-[#C9604D] ring-1 ring-rose-200",
+                cell.state === "unsubmitted" && "border-zinc-200 bg-zinc-100 text-[#C9604D] ring-2 ring-rose-200",
                 cell.state === "future" && "border-slate-200 bg-slate-50 text-slate-400",
-                cell.isToday && cell.state === "submitted" && "border-emerald-400 bg-emerald-100 text-emerald-800 ring-2 ring-emerald-200",
-                cell.isToday && cell.state === "waive" && "border-emerald-400 bg-emerald-100 text-emerald-800 ring-2 ring-emerald-200",
-                cell.isToday && cell.state === "leave" && "border-amber-300 bg-amber-100 text-amber-800 ring-2 ring-amber-200",
+                cell.isToday && cell.state === "submitted" && "border-zinc-200 bg-zinc-100 text-[#6FAA7D] ring-2 ring-emerald-200",
+                cell.isToday && cell.state === "waive" && "border-zinc-200 bg-zinc-100 text-[#6FAA7D] ring-2 ring-emerald-200",
+                cell.isToday && cell.state === "leave" && "border-zinc-200 bg-zinc-100 text-[#D99E55] ring-2 ring-amber-200",
                 (selectedDate === cell.key || selectedDates.includes(cell.key)) &&
                   "ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-white bg-[color:rgba(0,122,255,0.08)]",
               )}

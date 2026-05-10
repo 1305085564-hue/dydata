@@ -43,29 +43,29 @@ export function ExportButton() {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
       <div className="space-y-1.5">
-        <Label htmlFor="export-from" className="text-sm text-zinc-500">开始日期</Label>
+        <Label htmlFor="export-from" className="text-[13px] text-zinc-500">开始日期</Label>
         <Input
           id="export-from"
           type="date"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
-          className="h-9 w-auto border-zinc-200 bg-white text-zinc-950"
+          className="h-9 w-auto border-zinc-200 bg-white text-zinc-800"
         />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="export-to" className="text-sm text-zinc-500">结束日期</Label>
+        <Label htmlFor="export-to" className="text-[13px] text-zinc-500">结束日期</Label>
         <Input
           id="export-to"
           type="date"
           value={to}
           onChange={(e) => setTo(e.target.value)}
-          className="h-9 w-auto border-zinc-200 bg-white text-zinc-950"
+          className="h-9 w-auto border-zinc-200 bg-white text-zinc-800"
         />
       </div>
       <Button
         onClick={handleExport}
         disabled={loading}
-        className="h-9 bg-zinc-950 text-white rounded-xl hover:bg-zinc-800"
+        className="h-9 bg-zinc-950 text-white rounded-[10px] hover:bg-zinc-800"
       >
         {loading ? "导出中..." : "导出 Excel"}
       </Button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import type { AdminModulesData } from "@/lib/loaders/admin-modules";
 
@@ -13,9 +14,9 @@ interface ModulesModalPanelProps {
 function ModulesModalSkeleton() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="h-64 animate-pulse rounded-[24px] bg-slate-100/80" />
-      <div className="h-64 animate-pulse rounded-[24px] bg-slate-100/80" />
-      <div className="h-80 animate-pulse rounded-[24px] bg-slate-100/80 lg:col-span-2" />
+      <Skeleton className="h-64 rounded-2xl" />
+      <Skeleton className="h-64 rounded-2xl" />
+      <Skeleton className="h-80 rounded-2xl lg:col-span-2" />
     </div>
   );
 }
@@ -71,7 +72,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
   }
 
   if (error && !data) {
-    return <div className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>;
+    return <div className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D]">{error}</div>;
   }
 
   if (!data) {
@@ -80,13 +81,13 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[24px] border border-white/80 bg-white/88 p-4 shadow-[var(--shadow-light)]">
-        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+        <p className="text-[13px] leading-[1.7] text-zinc-500">
           这个面板只在打开时按需加载权限、数据修正和审计日志，不再复用首页的重型后台总 loader。
         </p>
       </div>
       {isLoading ? <ModulesModalSkeleton /> : null}
-      {error ? <div className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+      {error ? <div className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D]">{error}</div> : null}
       <AdminModulesContent
         currentUserId={data.currentUserId}
         currentUserRole={data.perm.role}

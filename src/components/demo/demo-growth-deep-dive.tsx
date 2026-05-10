@@ -31,8 +31,8 @@ type Props = {
 };
 
 const toneClassName = {
-  success: "border-emerald-500/15 bg-emerald-500/8 text-emerald-700",
-  warning: "border-amber-500/15 bg-amber-500/8 text-amber-700",
+  success: "border-zinc-200/15 bg-zinc-100/8 text-[#6FAA7D]",
+  warning: "border-zinc-200/15 bg-zinc-100/8 text-[#D99E55]",
   neutral: "border-slate-500/15 bg-slate-500/8 text-slate-700",
 };
 

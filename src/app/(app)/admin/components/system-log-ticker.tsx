@@ -32,21 +32,21 @@ export function SystemLogTicker({ logs }: SystemLogTickerProps) {
   const currentLog = logs[currentIndex];
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--glass-bg)] backdrop-blur-[12px] border-t border-[var(--color-border)] px-4 py-2 text-xs flex justify-center overflow-hidden h-9 shadow-[0_-4px_24px_rgba(0,0,0,0.02)] transition-all">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-zinc-200 px-4 py-2 text-[12px] flex justify-center overflow-hidden h-9 shadow-sm">
       <div className="max-w-[80rem] w-full flex items-center justify-between">
-        <div className="flex items-center gap-2 text-[var(--color-text-secondary)]">
-          <Activity className="size-3.5 text-[var(--color-primary)] animate-pulse" />
+        <div className="flex items-center gap-2 text-zinc-500">
+          <Activity className="size-3.5 text-[#D97757] stroke-[1.5] animate-pulse" />
           <span className="font-medium">全局动态流</span>
         </div>
-        
-        <div 
+
+        <div
           key={currentIndex}
           className="flex-1 ml-4 text-right animate-in slide-in-from-bottom-2 fade-in duration-500 ease-out flex justify-end items-center gap-2"
         >
-          <span className="font-medium text-[var(--color-text-primary)]">{currentLog.profile_name || "系统"}</span>
-          <span className="text-[var(--color-text-secondary)]">{currentLog.action}</span>
-          {currentLog.target && <span className="text-[var(--color-text-tertiary)] truncate max-w-[200px]">({currentLog.target})</span>}
-          <span className="text-[10px] text-[var(--color-text-tertiary)] ml-2 bg-[var(--color-border)]/50 px-1.5 py-0.5 rounded-sm">
+          <span className="font-medium text-zinc-800">{currentLog.profile_name || "系统"}</span>
+          <span className="text-zinc-500">{currentLog.action}</span>
+          {currentLog.target && <span className="text-zinc-400 truncate max-w-[200px]">({currentLog.target})</span>}
+          <span className="text-[10px] text-zinc-400 ml-2 bg-zinc-100 px-1.5 py-0.5 rounded-[10px] tabular-nums">
             {new Date(currentLog.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>

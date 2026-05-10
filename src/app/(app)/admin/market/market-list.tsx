@@ -29,15 +29,15 @@ function formatSignedPercent(value: number) {
 }
 
 function getNumberClassName(value: number) {
-  if (value > 0) return "inline-flex rounded-full bg-red-50 px-2 py-0.5 text-red-600 dark:bg-red-500/15 dark:text-red-400";
-  if (value < 0) return "inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400";
+  if (value > 0) return "inline-flex rounded-[10px] bg-[#C9604D]/10 px-2 py-0.5 text-[#C9604D]";
+  if (value < 0) return "inline-flex rounded-[10px] bg-[#6FAA7D]/10 px-2 py-0.5 text-[#6FAA7D]";
   return "text-foreground";
 }
 
 function getSentimentVariant(sentiment: MarketContextDaily["market_sentiment"]) {
-  if (sentiment === "强") return "bg-emerald-50 text-emerald-700 ring-emerald-200";
-  if (sentiment === "中") return "bg-amber-50 text-amber-700 ring-amber-200";
-  if (sentiment === "弱") return "bg-rose-50 text-rose-700 ring-rose-200";
+  if (sentiment === "强") return "bg-[#6FAA7D]/10 text-[#6FAA7D] ring-zinc-200";
+  if (sentiment === "中") return "bg-[#D99E55]/10 text-[#D99E55] ring-zinc-200";
+  if (sentiment === "弱") return "bg-[#C9604D]/10 text-[#C9604D] ring-zinc-200";
   return "bg-muted text-muted-foreground ring-border";
 }
 
@@ -68,7 +68,7 @@ export function MarketList({ initialData }: MarketListProps) {
         <MarketForm initialData={editingRow} onSaved={handleSaved} />
       )}
 
-      <Card className="rounded-2xl border border-border/70 bg-background/85 shadow-sm backdrop-blur-sm">
+      <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/60">
           <CardTitle>最近 30 天记录</CardTitle>
           <span className="text-xs text-muted-foreground">

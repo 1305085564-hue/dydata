@@ -9,7 +9,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
   return (
     <Link
       href={`/violations/${caseItem.id}`}
-      className="group block rounded-[1.5rem] border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+      className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-3">
@@ -24,7 +24,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
             {caseItem.script_text}
           </p>
           {caseItem.status === "verified" && caseItem.admin_conclusion ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm leading-6 text-[#D99E55]">
               {caseItem.admin_conclusion}
             </div>
           ) : null}

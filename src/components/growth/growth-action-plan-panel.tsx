@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardList, Eye, Lightbulb, PencilLine } from "lucide-react";
 
-
+import { Skeleton } from "@/components/ui/skeleton";
 import type { AdviceSections } from "@/lib/growth-page";
 
 type InsightResult = {
@@ -46,7 +46,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "conclusion",
         title: "一句话结论",
         content: DEMO_CONTENT.conclusion,
-        toneClass: "border-[color:var(--color-warning)]/20 bg-[color:var(--color-warning)]/10",
+        toneClass: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#D99E55]",
         badge: "示例内容",
         icon: Lightbulb,
       },
@@ -54,7 +54,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "evidence",
         title: "问题证据",
         content: DEMO_CONTENT.evidence,
-        toneClass: "border-[color:var(--color-danger)]/20 bg-[color:rgba(255,59,48,0.06)]",
+        toneClass: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#C9604D]",
         badge: "示范数据",
         icon: Eye,
       },
@@ -70,7 +70,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "rewrite",
         title: "改写建议",
         content: DEMO_CONTENT.rewrite,
-        toneClass: "border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/10",
+        toneClass: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#6FAA7D]",
         badge: "示例内容",
         icon: PencilLine,
       },
@@ -100,14 +100,14 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "conclusion",
       title: "一句话结论",
       content: conclusion,
-      toneClass: "border-[color:var(--color-warning)]/20 bg-[color:var(--color-warning)]/10",
+      toneClass: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#D99E55]",
       icon: Lightbulb,
     },
     {
       key: "evidence",
       title: "问题证据",
       content: evidence,
-      toneClass: "border-[color:var(--color-danger)]/20 bg-[color:rgba(255,59,48,0.06)]",
+      toneClass: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#C9604D]",
       badge: insight ? undefined : "规则判断",
       icon: Eye,
     },
@@ -123,7 +123,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "rewrite",
       title: "改写建议",
       content: rewrite,
-      toneClass: "border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/10",
+      toneClass: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#6FAA7D]",
       badge: insight ? undefined : "示例内容",
       icon: PencilLine,
     },
@@ -138,14 +138,14 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
   ];
 }
 
-function Skeleton() {
+function ActionPlanSkeleton() {
   return (
     <div className="grid gap-3">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="animate-pulse rounded-xl border border-zinc-200 bg-white p-4">
-          <div className="h-3 w-24 rounded bg-[var(--color-border)]" />
-          <div className="mt-3 h-3 w-full rounded bg-[var(--color-border)]" />
-          <div className="mt-2 h-3 w-4/5 rounded bg-[var(--color-border)]" />
+        <div key={index} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
         </div>
       ))}
     </div>
@@ -163,8 +163,8 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
             <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Action Plan</span>
             <div className="h-px flex-1 bg-zinc-200" />
           </div>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">下一轮先怎么改</h2>
-          <p className="text-sm leading-6 text-zinc-500">
+          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">下一轮先怎么改</h2>
+          <p className="text-[13px] leading-[1.7] text-zinc-500">
             {noData
               ? "当前没有真实数据，先看一次完整示例，知道这里以后会给你什么。"
               : insightState.status === "ok" && insightState.cached
@@ -173,26 +173,26 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
           </p>
         </div>
 
-        {insightState.status === "loading" && !noData ? <Skeleton /> : null}
+        {insightState.status === "loading" && !noData ? <ActionPlanSkeleton /> : null}
 
         {!(insightState.status === "loading" && !noData) ? (
           <div className="grid gap-3">
             {blocks.map((block) => {
               const Icon = block.icon;
               return (
-                <div key={block.key} className={`rounded-xl border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-4 border-l-[#D97757] rounded-l-none" : ""}`}>
+                <div key={block.key} className={`rounded-xl border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-2 border-l-[#D97757] rounded-l-none" : ""}`}>
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
-                      <Icon className="size-4" />
+                    <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
+                      <Icon className="size-4 stroke-[1.5]" />
                       {block.title}
                     </div>
                     {block.badge ? (
-                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
+                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
                         {block.badge}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-950">{block.content}</p>
+                  <p className="mt-3 whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">{block.content}</p>
                 </div>
               );
             })}
@@ -200,7 +200,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
         ) : null}
 
         {insightState.status === "error" && !noData ? (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
+          <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-500">
             单条视频复盘请求失败：{insightState.message}
           </div>
         ) : null}

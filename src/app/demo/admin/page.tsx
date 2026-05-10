@@ -57,7 +57,7 @@ export default function DemoAdminPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card-static border-white/70 bg-white/78 backdrop-blur-[16px]">
+          <Card className="glass-card-static border-white/70 bg-white/78">
             <CardHeader>
               <CardTitle className="font-semibold tracking-tight">快捷动作预览</CardTitle>
             </CardHeader>
@@ -86,7 +86,7 @@ export default function DemoAdminPage() {
           title="成员状态"
           description="成员、账号、提交状态和豁免状态全部可见，但所有管理按钮都锁定。"
         >
-          <div className="overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-[var(--shadow-card)]">
+          <div className="overflow-hidden rounded-2xl border border-white/70 bg-white/85 shadow-[var(--shadow-card)]">
             <Table>
               <TableHeader>
                 <TableRow>

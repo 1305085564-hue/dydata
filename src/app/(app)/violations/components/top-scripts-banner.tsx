@@ -31,7 +31,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
 
   if (top3.length === 0) {
     return (
-      <div className="rounded-[1.5rem] border border-dashed border-zinc-300 bg-white/60 p-6 text-center">
+      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white/60 p-6 text-center">
         <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
           <Crown className="size-5" strokeWidth={2.25} />
         </div>
@@ -42,10 +42,10 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
   }
 
   return (
-    <div className="rounded-[1.5rem] border border-zinc-200 bg-gradient-to-br from-white via-[#FFFBF5] to-[#FDF4EC] p-4 shadow-sm sm:p-5">
+    <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-white via-[#FFFBF5] to-[#FDF4EC] p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#D97757]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#D97757]">
             Top Conversion Scripts
           </p>
           <h3 className="mt-1 text-base font-semibold text-zinc-950">本周转化榜</h3>
@@ -63,7 +63,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
             <Link
               key={item.id}
               href={`/violations/${item.id}`}
-              className="group relative overflow-hidden rounded-[1.25rem] border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.995]"
+              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:-translate-y-0.5 hover:shadow-md]"
             >
               <div className={`absolute inset-x-0 top-0 h-[3px] ${medal.rail}`} />
               <div className="flex items-center justify-between">
@@ -74,7 +74,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
                   <span>No.{index + 1}</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-black text-[#067647]">{rate}%</div>
+                  <div className="text-lg font-semibold text-[#6FAA7D]">{rate}%</div>
                   <div className="text-[10px] font-medium text-zinc-400">转化率</div>
                 </div>
               </div>

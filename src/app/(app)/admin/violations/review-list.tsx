@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, CircleSlash2, Loader2 } from "lucide-react";
+import { CheckCircle2, CircleSlash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 import { cn } from "@/lib/utils";
@@ -41,9 +42,9 @@ interface ReviewDraft {
 }
 
 const RISK_OPTIONS: Array<{ value: ReviewDraft["riskLevel"]; label: string; className: string }> = [
-  { value: "high", label: "高风险", className: "border-red-200 bg-red-50 text-red-700" },
-  { value: "medium", label: "中风险", className: "border-amber-200 bg-amber-50 text-amber-700" },
-  { value: "low", label: "低风险", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  { value: "high", label: "高风险", className: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]" },
+  { value: "medium", label: "中风险", className: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]" },
+  { value: "low", label: "低风险", className: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]" },
 ];
 
 const STATUS_LABELS: Record<ViolationReviewStatus, string> = {
@@ -64,13 +65,13 @@ function getInitialDraft(item: ViolationReviewCase): ReviewDraft {
 function getStatusClassName(status: ViolationReviewStatus) {
   switch (status) {
     case "verified":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]";
     case "rejected":
       return "border-zinc-200 bg-zinc-100 text-zinc-600";
     case "archived":
       return "border-zinc-200 bg-zinc-50 text-zinc-400";
     default:
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]";
   }
 }
 
@@ -116,7 +117,7 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
   }
 
   return (
-    <article className="rounded-[2rem] border border-zinc-200 bg-white p-5 shadow-sm">
+    <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -207,11 +208,11 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
 
       <div className="mt-5 flex flex-wrap justify-end gap-2">
         <Button type="button" variant="outline" disabled={Boolean(isSaving)} onClick={() => submitReview("rejected")}>
-          {isSaving === "rejected" ? <Loader2 className="size-4 animate-spin" /> : <CircleSlash2 className="size-4" />}
+          {isSaving === "rejected" ? <Skeleton className="size-4 rounded" /> : <CircleSlash2 className="size-4 stroke-[1.5]" />}
           驳回
         </Button>
         <Button type="button" disabled={Boolean(isSaving)} onClick={() => submitReview("verified")}>
-          {isSaving === "verified" ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+          {isSaving === "verified" ? <Skeleton className="size-4 rounded" /> : <CheckCircle2 className="size-4 stroke-[1.5]" />}
           确认
         </Button>
       </div>
@@ -224,9 +225,9 @@ export function ViolationsReviewList({ cases }: { cases: ViolationReviewCase[] }
 
   if (cases.length === 0) {
     return (
-      <section className="rounded-[2rem] border border-zinc-200 bg-white p-10 text-center shadow-sm">
-        <p className="text-lg font-bold text-zinc-950">暂无需要显示的案例</p>
-        <p className="mt-2 text-sm text-zinc-500">切换到全部状态，或等待员工提交新的违规话术案例。</p>
+      <section className="rounded-2xl border border-zinc-200 bg-white p-10 text-center shadow-sm">
+        <p className="text-[16px] font-semibold text-zinc-800">暂无需要显示的案例</p>
+        <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">切换到全部状态，或等待员工提交新的违规话术案例。</p>
       </section>
     );
   }
@@ -234,8 +235,8 @@ export function ViolationsReviewList({ cases }: { cases: ViolationReviewCase[] }
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-zinc-950">复核列表</h2>
-        <p className="text-sm text-zinc-500">当前列表待复核 {pendingCases} 条</p>
+        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">复核列表</h2>
+        <p className="text-[13px] text-zinc-500">当前列表待复核 <span className="tabular-nums">{pendingCases}</span> 条</p>
       </div>
       {cases.map((item) => (
         <ReviewCard key={item.id} item={item} />

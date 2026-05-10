@@ -159,10 +159,10 @@ export default async function ViolationsPage({
     <div className="mx-auto max-w-6xl space-y-6 py-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-400">
             {headingEyebrow}
           </p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
             {headingLabel}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{headingDesc}</p>
@@ -191,7 +191,7 @@ export default async function ViolationsPage({
       />
 
       {error ? (
-        <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
           {error}
         </div>
       ) : perspective === "violation" ? (
@@ -225,7 +225,7 @@ export default async function ViolationsPage({
 
 function EmptyState({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="rounded-[1.5rem] border border-dashed border-zinc-300 bg-white p-10 text-center">
+    <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center">
       <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400">
         <svg
           xmlns="http://www.w3.org/2000/svg"

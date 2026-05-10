@@ -1,91 +1,107 @@
+/* 阿禅美学标准 V1 法典 Token —— 全站唯一真源 */
 :root {
-  --color-bg: #F9F9FB;
-  --color-surface: #ffffff;
-  --color-primary: #0a84ff;
-  --color-success: #067647;
-  --color-danger: #B42318;
-  --color-warning: #EAB308;
-  --color-text-primary: #09090B;
-  --color-text-secondary: #71717A;
-  --color-text-tertiary: #A1A1AA;
-  --color-border: #E4E4E7;
+  /* 法典二 底色三层（× shadow 做层级，仅由底色 + 1px zinc-200 border 构成） */
+  --color-bg: #F4F4F5;           /* L0 zinc-100 页面背景 */
+  --color-surface: #FAFAFB;      /* L1 zinc-50 卡片、主面板 */
+  --color-focus: #FFFFFF;        /* L2 焦点区、Modal、Focus 态输入、激活 Tab */
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-2xl: 22px;
+  /* 法典四 统一光源色（饱和 25-60 / 亮度 55-60） */
+  --color-primary: #D97757;      /* 主 CTA H15 S60 L60 */
+  --color-primary-hover: #C96442;
+  --color-warning: #D99E55;      /* 待处理 H35 S60 L59 */
+  --color-success: #6FAA7D;      /* 在线/通过 H137 S25 L55 */
+  --color-danger: #C9604D;       /* 失败/异常 H8 S52 L55 */
 
-  --shadow-card: 0 8px 24px -18px rgba(15, 23, 42, 0.22), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
-  --shadow-card-hover: 0 14px 30px -18px rgba(15, 23, 42, 0.3);
-  --shadow-float: 0 24px 72px -40px rgba(15, 23, 42, 0.45);
-  --shadow-toast: 0 20px 50px -28px rgba(15, 23, 42, 0.3);
+  /* 法典三 文字灰阶 */
+  --color-text-primary: #27272A;   /* text-zinc-800 主文字 */
+  --color-text-secondary: #71717A; /* text-zinc-500 次要文字 */
+  --color-text-tertiary: #A1A1AA;  /* text-zinc-400 元数据/空状态/单位 */
+  --color-border: #E4E4E7;         /* zinc-200 极冷 分隔/卡片/表格 */
+  --color-border-warm: #D4D4D8;    /* zinc-300 微温 可交互元素 */
 
+  /* 法典五 圆角阶梯 */
+  --radius-xs: 8px;       /* 小按钮/标签 */
+  --radius-sm: 10px;      /* 按钮默认 */
+  --radius-md: 12px;      /* 内层卡片、数据块 */
+  --radius-lg: 16px;      /* 主面板、对话区 */
+  --radius-xl: 20px;      /* 输入框外壳（仅对话输入框） */
+
+  /* 法典八 动效 150ms cubic-bezier(0.4, 0, 0.2, 1) */
   --duration-micro: 150ms;
-  --duration-fast: 220ms;
-  --duration-normal: 320ms;
-  --duration-slow: 500ms;
-  --duration-number: 600ms;
+  --duration-fast: 150ms;
+  --duration-normal: 150ms;
+  --duration-slow: 200ms;
+  --duration-number: 400ms;
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1); /* × 弹簧过冲，保留变量兼容 */
+  --ease-hover: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-out: cubic-bezier(0.25, 0, 0, 1);
+  /* 法典 8.4 主 CTA 弥散阴影（≤ 3% 透明度） */
+  --shadow-primary: 0 2px 8px rgba(217, 119, 87, 0.03);
+  /* 法典二 × shadow 做层级；但悬浮层允许极轻 shadow-sm */
+  --shadow-light: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-medium: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-heavy: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-float: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.06);
 
-  /* 旧 glass token — admin 页面不再使用，保留供 dashboard 等旧页面兼容 */
-  --glass-bg: color-mix(in srgb, white 82%, #f4f4f5);
-  --glass-blur: blur(24px);
-  --nav-bg: color-mix(in srgb, white 78%, #f4f4f5);
-  --nav-blur: blur(18px);
+  /* 兼容变量 —— glass/nav 改为实色，avoid 大面积模糊 */
+  --glass-bg: #FAFAFB;
+  --glass-blur: none;
+  --nav-bg: #FAFAFB;
+  --nav-blur: none;
 
-  /* Admin 专用 token — Studio Minimalist V1.0 */
-  --admin-bg: #F9F9FB;
-  --admin-surface: #ffffff;
+  /* Admin 专用 token —— 沿用法典色值 */
+  --admin-bg: #F4F4F5;
+  --admin-surface: #FAFAFB;
   --admin-border: #E4E4E7;
-  --admin-text-primary: #09090B;
+  --admin-text-primary: #27272A;
   --admin-text-secondary: #71717A;
   --admin-text-tertiary: #A1A1AA;
-  --admin-action: #09090B;
-  --admin-success: #067647;
-  --admin-success-bg: #ECFDF3;
-  --admin-warning: #EAB308;
-  --admin-warning-bg: #FEFCE8;
-  --admin-danger: #B42318;
-  --admin-danger-bg: #FEF3F2;
-  --admin-info: #444CE7;
-  --admin-info-bg: #EEF4FF;
+  --admin-action: #27272A;
+  --admin-success: #6FAA7D;
+  --admin-success-bg: #FAFAFB;
+  --admin-warning: #D99E55;
+  --admin-warning-bg: #FAFAFB;
+  --admin-danger: #C9604D;
+  --admin-danger-bg: #FAFAFB;
+  --admin-info: #8AA8C7;
+  --admin-info-bg: #FAFAFB;
 }
 
 .dark {
-  --color-bg: #0f1115;
-  --color-surface: rgba(20, 24, 31, 0.88);
-  --color-primary: #0a84ff;
-  --color-success: #30d158;
-  --color-danger: #ff453a;
-  --color-warning: #ff9f0a;
-  --color-text-primary: #f5f5f7;
-  --color-text-secondary: #d2d2d7;
-  --color-text-tertiary: #8e8e93;
-  --color-border: rgba(255, 255, 255, 0.12);
-  --shadow-card: 0 10px 26px -18px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
-  --shadow-card-hover: 0 20px 46px -24px rgba(0, 0, 0, 0.58);
-  --shadow-float: 0 28px 80px rgba(0, 0, 0, 0.5);
-  --shadow-toast: 0 24px 72px rgba(0, 0, 0, 0.42);
-  --glass-bg: color-mix(in srgb, rgba(20, 24, 31, 0.9) 84%, rgba(32, 38, 48, 0.92));
-  --nav-bg: color-mix(in srgb, rgba(17, 19, 24, 0.88) 90%, rgba(23, 27, 34, 0.92));
+  /* 深色态暂沿用浅色基础变量，待后续阶段单独设计 */
+  --color-bg: #18181B;
+  --color-surface: #27272A;
+  --color-focus: #27272A;
+  --color-text-primary: #F4F4F5;
+  --color-text-secondary: #A1A1AA;
+  --color-text-tertiary: #71717A;
+  --color-border: rgba(228, 228, 231, 0.12);
+  --glass-bg: #27272A;
+  --nav-bg: #27272A;
 }
 
 @layer utilities {
+  /* 法典 9.2 数字全站强制 tabular-nums */
+  .num,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  /* 保留 glass-* 工具类兼容老代码，但去掉模糊，回到实色 */
   .glass-panel {
     background-color: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
     border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-card);
   }
 
   .glass-nav {
     background-color: var(--nav-bg);
-    backdrop-filter: var(--nav-blur);
     border-bottom: 1px solid var(--color-border);
   }
 }

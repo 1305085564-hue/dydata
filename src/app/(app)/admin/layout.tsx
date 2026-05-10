@@ -21,7 +21,7 @@ export default async function AdminLayout({
     .single();
 
   return (
-    <div className="flex min-h-[100dvh] bg-[#F9F9FB]">
+    <div className="flex min-h-[100dvh] bg-[#F4F4F5]">
       <AdminSidebar
         userRole={profile?.role ?? "member"}
         permissions={profile?.permissions ?? {}}

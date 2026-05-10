@@ -125,7 +125,7 @@ export function MarketForm({ initialData, onSaved }: MarketFormProps) {
   }
 
   return (
-    <Card className="rounded-2xl border border-border/70 bg-background/85 shadow-sm backdrop-blur-sm">
+    <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <CardHeader className="space-y-1 border-b border-border/60">
         <CardTitle>{isEditMode ? "编辑市场环境" : "新增市场环境"}</CardTitle>
       </CardHeader>

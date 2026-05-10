@@ -28,23 +28,23 @@ export default async function AdminVideosPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-400">Video Console</p>
-        <h1 className="text-2xl font-black tracking-tight text-zinc-950">视频管理</h1>
-        <p className="mt-1 text-sm text-zinc-500">按账号、负责人、日期和状态查看全部视频与 24h 快照。</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Video Console</p>
+        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">视频管理</h1>
+        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">按账号、负责人、日期和状态查看全部视频与 24h 快照。</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m) => (
-          <div key={m.label} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-zinc-500">{m.label}</p>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-zinc-950">{m.value}</p>
-            <p className="mt-2 text-xs text-zinc-400">{m.hint}</p>
+          <div key={m.label} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{m.label}</p>
+            <p className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{m.value}</p>
+            <p className="mt-2 text-[12px] leading-[1.7] text-zinc-400">{m.hint}</p>
           </div>
         ))}
       </div>
 
-      <section className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-zinc-950">视频列表</h2>
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">视频列表</h2>
         <div className="mt-4">
           <VideoList
             videos={data.videos}

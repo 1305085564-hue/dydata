@@ -78,7 +78,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
   }
 
   return (
-    <div className="rounded-[28px] border border-border/60 bg-muted/30 p-4 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl sm:p-5">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">负责人</div>

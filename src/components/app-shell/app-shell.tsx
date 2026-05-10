@@ -79,7 +79,7 @@ function ShellHeader({
 }
 
 export function AppShell({ children, className, width = "wide" }: AppShellProps) {
-  return <div className={cn("app-shell-frame min-h-screen space-y-5 sm:space-y-6 bg-[#F9F9FB]", widthMap[width], className)}>{children}</div>
+  return <div className={cn("app-shell-frame min-h-screen space-y-5 sm:space-y-6", widthMap[width], className)}>{children}</div>
 }
 
 export function AppShellHero({ children, className, bodyClassName, ...props }: AppShellHeroProps) {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { ArrowUp, Loader2 } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputBarProps {
@@ -43,8 +43,8 @@ export function ChatInputBar({
       <div className="mx-auto max-w-3xl">
         <div
           className={cn(
-            'group relative flex items-end gap-2 rounded-[20px] border bg-white px-3 py-2.5 transition-all',
-            'focus-within:border-zinc-950 focus-within:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.06)]',
+            'group relative flex items-end gap-2 rounded-xl border bg-white px-3 py-2.5 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+            'focus-within:border-zinc-950 focus-within:shadow-sm',
             isSending ? 'border-zinc-200' : 'border-zinc-200 hover:border-zinc-300'
           )}
         >
@@ -71,17 +71,21 @@ export function ChatInputBar({
             onClick={onSend}
             disabled={!canSend}
             className={cn(
-              'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-all',
+              'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
               canSend
-                ? 'bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0'
+                ? 'bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0'
                 : 'bg-zinc-100 text-zinc-400'
             )}
             title={canSend ? '发送' : '输入内容后可发送'}
           >
             {isSending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="flex gap-0.5">
+                <span className="h-1 w-1 animate-pulse rounded-full bg-white" style={{ animationDelay: '0ms' }} />
+                <span className="h-1 w-1 animate-pulse rounded-full bg-white" style={{ animationDelay: '150ms' }} />
+                <span className="h-1 w-1 animate-pulse rounded-full bg-white" style={{ animationDelay: '300ms' }} />
+              </span>
             ) : (
-              <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+              <ArrowUp className="h-4 w-4" strokeWidth={2} />
             )}
           </button>
         </div>

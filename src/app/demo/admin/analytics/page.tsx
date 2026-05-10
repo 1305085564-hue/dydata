@@ -44,7 +44,7 @@ export default function DemoAdminAnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between gap-3 text-base">
               <span>经营建议输出结构</span>
-              <Badge variant="outline" className="rounded-full bg-amber-50 text-amber-700">
+              <Badge variant="outline" className="rounded-full bg-zinc-50 text-[#D99E55]">
                 只读
               </Badge>
             </CardTitle>

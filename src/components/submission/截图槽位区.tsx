@@ -45,7 +45,7 @@ export function SubmissionSlotsSection({
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-base font-black tracking-tight text-zinc-950">
+          <h3 className="text-base font-semibold tracking-tight text-zinc-950">
             截图上传
           </h3>
           <p className="text-sm text-zinc-500">
@@ -55,7 +55,7 @@ export function SubmissionSlotsSection({
           </p>
         </div>
         {issueCount > 0 ? (
-          <span className="rounded-full bg-[#FEFCE8] px-3 py-1 text-xs font-medium text-[#92400E] border border-[#FEFCE8] shrink-0">
+          <span className="rounded-full bg-[#FEFCE8] px-3 py-1 text-xs font-medium text-[#D99E55] border border-[#FEFCE8] shrink-0">
             待处理 {issueCount}
           </span>
         ) : null}
@@ -73,7 +73,7 @@ export function SubmissionSlotsSection({
                   type="button"
                   onClick={() => setShowSlot3(true)}
                   className={cn(
-                    "w-full flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-all duration-300",
+                    "w-full flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors duration-300",
                     isHighlighted
                       ? "border-zinc-950 bg-zinc-50 text-zinc-950 ring-2 ring-zinc-950/8"
                       : "border-dashed border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50 hover:border-zinc-400"

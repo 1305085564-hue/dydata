@@ -31,12 +31,12 @@ interface AdviceDetailDialogProps {
 }
 
 const STATUS_STYLES = {
-  待查看: "border-sky-200 bg-sky-50 text-sky-700",
-  已查看: "border-slate-200 bg-slate-100 text-slate-600",
-  待执行: "border-amber-200 bg-amber-50 text-amber-700",
-  已执行: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  已忽略: "border-slate-200 bg-slate-50 text-slate-500",
-  已复核: "border-violet-200 bg-violet-50 text-violet-700",
+  待查看: "border-zinc-200 bg-zinc-100 text-zinc-700",
+  已查看: "border-zinc-200 bg-zinc-100 text-zinc-600",
+  待执行: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  已执行: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  已忽略: "border-zinc-200 bg-zinc-50 text-zinc-500",
+  已复核: "border-zinc-200 bg-zinc-100 text-zinc-700",
 } as const;
 
 function pickSingle<T>(value: T | T[] | null | undefined): T | null {
@@ -94,14 +94,14 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl rounded-[32px] border-border/60 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl sm:max-w-4xl">
+      <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 shadow-sm sm:max-w-4xl">
         <DialogHeader className="border-b border-border/60 px-6 py-5 sm:px-7">
           <DialogTitle className="text-xl font-semibold tracking-tight">建议详情</DialogTitle>
         </DialogHeader>
 
         {advice ? (
           <div className="max-h-[80vh] space-y-6 overflow-y-auto px-6 py-6 sm:px-7">
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
                   <div className="text-lg font-semibold text-foreground">{targetProfile?.name || "未命名员工"}</div>
@@ -132,17 +132,17 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
               </div>
             </section>
 
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-base font-semibold text-foreground">完整建议</div>
               <div className="rounded-2xl bg-background/80 p-4 whitespace-pre-wrap text-sm leading-6 text-foreground">{advice.advice_content}</div>
             </section>
 
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-base font-semibold text-foreground">证据</div>
               <div className="rounded-2xl bg-background/80 p-4 whitespace-pre-wrap text-sm leading-6 text-foreground">{advice.evidence || "暂无证据"}</div>
             </section>
 
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-base font-semibold text-foreground">管理操作</div>
               <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-3 rounded-2xl bg-background/80 p-4">
@@ -194,7 +194,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
               </div>
             </section>
 
-            <section className="space-y-4 rounded-[28px] bg-muted/35 p-5">
+            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-base font-semibold text-foreground">关联视频</div>
               {relatedVideo ? (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

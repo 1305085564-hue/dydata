@@ -56,16 +56,16 @@ export function RewriteWorkbench() {
 
   if (state.errorState) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#F9F9FB]">
+      <div className="flex h-full items-center justify-center bg-zinc-50">
         <div className="relative max-w-sm overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <div className="absolute left-0 top-0 h-full w-[3px] bg-red-500" />
-          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-red-600">
+          <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
+          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
             System Error
           </p>
-          <h3 className="mt-2 text-[15px] font-black tracking-tight text-zinc-950">
+          <h3 className="mt-2 text-[15px] font-semibold tracking-tight text-zinc-950">
             {state.errorState.title}
           </h3>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500">
+          <p className="mt-1.5 text-[13px] leading-[1.7] text-zinc-500">
             {state.errorState.message}
           </p>
         </div>
@@ -75,12 +75,12 @@ export function RewriteWorkbench() {
 
   if (state.loading || !state.bootstrap) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#F9F9FB]">
+      <div className="flex h-full items-center justify-center bg-zinc-50">
         <div className="flex flex-col items-center gap-3">
           <div className="flex space-x-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.3s]" />
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.15s]" />
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce" />
+            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-pulse [animation-delay:0ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-pulse [animation-delay:150ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-pulse [animation-delay:300ms]" />
           </div>
           <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
             Entering Workstation
@@ -98,23 +98,22 @@ export function RewriteWorkbench() {
     state.bootstrap.modelViews.find((m) => m.id === state.selectedModelViewId)?.label ?? '默认模型';
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-[#F9F9FB]">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50">
       {/* Top bar */}
-      <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-[#F9F9FB] px-3">
+      <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setHistoryOpen((v) => !v)}
-            className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+            className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-950"
             title={historyOpen ? '收起历史' : '展开历史'}
           >
             {historyOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeft className="h-3.5 w-3.5" />}
           </button>
           <div className="flex items-center gap-2 px-1">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
             </span>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
               Rewrite Studio
             </span>
           </div>
@@ -123,7 +122,7 @@ export function RewriteWorkbench() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={actions.handleNewConversation}
-            className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm active:translate-y-0"
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 active:translate-y-0"
             title="开启新对话"
           >
             <Plus className="h-3 w-3" />
@@ -132,10 +131,10 @@ export function RewriteWorkbench() {
           <button
             onClick={() => setConfigOpen((v) => !v)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-[11px] font-medium transition-all hover:-translate-y-[1px] active:translate-y-0',
+              'inline-flex items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-[11px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0',
               configOpen
                 ? 'border-[#D97757] bg-[#D97757] text-white shadow-sm'
-                : 'border-zinc-200 bg-white text-zinc-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm'
+                : 'border-zinc-200 bg-white text-zinc-500 shadow-sm hover:border-zinc-300 hover:text-zinc-950'
             )}
             title={configOpen ? '收起配置栏' : '展开配置栏'}
           >
@@ -150,7 +149,7 @@ export function RewriteWorkbench() {
         {/* Left: History */}
         <aside
           className={cn(
-            'relative hidden shrink-0 flex-col border-r border-zinc-200 bg-[#F9F9FB] transition-[width] duration-300 ease-out lg:flex',
+            'relative hidden shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 transition-[width] duration-300 ease-out lg:flex',
             historyOpen ? 'w-[220px]' : 'w-0 overflow-hidden'
           )}
         >
@@ -195,7 +194,7 @@ export function RewriteWorkbench() {
         {/* Right: Config panel */}
         <aside
           className={cn(
-            'relative hidden shrink-0 flex-col border-l border-zinc-200 bg-[#F9F9FB] transition-[width] duration-300 ease-out lg:flex',
+            'relative hidden shrink-0 flex-col border-l border-zinc-200 bg-zinc-50 transition-[width] duration-300 ease-out lg:flex',
             configOpen ? 'w-[260px]' : 'w-0 overflow-hidden'
           )}
         >

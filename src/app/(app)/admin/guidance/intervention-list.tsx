@@ -13,7 +13,7 @@ import type { InterventionItem } from "./guidance-utils";
 export function InterventionList({ items }: { items: InterventionItem[] }) {
   if (items.length === 0) {
     return (
-      <Card className="border-dashed border-white/60 bg-white/60 backdrop-blur-xl">
+      <Card className="border-dashed border-zinc-200 bg-white">
         <CardContent className="py-10 text-center text-sm text-muted-foreground">
           近期未发现明显需要下滑干预的账号
         </CardContent>
@@ -43,12 +43,12 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
                     <div className="text-sm text-muted-foreground">{item.accountName}</div>
                   </div>
                 </TableCell>
-                <TableCell className="align-top font-medium text-rose-600">{item.metrics[0]?.value ?? "—"}</TableCell>
+                <TableCell className="align-top font-medium text-[#C9604D]">{item.metrics[0]?.value ?? "—"}</TableCell>
                 <TableCell className="align-top text-sm text-muted-foreground">{item.latestPerformance}</TableCell>
                 <TableCell className="align-top">
                   <div className="flex flex-wrap gap-1.5">
                     {item.reasons.map((reason) => (
-                      <Badge key={reason} variant="outline" className="border-rose-200 bg-rose-50 text-rose-700">
+                      <Badge key={reason} variant="outline" className="border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]">
                         {reason}
                       </Badge>
                     ))}
@@ -63,7 +63,7 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
 
       <div className="space-y-3 md:hidden">
         {items.map((item) => (
-          <Card key={item.accountId} className="border-white/70 bg-white/85 backdrop-blur-xl">
+          <Card key={item.accountId} className="border-zinc-200 bg-white">
             <CardContent className="space-y-4 pt-5">
               <div className="space-y-1">
                 <div className="font-medium text-foreground">{item.ownerName}</div>
@@ -71,7 +71,7 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {item.reasons.map((reason) => (
-                  <Badge key={reason} variant="outline" className="border-rose-200 bg-rose-50 text-rose-700">
+                  <Badge key={reason} variant="outline" className="border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]">
                     {reason}
                   </Badge>
                 ))}
@@ -84,7 +84,7 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl bg-rose-50/80 px-3 py-3 text-sm text-rose-700">{item.action}</div>
+              <div className="rounded-xl bg-[#C9604D]/5 border border-[#C9604D]/15 px-3 py-3 text-[13px] text-[#C9604D]">{item.action}</div>
             </CardContent>
           </Card>
         ))}

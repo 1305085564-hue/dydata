@@ -13,7 +13,7 @@ import type { MismatchItem } from "./guidance-utils";
 export function MismatchList({ items }: { items: MismatchItem[] }) {
   if (items.length === 0) {
     return (
-      <Card className="border-dashed border-white/60 bg-white/60 backdrop-blur-xl">
+      <Card className="border-dashed border-zinc-200 bg-white">
         <CardContent className="py-10 text-center text-sm text-muted-foreground">
           近期未发现明显的方向错配账号
         </CardContent>
@@ -49,7 +49,7 @@ export function MismatchList({ items }: { items: MismatchItem[] }) {
                 <TableCell className="align-top text-sm text-muted-foreground">{item.actualPerformance}</TableCell>
                 <TableCell className="align-top">
                   <div className="space-y-2">
-                    <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                    <Badge variant="outline" className="border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]">
                       {item.mismatchType}
                     </Badge>
                     <p className="text-xs text-muted-foreground">可信度：{item.confidenceLabel}</p>
@@ -64,7 +64,7 @@ export function MismatchList({ items }: { items: MismatchItem[] }) {
 
       <div className="space-y-3 md:hidden">
         {items.map((item) => (
-          <Card key={item.accountId} className="border-white/70 bg-white/85 backdrop-blur-xl">
+          <Card key={item.accountId} className="border-zinc-200 bg-white">
             <CardContent className="space-y-4 pt-5">
               <div className="space-y-1">
                 <div className="font-medium text-foreground">{item.ownerName}</div>
@@ -72,7 +72,7 @@ export function MismatchList({ items }: { items: MismatchItem[] }) {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{item.currentMode}</Badge>
-                <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                <Badge variant="outline" className="border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]">
                   {item.mismatchType}
                 </Badge>
               </div>

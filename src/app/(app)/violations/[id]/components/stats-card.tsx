@@ -15,12 +15,12 @@ const TONE_CLASS: Record<NonNullable<StatsCardProps["tone"]>, { value: string; h
     hint: "text-zinc-500",
   },
   positive: {
-    value: "text-[#067647]",
-    hint: "text-[#067647]/80",
+    value: "text-[#6FAA7D]",
+    hint: "text-[#6FAA7D]/80",
   },
   negative: {
-    value: "text-[#B42318]",
-    hint: "text-[#B42318]/80",
+    value: "text-[#C9604D]",
+    hint: "text-[#C9604D]/80",
   },
   accent: {
     value: "text-[#D97757]",
@@ -50,7 +50,7 @@ export function StatsCard({
         </span>
         {icon ? <span className="text-zinc-400">{icon}</span> : null}
       </div>
-      <div className={cn("mt-3 text-3xl font-black leading-none tracking-tight", toneClass.value)}>
+      <div className={cn("mt-3 text-3xl font-semibold leading-none tracking-tight", toneClass.value)}>
         {value}
       </div>
       {hint ? (

@@ -36,11 +36,11 @@ interface VideoListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-[#A7F3D0] bg-[#ECFDF3] text-[#067647]",
-  删稿: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
-  限流: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
-  投流: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
-  活动干预: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
+  正常: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  删稿: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  限流: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
   "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
 };
 
@@ -179,7 +179,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
     <div className="space-y-5">
       <VideoFilters profiles={profiles} accounts={accounts} onFilter={setFilters} />
 
-      <div className="overflow-x-auto rounded-[2rem] border border-zinc-200 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-zinc-200 bg-zinc-50">
@@ -223,7 +223,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                           {video.anomaly_status}
                         </Badge>
                         {tags.some((tag) => getTagReviewStatus(tag.confidence) === "待确认") ? (
-                          <Badge variant="outline" className="border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]">
+                          <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-[#D99E55]">
                             标签待确认
                           </Badge>
                         ) : null}

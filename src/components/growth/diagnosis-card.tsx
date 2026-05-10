@@ -244,23 +244,23 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
             <motion.article
               key={item.key}
               variants={itemVariants}
-              className="group flex flex-col rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-[1px] hover:shadow-md"
+              className="group flex flex-col rounded-xl border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0"
             >
               {/* 头部 */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   {isWeak ? (
-                    <AlertTriangle className="size-4 shrink-0 text-[#EAB308]" />
+                    <AlertTriangle className="size-4 shrink-0 stroke-[1.5] text-[#D99E55]" />
                   ) : (
-                    <ShieldCheck className="size-4 shrink-0 text-[#067647]" />
+                    <ShieldCheck className="size-4 shrink-0 stroke-[1.5] text-[#6FAA7D]" />
                   )}
-                  <h3 className="text-sm font-bold text-zinc-950">{item.title}</h3>
+                  <h3 className="text-[13px] font-semibold text-zinc-800">{item.title}</h3>
                 </div>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                     isWeak
-                      ? "bg-[#FEFCE8] text-[#B45309]"
-                      : "bg-[#ECFDF3] text-[#067647]"
+                      ? "bg-zinc-50 text-[#D99E55]"
+                      : "bg-zinc-50 text-[#6FAA7D]"
                   }`}
                 >
                   {isWeak ? "优先处理" : "继续放大"}
@@ -268,7 +268,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
               </div>
 
               {/* 数据证据 */}
-              <p className="mt-3 text-[13px] leading-relaxed text-zinc-600">
+              <p className="mt-3 text-[13px] leading-[1.7] text-zinc-600">
                 {item.evidence}
               </p>
 
@@ -279,9 +279,9 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
 
               {/* 下一步动作 — 底部按钮 */}
               <div className="mt-auto pt-3">
-                <div className={`flex items-start gap-2 rounded-xl border-l-4 p-3 ${isWeak ? "border-l-[#D97757] bg-[#D97757]/[0.03]" : "border-l-[#067647] bg-[#067647]/[0.03]"}`}>
-                  <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-zinc-500" />
-                  <p className="text-[13px] leading-relaxed text-zinc-800">{item.action}</p>
+                <div className={`flex items-start gap-2 rounded-xl border-l-2 p-3 ${isWeak ? "border-l-[#D97757] bg-zinc-50" : "border-l-[#6FAA7D] bg-zinc-50"}`}>
+                  <ArrowRight className="mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-zinc-500" />
+                  <p className="text-[13px] leading-[1.7] text-zinc-800">{item.action}</p>
                 </div>
               </div>
             </motion.article>
@@ -289,7 +289,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
         })}
 
         {diagnosisItems.length === 0 ? (
-          <div className="col-span-2 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+          <div className="col-span-2 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
             团队数据不足，暂时还不能给出有效对标。
           </div>
         ) : null}

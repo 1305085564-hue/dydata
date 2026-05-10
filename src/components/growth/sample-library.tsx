@@ -35,9 +35,9 @@ export type 学习样本库Props = {
 
 const 来源样式: Record<学习样本来源, string> = {
   标杆样本:
-    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-200",
+    "border-zinc-200 bg-zinc-50 text-[#8AA8C7]",
   你的历史最佳:
-    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200",
+    "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
 }
 
 function 截断文案(text: string, length = 100) {
@@ -159,7 +159,7 @@ export function SampleLibrary({
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm",
+        "overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm",
         className
       )}
     >

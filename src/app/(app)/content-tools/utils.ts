@@ -43,9 +43,9 @@ export function computeConfidence(sampleCount: number, hitRate: number): Recomme
 }
 
 export function getConfidenceTone(confidence: RecommendationConfidence) {
-  if (confidence === "高") return "text-emerald-600 bg-emerald-500/10 border-emerald-500/20";
-  if (confidence === "中") return "text-amber-600 bg-amber-500/10 border-amber-500/20";
-  return "text-slate-600 bg-slate-500/10 border-slate-500/20";
+  if (confidence === "高") return "text-[#4F7F5E] bg-zinc-50 border-zinc-200";
+  if (confidence === "中") return "text-[#8A6A2F] bg-zinc-50 border-zinc-200";
+  return "text-zinc-500 bg-zinc-50 border-zinc-200";
 }
 
 export function getDateDaysAgo(baseDate: string, days: number) {

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
   GitBranch,
-  Loader2,
   Pencil,
   Plus,
   RefreshCw,
@@ -18,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -252,7 +252,7 @@ function getStatusBadge(enabled: boolean, isDefault?: boolean) {
   }
 
   if (isDefault) {
-    return <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">默认启用</Badge>;
+    return <Badge className="bg-[#6FAA7D] text-white hover:bg-[#6FAA7D]">默认启用</Badge>;
   }
 
   return <Badge variant="secondary">已启用</Badge>;
@@ -841,7 +841,7 @@ export default function AIRewriteClient() {
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => void loadBundle(true)} disabled={isRefreshing || isLoading}>
-              {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              {isRefreshing ? <Skeleton className="size-4 rounded-full" /> : <RefreshCw className="size-4" />}
               刷新配置
             </Button>
           </div>
@@ -865,7 +865,7 @@ export default function AIRewriteClient() {
               </CardDescription>
             </div>
             <Button onClick={() => void saveRuntimeSettings()} disabled={isSavingRuntime || !bundle.featureConfig}>
-              {isSavingRuntime ? <Loader2 className="size-4 animate-spin" /> : null}
+              {isSavingRuntime ? <Skeleton className="size-4 rounded-full" /> : null}
               保存运行规则
             </Button>
           </div>
@@ -915,7 +915,7 @@ export default function AIRewriteClient() {
 
       {isLoading ? (
         <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-8 text-sm text-zinc-500">
-          <Loader2 className="size-4 animate-spin" />
+          <Skeleton className="size-4 rounded-full" />
           正在加载文案改写配置...
         </div>
       ) : (
@@ -988,7 +988,7 @@ export default function AIRewriteClient() {
                             onClick={() => void toggleEntity("fixed_mode", row)}
                             disabled={busyKey === `fixed_mode:${row.id}`}
                           >
-                            {busyKey === `fixed_mode:${row.id}` ? <Loader2 className="size-4 animate-spin" /> : null}
+                            {busyKey === `fixed_mode:${row.id}` ? <Skeleton className="size-4 rounded-full" /> : null}
                             {row.is_enabled ? "停用" : "启用"}
                           </Button>
                         </div>
@@ -1060,7 +1060,7 @@ export default function AIRewriteClient() {
                               onClick={() => void toggleEntity("model_view", row)}
                               disabled={busyKey === `model_view:${row.id}`}
                             >
-                              {busyKey === `model_view:${row.id}` ? <Loader2 className="size-4 animate-spin" /> : null}
+                              {busyKey === `model_view:${row.id}` ? <Skeleton className="size-4 rounded-full" /> : null}
                               {row.is_enabled ? "停用" : "启用"}
                             </Button>
                           </div>
@@ -1171,7 +1171,7 @@ export default function AIRewriteClient() {
                                       onClick={() => void toggleEntity("model_route", row)}
                                       disabled={busyKey === `model_route:${row.id}`}
                                     >
-                                      {busyKey === `model_route:${row.id}` ? <Loader2 className="size-4 animate-spin" /> : null}
+                                      {busyKey === `model_route:${row.id}` ? <Skeleton className="size-4 rounded-full" /> : null}
                                       {row.is_enabled ? "停用" : "启用"}
                                     </Button>
                                   </div>
@@ -1245,7 +1245,7 @@ export default function AIRewriteClient() {
                                 onClick={() => void toggleEntity("mode", row)}
                                 disabled={busyKey === `mode:${row.id}`}
                               >
-                                {busyKey === `mode:${row.id}` ? <Loader2 className="size-4 animate-spin" /> : null}
+                                {busyKey === `mode:${row.id}` ? <Skeleton className="size-4 rounded-full" /> : null}
                                 {row.is_enabled ? "停用" : "启用"}
                               </Button>
                             </div>
@@ -1319,7 +1319,7 @@ export default function AIRewriteClient() {
                                 onClick={() => void toggleEntity("length_preset", row)}
                                 disabled={busyKey === `length_preset:${row.id}`}
                               >
-                                {busyKey === `length_preset:${row.id}` ? <Loader2 className="size-4 animate-spin" /> : null}
+                                {busyKey === `length_preset:${row.id}` ? <Skeleton className="size-4 rounded-full" /> : null}
                                 {row.is_enabled ? "停用" : "启用"}
                               </Button>
                             </div>
@@ -1380,7 +1380,7 @@ export default function AIRewriteClient() {
                             onClick={() => void toggleEntity("workflow", workflow)}
                             disabled={busyKey === `workflow:${workflow.id}`}
                           >
-                            {busyKey === `workflow:${workflow.id}` ? <Loader2 className="size-4 animate-spin" /> : null}
+                            {busyKey === `workflow:${workflow.id}` ? <Skeleton className="size-4 rounded-full" /> : null}
                             {workflow.is_enabled ? "停用" : "启用"}
                           </Button>
                           <Button size="sm" onClick={() => openWorkflowStepEditor(undefined, { workflowId: workflow.id })}>
@@ -1437,7 +1437,7 @@ export default function AIRewriteClient() {
                                       onClick={() => void toggleEntity("workflow_step", step)}
                                       disabled={busyKey === `workflow_step:${step.id}`}
                                     >
-                                      {busyKey === `workflow_step:${step.id}` ? <Loader2 className="size-4 animate-spin" /> : null}
+                                      {busyKey === `workflow_step:${step.id}` ? <Skeleton className="size-4 rounded-full" /> : null}
                                       {step.is_enabled ? "停用" : "启用"}
                                     </Button>
                                   </div>
@@ -1827,7 +1827,7 @@ export default function AIRewriteClient() {
               取消
             </Button>
             <Button onClick={() => void saveEditor()} disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+              {isSubmitting ? <Skeleton className="size-4 rounded-full" /> : null}
               保存
             </Button>
           </DialogFooter>

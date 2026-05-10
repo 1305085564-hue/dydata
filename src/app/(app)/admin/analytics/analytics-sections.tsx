@@ -96,8 +96,8 @@ export function AnalyticsSections({
           >
             <div
               className={cn(
-                "overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-sm transition-all duration-500",
-                isExpanded ? "shadow-[0_8px_30px_rgba(0,0,0,0.04)]" : "hover:-translate-y-1 hover:shadow-md",
+                "overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                !isExpanded && "hover:-translate-y-[1px] active:translate-y-0",
               )}
             >
               <button
@@ -107,24 +107,24 @@ export function AnalyticsSections({
                 <div className="flex items-center gap-4">
                   <div
                     className={cn(
-                      "flex size-10 items-center justify-center rounded-2xl bg-zinc-100 font-black text-zinc-400 transition-colors duration-300",
-                      isExpanded && "bg-zinc-100 text-zinc-900",
+                      "flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-[13px] font-medium text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] tabular-nums",
+                      isExpanded && "bg-zinc-100 text-zinc-800",
                     )}
                   >
                     {index + 1}
                   </div>
-                  <h2 className="text-2xl font-bold tracking-tight text-zinc-950">
+                  <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
                     {section.title}
                   </h2>
                 </div>
 
                 <div
                   className={cn(
-                    "flex size-10 items-center justify-center rounded-full bg-zinc-50 text-zinc-400 transition-all duration-300 group-hover:bg-zinc-100",
-                    isExpanded && "rotate-180 bg-zinc-100 text-zinc-900 group-hover:bg-zinc-200",
+                    "flex size-10 items-center justify-center rounded-full bg-zinc-50 text-zinc-400 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:bg-zinc-100",
+                    isExpanded && "rotate-180 bg-zinc-100 text-zinc-800 group-hover:bg-zinc-200",
                   )}
                 >
-                  <ChevronDown className="size-5" />
+                  <ChevronDown className="size-5 stroke-[1.5]" />
                 </div>
               </button>
 

@@ -65,7 +65,7 @@ export function getStatusMeta(channel: AiChannelRow) {
   return {
     label: "健康",
     variant: "default" as const,
-    className: "rounded-full bg-emerald-600 text-white hover:bg-emerald-600",
+    className: "rounded-full bg-[#6FAA7D] text-white hover:bg-[#6FAA7D]",
   };
 }
 

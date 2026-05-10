@@ -105,7 +105,7 @@ function ExemptionModal({
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"
-            : "h-8 border-primary/20 px-3 text-xs font-medium text-zinc-900 shadow-sm transition-all hover:border-primary/40 hover:bg-zinc-900/5",
+            : "h-8 border-zinc-200 px-3 text-xs font-medium text-zinc-800 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-white active:translate-y-0",
           triggerClassName,
         )}
       >
@@ -113,7 +113,7 @@ function ExemptionModal({
           <>
             <div className="dashboard-top-action-card-head">
               <span className="dashboard-top-action-icon">
-                <ShieldAlert className="size-4" />
+                <ShieldAlert className="size-4 stroke-[1.5]" />
               </span>
               <div className="dashboard-top-action-title">{resolvedTitle}</div>
             </div>
@@ -123,31 +123,31 @@ function ExemptionModal({
           </>
         ) : (
           <>
-            <ShieldAlert className="size-4" />
+            <ShieldAlert className="size-4 stroke-[1.5]" />
             {resolvedTitle}
           </>
         )}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border-none bg-white/95 p-0 shadow-[0_20px_60px_rgba(0,0,0,0.15)] backdrop-blur-xl sm:max-w-4xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 shadow-sm sm:max-w-4xl">
           <DialogHeader className="px-6 pb-2 pt-6">
-            <DialogTitle className="text-xl font-bold tracking-tight text-[var(--color-text-zinc-900)]">
+            <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">
               选择豁免日期
             </DialogTitle>
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-6 px-6 pb-6 lg:grid-cols-2">
             <div className="space-y-3">
-              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+              <p className="text-[13px] leading-[1.7] text-zinc-500">
                 点击日历上的漏交、未交或未来日期，只会提交你点中的那些日期。
                 <br />
-                <span className="font-semibold text-[var(--color-primary)]">
+                <span className="font-medium text-[#D97757]">
                   注：不会再自动补成连续区间。
                 </span>
               </p>
 
-              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 p-1 ring-1 ring-black/5">
+              <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-[#FAFAFB] p-1">
                 <SubmissionCalendar
                   today={today}
                   submittedDates={submittedDates}
@@ -164,14 +164,14 @@ function ExemptionModal({
             <div className="flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-[var(--color-text-zinc-900)]">已选豁免日期</p>
+                  <p className="text-[13px] font-medium text-zinc-800">已选豁免日期</p>
                   {selectedDates.length > 0 ? (
-                    <div className="rounded-[1rem] bg-zinc-900/5 p-4 ring-1 ring-primary/20">
+                    <div className="rounded-xl border border-zinc-200 bg-[#FAFAFB] p-4">
                       <div className="flex flex-wrap gap-2">
                         {selectedDates.map((date) => (
                           <span
                             key={date}
-                            className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-zinc-900 ring-1 ring-primary/15"
+                            className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium tabular-nums text-zinc-800"
                           >
                             {date}
                           </span>
@@ -179,36 +179,37 @@ function ExemptionModal({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex h-24 items-center justify-center rounded-[1rem] border border-dashed border-black/10 bg-slate-50 text-sm text-[var(--color-text-secondary)]">
+                    <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-[#FAFAFB] text-[13px] text-zinc-400">
                       尚未选择任何日期
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-[var(--color-text-zinc-900)]">
-                    申请原因 <span className="text-rose-500">*</span>
+                  <p className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-800">
+                    申请原因
+                    <span className="inline-block size-1.5 rounded-full bg-[#D97757]" />
                   </p>
                   <textarea
-                    className="h-[120px] w-full resize-none rounded-[1rem] border border-black/10 bg-white px-4 py-3 text-sm shadow-sm transition-all placeholder:text-muted-foreground focus:border-zinc-400 focus:outline-none focus:ring-4 focus:ring-zinc-200"
+                    className="h-[120px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-800 shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                     maxLength={100}
                     placeholder="请简述豁免原因，如：外出拍摄、周末双休、账号限流等（最多100字）"
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                   />
-                  <p className="text-right text-xs text-muted-foreground">{reason.length}/100</p>
+                  <p className="text-right text-[11px] tabular-nums text-zinc-400">{reason.length}/100</p>
                 </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending} className="h-11 rounded-[12px] px-6">
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending} className="h-11 rounded-[10px] px-6">
                   取消
                 </Button>
                 <Button
                   type="button"
                   onClick={handleSubmit}
                   disabled={isPending}
-                  className="h-11 rounded-[12px] bg-zinc-900 px-8 text-white shadow-[0_8px_16px_-6px_rgba(0,122,255,0.4)] transition-all hover:bg-zinc-900/90 active:scale-[0.98]"
+                  className="h-11 rounded-[10px] bg-[#D97757] px-8 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
                 >
                   {isPending ? "提交中..." : "提交申请"}
                 </Button>

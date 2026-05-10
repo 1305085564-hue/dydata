@@ -57,13 +57,12 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        <DialogFooter className="bg-white border-zinc-200">
-          <Button variant="outline" className="rounded-xl border-zinc-200" onClick={() => onOpenChange(false)} disabled={pending}>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
             {cancelText}
           </Button>
           <Button
             variant={destructive ? "destructive" : "default"}
-            className={destructive ? "rounded-xl" : "rounded-xl bg-zinc-950 text-white hover:-translate-y-[1px] hover:shadow-lg"}
             onClick={handleConfirm}
             disabled={pending}
           >

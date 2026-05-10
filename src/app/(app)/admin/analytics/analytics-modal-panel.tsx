@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/ui/error-state";
 import type { AnalyticsRangePreset } from "@/lib/analytics-access";
 import type { AnalyticsPageData } from "@/lib/loaders/analytics-page";
 import { cn } from "@/lib/utils";
@@ -24,11 +26,11 @@ function AnalyticsModalSkeleton() {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="h-28 animate-pulse rounded-[24px] bg-slate-100/80" />
-        <div className="h-28 animate-pulse rounded-[24px] bg-slate-100/80" />
+        <Skeleton className="h-28" />
+        <Skeleton className="h-28" />
       </div>
-      <div className="h-12 animate-pulse rounded-[20px] bg-slate-100/80" />
-      <div className="h-80 animate-pulse rounded-[28px] bg-slate-100/80" />
+      <Skeleton className="h-12" />
+      <Skeleton className="h-80" />
     </div>
   );
 }
@@ -93,7 +95,7 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
   }
 
   if (error && !data) {
-    return <div className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>;
+    return <ErrorState title="加载经营分析失败" description={error} />;
   }
 
   if (!data) {
@@ -103,32 +105,32 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="rounded-[28px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(245,249,255,0.92))] p-5 shadow-[var(--shadow-card)]">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">
+            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
               经营分析
             </p>
-            <h3 className="text-2xl font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">经营分析工作台</h3>
-            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+            <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">经营分析工作台</h3>
+            <p className="text-[13px] leading-[1.7] text-zinc-500">
               面板打开后再加载分析数据，避免切换入口时触发整页后台重渲染。
             </p>
           </div>
         </div>
-        <div className="rounded-[24px] border border-white/80 bg-white/88 p-4 shadow-[var(--shadow-light)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">当前周期</p>
-          <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">当前周期</p>
+          <p className="mt-2 text-[16px] font-semibold text-zinc-800 tabular-nums">
             {data.range.from} 至 {data.range.to}
           </p>
-          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+          <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">
             仍保留原有权限裁剪逻辑，只把取数时机延后到真正打开面板时。
           </p>
         </div>
       </div>
 
-      <div className="rounded-[24px] border border-white/75 bg-white/82 p-4 shadow-[var(--shadow-light)]">
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
-            <p className="text-xs font-semibold tracking-[0.08em] text-[var(--color-text-secondary)]">快捷时间切换</p>
+            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">快捷时间切换</p>
             <div className="flex flex-wrap gap-2">
               {presetOptions.map((option) => (
                 <Button
@@ -137,8 +139,8 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
                   size="sm"
                   variant={preset === option.value ? "default" : "outline"}
                   className={cn(
-                    "h-8 rounded-full px-4 text-xs",
-                    preset === option.value ? "border-transparent" : "border-white/70 bg-white/88",
+                    "h-8 rounded-[10px] px-4 text-[12px]",
+                    preset === option.value ? "bg-zinc-800 text-white" : "border-zinc-200",
                   )}
                   onClick={() => setPreset(option.value)}
                 >
@@ -149,22 +151,22 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
           </div>
           {preset === "custom" ? (
             <div className="flex flex-col gap-3 sm:flex-row">
-              <label className="space-y-1 text-xs text-[var(--color-text-secondary)]">
+              <label className="space-y-1 text-[12px] text-zinc-500">
                 <span>开始日期</span>
                 <input
                   type="date"
                   value={from}
                   onChange={(event) => setFrom(event.target.value)}
-                  className="h-9 rounded-xl border border-white/80 bg-white/90 px-3 text-sm"
+                  className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-[13px] text-zinc-800 focus:ring-1 focus:ring-zinc-950/5 focus:border-zinc-300 outline-none"
                 />
               </label>
-              <label className="space-y-1 text-xs text-[var(--color-text-secondary)]">
+              <label className="space-y-1 text-[12px] text-zinc-500">
                 <span>结束日期</span>
                 <input
                   type="date"
                   value={to}
                   onChange={(event) => setTo(event.target.value)}
-                  className="h-9 rounded-xl border border-white/80 bg-white/90 px-3 text-sm"
+                  className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-[13px] text-zinc-800 focus:ring-1 focus:ring-zinc-950/5 focus:border-zinc-300 outline-none"
                 />
               </label>
             </div>
@@ -173,7 +175,7 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
       </div>
 
       {isLoading ? <AnalyticsModalSkeleton /> : null}
-      {error ? <div className="rounded-[24px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+      {error ? <ErrorState title="加载经营分析失败" description={error} /> : null}
 
       <AnalyticsContent
         userId={data.userId}

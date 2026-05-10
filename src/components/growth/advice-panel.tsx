@@ -3,11 +3,12 @@
 
 import { useTypewriter } from "@/lib/animations";
 import type { AdviceSections } from "@/lib/growth-page";
+import { ErrorState } from "@/components/ui/error-state";
 
 function TypeLine({ text }: { text: string }) {
   const { displayText, cursorClassName } = useTypewriter(text, 24);
   return (
-    <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[var(--color-text-primary)]">
+    <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">
       {displayText}
       <span className={cursorClassName} aria-hidden="true" />
     </p>
@@ -15,9 +16,9 @@ function TypeLine({ text }: { text: string }) {
 }
 
 const sectionTone = {
-  diagnosis: "border-[color:var(--color-warning)]/20 bg-[color:var(--color-warning)]/10",
+  diagnosis: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#D99E55]",
   reference: "border-zinc-200 bg-zinc-50",
-  action: "border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/10",
+  action: "border-zinc-200 bg-zinc-50 border-l-2 border-l-[#6FAA7D]",
 } as const;
 
 const DEMO_SECTIONS = [
@@ -41,32 +42,27 @@ const DEMO_SECTIONS = [
 export function AdvicePanel({ data, noData = false }: { data: AdviceSections; noData?: boolean }) {
   if (data.source === "error") {
     return (
-      <div className="rounded-[2rem] border border-[#B42318]/20 bg-[#FEF3F2] p-5">
-        <div className="space-y-2">
-          <h2 className="text-base font-semibold tracking-[-0.02em] text-zinc-950">诊断 / 参考 / 动作</h2>
-          <p className="text-sm text-[#B42318]">AI 分析暂时不可用</p>
-        </div>
-      </div>
+      <ErrorState title="AI 分析暂时不可用" description="稍后重试或切换规则诊断。" />
     );
   }
 
   if (noData) {
     return (
-      <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Advice Flow</p>
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">诊断 / 参考 / 动作</h2>
-            <p className="text-sm leading-6 text-zinc-500">暂无数据，以下为示范参考</p>
+            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">Advice Flow</p>
+            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">诊断 / 参考 / 动作</h2>
+            <p className="text-[13px] leading-[1.7] text-zinc-500">暂无数据，以下为示范参考</p>
           </div>
           <div className="grid gap-3">
             {DEMO_SECTIONS.map((section) => (
-              <div key={section.key} className={`rounded-[12px] border border-dashed p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
+              <div key={section.key} className={`rounded-xl border border-dashed p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="text-sm font-semibold text-zinc-950">{section.title}</span>
-                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] text-zinc-500">示范数据</span>
+                  <span className="text-[13px] font-semibold text-zinc-800">{section.title}</span>
+                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] text-zinc-400">示范数据</span>
                 </div>
-                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-zinc-950">{section.text}</p>
+                <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">{section.text}</p>
               </div>
             ))}
           </div>
@@ -76,13 +72,13 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
   }
 
   return (
-    <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 sm:p-6">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Advice Flow</p>
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">诊断 / 参考 / 动作</h2>
-            <p className="text-sm leading-6 text-zinc-500">
+            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">Advice Flow</p>
+            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">诊断 / 参考 / 动作</h2>
+            <p className="text-[13px] leading-[1.7] text-zinc-500">
               {data.source === "ai" ? "已优先展示 AI 洞察结果。" : "当前无 AI 结果，已切换规则诊断。"}
             </p>
           </div>
@@ -94,8 +90,8 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
             { key: "reference", title: "参考", text: data.reference },
             { key: "action", title: "动作", text: data.action },
           ].map((section) => (
-            <div key={section.key} className={`rounded-[16px] border p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
-              <div className="mb-2 text-sm font-semibold text-zinc-950">{section.title}</div>
+            <div key={section.key} className={`rounded-xl border p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
+              <div className="mb-2 text-[13px] font-semibold text-zinc-800">{section.title}</div>
               <TypeLine text={section.text} />
             </div>
           ))}

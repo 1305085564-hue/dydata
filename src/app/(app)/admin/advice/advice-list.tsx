@@ -33,12 +33,12 @@ const INITIAL_FILTERS: AdviceFilterValue = {
 };
 
 const STATUS_STYLES: Record<AdviceStatus, string> = {
-  待查看: "border-sky-200 bg-sky-50 text-sky-700",
-  已查看: "border-slate-200 bg-slate-100 text-slate-600",
-  待执行: "border-amber-200 bg-amber-50 text-amber-700",
-  已执行: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  已忽略: "border-slate-200 bg-slate-50 text-slate-500",
-  已复核: "border-violet-200 bg-violet-50 text-violet-700",
+  待查看: "border-zinc-200 bg-zinc-100 text-zinc-700",
+  已查看: "border-zinc-200 bg-zinc-100 text-zinc-600",
+  待执行: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  已执行: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  已忽略: "border-zinc-200 bg-zinc-50 text-zinc-500",
+  已复核: "border-zinc-200 bg-zinc-100 text-zinc-700",
 };
 
 const SOURCE_LABELS: Record<AdviceSource, string> = {
@@ -148,19 +148,19 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "待查看", value: stats.待查看, tone: "border-sky-200 bg-sky-50/80 text-sky-700" },
-          { label: "待执行", value: stats.待执行, tone: "border-amber-200 bg-amber-50/80 text-amber-700" },
-          { label: "已执行", value: stats.已执行, tone: "border-emerald-200 bg-emerald-50/80 text-emerald-700" },
-          { label: "已复核", value: stats.已复核, tone: "border-violet-200 bg-violet-50/80 text-violet-700" },
+          { label: "待查看", value: stats.待查看, tone: "border-zinc-200 bg-zinc-50 text-zinc-700" },
+          { label: "待执行", value: stats.待执行, tone: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]" },
+          { label: "已执行", value: stats.已执行, tone: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]" },
+          { label: "已复核", value: stats.已复核, tone: "border-zinc-200 bg-zinc-50 text-zinc-700" },
         ].map((card) => (
-          <div key={card.label} className={`rounded-[28px] border p-5 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl ${card.tone}`}>
+          <div key={card.label} className={`rounded-2xl border p-5 shadow-sm ${card.tone}`}>
             <div className="text-sm font-medium">{card.label}</div>
             <div className="mt-3 text-3xl font-semibold tracking-tight">{card.value}</div>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-[28px] border border-border/60 bg-background/80 p-4 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-sm font-medium text-foreground">建议池</div>
           <div className="text-xs text-muted-foreground">当前共 {filteredRows.length} 条建议</div>
@@ -172,7 +172,7 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
 
       <AdviceFilters profiles={profiles} accounts={accounts} onFilter={setFilters} />
 
-      <div className="overflow-x-auto rounded-[28px] border border-border/60 bg-background/80 shadow-sm ring-1 ring-foreground/5 backdrop-blur-xl">
+      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">

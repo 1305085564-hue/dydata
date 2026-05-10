@@ -142,26 +142,25 @@ export function DashboardForm({
   return (
     <div className="relative">
       {showSuccess && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/78 backdrop-blur-md">
-          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-2xl bg-white/78 px-8 py-7 shadow-[0_20px_60px_-28px_rgba(6,118,71,0.48)] dark:bg-[#067647]/55">
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/90">
+          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-8 py-7 shadow-sm">
             <div className="relative flex h-20 w-20 items-center justify-center">
-              <div className="absolute inset-0 animate-ping rounded-full bg-green-100 opacity-30" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-[#6FAA7D] bg-white">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2.5"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="h-10 w-10 text-green-600"
+                  className="h-10 w-10 text-[#6FAA7D]"
                 >
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
             </div>
-            <p className="text-xl font-semibold text-green-600">{successMsg}</p>
+            <p className="text-[20px] font-semibold tracking-tight text-[#6FAA7D]">{successMsg}</p>
           </div>
         </div>
       )}
@@ -193,15 +192,15 @@ export function DashboardForm({
 
                   <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
                     <DialogTrigger
-                      render={<Button type="button" className="h-12 w-full rounded-2xl px-5 text-base sm:w-auto" />}
+                      render={<Button type="button" className="h-12 w-full rounded-[10px] px-5 text-[14px] font-medium sm:w-auto" />}
                     >
-                      <ScanSearch className="size-4" />
+                      <ScanSearch className="size-4 stroke-[1.5]" />
                       截图识别导入
                     </DialogTrigger>
                     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
                       <DialogHeader>
-                        <DialogTitle>截图识别导入</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">截图识别导入</DialogTitle>
+                        <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">
                           支持 jpg、png、webp。识别结果可以逐项修改，确认后才会写回主表单。
                         </DialogDescription>
                       </DialogHeader>
@@ -213,23 +212,30 @@ export function DashboardForm({
                 <div className="dashboard-summary-bar">
                   <div className="glass-chip">
                     账号
-                    <span className="font-semibold text-foreground">
+                    <span className="font-medium text-zinc-800">
                       {accounts.find((account) => account.id === selectedAccountId)?.name ?? "--"}
                     </span>
                   </div>
                   <div className="glass-chip">
                     日期
-                    <span className="font-semibold text-foreground">{existingData?.report_date ?? today}</span>
+                    <span className="font-medium tabular-nums text-zinc-800">{existingData?.report_date ?? today}</span>
                   </div>
                   <div className="glass-chip">
                     状态
                     <span
                       className={
                         existingData
-                          ? "rounded-full bg-[#D1FADF] px-2 py-0.5 text-[#067647] dark:bg-[#067647]/15 dark:text-[#ABEFC6]"
-                          : "rounded-full bg-[#FEF9C3] px-2 py-0.5 text-[#92400E] dark:bg-[#CA8A04]/15 dark:text-[#FDE68A]"
+                          ? "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-800"
+                          : "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-800"
                       }
                     >
+                      <span
+                        className={
+                          existingData
+                            ? "inline-block size-1.5 rounded-full bg-[#6FAA7D]"
+                            : "inline-block size-1.5 rounded-full bg-[#D99E55]"
+                        }
+                      />
                       {existingData ? "今日可修改" : "今日待提交"}
                     </span>
                   </div>
@@ -314,7 +320,7 @@ export function DashboardForm({
                     </p>
                   </div>
                   <div
-                    className={`${getDashboardMetricGridClass("primary")} rounded-2xl border border-zinc-200 bg-zinc-900/6 p-4 shadow-sm backdrop-blur-xl sm:p-5`}
+                    className={`${getDashboardMetricGridClass("primary")} rounded-xl border border-zinc-200 bg-[#FAFAFB] p-4 sm:p-5`}
                   >
                     <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                       <Label htmlFor="play_count">播放量</Label>
@@ -539,18 +545,18 @@ export function DashboardForm({
               <div className="dashboard-form-floating-panel">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
-                    <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="size-4 text-zinc-900" />
+                    <div className="inline-flex items-center gap-2 text-[13px] text-zinc-500">
+                      <CheckCircle2 className="size-4 stroke-[1.5] text-zinc-800" />
                       <span>补充完成后再提交</span>
                     </div>
-                    <p className="text-xs leading-5 text-muted-foreground">
+                    <p className="text-[12px] leading-[1.7] text-zinc-500">
                       这个操作面板会跟随当前视口底部，同时给表单底部预留留白，不会压住最后几项输入。
                     </p>
                   </div>
                   <Button
                     type="submit"
                     disabled={isPending}
-                    className="h-11 w-full rounded-2xl px-6 text-sm sm:min-w-[168px] sm:w-auto"
+                    className="h-11 w-full rounded-[10px] px-6 text-[13px] sm:min-w-[168px] sm:w-auto"
                   >
                     {submitButtonLabel}
                   </Button>
@@ -559,11 +565,11 @@ export function DashboardForm({
             </div>
 
             <div className="fixed inset-x-0 bottom-0 z-20 dashboard-mobile-submit-bar p-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:hidden">
-              <div className="mx-auto max-w-md rounded-2xl border border-border/60 bg-background/86 p-2 shadow-[0_18px_40px_-20px_rgba(15,23,42,0.38)] backdrop-blur-xl">
+              <div className="mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">
                 <Button
                   type="submit"
                   disabled={isPending}
-                  className="h-12 w-full rounded-xl text-base font-semibold shadow-[0_14px_34px_-18px_rgba(37,99,235,0.62)]"
+                  className="h-12 w-full rounded-[10px] text-[14px] font-medium"
                 >
                   {submitButtonLabel}
                 </Button>
@@ -572,16 +578,16 @@ export function DashboardForm({
           </>
         ) : (
           <div className="dashboard-form-inline-action">
-            <div className="dashboard-surface dashboard-surface-panel rounded-xl border px-4 py-3">
+            <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="size-4 text-zinc-900" />
+                <div className="inline-flex items-center gap-2 text-[13px] text-zinc-500">
+                  <CheckCircle2 className="size-4 stroke-[1.5] text-zinc-800" />
                   <span>检查完整数据后再提交，提交后可在历史记录继续修改</span>
                 </div>
                 <Button
                   type="submit"
                   disabled={isPending}
-                  className="h-11 w-full rounded-2xl px-6 text-sm sm:min-w-[168px] sm:w-auto"
+                  className="h-11 w-full rounded-[10px] px-6 text-[13px] sm:min-w-[168px] sm:w-auto"
                 >
                   {submitButtonLabel}
                 </Button>

@@ -217,9 +217,9 @@ export function SubmitForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="rounded-[1.5rem] border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <Label htmlFor="script_text" className="text-sm font-semibold text-zinc-900">
-          话术原文 <span className="text-rose-600">*</span>
+          话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
           id="script_text"
@@ -231,7 +231,7 @@ export function SubmitForm({
         />
       </div>
 
-      <div className="grid gap-4 rounded-[1.5rem] border border-zinc-200 bg-white p-5 shadow-sm md:grid-cols-3">
+      <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:grid-cols-3">
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-zinc-900">判断</Label>
           <Select value={isViolation} onValueChange={(value) => value && setIsViolation(value)}>
@@ -278,7 +278,7 @@ export function SubmitForm({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-5 rounded-[1.5rem] border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="space-y-2">
             <Label htmlFor="scene_description" className="text-sm font-semibold text-zinc-900">
               配套画面/导粉方式
@@ -336,7 +336,7 @@ export function SubmitForm({
           </div>
         </div>
 
-        <div className="rounded-[1.5rem] border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="relative pl-5">
             <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
             <div className="mb-4 flex items-center gap-2">
@@ -358,7 +358,7 @@ export function SubmitForm({
                         transition={{ type: "spring", stiffness: 420, damping: 32 }}
                         onClick={() => setEventType(type)}
                         className={cn(
-                          "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all active:scale-95",
+                          "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
                           active
                             ? "border-transparent bg-[#D97757] text-white shadow-[0_6px_16px_-8px_rgba(217,119,87,0.55)]"
                             : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
@@ -472,12 +472,12 @@ export function SubmitForm({
         </div>
       </div>
 
-      <div className="rounded-[1.5rem] border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="relative pl-5">
           <div
             className={cn(
               "absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full",
-              reasonTagMissing ? "bg-[#B42318]" : "bg-[#D97757]",
+              reasonTagMissing ? "bg-[#C9604D]" : "bg-[#D97757]",
             )}
           />
           <div className="mb-4 flex items-center gap-2">
@@ -498,7 +498,7 @@ export function SubmitForm({
               ))}
             </div>
           ) : reasonTagsError ? (
-            <p className="text-xs font-medium text-[#B42318]">{reasonTagsError}</p>
+            <p className="text-xs font-medium text-[#C9604D]">{reasonTagsError}</p>
           ) : reasonTags.length === 0 ? (
             <p className="text-xs text-zinc-500">暂无可用原因标签，请联系管理员配置</p>
           ) : (
@@ -513,7 +513,7 @@ export function SubmitForm({
                     transition={{ type: "spring", stiffness: 420, damping: 32 }}
                     onClick={() => toggleReasonTag(tag.id)}
                     className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all active:scale-95",
+                      "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
                       active
                         ? "border-transparent bg-[#D97757] text-white shadow-[0_6px_16px_-8px_rgba(217,119,87,0.55)]"
                         : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
@@ -530,7 +530,7 @@ export function SubmitForm({
             <motion.p
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 text-xs font-medium text-[#B42318]"
+              className="mt-3 text-xs font-medium text-[#C9604D]"
             >
               至少选择一个原因标签
             </motion.p>

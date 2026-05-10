@@ -47,15 +47,15 @@ function EmptyReasonBlock({ data }: { data: ScriptBreakdownData }) {
 
   return (
     <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
-        <FileSearch className="size-4 text-zinc-500" />
+      <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
+        <FileSearch className="size-4 stroke-[1.5] text-zinc-500" />
         为什么这里没有真实内容
       </div>
-      <p className="mt-2 text-sm leading-6 text-zinc-500">{reasonText}</p>
+      <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">{reasonText}</p>
       {data.rawText ? (
         <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">当前拿到的原始文案</div>
-          <p className="text-sm leading-6 text-zinc-950">{data.rawText}</p>
+          <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">当前拿到的原始文案</div>
+          <p className="text-[13px] leading-[1.7] text-zinc-800">{data.rawText}</p>
         </div>
       ) : null}
     </div>
@@ -66,11 +66,11 @@ function DemoReferenceBlock() {
   return (
     <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
-          <Lightbulb className="size-4 text-zinc-950" />
+        <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
+          <Lightbulb className="size-4 stroke-[1.5] text-zinc-800" />
           示例拆解参考
         </div>
-        <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-950">
+        <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
           示例内容
         </span>
       </div>
@@ -78,10 +78,10 @@ function DemoReferenceBlock() {
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {DEMO_SEGMENTS.map((segment) => (
           <div key={segment.id} className="rounded-xl border border-zinc-200 bg-white p-3">
-            <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone])} variant="outline">
+            <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-medium", toneMap[segment.tone])} variant="outline">
               {segment.label}
             </Badge>
-            <p className="mt-3 text-sm leading-6 text-zinc-950">{segment.content}</p>
+            <p className="mt-3 text-[13px] leading-[1.7] text-zinc-800">{segment.content}</p>
           </div>
         ))}
       </div>
@@ -114,8 +114,8 @@ export function ScriptBreakdown({
             <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Script Breakdown</span>
             <div className="h-px flex-1 bg-zinc-200" />
           </div>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-zinc-950">{title}</h2>
-          <p className="text-sm leading-6 text-zinc-500">先看开头、中段、结尾分别出了什么问题，再决定文案怎么改。</p>
+          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">{title}</h2>
+          <p className="text-[13px] leading-[1.7] text-zinc-500">先看开头、中段、结尾分别出了什么问题，再决定文案怎么改。</p>
         </div>
 
         {isStructured ? (
@@ -127,34 +127,34 @@ export function ScriptBreakdown({
                   type="button"
                   variants={itemVariants}
                   onClick={() => onSegmentSelect?.({ startSec: segment.startSec, endSec: segment.endSec })}
-                  className="rounded-xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-[1px] hover:shadow-md active:scale-[0.97]"
+                  className="rounded-xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", toneMap[segment.tone as SegmentTone])} variant="outline">
+                    <Badge className={cn("rounded-full border px-2.5 py-1 text-[11px] font-medium", toneMap[segment.tone as SegmentTone])} variant="outline">
                       {segment.label}
                     </Badge>
                     {segment.startSec !== undefined || segment.endSec !== undefined ? (
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-[11px] tabular-nums text-zinc-500">
                         {segment.startSec ?? 0}s - {segment.endSec ?? "--"}s
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-zinc-950">{segment.content}</p>
+                  <p className="mt-3 text-[13px] leading-[1.7] text-zinc-800">{segment.content}</p>
                 </motion.button>
               ))}
             </motion.div>
 
             {hasMoreSegments ? (
               <div className="flex justify-center">
-                <Button type="button" variant="outline" size="sm" className="h-11 rounded-lg px-4" onClick={() => setExpanded((prev) => !prev)}>
+                <Button type="button" variant="outline" size="sm" className="h-9 rounded-[10px] px-4" onClick={() => setExpanded((prev) => !prev)}>
                   {expanded ? (
                     <>
-                      <ChevronUp className="size-4" />
+                      <ChevronUp className="size-4 stroke-[1.5]" />
                       收起
                     </>
                   ) : (
                     <>
-                      <ChevronDown className="size-4" />
+                      <ChevronDown className="size-4 stroke-[1.5]" />
                       展开剩余 {data.segments.length - maxVisibleSegments} 段
                     </>
                   )}
@@ -170,8 +170,8 @@ export function ScriptBreakdown({
         )}
 
         {!isStructured ? (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500">
-            <Sparkles className="size-3.5" />
+          <div className="flex items-center gap-2 rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-500">
+            <Sparkles className="size-3.5 stroke-[1.5]" />
             这里展示的是示例拆解格式，真实上传后会按同样结构输出。
           </div>
         ) : null}

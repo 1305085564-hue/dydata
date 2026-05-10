@@ -27,46 +27,43 @@ export interface MetricCardProps {
 export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "neutral" }: MetricCardProps) {
   const Icon = iconMap[icon] ?? Activity;
   const toneClasses = {
-    primary: "text-zinc-950 bg-zinc-100 border-zinc-200",
-    warning: "text-amber-600 bg-amber-50 border-amber-200",
-    success: "text-emerald-700 bg-emerald-50 border-emerald-200",
-    danger: "text-red-700 bg-red-50 border-red-200",
+    primary: "text-[#D97757] bg-zinc-50 border-zinc-200",
+    warning: "text-[#D99E55] bg-zinc-50 border-zinc-200",
+    success: "text-[#6FAA7D] bg-zinc-50 border-zinc-200",
+    danger: "text-[#C9604D] bg-zinc-50 border-zinc-200",
     neutral: "text-zinc-500 bg-zinc-50 border-zinc-200",
   };
 
   const isClickable = !!onClick;
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300",
-        isClickable && "cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:border-zinc-300 group"
+        "relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        isClickable && "cursor-pointer hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm hover:border-zinc-300 group"
       )}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-secondary)]">{label}</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{label}</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">{value}</span>
+            <span className="text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{value}</span>
             {trend && (
               <span className={cn(
-                "text-xs font-medium px-1.5 py-0.5 rounded-full",
-                trend.isPositive ? "text-[var(--color-success)] bg-[var(--color-success)]/10" : "text-[var(--color-danger)] bg-[var(--color-danger)]/10"
+                "text-[12px] font-medium px-1.5 py-0.5 rounded-[10px]",
+                trend.isPositive ? "text-[#6FAA7D] bg-[#6FAA7D]/10" : "text-[#C9604D] bg-[#C9604D]/10"
               )}>
                 {trend.isPositive ? "+" : ""}{trend.value}%
               </span>
             )}
           </div>
-          <p className="mt-2 text-xs text-[var(--color-text-tertiary)]">{hint}</p>
+          <p className="mt-2 text-[12px] leading-[1.7] text-zinc-400">{hint}</p>
         </div>
-        <div className={cn("rounded-xl p-2.5 transition-colors", toneClasses[tone], isClickable && "group-hover:bg-zinc-950 group-hover:text-white")}>
-          <Icon className="size-5" />
+        <div className={cn("rounded-lg p-2.5 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]", toneClasses[tone])}>
+          <Icon className="size-5 stroke-[1.5]" />
         </div>
       </div>
-      
-      {/* 底部微型火花线占位符 - 由于不引入新库，用 CSS 渐变模拟 */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-950/10 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 }

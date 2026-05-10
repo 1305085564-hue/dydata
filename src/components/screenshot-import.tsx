@@ -81,9 +81,9 @@ function getBadgeVariant(level: ConfidenceLevel): "default" | "secondary" | "des
 }
 
 function getBadgeClassName(level: ConfidenceLevel): string {
-  if (level === "high") return "bg-emerald-500/12 text-emerald-700 hover:bg-emerald-500/12";
-  if (level === "medium") return "bg-amber-500/15 text-amber-700 hover:bg-amber-500/15";
-  return "bg-rose-500/12 text-rose-700 hover:bg-rose-500/12";
+  if (level === "high") return "bg-zinc-100/12 text-[#6FAA7D] hover:bg-zinc-100/12";
+  if (level === "medium") return "bg-zinc-100/15 text-[#D99E55] hover:bg-zinc-100/15";
+  return "bg-zinc-100/12 text-[#C9604D] hover:bg-zinc-100/12";
 }
 
 interface ScreenshotImportProps {
@@ -263,7 +263,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
           }
         }}
         className={cn(
-          "flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed px-6 py-8 text-center transition-all",
+          "flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors",
           isDragging
             ? "border-primary bg-primary/5 shadow-[0_0_0_4px_rgba(59,130,246,0.08)]"
             : "border-border/70 bg-background/70 hover:border-primary/60 hover:bg-muted/30"
@@ -297,7 +297,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FIELD_META.map((field) => (
-              <Card key={field.key} className="card-elevated bg-background/80 backdrop-blur-sm">
+              <Card key={field.key} className="card-elevated bg-background/80">
                 <CardContent className="space-y-3 pt-5 pb-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-foreground">{field.label}</div>

@@ -33,8 +33,8 @@ export default function AIAssistantClient({ actorRole }: Props) {
           </button>
           <div className="flex items-center gap-2 px-1">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6FAA7D] opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
             </span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
               AI Workstation
@@ -45,7 +45,7 @@ export default function AIAssistantClient({ actorRole }: Props) {
         <div className="flex items-center gap-1.5">
           <button
             onClick={startNewSession}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm active:translate-y-0"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-800 hover:shadow-sm active:translate-y-0"
             title="开启新对话"
           >
             <Plus className="h-3 w-3" />

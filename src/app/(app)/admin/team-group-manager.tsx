@@ -365,7 +365,7 @@ export function TeamGroupManager({
               </div>
               <Button
                 type="button"
-                className="mt-auto h-10 bg-zinc-950 text-white rounded-xl hover:-translate-y-[1px] hover:shadow-lg"
+                className="mt-auto h-10 bg-zinc-950 text-white rounded-[10px] hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
                 onClick={handleCreateGroup}
                 disabled={isPending || !newGroupName.trim() || !newLeaderId}
               >
@@ -440,7 +440,7 @@ export function TeamGroupManager({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-zinc-500 hover:text-[#B42318]"
+                              className="text-zinc-500 hover:text-[#C9604D]"
                               onClick={() => handleRemoveMember(member.id)}
                               disabled={isPending}
                             >
@@ -467,7 +467,7 @@ export function TeamGroupManager({
                       <Button
                         type="button"
                         size="sm"
-                        className="bg-zinc-950 text-white rounded-xl hover:-translate-y-[1px] hover:shadow-lg"
+                        className="bg-zinc-950 text-white rounded-[10px] hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
                         onClick={handleAssignMembers}
                         disabled={isPending || checkedMemberIds.length === 0}
                       >

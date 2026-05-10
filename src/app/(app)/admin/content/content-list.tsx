@@ -33,11 +33,11 @@ interface ContentListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-[#A7F3D0] bg-[#ECFDF3] text-[#067647]",
-  删稿: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
-  限流: "border-[#FECDCA] bg-[#FEF3F2] text-[#B42318]",
-  投流: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
-  活动干预: "border-[#FDE68A] bg-[#FEFCE8] text-[#92400E]",
+  正常: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  删稿: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  限流: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
   "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
 };
 
@@ -167,7 +167,7 @@ export function ContentList({
     <div className="space-y-4">
       <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
 
-      <div className="overflow-x-auto rounded-[2rem] border border-zinc-200 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-zinc-200 bg-zinc-50">
@@ -240,7 +240,7 @@ export function ContentList({
                     </TableCell>
                     <TableCell>
                       {isReviewed ? (
-                        <Badge variant="outline" className="border-[#C7D2FE] bg-[#EEF4FF] text-xs text-[#444CE7]">
+                        <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-xs text-[#8AA8C7]">
                           已复盘
                         </Badge>
                       ) : (

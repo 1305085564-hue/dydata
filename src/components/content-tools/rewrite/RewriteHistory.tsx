@@ -33,7 +33,7 @@ export function RewriteHistory({
         </div>
         <button
           onClick={onNewConversation}
-          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-all hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 hover:shadow-sm active:translate-y-0"
+          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 active:translate-y-0"
         >
           <Plus className="h-3 w-3" />
           <span className="tracking-wide">新文案</span>
@@ -60,8 +60,8 @@ export function RewriteHistory({
                   type="button"
                   onClick={() => onSelectConversation(conversation)}
                   className={cn(
-                    'group relative w-full rounded-lg px-2.5 py-2 text-left transition-colors',
-                    active ? 'bg-white shadow-[0_1px_0_rgba(0,0,0,0.02)]' : 'hover:bg-zinc-100/60'
+                    'group relative w-full rounded-lg px-2.5 py-2 text-left transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                    active ? 'bg-white shadow-sm' : 'hover:bg-zinc-50'
                   )}
                 >
                   {active && (

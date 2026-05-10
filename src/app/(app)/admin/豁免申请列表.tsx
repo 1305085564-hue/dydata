@@ -76,17 +76,17 @@ function RequestRow({
   }
 
   return (
-    <TableRow className="hover:bg-zinc-50">
-      <TableCell className="font-medium">{request.applicant_name}</TableCell>
+    <TableRow>
+      <TableCell className="font-medium text-zinc-800">{request.applicant_name}</TableCell>
       <TableCell>
         {(CATEGORY_LABELS[request.exemption_category ?? "waive"] ?? "免交") +
           " / " +
           (MODE_LABELS[request.exemption_type] ?? request.exemption_type)}
       </TableCell>
-      <TableCell className="max-w-[200px] truncate text-muted-foreground">
+      <TableCell className="max-w-[200px] truncate text-zinc-500">
         {request.reason ?? "-"}
       </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
+      <TableCell className="text-[13px] text-zinc-500">
         {new Date(request.created_at).toLocaleString("zh-CN", {
           month: "2-digit",
           day: "2-digit",
@@ -100,7 +100,7 @@ function RequestRow({
             size="sm"
             disabled={isPending}
             onClick={() => handle("approved")}
-            className="rounded-xl bg-zinc-950 text-white hover:bg-zinc-800"
+            className="rounded-[10px] bg-zinc-950 text-white hover:bg-zinc-800"
           >
             批准
           </Button>
@@ -109,7 +109,7 @@ function RequestRow({
             variant="outline"
             disabled={isPending}
             onClick={() => handle("rejected")}
-            className="rounded-xl border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+            className="rounded-[10px] border-zinc-200 text-zinc-700 hover:bg-zinc-50"
           >
             拒绝
           </Button>
@@ -134,28 +134,18 @@ function ExemptionRequestList({ requests, onHandled }: Props) {
   }
 
   if (localRequests.length === 0) {
-    return <p className="text-sm text-zinc-500">暂无待审批申请</p>;
+    return <p className="text-[13px] text-zinc-400">暂无待审批申请</p>;
   }
 
   return (
     <Table>
       <TableHeader>
-        <TableRow className="bg-zinc-50">
-          <TableHead className="text-zinc-500 text-[11px] uppercase tracking-wider">
-            申请人
-          </TableHead>
-          <TableHead className="text-zinc-500 text-[11px] uppercase tracking-wider">
-            类型
-          </TableHead>
-          <TableHead className="text-zinc-500 text-[11px] uppercase tracking-wider">
-            原因
-          </TableHead>
-          <TableHead className="text-zinc-500 text-[11px] uppercase tracking-wider">
-            申请时间
-          </TableHead>
-          <TableHead className="text-zinc-500 text-[11px] uppercase tracking-wider">
-            操作
-          </TableHead>
+        <TableRow>
+          <TableHead>申请人</TableHead>
+          <TableHead>类型</TableHead>
+          <TableHead>原因</TableHead>
+          <TableHead>申请时间</TableHead>
+          <TableHead>操作</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

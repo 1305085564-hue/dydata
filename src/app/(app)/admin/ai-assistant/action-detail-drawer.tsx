@@ -15,13 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import {
   Copy,
-  Loader2,
   Terminal,
   AlertTriangle,
   CheckCircle2,
   XCircle,
   ChevronDown,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 type ActionDetail = {
@@ -63,14 +63,14 @@ function resultMeta(result?: string) {
       return {
         icon: <CheckCircle2 className="h-3 w-3" />,
         text: "APPROVED",
-        dot: "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]",
-        text_cls: "text-emerald-700",
+        dot: "bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]",
+        text_cls: "text-[#6FAA7D]",
       };
     case "failed":
       return {
         icon: <XCircle className="h-3 w-3" />,
         text: "REJECTED",
-        dot: "bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]",
+        dot: "bg-[#C9604D] shadow-[0_0_0_3px_rgba(201,96,77,0.15)]",
         text_cls: "text-red-700",
       };
     case "cancelled":
@@ -82,10 +82,10 @@ function resultMeta(result?: string) {
       };
     case "pending_confirm":
       return {
-        icon: <Loader2 className="h-3 w-3 animate-spin" />,
+        icon: <Skeleton className="h-3 w-3 rounded-full" />,
         text: "PENDING",
-        dot: "bg-amber-500 shadow-[0_0_0_3px_rgba(234,179,8,0.12)] animate-pulse",
-        text_cls: "text-amber-700",
+        dot: "bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)] animate-pulse",
+        text_cls: "text-[#B88448]",
       };
     default:
       return {
@@ -170,7 +170,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                   </code>
                 )}
               </div>
-              <DialogTitle className="mt-2 text-[18px] font-black leading-tight tracking-tight text-zinc-950">
+              <DialogTitle className="mt-2 text-[18px] font-semibold leading-tight tracking-tight text-zinc-800">
                 {loading ? "加载中..." : detail?.description || "—"}
               </DialogTitle>
             </div>
@@ -193,7 +193,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
         <div className="max-h-[75vh] space-y-5 overflow-y-auto custom-scrollbar px-6 py-5">
           {loading ? (
             <div className="flex flex-col items-center gap-2 py-12">
-              <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+              <Skeleton className="h-4 w-24 rounded" />
               <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
                 Syncing
               </span>
@@ -215,7 +215,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               {/* Error message */}
               {detail.errorMessage && (
                 <div className="relative overflow-hidden rounded-2xl border border-red-100 bg-[#FEF9F9] p-4">
-                  <div className="absolute left-0 top-0 h-full w-[3px] bg-red-500" />
+                  <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
                   <div className="pl-2">
                     <div className="text-[9px] font-semibold uppercase tracking-[0.25em] text-red-700">
                       System Error
@@ -267,7 +267,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                         <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-[#FAFAFB] px-3 py-1.5">
                           <CopyButton payload={formatJson(detail.toolParams)} />
                         </div>
-                        <pre className="overflow-x-auto bg-zinc-950 p-3 text-[11px] leading-relaxed text-zinc-200">
+                        <pre className="overflow-x-auto bg-zinc-900 p-3 text-[11px] leading-relaxed text-zinc-200">
                           {formatJson(detail.toolParams)}
                         </pre>
                       </CollapsibleContent>
@@ -286,7 +286,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                         <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-[#FAFAFB] px-3 py-1.5">
                           <CopyButton payload={detail.backupSql} />
                         </div>
-                        <pre className="overflow-x-auto whitespace-pre-wrap bg-zinc-950 p-3 text-[11px] leading-relaxed text-emerald-300">
+                        <pre className="overflow-x-auto whitespace-pre-wrap bg-zinc-900 p-3 text-[11px] leading-relaxed text-[#D5E4D9]">
                           {detail.backupSql}
                         </pre>
                       </CollapsibleContent>
