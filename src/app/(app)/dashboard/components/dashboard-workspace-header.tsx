@@ -133,7 +133,7 @@ export function DashboardWorkspaceHeader({
           />
         </div>
 
-        <nav className="flex w-full gap-1 overflow-x-auto rounded-[10px] border border-zinc-200 bg-white p-1 shadow-sm lg:w-auto">
+        <nav className="flex w-full gap-1 overflow-x-auto rounded-[10px] border border-zinc-200 bg-zinc-100 p-1 shadow-sm lg:w-auto">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -142,8 +142,8 @@ export function DashboardWorkspaceHeader({
               className={cn(
                 "relative min-w-24 shrink-0 rounded-[8px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                 activeTab === tab.key
-                  ? "bg-zinc-900 text-white"
-                  : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900",
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:bg-white/60 hover:text-zinc-900",
               )}
             >
               {tab.label}
