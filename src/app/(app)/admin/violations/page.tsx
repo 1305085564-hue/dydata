@@ -200,7 +200,7 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
       </form>
 
       {error ? (
-        <section className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50 p-6 text-[13px] text-[#C9604D]">
+        <section className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 p-6 text-[13px] text-[#C9604D]">
           违规案例数据暂时无法读取：{error.message}
         </section>
       ) : (

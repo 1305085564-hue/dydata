@@ -191,7 +191,7 @@ export default async function ViolationsPage({
       />
 
       {error ? (
-        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
+        <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
           {error}
         </div>
       ) : perspective === "violation" ? (

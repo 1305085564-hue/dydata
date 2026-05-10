@@ -778,8 +778,8 @@ export function VideoSubmitPanel({
                 className={cn(
                   "rounded-2xl border p-4 text-[13px] sm:p-5",
                   activeDateStatus.state === "waive"
-                    ? "border-zinc-200 bg-white text-zinc-800"
-                    : "border-zinc-200 bg-[#FAFAFB] text-zinc-800",
+                    ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white text-zinc-800"
+                    : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-[#FAFAFB] text-zinc-800",
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -951,8 +951,8 @@ export function VideoSubmitPanel({
                   className={cn(
                     "mt-4 rounded-2xl border p-4",
                     activeDateStatus.state === "waive"
-                      ? "border-zinc-200 bg-white"
-                      : "border-zinc-200 bg-[#FAFAFB]",
+                      ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white"
+                      : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-[#FAFAFB]",
                   )}
                 >
                   <div className="space-y-2">
@@ -985,7 +985,7 @@ export function VideoSubmitPanel({
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-4">
+                <div className="mt-4 rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-[#FAFAFB] p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-1">
                       <p className="text-[13px] font-medium text-[#C9604D]">

@@ -130,7 +130,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
                             <button
                               onClick={() => onOpenTarget(row.userId, checkpoint.id)}
                               className={cn(
-                                "flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50/50 border-l-2 transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-100 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5",
+                                "flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50/50 border-l-[2px] transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-100 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                                 theme.cellBar,
                                 theme.color,
                               )}

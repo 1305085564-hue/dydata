@@ -137,7 +137,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           >
             {/* 最佳方向 */}
             {insight.best_direction && (
-              <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#6FAA7D] bg-white p-6 shadow-sm">
+              <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#6FAA7D]">
                     <TrendingUp className="size-6 stroke-[1.5]" />
@@ -168,7 +168,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
             {/* 最差方向 */}
             {insight.worst_direction && (
-              <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-white p-6 shadow-sm">
+              <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#C9604D]">
                     <TrendingDown className="size-6 stroke-[1.5]" />
@@ -239,7 +239,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
               )}
 
               {insight.sample_warning && insight.sample_warning.length > 0 && (
-                <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#D99E55] bg-white p-5 shadow-sm">
+                <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <AlertTriangle className="size-4 stroke-[1.5] text-[#D99E55]" />
                     <h4 className="text-[13px] font-semibold text-zinc-800">样本不足警告</h4>

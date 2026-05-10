@@ -317,7 +317,7 @@ export function PermissionManager({
               className={cn(
                 "flex flex-col gap-3 rounded-xl p-3 sm:flex-row sm:items-center sm:justify-between",
                 hasPermissionChanges
-                  ? "bg-zinc-50 border border-[#D99E55]/30 border-l-2 border-l-[#D99E55]"
+                  ? "bg-zinc-50 border border-[#D99E55]/30 border-l-[2px] border-l-[#D99E55]"
                   : "bg-zinc-50 border border-zinc-200"
               )}
             >

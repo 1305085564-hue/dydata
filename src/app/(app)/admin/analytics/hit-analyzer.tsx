@@ -796,7 +796,7 @@ export function HitAnalyzer({
             <div className="space-y-2">
               <p className="text-[12px] font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Submitters</p>
               {lockedSubmitter ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
                   <span className="font-medium">当前联动成员：</span>
                   <span className="rounded-[10px] bg-white px-2.5 py-1 font-medium text-zinc-800">{lockedSubmitter}</span>
                   <button

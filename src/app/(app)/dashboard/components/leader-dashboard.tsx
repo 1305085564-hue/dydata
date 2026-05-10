@@ -184,7 +184,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
       {(overdueMembers.length > 0 || pendingSubmissions.length > 0) && (
         <div className="grid gap-4 sm:grid-cols-2">
           {overdueMembers.length > 0 && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-2 border-l-[#C9604D] shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#C9604D] shadow-sm">
               <div className="mb-3 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
                 <AlertCircle size={14} className="stroke-[1.5] text-[#C9604D]" />
@@ -202,7 +202,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
             </div>
           )}
           {pendingSubmissions.length > 0 && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-2 border-l-[#D99E55] shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#D99E55] shadow-sm">
               <div className="mb-3 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                 <Activity size={14} className="stroke-[1.5] text-[#D99E55]" />

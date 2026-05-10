@@ -241,7 +241,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
           className={cn(
             "relative overflow-hidden rounded-xl border px-4 py-3 shadow-sm ",
             recommendationMeta.hasRecommendation
-              ? "border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50"
+              ? "border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50"
               : "border-zinc-200 bg-white",
           )}
         >
@@ -328,7 +328,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 <p className="line-clamp-2 text-xs leading-5 text-zinc-600">{recommendationMeta.description}</p>
               </div>
               {recommendationMeta.hasRecommendation ? (
-                <div className="rounded-lg border border-zinc-200 border-l-2 border-l-[#C9604D] bg-white px-3 py-2 text-[13px] shadow-sm">
+                <div className="rounded-lg border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white px-3 py-2 text-[13px] shadow-sm">
                   <p className="font-semibold text-zinc-800">{recommendationMeta.title}</p>
                   <p className="mt-1 text-zinc-500">
                     窗口样本 {recommendationWindowStats?.count ?? 0} 条，窗口总播放{" "}

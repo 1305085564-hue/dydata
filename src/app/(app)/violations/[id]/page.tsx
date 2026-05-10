@@ -285,7 +285,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           <ArrowLeft className="size-4" />
           话术库
         </Link>
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
+        <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
           {error ?? "案例不存在"}
         </div>
       </div>
@@ -430,7 +430,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       {caseItem.admin_conclusion || caseItem.suggested_action ? (
         <section className="grid gap-3 lg:grid-cols-2">
           {caseItem.admin_conclusion ? (
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5">
+            <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5">
               <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D99E55]">
                 管理员结论
               </h2>
@@ -440,7 +440,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
             </div>
           ) : null}
           {caseItem.suggested_action ? (
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5">
+            <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-zinc-50 p-5">
               <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6FAA7D]">
                 建议动作
               </h2>

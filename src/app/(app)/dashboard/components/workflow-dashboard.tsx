@@ -248,7 +248,7 @@ export function WorkflowDashboard({
                     <div
                       key={checkpoint.id}
                       className={cn(
-                        "rounded-xl border border-zinc-200 bg-zinc-50/50 p-5 border-l-2",
+                        "rounded-xl border border-zinc-200 bg-zinc-50/50 p-5 border-l-[2px]",
                         theme.cellBar,
                       )}
                     >

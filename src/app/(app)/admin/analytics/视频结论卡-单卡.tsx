@@ -142,7 +142,7 @@ export function 干预结论单卡({
     <div
       className={cn(
         shellClassName,
-        "border-l-2 border-l-[#C9604D]",
+        "border-l-[2px] border-l-[#C9604D]",
         className,
       )}
     >

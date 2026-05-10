@@ -24,7 +24,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
             {caseItem.script_text}
           </p>
           {caseItem.status === "verified" && caseItem.admin_conclusion ? (
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm leading-6 text-[#D99E55]">
+            <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 px-3 py-2 text-sm leading-6 text-[#D99E55]">
               {caseItem.admin_conclusion}
             </div>
           ) : null}
