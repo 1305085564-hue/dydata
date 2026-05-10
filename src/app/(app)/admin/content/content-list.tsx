@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
 import { getSampleCredibility } from "@/lib/next-day-review";
 import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
+import { ChevronDown } from "lucide-react";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -40,6 +41,8 @@ const statusClassName: Record<Video["anomaly_status"], string> = {
   活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
   "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
 };
+
+const PAGE_SIZE = 50;
 
 function formatNumber(value: number | null | undefined) {
   if (value == null) return "-";
@@ -78,6 +81,142 @@ function getSnapshotPlay(snapshot: VideoMetricsSnapshot | undefined) {
   return snapshot?.play_count ?? 0;
 }
 
+function getVideoTimestamp(video: VideoRow) {
+  const raw = video.published_at ?? video.created_at;
+  if (!raw) return 0;
+  const ts = new Date(raw).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Timeline helpers                                                   */
+/* ------------------------------------------------------------------ */
+
+interface MonthGroup {
+  label: string;
+  count: number;
+  firstIndex: number;
+}
+
+function buildTimeline(rows: VideoRow[]): MonthGroup[] {
+  const groups: MonthGroup[] = [];
+  let current: MonthGroup | null = null;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const month = getVideoMonthKey(row);
+    const label = month.replace("-", "年") + "月";
+
+    if (!current || current.label !== label) {
+      current = { label, count: 0, firstIndex: i };
+      groups.push(current);
+    }
+    current.count++;
+  }
+
+  return groups;
+}
+
+/* ------------------------------------------------------------------ */
+/*  MiniTimeline component                                             */
+/* ------------------------------------------------------------------ */
+
+function MiniTimeline({
+  groups,
+  total,
+  currentIndex,
+  onSeek,
+}: {
+  groups: MonthGroup[];
+  total: number;
+  currentIndex: number;
+  onSeek: (index: number) => void;
+}) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [tooltip, setTooltip] = useState<{ label: string; y: number } | null>(null);
+
+  const progress = total > 0 ? (currentIndex / (total - 1)) * 100 : 0;
+
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const ratio = (e.clientY - rect.top) / rect.height;
+    const targetIndex = Math.min(total - 1, Math.max(0, Math.floor(ratio * total)));
+    onSeek(targetIndex);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const ratio = (e.clientY - rect.top) / rect.height;
+    const idx = Math.min(total - 1, Math.max(0, Math.floor(ratio * total)));
+    const group = groups.find((g) => idx >= g.firstIndex && idx < g.firstIndex + g.count);
+    setTooltip({
+      label: group?.label ?? "",
+      y: e.clientY - rect.top,
+    });
+  };
+
+  return (
+    <div
+      className="relative flex flex-col items-center"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false);
+        setTooltip(null);
+      }}
+    >
+      {/* Track */}
+      <div
+        ref={trackRef}
+        className="relative w-[3px] rounded-full bg-zinc-200 cursor-pointer"
+        style={{ height: 320 }}
+        onClick={handleTrackClick}
+        onMouseMove={handleMouseMove}
+      >
+        {/* Progress fill */}
+        <div
+          className="absolute left-0 top-0 w-full rounded-full bg-[#D97757]/40"
+          style={{ height: `${Math.min(100, Math.max(0, progress))}%` }}
+        />
+
+        {/* Thumb */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 size-2.5 rounded-full bg-[#D97757] ring-2 ring-white shadow-sm transition-[top] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+          style={{ top: `${Math.min(100, Math.max(0, progress))}%`, transform: "translate(-50%, -50%)" }}
+        />
+
+        {/* Month ticks */}
+        {groups.map((g) => {
+          const tickTop = total > 0 ? (g.firstIndex / total) * 100 : 0;
+          return (
+            <div
+              key={g.label}
+              className="absolute left-1/2 -translate-x-1/2 size-1 rounded-full bg-zinc-300"
+              style={{ top: `${tickTop}%`, transform: "translate(-50%, -50%)" }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Tooltip */}
+      {hovered && tooltip && (
+        <div
+          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-600 shadow-sm"
+          style={{ top: tooltip.y - 12 }}
+        >
+          {tooltip.label}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main component                                                     */
+/* ------------------------------------------------------------------ */
+
 export function ContentList({
   videos,
   snapshots,
@@ -99,6 +238,11 @@ export function ContentList({
   const [localReviewedIds, setLocalReviewedIds] = useState<Set<string>>(
     () => new Set(reviewedVideoIds)
   );
+  const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [newBatchIds, setNewBatchIds] = useState<Set<string>>(new Set());
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const snapshotMap = useMemo(() => {
     const map = new Map<string, VideoMetricsSnapshot>();
@@ -116,6 +260,9 @@ export function ContentList({
 
   const handleFilter = useCallback((value: ContentFilterValue) => {
     setFilters(value);
+    setLoadedCount(PAGE_SIZE);
+    setNewBatchIds(new Set());
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const filtered = useMemo(() => {
@@ -160,6 +307,91 @@ export function ContentList({
     });
   }, [videos, filters, snapshotMap, localReviewedIds]);
 
+  const visible = useMemo(() => filtered.slice(0, loadedCount), [filtered, loadedCount]);
+  const hasMore = loadedCount < filtered.length;
+  const timelineGroups = useMemo(() => buildTimeline(filtered), [filtered]);
+
+  /* Intersection Observer for auto-load */
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !isLoadingMore) {
+          setIsLoadingMore(true);
+          setTimeout(() => {
+            const nextIds = new Set<string>();
+            filtered.slice(loadedCount, loadedCount + PAGE_SIZE).forEach((v) => nextIds.add(v.id));
+            setNewBatchIds(nextIds);
+            setLoadedCount((c) => c + PAGE_SIZE);
+            setIsLoadingMore(false);
+            setTimeout(() => setNewBatchIds(new Set()), 600);
+          }, 300);
+        }
+      },
+      { root: tableContainerRef.current, rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, loadedCount, filtered]);
+
+  /* Current scroll index for timeline */
+  const [currentIndex, setCurrentIndex] = useState(0);
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const onScroll = () => {
+      const rows = container.querySelectorAll("tbody tr[data-video-id]");
+      if (!rows.length) return;
+      const containerRect = container.getBoundingClientRect();
+      const centerY = containerRect.top + containerRect.height / 2;
+
+      let closest = 0;
+      let minDist = Infinity;
+      rows.forEach((row, i) => {
+        const rect = row.getBoundingClientRect();
+        const dist = Math.abs(rect.top + rect.height / 2 - centerY);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = i;
+        }
+      });
+      setCurrentIndex(closest + (currentPageStart(visible)));
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [visible]);
+
+  function currentPageStart(visibleRows: VideoRow[]) {
+    const firstId = visibleRows[0]?.id;
+    return filtered.findIndex((v) => v.id === firstId);
+  }
+
+  const handleTimelineSeek = useCallback(
+    (index: number) => {
+      const targetId = filtered[index]?.id;
+      if (!targetId) return;
+      const row = tableContainerRef.current?.querySelector(`tr[data-video-id="${targetId}"]`);
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else {
+        // Target not in DOM yet, load up to that point
+        const needCount = Math.min(filtered.length, Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE);
+        setLoadedCount(needCount);
+        setTimeout(() => {
+          const r = tableContainerRef.current?.querySelector(`tr[data-video-id="${targetId}"]`);
+          r?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+      }
+    },
+    [filtered]
+  );
+
   const selectedVideo = selectedVideoId ? (videos.find((v) => v.id === selectedVideoId) ?? null) : null;
   const selectedSnapshot = selectedVideoId ? (snapshotMap.get(selectedVideoId) ?? null) : null;
 
@@ -167,102 +399,198 @@ export function ContentList({
     <div className="space-y-4">
       <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
 
-      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-zinc-200 bg-zinc-50">
-              <TableHead className="w-16 text-[11px] uppercase tracking-wider text-zinc-500">排名</TableHead>
-              <TableHead className="min-w-[200px] text-[11px] uppercase tracking-wider text-zinc-500">标题</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">人员</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">账号</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">发布时间</TableHead>
-              <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">播放</TableHead>
-              <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">2s跳出</TableHead>
-              <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">5s完播</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">样本状态</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">异常状态</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">复盘状态</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={12} className="py-12 text-center text-sm text-zinc-500">
-                  暂无内容
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((video, index) => {
-                const snap = snapshotMap.get(video.id);
-                const sample = getSampleCredibility(snap?.play_count ?? null, video.anomaly_status);
-                const isReviewed = localReviewedIds.has(video.id);
-                return (
-                  <TableRow key={video.id} className="border-b border-zinc-100 hover:bg-zinc-50">
-                    <TableCell className="py-3 text-sm font-semibold font-mono tabular-nums text-zinc-400">
-                      #{index + 1}
-                    </TableCell>
-                    <TableCell className="max-w-md py-3">
-                      <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
-                        {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-500">
-                      {video.profiles.name}
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-500">
-                      {video.accounts.name}
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-500">
-                      {formatDateTime(video.published_at ?? video.created_at)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {snap ? formatNumber(snap.play_count) : "-"}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {snap ? formatRate(snap.bounce_rate_2s) : "-"}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {snap ? formatRate(snap.completion_rate_5s) : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {sample.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${statusClassName[video.anomaly_status]}`}
-                      >
-                        {video.anomaly_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {isReviewed ? (
-                        <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-xs text-[#8AA8C7]">
-                          已复盘
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-zinc-500">未复盘</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
-                        onClick={() => setSelectedVideoId(video.id)}
-                      >
-                        查看复盘
-                      </Button>
+      <div className="flex gap-4">
+        {/* Table area */}
+        <div className="flex-1 min-w-0">
+          <div
+            ref={tableContainerRef}
+            className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
+            style={{ maxHeight: "70vh" }}
+          >
+            <Table>
+              <TableHeader className="sticky top-0 z-10">
+                <TableRow className="border-b border-zinc-200 bg-zinc-50">
+                  <TableHead className="w-16 text-[11px] uppercase tracking-wider text-zinc-500">排名</TableHead>
+                  <TableHead className="min-w-[200px] text-[11px] uppercase tracking-wider text-zinc-500">标题</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">人员</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">账号</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">发布时间</TableHead>
+                  <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">播放</TableHead>
+                  <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">2s跳出</TableHead>
+                  <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">5s完播</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">样本状态</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">异常状态</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">复盘状态</TableHead>
+                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visible.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} className="py-12 text-center text-sm text-zinc-500">
+                      暂无内容
                     </TableCell>
                   </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                ) : (
+                  visible.map((video, index) => {
+                    const snap = snapshotMap.get(video.id);
+                    const sample = getSampleCredibility(snap?.play_count ?? null, video.anomaly_status);
+                    const isReviewed = localReviewedIds.has(video.id);
+                    const isNewBatch = newBatchIds.has(video.id);
+                    return (
+                      <TableRow
+                        key={video.id}
+                        data-video-id={video.id}
+                        className={[
+                          "border-b border-zinc-100 hover:bg-zinc-50",
+                          isNewBatch && "animate-fade-in-up",
+                        ].filter(Boolean).join(" ")}
+                        style={
+                          isNewBatch
+                            ? {
+                                animation: "fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) forwards",
+                              }
+                            : undefined
+                        }
+                      >
+                        <TableCell className="py-3 text-sm font-semibold font-mono tabular-nums text-zinc-400">
+                          #{index + 1}
+                        </TableCell>
+                        <TableCell className="max-w-md py-3">
+                          <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                            {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-500">
+                          {video.profiles.name}
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-500">
+                          {video.accounts.name}
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-500">
+                          {formatDateTime(video.published_at ?? video.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {snap ? formatNumber(snap.play_count) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {snap ? formatRate(snap.bounce_rate_2s) : "-"}
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {snap ? formatRate(snap.completion_rate_5s) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {sample.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${statusClassName[video.anomaly_status]}`}
+                          >
+                            {video.anomaly_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {isReviewed ? (
+                            <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-xs text-[#8AA8C7]">
+                              已复盘
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-zinc-500">未复盘</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+                            onClick={() => setSelectedVideoId(video.id)}
+                          >
+                            查看复盘
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+
+                {/* Sentinel for auto-load */}
+                {hasMore && (
+                  <TableRow>
+                    <TableCell colSpan={12} className="p-0">
+                      <div ref={sentinelRef} className="h-4" />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Load more button (manual fallback + visual anchor) */}
+          {hasMore && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 gap-1.5 rounded-xl border-zinc-200 px-6 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+                onClick={() => {
+                  setIsLoadingMore(true);
+                  setTimeout(() => {
+                    const nextIds = new Set<string>();
+                    filtered.slice(loadedCount, loadedCount + PAGE_SIZE).forEach((v) => nextIds.add(v.id));
+                    setNewBatchIds(nextIds);
+                    setLoadedCount((c) => c + PAGE_SIZE);
+                    setIsLoadingMore(false);
+                    setTimeout(() => setNewBatchIds(new Set()), 600);
+                  }, 200);
+                }}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? (
+                  <>
+                    <span className="size-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+                    加载中…
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="size-3.5" />
+                    加载更多
+                    <span className="ml-1 text-[11px] text-zinc-400">
+                      ({filtered.length - loadedCount} 条剩余)
+                    </span>
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* End state */}
+          {!hasMore && filtered.length > 0 && (
+            <div className="mt-4 text-center text-[12px] text-zinc-400">
+              已加载全部 {filtered.length} 条内容
+            </div>
+          )}
+        </div>
+
+        {/* Right sidebar: mini timeline */}
+        {filtered.length > PAGE_SIZE && (
+          <div className="hidden lg:flex flex-col items-center gap-3 py-4">
+            <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400 rotate-180" style={{ writingMode: "vertical-rl" }}>
+              Timeline
+            </span>
+            <MiniTimeline
+              groups={timelineGroups}
+              total={filtered.length}
+              currentIndex={Math.min(currentIndex, filtered.length - 1)}
+              onSeek={handleTimelineSeek}
+            />
+            <span className="text-[10px] text-zinc-400 rotate-180" style={{ writingMode: "vertical-rl" }}>
+              {filtered.length} 条
+            </span>
+          </div>
+        )}
       </div>
 
       <ContentDetailDialog
@@ -277,6 +605,20 @@ export function ContentList({
           setLocalReviewedIds((prev) => new Set([...prev, videoId]));
         }}
       />
+
+      {/* Keyframe animation for new batch */}
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
