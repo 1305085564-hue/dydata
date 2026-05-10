@@ -140,7 +140,7 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
                   variant={preset === option.value ? "default" : "outline"}
                   className={cn(
                     "h-8 rounded-[10px] px-4 text-[12px]",
-                    preset === option.value ? "bg-zinc-800 text-white" : "border-zinc-200",
+                    preset === option.value ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60" : "border-zinc-200",
                   )}
                   onClick={() => setPreset(option.value)}
                 >

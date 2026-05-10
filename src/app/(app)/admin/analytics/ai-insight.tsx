@@ -63,7 +63,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <button
             className={cn(
               "rounded-[10px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              type === "week" ? "bg-zinc-800 text-white" : "text-zinc-600 hover:bg-zinc-100"
+              type === "week" ? "bg-white shadow-sm text-zinc-800 border border-zinc-200" : "text-zinc-600 hover:bg-zinc-100"
             )}
             onClick={() => setType("week")}
           >
@@ -72,7 +72,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <button
             className={cn(
               "rounded-[10px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              type === "month" ? "bg-zinc-800 text-white" : "text-zinc-600 hover:bg-zinc-100"
+              type === "month" ? "bg-white shadow-sm text-zinc-800 border border-zinc-200" : "text-zinc-600 hover:bg-zinc-100"
             )}
             onClick={() => setType("month")}
           >

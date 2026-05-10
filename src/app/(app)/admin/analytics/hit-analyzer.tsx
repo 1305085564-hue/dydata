@@ -764,7 +764,7 @@ export function HitAnalyzer({
                   className={cn(
                     "rounded-[10px] border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     activeFilter === filter.id
-                      ? "border-zinc-800 bg-zinc-800 text-white"
+                      ? "border-[#D97757]/40 bg-white text-[#D97757]"
                       : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-white",
                   )}
                 >
@@ -782,7 +782,7 @@ export function HitAnalyzer({
                   className={cn(
                     "rounded-[10px] border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     activeTimePreset === preset.id
-                      ? "border-zinc-900 bg-zinc-900 text-white"
+                      ? "border-[#D97757]/40 bg-white text-[#D97757]"
                       : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-white",
                   )}
                 >
@@ -857,7 +857,7 @@ export function HitAnalyzer({
                     className={cn(
                       "min-w-0 truncate rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                       effectiveSelectedSubmitters.includes(name)
-                        ? "border-zinc-800 bg-zinc-800 text-white"
+                        ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
                         : "border-zinc-200 bg-transparent text-zinc-600 hover:border-zinc-300 hover:bg-white",
                     )}
                   >

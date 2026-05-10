@@ -39,7 +39,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                   className={cn(
                     "group relative flex w-full items-center justify-between overflow-hidden rounded-xl px-3 py-3 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isSelected
-                      ? "bg-zinc-800 text-white"
+                      ? "bg-white border border-[#D97757]/40 text-zinc-800 shadow-sm"
                       : "hover:bg-zinc-50 text-zinc-500"
                   )}
                 >
@@ -50,13 +50,13 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                     <StatusIndicator status={status} />
                     <span className={cn(
                       "truncate text-[13px] font-medium transition-colors duration-150",
-                      isSelected ? "text-white" : "text-zinc-800 group-hover:text-zinc-800"
+                      isSelected ? "text-zinc-800" : "text-zinc-800 group-hover:text-zinc-800"
                     )}>
                       {channel.name}
                     </span>
                   </button>
                   {isSelected && (
-                    <div className="absolute inset-y-0 left-0 w-1 bg-white/40 rounded-r-full" />
+                    <div className="absolute inset-y-0 left-0 w-[2px] bg-[#D97757] rounded-r-full" />
                   )}
                 </div>
               );
@@ -69,7 +69,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
         <Button
           onClick={onAddClick}
           variant="default"
-          className="w-full justify-start gap-2 rounded-xl bg-zinc-800 text-white hover:bg-zinc-700"
+          className="w-full justify-start gap-2 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800"
         >
           <Plus className="size-4 stroke-[1.5]" />
           添加渠道
