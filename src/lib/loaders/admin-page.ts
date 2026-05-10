@@ -40,14 +40,6 @@ type AuditLogRow = {
   detail?: string;
   user_name?: string;
 };
-type InviteCodeRow = {
-  id: string;
-  code: string;
-  used: boolean;
-  used_by: string | null;
-  expires_at: string | null;
-  created_at: string;
-};
 
 async function loadPendingExemptionRequests(supabase: AdminSupabase) {
   const primary = await supabase
@@ -106,7 +98,6 @@ export interface AdminPageData {
   };
   logsWithNames: AuditLogRow[];
   exemptionRequests: ExemptionRequestRow[];
-  inviteCodes: InviteCodeRow[];
   trendData: ReturnType<typeof build团队趋势数据>;
   topSummaryCards: Array<{ label: string; value: number; hint: string; icon: unknown }>;
   quickActions: Array<{ label: string; description: string; href?: string }>;
@@ -116,7 +107,6 @@ export interface AdminPageData {
     exemptProfilesCount: number;
     todayReportCount: number;
     pendingRequestCount: number;
-    inviteCodeCount: number;
     latestLogAction: string | null;
   };
 }
@@ -301,10 +291,9 @@ export async function loadAdminPageData({
     .filter((profile) => Boolean(profile.team_id))
     .filter((profile) => !isIgnoredTeamManagementUser(profile));
 
-  const [{ data: auditLogs }, { data: pendingRequests }, { data: inviteCodes }] = await Promise.all([
+  const [{ data: auditLogs }, { data: pendingRequests }] = await Promise.all([
     supabase.from("audit_logs").select("id, created_at, user_id, action, target, detail").order("created_at", { ascending: false }).limit(50),
     loadPendingExemptionRequests(supabase),
-    supabase.from("invite_codes").select("id, code, used, used_by, expires_at, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
 
   const profileMap = new Map(hydratedProfiles.map((profile) => [profile.id, profile.name]));
@@ -356,7 +345,6 @@ export async function loadAdminPageData({
   const exemptProfilesCount = hydratedProfiles.filter((profile) => profile.status === "exempt").length;
   const todayReportCount = (dateReports ?? []).length;
   const pendingRequestCount = exemptionRequests.length;
-  const inviteCodeCount = (inviteCodes ?? []).length;
   const latestLogAction = logsWithNames[0]?.action ?? null;
 
   return {
@@ -383,7 +371,6 @@ export async function loadAdminPageData({
     },
     logsWithNames,
     exemptionRequests,
-    inviteCodes: inviteCodes ?? [],
     trendData,
     topSummaryCards: [],
     quickActions: [
@@ -391,7 +378,6 @@ export async function loadAdminPageData({
       perm.role === "admin" || perm.role === "owner"
         ? { label: "后台 AI 助手", description: "进入高权限 AI 操作与诊断入口", href: "/admin/ai-assistant" }
         : null,
-      hasPermission(perm.role, perm.permissions, "manage_invite") ? { label: "生成邀请码", description: "补充新成员入口" } : null,
       hasPermission(perm.role, perm.permissions, "export_data") ? { label: "导出数据", description: "快速发给业务复盘" } : null,
       hasPermission(perm.role, perm.permissions, "edit_data") ? { label: "处理异常数据", description: "优先检查今日异常值" } : null,
     ].filter((item): item is { label: string; description: string; href?: string } => item !== null),
@@ -401,7 +387,6 @@ export async function loadAdminPageData({
       exemptProfilesCount,
       todayReportCount,
       pendingRequestCount,
-      inviteCodeCount,
       latestLogAction,
     },
   };

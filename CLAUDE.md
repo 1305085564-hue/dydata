@@ -46,8 +46,11 @@
 
 ## 前端协作
 - **美学法典权威文件**：`~/.claude/memory/阿禅美学标准-V1.2.md`（全局，唯一版本）。所有前端改造前必读。项目 docs/ 不再维护副本，避免版本漂移。V1/V1.1/V2 均已废止。
-- 多批次前端改动默认走 Gemini + Codex 联动：Gemini 先出分批方案 → 我把关纠偏 → Gemini 按确认方案执行 → Codex 审代码 → 再决定补问题还是进下一轮
-- 标准文档：`docs/前端-Gemini-Codex联动流程.md`
+- 分工（2026-05-10 锁定）：
+  - 前端改造 → Claude Opus 4.7 直接做
+  - 后端（Service / RPC / migration 逻辑层） → 固定委托 Codex（`mcp__codex__codex`）
+  - SQL migration 执行 → Claude 直接跑（Supabase service_role 连接）
+  - Gemini → 仅用于出方案和思路，× 执行改造
 
 ## 日志规则
 - 每次完成一个任务/修复/功能后，追加记录到 `~/.claude/memory/日志/YYYY-MM-DD.md`

@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { TeamOption } from "@/lib/teams";
 
+import { AuthShell } from "../_components/auth-shell";
+
 type RegisterFormState = {
   error: string | null;
 };
@@ -81,21 +83,8 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
   }, [state.error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-10 space-y-3 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            Invite Registration
-          </p>
-          <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
-            创建 DYData 账号
-          </h1>
-          <p className="text-[13px] leading-[1.7] text-zinc-500">
-            使用邀请码加入团队
-          </p>
-        </div>
-
-        <form action={formAction} className="space-y-5">
+    <AuthShell title="创建 DYData 账号" subtitle="注册后提交入团申请，管理员审核通过即可查看团队数据">
+      <form action={formAction} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="name">姓名</Label>
             <Input autoComplete="name" id="name" name="name" placeholder="请输入姓名" required type="text" />
@@ -107,20 +96,24 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="teamId">所属团队</Label>
+            <Label htmlFor="teamId">申请加入团队</Label>
             <select
               id="teamId"
               name="teamId"
               className="flex h-8 w-full rounded-lg border border-transparent bg-zinc-50 px-3 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
-              defaultValue={teams[0]?.id ?? ""}
+              defaultValue=""
               required
             >
+              <option value="" disabled>
+                请选择目标团队
+              </option>
               {teams.map((team) => (
                 <option key={team.id} value={team.id}>
                   {team.name}
                 </option>
               ))}
             </select>
+            <p className="text-[12px] text-zinc-400">提交后由管理员审核，通过后将归属该团队</p>
           </div>
 
           <div className="space-y-2">
@@ -160,11 +153,6 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="inviteCode">邀请码</Label>
-            <Input id="inviteCode" name="inviteCode" placeholder="请输入邀请码" required type="text" />
-          </div>
-
           <SubmitButton />
 
           <Link
@@ -181,7 +169,6 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
             </Link>
           </p>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

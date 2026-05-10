@@ -8,12 +8,12 @@ import { hasPermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { loadAdminPageData } from "@/lib/loaders/admin-page";
 
-import { InviteCodeManager } from "./generate-invite-button";
 import { SubmissionStatus } from "./submission-status";
 import { TeamManager } from "./team-manager";
 import { TeamGroupManager } from "./team-group-manager";
 import { ActionHub } from "./components/action-hub";
 import { MetricCardsRow } from "./components/metric-cards";
+import { JoinRequestReviewSection } from "./join-request-review-section";
 
 interface AdminPageProps {
   searchParams: Promise<{ date?: string }>;
@@ -58,18 +58,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       icon: "FileClock",
       tone: data.summary.pendingRequestCount > 0 ? ("warning" as const) : ("neutral" as const),
     },
-    {
-      label: "邀请码存量",
-      value: data.summary.inviteCodeCount,
-      hint: data.summary.inviteCodeCount > 0 ? "可直接邀请新成员" : "建议补充邀请码",
-      icon: "ShieldCheck",
-      tone: "neutral" as const,
-    },
   ];
 
   const profileMap = new Map(data.allProfiles.map((profile) => [profile.id, profile.name]));
   const currentUserName = profileMap.get(user.id)?.trim() ?? "";
-  const canManageInviteModule =
+  const canManageTeamModule =
     hasPermission(data.perm.role, data.perm.permissions, "manage_invite") &&
     (currentUserName === "闃跨" || currentUserName === "阿豪");
   const [resultTrendData, interactionTrendData] = Object.values(data.trendData) as [
@@ -94,6 +87,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       {/* 指标卡行 */}
       <MetricCardsRow cards={topSummaryCards} />
+
+      {/* 入团申请审核（最高优先级） */}
+      {canManageAdmin && <JoinRequestReviewSection />}
 
       {/* 工作区双栏 */}
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
@@ -150,17 +146,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </section>
       )}
 
-      {/* 邀请码管理 */}
-      {canManageInviteModule && (
+      {/* 团队管理 */}
+      {canManageTeamModule && (
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">邀请码管理</h2>
-          <div className="mt-4 space-y-6">
+          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">团队管理</h2>
+          <div className="mt-4">
             <TeamManager teams={data.teams} />
-            <InviteCodeManager
-              adminId={user.id}
-              existingCodes={data.inviteCodes}
-              profileNames={Object.fromEntries(profileMap)}
-            />
           </div>
         </section>
       )}

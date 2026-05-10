@@ -291,43 +291,6 @@ async function applyGrantToProfile(
   return { error: undefined };
 }
 
-export async function generateInviteCode(
-  adminId: string,
-  count: number = 1,
-  expiresInDays: number | null = null
-): Promise<{ codes?: string[]; error?: string }> {
-  const perm = await getUserPermissions();
-  if (!perm) return { error: "未登录" };
-  if (perm.userId !== adminId) return { error: "用户信息不匹配" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_invite")) return { error: "无权限" };
-
-  const supabase = await createClient();
-
-  const codes: string[] = [];
-  const rows = [];
-  for (let i = 0; i < Math.min(count, 20); i++) {
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    codes.push(code);
-    rows.push({
-      code,
-      created_by: adminId,
-      expires_at: expiresInDays
-        ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
-        : null,
-    });
-  }
-
-  const { error } = await supabase.from("invite_codes").insert(rows);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  await writeAuditLog(supabase, perm.userId, "generate_invite_code", adminId, `count=${rows.length}|expiresInDays=${expiresInDays ?? "permanent"}`);
-
-  return { codes };
-}
-
 export async function updateExemption(values: ExemptionFormValues): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };

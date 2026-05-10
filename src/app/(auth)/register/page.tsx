@@ -22,12 +22,11 @@ export default async function RegisterPage() {
     const name = formData.get("name")?.toString().trim() ?? "";
     const email = formData.get("email")?.toString().trim() ?? "";
     const password = formData.get("password")?.toString() ?? "";
-    const inviteCode = formData.get("inviteCode")?.toString().trim() ?? "";
     const teamId = formData.get("teamId")?.toString().trim() ?? "";
     const selectedTeam = teams.find((team) => team.id === teamId);
 
-    if (!name || !email || !password || !inviteCode) {
-      return { error: "请完整填写姓名、邮箱、密码和邀请码。" };
+    if (!name || !email || !password) {
+      return { error: "请完整填写姓名、邮箱和密码。" };
     }
 
     if (password.length < 6) {
@@ -35,28 +34,10 @@ export default async function RegisterPage() {
     }
 
     if (!selectedTeam) {
-      return { error: "请选择团队。" };
+      return { error: "请选择要申请加入的团队。" };
     }
 
     const supabase = await createClient();
-
-    const { data: inviteId, error: inviteError } = await supabase.rpc("validate_invite_code", {
-      p_code: inviteCode,
-    });
-
-    if (inviteError || !inviteId) {
-      return { error: "邀请码无效或已被使用。" };
-    }
-
-    const { data: inviteRow } = await supabase
-      .from("invite_codes")
-      .select("expires_at")
-      .eq("id", inviteId)
-      .single();
-
-    if (inviteRow?.expires_at && new Date(inviteRow.expires_at) < new Date()) {
-      return { error: "邀请码已过期，请联系管理员获取新的邀请码。" };
-    }
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -64,8 +45,8 @@ export default async function RegisterPage() {
       options: {
         data: {
           name,
-          team_id: selectedTeam.id,
-          team_name: selectedTeam.name,
+          pending_team_id: selectedTeam.id,
+          pending_team_name: selectedTeam.name,
         },
       },
     });
@@ -80,7 +61,7 @@ export default async function RegisterPage() {
       id: userId,
       name,
       role: "member",
-      team_id: selectedTeam.id,
+      team_id: null,
       permissions: {},
     });
 
@@ -98,24 +79,20 @@ export default async function RegisterPage() {
       return { error: "创建默认账号失败，请联系管理员检查 accounts 表权限。" };
     }
 
-    const { error: updateInviteError } = await supabase
-      .from("invite_codes")
-      .update({
-        used_by: userId,
-        used_at: new Date().toISOString(),
-      })
-      .eq("id", inviteId)
-      .is("used_by", null);
+    const { error: joinRequestError } = await supabase.from("team_join_requests").insert({
+      applicant_user_id: userId,
+      target_team_id: selectedTeam.id,
+    });
 
-    if (updateInviteError) {
-      return { error: "邀请码回写失败，请联系管理员检查 invite_codes 权限。" };
+    if (joinRequestError) {
+      console.error("team_join_requests insert failed", joinRequestError);
     }
 
     if (!signUpData.session) {
-      redirect("/login?registered=1");
+      redirect(`/login?registered=1&pending=${encodeURIComponent(selectedTeam.name)}`);
     }
 
-    redirect("/dashboard");
+    redirect("/dashboard?just_registered=1");
   }
 
   return <RegisterForm action={registerAction} teams={teams} />;
