@@ -28,6 +28,7 @@ import {
 import { AlertCenter } from "./components/alert-center";
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
+import { FocusHeroCard } from "./components/focus-hero-card";
 import { GlobalMatrix } from "./components/global-matrix";
 import { LeaderDashboard } from "./components/leader-dashboard";
 import { WorkflowDashboard } from "./components/workflow-dashboard";
@@ -256,6 +257,17 @@ export function ProductionControlSystem({
           onToggleUser={toggleAlertUser}
           onDismissAlert={dismissAlert}
         />
+
+        {userRole === "member" && activeTab === "FLOW" && (
+          <div className="mx-auto mb-6 max-w-6xl">
+            <FocusHeroCard
+              todayReports={todayReports}
+              totalAccounts={accounts.length}
+              userDisplayName={userDisplayName}
+              today={today}
+            />
+          </div>
+        )}
 
         {activeTab === "FLOW" && (
           <WorkflowDashboard
