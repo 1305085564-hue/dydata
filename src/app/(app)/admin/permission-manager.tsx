@@ -334,7 +334,7 @@ export function PermissionManager({
                   取消
                 </Button>
                 <Button
-                  className="h-10 rounded-[10px] bg-zinc-950 text-white hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+                  className="h-10 rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
                   onClick={handleSavePermissions}
                   disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
                 >
@@ -354,8 +354,8 @@ export function PermissionManager({
                       className={cn(
                         "inline-flex items-center rounded-[10px] px-2.5 py-0.5 text-[12px] font-medium",
                         member.role === "admin"
-                          ? "bg-zinc-800 text-white"
-                          : "bg-zinc-100 text-zinc-600"
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : "bg-zinc-50 text-zinc-600 border border-zinc-200"
                       )}
                     >
                       {member.role === "admin" ? "管理员" : "成员"}
@@ -473,8 +473,8 @@ export function PermissionManager({
                       className={cn(
                         "h-8 w-8 p-0 text-[12px] rounded-[10px]",
                         page === pmPage
-                          ? "bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-800"
-                          : "border-zinc-200"
+                          ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60"
+                          : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"
                       )}
                     >
                       {page}
@@ -574,7 +574,7 @@ export function PermissionManager({
               取消
             </Button>
             <Button
-              className="rounded-[10px] bg-zinc-950 text-white hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+              className="rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
               onClick={handleResetPassword}
               disabled={isResettingPassword}
             >

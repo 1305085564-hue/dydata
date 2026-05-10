@@ -411,7 +411,7 @@ export function DataManager({
                 size="sm"
                 disabled={isPending}
                 onClick={() => handleSave(report.id)}
-                className="h-8 bg-zinc-950 text-xs text-white hover:bg-zinc-800"
+                className="h-8 bg-zinc-900 text-xs text-white hover:bg-zinc-800"
               >
                 保存
               </Button>
@@ -600,7 +600,7 @@ export function DataManager({
             size="sm"
             disabled={isPending}
             onClick={() => handleSave(report.id)}
-            className="h-8 bg-zinc-950 text-xs text-white hover:bg-zinc-800"
+            className="h-8 bg-zinc-900 text-xs text-white hover:bg-zinc-800"
           >
             保存
           </Button>
@@ -718,7 +718,7 @@ export function DataManager({
             size="sm"
             variant={viewMode === "profile" ? "default" : "outline"}
             onClick={() => setViewMode("profile")}
-            className={viewMode === "profile" ? "bg-zinc-950 text-white hover:bg-zinc-800" : "border-zinc-200 text-zinc-500 hover:text-zinc-800"}
+            className={viewMode === "profile" ? "bg-white shadow-sm text-zinc-800 rounded-lg border-zinc-200 hover:bg-white" : "border-zinc-200 text-zinc-500 hover:text-zinc-800"}
           >
             按人查看
           </Button>
@@ -726,7 +726,7 @@ export function DataManager({
             size="sm"
             variant={viewMode === "account" ? "default" : "outline"}
             onClick={() => setViewMode("account")}
-            className={viewMode === "account" ? "bg-zinc-950 text-white hover:bg-zinc-800" : "border-zinc-200 text-zinc-500 hover:text-zinc-800"}
+            className={viewMode === "account" ? "bg-white shadow-sm text-zinc-800 rounded-lg border-zinc-200 hover:bg-white" : "border-zinc-200 text-zinc-500 hover:text-zinc-800"}
           >
             按账号查看
           </Button>
