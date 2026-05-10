@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { AuthShell } from "../_components/auth-shell";
+
 export function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -44,21 +46,8 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-10 space-y-3 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            Reset Password
-          </p>
-          <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
-            设置新密码
-          </h1>
-          <p className="text-[13px] leading-[1.7] text-zinc-500">
-            输入并确认你的新密码
-          </p>
-        </div>
-
-        <form className="space-y-5" onSubmit={handleSubmit}>
+    <AuthShell title="设置新密码" subtitle="输入并确认你的新密码">
+      <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="password">新密码</Label>
             <Input
@@ -94,7 +83,6 @@ export function ResetPasswordForm() {
             </Link>
           </p>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

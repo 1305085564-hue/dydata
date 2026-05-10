@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
+import { AuthShell } from "../_components/auth-shell";
+
 type LoginFormState = {
   error: string | null;
   email: string;
@@ -76,21 +78,8 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   }, [notice]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-10 space-y-3 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            DYData
-          </p>
-          <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
-            回到工作台
-          </h1>
-          <p className="text-[13px] leading-[1.7] text-zinc-500">
-            继续处理日报、经营分析和成长复盘
-          </p>
-        </div>
-
-        <form action={formAction} className="space-y-5">
+    <AuthShell title="回到工作台" subtitle="继续处理日报、经营分析和成长复盘">
+      <form action={formAction} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="email">邮箱</Label>
             <Input
@@ -156,7 +145,6 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
             </Link>
           </p>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
