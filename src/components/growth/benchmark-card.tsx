@@ -83,7 +83,7 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
             <div
-              className="h-full rounded-full bg-zinc-400 transition-[width] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-full rounded-full bg-zinc-300 transition-[width] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
               style={{ width: `${我的占比}%` }}
             />
           </div>
@@ -98,7 +98,7 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
             <div
-              className="h-full rounded-full bg-zinc-800 transition-[width] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-full rounded-full bg-[#D97757] transition-[width] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
               style={{ width: `${标杆占比}%` }}
             />
           </div>
