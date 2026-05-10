@@ -98,7 +98,7 @@ export function AlertCenter({
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[11px] font-medium text-white">
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 ring-1 ring-zinc-200">
                         {group.count} 项
                       </span>
                       {userExpanded ? (

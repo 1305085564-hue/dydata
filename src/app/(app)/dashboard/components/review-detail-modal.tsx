@@ -143,7 +143,7 @@ export function ReviewDetailModal({
                   href={submission.video_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-[10px] bg-zinc-900 px-5 py-3 text-[13px] font-medium text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                  className="inline-flex items-center gap-2 rounded-[10px] border border-zinc-200 bg-white px-5 py-3 text-[13px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                 >
                   打开视频链接 <ArrowUpRight size={14} className="stroke-[1.5]" />
                 </a>

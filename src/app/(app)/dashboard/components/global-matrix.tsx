@@ -58,7 +58,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
               {String(riskCount).padStart(2, "0")}
             </span>
           </div>
-          <button className="ml-4 rounded-[10px] bg-zinc-900 p-2 text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5">
+          <button className="ml-4 rounded-[10px] border border-zinc-200 bg-white p-2 text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5">
             <Filter size={16} className="stroke-[1.5]" />
           </button>
         </div>
