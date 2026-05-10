@@ -148,7 +148,7 @@ export function ChannelDetailForm({
               <Button
                 variant="ghost"
                 size="sm"
-                className="rounded-xl h-8 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0"
+                className="rounded-xl h-8 px-2 text-[#C9604D] hover:bg-[#C9604D]/10 hover:text-[#C9604D] shrink-0"
                 onClick={() => onDeleteClick(channel)}
                 title="删除渠道"
                 aria-label="删除渠道"

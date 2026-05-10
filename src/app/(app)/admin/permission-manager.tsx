@@ -280,7 +280,7 @@ export function PermissionManager({
                     setPmShowAll(false);
                   }}
                 >
-                  <SelectTrigger id="team-filter" className="h-10 w-[150px] bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                  <SelectTrigger id="team-filter" className="h-10 w-[150px] bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -307,7 +307,7 @@ export function PermissionManager({
                   setPmShowAll(false);
                 }}
                 placeholder="输入姓名、邮箱或团队"
-                className="h-10 rounded-lg bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:max-w-xs"
+                className="h-10 rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:max-w-xs"
               />
             </div>
           </div>
@@ -419,7 +419,7 @@ export function PermissionManager({
                           isChangingRole || isSavingPermissions || isRemoving || isResettingPassword
                         }
                       >
-                        <SelectTrigger className="h-9 w-full sm:w-28 bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                        <SelectTrigger className="h-9 w-full sm:w-28 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -543,7 +543,7 @@ export function PermissionManager({
                 placeholder="至少 6 位"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
-                className="rounded-lg bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
               />
             </div>
             <div className="space-y-2">
@@ -556,7 +556,7 @@ export function PermissionManager({
                 placeholder="再次输入新密码"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
-                className="rounded-lg bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
               />
             </div>
           </div>

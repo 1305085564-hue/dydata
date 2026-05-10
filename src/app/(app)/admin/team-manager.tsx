@@ -47,7 +47,7 @@ export function TeamManager({ teams }: TeamManagerProps) {
             value={teamName}
             onChange={(event) => setTeamName(event.target.value)}
             placeholder="例如：上海一部"
-            className="h-10 rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="h-10 rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
         </div>
         <Button

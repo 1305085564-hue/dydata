@@ -130,8 +130,8 @@ interface AdminSecondaryNavProps {
 
 function getCardClassName(active: boolean) {
   return cn(
-    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-slate-200/80 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(244,248,255,0.92))] p-5 text-left shadow-[0_18px_48px_-28px_rgba(15,23,42,0.32)] transition duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_22px_60px_-28px_rgba(37,99,235,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:min-w-[240px] xl:min-w-[200px]",
-    active && "admin-subnav-link-active border-primary/40 bg-[linear-gradient(160deg,rgba(239,246,255,0.98),rgba(255,255,255,0.96))] shadow-[0_24px_70px_-32px_rgba(37,99,235,0.35)]",
+    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-[#D97757]/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30 sm:min-w-[240px] xl:min-w-[200px]",
+    active && "admin-subnav-link-active border-[#D97757]/50 bg-[#D97757]/5 shadow-md",
   );
 }
 
@@ -166,14 +166,14 @@ export function AdminSecondaryNav({
         const content = (
           <>
             <div className="admin-subnav-link-head dashboard-top-action-card-head flex items-start gap-3">
-              <span className="admin-subnav-link-icon dashboard-top-action-icon flex size-11 items-center justify-center rounded-2xl border border-white/70 bg-white/85 text-[var(--color-text-primary)] shadow-[var(--shadow-light)] transition group-hover:border-primary/20 group-hover:text-primary">
+              <span className="admin-subnav-link-icon dashboard-top-action-icon flex size-11 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
                 <Icon className="size-5" />
               </span>
-              <span className="admin-subnav-link-title dashboard-top-action-title flex-1 pt-1 text-base font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
+              <span className="admin-subnav-link-title dashboard-top-action-title flex-1 pt-1 text-base font-semibold tracking-[-0.02em] text-zinc-800">
                 {item.label}
               </span>
             </div>
-            <span className="admin-subnav-link-description app-shell-metric-hint text-sm leading-6 text-[var(--color-text-secondary)]">
+            <span className="admin-subnav-link-description app-shell-metric-hint text-sm leading-6 text-zinc-500">
               {item.description}
             </span>
           </>

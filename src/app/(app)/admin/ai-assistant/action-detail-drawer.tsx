@@ -115,7 +115,7 @@ function CopyButton({ payload }: { payload: string }) {
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-0.5">
-      <div className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
         {label}
       </div>
       <div className="truncate text-[12px] font-medium text-zinc-800">{value}</div>
@@ -161,7 +161,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
                   Action Record
                 </span>
                 {detail?.id && (
@@ -179,7 +179,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                 <span className={cn("inline-flex rounded-full", status.dot)} />
                 <span
                   className={cn(
-                    "text-[9px] font-semibold uppercase tracking-[0.25em]",
+                    "text-[10px] font-semibold uppercase tracking-[0.25em]",
                     status.text_cls
                   )}
                 >
@@ -217,7 +217,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                 <div className="relative overflow-hidden rounded-2xl border border-red-100 bg-[#FEF9F9] p-4">
                   <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
                   <div className="pl-2">
-                    <div className="text-[9px] font-semibold uppercase tracking-[0.25em] text-red-700">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-red-700">
                       System Error
                     </div>
                     <div className="mt-1.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-red-900/80">
@@ -230,7 +230,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               {/* AI Reasoning */}
               {detail.aiReasoning && (
                 <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-                  <div className="mb-2 text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
                     AI Reasoning
                   </div>
                   <div className="whitespace-pre-wrap text-[12.5px] italic leading-relaxed text-zinc-600">
@@ -243,11 +243,11 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               {(detail.toolParams || detail.backupSql) && actorRole === "owner" && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-1">
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
                       Owner Debug
                     </span>
                     <div className="h-px flex-1 bg-zinc-200" />
-                    <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-300">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-300">
                       Restricted
                     </span>
                   </div>

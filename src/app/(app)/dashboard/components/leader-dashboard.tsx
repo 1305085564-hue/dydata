@@ -132,7 +132,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
   if (!board && error) {
     return (
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/50 px-6 py-10 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
           <div className="relative flex size-2 items-center justify-center">
             <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
           </div>
@@ -229,7 +229,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50/50 text-zinc-500">
+              <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500">
                 <th className="p-5 text-[10px] font-medium uppercase tracking-[0.25em]">
                   组员
                 </th>
@@ -247,7 +247,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
               {board.members.map((member) => (
                 <tr
                   key={member.userId}
-                  className="border-b border-zinc-50 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] last:border-none hover:bg-zinc-50/50"
+                  className="border-b border-zinc-50 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] last:border-none hover:bg-zinc-50"
                 >
                   <td className="p-5 text-[13px] font-medium text-zinc-800">
                     {member.userName}
@@ -300,7 +300,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
                       <span className="text-[13px] font-semibold text-zinc-800">
                         {member?.userName ?? "未知"}
                       </span>
-                      <span className="rounded-md border border-zinc-200 bg-zinc-50/50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
                         {checkpointLabel(s.checkpoint as SopCheckpoint)}
                       </span>
                     </div>

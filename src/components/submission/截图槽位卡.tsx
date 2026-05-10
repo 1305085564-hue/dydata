@@ -166,17 +166,17 @@ export function SubmissionSlotCard({
                   {title}
                 </span>
                 {required ? (
-                  <span className="rounded-full bg-white px-1.5 py-0.5 text-[9px] font-semibold text-zinc-800 border border-zinc-200">
+                  <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-800 border border-zinc-200">
                     必传
                   </span>
                 ) : (
-                  <span className="rounded-lg bg-zinc-500/70 px-1 py-0.5 text-[9px] font-medium text-white/90">
+                  <span className="rounded-lg bg-zinc-500/70 px-1 py-0.5 text-[10px] font-medium text-white/90">
                     选传
                   </span>
                 )}
               </div>
               <span className={cn(
-                "rounded-full px-2 py-0.5 text-[9px] font-semibold transition-colors flex items-center gap-1",
+                "rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors flex items-center gap-1",
                 isSuccess ? "bg-[#6FAA7D] text-white" :
                 isError ? "bg-[#C9604D] text-white" :
                 isWarning ? "bg-[#EAB308] text-white" :
@@ -292,7 +292,7 @@ export function SubmissionSlotCard({
                   <button
                     type="button"
                     onClick={onRetry}
-                    className="inline-flex h-5 items-center rounded border border-[#C9604D]/40 px-2 text-[9px] hover:bg-[#C9604D]/8 transition-colors"
+                    className="inline-flex h-5 items-center rounded border border-[#C9604D]/40 px-2 text-[10px] hover:bg-[#C9604D]/8 transition-colors"
                   >
                     重试
                   </button>
@@ -302,7 +302,7 @@ export function SubmissionSlotCard({
 
             {ocrSummary && ocrSummary.length > 0 ? (
               <div className="flex-1 rounded-xl bg-[#F9F9FB] px-2.5 py-2 text-[11px] text-zinc-800 border border-zinc-200 overflow-hidden flex flex-col max-h-[120px]">
-                <div className="font-semibold text-zinc-500 mb-1 shrink-0 text-[9px] uppercase tracking-wider">AI 识别结果</div>
+                <div className="font-semibold text-zinc-500 mb-1 shrink-0 text-[10px] uppercase tracking-wider">AI 识别结果</div>
                 <ul className="space-y-0.5 overflow-y-auto pr-1 flex-1 min-h-0 custom-scrollbar">
                   {ocrSummary.map((item) => (
                     <li key={item} className="leading-snug text-zinc-700 text-[10px]">{item}</li>

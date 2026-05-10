@@ -228,7 +228,7 @@ export function TeamGroupManager({
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
-            <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择团队">
                 {selectedTeamName ?? undefined}
               </SelectValue>
@@ -242,7 +242,7 @@ export function TeamGroupManager({
             </SelectContent>
           </Select>
           <Select value={effectiveSelectedGroupId} onValueChange={handleGroupChange}>
-            <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择分组">
                 {selectedGroupName ?? (effectiveSelectedGroupId === NO_GROUP ? "暂无分组" : undefined)}
               </SelectValue>
@@ -337,13 +337,13 @@ export function TeamGroupManager({
                   value={newGroupName}
                   onChange={(event) => setNewGroupName(event.target.value)}
                   placeholder="例如：第一组"
-                  className="rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label>组长</Label>
                 <Select value={newLeaderId} onValueChange={handleNewLeaderChange}>
-                  <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                  <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                     <SelectValue placeholder="选择组长">
                       {newLeaderName ?? undefined}
                     </SelectValue>
@@ -385,13 +385,13 @@ export function TeamGroupManager({
                       id="edit-group-name"
                       value={editGroupName}
                       onChange={(event) => setEditGroupName(event.target.value)}
-                      className="rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label>更换组长</Label>
                     <Select value={editLeaderId} onValueChange={handleEditLeaderChange}>
-                      <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                      <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                         <SelectValue placeholder="选择组长">
                           {editLeaderName ?? undefined}
                         </SelectValue>

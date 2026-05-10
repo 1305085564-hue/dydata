@@ -81,7 +81,7 @@ export function MetricInputCard({
           {optional && <span className="ml-1 font-normal opacity-60">可选</span>}
         </Label>
         {statusLabel && (
-          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-wide scale-90 origin-right bg-zinc-100 text-zinc-500 border border-zinc-200">
+          <span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold tracking-wide scale-90 origin-right bg-zinc-100 text-zinc-500 border border-zinc-200">
             {statusLabel}
           </span>
         )}

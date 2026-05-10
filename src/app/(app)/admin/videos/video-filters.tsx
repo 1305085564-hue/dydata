@@ -193,8 +193,8 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
                     className={[
                       "rounded-full border px-3 py-1.5 text-xs transition-colors",
                       active
-                        ? "border-primary/40 bg-primary/10 text-primary"
-                        : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/50",
+                        ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
+                        : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100",
                     ].join(" ")}
                   >
                     {option}

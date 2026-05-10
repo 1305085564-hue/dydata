@@ -25,7 +25,7 @@ interface ConfigBarProps {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 px-1">
-      <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
         {children}
       </span>
       <div className="h-px flex-1 bg-zinc-200" />
@@ -132,12 +132,12 @@ export function ConfigBar({
           {/* Custom params */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
                 Custom
               </span>
               <div className="h-px flex-1 bg-zinc-200" />
               {customControlsLocked && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-50 px-1.5 py-0.5 text-[9px] font-medium text-zinc-500 ring-1 ring-zinc-200">
+                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 ring-1 ring-zinc-200">
                   <Lock className="h-2.5 w-2.5" />
                   Locked
                 </span>
