@@ -142,7 +142,7 @@ export function BenchmarkCard({
               {配置.文案}
             </Badge>
             <div className="space-y-1">
-              <h3 className="text-[16px] font-semibold tracking-tight text-zinc-800">
+              <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
                 {账号名}
               </h3>
               {账号标识 ? (

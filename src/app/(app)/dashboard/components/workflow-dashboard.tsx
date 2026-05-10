@@ -133,7 +133,7 @@ export function WorkflowDashboard({
                 <span
                   className={cn(
                     "mt-3 text-center text-[10px] font-medium uppercase tracking-[0.25em] transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    isActive ? "text-zinc-900" : theme.color,
+                    isActive ? "text-zinc-800" : theme.color,
                   )}
                 >
                   {cp.label}
@@ -151,7 +151,7 @@ export function WorkflowDashboard({
           <div className="flex justify-center">
             <StatusBadge status={statuses.MORNING_REVIEW} />
           </div>
-          <h3 className="mt-4 text-[20px] font-semibold tracking-tight text-zinc-900">
+          <h3 className="mt-4 text-[20px] font-semibold tracking-tight text-zinc-800">
             早会复盘
           </h3>
           <p className="mx-auto mt-2 max-w-xl text-[13px] leading-[1.7] text-zinc-500">
@@ -172,7 +172,7 @@ export function WorkflowDashboard({
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <StatusBadge status={activeStatus} />
-                  <h3 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+                  <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">
                     {stageTitle}
                   </h3>
                 </div>
@@ -188,7 +188,7 @@ export function WorkflowDashboard({
                     onChange={(event) => setTopicText(event.target.value)}
                     className={cn(
                       "w-full resize-none rounded-xl border border-zinc-200 bg-white p-5 text-[13px] font-medium leading-[1.7] text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:border-zinc-950/20 focus:outline-none focus:ring-1 focus:ring-zinc-950/5",
-                      activeCheckpoint === "TOPIC" ? "h-56 text-[15px]" : "h-24",
+                      activeCheckpoint === "TOPIC" ? "h-56 text-[14px]" : "h-24",
                     )}
                     placeholder="写选题核心，例如：为什么说今天的反弹不是安全信号？"
                   />
@@ -198,7 +198,7 @@ export function WorkflowDashboard({
                   <textarea
                     value={scriptText}
                     onChange={(event) => setScriptText(event.target.value)}
-                    className="h-80 w-full resize-none rounded-xl border border-zinc-200 bg-white p-8 text-[15px] font-medium leading-[1.7] text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:border-zinc-950/20 focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    className="h-80 w-full resize-none rounded-xl border border-zinc-200 bg-white p-8 text-[14px] font-medium leading-[1.7] text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:border-zinc-950/20 focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
                     placeholder="请在此输入 1000-1300 字的脚本详情..."
                   />
                 ) : null}

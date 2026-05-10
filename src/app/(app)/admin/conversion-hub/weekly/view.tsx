@@ -149,7 +149,7 @@ function BucketCard({ bucket, index }: { bucket: DecisionBucket; index: number }
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xl leading-none">{bucket.emoji}</span>
-          <h2 className={`text-[16px] font-semibold ${tone.title}`}>{bucket.label}</h2>
+          <h2 className={`text-[18px] font-medium ${tone.title}`}>{bucket.label}</h2>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone.badge}`}>
             {bucket.entries.length} 条
           </span>
@@ -197,7 +197,7 @@ function EmptyState({
       <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-zinc-50">
         <Inbox className="size-7 text-zinc-400" />
       </div>
-      <h3 className="mt-4 text-[16px] font-semibold text-zinc-800">本周暂无决策草稿</h3>
+      <h3 className="mt-4 text-[18px] font-medium text-zinc-800">本周暂无决策草稿</h3>
       <p className="mx-auto mt-1.5 max-w-md text-xs text-zinc-500">
         周起：{weekStart}。AI 每周草稿接口待后端实现，届时会在此自动生成四类话术候选。
       </p>

@@ -953,7 +953,7 @@ export default function AIRewriteClient() {
                       <CardHeader>
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
-                            <CardTitle className="text-base font-semibold tracking-tight">{row.name}</CardTitle>
+                            <CardTitle className="text-[18px] font-medium tracking-tight">{row.name}</CardTitle>
                             <CardDescription>{row.description || "—"}</CardDescription>
                           </div>
                           {getStatusBadge(row.is_enabled)}
@@ -1104,7 +1104,7 @@ export default function AIRewriteClient() {
                     <CardHeader className="border-b border-zinc-200">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                          <CardTitle className="text-base">{modelView.label}</CardTitle>
+                          <CardTitle className="text-[18px] font-medium">{modelView.label}</CardTitle>
                           <CardDescription className="mt-1">
                             {modelView.description || "员工端看到的展示模型。下面这些才是真实执行路线。"}
                           </CardDescription>
@@ -1361,7 +1361,7 @@ export default function AIRewriteClient() {
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <CardTitle className="text-base">{workflow.name}</CardTitle>
+                            <CardTitle className="text-[18px] font-medium">{workflow.name}</CardTitle>
                             {getStatusBadge(workflow.is_enabled, workflow.is_default)}
                             <Badge variant="outline" className="font-mono text-xs">
                               {workflow.key}

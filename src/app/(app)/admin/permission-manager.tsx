@@ -334,7 +334,7 @@ export function PermissionManager({
                   取消
                 </Button>
                 <Button
-                  className="h-10 rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+                  className="h-10 rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
                   onClick={handleSavePermissions}
                   disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
                 >
@@ -574,7 +574,7 @@ export function PermissionManager({
               取消
             </Button>
             <Button
-              className="rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+              className="rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
               onClick={handleResetPassword}
               disabled={isResettingPassword}
             >

@@ -101,7 +101,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-[16px] font-semibold text-zinc-800">TOP 20 话术排行榜</h2>
+            <h2 className="text-[18px] font-medium text-zinc-800">TOP 20 话术排行榜</h2>
             <p className="mt-0.5 text-xs text-zinc-500">
               转化话术，使用 ≥3 且展示 ≥1k
             </p>
@@ -236,7 +236,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
       >
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-[16px] font-semibold text-zinc-800">近 7 日违规事件趋势</h2>
+            <h2 className="text-[18px] font-medium text-zinc-800">近 7 日违规事件趋势</h2>
             <p className="mt-0.5 text-xs text-zinc-500">数字化展示每日违规事件数量</p>
           </div>
         </div>

@@ -79,7 +79,7 @@ export function AlertCenter({
                     aria-expanded={userExpanded}
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-[13px] font-semibold text-zinc-900">
+                      <div className="truncate text-[13px] font-semibold text-zinc-800">
                         {group.userName}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-1.5">

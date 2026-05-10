@@ -118,7 +118,7 @@ export function RewriteInput({
 
             {isChatStage ? (
               <div className="mb-4 flex items-start gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[12px] leading-[1.7] text-zinc-500">
-                <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#8AA8C7]" />
+                <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#8AA8C7] ring-1 ring-white" />
                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-400" />
                 <span>第二轮起固定进入正常聊天模式：当前已重置为聊天默认值，但你仍可重新指定各项参数。</span>
               </div>

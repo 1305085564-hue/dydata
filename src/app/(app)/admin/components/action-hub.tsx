@@ -66,7 +66,7 @@ export function ActionHub({
 
   return (
     <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-      <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">工作流中心</h2>
+      <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">工作流中心</h2>
 
       <div className="mt-5 space-y-5">
         <div>

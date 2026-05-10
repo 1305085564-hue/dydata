@@ -98,7 +98,7 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-[16px] font-semibold tracking-tight text-zinc-900">
+        <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
           今日日报
         </h3>
         {saved && (
@@ -110,7 +110,7 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
           >
             <span
               className={cn(
-                "h-1.5 w-1.5 rounded-full",
+                "h-1.5 w-1.5 rounded-full ring-1 ring-white",
                 saved === "submitted" ? "bg-[#6FAA7D]" : "bg-[#D99E55]",
               )}
             />
@@ -139,7 +139,7 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
           <button
             onClick={() => save(true)}
             disabled={saving}
-            className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             保存草稿
           </button>

@@ -302,7 +302,7 @@ function PersonRankCard({
             <div className="flex items-end justify-between gap-2">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">均播对比</p>
-                <p className="mt-0.5 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatPlayCountCompact(person.avgPlay)}</p>
+                <p className="mt-0.5 text-[24px] font-semibold text-zinc-800 tabular-nums tracking-tight">{formatPlayCountCompact(person.avgPlay)}</p>
               </div>
               <div className="text-right">
                 <p className="text-[11px] font-medium text-zinc-400">稳定性</p>

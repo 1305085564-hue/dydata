@@ -199,7 +199,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                       <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
                         TOP {video.rank}
                       </p>
-                      <CardTitle className="line-clamp-2 text-base font-semibold tracking-tight text-foreground">
+                      <CardTitle className="line-clamp-2 text-[18px] font-medium tracking-tight text-foreground">
                         {video.video_title || "未命名视频"}
                       </CardTitle>
                     </div>
@@ -220,13 +220,13 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">涨粉</p>
-                      <p className="mt-1 text-base font-semibold tracking-tight tabular-nums">
+                      <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">
                         {formatCompactNumber(video.snapshot24h.follower_gain)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">负责人</p>
-                      <p className="mt-1 text-base font-semibold tracking-tight">{video.profiles?.name ?? "未知"}</p>
+                      <p className="mt-1 text-[14px] font-medium tracking-tight">{video.profiles?.name ?? "未知"}</p>
                     </div>
                   </div>
 

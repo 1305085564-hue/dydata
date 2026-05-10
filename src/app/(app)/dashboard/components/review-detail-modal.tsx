@@ -82,12 +82,12 @@ export function ReviewDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-zinc-100 px-8 py-5">
-          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-800">
             {checkpointLabel(submission.checkpoint as SopCheckpoint)}审核
           </h3>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="rounded-md p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             <X size={18} className="stroke-[1.5]" />
           </button>
@@ -143,7 +143,7 @@ export function ReviewDetailModal({
                   href={submission.video_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-[10px] border border-zinc-200 bg-white px-5 py-3 text-[13px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                  className="inline-flex items-center gap-2 rounded-[10px] border border-zinc-200 bg-white px-5 py-3 text-[13px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                 >
                   打开视频链接 <ArrowUpRight size={14} className="stroke-[1.5]" />
                 </a>
@@ -158,7 +158,7 @@ export function ReviewDetailModal({
               <div key={d.key} className="space-y-2">
                 <div className="flex items-end justify-between text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                   <span>{d.short}</span>
-                  <span className="tabular-nums text-zinc-900">{scores[d.key]} / 10</span>
+                  <span className="tabular-nums text-zinc-800">{scores[d.key]} / 10</span>
                 </div>
                 <input
                   type="range"
@@ -188,7 +188,7 @@ export function ReviewDetailModal({
                     CTA: s,
                   })
                 }
-                className="rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-900 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                className="rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               >
                 一键 {s} 分
               </button>

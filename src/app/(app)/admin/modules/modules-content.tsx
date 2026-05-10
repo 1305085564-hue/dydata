@@ -116,7 +116,7 @@ export function AdminModulesContent({
         <TabsContent value="permissions" className="mt-0">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
-              <h2 className="text-[16px] font-semibold text-zinc-800">角色与权限管理</h2>
+              <h2 className="text-[18px] font-medium text-zinc-800">角色与权限管理</h2>
               <p className="text-sm text-zinc-500">控制成员角色和管理权限，保持原有权限规则不变。</p>
             </div>
             <div className="max-h-[720px] overflow-y-auto pr-1">
@@ -142,7 +142,7 @@ export function AdminModulesContent({
         <TabsContent value="data" className="mt-0">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
-              <h2 className="text-[16px] font-semibold text-zinc-800">数据管理与修正</h2>
+              <h2 className="text-[18px] font-medium text-zinc-800">数据管理与修正</h2>
               <p className="text-sm text-zinc-500">处理异常值、补录和修正，继续复用现有后台编辑逻辑。</p>
             </div>
             <DataManager
@@ -161,7 +161,7 @@ export function AdminModulesContent({
         <TabsContent value="audit" className="mt-0">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
-              <h2 className="text-[16px] font-semibold text-zinc-800">近期操作审计</h2>
+              <h2 className="text-[18px] font-medium text-zinc-800">近期操作审计</h2>
               <p className="text-sm text-zinc-500">查看最近后台操作日志，保留原有日志数据来源和展示能力。</p>
             </div>
             <AuditLogList logs={logsWithNames} />
@@ -173,7 +173,7 @@ export function AdminModulesContent({
         <TabsContent value="export" className="mt-0">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
-              <h2 className="text-[16px] font-semibold text-zinc-800">数据导出</h2>
+              <h2 className="text-[18px] font-medium text-zinc-800">数据导出</h2>
               <p className="text-sm text-zinc-500">继续使用原有导出接口，按日期范围导出 Excel。</p>
             </div>
             <ExportButton />

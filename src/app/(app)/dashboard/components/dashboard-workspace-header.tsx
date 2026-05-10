@@ -73,9 +73,9 @@ export function DashboardWorkspaceHeader({
       <div className="flex flex-col gap-4 border-b border-zinc-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            <Activity size={14} className="text-zinc-900" /> Live Workflow
+            <Activity size={14} className="text-zinc-800" /> Live Workflow
           </div>
-          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
             今日生产流程
           </h2>
         </div>
@@ -87,7 +87,7 @@ export function DashboardWorkspaceHeader({
             <button
               type="button"
               onClick={openDatePicker}
-              className="group inline-flex items-center justify-end gap-1.5 rounded-[10px] py-1 text-[20px] font-semibold tabular-nums text-zinc-900 transition-[color,opacity] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+              className="group inline-flex items-center justify-end gap-1.5 rounded-[10px] py-1 text-[20px] font-semibold tabular-nums text-zinc-800 transition-[color,opacity] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               aria-label="选择填报日期"
             >
               <span>{activeBizDate}</span>
@@ -118,7 +118,7 @@ export function DashboardWorkspaceHeader({
                 key={action.key}
                 type="button"
                 onClick={() => onDashboardAction(action.key)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               >
                 <Icon size={13} />
                 {action.label}
@@ -143,7 +143,7 @@ export function DashboardWorkspaceHeader({
                 "relative min-w-24 shrink-0 rounded-[8px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                 activeTab === tab.key
                   ? "bg-white text-zinc-800 shadow-sm"
-                  : "text-zinc-500 hover:bg-white/60 hover:text-zinc-900",
+                  : "text-zinc-500 hover:bg-white/60 hover:text-zinc-800",
               )}
             >
               {tab.label}

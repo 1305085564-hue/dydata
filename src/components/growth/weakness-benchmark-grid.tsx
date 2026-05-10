@@ -11,7 +11,7 @@ export function WeaknessBenchmarkGrid({ items }: { items: WeakBenchmarkCard[] })
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <div className="space-y-2">
-          <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">弱项对标</h2>
+          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">弱项对标</h2>
           <p className="text-[13px] leading-[1.7] text-zinc-500">暂无可用对标数据</p>
         </div>
       </div>
@@ -26,7 +26,7 @@ export function WeaknessBenchmarkGrid({ items }: { items: WeakBenchmarkCard[] })
             <div className="flex h-full flex-col gap-4">
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">弱项对标</p>
-                <h3 className="mt-2 text-[16px] font-semibold tracking-tight text-zinc-800">{item.dimension}</h3>
+                <h3 className="mt-2 text-[18px] font-medium tracking-tight text-zinc-800">{item.dimension}</h3>
                 <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">{item.headline}</p>
               </div>
 

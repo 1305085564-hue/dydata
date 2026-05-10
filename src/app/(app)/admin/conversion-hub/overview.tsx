@@ -174,7 +174,7 @@ export function ConversionHubOverview({ stats }: Props) {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[16px] font-semibold text-zinc-800">TOP 10 转化话术</h2>
+              <h2 className="text-[18px] font-medium text-zinc-800">TOP 10 转化话术</h2>
               <p className="mt-0.5 text-xs text-zinc-500">按加权转化率排序，仅展示使用 ≥3 且展示 ≥1k 的话术</p>
             </div>
             <Link
@@ -228,7 +228,7 @@ export function ConversionHubOverview({ stats }: Props) {
           transition={{ delay: 0.4, duration: 0.4, ease: "easeOut" }}
           className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
         >
-          <h2 className="text-[16px] font-semibold text-zinc-800">快捷入口</h2>
+          <h2 className="text-[18px] font-medium text-zinc-800">快捷入口</h2>
           <p className="mt-0.5 text-xs text-zinc-500">直达数据分析、每周清单与原始话术库</p>
 
           <div className="mt-4 space-y-3">

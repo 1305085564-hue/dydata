@@ -265,7 +265,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
             <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-zinc-100 mb-4">
               <Sparkles className="size-8 stroke-[1.5] text-zinc-400" />
             </div>
-            <h3 className="text-[16px] font-semibold text-zinc-800 mb-2">准备好挖掘数据价值了吗？</h3>
+            <h3 className="text-[18px] font-medium text-zinc-800 mb-2">准备好挖掘数据价值了吗？</h3>
             <p className="text-[13px] text-zinc-500 leading-[1.7] max-w-md mx-auto">
               基于您选择的分析周期，AI 将深度挖掘爆款特征、分析滑铁卢原因，并为您提取下期可执行的焦点策略。
             </p>

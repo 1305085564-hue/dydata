@@ -53,7 +53,7 @@ export function TeamManager({ teams }: TeamManagerProps) {
         <Button
           onClick={handleCreate}
           disabled={isPending || !teamName.trim()}
-          className="h-10 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+          className="h-10 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
         >
           {isPending ? "创建中..." : "新增团队"}
         </Button>

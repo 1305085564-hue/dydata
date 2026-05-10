@@ -702,7 +702,7 @@ export function VideoSubmitPanel({
                       </span>
                     </div>
                     <div className="space-y-1.5">
-                      <div className="text-[17px] font-semibold text-zinc-800 sm:text-[18px]">
+                      <div className="text-[18px] font-medium text-zinc-800">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
                       <div className="text-[12px] leading-[1.7] text-zinc-500">
@@ -789,7 +789,7 @@ export function VideoSubmitPanel({
                       {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                     </span>
                     <div className="space-y-1">
-                      <div className="text-[17px] font-semibold text-zinc-800 sm:text-[18px]">
+                      <div className="text-[18px] font-medium text-zinc-800">
                         {activeBizDate} 已标记为{activeDateStatus.label}
                       </div>
                       <p className="text-[13px] leading-[1.7] text-zinc-500">
@@ -898,7 +898,7 @@ export function VideoSubmitPanel({
                         <p className="text-[12px] text-zinc-500">
                           {accounts.find((account) => account.id === activeDateReport.account_id)?.display_name ?? "当前账号"}
                         </p>
-                        <h4 className="text-[16px] font-semibold text-zinc-800">
+                        <h4 className="text-[18px] font-medium text-zinc-800">
                           {activeDateReport.title?.trim() || "未填写视频标题"}
                         </h4>
                         <p className="mt-1 text-[12px] text-zinc-400">

@@ -33,10 +33,10 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
       <div className="flex flex-col justify-between gap-6 px-2 lg:flex-row lg:items-end">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/50 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
             <Activity size={12} className="stroke-[1.5]" /> Global Efficiency Index
           </div>
-          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
             全域生产矩阵
           </h2>
         </div>
@@ -45,7 +45,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
             <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
               产出率
             </span>
-            <span className="text-[20px] font-semibold tabular-nums text-zinc-900">
+            <span className="text-[20px] font-semibold tabular-nums text-zinc-800">
               {matrixRate(rows)}%
             </span>
           </div>
@@ -58,7 +58,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
               {String(riskCount).padStart(2, "0")}
             </span>
           </div>
-          <button className="ml-4 rounded-[10px] border border-zinc-200 bg-white p-2 text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5">
+          <button className="ml-4 rounded-[10px] border border-zinc-200 bg-white p-2 text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5">
             <Filter size={16} className="stroke-[1.5]" />
           </button>
         </div>
@@ -145,7 +145,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
                         </td>
                       );
                     })}
-                    <td className="p-8 text-right font-semibold tabular-nums text-zinc-900">
+                    <td className="p-8 text-right font-semibold tabular-nums text-zinc-800">
                       {approvedCount}.{row.submissions.length}
                     </td>
                   </tr>

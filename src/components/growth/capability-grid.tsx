@@ -16,9 +16,9 @@ const toneMap = {
 } as const;
 
 const signalMap = {
-  red: "bg-[#C9604D]",
-  yellow: "bg-[#D99E55]",
-  green: "bg-[#6FAA7D]",
+  red: "bg-[#C9604D] ring-1 ring-white",
+  yellow: "bg-[#D99E55] ring-1 ring-white",
+  green: "bg-[#6FAA7D] ring-1 ring-white",
 } as const;
 
 function MetricValue({ value, text }: { value: number; text: string }) {
@@ -37,7 +37,7 @@ export function CapabilityGrid({ items }: { items: GrowthDimensionCard[] }) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <div className="space-y-3">
-          <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">六维能力</h2>
+          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">六维能力</h2>
           <p className="text-[13px] leading-[1.7] text-zinc-500">数据不足，先连续提交数据后再看能力分布。</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (

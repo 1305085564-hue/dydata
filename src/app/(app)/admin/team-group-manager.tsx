@@ -365,7 +365,7 @@ export function TeamGroupManager({
               </div>
               <Button
                 type="button"
-                className="mt-auto h-10 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+                className="mt-auto h-10 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
                 onClick={handleCreateGroup}
                 disabled={isPending || !newGroupName.trim() || !newLeaderId}
               >

@@ -170,7 +170,7 @@ export function InteractionTrend({
     <section className="glass-card-static p-4 sm:p-5">
       <div className="flex flex-col gap-2 border-b border-border/60 pb-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">互动质量分趋势</h3>
+          <h3 className="text-[18px] font-medium tracking-tight text-foreground">互动质量分趋势</h3>
           <p className="text-xs text-muted-foreground">评论×0.35 + 分享×0.25 + 点赞×0.25 + 收藏×0.15</p>
         </div>
         <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/45 p-0.5 backdrop-blur">

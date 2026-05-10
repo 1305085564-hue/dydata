@@ -44,7 +44,7 @@ export default async function AdminVideosPage() {
       </div>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">视频列表</h2>
+        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">视频列表</h2>
         <div className="mt-4">
           <VideoList
             videos={data.videos}

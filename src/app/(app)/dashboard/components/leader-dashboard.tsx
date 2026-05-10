@@ -145,7 +145,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
           </div>
           <button
             onClick={() => fetchBoard()}
-            className="mt-1 inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             <RefreshCw size={12} className="stroke-[1.5]" /> 重新加载
           </button>
@@ -170,12 +170,12 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+        <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
           组长看板
         </h2>
         <button
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+          className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
         >
           <RefreshCw size={12} className="stroke-[1.5]" /> 刷新
         </button>
@@ -278,7 +278,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
 
       {pendingSubmissions.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-[16px] font-semibold tracking-tight text-zinc-900">
+          <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
             审核队列
           </h3>
           <div className="space-y-3">
@@ -297,7 +297,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="text-[13px] font-semibold text-zinc-900">
+                      <span className="text-[13px] font-semibold text-zinc-800">
                         {member?.userName ?? "未知"}
                       </span>
                       <span className="rounded-md border border-zinc-200 bg-zinc-50/50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
@@ -316,7 +316,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
                   </div>
                   <button
                     onClick={() => setSelected(s)}
-                    className="shrink-0 rounded-[10px] border border-zinc-200 bg-white px-4 py-2 text-[11px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="shrink-0 rounded-[10px] border border-zinc-200 bg-white px-4 py-2 text-[11px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                   >
                     审核
                   </button>
