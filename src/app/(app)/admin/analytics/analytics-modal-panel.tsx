@@ -110,7 +110,7 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
               经营分析
             </p>
-            <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">经营分析工作台</h3>
+            <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">经营分析工作台</h3>
             <p className="text-[13px] leading-[1.7] text-zinc-500">
               面板打开后再加载分析数据，避免切换入口时触发整页后台重渲染。
             </p>

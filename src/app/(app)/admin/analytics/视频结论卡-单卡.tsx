@@ -47,7 +47,7 @@ export function 视频结论卡单卡({
                 {card.eyebrow}
               </span>
             </div>
-            <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">{card.title}</h3>
+            <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">{card.title}</h3>
           </div>
           <Badge
             variant="outline"
@@ -73,7 +73,7 @@ export function 视频结论卡单卡({
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">关键信号</p>
-              <p className="mt-0.5 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{card.summary}</p>
+              <p className="mt-0.5 text-[18px] font-medium tracking-tight text-zinc-800 font-mono tabular-nums">{card.summary}</p>
             </div>
           </div>
 
@@ -154,7 +154,7 @@ export function 干预结论单卡({
                 {card.eyebrow}
               </span>
             </div>
-            <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">{card.title}</h3>
+            <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">{card.title}</h3>
           </div>
           <Badge
             variant="outline"
@@ -181,7 +181,7 @@ export function 干预结论单卡({
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">干预信号</p>
-              <p className="mt-0.5 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{card.summary}</p>
+              <p className="mt-0.5 text-[18px] font-medium tracking-tight text-zinc-800 font-mono tabular-nums">{card.summary}</p>
             </div>
           </div>
 

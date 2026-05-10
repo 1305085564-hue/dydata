@@ -42,20 +42,20 @@ interface PersonStats {
   avgPlay: number;
   recentAvgPlay: number;
   prevAvgPlay: number;
-  suggestion: { label: string; color: string; bgColor: string; borderColor: string };
+  suggestion: { label: string; color: string; bgColor: string; leftBorder: string };
 }
 
 function getSuggestion(metrics: { hitRate: number; stability: number; trend: number; engagementRate: number }) {
   if (metrics.trend < -10) {
-    return { label: "重点关注", color: "text-[#C9604D]", bgColor: "bg-[#C9604D]/10", borderColor: "border-[#C9604D]/20" };
+    return { label: "重点关注", color: "text-[#C9604D]", bgColor: "bg-[#C9604D]/10", leftBorder: "border-l-[#C9604D]" };
   }
   if (metrics.hitRate >= 30 && metrics.trend >= 0) {
-    return { label: "继续放量", color: "text-[#6FAA7D]", bgColor: "bg-[#6FAA7D]/10", borderColor: "border-[#6FAA7D]/20" };
+    return { label: "继续放量", color: "text-[#6FAA7D]", bgColor: "bg-[#6FAA7D]/10", leftBorder: "border-l-[#6FAA7D]" };
   }
   if (metrics.stability >= 15) {
-    return { label: "波动异常", color: "text-[#D99E55]", bgColor: "bg-[#D99E55]/10", borderColor: "border-[#D99E55]/20" };
+    return { label: "波动异常", color: "text-[#D99E55]", bgColor: "bg-[#D99E55]/10", leftBorder: "border-l-[#D99E55]" };
   }
-  return { label: "保持观察", color: "text-zinc-600", bgColor: "bg-zinc-100", borderColor: "border-zinc-200" };
+  return { label: "保持观察", color: "text-zinc-600", bgColor: "bg-zinc-100", leftBorder: "border-l-transparent" };
 }
 
 function computeP70Map(reports: Report[]): Map<string, number> {
@@ -264,9 +264,9 @@ function PersonRankCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border bg-white p-3 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0",
-        person.suggestion.borderColor,
-        isActive && "ring-1 ring-zinc-950/5 border-zinc-400",
+        "group relative overflow-hidden rounded-xl border border-zinc-200 border-l-[2px] bg-[#FAFAFB] p-3 shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-white hover:shadow-sm active:translate-y-0",
+        person.suggestion.leftBorder,
+        isActive && "ring-1 ring-[#D97757]/30 border-l-[#D97757]",
       )}
     >
       <div className="pointer-events-none absolute -right-2 -top-4 text-[58px] font-semibold leading-none text-zinc-50 transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
@@ -302,7 +302,7 @@ function PersonRankCard({
             <div className="flex items-end justify-between gap-2">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">均播对比</p>
-                <p className="mt-0.5 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatPlayCountCompact(person.avgPlay)}</p>
+                <p className="mt-0.5 text-[18px] font-medium text-zinc-800 font-mono tabular-nums tracking-tight">{formatPlayCountCompact(person.avgPlay)}</p>
               </div>
               <div className="text-right">
                 <p className="text-[11px] font-medium text-zinc-400">稳定性</p>
@@ -431,7 +431,7 @@ function MetricBarCard({
       <div className="flex items-end justify-between gap-2">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{title}</p>
-          <p className="mt-0.5 text-[13px] font-semibold text-zinc-800 font-mono tabular-nums">{value}</p>
+          <p className="mt-0.5 text-[13px] font-medium text-zinc-800 font-mono tabular-nums">{value}</p>
         </div>
       </div>
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/90">

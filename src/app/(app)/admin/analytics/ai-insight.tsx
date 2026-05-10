@@ -146,7 +146,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     <div>
                       <h4 className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#6FAA7D] mb-1">最佳验证方向</h4>
                       <div className="flex items-center gap-2">
-                        <span className="text-[20px] font-semibold tracking-tight text-zinc-800">{insight.best_direction.tag}</span>
+                        <span className="text-[18px] font-medium tracking-tight text-zinc-800">{insight.best_direction.tag}</span>
                       </div>
                     </div>
 
@@ -177,7 +177,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     <div>
                       <h4 className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#C9604D] mb-1">需规避方向</h4>
                       <div className="flex items-center gap-2">
-                        <span className="text-[20px] font-semibold tracking-tight text-zinc-800">{insight.worst_direction.tag}</span>
+                        <span className="text-[18px] font-medium tracking-tight text-zinc-800">{insight.worst_direction.tag}</span>
                       </div>
                     </div>
 
