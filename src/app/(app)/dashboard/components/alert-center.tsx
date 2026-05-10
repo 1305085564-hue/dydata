@@ -50,7 +50,7 @@ export function AlertCenter({
             </span>
             {criticalUserCount > 0 && (
               <span className="hidden items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-[#C9604D] sm:inline-flex">
-                <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
                 {criticalUserCount} 人严重
               </span>
             )}
@@ -85,13 +85,13 @@ export function AlertCenter({
                       <div className="mt-1 flex flex-wrap gap-1.5">
                         {group.criticalCount > 0 && (
                           <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-[#C9604D]">
-                            <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
+                            <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
                             严重 {group.criticalCount}
                           </span>
                         )}
                         {group.warningCount > 0 && (
                           <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-[#D99E55]">
-                            <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
+                            <span className="h-2 w-2 rounded-full bg-[#D99E55] ring-1 ring-white" />
                             提醒 {group.warningCount}
                           </span>
                         )}

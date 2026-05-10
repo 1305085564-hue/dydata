@@ -105,13 +105,19 @@ export function DashboardForm({
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("提交成功");
+  const [successMsg, setSuccessMsg] = useState("已提交");
   const [ocrValues, setOcrValues] = useState<OcrFormState>(() => getInitialOcrState(existingData));
   const [isImportOpen, setIsImportOpen] = useState(false);
   const formKey = existingData?.id ?? `new-${defaultAccountId ?? accounts[0]?.id ?? "default"}`;
   const selectedAccountId = defaultAccountId ?? accounts[0]?.id ?? "";
   const isFloatingActionBar = actionBarMode === "floating";
-  const submitButtonLabel = isPending ? "提交中..." : existingData ? "修改日报" : "提交日报";
+  const submitButtonLabel = isPending
+    ? "提交中..."
+    : showSuccess
+      ? successMsg
+      : existingData
+        ? "修改日报"
+        : "提交日报";
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -122,9 +128,12 @@ export function DashboardForm({
       if (result?.error) {
         feedbackToast.error(result.error);
       } else {
-        setSuccessMsg(result?.isUpdate ? "修改成功" : "提交成功");
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        setSuccessMsg(`${result?.isUpdate ? "已修改" : "已提交"} ${hh}:${mm}`);
         setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 2500);
+        setTimeout(() => setShowSuccess(false), 2000);
       }
     });
   }
@@ -141,30 +150,6 @@ export function DashboardForm({
 
   return (
     <div className="relative">
-      {showSuccess && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/90">
-          <div className="flex animate-in fade-in zoom-in duration-300 flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-8 py-7 shadow-sm">
-            <div className="relative flex h-20 w-20 items-center justify-center">
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-[#6FAA7D] bg-white">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-10 w-10 text-[#6FAA7D]"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-[20px] font-semibold tracking-tight text-[#6FAA7D]">{successMsg}</p>
-          </div>
-        </div>
-      )}
-
       <form
         key={formKey}
         onSubmit={handleSubmit}
@@ -556,7 +541,8 @@ export function DashboardForm({
                   <Button
                     type="submit"
                     disabled={isPending}
-                    className="h-11 w-full rounded-[10px] px-6 text-[13px] sm:min-w-[168px] sm:w-auto"
+                    data-success={showSuccess || undefined}
+                    className="h-11 w-full rounded-[10px] px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
                   >
                     {submitButtonLabel}
                   </Button>
@@ -569,7 +555,8 @@ export function DashboardForm({
                 <Button
                   type="submit"
                   disabled={isPending}
-                  className="h-12 w-full rounded-[10px] text-[14px] font-medium"
+                  data-success={showSuccess || undefined}
+                  className="h-12 w-full rounded-[10px] text-[14px] font-medium tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200"
                 >
                   {submitButtonLabel}
                 </Button>
@@ -587,7 +574,8 @@ export function DashboardForm({
                 <Button
                   type="submit"
                   disabled={isPending}
-                  className="h-11 w-full rounded-[10px] px-6 text-[13px] sm:min-w-[168px] sm:w-auto"
+                  data-success={showSuccess || undefined}
+                  className="h-11 w-full rounded-[10px] px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
                 >
                   {submitButtonLabel}
                 </Button>

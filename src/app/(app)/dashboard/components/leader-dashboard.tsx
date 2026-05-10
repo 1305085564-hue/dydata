@@ -134,7 +134,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
           <div className="relative flex size-2 items-center justify-center">
-            <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
+            <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
           </div>
           <div className="mt-2 space-y-1">
             <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold tracking-tight text-zinc-800">
@@ -186,7 +186,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
           {overdueMembers.length > 0 && (
             <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#C9604D] shadow-sm">
               <div className="mb-3 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
                 <AlertCircle size={14} className="stroke-[1.5] text-[#C9604D]" />
                 <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
                   超时未交

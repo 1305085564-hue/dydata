@@ -566,7 +566,7 @@ export function VideoSubmitPanel({
                   <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
                     SOP Control Pipeline
                   </div>
-                  <h2 className="text-2xl font-semibold tracking-tight text-zinc-800 sm:text-[28px]">DYData 数据填报</h2>
+                  <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">DYData 数据填报</h2>
                   <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
                     以 5 个关键时间卡点推进今日内容生产，第一步先完成昨日数据上报。
                   </p>
