@@ -102,7 +102,7 @@ function PlatformNoticeBlock({ text }: { text: string }) {
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-zinc-950"
+              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-zinc-800"
             >
               {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
               {expanded ? "收起" : "展开全文"}

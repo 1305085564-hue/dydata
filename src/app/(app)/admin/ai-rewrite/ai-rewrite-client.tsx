@@ -272,7 +272,7 @@ function EmptyBlock({
   return (
     <div className="rounded-2xl border border-dashed border-zinc-200 bg-white px-4 py-8 text-center">
       <div className="space-y-1">
-        <p className="text-sm font-medium text-zinc-950">{title}</p>
+        <p className="text-sm font-medium text-zinc-800">{title}</p>
         <p className="text-xs text-zinc-500">{description}</p>
       </div>
       {actionLabel && onAction ? (
@@ -303,12 +303,12 @@ function SummaryCard({
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">
               {label}
             </div>
-            <div className="text-2xl font-semibold tracking-[-0.03em] text-zinc-950">
+            <div className="text-2xl font-semibold tracking-[-0.03em] text-zinc-800">
               {value}
             </div>
             <div className="text-xs leading-5 text-zinc-500">{hint}</div>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-zinc-950">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-zinc-800">
             <Icon className="size-4" />
           </div>
         </div>
@@ -857,7 +857,7 @@ export default function AIRewriteClient() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                <Ruler className="size-4 text-zinc-950" />
+                <Ruler className="size-4 text-zinc-800" />
                 运行规则
               </CardTitle>
               <CardDescription className="mt-1">
@@ -872,14 +872,14 @@ export default function AIRewriteClient() {
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[1.3fr,1fr,1fr]">
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-500">
-            <p className="font-medium text-zinc-950">当前固定规则</p>
+            <p className="font-medium text-zinc-800">当前固定规则</p>
             <p className="mt-2">1. 首条默认结果模式，只出 1 个主版本。</p>
             <p>2. 第二轮开始固定聊天模式，不再返回版本卡。</p>
             <p>3. 顶部强框架 / 强语感 / 展示模型 / 普通模式会自动清空并锁定。</p>
           </div>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-zinc-950">输出上限</span>
+            <span className="text-sm font-medium text-zinc-800">输出上限</span>
             <Input
               value={runtimeForm.output_token_limit}
               onChange={(event) => setRuntimeForm((prev) => ({ ...prev, output_token_limit: event.target.value }))}
@@ -892,7 +892,7 @@ export default function AIRewriteClient() {
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-zinc-950">上下文条数</span>
+            <span className="text-sm font-medium text-zinc-800">上下文条数</span>
             <Input
               value={runtimeForm.context_message_limit}
               onChange={(event) =>
@@ -925,7 +925,7 @@ export default function AIRewriteClient() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <Sparkles className="size-4 text-zinc-950" />
+                    <Sparkles className="size-4 text-zinc-800" />
                     固定能力套餐
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -962,19 +962,19 @@ export default function AIRewriteClient() {
                       <CardContent className="space-y-3 text-sm text-zinc-500">
                         <div className="grid gap-2 text-xs">
                           <div className="rounded-2xl bg-zinc-50 px-3 py-2">
-                            <span className="font-semibold text-zinc-950">key：</span>
+                            <span className="font-semibold text-zinc-800">key：</span>
                             <span className="font-mono">{row.key}</span>
                           </div>
                           <div className="rounded-2xl bg-zinc-50 px-3 py-2">
-                            <span className="font-semibold text-zinc-950">绑定展示模型：</span>
+                            <span className="font-semibold text-zinc-800">绑定展示模型：</span>
                             {row.model_view?.label ?? "未绑定"}
                           </div>
                           <div className="rounded-2xl bg-zinc-50 px-3 py-2">
-                            <span className="font-semibold text-zinc-950">固定字数：</span>
+                            <span className="font-semibold text-zinc-800">固定字数：</span>
                             {row.length_preset?.name ?? "跟随默认字数"}
                           </div>
                         </div>
-                        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm leading-6 text-zinc-950">
+                        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm leading-6 text-zinc-800">
                           {row.fixed_prompt}
                         </div>
                         <div className="flex justify-end gap-2">
@@ -1005,7 +1005,7 @@ export default function AIRewriteClient() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <Bot className="size-4 text-zinc-950" />
+                    <Bot className="size-4 text-zinc-800" />
                     展示模型
                   </CardTitle>
                   <CardDescription className="mt-1">支持新增、编辑、默认项切换和启停。</CardDescription>
@@ -1040,7 +1040,7 @@ export default function AIRewriteClient() {
                   <TableBody>
                     {bundle.modelViews.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell className="font-medium text-zinc-950">{row.label}</TableCell>
+                        <TableCell className="font-medium text-zinc-800">{row.label}</TableCell>
                         <TableCell className="font-mono text-xs text-zinc-500">{row.key}</TableCell>
                         <TableCell className="max-w-[320px] whitespace-normal text-sm text-zinc-500">
                           {row.description || "—"}
@@ -1078,7 +1078,7 @@ export default function AIRewriteClient() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <Route className="size-4 text-zinc-950" />
+                    <Route className="size-4 text-zinc-800" />
                     真实执行路线
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -1149,7 +1149,7 @@ export default function AIRewriteClient() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="space-y-1">
-                                    <div className="font-medium text-zinc-950">{row.channel?.name ?? "已丢失渠道"}</div>
+                                    <div className="font-medium text-zinc-800">{row.channel?.name ?? "已丢失渠道"}</div>
                                     <div className="text-xs text-zinc-500">
                                       {row.channel?.is_enabled ? "渠道已启用" : "渠道已停用"}
                                     </div>
@@ -1194,7 +1194,7 @@ export default function AIRewriteClient() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                      <Sparkles className="size-4 text-zinc-950" />
+                      <Sparkles className="size-4 text-zinc-800" />
                       模式
                     </CardTitle>
                     <CardDescription className="mt-1">员工可选的改写风格。</CardDescription>
@@ -1224,7 +1224,7 @@ export default function AIRewriteClient() {
                         <TableRow key={row.id}>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium text-zinc-950">{row.name}</div>
+                              <div className="font-medium text-zinc-800">{row.name}</div>
                               <div className="max-w-[260px] whitespace-normal text-xs text-zinc-500">
                                 {row.description || "—"}
                               </div>
@@ -1263,7 +1263,7 @@ export default function AIRewriteClient() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                      <Ruler className="size-4 text-zinc-950" />
+                      <Ruler className="size-4 text-zinc-800" />
                       字数预设
                     </CardTitle>
                     <CardDescription className="mt-1">控制输出长短的快捷预设。</CardDescription>
@@ -1298,7 +1298,7 @@ export default function AIRewriteClient() {
                         <TableRow key={row.id}>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium text-zinc-950">{row.name}</div>
+                              <div className="font-medium text-zinc-800">{row.name}</div>
                               <div className="max-w-[260px] whitespace-normal text-xs text-zinc-500">
                                 {row.description || "—"}
                               </div>
@@ -1338,7 +1338,7 @@ export default function AIRewriteClient() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <GitBranch className="size-4 text-zinc-950" />
+                    <GitBranch className="size-4 text-zinc-800" />
                     自动流程与步骤
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -1415,7 +1415,7 @@ export default function AIRewriteClient() {
                               <TableRow key={step.id}>
                                 <TableCell>
                                   <div className="space-y-1">
-                                    <div className="font-medium text-zinc-950">{step.name}</div>
+                                    <div className="font-medium text-zinc-800">{step.name}</div>
                                     <div className="max-w-[320px] whitespace-normal text-xs text-zinc-500">
                                       {step.description || "—"}
                                     </div>
@@ -1526,7 +1526,7 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">启用</span>
+                  <span className="text-sm text-zinc-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1559,11 +1559,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">设为默认展示模型</span>
+                  <span className="text-sm text-zinc-800">设为默认展示模型</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">启用</span>
+                  <span className="text-sm text-zinc-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1644,7 +1644,7 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 md:col-span-2">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">启用这条路线</span>
+                  <span className="text-sm text-zinc-800">启用这条路线</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1675,11 +1675,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">设为默认</span>
+                  <span className="text-sm text-zinc-800">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">启用</span>
+                  <span className="text-sm text-zinc-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1710,11 +1710,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">设为默认</span>
+                  <span className="text-sm text-zinc-800">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">启用</span>
+                  <span className="text-sm text-zinc-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1741,11 +1741,11 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">设为默认</span>
+                  <span className="text-sm text-zinc-800">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">启用</span>
+                  <span className="text-sm text-zinc-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1815,7 +1815,7 @@ export default function AIRewriteClient() {
               </div>
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-950">启用</span>
+                  <span className="text-sm text-zinc-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>

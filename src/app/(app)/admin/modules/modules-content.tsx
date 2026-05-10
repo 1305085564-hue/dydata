@@ -81,7 +81,7 @@ export function AdminModulesContent({
         {canManagePermissions ? (
           <TabsTrigger
             value="permissions"
-            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
+            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-800 data-[state=active]:shadow-sm"
           >
             权限管理
           </TabsTrigger>
@@ -89,7 +89,7 @@ export function AdminModulesContent({
         {canEditData ? (
           <TabsTrigger
             value="data"
-            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
+            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-800 data-[state=active]:shadow-sm"
           >
             数据管理
           </TabsTrigger>
@@ -97,7 +97,7 @@ export function AdminModulesContent({
         {canViewAuditLog ? (
           <TabsTrigger
             value="audit"
-            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
+            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-800 data-[state=active]:shadow-sm"
           >
             审计日志
           </TabsTrigger>
@@ -105,7 +105,7 @@ export function AdminModulesContent({
         {canExportData ? (
           <TabsTrigger
             value="export"
-            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-950 data-[state=active]:shadow-sm"
+            className="rounded-lg px-4 text-sm font-medium text-zinc-500 data-[state=active]:bg-white data-[state=active]:text-zinc-800 data-[state=active]:shadow-sm"
           >
             数据导出
           </TabsTrigger>

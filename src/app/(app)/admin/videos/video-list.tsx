@@ -205,7 +205,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                   <TableRow key={video.id} className="hover:bg-zinc-50">
                     <TableCell className="max-w-[280px] px-4 align-top whitespace-normal">
                       <div className="space-y-1">
-                        <div className="line-clamp-2 font-medium text-zinc-950">
+                        <div className="line-clamp-2 font-medium text-zinc-800">
                           {video.video_title?.trim() || "未命名视频"}
                         </div>
                         <div className="text-xs text-zinc-500">{video.id.slice(0, 8)}</div>

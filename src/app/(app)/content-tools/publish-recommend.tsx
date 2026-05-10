@@ -149,7 +149,7 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
                       <div key={`${item.dimensionLabel}-${slot.hourBlock}-${slot.weekday ?? "all"}`} className="rounded-xl border border-zinc-200 bg-white p-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-medium text-zinc-950">
+                            <div className="text-sm font-medium text-zinc-800">
                               {slot.weekday ? `${slot.weekday} · ` : ""}
                               {slot.hourBlock}
                             </div>
@@ -162,15 +162,15 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
                         <div className="mt-4 grid gap-3 sm:grid-cols-3">
                           <div>
                             <div className="text-xs text-zinc-500">历史平均播放</div>
-                            <div className="mt-1 text-sm font-medium text-zinc-950 tabular-nums">{formatPlayCount(slot.avgPlayCount)}</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-800 tabular-nums">{formatPlayCount(slot.avgPlayCount)}</div>
                           </div>
                           <div>
                             <div className="text-xs text-zinc-500">爆款率</div>
-                            <div className="mt-1 text-sm font-medium text-zinc-950 tabular-nums">{formatRatio(slot.hitRate)}</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-800 tabular-nums">{formatRatio(slot.hitRate)}</div>
                           </div>
                           <div>
                             <div className="text-xs text-zinc-500">样本数</div>
-                            <div className="mt-1 text-sm font-medium text-zinc-950 tabular-nums">{slot.sampleCount}</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-800 tabular-nums">{slot.sampleCount}</div>
                           </div>
                         </div>
                       </div>

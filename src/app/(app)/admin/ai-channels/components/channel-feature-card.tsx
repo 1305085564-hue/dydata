@@ -74,12 +74,12 @@ export function ChannelFeatureCard({
         aria-controls={`feature-config-${feature.id}`}
       >
         <div className="flex items-center gap-3">
-          <h4 className="text-sm font-medium text-zinc-950">
+          <h4 className="text-sm font-medium text-zinc-800">
             {feature.metadata.title}
           </h4>
           <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className={cn("px-1.5 py-0.5 rounded-md text-center sm:text-left", isBoundToCurrent ? "bg-zinc-100 text-zinc-950 font-medium" : "text-zinc-500")}>
+            <span className={cn("px-1.5 py-0.5 rounded-md text-center sm:text-left", isBoundToCurrent ? "bg-zinc-100 text-zinc-800 font-medium" : "text-zinc-500")}>
               渠道: {feature.channel_name || "默认自动（failover）"}
             </span>
             <span className="text-zinc-400 px-1.5 py-0.5 text-center sm:text-left">

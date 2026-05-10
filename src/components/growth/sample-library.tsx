@@ -137,7 +137,7 @@ function 样本卡({
         </div>
 
         <div className="rounded-2xl border border-zinc-200 bg-white px-3.5 py-3 text-sm leading-6 text-zinc-500">
-          <span className="font-semibold text-zinc-950">推荐理由：</span>
+          <span className="font-semibold text-zinc-800">推荐理由：</span>
           {sample.推荐理由}
         </div>
       </div>
@@ -166,7 +166,7 @@ export function SampleLibrary({
       <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5">
-            <h2 className="text-[15px] font-semibold text-zinc-950 sm:text-base">学习样本库</h2>
+            <h2 className="text-[15px] font-semibold text-zinc-800 sm:text-base">学习样本库</h2>
             <p className="text-sm leading-6 text-zinc-500">
               把标杆样本和你自己的历史最佳放到同一个观察面板里，先抄最弱指标对应的动作。
             </p>

@@ -169,21 +169,21 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
                 <CardContent className="space-y-4">
                   <div className="rounded-xl bg-zinc-50 p-4">
                     <div className="text-xs text-zinc-500">切入角度</div>
-                    <div className="mt-1 text-sm font-medium text-zinc-950">{item.angle}</div>
+                    <div className="mt-1 text-sm font-medium text-zinc-800">{item.angle}</div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-xl border border-zinc-200 bg-white p-4">
                       <div className="text-xs text-zinc-500">预期表现</div>
-                      <div className="mt-1 text-sm font-medium text-zinc-950">{item.expectedPerformance}</div>
+                      <div className="mt-1 text-sm font-medium text-zinc-800">{item.expectedPerformance}</div>
                     </div>
                     <div className="rounded-xl border border-zinc-200 bg-white p-4">
                       <div className="text-xs text-zinc-500">数据依据</div>
-                      <div className="mt-1 text-sm text-zinc-950">{item.evidence}</div>
+                      <div className="mt-1 text-sm text-zinc-800">{item.evidence}</div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <div className="text-sm font-medium text-zinc-950">参考视频</div>
+                    <div className="text-sm font-medium text-zinc-800">参考视频</div>
                     {item.referenceVideos.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-zinc-200 px-4 py-3 text-sm text-zinc-500">
                         暂无参考视频
@@ -191,7 +191,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
                     ) : (
                       item.referenceVideos.map((video) => (
                         <div key={`${item.title}-${video.videoId}`} className="rounded-xl border border-zinc-200 bg-white p-4">
-                          <div className="text-sm font-medium text-zinc-950">{video.title ?? "未命名视频"}</div>
+                          <div className="text-sm font-medium text-zinc-800">{video.title ?? "未命名视频"}</div>
                           <div className="mt-1 text-xs text-zinc-500">
                             {video.accountName ?? "未知账号"} · 24h播放 {video.playCount24h ? formatPlayCount(video.playCount24h) : "暂无"}
                             {typeof video.breakoutCoefficient === "number"

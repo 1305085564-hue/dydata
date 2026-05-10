@@ -218,7 +218,7 @@ export function SubmitForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <Label htmlFor="script_text" className="text-sm font-semibold text-zinc-900">
+        <Label htmlFor="script_text" className="text-sm font-semibold text-zinc-800">
           话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
@@ -233,7 +233,7 @@ export function SubmitForm({
 
       <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:grid-cols-3">
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-900">判断</Label>
+          <Label className="text-sm font-semibold text-zinc-800">判断</Label>
           <Select value={isViolation} onValueChange={(value) => value && setIsViolation(value)}>
             <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
               <SelectValue placeholder="是否违规" />
@@ -245,7 +245,7 @@ export function SubmitForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-900">分类</Label>
+          <Label className="text-sm font-semibold text-zinc-800">分类</Label>
           <Select value={category} onValueChange={(value) => setCategory(value as typeof category)}>
             <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
               <SelectValue placeholder="选择分类" />
@@ -260,7 +260,7 @@ export function SubmitForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-900">账号</Label>
+          <Label className="text-sm font-semibold text-zinc-800">账号</Label>
           <Select value={accountId} onValueChange={(value) => value && setAccountId(value)}>
             <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
               <SelectValue placeholder="可不选" />
@@ -280,7 +280,7 @@ export function SubmitForm({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="space-y-2">
-            <Label htmlFor="scene_description" className="text-sm font-semibold text-zinc-900">
+            <Label htmlFor="scene_description" className="text-sm font-semibold text-zinc-800">
               配套画面/导粉方式
             </Label>
             <Textarea
@@ -292,7 +292,7 @@ export function SubmitForm({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="result" className="text-sm font-semibold text-zinc-900">
+            <Label htmlFor="result" className="text-sm font-semibold text-zinc-800">
               结果描述
             </Label>
             <Input
@@ -323,7 +323,7 @@ export function SubmitForm({
                       <button
                         type="button"
                         onClick={() => setScreenshots((current) => current.filter((screenshot) => screenshot.path !== item.path))}
-                        className="text-zinc-400 hover:text-zinc-900"
+                        className="text-zinc-400 hover:text-zinc-800"
                         aria-label="移除截图"
                       >
                         <X className="size-3" />
@@ -340,7 +340,7 @@ export function SubmitForm({
           <div className="relative pl-5">
             <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
             <div className="mb-4 flex items-center gap-2">
-              <h3 className="text-sm font-medium text-zinc-900">处罚信息</h3>
+              <h3 className="text-sm font-medium text-zinc-800">处罚信息</h3>
               <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">punishment</span>
             </div>
 
@@ -481,7 +481,7 @@ export function SubmitForm({
             )}
           />
           <div className="mb-4 flex items-center gap-2">
-            <h3 className="text-sm font-medium text-zinc-900">原因标签</h3>
+            <h3 className="text-sm font-medium text-zinc-800">原因标签</h3>
             <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">required</span>
             {reasonTagIds.length > 0 && (
               <span className="text-[11px] font-medium text-zinc-500">已选 {reasonTagIds.length}</span>

@@ -114,7 +114,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         <select
           value={comparePersonId}
           onChange={(e) => setComparePersonId(e.target.value)}
-          className="rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-950 outline-none hover:border-zinc-300 focus:border-zinc-900"
+          className="rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-800 outline-none hover:border-zinc-300 focus:border-zinc-900"
         >
           <option value="">团队 P80</option>
           {teamMembers.map((m) => (

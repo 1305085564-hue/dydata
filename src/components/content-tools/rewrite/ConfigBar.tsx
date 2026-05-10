@@ -98,7 +98,7 @@ export function ConfigBar({
                       <span
                         className={cn(
                           'text-[13px] font-semibold',
-                          active ? 'text-zinc-950' : 'text-zinc-950'
+                          active ? 'text-zinc-800' : 'text-zinc-800'
                         )}
                       >
                         {fixedMode.name}

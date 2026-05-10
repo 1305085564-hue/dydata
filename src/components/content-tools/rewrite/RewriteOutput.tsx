@@ -64,7 +64,7 @@ export function RewriteOutput({
             <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-sm">
               <PenLine className="h-4 w-4 text-zinc-500" />
             </div>
-            <h2 className="text-[20px] font-semibold leading-tight tracking-tight text-zinc-950">
+            <h2 className="text-[20px] font-semibold leading-tight tracking-tight text-zinc-800">
               {activeFixedMode ? `${activeFixedMode.name} 就位` : '今天改哪段？'}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-[13px] leading-[1.7] text-zinc-500">
@@ -86,7 +86,7 @@ export function RewriteOutput({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <span className="inline-flex h-1 w-1 rounded-full bg-zinc-300 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:bg-[#D97757]" />
-                      <span className="text-[13px] font-semibold text-zinc-950">
+                      <span className="text-[13px] font-semibold text-zinc-800">
                         {shortcut.label}
                       </span>
                     </div>
@@ -147,7 +147,7 @@ export function RewriteOutput({
 
                 <div className="min-w-0 flex-1 space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-semibold tracking-tight text-zinc-950">
+                    <span className="text-[12px] font-semibold tracking-tight text-zinc-800">
                       {responseMode === 'chat' ? '继续对话' : '改写结果'}
                     </span>
                     <span className="rounded-md bg-zinc-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
@@ -174,7 +174,7 @@ export function RewriteOutput({
                             className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300"
                           >
                             <div className="flex items-center justify-between border-b border-zinc-100 px-3.5 py-2">
-                              <h3 className="text-[12px] font-semibold tracking-tight text-zinc-950">
+                              <h3 className="text-[12px] font-semibold tracking-tight text-zinc-800">
                                 {version.title || `版本 ${index + 1}`}
                               </h3>
                               <button
@@ -184,14 +184,14 @@ export function RewriteOutput({
                                   'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                                   copied
                                     ? 'bg-zinc-50 text-[#4F7F5E] ring-1 ring-zinc-200'
-                                    : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-950'
+                                    : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-800'
                                 )}
                               >
                                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                                 {copied ? 'Copied' : 'Copy'}
                               </button>
                             </div>
-                            <div className="px-3.5 py-3 text-[14px] leading-[1.7] text-zinc-950">
+                            <div className="px-3.5 py-3 text-[14px] leading-[1.7] text-zinc-800">
                               <p className="whitespace-pre-wrap">{version.content}</p>
                             </div>
                           </div>
@@ -208,13 +208,13 @@ export function RewriteOutput({
                           'absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                           copiedKey === message.id
                             ? 'bg-zinc-50 text-[#4F7F5E] ring-1 ring-zinc-200'
-                            : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-950'
+                            : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-800'
                         )}
                       >
                         {copiedKey === message.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                         {copiedKey === message.id ? 'Copied' : 'Copy'}
                       </button>
-                      <div className="text-[14px] leading-[1.7] text-zinc-950">
+                      <div className="text-[14px] leading-[1.7] text-zinc-800">
                         <p className="whitespace-pre-wrap">{chatText || '...'}</p>
                       </div>
                     </div>
@@ -249,7 +249,7 @@ export function RewriteOutput({
                   key={`${suggestion}-${index}`}
                   type="button"
                   onClick={() => onSendOverride(suggestion)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 active:translate-y-0"
+                  className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
                 >
                   {suggestion}
                   <ArrowRight className="h-3 w-3 text-zinc-400" />

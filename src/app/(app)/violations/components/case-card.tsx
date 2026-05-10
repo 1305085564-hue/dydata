@@ -20,7 +20,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
               {caseItem.category || "其他"}
             </span>
           </div>
-          <p className="line-clamp-3 text-base font-semibold leading-7 text-zinc-950">
+          <p className="line-clamp-3 text-base font-semibold leading-7 text-zinc-800">
             {caseItem.script_text}
           </p>
           {caseItem.status === "verified" && caseItem.admin_conclusion ? (
@@ -35,7 +35,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
             <span>{formatDateTime(caseItem.reviewed_at ?? caseItem.created_at)}</span>
           </div>
         </div>
-        <ArrowRight className="size-4 shrink-0 text-zinc-300 transition-transform group-hover:translate-x-1 group-hover:text-zinc-900" />
+        <ArrowRight className="size-4 shrink-0 text-zinc-300 transition-transform group-hover:translate-x-1 group-hover:text-zinc-800" />
       </div>
     </Link>
   );

@@ -204,7 +204,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
                 className="rounded-xl border border-zinc-200 bg-white p-3 text-sm transition-colors hover:border-zinc-300"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-zinc-950">{getRecordAccountName(record)}</span>
+                  <span className="font-semibold text-zinc-800">{getRecordAccountName(record)}</span>
                   <span
                     className={
                       record.passed
@@ -280,7 +280,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       <div className="mx-auto max-w-5xl space-y-5 py-8">
         <Link
           href="/violations"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-950"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-800"
         >
           <ArrowLeft className="size-4" />
           话术库
@@ -306,7 +306,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/violations"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-950"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-800"
         >
           <ArrowLeft className="size-4" />
           话术库
@@ -339,29 +339,29 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           </div>
         </div>
 
-        <p className="mt-6 whitespace-pre-wrap text-lg font-semibold leading-7 tracking-wide text-zinc-950 sm:text-xl sm:leading-8">
+        <p className="mt-6 whitespace-pre-wrap text-lg font-semibold leading-7 tracking-wide text-zinc-800 sm:text-xl sm:leading-8">
           {caseItem.script_text}
         </p>
 
         <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500">
           <span>
             <span className="text-zinc-400">提交人 </span>
-            <span className="font-semibold text-zinc-900">{getSubmitterName(caseItem)}</span>
+            <span className="font-semibold text-zinc-800">{getSubmitterName(caseItem)}</span>
           </span>
           <span className="text-zinc-200">·</span>
           <span>
             <span className="text-zinc-400">提交时间 </span>
-            <span className="font-semibold text-zinc-900">{formatDateTime(caseItem.created_at)}</span>
+            <span className="font-semibold text-zinc-800">{formatDateTime(caseItem.created_at)}</span>
           </span>
           <span className="text-zinc-200">·</span>
           <span>
             <span className="text-zinc-400">账号 </span>
-            <span className="font-semibold text-zinc-900">{getAccountName(caseItem)}</span>
+            <span className="font-semibold text-zinc-800">{getAccountName(caseItem)}</span>
           </span>
           <span className="text-zinc-200">·</span>
           <span>
             <span className="text-zinc-400">团队 </span>
-            <span className="font-semibold text-zinc-900">{getTeamName(caseItem)}</span>
+            <span className="font-semibold text-zinc-800">{getTeamName(caseItem)}</span>
           </span>
         </div>
       </section>
@@ -472,7 +472,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
               <div className="mt-3 space-y-3 text-sm leading-7 text-zinc-600">
                 <p>{caseItem.scene_description || "暂无配套画面/导粉方式描述"}</p>
                 {caseItem.result ? (
-                  <p className="font-semibold text-zinc-950">结果：{caseItem.result}</p>
+                  <p className="font-semibold text-zinc-800">结果：{caseItem.result}</p>
                 ) : null}
               </div>
             </div>

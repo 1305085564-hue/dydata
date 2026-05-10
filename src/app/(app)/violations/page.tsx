@@ -162,7 +162,7 @@ export default async function ViolationsPage({
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-400">
             {headingEyebrow}
           </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
             {headingLabel}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{headingDesc}</p>
@@ -241,7 +241,7 @@ function EmptyState({ title, hint }: { title: string; hint: string }) {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       </div>
-      <h2 className="mt-4 text-base font-semibold text-zinc-950">{title}</h2>
+      <h2 className="mt-4 text-base font-semibold text-zinc-800">{title}</h2>
       <p className="mt-2 text-sm text-zinc-500">{hint}</p>
     </div>
   );

@@ -141,7 +141,7 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
             data.categories.map((category) => (
               <div key={category.category} className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-base font-semibold tracking-tight text-zinc-950">{category.category}</h3>
+                  <h3 className="text-base font-semibold tracking-tight text-zinc-800">{category.category}</h3>
                   <div className="text-xs text-zinc-500">模板 {category.templates.length} 个</div>
                 </div>
                 <div className="grid gap-4 xl:grid-cols-2">
@@ -154,7 +154,7 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
                       <CardContent className="space-y-4">
                         <div className="rounded-xl bg-zinc-50 p-4">
                           <div className="text-xs text-zinc-500">结构骨架</div>
-                          <ol className="mt-2 space-y-2 text-[13px] leading-[1.7] text-zinc-950">
+                          <ol className="mt-2 space-y-2 text-[13px] leading-[1.7] text-zinc-800">
                             {template.structure.map((item, index) => (
                               <li key={`${template.name}-${index}`} className="flex gap-2">
                                 <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[11px] font-medium text-zinc-500 tabular-nums">
@@ -179,15 +179,15 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
                           </div>
                           <div className="rounded-xl border border-zinc-200 bg-white p-4">
                             <div className="text-xs text-zinc-500">数据证据</div>
-                            <div className="mt-1 text-sm text-zinc-950">{template.evidence}</div>
+                            <div className="mt-1 text-sm text-zinc-800">{template.evidence}</div>
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          <div className="text-sm font-medium text-zinc-950">参考视频</div>
+                          <div className="text-sm font-medium text-zinc-800">参考视频</div>
                           {template.referenceVideos.map((video) => (
                             <div key={video.videoId} className="rounded-xl border border-zinc-200 bg-white p-4 text-sm">
-                              <div className="font-medium text-zinc-950">{video.title ?? "未命名视频"}</div>
+                              <div className="font-medium text-zinc-800">{video.title ?? "未命名视频"}</div>
                               <div className="mt-1 text-xs text-zinc-500">{video.accountName ?? "未知账号"}</div>
                             </div>
                           ))}

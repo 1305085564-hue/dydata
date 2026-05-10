@@ -311,14 +311,14 @@ export function DataManager({
       <TableRow key={`${report.id}-edit`} className="border-0 bg-transparent hover:bg-transparent">
         <TableCell colSpan={14} className="p-0">
           <div className="m-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-            <div className="mb-3 text-sm font-semibold text-zinc-950">编辑数据</div>
+            <div className="mb-3 text-sm font-semibold text-zinc-800">编辑数据</div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
                 <label className="text-xs font-medium text-zinc-500">标题</label>
                 <Input
                   value={editData.title ?? ""}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -330,7 +330,7 @@ export function DataManager({
                   onChange={(e) =>
                     setEditData({ ...editData, play_count: Math.round(Number(e.target.value) * 10000) })
                   }
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -343,7 +343,7 @@ export function DataManager({
                       completion_rate: e.target.value ? `${e.target.value}%` : null,
                     })
                   }
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -352,7 +352,7 @@ export function DataManager({
                   type="number"
                   value={editData.follower_gain ?? 0}
                   onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -366,7 +366,7 @@ export function DataManager({
                       follower_convert: e.target.value ? Number(e.target.value) : null,
                     })
                   }
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -375,7 +375,7 @@ export function DataManager({
                   type="number"
                   value={editData.likes ?? 0}
                   onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -384,7 +384,7 @@ export function DataManager({
                   type="number"
                   value={editData.comments ?? 0}
                   onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -393,7 +393,7 @@ export function DataManager({
                   type="number"
                   value={editData.shares ?? 0}
                   onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -402,7 +402,7 @@ export function DataManager({
                   type="number"
                   value={editData.favorites ?? 0}
                   onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}
-                  className="h-8 border-zinc-200 bg-white text-zinc-950"
+                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
             </div>
@@ -419,7 +419,7 @@ export function DataManager({
                 size="sm"
                 variant="outline"
                 onClick={cancelEdit}
-                className="h-8 text-xs border-zinc-200 text-zinc-500 hover:text-zinc-950"
+                className="h-8 text-xs border-zinc-200 text-zinc-500 hover:text-zinc-800"
               >
                 取消
               </Button>
@@ -436,25 +436,25 @@ export function DataManager({
       <TableRow key={report.id} className={`border-zinc-200 ${isEditing ? "bg-zinc-50" : "hover:bg-zinc-50"}`}>
         <TableCell>
           <div className="space-y-1">
-            <p className="text-sm text-zinc-950">{viewMode === "account" ? report.accountName : report.profileName}</p>
+            <p className="text-sm text-zinc-800">{viewMode === "account" ? report.accountName : report.profileName}</p>
             <p className="text-xs text-zinc-500">
               {viewMode === "account" ? report.profileName : `${report.accountName} · ${report.report_date}`}
             </p>
             {viewMode === "account" ? renderAccountMeta(report) : null}
           </div>
         </TableCell>
-        <TableCell className="max-w-[160px] truncate text-sm text-zinc-950">{report.title}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">
+        <TableCell className="max-w-[160px] truncate text-sm text-zinc-800">{report.title}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">
           {report.play_count != null ? (report.play_count / 10000).toFixed(2) : "-"}
           {renderAnomaly(report)}
         </TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">{report.completion_rate ?? "-"}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">{report.follower_gain}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">{report.follower_convert ?? "-"}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">{report.likes}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">{report.comments}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">{report.shares}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-950">{report.favorites}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.completion_rate ?? "-"}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.follower_gain}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.follower_convert ?? "-"}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.likes}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.comments}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.shares}</TableCell>
+        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.favorites}</TableCell>
         <TableCell className="text-sm text-zinc-500">{formatShanghaiDateTime(report.published_at)}</TableCell>
         <TableCell className="text-sm text-zinc-500">{formatShanghaiDateTime(report.uploaded_at)}</TableCell>
         <TableCell>
@@ -463,7 +463,7 @@ export function DataManager({
               size="sm"
               variant="ghost"
               onClick={() => setContentDialog({ title: report.title, content: report.content ?? "" })}
-              className="h-7 text-xs text-zinc-500 hover:text-zinc-950"
+              className="h-7 text-xs text-zinc-500 hover:text-zinc-800"
             >
               查看
             </Button>
@@ -478,7 +478,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => startEdit(report)}
-                className="h-7 text-xs text-zinc-500 hover:text-zinc-950"
+                className="h-7 text-xs text-zinc-500 hover:text-zinc-800"
               >
                 编辑
               </Button>
@@ -500,13 +500,13 @@ export function DataManager({
   function renderMobileEditPanel(report: (typeof reportsWithMeta)[number]) {
     return (
       <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
-        <div className="text-sm font-semibold text-zinc-950">编辑数据</div>
+        <div className="text-sm font-semibold text-zinc-800">编辑数据</div>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-zinc-500">标题</label>
           <Input
             value={editData.title ?? ""}
             onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-            className="h-8 border-zinc-200 bg-white text-zinc-950"
+            className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -519,7 +519,7 @@ export function DataManager({
               onChange={(e) =>
                 setEditData({ ...editData, play_count: Math.round(Number(e.target.value) * 10000) })
               }
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -532,7 +532,7 @@ export function DataManager({
                   completion_rate: e.target.value ? `${e.target.value}%` : null,
                 })
               }
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -541,7 +541,7 @@ export function DataManager({
               type="number"
               value={editData.follower_gain ?? 0}
               onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -555,7 +555,7 @@ export function DataManager({
                   follower_convert: e.target.value ? Number(e.target.value) : null,
                 })
               }
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -564,7 +564,7 @@ export function DataManager({
               type="number"
               value={editData.likes ?? 0}
               onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -573,7 +573,7 @@ export function DataManager({
               type="number"
               value={editData.comments ?? 0}
               onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -582,7 +582,7 @@ export function DataManager({
               type="number"
               value={editData.shares ?? 0}
               onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -591,7 +591,7 @@ export function DataManager({
               type="number"
               value={editData.favorites ?? 0}
               onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}
-              className="h-8 border-zinc-200 bg-white text-zinc-950"
+              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
         </div>
@@ -608,7 +608,7 @@ export function DataManager({
             size="sm"
             variant="outline"
             onClick={cancelEdit}
-            className="h-8 text-xs border-zinc-200 text-zinc-500 hover:text-zinc-950"
+            className="h-8 text-xs border-zinc-200 text-zinc-500 hover:text-zinc-800"
           >
             取消
           </Button>
@@ -623,7 +623,7 @@ export function DataManager({
       <div key={report.id} className={`space-y-2 rounded-xl border border-zinc-200 bg-white p-4 ${isEditing ? "ring-1 ring-zinc-200" : ""}`}>
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-zinc-950">{viewMode === "account" ? report.accountName : report.profileName}</p>
+            <p className="text-sm font-medium text-zinc-800">{viewMode === "account" ? report.accountName : report.profileName}</p>
             <p className="max-w-[220px] truncate text-xs text-zinc-500">{report.title}</p>
             <p className="text-xs text-zinc-500">{viewMode === "account" ? report.profileName : report.accountName}</p>
             {viewMode === "account" ? renderAccountMeta(report) : null}
@@ -634,7 +634,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => startEdit(report)}
-                className="h-7 text-xs text-zinc-500 hover:text-zinc-950"
+                className="h-7 text-xs text-zinc-500 hover:text-zinc-800"
               >
                 编辑
               </Button>
@@ -652,38 +652,38 @@ export function DataManager({
         <div className="grid grid-cols-4 gap-2 text-xs">
           <div>
             <p className="text-zinc-500">播放量</p>
-            <p className="font-medium tabular-nums text-zinc-950">
+            <p className="font-medium tabular-nums text-zinc-800">
               {formatPlayCount(report.play_count)}
               {renderAnomaly(report)}
             </p>
           </div>
           <div>
             <p className="text-zinc-500">完播率</p>
-            <p className="tabular-nums text-zinc-950">{report.completion_rate ?? "-"}</p>
+            <p className="tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</p>
           </div>
           <div>
             <p className="text-zinc-500">涨粉</p>
-            <p className="tabular-nums text-zinc-950">{report.follower_gain}</p>
+            <p className="tabular-nums text-zinc-800">{report.follower_gain}</p>
           </div>
           <div>
             <p className="text-zinc-500">导粉</p>
-            <p className="tabular-nums text-zinc-950">{report.follower_convert ?? "-"}</p>
+            <p className="tabular-nums text-zinc-800">{report.follower_convert ?? "-"}</p>
           </div>
           <div>
             <p className="text-zinc-500">点赞</p>
-            <p className="tabular-nums text-zinc-950">{report.likes}</p>
+            <p className="tabular-nums text-zinc-800">{report.likes}</p>
           </div>
           <div>
             <p className="text-zinc-500">评论</p>
-            <p className="tabular-nums text-zinc-950">{report.comments}</p>
+            <p className="tabular-nums text-zinc-800">{report.comments}</p>
           </div>
           <div>
             <p className="text-zinc-500">发布时间</p>
-            <p className="text-zinc-950">{formatShanghaiDateTime(report.published_at)}</p>
+            <p className="text-zinc-800">{formatShanghaiDateTime(report.published_at)}</p>
           </div>
           <div>
             <p className="text-zinc-500">上传时间</p>
-            <p className="text-zinc-950">{formatShanghaiDateTime(report.uploaded_at)}</p>
+            <p className="text-zinc-800">{formatShanghaiDateTime(report.uploaded_at)}</p>
           </div>
         </div>
         {report.content ? (
@@ -691,7 +691,7 @@ export function DataManager({
             size="sm"
             variant="ghost"
             onClick={() => setContentDialog({ title: report.title, content: report.content ?? "" })}
-            className="h-7 w-full justify-start text-xs text-zinc-500 hover:text-zinc-950"
+            className="h-7 w-full justify-start text-xs text-zinc-500 hover:text-zinc-800"
           >
             查看文案
           </Button>
@@ -709,7 +709,7 @@ export function DataManager({
             type="date"
             value={date}
             onChange={handleDateChange}
-            className="h-9 w-auto border-zinc-200 bg-white text-zinc-950"
+            className="h-9 w-auto bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
           <span className="text-sm text-zinc-500">{reports.length} 条记录</span>
         </div>
@@ -718,7 +718,7 @@ export function DataManager({
             size="sm"
             variant={viewMode === "profile" ? "default" : "outline"}
             onClick={() => setViewMode("profile")}
-            className={viewMode === "profile" ? "bg-zinc-950 text-white hover:bg-zinc-800" : "border-zinc-200 text-zinc-500 hover:text-zinc-950"}
+            className={viewMode === "profile" ? "bg-zinc-950 text-white hover:bg-zinc-800" : "border-zinc-200 text-zinc-500 hover:text-zinc-800"}
           >
             按人查看
           </Button>
@@ -726,7 +726,7 @@ export function DataManager({
             size="sm"
             variant={viewMode === "account" ? "default" : "outline"}
             onClick={() => setViewMode("account")}
-            className={viewMode === "account" ? "bg-zinc-950 text-white hover:bg-zinc-800" : "border-zinc-200 text-zinc-500 hover:text-zinc-950"}
+            className={viewMode === "account" ? "bg-zinc-950 text-white hover:bg-zinc-800" : "border-zinc-200 text-zinc-500 hover:text-zinc-800"}
           >
             按账号查看
           </Button>
@@ -761,19 +761,19 @@ export function DataManager({
                 <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                   <div>
                     <p className="text-zinc-500">总播放</p>
-                    <p className="font-semibold tabular-nums text-zinc-950">{formatPlayCount(group.totalPlay)}</p>
+                    <p className="font-semibold tabular-nums text-zinc-800">{formatPlayCount(group.totalPlay)}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500">总互动</p>
-                    <p className="font-semibold tabular-nums text-zinc-950">{group.totalEngagement}</p>
+                    <p className="font-semibold tabular-nums text-zinc-800">{group.totalEngagement}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500">账号数</p>
-                    <p className="font-semibold tabular-nums text-zinc-950">{group.accountCount}</p>
+                    <p className="font-semibold tabular-nums text-zinc-800">{group.accountCount}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500">记录数</p>
-                    <p className="font-semibold tabular-nums text-zinc-950">{group.reportCount}</p>
+                    <p className="font-semibold tabular-nums text-zinc-800">{group.reportCount}</p>
                   </div>
                 </div>
               </div>
@@ -865,7 +865,7 @@ export function DataManager({
       <Dialog open={!!contentDialog} onOpenChange={() => setContentDialog(null)}>
         <DialogContent className="max-w-lg border-zinc-200">
           <DialogHeader>
-            <DialogTitle className="text-base text-zinc-950">{contentDialog?.title}</DialogTitle>
+            <DialogTitle className="text-base text-zinc-800">{contentDialog?.title}</DialogTitle>
           </DialogHeader>
           <p className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
             {contentDialog?.content}

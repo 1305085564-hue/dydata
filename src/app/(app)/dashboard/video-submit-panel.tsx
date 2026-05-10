@@ -875,7 +875,7 @@ export function VideoSubmitPanel({
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-text-tertiary)]">
                     Daily Detail
                   </p>
-                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-zinc-900)]">
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-zinc-800)]">
                     {activeBizDate} 的提交情况
                   </h3>
                   <p className="text-sm leading-6 text-[var(--color-text-secondary)]">

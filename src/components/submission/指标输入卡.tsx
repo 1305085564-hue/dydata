@@ -97,7 +97,7 @@ export function MetricInputCard({
           onFocus={onFocus}
           onBlur={onBlur}
           className={cn(
-            "rounded-xl pr-8 font-semibold text-zinc-950 transition-colors tracking-wide",
+            "rounded-xl pr-8 font-semibold text-zinc-800 transition-colors tracking-wide",
             "bg-white border-zinc-200 focus:bg-white focus:border-zinc-950/30 focus:ring-1 focus:ring-zinc-950/10",
             size === "primary" ? "h-10 text-lg" : "h-9 text-base",
             field.source === "ocr"

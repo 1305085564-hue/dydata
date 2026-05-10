@@ -31,7 +31,7 @@ export default function AssistantDetailSections({ details }: Props) {
                   <span className="shrink-0 text-[10px] uppercase tracking-wider text-zinc-400">
                     {item.label}
                   </span>
-                  <span className="ml-auto truncate text-right text-[12.5px] font-medium tabular-nums text-zinc-900">
+                  <span className="ml-auto truncate text-right text-[12.5px] font-medium tabular-nums text-zinc-800">
                     {item.value}
                   </span>
                 </div>
@@ -48,7 +48,7 @@ export default function AssistantDetailSections({ details }: Props) {
                 >
                   <span className="mt-1.5 inline-block h-1 w-1 shrink-0 rounded-full bg-zinc-400" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[12.5px] font-medium text-zinc-950">{item.title}</div>
+                    <div className="text-[12.5px] font-medium text-zinc-800">{item.title}</div>
                     {item.description && (
                       <div className="mt-0.5 text-[11.5px] leading-relaxed text-zinc-500">
                         {item.description}

@@ -52,7 +52,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
                 "relative inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors",
                 isActive
                   ? "bg-zinc-950 text-white"
-                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950",
+                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
               )}
             >
               {tab.label}

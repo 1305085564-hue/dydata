@@ -333,7 +333,7 @@ export function SubmissionStatus({
                   <TableBody>
                     {visibleUnsubmittedProfileRows.map((row) => (
                       <TableRow key={row.id} className="border-l-[2px] border-l-[#D99E55] hover:bg-zinc-50">
-                        <TableCell className="font-medium text-zinc-950">{row.name}</TableCell>
+                        <TableCell className="font-medium text-zinc-800">{row.name}</TableCell>
                         <TableCell>
                           <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">
                             {renderRole(row.role)}
@@ -478,7 +478,7 @@ export function SubmissionStatus({
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-zinc-950">{row.name}</p>
+                          <p className="text-sm font-medium text-zinc-800">{row.name}</p>
                           <p className="text-xs text-zinc-500">{renderRole(row.role)} · {row.accountCount} 个账号</p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
@@ -587,7 +587,7 @@ export function SubmissionStatus({
                   <TableBody>
                     {visibleUnsubmittedAccountRows.map((row) => (
                       <TableRow key={row.id} className="border-l-[2px] border-l-[#D99E55] hover:bg-zinc-50">
-                        <TableCell className="font-medium text-zinc-950">{row.name}</TableCell>
+                        <TableCell className="font-medium text-zinc-800">{row.name}</TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <p>{row.profile_name}</p>
@@ -686,7 +686,7 @@ export function SubmissionStatus({
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-zinc-950">{row.name}</p>
+                          <p className="text-sm font-medium text-zinc-800">{row.name}</p>
                           <p className="text-xs text-zinc-500">{row.profile_name} · {renderRole(row.profile.role)}</p>
                         </div>
                         <div className="flex flex-col items-end gap-2">

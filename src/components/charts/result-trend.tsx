@@ -17,6 +17,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { getTrendAxisUpperBound } from "@/lib/趋势图";
 import { ANIMATION_TIMINGS } from "@/lib/animations";
+import {
+  CHART_AXIS_TICK,
+  CHART_COLORS,
+  CHART_GRADIENT_PRIMARY,
+  CHART_GRID_PROPS,
+} from "@/lib/chart-palette";
 import { cn } from "@/lib/utils";
 import { ChartSkeleton } from "./chart-skeleton";
 
@@ -260,22 +266,22 @@ export function ResultTrend({
                 <ComposedChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#60A5FA" stopOpacity={0.03} />
+                      <stop offset="0%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0.03} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.08)" />
+                  <CartesianGrid {...CHART_GRID_PROPS} />
                   <XAxis
                     dataKey="date"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
+                    tick={CHART_AXIS_TICK}
                     tickMargin={10}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: "rgba(15,23,42,0.45)" }}
+                    tick={CHART_AXIS_TICK}
                     tickFormatter={activeMetric.formatter}
                     domain={[0, yAxisUpperBound]}
                     width={56}
@@ -302,10 +308,10 @@ export function ResultTrend({
                     type="monotone"
                     dataKey={personalLabel}
                     name={personalLabel}
-                    stroke="#3B82F6"
+                    stroke={CHART_COLORS.primary}
                     strokeWidth={2.5}
                     dot={false}
-                    activeDot={{ r: 5, fill: "#3B82F6", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 5, fill: CHART_COLORS.primary, stroke: "white", strokeWidth: 2 }}
                     connectNulls
                     isAnimationActive={false}
                   />
@@ -313,11 +319,11 @@ export function ResultTrend({
                     type="monotone"
                     dataKey={teamAverageLabel}
                     name={teamAverageLabel}
-                    stroke="#F97316"
+                    stroke={CHART_COLORS.secondary}
                     strokeWidth={2.5}
                     dot={false}
                     strokeDasharray="4 5"
-                    activeDot={{ r: 4, fill: "#F97316", stroke: "white", strokeWidth: 2 }}
+                    activeDot={{ r: 4, fill: CHART_COLORS.secondary, stroke: "white", strokeWidth: 2 }}
                     connectNulls
                     isAnimationActive={false}
                   />

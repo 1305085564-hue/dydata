@@ -230,7 +230,7 @@ export function ProductionControlSystem({
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
+    <div className="min-h-screen bg-zinc-50 text-zinc-800 antialiased">
       <main className="p-4 lg:p-8">
         <DashboardWorkspaceHeader
           today={today}

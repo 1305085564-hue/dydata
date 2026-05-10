@@ -60,7 +60,7 @@ export function RewriteInput({
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           <div>
-            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-950">
+            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
               {isChatStage ? '继续对话' : '首条默认走结果模式'}
             </h2>
             <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">
@@ -86,7 +86,7 @@ export function RewriteInput({
                       interactionControlsDisabled
                         ? 'cursor-not-allowed border-zinc-200 bg-zinc-50 text-zinc-400'
                         : active
-                          ? 'border-zinc-300 bg-white text-zinc-950 shadow-sm ring-1 ring-zinc-950/5'
+                          ? 'border-zinc-300 bg-white text-zinc-800 shadow-sm ring-1 ring-zinc-950/5'
                           : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-white',
                     )}
                   >
@@ -111,7 +111,7 @@ export function RewriteInput({
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-            <div className="mb-4 flex items-center gap-2 text-[13px] font-semibold text-zinc-950">
+            <div className="mb-4 flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
               <SlidersHorizontal className="h-4 w-4" />
               普通自定义区
             </div>
@@ -141,7 +141,7 @@ export function RewriteInput({
                     'w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-200 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-950 focus-visible:ring-1 focus-visible:ring-zinc-950/5',
+                      : 'border-zinc-200 text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5',
                   )}
                 >
                   <option value="">无附加模型</option>
@@ -163,7 +163,7 @@ export function RewriteInput({
                     'w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-200 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-950 focus-visible:ring-1 focus-visible:ring-zinc-950/5',
+                      : 'border-zinc-200 text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5',
                   )}
                 >
                   <option value="">无附加模式</option>
@@ -185,7 +185,7 @@ export function RewriteInput({
                     'w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-200 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-950 focus-visible:ring-1 focus-visible:ring-zinc-950/5',
+                      : 'border-zinc-200 text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5',
                   )}
                 >
                   {bootstrap.lengthPresets.map((item) => (
@@ -221,7 +221,7 @@ export function RewriteInput({
                   : '请输入原文开始改写...'
             }
             className={cn(
-              'min-h-[120px] w-full resize-none bg-transparent px-3 py-3 text-[14px] leading-[1.7] text-zinc-950 outline-none placeholder:text-zinc-400',
+              'min-h-[120px] w-full resize-none bg-transparent px-3 py-3 text-[14px] leading-[1.7] text-zinc-800 outline-none placeholder:text-zinc-400',
               isSending && 'cursor-not-allowed opacity-60'
             )}
           />

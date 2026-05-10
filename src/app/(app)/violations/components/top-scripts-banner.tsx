@@ -48,7 +48,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#D97757]">
             Top Conversion Scripts
           </p>
-          <h3 className="mt-1 text-base font-semibold text-zinc-950">本周转化榜</h3>
+          <h3 className="mt-1 text-base font-semibold text-zinc-800">本周转化榜</h3>
         </div>
         <span className="hidden rounded-full bg-white/70 px-3 py-1 text-[11px] font-medium text-zinc-500 sm:inline-flex">
           加权转化率 · 展示量 ≥ 1k · 复用 ≥ 3

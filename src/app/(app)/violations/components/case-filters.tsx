@@ -56,7 +56,7 @@ function chipClass(active: boolean, tone: "orange" | "green" = "orange") {
       ? `${base} border-[#D97757] bg-[#D97757] text-white shadow-sm`
       : `${base} border-[#6FAA7D] bg-[#6FAA7D] text-white shadow-sm`;
   }
-  return `${base} border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900`;
+  return `${base} border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-800`;
 }
 
 export function CaseFilters({

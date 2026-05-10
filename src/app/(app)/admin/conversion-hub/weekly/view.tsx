@@ -107,7 +107,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
             <div>
-              <p className="text-sm font-semibold text-zinc-950">确认本周决策</p>
+              <p className="text-sm font-semibold text-zinc-800">确认本周决策</p>
               <p className="mt-0.5 text-xs text-zinc-500">
                 草稿由 {generatedBy === "ai" ? "AI" : "人工"} 生成，确认后锁定本周四类
               </p>

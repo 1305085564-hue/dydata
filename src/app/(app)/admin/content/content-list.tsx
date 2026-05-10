@@ -203,7 +203,7 @@ export function ContentList({
                       #{index + 1}
                     </TableCell>
                     <TableCell className="max-w-md py-3">
-                      <div className="line-clamp-2 text-sm font-medium text-zinc-950" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                      <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                         {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                       </div>
                     </TableCell>
@@ -251,7 +251,7 @@ export function ContentList({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-950 hover:bg-zinc-50"
+                        className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
                         onClick={() => setSelectedVideoId(video.id)}
                       >
                         查看复盘

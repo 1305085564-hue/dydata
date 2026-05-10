@@ -15,6 +15,11 @@ import {
   ZAxis,
 } from "recharts";
 import { Input } from "@/components/ui/input";
+import {
+  CHART_AXIS_TICK,
+  CHART_COLORS,
+  CHART_GRID_PROPS,
+} from "@/lib/chart-palette";
 import { cn } from "@/lib/utils";
 
 interface Report {
@@ -621,7 +626,7 @@ export function HitAnalyzer({
       {scatterData.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 18, right: 18, bottom: 14, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <CartesianGrid {...CHART_GRID_PROPS} />
             <XAxis
               type="number"
               dataKey="cr"
@@ -629,7 +634,7 @@ export function HitAnalyzer({
               unit="%"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#64748b" }}
+              tick={CHART_AXIS_TICK}
               domain={["auto", "auto"]}
             />
             <YAxis
@@ -638,7 +643,7 @@ export function HitAnalyzer({
               name="播放量"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "#64748b" }}
+              tick={CHART_AXIS_TICK}
               tickFormatter={(value: number) => formatPlayCount(value)}
               domain={["auto", "auto"]}
             />
@@ -646,12 +651,12 @@ export function HitAnalyzer({
             <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: "3 3", stroke: "#94a3b8" }} />
             <ReferenceLine
               y={hitThreshold}
-              stroke="#C9604D"
+              stroke={CHART_COLORS.danger}
               strokeDasharray="4 4"
               label={{
                 position: "insideTopLeft",
                 value: "10w+",
-                fill: "#C9604D",
+                fill: CHART_COLORS.danger,
                 fontSize: 11,
                 fontWeight: 600,
                 offset: 8,
@@ -660,12 +665,12 @@ export function HitAnalyzer({
             {scatterSummary ? (
               <ReferenceLine
                 x={scatterSummary.highCompletionLine}
-                stroke="var(--color-primary, #3b82f6)"
+                stroke="var(--color-primary, #D97757)"
                 strokeDasharray="4 4"
                 label={{
                   position: "insideBottomRight",
                   value: formatPercent(scatterSummary.highCompletionLine),
-                  fill: "var(--color-primary, #3b82f6)",
+                  fill: "var(--color-primary, #D97757)",
                   fontSize: 11,
                   fontWeight: 600,
                 }}
@@ -887,7 +892,7 @@ export function HitAnalyzer({
                     max={dateTo || dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("from", event.target.value)}
-                    className="h-8 bg-white"
+                    className="h-8 bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -899,7 +904,7 @@ export function HitAnalyzer({
                     max={dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("to", event.target.value)}
-                    className="h-8 bg-white"
+                    className="h-8 bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                   />
                 </div>
               </div>

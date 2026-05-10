@@ -100,7 +100,7 @@ function resultMeta(result?: string) {
 function CopyButton({ payload }: { payload: string }) {
   return (
     <button
-      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-zinc-900"
+      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-zinc-800"
       onClick={() => {
         navigator.clipboard.writeText(payload);
         toast.success("已复制");
@@ -118,7 +118,7 @@ function Meta({ label, value }: { label: string; value: string }) {
       <div className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
         {label}
       </div>
-      <div className="truncate text-[12px] font-medium text-zinc-900">{value}</div>
+      <div className="truncate text-[12px] font-medium text-zinc-800">{value}</div>
     </div>
   );
 }

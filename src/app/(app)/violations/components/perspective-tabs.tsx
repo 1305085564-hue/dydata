@@ -53,7 +53,7 @@ export function PerspectiveTabs({ active }: { active: PerspectiveKey }) {
             aria-pressed={isActive}
             disabled={isPending && isActive}
             className={`group relative flex-1 px-4 pb-3 pt-2 text-left transition-colors sm:flex-none sm:min-w-[180px] ${
-              isActive ? "text-zinc-950" : "text-zinc-400 hover:text-zinc-700"
+              isActive ? "text-zinc-800" : "text-zinc-400 hover:text-zinc-700"
             }`}
           >
             <div className="flex items-center gap-2">

@@ -118,7 +118,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                   href={buildHref(opt.value, format)}
                   scroll={false}
                   className={`relative rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    active ? "text-white" : "text-zinc-600 hover:text-zinc-950"
+                    active ? "text-white" : "text-zinc-600 hover:text-zinc-800"
                   }`}
                 >
                   {active && (
@@ -193,7 +193,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                         <td className="max-w-[440px] border-b border-zinc-100 px-3 py-3">
                           <Link
                             href={`/violations/${row.id}`}
-                            className="group flex items-start gap-2 text-zinc-800 hover:text-zinc-950"
+                            className="group flex items-start gap-2 text-zinc-800 hover:text-zinc-800"
                           >
                             <span className="line-clamp-2 leading-snug">{row.script_text}</span>
                             <ArrowUpRight className="mt-0.5 size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />

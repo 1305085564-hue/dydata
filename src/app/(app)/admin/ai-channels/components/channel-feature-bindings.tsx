@@ -38,7 +38,7 @@ export function ChannelFeatureBindings({
         className="mt-6 rounded-2xl bg-transparent p-8 md:p-16 text-center flex flex-col items-center justify-center"
       >
         <Info className="size-8 text-muted-foreground/30 mb-3" />
-        <h3 className="text-base font-medium text-zinc-950">请在左侧选择渠道，或新建一个渠道</h3>
+        <h3 className="text-base font-medium text-zinc-800">请在左侧选择渠道，或新建一个渠道</h3>
       </motion.div>
     );
   }
@@ -47,7 +47,7 @@ export function ChannelFeatureBindings({
     <div className="mt-8 space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-zinc-950">功能接管</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-800">功能接管</h2>
           <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-sm">
             当前渠道仅作为对照视角。每个功能都可独立指定接管渠道和模型，留空则由系统自动接管。
           </p>
@@ -81,7 +81,7 @@ export function ChannelFeatureBindings({
               key={group.group}
               className="space-y-4"
             >
-              <h3 className="text-sm font-medium text-zinc-950 flex items-center gap-2 pl-1">
+              <h3 className="text-sm font-medium text-zinc-800 flex items-center gap-2 pl-1">
                 {group.group}
                 <span className="text-[10px] font-normal text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-full">
                   {group.features.length}

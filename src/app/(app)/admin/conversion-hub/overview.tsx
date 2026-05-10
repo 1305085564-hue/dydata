@@ -203,7 +203,7 @@ export function ConversionHubOverview({ stats }: Props) {
                       {medal ?? `#${idx + 1}`}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-3 text-sm leading-snug text-zinc-800 group-hover:text-zinc-950">
+                      <p className="line-clamp-3 text-sm leading-snug text-zinc-800 group-hover:text-zinc-800">
                         {row.script_text}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500">
@@ -242,7 +242,7 @@ export function ConversionHubOverview({ stats }: Props) {
                   <Icon className="size-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-zinc-950">{title}</p>
+                  <p className="text-sm font-semibold text-zinc-800">{title}</p>
                   <p className="mt-0.5 line-clamp-1 text-xs text-zinc-500">{desc}</p>
                 </div>
                 <span className="text-xs text-zinc-400 transition-colors group-hover:text-[#D97757]">→</span>

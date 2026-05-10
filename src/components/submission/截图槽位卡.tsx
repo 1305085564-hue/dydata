@@ -166,7 +166,7 @@ export function SubmissionSlotCard({
                   {title}
                 </span>
                 {required ? (
-                  <span className="rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold text-zinc-950 border border-zinc-200">
+                  <span className="rounded-full bg-white px-1.5 py-0.5 text-[9px] font-semibold text-zinc-800 border border-zinc-200">
                     必传
                   </span>
                 ) : (
@@ -176,7 +176,7 @@ export function SubmissionSlotCard({
                 )}
               </div>
               <span className={cn(
-                "rounded-full px-2 py-0.5 text-[9px] font-bold transition-colors flex items-center gap-1",
+                "rounded-full px-2 py-0.5 text-[9px] font-semibold transition-colors flex items-center gap-1",
                 isSuccess ? "bg-[#6FAA7D] text-white" :
                 isError ? "bg-[#C9604D] text-white" :
                 isWarning ? "bg-[#EAB308] text-white" :
@@ -232,7 +232,7 @@ export function SubmissionSlotCard({
                         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                       />
                     </div>
-                    <p className="text-[10px] font-medium text-zinc-950 bg-white px-1.5 py-0.5 rounded-lg border border-zinc-200">AI正在解析... {Math.floor(Math.min(99, progress))}%</p>
+                    <p className="text-[10px] font-medium text-zinc-800 bg-white px-1.5 py-0.5 rounded-lg border border-zinc-200">AI正在解析... {Math.floor(Math.min(99, progress))}%</p>
                   </div>
                 ) : (
                   <>
@@ -301,7 +301,7 @@ export function SubmissionSlotCard({
             ) : null}
 
             {ocrSummary && ocrSummary.length > 0 ? (
-              <div className="flex-1 rounded-xl bg-[#F9F9FB] px-2.5 py-2 text-[11px] text-zinc-950 border border-zinc-200 overflow-hidden flex flex-col max-h-[120px]">
+              <div className="flex-1 rounded-xl bg-[#F9F9FB] px-2.5 py-2 text-[11px] text-zinc-800 border border-zinc-200 overflow-hidden flex flex-col max-h-[120px]">
                 <div className="font-semibold text-zinc-500 mb-1 shrink-0 text-[9px] uppercase tracking-wider">AI 识别结果</div>
                 <ul className="space-y-0.5 overflow-y-auto pr-1 flex-1 min-h-0 custom-scrollbar">
                   {ocrSummary.map((item) => (

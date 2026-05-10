@@ -33,7 +33,7 @@ export function RewriteHistory({
         </div>
         <button
           onClick={onNewConversation}
-          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 active:translate-y-0"
+          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
         >
           <Plus className="h-3 w-3" />
           <span className="tracking-wide">新文案</span>
@@ -77,7 +77,7 @@ export function RewriteHistory({
                     <p
                       className={cn(
                         'truncate text-[12px] font-medium leading-tight',
-                        active ? 'text-zinc-950' : 'text-zinc-600'
+                        active ? 'text-zinc-800' : 'text-zinc-600'
                       )}
                     >
                       {conversation.title || '新文案'}

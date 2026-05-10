@@ -129,7 +129,7 @@ function SidebarContent({
                 "rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors",
                 filter === item.value
                   ? "bg-[#D97757] text-white"
-                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
               )}
             >
               {item.label}
@@ -151,7 +151,7 @@ function SidebarContent({
             <div className="text-[11px] text-zinc-500">{error}</div>
             <button
               onClick={onRetry}
-              className="mt-1 rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-900"
+              className="mt-1 rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
             >
               重新同步
             </button>
@@ -181,7 +181,7 @@ function SidebarContent({
                     <span
                       className={cn(
                         "flex-1 truncate text-[11.5px] leading-tight tracking-tight",
-                        selected ? "font-semibold text-zinc-950" : "font-medium text-zinc-700 group-hover:text-zinc-950"
+                        selected ? "font-semibold text-zinc-800" : "font-medium text-zinc-700 group-hover:text-zinc-800"
                       )}
                     >
                       {record.description}

@@ -68,7 +68,7 @@ export function ConversionCaseCard({ caseItem }: { caseItem: ConversionCase }) {
             {previewText(caseItem.script_text)}
           </p>
         </div>
-        <ArrowRight className="size-4 shrink-0 text-zinc-300 transition-transform group-hover:translate-x-1 group-hover:text-zinc-900" />
+        <ArrowRight className="size-4 shrink-0 text-zinc-300 transition-transform group-hover:translate-x-1 group-hover:text-zinc-800" />
       </div>
 
       <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-dashed border-zinc-200 pt-4">

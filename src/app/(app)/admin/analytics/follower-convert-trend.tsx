@@ -13,6 +13,11 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  CHART_AXIS_TICK,
+  CHART_COLORS,
+  CHART_GRID_PROPS,
+} from "@/lib/chart-palette";
 import { cn } from "@/lib/utils";
 
 interface Report {
@@ -118,10 +123,10 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
       </div>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="rgba(15,23,42,0.06)" />
-          <XAxis dataKey="date" tick={{ fontSize: 12, fill: "rgba(82,82,91,0.6)" }} axisLine={false} tickLine={false} />
+          <CartesianGrid {...CHART_GRID_PROPS} />
+          <XAxis dataKey="date" tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
           <YAxis
-            tick={{ fontSize: 12, fill: "rgba(82,82,91,0.6)" }}
+            tick={CHART_AXIS_TICK}
             domain={[0, yUpperBound]}
             allowDecimals={false}
             axisLine={false}
@@ -131,10 +136,10 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
           <Line
             type="monotone"
             dataKey="导粉量"
-            stroke="#D97757"
+            stroke={CHART_COLORS.primary}
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, fill: "#D97757", stroke: "white", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: CHART_COLORS.primary, stroke: "white", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

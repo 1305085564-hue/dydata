@@ -62,7 +62,7 @@ export function ChatInputBar({
             placeholder={placeholder}
             rows={1}
             className={cn(
-              'max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.7] tracking-[0.005em] text-zinc-900 outline-none placeholder:text-zinc-400',
+              'max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.7] tracking-[0.005em] text-zinc-800 outline-none placeholder:text-zinc-400',
               isSending && 'cursor-not-allowed opacity-60'
             )}
           />

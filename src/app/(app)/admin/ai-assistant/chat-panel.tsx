@@ -364,7 +364,7 @@ export default function ChatPanel({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 transition-colors group-hover:bg-[#6FAA7D]" />
-                          <div className="text-[13px] font-semibold tracking-tight text-zinc-950">
+                          <div className="text-[13px] font-semibold tracking-tight text-zinc-800">
                             {shortcut.title}
                           </div>
                         </div>
@@ -431,7 +431,7 @@ export default function ChatPanel({
                       <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950">
                         <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2} />
                       </div>
-                      <span className="text-[11px] font-bold tracking-tight text-zinc-950">
+                      <span className="text-[11px] font-semibold tracking-tight text-zinc-800">
                         AI 助手
                       </span>
                       <span className="h-3 w-px bg-zinc-200" />
@@ -540,7 +540,7 @@ export default function ChatPanel({
               rows={1}
               disabled={loading}
               className={cn(
-                "max-h-[200px] min-h-[40px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.6] tracking-wide text-zinc-950 outline-none placeholder:text-zinc-400",
+                "max-h-[200px] min-h-[40px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.6] tracking-wide text-zinc-800 outline-none placeholder:text-zinc-400",
                 loading && "cursor-not-allowed opacity-60"
               )}
             />

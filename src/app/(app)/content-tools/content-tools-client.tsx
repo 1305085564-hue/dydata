@@ -49,8 +49,8 @@ export function ContentToolsClient({ accounts, summary }: ContentToolsClientProp
                     className={cn(
                       "flex min-w-[92px] flex-col items-center gap-1 rounded-[10px] px-4 py-3 text-center text-xs transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:min-w-[132px]",
                       active
-                        ? "bg-zinc-50 text-zinc-950 shadow-sm ring-1 ring-zinc-950/5"
-                        : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950"
+                        ? "bg-zinc-50 text-zinc-800 shadow-sm ring-1 ring-zinc-950/5"
+                        : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
                     )}
                   >
                     <Icon className="size-4" />

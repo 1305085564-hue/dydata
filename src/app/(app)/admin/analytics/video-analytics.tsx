@@ -21,6 +21,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  CHART_AXIS_TICK,
+  CHART_GRADIENT_PRIMARY,
+  CHART_GRID_PROPS,
+} from "@/lib/chart-palette";
 
 interface VideoAnalyticsProps {
   videos: Array<{
@@ -254,21 +259,21 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={trendData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                  <CartesianGrid vertical={false} stroke="#e5e7eb" strokeDasharray="3 3" />
+                  <CartesianGrid {...CHART_GRID_PROPS} />
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
+                    tick={CHART_AXIS_TICK}
                     tickLine={false}
                     axisLine={false}
                     minTickGap={12}
                   />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#6b7280" }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={CHART_AXIS_TICK} tickLine={false} axisLine={false} />
                   <Tooltip content={<TrendTooltip />} cursor={{ fill: "rgba(15, 23, 42, 0.04)" }} />
                   <Bar dataKey="count" fill="url(#videoCountGradient)" radius={[10, 10, 0, 0]} maxBarSize={28} />
                   <defs>
                     <linearGradient id="videoCountGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#111827" stopOpacity={0.92} />
-                      <stop offset="100%" stopColor="#60a5fa" stopOpacity={0.72} />
+                      <stop offset="0%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0.92} />
+                      <stop offset="100%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0.12} />
                     </linearGradient>
                   </defs>
                 </BarChart>

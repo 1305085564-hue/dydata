@@ -221,14 +221,14 @@ export function TeamGroupManager({
     <div className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-zinc-950">团队与分组</h3>
+          <h3 className="text-lg font-semibold text-zinc-800">团队与分组</h3>
           <p className="text-sm text-zinc-500">
             负责人管理团队下的组，组长只查看自己组的成员。
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
-            <SelectTrigger className="h-10 w-full bg-white sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择团队">
                 {selectedTeamName ?? undefined}
               </SelectValue>
@@ -242,7 +242,7 @@ export function TeamGroupManager({
             </SelectContent>
           </Select>
           <Select value={effectiveSelectedGroupId} onValueChange={handleGroupChange}>
-            <SelectTrigger className="h-10 w-full bg-white sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择分组">
                 {selectedGroupName ?? (effectiveSelectedGroupId === NO_GROUP ? "暂无分组" : undefined)}
               </SelectValue>
@@ -265,7 +265,7 @@ export function TeamGroupManager({
       <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-4">
           <div className="flex items-center justify-between">
-            <div className="font-medium text-zinc-950">当前分组</div>
+            <div className="font-medium text-zinc-800">当前分组</div>
             <Badge
               className={
                 access.canEditGroups
@@ -291,7 +291,7 @@ export function TeamGroupManager({
                   }`}
                 >
                   <span>
-                    <span className="block font-medium text-zinc-950">{group.name}</span>
+                    <span className="block font-medium text-zinc-800">{group.name}</span>
                     <span className="text-xs text-zinc-500">
                       组长：{getProfileName(profiles, group.leader_user_id)}
                     </span>
@@ -337,13 +337,13 @@ export function TeamGroupManager({
                   value={newGroupName}
                   onChange={(event) => setNewGroupName(event.target.value)}
                   placeholder="例如：第一组"
-                  className="rounded-xl bg-white border-zinc-200"
+                  className="rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label>组长</Label>
                 <Select value={newLeaderId} onValueChange={handleNewLeaderChange}>
-                  <SelectTrigger className="h-10 w-full bg-white">
+                  <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                     <SelectValue placeholder="选择组长">
                       {newLeaderName ?? undefined}
                     </SelectValue>
@@ -385,13 +385,13 @@ export function TeamGroupManager({
                       id="edit-group-name"
                       value={editGroupName}
                       onChange={(event) => setEditGroupName(event.target.value)}
-                      className="rounded-xl bg-white border-zinc-200"
+                      className="rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label>更换组长</Label>
                     <Select value={editLeaderId} onValueChange={handleEditLeaderChange}>
-                      <SelectTrigger className="h-10 w-full bg-white">
+                      <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                         <SelectValue placeholder="选择组长">
                           {editLeaderName ?? undefined}
                         </SelectValue>
@@ -426,7 +426,7 @@ export function TeamGroupManager({
 
               <div className="grid gap-4 xl:grid-cols-2">
                 <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                  <div className="mb-3 font-medium text-zinc-950">组内成员</div>
+                  <div className="mb-3 font-medium text-zinc-800">组内成员</div>
                   <div className="space-y-2">
                     {groupMembers.length > 0 ? (
                       groupMembers.map((member) => (
@@ -463,7 +463,7 @@ export function TeamGroupManager({
                 {access.canEditGroups ? (
                   <div className="rounded-xl border border-zinc-200 bg-white p-3">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <div className="font-medium text-zinc-950">分配组员</div>
+                      <div className="font-medium text-zinc-800">分配组员</div>
                       <Button
                         type="button"
                         size="sm"

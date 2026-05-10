@@ -324,12 +324,12 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
           <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
             <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-zinc-900">推荐窗口说明</p>
+                <p className="text-sm font-semibold text-zinc-800">推荐窗口说明</p>
                 <p className="line-clamp-2 text-xs leading-5 text-zinc-600">{recommendationMeta.description}</p>
               </div>
               {recommendationMeta.hasRecommendation ? (
                 <div className="rounded-lg border border-zinc-200 border-l-2 border-l-[#C9604D] bg-white px-3 py-2 text-[13px] shadow-sm">
-                  <p className="font-semibold text-zinc-900">{recommendationMeta.title}</p>
+                  <p className="font-semibold text-zinc-800">{recommendationMeta.title}</p>
                   <p className="mt-1 text-zinc-500">
                     窗口样本 {recommendationWindowStats?.count ?? 0} 条，窗口总播放{" "}
                     {formatPlayCount(recommendationWindowStats?.totalPlay ?? null)}
@@ -469,7 +469,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   {activeIsRecommended ? "属于推荐窗口" : "不属于推荐窗口"}
                 </div>
                 <div>
-                  <h4 className="text-lg font-semibold tracking-tight text-zinc-950">
+                  <h4 className="text-lg font-semibold tracking-tight text-zinc-800">
                     {WEEKDAYS[activeCell.weekdayIndex]}
                   </h4>
                   <p className="mt-0.5 text-[13px] text-zinc-500">{formatHourRange(activeCell.hour)}</p>

@@ -127,7 +127,7 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
                 />
                 <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:border-zinc-300">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
                       <Calendar className="size-3.5 text-zinc-400" strokeWidth={2.25} />
                       {formatDate(record.used_at)}
                       <span className="text-zinc-300">·</span>
@@ -193,7 +193,7 @@ function MetricCell({
         className={
           accent
             ? "mt-0.5 text-sm font-semibold tracking-tight text-[#6FAA7D]"
-            : "mt-0.5 text-sm font-bold tracking-tight text-zinc-900"
+            : "mt-0.5 text-sm font-semibold tracking-tight text-zinc-800"
         }
       >
         {value}

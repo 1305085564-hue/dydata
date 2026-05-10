@@ -405,13 +405,13 @@ export default function AIChannelsClient() {
     <div className="w-full space-y-6 px-4 py-4 sm:px-6 lg:px-8">
       {/* 极简顶部导航 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-950">AI 功能区</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-800">AI 功能区</h1>
         <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[var(--color-text-secondary)]">
-          <Link href="/admin" className="flex items-center gap-1.5 hover:text-zinc-950 transition-colors">
+          <Link href="/admin" className="flex items-center gap-1.5 hover:text-zinc-800 transition-colors">
             返回总控台
           </Link>
           <div className="h-3.5 w-px bg-border/60" />
-          <Link href="/admin/ai-rewrite" className="flex items-center gap-1.5 hover:text-zinc-950 transition-colors">
+          <Link href="/admin/ai-rewrite" className="flex items-center gap-1.5 hover:text-zinc-800 transition-colors">
             文案改写配置
           </Link>
         </div>
@@ -421,7 +421,7 @@ export default function AIChannelsClient() {
         <div className="flex h-64 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <div className="flex flex-col items-center gap-4 text-[var(--color-text-secondary)]">
             <Skeleton className="size-8 rounded-full" />
-            <p className="font-medium text-zinc-950">加载数据中...</p><p className="text-xs text-zinc-500">正在获取渠道与绑定配置</p>
+            <p className="font-medium text-zinc-800">加载数据中...</p><p className="text-xs text-zinc-500">正在获取渠道与绑定配置</p>
           </div>
         </div>
       ) : (

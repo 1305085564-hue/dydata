@@ -131,7 +131,7 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
               {item.category}
             </span>
           </div>
-          <p className="whitespace-pre-wrap text-base font-semibold leading-7 text-zinc-950">{item.scriptText}</p>
+          <p className="whitespace-pre-wrap text-base font-semibold leading-7 text-zinc-800">{item.scriptText}</p>
         </div>
         <div className="shrink-0 text-left text-xs leading-6 text-zinc-500 lg:text-right">
           <p>提交人：{item.submitterName}</p>

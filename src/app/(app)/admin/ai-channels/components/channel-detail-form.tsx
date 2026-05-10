@@ -87,7 +87,7 @@ export function ChannelDetailForm({
       <div className="flex flex-col xl:flex-row xl:items-center justify-between border-b border-zinc-200 bg-zinc-50 px-6 py-4 gap-4">
         {/* Left: Title & Toggle */}
         <div className="flex flex-wrap items-center gap-4">
-          <h2 className="text-lg font-semibold tracking-tight text-zinc-950">
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-800">
             {channel ? channel.name : "新增渠道"}
           </h2>
           {channel && (
@@ -295,7 +295,7 @@ export function ChannelDetailForm({
           {!channel && (
             <div className="sm:col-span-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 p-8 text-center text-sm text-zinc-500 min-h-[160px]">
               <CheckCircle2 className="mb-2 size-8 text-muted-foreground/40" />
-              <p className="mt-1 font-medium text-zinc-950">保存基本信息后</p>
+              <p className="mt-1 font-medium text-zinc-800">保存基本信息后</p>
               <p className="mt-1 opacity-80 text-xs">即可测试连通性并配置功能接管</p>
             </div>
           )}

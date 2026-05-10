@@ -98,7 +98,7 @@ export default function ConfirmCard({
         {/* Debug (Owner only) */}
         {actorRole === "owner" && debug && (
           <Collapsible className="overflow-hidden rounded-xl border border-zinc-200 bg-[#FAFAFB]">
-            <CollapsibleTrigger className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:bg-white hover:text-zinc-900">
+            <CollapsibleTrigger className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:bg-white hover:text-zinc-800">
               <Terminal className="h-3 w-3" />
               Debug
             </CollapsibleTrigger>
@@ -108,7 +108,7 @@ export default function ConfirmCard({
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                     <span>Rollback SQL</span>
                     <button
-                      className="inline-flex items-center gap-1 normal-case text-zinc-400 transition-colors hover:text-zinc-900"
+                      className="inline-flex items-center gap-1 normal-case text-zinc-400 transition-colors hover:text-zinc-800"
                       onClick={() => navigator.clipboard.writeText(debug.backupSql || "")}
                     >
                       <Copy className="h-3 w-3" /> 复制
@@ -142,7 +142,7 @@ export default function ConfirmCard({
             disabled={submitting}
             className={cn(
               "h-8 border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 shadow-none",
-              "hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-white hover:text-zinc-900 hover:shadow-sm active:translate-y-0"
+              "hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-white hover:text-zinc-800 hover:shadow-sm active:translate-y-0"
             )}
           >
             <XCircle className="mr-1.5 h-3 w-3" />

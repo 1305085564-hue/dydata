@@ -11,7 +11,7 @@ interface StatsCardProps {
 
 const TONE_CLASS: Record<NonNullable<StatsCardProps["tone"]>, { value: string; hint: string }> = {
   default: {
-    value: "text-zinc-950",
+    value: "text-zinc-800",
     hint: "text-zinc-500",
   },
   positive: {

@@ -62,7 +62,7 @@ export function RewriteWorkbench() {
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
             System Error
           </p>
-          <h3 className="mt-2 text-[15px] font-semibold tracking-tight text-zinc-950">
+          <h3 className="mt-2 text-[15px] font-semibold tracking-tight text-zinc-800">
             {state.errorState.title}
           </h3>
           <p className="mt-1.5 text-[13px] leading-[1.7] text-zinc-500">
@@ -104,7 +104,7 @@ export function RewriteWorkbench() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setHistoryOpen((v) => !v)}
-            className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-950"
+            className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800"
             title={historyOpen ? '收起历史' : '展开历史'}
           >
             {historyOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeft className="h-3.5 w-3.5" />}
@@ -122,7 +122,7 @@ export function RewriteWorkbench() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={actions.handleNewConversation}
-            className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-950 active:translate-y-0"
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
             title="开启新对话"
           >
             <Plus className="h-3 w-3" />
@@ -134,7 +134,7 @@ export function RewriteWorkbench() {
               'inline-flex items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-[11px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0',
               configOpen
                 ? 'border-[#D97757] bg-[#D97757] text-white shadow-sm'
-                : 'border-zinc-200 bg-white text-zinc-500 shadow-sm hover:border-zinc-300 hover:text-zinc-950'
+                : 'border-zinc-200 bg-white text-zinc-500 shadow-sm hover:border-zinc-300 hover:text-zinc-800'
             )}
             title={configOpen ? '收起配置栏' : '展开配置栏'}
           >

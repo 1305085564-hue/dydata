@@ -73,7 +73,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
             max={20}
             value={count}
             onChange={(e) => setCount(Number(e.target.value))}
-            className="h-9 w-20 rounded-xl bg-white border-zinc-200"
+            className="h-9 w-20 rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
         </div>
         <div className="space-y-1.5">
@@ -84,7 +84,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
             value={expiresInDays}
             onChange={(e) => setExpiresInDays(e.target.value === "" ? "" : Number(e.target.value))}
             placeholder="永久"
-            className="h-9 w-28 rounded-xl bg-white border-zinc-200"
+            className="h-9 w-28 rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
         </div>
         <Button
