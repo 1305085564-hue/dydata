@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence, useReducedMotion, type Variants } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -48,55 +47,20 @@ export function AnalyticsSections({
     }));
   };
 
-  const shouldReduceMotion = useReducedMotion();
-
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: shouldReduceMotion ? 0 : 0.1,
-        delayChildren: shouldReduceMotion ? 0 : 0.2,
-      },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 30, scale: 0.98 },
-    visible: {
-      opacity: 1,
-      ...(shouldReduceMotion ? {} : { y: 0, scale: 1 }),
-      transition: shouldReduceMotion
-        ? { duration: 0.2 }
-        : {
-            type: "spring",
-            stiffness: 100,
-            damping: 20,
-          },
-    },
-  };
-
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {sections.map((section, index) => {
         const isExpanded = expandedSections[section.id];
 
         return (
-          <motion.div
+          <div
             key={section.id}
             id={`analytics-section-${section.id}`}
-            variants={itemVariants}
             className="group"
           >
             <div
               className={cn(
-                "overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                "overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 !isExpanded && "hover:-translate-y-[1px] active:translate-y-0",
               )}
             >
@@ -113,7 +77,7 @@ export function AnalyticsSections({
                   >
                     {index + 1}
                   </div>
-                  <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
+                  <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">
                     {section.title}
                   </h2>
                 </div>
@@ -128,35 +92,20 @@ export function AnalyticsSections({
                 </div>
               </button>
 
-              <AnimatePresence initial={false}>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{
-                      height: "auto",
-                      opacity: 1,
-                      transition: {
-                        height: { type: "spring", stiffness: 100, damping: 20 },
-                        opacity: { duration: 0.2, delay: 0.1 },
-                      },
-                    }}
-                    exit={{
-                      height: 0,
-                      opacity: 0,
-                      transition: {
-                        height: { type: "spring", stiffness: 100, damping: 20 },
-                        opacity: { duration: 0.2 },
-                      },
-                    }}
-                  >
-                    <div className="border-t border-zinc-100 px-6 pb-6 pt-5">{section.content}</div>
-                  </motion.div>
+              <div
+                className={cn(
+                  "grid transition-[grid-template-rows,opacity] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
                 )}
-              </AnimatePresence>
+              >
+                <div className="overflow-hidden">
+                  <div className="border-t border-zinc-100 px-6 pb-6 pt-5">{section.content}</div>
+                </div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         );
       })}
-    </motion.div>
+    </div>
   );
 }

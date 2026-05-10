@@ -10,6 +10,7 @@ import { TimeAnalysis } from "./time-analysis";
 import { AiInsight } from "./ai-insight";
 import type { AnalyticsVideoRow } from "./视频结论卡-类型";
 import { FollowerConvertTrend } from "./follower-convert-trend";
+import { HitHeroCard } from "./hit-hero-card";
 import { Button } from "@/components/ui/button";
 
 interface ReportRow {
@@ -122,7 +123,9 @@ export function AnalyticsWorkbench({
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <HitHeroCard reports={scopedReports} scopeLabel={lockedSubmitter} />
+
       <div className="space-y-3">
 
         {lockedSubmitter ? (

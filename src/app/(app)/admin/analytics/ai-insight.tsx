@@ -55,7 +55,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
-          <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">AI 结构化洞察</h3>
+          <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">AI 结构化洞察</h3>
           <p className="text-[13px] leading-[1.7] text-zinc-500">基于业务数据自动生成的分析结论与建议行动。</p>
         </div>
 
