@@ -233,8 +233,8 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                       <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
                         {showPatchButton ? (
                           <Button
-                            variant="secondary"
-                            className="rounded-xl bg-zinc-950 text-white hover:bg-zinc-800"
+                            variant="outline"
+                            className="rounded-xl bg-white border-zinc-300 text-zinc-800 hover:bg-zinc-50"
                             onClick={() => setPatchingVideoId(video.id)}
                           >
                             补录24h数据

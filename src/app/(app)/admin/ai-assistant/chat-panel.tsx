@@ -419,7 +419,7 @@ export default function ChatPanel({
                   >
                     {/* Meta line */}
                     <div className="mb-2 flex items-center gap-2.5">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-800">
                         <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2} />
                       </div>
                       <span className="text-[11px] font-semibold tracking-tight text-zinc-800">
@@ -492,7 +492,7 @@ export default function ChatPanel({
               {/* Loading */}
               {loading && (
                 <div className="flex items-center gap-2.5 animate-in fade-in duration-200">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-800">
                     <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2} />
                   </div>
                   <div className="flex items-center gap-1.5 px-0.5">

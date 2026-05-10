@@ -124,7 +124,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                   {active && (
                     <motion.span
                       layoutId="sort-active"
-                      className="absolute inset-0 rounded-full bg-zinc-950"
+                      className="absolute inset-0 rounded-full bg-zinc-900"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}

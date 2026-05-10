@@ -123,7 +123,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
                 type="button"
                 onClick={handleConfirm}
                 disabled={confirming || Boolean(confirmedAt)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Check className="size-4" />
                 {confirmedAt ? "已确认" : "一键确认整单"}
@@ -204,7 +204,7 @@ function EmptyState({
       <button
         type="button"
         onClick={onGenerate}
-        className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98]"
+        className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98]"
       >
         <Sparkles className="size-4" />
         生成草稿

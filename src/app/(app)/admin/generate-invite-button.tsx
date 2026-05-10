@@ -90,7 +90,7 @@ export function InviteCodeManager({ adminId, existingCodes, profileNames = {} }:
         <Button
           onClick={handleGenerate}
           disabled={isPending}
-          className="bg-zinc-950 text-white rounded-[10px] hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+          className="bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
         >
           {isPending ? "生成中..." : `生成 ${count} 个`}
         </Button>
