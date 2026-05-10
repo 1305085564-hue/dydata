@@ -162,7 +162,7 @@ export function SubmissionSlotCard({
             {/* 悬浮标签：标题、状态等 */}
             <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1">
               <div className="flex items-center gap-1">
-                <span className="rounded-lg bg-zinc-950/80 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                <span className="rounded-lg bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-zinc-700 border border-zinc-200">
                   {title}
                 </span>
                 {required ? (
@@ -228,7 +228,7 @@ export function SubmissionSlotCard({
                   <div className="flex flex-col items-center gap-2 w-full max-w-[100px]">
                     <div className="w-full h-[3px] bg-zinc-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-zinc-950 rounded-full transition-colors"
+                        className="h-full bg-zinc-400 rounded-full transition-colors"
                         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                       />
                     </div>
