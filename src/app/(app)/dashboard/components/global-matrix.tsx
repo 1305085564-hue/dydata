@@ -32,7 +32,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
     <div className="space-y-12">
       <div className="flex flex-col justify-between gap-6 px-2 lg:flex-row lg:items-end">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/50 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
+          <div className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
             <Activity size={12} className="stroke-[1.5]" /> Global Efficiency Index
           </div>
@@ -45,7 +45,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
             <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
               产出率
             </span>
-            <span className="text-[20px] font-semibold tabular-nums text-zinc-800">
+            <span className="text-[20px] font-semibold font-mono tabular-nums text-zinc-800">
               {matrixRate(rows)}%
             </span>
           </div>
@@ -54,7 +54,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
             <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
               风险节点
             </span>
-            <span className="text-[20px] font-semibold tabular-nums text-[#C9604D]">
+            <span className="text-[20px] font-semibold font-mono tabular-nums text-[#C9604D]">
               {String(riskCount).padStart(2, "0")}
             </span>
           </div>
@@ -68,8 +68,8 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50/50 text-zinc-500">
-                <th className="sticky left-0 z-20 border-r border-zinc-100 bg-zinc-50/50 p-8 text-[10px] font-medium uppercase tracking-[0.25em]">
+              <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500">
+                <th className="sticky left-0 z-20 border-r border-zinc-100 bg-zinc-50 p-8 text-[10px] font-medium uppercase tracking-[0.25em]">
                   Influencer
                 </th>
                 {MATRIX_CHECKPOINTS.map((cp) => (
@@ -98,9 +98,9 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
                 return (
                   <tr
                     key={row.userId}
-                    className="group border-b border-zinc-50 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] last:border-none hover:bg-zinc-50/50"
+                    className="group border-b border-zinc-50 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] last:border-none hover:bg-zinc-50"
                   >
-                    <td className="sticky left-0 z-10 border-r border-zinc-100 bg-white p-8 group-hover:bg-zinc-50/50">
+                    <td className="sticky left-0 z-10 border-r border-zinc-100 bg-white p-8 group-hover:bg-zinc-50">
                       <div className="flex items-center gap-4">
                         <div
                           className={cn(
@@ -130,7 +130,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
                             <button
                               onClick={() => onOpenTarget(row.userId, checkpoint.id)}
                               className={cn(
-                                "flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50/50 border-l-[2px] transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-100 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5",
+                                "flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 border-l-[2px] transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-100 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                                 theme.cellBar,
                                 theme.color,
                               )}
@@ -145,7 +145,7 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
                         </td>
                       );
                     })}
-                    <td className="p-8 text-right font-semibold tabular-nums text-zinc-800">
+                    <td className="p-8 text-right font-semibold font-mono tabular-nums text-zinc-800">
                       {approvedCount}.{row.submissions.length}
                     </td>
                   </tr>

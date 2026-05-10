@@ -33,7 +33,7 @@ export function WeaknessBenchmarkGrid({ items }: { items: WeakBenchmarkCard[] })
               <div className="rounded-xl border border-zinc-200 bg-white p-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] font-semibold text-zinc-800">{item.personName}</span>
-                  <span className="text-[13px] font-semibold tabular-nums text-zinc-800">{item.metricText}</span>
+                  <span className="text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{item.metricText}</span>
                 </div>
                 <p className="mt-3 text-[13px] leading-[1.7] text-zinc-500">{item.snippet}</p>
               </div>
@@ -45,7 +45,7 @@ export function WeaknessBenchmarkGrid({ items }: { items: WeakBenchmarkCard[] })
                     {item.historyTopSamples.map((sample) => (
                       <div key={sample.id} className="flex items-center justify-between rounded-[10px] border border-zinc-200 px-3 py-2 text-[13px]">
                         <span className="text-zinc-800">{sample.title}</span>
-                        <span className="font-semibold tabular-nums text-zinc-500">{sample.metricText}</span>
+                        <span className="font-semibold font-mono tabular-nums text-zinc-500">{sample.metricText}</span>
                       </div>
                     ))}
                   </div>

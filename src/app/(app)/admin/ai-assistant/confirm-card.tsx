@@ -72,7 +72,7 @@ export default function ConfirmCard({
           </p>
           {data.confirmationReason && (
             <div className="rounded-lg border border-zinc-200 bg-[#FBF6EC] px-3 py-2">
-              <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
                 Reason
               </div>
               <p className="mt-1 text-[12.5px] italic leading-relaxed text-[#8A6535]">
@@ -85,7 +85,7 @@ export default function ConfirmCard({
         {/* Details */}
         {data.details && (
           <div className="rounded-xl border border-zinc-200 bg-[#FAFAFB] p-3">
-            <div className="mb-2 text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
               Payload
             </div>
             <AssistantDetailSections details={data.details} />
@@ -151,7 +151,7 @@ export default function ConfirmCard({
             disabled={submitting}
             className={cn(
               "h-8 bg-[#D97757] px-3 text-[12px] font-medium text-white shadow-sm",
-              "hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
+              "hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
             )}
           >
             {submitting ? (

@@ -42,7 +42,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-white via-[#FFFBF5] to-[#FDF4EC] p-4 shadow-sm sm:p-5">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#D97757]">
@@ -50,7 +50,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
           </p>
           <h3 className="mt-1 text-base font-semibold text-zinc-800">本周转化榜</h3>
         </div>
-        <span className="hidden rounded-full bg-white/70 px-3 py-1 text-[11px] font-medium text-zinc-500 sm:inline-flex">
+        <span className="hidden rounded-full bg-zinc-50 px-3 py-1 text-[11px] font-medium text-zinc-500 sm:inline-flex">
           加权转化率 · 展示量 ≥ 1k · 复用 ≥ 3
         </span>
       </div>
@@ -63,7 +63,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
             <Link
               key={item.id}
               href={`/violations/${item.id}`}
-              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:-translate-y-0.5 hover:shadow-md]"
+              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:-translate-y-0.5"
             >
               <div className={`absolute inset-x-0 top-0 h-[3px] ${medal.rail}`} />
               <div className="flex items-center justify-between">

@@ -73,7 +73,7 @@ export function CapabilityGrid({ items }: { items: GrowthDimensionCard[] }) {
                 </Badge>
               </div>
 
-              <div className="text-[24px] font-semibold tabular-nums tracking-tight text-zinc-800">
+              <div className="text-[24px] font-semibold font-mono tabular-nums tracking-tight text-zinc-800">
                 <MetricValue value={item.metricValue} text={item.metricText} />
               </div>
 

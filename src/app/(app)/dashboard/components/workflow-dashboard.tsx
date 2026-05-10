@@ -213,7 +213,7 @@ export function WorkflowDashboard({
                 ) : null}
               </div>
 
-              <div className="flex flex-col justify-between gap-4 border-t border-zinc-100 pt-6 sm:flex-row sm:items-center">
+              <div className="flex flex-col justify-between gap-4 mt-6 sm:flex-row sm:items-center">
                 <div className="flex gap-3">
                   {activeCheckpoint === "SCRIPT" ? (
                     <button
@@ -248,7 +248,7 @@ export function WorkflowDashboard({
                     <div
                       key={checkpoint.id}
                       className={cn(
-                        "rounded-xl border border-zinc-200 bg-zinc-50/50 p-5 border-l-[2px]",
+                        "rounded-xl border border-zinc-200 bg-zinc-50 p-5 border-l-[2px]",
                         theme.cellBar,
                       )}
                     >

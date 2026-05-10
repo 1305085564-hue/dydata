@@ -118,7 +118,7 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">当前周期</p>
-          <p className="mt-2 text-[24px] font-semibold text-zinc-800 tabular-nums tracking-tight">
+          <p className="mt-2 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">
             {data.range.from} 至 {data.range.to}
           </p>
           <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">

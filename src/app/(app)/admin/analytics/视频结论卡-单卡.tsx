@@ -73,7 +73,7 @@ export function 视频结论卡单卡({
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">关键信号</p>
-              <p className="mt-0.5 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{card.summary}</p>
+              <p className="mt-0.5 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{card.summary}</p>
             </div>
           </div>
 
@@ -82,10 +82,10 @@ export function 视频结论卡单卡({
           ) : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 pt-4">
+        <div className="grid grid-cols-2 gap-3 pt-4">
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{keyMetric?.label}</p>
-            <p className="text-[24px] font-semibold tracking-tight text-zinc-800 tabular-nums">{keyMetric?.value}</p>
+            <p className="text-[24px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{keyMetric?.value}</p>
           </div>
           <div className="space-y-1 border-l border-zinc-100 pl-3">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
@@ -93,7 +93,7 @@ export function 视频结论卡单卡({
             </p>
             <p
               className={cn(
-                "text-[24px] font-semibold tracking-tight tabular-nums",
+                "text-[24px] font-semibold tracking-tight font-mono tabular-nums",
                 secondaryMetrics[0]?.value.startsWith("+") ? "text-[#6FAA7D]" : "text-zinc-800",
               )}
             >
@@ -103,7 +103,7 @@ export function 视频结论卡单卡({
         </div>
 
         {onClick ? (
-          <div className="border-t border-zinc-100 pt-4">
+          <div className="pt-4">
             <Button type="button" variant="outline" className="w-full rounded-[10px]" onClick={onClick}>
               {actionLabel ?? "查看对应分析"}
             </Button>
@@ -181,7 +181,7 @@ export function 干预结论单卡({
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">干预信号</p>
-              <p className="mt-0.5 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{card.summary}</p>
+              <p className="mt-0.5 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{card.summary}</p>
             </div>
           </div>
 
@@ -191,7 +191,7 @@ export function 干预结论单卡({
         </div>
 
         {needsIntervention ? (
-          <div className="border-t border-zinc-100 pt-4">
+          <div className="pt-4">
             <p className="mb-3 text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">重点人员</p>
             <div className="space-y-2">
               {card.items.slice(0, 2).map((item) => (
@@ -211,7 +211,7 @@ export function 干预结论单卡({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[24px] font-semibold tracking-tight text-[#C9604D] tabular-nums">
+                    <p className="text-[24px] font-semibold tracking-tight text-[#C9604D] font-mono tabular-nums">
                       {item.dropRatio !== null ? `-${Math.round(item.dropRatio * 100)}%` : "—"}
                     </p>
                     <p className="mt-1 text-[11px] text-zinc-400">查看样本</p>
@@ -221,11 +221,11 @@ export function 干预结论单卡({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-3 border-t border-zinc-100 pt-4">
+          <div className="grid grid-cols-3 gap-3 pt-4">
             {card.metrics.map((metric) => (
               <div key={metric.label} className="space-y-1">
                 <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{metric.label}</p>
-                <p className="text-[24px] font-semibold tracking-tight text-zinc-800 tabular-nums">{metric.value}</p>
+                <p className="text-[24px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{metric.value}</p>
               </div>
             ))}
           </div>

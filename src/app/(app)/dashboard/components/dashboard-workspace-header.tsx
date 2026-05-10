@@ -28,7 +28,6 @@ interface DashboardWorkspaceHeaderProps {
 
 /**
  * 仪表盘工作区顶栏
- * 法典 V1：无大面积彩底 / 无 font-black / 无 scale 动效 / ring-1 细光环
  */
 export function DashboardWorkspaceHeader({
   today,
@@ -87,7 +86,7 @@ export function DashboardWorkspaceHeader({
             <button
               type="button"
               onClick={openDatePicker}
-              className="group inline-flex items-center justify-end gap-1.5 rounded-[10px] py-1 text-[20px] font-semibold tabular-nums text-zinc-800 transition-[color,opacity] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+              className="group inline-flex items-center justify-end gap-1.5 rounded-[10px] py-1 text-[20px] font-semibold font-mono tabular-nums text-zinc-800 transition-[color,opacity] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               aria-label="选择填报日期"
             >
               <span>{activeBizDate}</span>
@@ -148,7 +147,7 @@ export function DashboardWorkspaceHeader({
             >
               {tab.label}
               {tab.key === "REVIEW" && alertCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C9604D] px-1 text-[9px] font-semibold text-white">
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-semibold text-white">
                   {alertCount > 9 ? "9+" : alertCount}
                 </span>
               )}

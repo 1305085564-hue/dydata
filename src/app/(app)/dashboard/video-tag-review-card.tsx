@@ -145,7 +145,7 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
                   <div>来源：AI</div>
                   <div>
                     置信度：
-                    <span className="tabular-nums text-zinc-800">
+                    <span className="font-mono tabular-nums text-zinc-800">
                       {tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}
                     </span>
                   </div>

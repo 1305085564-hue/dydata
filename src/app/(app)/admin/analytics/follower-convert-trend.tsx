@@ -50,7 +50,7 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
       <p className="text-[12px] font-medium tracking-tight text-zinc-800">{label}</p>
-      <p className="mt-1 text-[12px] tabular-nums text-[#D97757]">
+      <p className="mt-1 text-[12px] font-mono tabular-nums text-[#D97757]">
         导粉：{payload[0].value.toLocaleString()}
       </p>
     </div>

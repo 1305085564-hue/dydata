@@ -15,7 +15,7 @@ export default function AssistantDetailSections({ details }: Props) {
       {details.sections.map((section, index) => (
         <div key={`${section.title}-${index}`} className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
               {section.title}
             </span>
             <div className="h-px flex-1 bg-zinc-200" />
@@ -31,7 +31,7 @@ export default function AssistantDetailSections({ details }: Props) {
                   <span className="shrink-0 text-[10px] uppercase tracking-wider text-zinc-400">
                     {item.label}
                   </span>
-                  <span className="ml-auto truncate text-right text-[12.5px] font-medium tabular-nums text-zinc-800">
+                  <span className="ml-auto truncate text-right text-[12.5px] font-medium font-mono tabular-nums text-zinc-800">
                     {item.value}
                   </span>
                 </div>
@@ -68,7 +68,7 @@ export default function AssistantDetailSections({ details }: Props) {
                     {section.columns.map((column) => (
                       <th
                         key={`${section.title}-${column}`}
-                        className="whitespace-nowrap border-b border-zinc-200 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500"
+                        className="whitespace-nowrap border-b border-zinc-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500"
                       >
                         {column}
                       </th>
@@ -84,7 +84,7 @@ export default function AssistantDetailSections({ details }: Props) {
                       {row.map((cell, cellIndex) => (
                         <td
                           key={`${section.title}-${rowIndex}-${cellIndex}`}
-                          className="px-3 py-2 align-top text-zinc-800 tabular-nums"
+                          className="px-3 py-2 align-top text-zinc-800 font-mono tabular-nums"
                         >
                           {cell}
                         </td>
@@ -100,7 +100,7 @@ export default function AssistantDetailSections({ details }: Props) {
 
       {details.nextSteps?.length ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-3">
-          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
             Next Steps
           </div>
           <ul className="space-y-1">

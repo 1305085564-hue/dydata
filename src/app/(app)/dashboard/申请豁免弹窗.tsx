@@ -171,7 +171,7 @@ function ExemptionModal({
                         {selectedDates.map((date) => (
                           <span
                             key={date}
-                            className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium tabular-nums text-zinc-800"
+                            className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium font-mono tabular-nums text-zinc-800"
                           >
                             {date}
                           </span>
@@ -197,7 +197,7 @@ function ExemptionModal({
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                   />
-                  <p className="text-right text-[11px] tabular-nums text-zinc-400">{reason.length}/100</p>
+                  <p className="text-right text-[11px] font-mono tabular-nums text-zinc-400">{reason.length}/100</p>
                 </div>
               </div>
 

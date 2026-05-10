@@ -56,7 +56,7 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId }: 
                 ) : checkpoint.isPlaceholder ? (
                   <Lock className="size-4 stroke-[1.5] opacity-50" />
                 ) : (
-                  <span className="text-sm font-semibold tabular-nums">{index + 1}</span>
+                  <span className="text-sm font-semibold font-mono tabular-nums">{index + 1}</span>
                 )}
               </div>
 
@@ -71,7 +71,7 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId }: 
                 </p>
                 <div className="flex items-center gap-1.5 text-zinc-400">
                   <Clock className="size-3 stroke-[1.5]" />
-                  <span className="text-[10px] font-medium tabular-nums">{checkpoint.time}</span>
+                  <span className="text-[10px] font-medium font-mono tabular-nums">{checkpoint.time}</span>
                 </div>
               </div>
 

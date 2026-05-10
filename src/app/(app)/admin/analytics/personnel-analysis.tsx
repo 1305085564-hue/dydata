@@ -302,11 +302,11 @@ function PersonRankCard({
             <div className="flex items-end justify-between gap-2">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">均播对比</p>
-                <p className="mt-0.5 text-[24px] font-semibold text-zinc-800 tabular-nums tracking-tight">{formatPlayCountCompact(person.avgPlay)}</p>
+                <p className="mt-0.5 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatPlayCountCompact(person.avgPlay)}</p>
               </div>
               <div className="text-right">
                 <p className="text-[11px] font-medium text-zinc-400">稳定性</p>
-                <p className="mt-0.5 text-[12px] font-medium text-zinc-700 tabular-nums">{person.stability.toFixed(1)}</p>
+                <p className="mt-0.5 text-[12px] font-medium text-zinc-700 font-mono tabular-nums">{person.stability.toFixed(1)}</p>
               </div>
             </div>
 
@@ -350,7 +350,7 @@ function PersonRankCard({
         </div>
 
         {onSelectPerson ? (
-          <div className="border-t border-zinc-100 pt-2">
+          <div className="mt-4">
             <button
               type="button"
               onClick={() => onSelectPerson(person.name)}
@@ -431,7 +431,7 @@ function MetricBarCard({
       <div className="flex items-end justify-between gap-2">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{title}</p>
-          <p className="mt-0.5 text-[13px] font-semibold text-zinc-800 tabular-nums">{value}</p>
+          <p className="mt-0.5 text-[13px] font-semibold text-zinc-800 font-mono tabular-nums">{value}</p>
         </div>
       </div>
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/90">

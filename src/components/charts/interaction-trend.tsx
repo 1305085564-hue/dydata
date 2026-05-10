@@ -120,7 +120,7 @@ function InteractionTooltip({
           const showTrend = item.dataKey === personalLabel && isPositive != null;
 
           return (
-            <div key={item.dataKey} className="flex items-center justify-between gap-3 text-xs tabular-nums">
+            <div key={item.dataKey} className="flex items-center justify-between gap-3 text-xs font-mono tabular-nums">
               <span className="flex items-center gap-2 text-foreground/70">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
                 {item.name}

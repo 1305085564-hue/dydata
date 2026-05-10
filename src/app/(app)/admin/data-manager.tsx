@@ -318,7 +318,7 @@ export function DataManager({
                 <Input
                   value={editData.title ?? ""}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -330,7 +330,7 @@ export function DataManager({
                   onChange={(e) =>
                     setEditData({ ...editData, play_count: Math.round(Number(e.target.value) * 10000) })
                   }
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -343,7 +343,7 @@ export function DataManager({
                       completion_rate: e.target.value ? `${e.target.value}%` : null,
                     })
                   }
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -352,7 +352,7 @@ export function DataManager({
                   type="number"
                   value={editData.follower_gain ?? 0}
                   onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -366,7 +366,7 @@ export function DataManager({
                       follower_convert: e.target.value ? Number(e.target.value) : null,
                     })
                   }
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -375,7 +375,7 @@ export function DataManager({
                   type="number"
                   value={editData.likes ?? 0}
                   onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -384,7 +384,7 @@ export function DataManager({
                   type="number"
                   value={editData.comments ?? 0}
                   onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -393,7 +393,7 @@ export function DataManager({
                   type="number"
                   value={editData.shares ?? 0}
                   onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -402,7 +402,7 @@ export function DataManager({
                   type="number"
                   value={editData.favorites ?? 0}
                   onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}
-                  className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
             </div>
@@ -444,17 +444,17 @@ export function DataManager({
           </div>
         </TableCell>
         <TableCell className="max-w-[160px] truncate text-sm text-zinc-800">{report.title}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">
           {report.play_count != null ? (report.play_count / 10000).toFixed(2) : "-"}
           {renderAnomaly(report)}
         </TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.completion_rate ?? "-"}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.follower_gain}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.follower_convert ?? "-"}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.likes}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.comments}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.shares}</TableCell>
-        <TableCell className="text-right tabular-nums text-sm text-zinc-800">{report.favorites}</TableCell>
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">{report.completion_rate ?? "-"}</TableCell>
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">{report.follower_gain}</TableCell>
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">{report.follower_convert ?? "-"}</TableCell>
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">{report.likes}</TableCell>
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">{report.comments}</TableCell>
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">{report.shares}</TableCell>
+        <TableCell className="text-right font-mono tabular-nums text-sm text-zinc-800">{report.favorites}</TableCell>
         <TableCell className="text-sm text-zinc-500">{formatShanghaiDateTime(report.published_at)}</TableCell>
         <TableCell className="text-sm text-zinc-500">{formatShanghaiDateTime(report.uploaded_at)}</TableCell>
         <TableCell>
@@ -506,7 +506,7 @@ export function DataManager({
           <Input
             value={editData.title ?? ""}
             onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-            className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -519,7 +519,7 @@ export function DataManager({
               onChange={(e) =>
                 setEditData({ ...editData, play_count: Math.round(Number(e.target.value) * 10000) })
               }
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -532,7 +532,7 @@ export function DataManager({
                   completion_rate: e.target.value ? `${e.target.value}%` : null,
                 })
               }
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -541,7 +541,7 @@ export function DataManager({
               type="number"
               value={editData.follower_gain ?? 0}
               onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -555,7 +555,7 @@ export function DataManager({
                   follower_convert: e.target.value ? Number(e.target.value) : null,
                 })
               }
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -564,7 +564,7 @@ export function DataManager({
               type="number"
               value={editData.likes ?? 0}
               onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -573,7 +573,7 @@ export function DataManager({
               type="number"
               value={editData.comments ?? 0}
               onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -582,7 +582,7 @@ export function DataManager({
               type="number"
               value={editData.shares ?? 0}
               onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
@@ -591,7 +591,7 @@ export function DataManager({
               type="number"
               value={editData.favorites ?? 0}
               onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}
-              className="h-8 bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
         </div>
@@ -652,30 +652,30 @@ export function DataManager({
         <div className="grid grid-cols-4 gap-2 text-xs">
           <div>
             <p className="text-zinc-500">播放量</p>
-            <p className="font-medium tabular-nums text-zinc-800">
+            <p className="font-medium font-mono tabular-nums text-zinc-800">
               {formatPlayCount(report.play_count)}
               {renderAnomaly(report)}
             </p>
           </div>
           <div>
             <p className="text-zinc-500">完播率</p>
-            <p className="tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</p>
+            <p className="font-mono tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</p>
           </div>
           <div>
             <p className="text-zinc-500">涨粉</p>
-            <p className="tabular-nums text-zinc-800">{report.follower_gain}</p>
+            <p className="font-mono tabular-nums text-zinc-800">{report.follower_gain}</p>
           </div>
           <div>
             <p className="text-zinc-500">导粉</p>
-            <p className="tabular-nums text-zinc-800">{report.follower_convert ?? "-"}</p>
+            <p className="font-mono tabular-nums text-zinc-800">{report.follower_convert ?? "-"}</p>
           </div>
           <div>
             <p className="text-zinc-500">点赞</p>
-            <p className="tabular-nums text-zinc-800">{report.likes}</p>
+            <p className="font-mono tabular-nums text-zinc-800">{report.likes}</p>
           </div>
           <div>
             <p className="text-zinc-500">评论</p>
-            <p className="tabular-nums text-zinc-800">{report.comments}</p>
+            <p className="font-mono tabular-nums text-zinc-800">{report.comments}</p>
           </div>
           <div>
             <p className="text-zinc-500">发布时间</p>
@@ -709,7 +709,7 @@ export function DataManager({
             type="date"
             value={date}
             onChange={handleDateChange}
-            className="h-9 w-auto bg-zinc-100/70 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="h-9 w-auto bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
           <span className="text-sm text-zinc-500">{reports.length} 条记录</span>
         </div>
@@ -761,19 +761,19 @@ export function DataManager({
                 <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                   <div>
                     <p className="text-zinc-500">总播放</p>
-                    <p className="font-semibold tabular-nums text-zinc-800">{formatPlayCount(group.totalPlay)}</p>
+                    <p className="font-semibold font-mono tabular-nums text-zinc-800">{formatPlayCount(group.totalPlay)}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500">总互动</p>
-                    <p className="font-semibold tabular-nums text-zinc-800">{group.totalEngagement}</p>
+                    <p className="font-semibold font-mono tabular-nums text-zinc-800">{group.totalEngagement}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500">账号数</p>
-                    <p className="font-semibold tabular-nums text-zinc-800">{group.accountCount}</p>
+                    <p className="font-semibold font-mono tabular-nums text-zinc-800">{group.accountCount}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500">记录数</p>
-                    <p className="font-semibold tabular-nums text-zinc-800">{group.reportCount}</p>
+                    <p className="font-semibold font-mono tabular-nums text-zinc-800">{group.reportCount}</p>
                   </div>
                 </div>
               </div>

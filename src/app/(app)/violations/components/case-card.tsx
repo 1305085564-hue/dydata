@@ -9,7 +9,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
   return (
     <Link
       href={`/violations/${caseItem.id}`}
-      className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+      className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-3">

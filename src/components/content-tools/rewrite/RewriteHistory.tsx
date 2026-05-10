@@ -25,11 +25,11 @@ export function RewriteHistory({
       {/* Header */}
       <div className="shrink-0 px-3 pt-3 pb-2">
         <div className="flex items-center gap-2 px-1">
-          <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
             History
           </span>
           <div className="h-px flex-1 bg-zinc-200" />
-          <span className="text-[10px] text-zinc-400 tabular-nums">{conversations.length}</span>
+          <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{conversations.length}</span>
         </div>
         <button
           onClick={onNewConversation}
@@ -84,7 +84,7 @@ export function RewriteHistory({
                     </p>
                   </div>
                   <div className="mt-1 flex items-center justify-between pl-2.5">
-                    <span className="text-[9px] uppercase tracking-[0.15em] text-zinc-400 tabular-nums">
+                    <span className="text-[10px] uppercase tracking-[0.15em] text-zinc-400 font-mono tabular-nums">
                       {new Date(conversation.updatedAt).toLocaleString('zh-CN', {
                         month: '2-digit',
                         day: '2-digit',
@@ -92,7 +92,7 @@ export function RewriteHistory({
                         minute: '2-digit',
                       })}
                     </span>
-                    <span className="truncate text-[9px] text-zinc-400">
+                    <span className="truncate text-[10px] text-zinc-400">
                       {getConversationTag(conversation)}
                     </span>
                   </div>
@@ -105,7 +105,7 @@ export function RewriteHistory({
 
       {/* Footer */}
       <div className="shrink-0 border-t border-zinc-200 px-3 py-2">
-        <p className="truncate text-[9px] uppercase tracking-[0.2em] text-zinc-400">
+        <p className="truncate text-[10px] uppercase tracking-[0.2em] text-zinc-400">
           {featureLabel}
         </p>
       </div>

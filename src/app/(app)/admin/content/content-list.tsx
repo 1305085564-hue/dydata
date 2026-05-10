@@ -199,7 +199,7 @@ export function ContentList({
                 const isReviewed = localReviewedIds.has(video.id);
                 return (
                   <TableRow key={video.id} className="border-b border-zinc-100 hover:bg-zinc-50">
-                    <TableCell className="py-3 text-sm font-semibold tabular-nums text-zinc-400">
+                    <TableCell className="py-3 text-sm font-semibold font-mono tabular-nums text-zinc-400">
                       #{index + 1}
                     </TableCell>
                     <TableCell className="max-w-md py-3">

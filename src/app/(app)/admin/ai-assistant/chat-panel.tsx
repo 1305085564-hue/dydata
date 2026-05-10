@@ -147,7 +147,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#6FAA7D]">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6FAA7D]">
           Approved
         </span>
       </span>
@@ -157,7 +157,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-red-700">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-700">
           Rejected
         </span>
       </span>
@@ -167,7 +167,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
           Pending
         </span>
       </span>
@@ -176,7 +176,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className="inline-flex h-1.5 w-1.5 rounded-full bg-zinc-200" />
-      <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
         Answered
       </span>
     </span>
@@ -327,7 +327,7 @@ export default function ChatPanel({
               {/* Hero */}
               <div className="mb-10 flex flex-col items-center text-center">
                 <div className="relative mb-6 flex h-14 w-14 items-center justify-center">
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-700 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.3)]" />
+                  <div className="absolute inset-0 rounded-2xl bg-zinc-800 shadow-sm" />
                   <Sparkles className="relative h-6 w-6 text-white" strokeWidth={1.75} />
                 </div>
                 <h1 className="text-[24px] font-semibold leading-tight tracking-tight text-zinc-800">
@@ -374,14 +374,14 @@ export default function ChatPanel({
               {/* Tiny command hint */}
               <div className="mt-8 flex items-center justify-center gap-4 text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[9px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                     Enter
                   </kbd>
                   <span>发送</span>
                 </span>
                 <span className="h-3 w-px bg-zinc-200" />
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[9px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                     ⇧ Enter
                   </kbd>
                   <span>换行</span>
@@ -542,7 +542,7 @@ export default function ChatPanel({
                 "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors",
                 !canSend
                   ? "bg-zinc-100 text-zinc-400"
-                  : "bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
+                  : "bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
               )}
             >
               {loading ? (
@@ -573,7 +573,7 @@ export default function ChatPanel({
                 <Command className="h-2.5 w-2.5" />
                 快捷键
               </span>
-              <span className="tabular-nums normal-case tracking-normal text-zinc-300">
+              <span className="font-mono tabular-nums normal-case tracking-normal text-zinc-300">
                 {input.length}
               </span>
             </div>

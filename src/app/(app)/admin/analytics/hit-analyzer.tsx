@@ -193,7 +193,7 @@ function SummaryBucketCard({
         {items.map((item) => (
           <div key={item.label} className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-[11px]">
             <span className="font-semibold tracking-tight text-zinc-700">{item.label}</span>
-            <span className="ml-1 tabular-nums text-zinc-400">
+            <span className="ml-1 font-mono tabular-nums text-zinc-400">
               {item.count}条 ({item.pct}%)
             </span>
           </div>
@@ -598,7 +598,7 @@ export function HitAnalyzer({
               {datum.submitter} · {formatDate(datum.published_at) ?? datum.report_date}
             </p>
           </div>
-          <div className="mt-1 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-3">
+          <div className="mt-3 grid grid-cols-2 gap-2 pt-1">
             <div>
               <p className="text-[10px] font-medium text-[var(--color-text-tertiary)]">播放量</p>
               <p className={cn("text-[13px] font-medium", datum.isHit ? "text-[#C9604D]" : "text-zinc-700")}>{formatPlayCount(datum.play)}</p>
@@ -820,7 +820,7 @@ export function HitAnalyzer({
                   >
                     上一页
                   </button>
-                  <span className="min-w-12 text-center tabular-nums">
+                  <span className="min-w-12 text-center font-mono tabular-nums">
                     {safeSubmitterPage + 1}/{submitterPageCount}
                   </span>
                   <button
@@ -892,7 +892,7 @@ export function HitAnalyzer({
                     max={dateTo || dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("from", event.target.value)}
-                    className="h-8 bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="h-8 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -904,7 +904,7 @@ export function HitAnalyzer({
                     max={dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("to", event.target.value)}
-                    className="h-8 bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="h-8 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                   />
                 </div>
               </div>
@@ -918,31 +918,31 @@ export function HitAnalyzer({
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">筛选样本</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{stats.count}</p>
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{stats.count}</p>
             <p className="mt-1 text-xs text-zinc-500">其中 {stats.validScatterCount} 条可进入散点图分析</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均播放量</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{formatPlayCount(stats.avgPlay)}</p>
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{formatPlayCount(stats.avgPlay)}</p>
             <p className="mt-1 text-xs text-zinc-500">爆款率 {formatPercent(stats.hitRate)}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均完播率</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">
               {stats.avgCr !== null ? formatPercent(stats.avgCr) : "--"}
             </p>
             <p className="mt-1 text-xs text-zinc-500">高完播样本占比 {formatPercent(stats.highCompletionRate)}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均互动率</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">
               {stats.engagementRate !== null ? formatPercent(stats.engagementRate, 2) : "--"}
             </p>
             <p className="mt-1 text-xs text-zinc-500">均值点赞 {stats.avgLikes.toLocaleString("zh-CN")}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均播放时长</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">
               {stats.avgDur !== null ? `${stats.avgDur.toFixed(1)}秒` : "--"}
             </p>
             <p className="mt-0.5 truncate text-xs text-zinc-500">
@@ -1002,19 +1002,19 @@ export function HitAnalyzer({
                 <div className="grid gap-3 sm:grid-cols-4">
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">播放量</p>
-                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 tabular-nums tracking-tight">{formatPlayCount(leadInsight.play)}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatPlayCount(leadInsight.play)}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">完播率</p>
-                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 tabular-nums tracking-tight">{formatPercent(leadInsight.cr)}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatPercent(leadInsight.cr)}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">总互动</p>
-                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 tabular-nums tracking-tight">{leadInsight.engagement.toLocaleString("zh-CN")}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{leadInsight.engagement.toLocaleString("zh-CN")}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">发布时间</p>
-                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 tabular-nums tracking-tight">{formatDate(leadInsight.published_at) ?? leadInsight.report_date}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatDate(leadInsight.published_at) ?? leadInsight.report_date}</p>
                   </div>
                 </div>
 
@@ -1093,7 +1093,7 @@ export function HitAnalyzer({
                         <p className="text-sm font-semibold">{card.label}</p>
                         <p className="mt-1 text-xs leading-5 opacity-80">{card.description}</p>
                       </div>
-                      <span className="text-[20px] font-semibold tabular-nums">{card.count}</span>
+                      <span className="text-[20px] font-semibold font-mono tabular-nums">{card.count}</span>
                     </div>
                   </div>
                 ))}

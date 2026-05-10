@@ -236,7 +236,7 @@ export function ViolationsReviewList({ cases }: { cases: ViolationReviewCase[] }
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">复核列表</h2>
-        <p className="text-[13px] text-zinc-500">当前列表待复核 <span className="tabular-nums">{pendingCases}</span> 条</p>
+        <p className="text-[13px] text-zinc-500">当前列表待复核 <span className="font-mono tabular-nums">{pendingCases}</span> 条</p>
       </div>
       {cases.map((item) => (
         <ReviewCard key={item.id} item={item} />

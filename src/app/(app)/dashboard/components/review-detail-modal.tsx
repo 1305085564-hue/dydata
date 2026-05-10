@@ -95,7 +95,7 @@ export function ReviewDetailModal({
 
         <div className="space-y-6 p-8">
           {submission.checkpoint === "TOPIC" && (
-            <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50/50 p-5">
+            <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50 p-5">
               <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                 选题内容
               </div>
@@ -107,7 +107,7 @@ export function ReviewDetailModal({
           {submission.checkpoint === "SCRIPT" && (
             <div className="space-y-4">
               {submission.topic_text && (
-                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50/50 p-4">
+                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50 p-4">
                   <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                     选题
                   </div>
@@ -116,7 +116,7 @@ export function ReviewDetailModal({
                   </p>
                 </div>
               )}
-              <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50/50 p-5">
+              <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50 p-5">
                 <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                   脚本文案
                 </div>
@@ -129,7 +129,7 @@ export function ReviewDetailModal({
           {submission.checkpoint === "VIDEO" && (
             <div className="space-y-4">
               {submission.script_text && (
-                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50/50 p-4">
+                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50 p-4">
                   <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                     脚本文案
                   </div>
@@ -158,7 +158,7 @@ export function ReviewDetailModal({
               <div key={d.key} className="space-y-2">
                 <div className="flex items-end justify-between text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                   <span>{d.short}</span>
-                  <span className="tabular-nums text-zinc-800">{scores[d.key]} / 10</span>
+                  <span className="font-mono tabular-nums text-zinc-800">{scores[d.key]} / 10</span>
                 </div>
                 <input
                   type="range"
@@ -198,7 +198,7 @@ export function ReviewDetailModal({
           <textarea
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
-            className="mb-4 h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 text-[12px] text-zinc-600 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+            className="mb-4 h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[12px] text-zinc-600 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
             placeholder="打回时必须填写原因..."
           />
 

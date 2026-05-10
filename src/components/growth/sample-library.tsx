@@ -49,7 +49,7 @@ function 指标块({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-muted/55 px-3 py-2">
       <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">{value}</div>
+      <div className="mt-1 text-sm font-semibold font-mono tabular-nums text-foreground">{value}</div>
     </div>
   )
 }

@@ -223,12 +223,12 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
         <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
           <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
           <span className="text-zinc-500">最强</span>
-          <span className="font-semibold text-zinc-800 tabular-nums">{capabilityCards[strongIndex]?.name}</span>
+          <span className="font-semibold text-zinc-800 font-mono tabular-nums">{capabilityCards[strongIndex]?.name}</span>
         </div>
         <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
           <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
           <span className="text-zinc-500">最弱</span>
-          <span className="font-semibold text-zinc-800 tabular-nums">{capabilityCards[weakIndex]?.name}</span>
+          <span className="font-semibold text-zinc-800 font-mono tabular-nums">{capabilityCards[weakIndex]?.name}</span>
         </div>
       </div>
     </div>

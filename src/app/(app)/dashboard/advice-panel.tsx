@@ -241,7 +241,7 @@ export function AdvicePanel() {
                     <p className="text-[12px] leading-[1.7] text-zinc-500">来源依据：{advice.evidence}</p>
                   ) : null}
                 </div>
-                <span className="text-[11px] tabular-nums text-zinc-400">{advice.created_at.slice(5, 10)}</span>
+                <span className="text-[11px] font-mono tabular-nums text-zinc-400">{advice.created_at.slice(5, 10)}</span>
               </div>
 
               <div className="flex flex-wrap gap-2">

@@ -67,7 +67,7 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
     <div className="space-y-2.5 rounded-xl border border-zinc-200 bg-white p-3">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[13px] font-medium text-zinc-800">{item.指标名}</span>
-        <span className="text-[11px] tabular-nums text-zinc-500">
+        <span className="text-[11px] font-mono tabular-nums text-zinc-500">
           {格式化指标(item.我的值, item.单位, item.精度)} / {" "}
           {格式化指标(item.标杆值, item.单位, item.精度)}
         </span>
@@ -77,7 +77,7 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[11px] text-zinc-500">
             <span>我</span>
-            <span className="tabular-nums">
+            <span className="font-mono tabular-nums">
               {格式化指标(item.我的值, item.单位, item.精度)}
             </span>
           </div>
@@ -92,7 +92,7 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[11px] text-zinc-500">
             <span>标杆</span>
-            <span className="tabular-nums">
+            <span className="font-mono tabular-nums">
               {格式化指标(item.标杆值, item.单位, item.精度)}
             </span>
           </div>

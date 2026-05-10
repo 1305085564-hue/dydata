@@ -71,12 +71,12 @@ function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.35, ease: "easeOut" }}
       whileHover={{ y: -2 }}
-      className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+      className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-zinc-500">{label}</p>
-          <p className="text-[24px] font-semibold tracking-tight text-zinc-800 tabular-nums">{value}</p>
+          <p className="text-[24px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{value}</p>
           <p className="text-xs text-zinc-400">{hint}</p>
         </div>
         <div className={`rounded-xl p-2.5 ${KPI_TONES[tone]}`}>

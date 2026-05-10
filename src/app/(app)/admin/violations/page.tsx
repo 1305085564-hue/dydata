@@ -157,7 +157,7 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
           <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">确认、驳回并沉淀员工提交的违规/非违规话术案例</p>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] shadow-sm">
-          <span className="font-semibold text-zinc-800 tabular-nums">{pendingCount}</span>
+          <span className="font-semibold text-zinc-800 font-mono tabular-nums">{pendingCount}</span>
           <span className="ml-1 text-zinc-500">条待复核</span>
         </div>
       </div>

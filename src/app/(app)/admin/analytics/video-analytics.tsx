@@ -210,17 +210,17 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                   <div className="grid grid-cols-2 gap-3 rounded-2xl bg-muted/35 p-3">
                     <div>
                       <p className="text-xs text-muted-foreground">24h 播放</p>
-                      <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">
+                      <p className="mt-1 text-lg font-semibold tracking-tight font-mono tabular-nums">
                         {formatCompactNumber(video.snapshot24h.play_count)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">互动率</p>
-                      <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">{formatPercent(rate)}</p>
+                      <p className="mt-1 text-lg font-semibold tracking-tight font-mono tabular-nums">{formatPercent(rate)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">涨粉</p>
-                      <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">
+                      <p className="mt-1 text-lg font-semibold tracking-tight font-mono tabular-nums">
                         {formatCompactNumber(video.snapshot24h.follower_gain)}
                       </p>
                     </div>
@@ -307,12 +307,12 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                       </p>
                       <div className="grid grid-cols-2 gap-1.5">
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
-                          <p className="text-[9px] text-muted-foreground">24h播放</p>
-                          <p className="text-[12px] font-medium tabular-nums">{formatCompactNumber(video.snapshot24h.play_count)}</p>
+                          <p className="text-[10px] text-muted-foreground">24h播放</p>
+                          <p className="text-[12px] font-medium font-mono tabular-nums">{formatCompactNumber(video.snapshot24h.play_count)}</p>
                         </div>
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
-                          <p className="text-[9px] text-muted-foreground">涨粉</p>
-                          <p className="text-[12px] font-medium tabular-nums">{formatCompactNumber(video.snapshot24h.follower_gain)}</p>
+                          <p className="text-[10px] text-muted-foreground">涨粉</p>
+                          <p className="text-[12px] font-medium font-mono tabular-nums">{formatCompactNumber(video.snapshot24h.follower_gain)}</p>
                         </div>
                       </div>
                       <p className="truncate text-[10px] text-muted-foreground">{video.accounts?.name} · {video.profiles?.name ?? "未知"}</p>
@@ -340,7 +340,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                     const rate = calculateInteractionRate(video.snapshot24h);
                     return (
                       <TableRow key={video.id}>
-                        <TableCell className="font-medium tabular-nums text-muted-foreground">#{video.rank}</TableCell>
+                        <TableCell className="font-medium font-mono tabular-nums text-muted-foreground">#{video.rank}</TableCell>
                         <TableCell className="max-w-[320px] whitespace-normal">
                           <div className="space-y-1">
                             <p className="line-clamp-2 font-medium tracking-tight text-foreground">
@@ -360,11 +360,11 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                         </TableCell>
                         <TableCell>{video.accounts.name}</TableCell>
                         <TableCell>{video.profiles?.name ?? "未知"}</TableCell>
-                        <TableCell className="text-right font-medium tabular-nums">
+                        <TableCell className="text-right font-medium font-mono tabular-nums">
                           {formatCompactNumber(video.snapshot24h.play_count)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">{formatPercent(rate)}</TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="text-right font-mono tabular-nums">{formatPercent(rate)}</TableCell>
+                        <TableCell className="text-right font-mono tabular-nums">
                           {formatCompactNumber(video.snapshot24h.follower_gain)}
                         </TableCell>
                         <TableCell>

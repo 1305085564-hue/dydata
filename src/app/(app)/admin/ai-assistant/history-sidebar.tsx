@@ -111,10 +111,10 @@ function SidebarContent({
       {/* Header — Claude style */}
       <div className="shrink-0 px-3 pt-3 pb-2">
         <div className="flex items-center justify-between px-1">
-          <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
             History
           </span>
-          <span className="text-[10px] tabular-nums text-zinc-400">{total}</span>
+          <span className="text-[10px] font-mono tabular-nums text-zinc-400">{total}</span>
         </div>
       </div>
 
@@ -173,7 +173,7 @@ function SidebarContent({
                     "group w-full rounded-lg px-2 py-1.5 text-left transition-colors",
                     selected
                       ? "bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] ring-1 ring-zinc-200"
-                      : "hover:bg-white/60"
+                      : "hover:bg-white"
                   )}
                 >
                   <div className="flex items-center gap-1.5">
@@ -186,7 +186,7 @@ function SidebarContent({
                     >
                       {record.description}
                     </span>
-                    <span className="shrink-0 text-[9px] tabular-nums text-zinc-400">
+                    <span className="shrink-0 text-[10px] font-mono tabular-nums text-zinc-400">
                       {timeLabel(record.createdAt)}
                     </span>
                   </div>
@@ -198,7 +198,7 @@ function SidebarContent({
               <button
                 onClick={onLoadMore}
                 disabled={loadingMore}
-                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] text-zinc-400 transition-colors hover:bg-white/60 hover:text-zinc-700 disabled:opacity-50"
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] text-zinc-400 transition-colors hover:bg-white hover:text-zinc-700 disabled:opacity-50"
               >
                 {loadingMore ? (
                   <Skeleton className="h-3 w-12 rounded" />

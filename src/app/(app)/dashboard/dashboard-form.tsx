@@ -218,7 +218,7 @@ export function DashboardForm({
                   </div>
                   <div className="glass-chip">
                     日期
-                    <span className="font-medium tabular-nums text-zinc-800">{existingData?.report_date ?? today}</span>
+                    <span className="font-medium font-mono tabular-nums text-zinc-800">{existingData?.report_date ?? today}</span>
                   </div>
                   <div className="glass-chip">
                     状态

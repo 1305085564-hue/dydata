@@ -261,7 +261,7 @@ export function SubmissionStatus({
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{summary.totalLabel}</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 tabular-nums">
+            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.totalActive} />
             </p>
           </CardContent>
@@ -269,7 +269,7 @@ export function SubmissionStatus({
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#6FAA7D]">已提交</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 tabular-nums">
+            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.submittedCount} />
             </p>
           </CardContent>
@@ -277,7 +277,7 @@ export function SubmissionStatus({
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#D99E55]">待提交</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 tabular-nums">
+            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.unsubmittedCount} />
             </p>
           </CardContent>
@@ -285,7 +285,7 @@ export function SubmissionStatus({
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">提交率</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 tabular-nums">
+            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.submitRate} format={(n) => `${n}%`} />
             </p>
           </CardContent>
@@ -339,7 +339,7 @@ export function SubmissionStatus({
                             {renderRole(row.role)}
                           </Badge>
                         </TableCell>
-                        <TableCell className="tabular-nums">{row.accountCount}</TableCell>
+                        <TableCell className="font-mono tabular-nums">{row.accountCount}</TableCell>
                         <TableCell>
                           <Badge
                             variant={getExemptionBadgeVariant(
@@ -398,7 +398,7 @@ export function SubmissionStatus({
                             <TableCell>
                               <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">{renderRole(row.role)}</Badge>
                             </TableCell>
-                            <TableCell className="tabular-nums">{row.accountCount}</TableCell>
+                            <TableCell className="font-mono tabular-nums">{row.accountCount}</TableCell>
                             <TableCell><Badge variant="success" className="text-xs">{row.statusText}</Badge></TableCell>
                             <TableCell>
                               {row.ownAccounts.length ? (
@@ -435,7 +435,7 @@ export function SubmissionStatus({
                                 {renderRole(row.role)}
                               </Badge>
                             </TableCell>
-                            <TableCell className="tabular-nums">{row.accountCount}</TableCell>
+                            <TableCell className="font-mono tabular-nums">{row.accountCount}</TableCell>
                             <TableCell>
                               <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
                                 {getExemptionBadgeLabel(row.exemption, row.statusText)}

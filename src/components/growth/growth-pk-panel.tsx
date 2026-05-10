@@ -59,10 +59,10 @@ function Row({ row, leftName, rightName }: { row: GrowthPkRow; leftName: string;
       <div className="mt-2 flex justify-between text-[11px] text-zinc-500">
         <span>
           <span className="font-medium text-zinc-800">{leftName}</span>{" "}
-          <span className="tabular-nums">{row.leftText}</span>
+          <span className="font-mono tabular-nums">{row.leftText}</span>
         </span>
         <span>
-          <span className="tabular-nums">{row.rightText}</span>{" "}
+          <span className="font-mono tabular-nums">{row.rightText}</span>{" "}
           <span className="font-medium text-zinc-800">{rightName}</span>
         </span>
       </div>
@@ -88,7 +88,7 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
           </div>
           {total > 0 && (
             <div className="shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-center">
-              <div className="text-[18px] font-medium tabular-nums text-zinc-800">
+              <div className="text-[18px] font-medium font-mono tabular-nums text-zinc-800">
                 {winCount}/{total}
               </div>
               <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">领先</div>

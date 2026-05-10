@@ -50,7 +50,7 @@ export function ConversionCaseCard({ caseItem }: { caseItem: ConversionCase }) {
   return (
     <Link
       href={`/violations/${caseItem.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md]"
+      className="group relative block overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
