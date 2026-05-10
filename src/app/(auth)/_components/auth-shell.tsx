@@ -19,7 +19,16 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative w-full max-w-[440px] overflow-hidden rounded-2xl bg-white px-8 py-10"
       >
-        <div className="absolute left-0 right-0 top-0 h-[2px] bg-[#D97757]" />
+        <motion.div
+          className="absolute right-6 top-6"
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div
+            className="h-[6px] w-[6px] rounded-full bg-[#D97757]"
+            style={{ boxShadow: "0 0 16px 3px rgba(217, 119, 87, 0.55)" }}
+          />
+        </motion.div>
 
         <div className="mb-10 space-y-3 text-center">
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
