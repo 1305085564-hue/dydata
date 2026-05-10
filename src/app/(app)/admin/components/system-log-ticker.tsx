@@ -46,7 +46,7 @@ export function SystemLogTicker({ logs }: SystemLogTickerProps) {
           <span className="font-medium text-zinc-800">{currentLog.profile_name || "系统"}</span>
           <span className="text-zinc-500">{currentLog.action}</span>
           {currentLog.target && <span className="text-zinc-400 truncate max-w-[200px]">({currentLog.target})</span>}
-          <span className="text-[10px] text-zinc-400 ml-2 bg-zinc-100 px-1.5 py-0.5 rounded-[10px] tabular-nums">
+          <span className="text-[10px] text-zinc-400 ml-2 bg-zinc-100 px-1.5 py-0.5 rounded-[10px] font-mono tabular-nums">
             {new Date(currentLog.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>

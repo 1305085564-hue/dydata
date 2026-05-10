@@ -88,7 +88,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
           </div>
           {confirmedAt ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-3 py-1.5 text-xs font-medium text-[#6FAA7D]">
-              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+              <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
               已确认
             </span>
           ) : null}
@@ -123,7 +123,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
                 type="button"
                 onClick={handleConfirm}
                 disabled={confirming || Boolean(confirmedAt)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Check className="size-4" />
                 {confirmedAt ? "已确认" : "一键确认整单"}
@@ -149,7 +149,7 @@ function BucketCard({ bucket, index }: { bucket: DecisionBucket; index: number }
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xl leading-none">{bucket.emoji}</span>
-          <h2 className={`text-[16px] font-semibold ${tone.title}`}>{bucket.label}</h2>
+          <h2 className={`text-[18px] font-medium ${tone.title}`}>{bucket.label}</h2>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone.badge}`}>
             {bucket.entries.length} 条
           </span>
@@ -197,14 +197,14 @@ function EmptyState({
       <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-zinc-50">
         <Inbox className="size-7 text-zinc-400" />
       </div>
-      <h3 className="mt-4 text-[16px] font-semibold text-zinc-800">本周暂无决策草稿</h3>
+      <h3 className="mt-4 text-[18px] font-medium text-zinc-800">本周暂无决策草稿</h3>
       <p className="mx-auto mt-1.5 max-w-md text-xs text-zinc-500">
         周起：{weekStart}。AI 每周草稿接口待后端实现，届时会在此自动生成四类话术候选。
       </p>
       <button
         type="button"
         onClick={onGenerate}
-        className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98]"
+        className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:translate-y-0"
       >
         <Sparkles className="size-4" />
         生成草稿

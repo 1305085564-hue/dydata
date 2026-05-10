@@ -63,28 +63,28 @@ function resultMeta(result?: string) {
       return {
         icon: <CheckCircle2 className="h-3 w-3" />,
         text: "APPROVED",
-        dot: "bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]",
+        dot: "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white",
         text_cls: "text-[#6FAA7D]",
       };
     case "failed":
       return {
         icon: <XCircle className="h-3 w-3" />,
         text: "REJECTED",
-        dot: "bg-[#C9604D] shadow-[0_0_0_3px_rgba(201,96,77,0.15)]",
+        dot: "h-2 w-2 bg-[#C9604D] ring-1 ring-white animate-pulse",
         text_cls: "text-red-700",
       };
     case "cancelled":
       return {
         icon: <AlertTriangle className="h-3 w-3" />,
         text: "ABORTED",
-        dot: "bg-zinc-400",
+        dot: "h-1.5 w-1.5 bg-zinc-200",
         text_cls: "text-zinc-500",
       };
     case "pending_confirm":
       return {
         icon: <Skeleton className="h-3 w-3 rounded-full" />,
         text: "PENDING",
-        dot: "bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)] animate-pulse",
+        dot: "h-2 w-2 bg-[#D97757] ring-1 ring-white",
         text_cls: "text-[#B88448]",
       };
     default:
@@ -115,7 +115,7 @@ function CopyButton({ payload }: { payload: string }) {
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-0.5">
-      <div className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
         {label}
       </div>
       <div className="truncate text-[12px] font-medium text-zinc-800">{value}</div>
@@ -155,13 +155,13 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
 
   return (
     <Dialog open={!!id} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-0 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.12)]">
+      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-0 shadow-sm">
         <DialogHeader className="relative shrink-0 border-b border-zinc-200 bg-white px-6 pb-4 pt-5">
-          <div className="absolute left-0 top-0 h-full w-[3px] bg-zinc-950" />
+          <div className="absolute left-0 top-0 h-full w-[3px] bg-zinc-300" />
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
                   Action Record
                 </span>
                 {detail?.id && (
@@ -176,10 +176,10 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
             </div>
             {detail?.result && (
               <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#FAFAFB] px-2.5 py-1">
-                <span className={cn("inline-flex h-1.5 w-1.5 rounded-full", status.dot)} />
+                <span className={cn("inline-flex rounded-full", status.dot)} />
                 <span
                   className={cn(
-                    "text-[9px] font-semibold uppercase tracking-[0.25em]",
+                    "text-[10px] font-semibold uppercase tracking-[0.25em]",
                     status.text_cls
                   )}
                 >
@@ -217,7 +217,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                 <div className="relative overflow-hidden rounded-2xl border border-red-100 bg-[#FEF9F9] p-4">
                   <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
                   <div className="pl-2">
-                    <div className="text-[9px] font-semibold uppercase tracking-[0.25em] text-red-700">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-red-700">
                       System Error
                     </div>
                     <div className="mt-1.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-red-900/80">
@@ -230,7 +230,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               {/* AI Reasoning */}
               {detail.aiReasoning && (
                 <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-                  <div className="mb-2 text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
                     AI Reasoning
                   </div>
                   <div className="whitespace-pre-wrap text-[12.5px] italic leading-relaxed text-zinc-600">
@@ -243,11 +243,11 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               {(detail.toolParams || detail.backupSql) && actorRole === "owner" && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-1">
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
                       Owner Debug
                     </span>
                     <div className="h-px flex-1 bg-zinc-200" />
-                    <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-300">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-300">
                       Restricted
                     </span>
                   </div>

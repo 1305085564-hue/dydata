@@ -49,7 +49,7 @@ function 指标块({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-muted/55 px-3 py-2">
       <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm font-semibold tabular-nums text-foreground">{value}</div>
+      <div className="mt-1 text-sm font-semibold font-mono tabular-nums text-foreground">{value}</div>
     </div>
   )
 }
@@ -91,7 +91,7 @@ function 样本卡({
             </div>
 
             <div className="space-y-1.5">
-              <h3 className="line-clamp-2 text-sm font-semibold leading-6 text-foreground sm:text-[15px]">
+              <h3 className="line-clamp-2 text-[14px] font-medium leading-6 text-foreground">
                 {sample.视频标题}
               </h3>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
@@ -166,7 +166,7 @@ export function SampleLibrary({
       <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5">
-            <h2 className="text-[15px] font-semibold text-zinc-800 sm:text-base">学习样本库</h2>
+            <h2 className="text-[18px] font-medium text-zinc-800">学习样本库</h2>
             <p className="text-sm leading-6 text-zinc-500">
               把标杆样本和你自己的历史最佳放到同一个观察面板里，先抄最弱指标对应的动作。
             </p>

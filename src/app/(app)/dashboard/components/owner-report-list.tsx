@@ -26,7 +26,6 @@ type GroupRecord = {
 
 /**
  * 组长日报一览（owner 视角）
- * 法典 V1：彩色文字 + 状态点替代彩色背景；无 font-black
  */
 export function OwnerReportList({ today }: OwnerReportListProps) {
   const [groups, setGroups] = useState<GroupRecord[]>([]);
@@ -72,14 +71,14 @@ export function OwnerReportList({ today }: OwnerReportListProps) {
         : "text-[#C9604D]";
   const statusDot = (status: string) =>
     status === "SUBMITTED"
-      ? "bg-[#6FAA7D]"
+      ? "bg-[#6FAA7D] ring-1 ring-white"
       : status === "DRAFT"
-        ? "bg-[#D99E55]"
-        : "bg-[#C9604D]";
+        ? "bg-[#D99E55] ring-1 ring-white"
+        : "bg-[#C9604D] ring-1 ring-white";
 
   return (
     <div className="space-y-4">
-      <h3 className="text-[16px] font-semibold tracking-tight text-zinc-900">
+      <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
         组长日报一览
       </h3>
       {groups.map((g) => (
@@ -89,10 +88,10 @@ export function OwnerReportList({ today }: OwnerReportListProps) {
         >
           <button
             onClick={() => toggle(g.groupId)}
-            className="flex w-full items-center justify-between p-5 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="flex w-full items-center justify-between p-5 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             <div>
-              <span className="text-[13px] font-semibold text-zinc-900">
+              <span className="text-[13px] font-semibold text-zinc-800">
                 {g.groupName}
               </span>
               {g.leaderName && (
@@ -102,7 +101,7 @@ export function OwnerReportList({ today }: OwnerReportListProps) {
             <div className="flex items-center gap-3">
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/50 px-2 py-0.5 text-[10px] font-medium",
+                  "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium",
                   statusColor(g.status),
                 )}
               >

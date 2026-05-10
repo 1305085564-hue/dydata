@@ -53,15 +53,15 @@ export function getHistoryErrorMessage(errorMessage: string) {
 function dotColor(result: string) {
   switch (result) {
     case "success":
-      return "bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]";
+      return "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white";
     case "failed":
-      return "bg-[#C9604D] shadow-[0_0_0_3px_rgba(201,96,77,0.15)]";
+      return "h-2 w-2 bg-[#C9604D] ring-1 ring-white animate-pulse";
     case "cancelled":
-      return "bg-zinc-300";
+      return "h-1.5 w-1.5 bg-zinc-200";
     case "pending_confirm":
-      return "bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)] animate-pulse";
+      return "h-2 w-2 bg-[#D97757] ring-1 ring-white";
     default:
-      return "bg-zinc-300";
+      return "h-1.5 w-1.5 bg-zinc-200";
   }
 }
 
@@ -111,10 +111,10 @@ function SidebarContent({
       {/* Header — Claude style */}
       <div className="shrink-0 px-3 pt-3 pb-2">
         <div className="flex items-center justify-between px-1">
-          <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
             History
           </span>
-          <span className="text-[10px] tabular-nums text-zinc-400">{total}</span>
+          <span className="text-[10px] font-mono tabular-nums text-zinc-400">{total}</span>
         </div>
       </div>
 
@@ -173,11 +173,11 @@ function SidebarContent({
                     "group w-full rounded-lg px-2 py-1.5 text-left transition-colors",
                     selected
                       ? "bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] ring-1 ring-zinc-200"
-                      : "hover:bg-white/60"
+                      : "hover:bg-white"
                   )}
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className={cn("h-1 w-1 shrink-0 rounded-full", dotColor(record.result))} />
+                    <span className={cn("shrink-0 rounded-full", dotColor(record.result))} />
                     <span
                       className={cn(
                         "flex-1 truncate text-[11.5px] leading-tight tracking-tight",
@@ -186,7 +186,7 @@ function SidebarContent({
                     >
                       {record.description}
                     </span>
-                    <span className="shrink-0 text-[9px] tabular-nums text-zinc-400">
+                    <span className="shrink-0 text-[10px] font-mono tabular-nums text-zinc-400">
                       {timeLabel(record.createdAt)}
                     </span>
                   </div>
@@ -198,7 +198,7 @@ function SidebarContent({
               <button
                 onClick={onLoadMore}
                 disabled={loadingMore}
-                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] text-zinc-400 transition-colors hover:bg-white/60 hover:text-zinc-700 disabled:opacity-50"
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] text-zinc-400 transition-colors hover:bg-white hover:text-zinc-700 disabled:opacity-50"
               >
                 {loadingMore ? (
                   <Skeleton className="h-3 w-12 rounded" />

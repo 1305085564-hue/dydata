@@ -33,11 +33,11 @@ export function AlertCenter({
 
   return (
     <div className="mx-auto mb-6 max-w-6xl">
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white shadow-sm">
         <button
           type="button"
           onClick={onToggleExpanded}
-          className="flex w-full items-center justify-between gap-4 bg-zinc-50/50 px-4 py-3 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100/70 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+          className="flex w-full items-center justify-between gap-4 bg-zinc-50 px-4 py-3 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           aria-expanded={expanded}
         >
           <div className="flex min-w-0 items-center gap-2">
@@ -50,7 +50,7 @@ export function AlertCenter({
             </span>
             {criticalUserCount > 0 && (
               <span className="hidden items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-[#C9604D] sm:inline-flex">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#C9604D]" />
+                <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
                 {criticalUserCount} 人严重
               </span>
             )}
@@ -79,26 +79,26 @@ export function AlertCenter({
                     aria-expanded={userExpanded}
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-[13px] font-semibold text-zinc-900">
+                      <div className="truncate text-[13px] font-semibold text-zinc-800">
                         {group.userName}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-1.5">
                         {group.criticalCount > 0 && (
-                          <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50/50 px-2 py-0.5 text-[10px] font-medium text-[#C9604D]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#C9604D]" />
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-[#C9604D]">
+                            <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
                             严重 {group.criticalCount}
                           </span>
                         )}
                         {group.warningCount > 0 && (
-                          <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50/50 px-2 py-0.5 text-[10px] font-medium text-[#D99E55]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55]" />
+                          <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-[#D99E55]">
+                            <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                             提醒 {group.warningCount}
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[11px] font-medium text-white">
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 ring-1 ring-zinc-200">
                         {group.count} 项
                       </span>
                       {userExpanded ? (
@@ -110,7 +110,7 @@ export function AlertCenter({
                   </button>
 
                   {userExpanded && (
-                    <div className="space-y-2 bg-zinc-50/50 px-4 pb-4">
+                    <div className="space-y-2 bg-zinc-50 px-4 pb-4">
                       {group.alerts.map((alert) => (
                         <div
                           key={alert.id}
@@ -121,7 +121,7 @@ export function AlertCenter({
                               {alert.checkpointLabel && (
                                 <span
                                   className={cn(
-                                    "inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50/50 px-1.5 py-0.5 text-[10px] font-medium",
+                                    "inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium",
                                     severityTone(alert.severity),
                                   )}
                                 >

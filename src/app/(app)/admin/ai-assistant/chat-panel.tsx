@@ -146,11 +146,8 @@ function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "result") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D] opacity-30" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D] shadow-[0_0_0_3px_rgba(111,170,125,0.15)]" />
-        </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#6FAA7D]">
+        <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6FAA7D]">
           Approved
         </span>
       </span>
@@ -159,11 +156,8 @@ function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "error") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C9604D] opacity-50" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-600 shadow-[0_0_0_3px_rgba(220,38,38,0.08)]" />
-        </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-red-700">
+        <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-700">
           Rejected
         </span>
       </span>
@@ -172,11 +166,8 @@ function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "confirmation") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D99E55] opacity-60" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)]" />
-        </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
+        <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
           Pending
         </span>
       </span>
@@ -184,8 +175,8 @@ function StatusDot({ type }: { type: Message["type"] }) {
   }
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="inline-flex h-1.5 w-1.5 rounded-full bg-zinc-300" />
-      <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+      <span className="inline-flex h-1.5 w-1.5 rounded-full bg-zinc-200" />
+      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
         Answered
       </span>
     </span>
@@ -336,7 +327,7 @@ export default function ChatPanel({
               {/* Hero */}
               <div className="mb-10 flex flex-col items-center text-center">
                 <div className="relative mb-6 flex h-14 w-14 items-center justify-center">
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-700 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.3)]" />
+                  <div className="absolute inset-0 rounded-2xl bg-zinc-800 shadow-sm" />
                   <Sparkles className="relative h-6 w-6 text-white" strokeWidth={1.75} />
                 </div>
                 <h1 className="text-[24px] font-semibold leading-tight tracking-tight text-zinc-800">
@@ -383,14 +374,14 @@ export default function ChatPanel({
               {/* Tiny command hint */}
               <div className="mt-8 flex items-center justify-center gap-4 text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[9px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                     Enter
                   </kbd>
                   <span>发送</span>
                 </span>
                 <span className="h-3 w-px bg-zinc-200" />
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[9px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                  <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-medium text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                     ⇧ Enter
                   </kbd>
                   <span>换行</span>
@@ -411,7 +402,7 @@ export default function ChatPanel({
                       key={msg.id}
                       className="flex justify-end animate-in fade-in slide-in-from-bottom-1 duration-300"
                     >
-                      <div className="max-w-[82%] rounded-[14px] rounded-tr-[4px] bg-zinc-950 px-4 py-3 text-[14px] leading-[1.7] text-zinc-50 shadow-[0_2px_6px_-2px_rgba(0,0,0,0.25)]">
+                      <div className="max-w-[82%] rounded-[14px] rounded-tr-[4px] bg-zinc-950 px-4 py-3 text-[14px] leading-[1.7] text-zinc-50 shadow-sm">
                         <p className="whitespace-pre-wrap tracking-[0.005em]">
                           {msg.content}
                         </p>
@@ -428,7 +419,7 @@ export default function ChatPanel({
                   >
                     {/* Meta line */}
                     <div className="mb-2 flex items-center gap-2.5">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-800">
                         <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2} />
                       </div>
                       <span className="text-[11px] font-semibold tracking-tight text-zinc-800">
@@ -501,7 +492,7 @@ export default function ChatPanel({
               {/* Loading */}
               {loading && (
                 <div className="flex items-center gap-2.5 animate-in fade-in duration-200">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-950">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-zinc-800">
                     <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2} />
                   </div>
                   <div className="flex items-center gap-1.5 px-0.5">
@@ -551,7 +542,7 @@ export default function ChatPanel({
                 "mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors",
                 !canSend
                   ? "bg-zinc-100 text-zinc-400"
-                  : "bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
+                  : "bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
               )}
             >
               {loading ? (
@@ -582,7 +573,7 @@ export default function ChatPanel({
                 <Command className="h-2.5 w-2.5" />
                 快捷键
               </span>
-              <span className="tabular-nums normal-case tracking-normal text-zinc-300">
+              <span className="font-mono tabular-nums normal-case tracking-normal text-zinc-300">
                 {input.length}
               </span>
             </div>

@@ -111,7 +111,7 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
             <select
               id="teamId"
               name="teamId"
-              className="flex h-8 w-full rounded-lg border border-transparent bg-zinc-100/70 px-3 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+              className="flex h-8 w-full rounded-lg border border-transparent bg-zinc-50 px-3 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               defaultValue={teams[0]?.id ?? ""}
               required
             >

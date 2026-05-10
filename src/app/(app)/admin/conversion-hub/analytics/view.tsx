@@ -101,7 +101,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-[16px] font-semibold text-zinc-800">TOP 20 话术排行榜</h2>
+            <h2 className="text-[18px] font-medium text-zinc-800">TOP 20 话术排行榜</h2>
             <p className="mt-0.5 text-xs text-zinc-500">
               转化话术，使用 ≥3 且展示 ≥1k
             </p>
@@ -118,13 +118,13 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                   href={buildHref(opt.value, format)}
                   scroll={false}
                   className={`relative rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    active ? "text-white" : "text-zinc-600 hover:text-zinc-800"
+                    active ? "text-zinc-800" : "text-zinc-600 hover:text-zinc-800"
                   }`}
                 >
                   {active && (
                     <motion.span
                       layoutId="sort-active"
-                      className="absolute inset-0 rounded-full bg-zinc-950"
+                      className="absolute inset-0 rounded-full bg-white shadow-sm"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
@@ -183,7 +183,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.2, delay: Math.min(idx * 0.02, 0.2) }}
-                        className="text-zinc-700 transition-colors hover:bg-zinc-50/60"
+                        className="text-zinc-700 transition-colors hover:bg-zinc-50"
                       >
                         <td className="border-b border-zinc-100 px-3 py-3">
                           <span className="font-semibold text-zinc-500">
@@ -206,16 +206,16 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                             {FORMAT_LABEL[row.script_format]}
                           </span>
                         </td>
-                        <td className="border-b border-zinc-100 px-3 py-3 text-right tabular-nums">
+                        <td className="border-b border-zinc-100 px-3 py-3 text-right font-mono tabular-nums">
                           {row.usage_count}
                         </td>
-                        <td className="border-b border-zinc-100 px-3 py-3 text-right tabular-nums">
+                        <td className="border-b border-zinc-100 px-3 py-3 text-right font-mono tabular-nums">
                           {formatNumber(row.total_views)}
                         </td>
-                        <td className="border-b border-zinc-100 px-3 py-3 text-right tabular-nums">
+                        <td className="border-b border-zinc-100 px-3 py-3 text-right font-mono tabular-nums">
                           {formatNumber(row.total_follows)}
                         </td>
-                        <td className="border-b border-zinc-100 px-3 py-3 text-right font-semibold tabular-nums text-[#6FAA7D]">
+                        <td className="border-b border-zinc-100 px-3 py-3 text-right font-semibold font-mono tabular-nums text-[#6FAA7D]">
                           {formatRate(row.weighted_conversion_rate)}
                         </td>
                       </motion.tr>
@@ -236,7 +236,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
       >
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-[16px] font-semibold text-zinc-800">近 7 日违规事件趋势</h2>
+            <h2 className="text-[18px] font-medium text-zinc-800">近 7 日违规事件趋势</h2>
             <p className="mt-0.5 text-xs text-zinc-500">数字化展示每日违规事件数量</p>
           </div>
         </div>
@@ -261,7 +261,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
                   {formatDayShort(day.date)}
                 </p>
                 <p
-                  className={`mt-2 text-[20px] font-semibold tabular-nums ${
+                  className={`mt-2 text-[20px] font-semibold font-mono tabular-nums ${
                     alert ? "text-[#C9604D]" : "text-zinc-800"
                   }`}
                 >

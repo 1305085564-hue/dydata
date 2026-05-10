@@ -62,7 +62,7 @@ export function RewriteWorkbench() {
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
             System Error
           </p>
-          <h3 className="mt-2 text-[15px] font-semibold tracking-tight text-zinc-800">
+          <h3 className="mt-2 text-[18px] font-medium tracking-tight text-zinc-800">
             {state.errorState.title}
           </h3>
           <p className="mt-1.5 text-[13px] leading-[1.7] text-zinc-500">
@@ -111,7 +111,7 @@ export function RewriteWorkbench() {
           </button>
           <div className="flex items-center gap-2 px-1">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
             </span>
             <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
               Rewrite Studio

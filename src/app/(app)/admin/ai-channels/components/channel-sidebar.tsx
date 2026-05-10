@@ -39,7 +39,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                   className={cn(
                     "group relative flex w-full items-center justify-between overflow-hidden rounded-xl px-3 py-3 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isSelected
-                      ? "bg-zinc-800 text-white shadow-sm"
+                      ? "bg-white border border-[#D97757]/40 text-zinc-800 shadow-sm"
                       : "hover:bg-zinc-50 text-zinc-500"
                   )}
                 >
@@ -50,13 +50,13 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                     <StatusIndicator status={status} />
                     <span className={cn(
                       "truncate text-[13px] font-medium transition-colors duration-150",
-                      isSelected ? "text-white" : "text-zinc-800 group-hover:text-zinc-800"
+                      isSelected ? "text-zinc-800" : "text-zinc-800 group-hover:text-zinc-800"
                     )}>
                       {channel.name}
                     </span>
                   </button>
                   {isSelected && (
-                    <div className="absolute inset-y-0 left-0 w-1 bg-white/40 rounded-r-full" />
+                    <div className="absolute inset-y-0 left-0 w-[2px] bg-[#D97757] rounded-r-full" />
                   )}
                 </div>
               );
@@ -69,7 +69,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
         <Button
           onClick={onAddClick}
           variant="default"
-          className="w-full justify-start gap-2 rounded-xl bg-zinc-800 text-white hover:bg-zinc-700"
+          className="w-full justify-start gap-2 rounded-xl bg-white border border-zinc-200 text-zinc-800 hover:bg-zinc-50"
         >
           <Plus className="size-4 stroke-[1.5]" />
           添加渠道
@@ -81,17 +81,17 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
 
 function StatusIndicator({ status }: { status: "healthy" | "circuit" | "disabled" }) {
   if (status === "healthy") {
-    return <div className="size-2 shrink-0 rounded-full bg-[#6FAA7D]" title="健康" />;
+    return <div className="h-2 w-2 shrink-0 rounded-full bg-[#6FAA7D] ring-1 ring-white" title="健康" />;
   }
   if (status === "circuit") {
-    return <div className="size-2 shrink-0 rounded-full bg-[#C9604D]" title="熔断中" />;
+    return <div className="h-2 w-2 shrink-0 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" title="熔断中" />;
   }
-  return <div className="size-2 shrink-0 rounded-full bg-zinc-400" title="已禁用" />;
+  return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-200" title="已禁用" />;
 }
 
 function Badge({ count }: { count: number }) {
   return (
-    <span className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-2 py-0.5 text-[12px] font-medium tabular-nums text-zinc-700">
+    <span className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-2 py-0.5 text-[12px] font-medium font-mono tabular-nums text-zinc-700">
       {count}
     </span>
   );

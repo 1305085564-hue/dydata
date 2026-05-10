@@ -41,7 +41,7 @@ export function StatusCardGrid({ items }: { items: StatusCardItem[] }) {
             <div className="flex h-full flex-col justify-between gap-3">
               <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">{item.label}</p>
               <div className="flex items-end justify-between gap-2">
-                <div className="whitespace-nowrap text-[20px] font-semibold leading-none tabular-nums tracking-tight text-zinc-800 sm:text-[24px]">
+                <div className="whitespace-nowrap text-[20px] font-semibold leading-none font-mono tabular-nums tracking-tight text-zinc-800 sm:text-[24px]">
                   <StatusValue item={item} />
                 </div>
                 <Delta item={item} />

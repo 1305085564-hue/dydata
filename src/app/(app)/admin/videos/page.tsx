@@ -37,14 +37,14 @@ export default async function AdminVideosPage() {
         {metrics.map((m) => (
           <div key={m.label} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{m.label}</p>
-            <p className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{m.value}</p>
+            <p className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{m.value}</p>
             <p className="mt-2 text-[12px] leading-[1.7] text-zinc-400">{m.hint}</p>
           </div>
         ))}
       </div>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">视频列表</h2>
+        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">视频列表</h2>
         <div className="mt-4">
           <VideoList
             videos={data.videos}

@@ -107,7 +107,7 @@ export function AnalyticsSections({
                 <div className="flex items-center gap-4">
                   <div
                     className={cn(
-                      "flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-[13px] font-medium text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] tabular-nums",
+                      "flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-[13px] font-medium text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] font-mono tabular-nums",
                       isExpanded && "bg-zinc-100 text-zinc-800",
                     )}
                   >

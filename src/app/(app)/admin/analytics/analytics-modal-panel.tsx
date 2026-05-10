@@ -118,7 +118,7 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">当前周期</p>
-          <p className="mt-2 text-[16px] font-semibold text-zinc-800 tabular-nums">
+          <p className="mt-2 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">
             {data.range.from} 至 {data.range.to}
           </p>
           <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">
@@ -140,7 +140,7 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
                   variant={preset === option.value ? "default" : "outline"}
                   className={cn(
                     "h-8 rounded-[10px] px-4 text-[12px]",
-                    preset === option.value ? "bg-zinc-800 text-white" : "border-zinc-200",
+                    preset === option.value ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60" : "border-zinc-200",
                   )}
                   onClick={() => setPreset(option.value)}
                 >

@@ -162,15 +162,15 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
                         <div className="mt-4 grid gap-3 sm:grid-cols-3">
                           <div>
                             <div className="text-xs text-zinc-500">历史平均播放</div>
-                            <div className="mt-1 text-sm font-medium text-zinc-800 tabular-nums">{formatPlayCount(slot.avgPlayCount)}</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-800 font-mono tabular-nums">{formatPlayCount(slot.avgPlayCount)}</div>
                           </div>
                           <div>
                             <div className="text-xs text-zinc-500">爆款率</div>
-                            <div className="mt-1 text-sm font-medium text-zinc-800 tabular-nums">{formatRatio(slot.hitRate)}</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-800 font-mono tabular-nums">{formatRatio(slot.hitRate)}</div>
                           </div>
                           <div>
                             <div className="text-xs text-zinc-500">样本数</div>
-                            <div className="mt-1 text-sm font-medium text-zinc-800 tabular-nums">{slot.sampleCount}</div>
+                            <div className="mt-1 text-sm font-medium text-zinc-800 font-mono tabular-nums">{slot.sampleCount}</div>
                           </div>
                         </div>
                       </div>

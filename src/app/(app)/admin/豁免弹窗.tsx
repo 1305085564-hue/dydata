@@ -207,7 +207,7 @@ export function ExemptionDialog({
               }
               disabled={isPending}
             >
-              <SelectTrigger className="w-full rounded-lg border-transparent bg-zinc-100/70 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+              <SelectTrigger className="w-full rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                 <SelectValue>
                   {CATEGORY_LABELS[formValues.category]}
                 </SelectValue>
@@ -226,7 +226,7 @@ export function ExemptionDialog({
               onValueChange={handleModeChange}
               disabled={isPending}
             >
-              <SelectTrigger className="w-full rounded-lg border-transparent bg-zinc-100/70 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+              <SelectTrigger className="w-full rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                 <SelectValue>{MODE_LABELS[formValues.mode]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -246,7 +246,7 @@ export function ExemptionDialog({
                 value={formValues.date ?? fallbackYesterday}
                 onChange={(e) => updateField("date", e.target.value)}
                 disabled={isPending}
-                className="rounded-lg border-transparent bg-zinc-100/70 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
               />
             </div>
           )}
@@ -260,7 +260,7 @@ export function ExemptionDialog({
                   value={formValues.startDate ?? ""}
                   onChange={(e) => updateField("startDate", e.target.value)}
                   disabled={isPending}
-                  className="rounded-lg border-transparent bg-zinc-100/70 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-2">
@@ -270,7 +270,7 @@ export function ExemptionDialog({
                   value={formValues.endDate ?? ""}
                   onChange={(e) => updateField("endDate", e.target.value)}
                   disabled={isPending}
-                  className="rounded-lg border-transparent bg-zinc-100/70 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
             </div>
@@ -283,7 +283,7 @@ export function ExemptionDialog({
               onChange={(e) => updateField("reason", e.target.value)}
               disabled={isPending}
               rows={3}
-              className="flex min-h-20 w-full rounded-lg border border-transparent bg-zinc-100/70 px-3 py-2 text-[13px] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:opacity-50"
+              className="flex min-h-20 w-full rounded-lg border border-transparent bg-zinc-50 px-3 py-2 text-[13px] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:opacity-50"
               placeholder="可选，建议写明原因"
             />
           </div>
@@ -314,7 +314,7 @@ export function ExemptionDialog({
             <Button
               onClick={handleSaveClick}
               disabled={isPending}
-              className="rounded-[10px] bg-zinc-950 text-white hover:bg-zinc-800"
+              className="rounded-[10px] bg-[#D97757] text-white hover:bg-[#C96442]"
             >
               保存
             </Button>

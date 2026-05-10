@@ -82,12 +82,12 @@ export function ReviewDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-zinc-100 px-8 py-5">
-          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-800">
             {checkpointLabel(submission.checkpoint as SopCheckpoint)}审核
           </h3>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="rounded-md p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             <X size={18} className="stroke-[1.5]" />
           </button>
@@ -95,7 +95,7 @@ export function ReviewDetailModal({
 
         <div className="space-y-6 p-8">
           {submission.checkpoint === "TOPIC" && (
-            <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50/50 p-5">
+            <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50 p-5">
               <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                 选题内容
               </div>
@@ -107,7 +107,7 @@ export function ReviewDetailModal({
           {submission.checkpoint === "SCRIPT" && (
             <div className="space-y-4">
               {submission.topic_text && (
-                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50/50 p-4">
+                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50 p-4">
                   <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                     选题
                   </div>
@@ -116,7 +116,7 @@ export function ReviewDetailModal({
                   </p>
                 </div>
               )}
-              <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50/50 p-5">
+              <div className="rounded-r-xl border-l-2 border-zinc-900 bg-zinc-50 p-5">
                 <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                   脚本文案
                 </div>
@@ -129,7 +129,7 @@ export function ReviewDetailModal({
           {submission.checkpoint === "VIDEO" && (
             <div className="space-y-4">
               {submission.script_text && (
-                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50/50 p-4">
+                <div className="rounded-r-xl border-l-2 border-zinc-300 bg-zinc-50 p-4">
                   <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                     脚本文案
                   </div>
@@ -143,7 +143,7 @@ export function ReviewDetailModal({
                   href={submission.video_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-[10px] bg-zinc-900 px-5 py-3 text-[13px] font-medium text-white shadow-sm transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                  className="inline-flex items-center gap-2 rounded-[10px] border border-zinc-200 bg-white px-5 py-3 text-[13px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                 >
                   打开视频链接 <ArrowUpRight size={14} className="stroke-[1.5]" />
                 </a>
@@ -158,7 +158,7 @@ export function ReviewDetailModal({
               <div key={d.key} className="space-y-2">
                 <div className="flex items-end justify-between text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                   <span>{d.short}</span>
-                  <span className="tabular-nums text-zinc-900">{scores[d.key]} / 10</span>
+                  <span className="font-mono tabular-nums text-zinc-800">{scores[d.key]} / 10</span>
                 </div>
                 <input
                   type="range"
@@ -188,7 +188,7 @@ export function ReviewDetailModal({
                     CTA: s,
                   })
                 }
-                className="rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-900 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                className="rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               >
                 一键 {s} 分
               </button>
@@ -198,7 +198,7 @@ export function ReviewDetailModal({
           <textarea
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
-            className="mb-4 h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 text-[12px] text-zinc-600 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+            className="mb-4 h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[12px] text-zinc-600 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
             placeholder="打回时必须填写原因..."
           />
 
@@ -213,7 +213,7 @@ export function ReviewDetailModal({
             <button
               onClick={() => submit(false)}
               disabled={isReviewing}
-              className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium uppercase text-white shadow-sm transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+              className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium uppercase text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
             >
               通过
             </button>

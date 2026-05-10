@@ -134,7 +134,7 @@ export function ScriptBreakdown({
                       {segment.label}
                     </Badge>
                     {segment.startSec !== undefined || segment.endSec !== undefined ? (
-                      <span className="text-[11px] tabular-nums text-zinc-500">
+                      <span className="text-[11px] font-mono tabular-nums text-zinc-500">
                         {segment.startSec ?? 0}s - {segment.endSec ?? "--"}s
                       </span>
                     ) : null}

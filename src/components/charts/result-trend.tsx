@@ -139,7 +139,7 @@ function ResultTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-[16px] border border-white/70 bg-[var(--glass-bg)] px-3 py-2.5 shadow-[var(--shadow-toast)]"
+      className="min-w-40 rounded-[16px] border border-zinc-200 bg-white px-3 py-2.5 shadow-[var(--shadow-toast)]"
     >
       <p className="text-[11px] font-medium tracking-[0.01em] text-foreground/70">{label}</p>
       <div className="mt-2 space-y-1.5">
@@ -148,7 +148,7 @@ function ResultTooltip({
           const showTrend = item.dataKey === personalLabel && isPositive != null;
 
           return (
-            <div key={item.dataKey} className="flex items-center justify-between gap-3 text-xs tabular-nums">
+            <div key={item.dataKey} className="flex items-center justify-between gap-3 text-xs font-mono tabular-nums">
               <span className="flex items-center gap-2 text-foreground/70">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
                 {item.name}
@@ -202,7 +202,7 @@ export function ResultTrend({
     <section className="glass-card-static p-4 sm:p-5">
       <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-[15px] font-semibold tracking-tight text-foreground">结果趋势</h3>
+          <h3 className="text-[18px] font-medium tracking-tight text-foreground">结果趋势</h3>
           <p className="text-xs text-muted-foreground">{activeMetric.label}对比团队 P70，保留最近 {range} 天，并优先展示趋势方向。</p>
         </div>
         <div className="flex flex-col gap-1.5 sm:items-end">

@@ -642,7 +642,7 @@ export function VideoSubmitPanel({
                       className="group inline-flex items-center gap-2 rounded-lg px-0 py-1 text-left transition-opacity duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80"
                       aria-label="选择填报日期"
                     >
-                      <span className="text-[26px] font-semibold tabular-nums tracking-tight text-[#D97757] sm:text-[30px]">
+                      <span className="text-[26px] font-semibold font-mono tabular-nums tracking-tight text-[#D97757] sm:text-[30px]">
                         {activeBizDate}
                       </span>
                       <CalendarDays className="size-5 stroke-[1.5] text-[#D97757] transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:-translate-y-0.5" />
@@ -702,7 +702,7 @@ export function VideoSubmitPanel({
                       </span>
                     </div>
                     <div className="space-y-1.5">
-                      <div className="text-[17px] font-semibold text-zinc-800 sm:text-[18px]">
+                      <div className="text-[18px] font-medium text-zinc-800">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
                       <div className="text-[12px] leading-[1.7] text-zinc-500">
@@ -714,11 +714,11 @@ export function VideoSubmitPanel({
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
                         <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">播放量</div>
-                        <div className="mt-1 text-[13px] font-semibold tabular-nums text-zinc-800">{primarySummary.playCount ?? "--"}</div>
+                        <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.playCount ?? "--"}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
                         <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">互动总量</div>
-                        <div className="mt-1 text-[13px] font-semibold tabular-nums text-zinc-800">
+                        <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">
                           {(primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
                             (primarySummary.shares ?? 0) +
@@ -727,11 +727,11 @@ export function VideoSubmitPanel({
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
                         <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">涨粉</div>
-                        <div className="mt-1 text-[13px] font-semibold tabular-nums text-zinc-800">{primarySummary.followerGain ?? "--"}</div>
+                        <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.followerGain ?? "--"}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
                         <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">完播率</div>
-                        <div className="mt-1 text-[13px] font-semibold tabular-nums text-zinc-800">{primarySummary.completionRate ?? "--"}</div>
+                        <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.completionRate ?? "--"}</div>
                       </div>
                     </div>
                   </div>
@@ -778,8 +778,8 @@ export function VideoSubmitPanel({
                 className={cn(
                   "rounded-2xl border p-4 text-[13px] sm:p-5",
                   activeDateStatus.state === "waive"
-                    ? "border-zinc-200 bg-white text-zinc-800"
-                    : "border-zinc-200 bg-[#FAFAFB] text-zinc-800",
+                    ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white text-zinc-800"
+                    : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-[#FAFAFB] text-zinc-800",
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -789,7 +789,7 @@ export function VideoSubmitPanel({
                       {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                     </span>
                     <div className="space-y-1">
-                      <div className="text-[17px] font-semibold text-zinc-800 sm:text-[18px]">
+                      <div className="text-[18px] font-medium text-zinc-800">
                         {activeBizDate} 已标记为{activeDateStatus.label}
                       </div>
                       <p className="text-[13px] leading-[1.7] text-zinc-500">
@@ -898,7 +898,7 @@ export function VideoSubmitPanel({
                         <p className="text-[12px] text-zinc-500">
                           {accounts.find((account) => account.id === activeDateReport.account_id)?.display_name ?? "当前账号"}
                         </p>
-                        <h4 className="text-[16px] font-semibold text-zinc-800">
+                        <h4 className="text-[18px] font-medium text-zinc-800">
                           {activeDateReport.title?.trim() || "未填写视频标题"}
                         </h4>
                         <p className="mt-1 text-[12px] text-zinc-400">
@@ -909,13 +909,13 @@ export function VideoSubmitPanel({
                       <div className={getDashboardMetricGridClass("secondary")}>
                         <div className="dashboard-metric-card">
                           <div className="text-[12px] text-zinc-400">播放量</div>
-                          <div className="text-[13px] font-semibold text-zinc-800 tabular-nums">
+                          <div className="text-[13px] font-semibold text-zinc-800 font-mono tabular-nums">
                             {activeDateReport.play_count?.toLocaleString("zh-CN") ?? "--"}
                           </div>
                         </div>
                         <div className="dashboard-metric-card">
                           <div className="text-[12px] text-zinc-400">互动总量</div>
-                          <div className="text-[13px] font-semibold text-zinc-800 tabular-nums">
+                          <div className="text-[13px] font-semibold text-zinc-800 font-mono tabular-nums">
                             {(activeDateReport.likes ?? 0) +
                               (activeDateReport.comments ?? 0) +
                               (activeDateReport.shares ?? 0) +
@@ -924,11 +924,11 @@ export function VideoSubmitPanel({
                         </div>
                         <div className="dashboard-metric-card">
                           <div className="text-[12px] text-zinc-400">涨粉</div>
-                          <div className="text-[13px] font-semibold text-zinc-800 tabular-nums">{activeDateReport.follower_gain ?? "--"}</div>
+                          <div className="text-[13px] font-semibold text-zinc-800 font-mono tabular-nums">{activeDateReport.follower_gain ?? "--"}</div>
                         </div>
                         <div className="dashboard-metric-card">
                           <div className="text-[12px] text-zinc-400">完播率</div>
-                          <div className="text-[13px] font-semibold text-zinc-800 tabular-nums">{activeDateReport.completion_rate ?? "--"}</div>
+                          <div className="text-[13px] font-semibold text-zinc-800 font-mono tabular-nums">{activeDateReport.completion_rate ?? "--"}</div>
                         </div>
                       </div>
                     </div>
@@ -951,8 +951,8 @@ export function VideoSubmitPanel({
                   className={cn(
                     "mt-4 rounded-2xl border p-4",
                     activeDateStatus.state === "waive"
-                      ? "border-zinc-200 bg-white"
-                      : "border-zinc-200 bg-[#FAFAFB]",
+                      ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white"
+                      : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-[#FAFAFB]",
                   )}
                 >
                   <div className="space-y-2">
@@ -985,7 +985,7 @@ export function VideoSubmitPanel({
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-4">
+                <div className="mt-4 rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-[#FAFAFB] p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-1">
                       <p className="text-[13px] font-medium text-[#C9604D]">

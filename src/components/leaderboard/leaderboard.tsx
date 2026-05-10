@@ -253,8 +253,8 @@ export function Leaderboard({
                   <TableRow
                     key={item.accountId}
                     className={cn(
-                      "border-b border-border/70 bg-background/85 transition-colors hover:bg-muted/50",
-                      item.isOwn && "border-l-4 border-l-primary bg-primary/5 hover:bg-muted/50"
+                      "border-b border-zinc-200 bg-white transition-colors hover:bg-zinc-50",
+                      item.isOwn && "border-l-4 border-l-[#D97757] bg-[#D97757]/5 hover:bg-zinc-50"
                     )}
                   >
                     <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur">
@@ -275,7 +275,7 @@ export function Leaderboard({
                       </TableCell>
                     ) : null}
                     {visibleMetrics.map((metric) => (
-                      <TableCell key={metric.key} className="text-right tabular-nums">
+                      <TableCell key={metric.key} className="text-right font-mono tabular-nums">
                         {formatMetric(item, metric.key)}
                       </TableCell>
                     ))}
@@ -370,7 +370,7 @@ function RankBadge({ rank }: { rank: number }) {
   return (
     <span
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold tabular-nums ring-1",
+        "inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold font-mono tabular-nums ring-1",
         badgeClass
       )}
     >
@@ -387,10 +387,10 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium font-mono tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "bg-zinc-50 text-emerald-600 dark:bg-zinc-100/15 dark:text-emerald-400"
-          : "bg-zinc-50 text-red-600 dark:bg-zinc-100/15 dark:text-red-400"
+          ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
+          : "bg-[#C9604D]/10 text-[#C9604D]"
       )}
     >
       <TrendingUp className="size-3.5" />

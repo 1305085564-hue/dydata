@@ -93,7 +93,7 @@ export function ChatInputBar({
           <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
             Enter 发送 · Shift+Enter 换行
           </span>
-          <span className="text-[10px] text-zinc-400 tabular-nums">{inputText.length} 字</span>
+          <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{inputText.length} 字</span>
         </div>
       </div>
     </div>

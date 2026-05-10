@@ -175,7 +175,7 @@ export function PKBattle({
           </div>
           {total > 0 && (
             <div className="shrink-0 rounded-[10px] bg-[#8AA8C7]/10 px-3 py-1.5 text-center">
-              <div className="text-base font-semibold tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
+              <div className="text-base font-semibold font-mono tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
               <div className="text-[10px] text-[#8AA8C7]/70">项领先</div>
             </div>
           )}
@@ -201,10 +201,10 @@ export function PKBattle({
               <div className="mt-2 flex justify-between gap-2 text-xs text-[var(--color-text-secondary)]">
                 <span className="min-w-0 truncate">
                   <span className="font-medium text-[var(--color-text-primary)]">{playerA.name}</span>{" "}
-                  <span className="tabular-nums">{row.leftText}</span>
+                  <span className="font-mono tabular-nums">{row.leftText}</span>
                 </span>
                 <span className="min-w-0 shrink-0 text-right">
-                  <span className="tabular-nums">{row.rightText}</span>{" "}
+                  <span className="font-mono tabular-nums">{row.rightText}</span>{" "}
                   <span className="font-medium text-[var(--color-text-primary)]">{playerB.name}</span>
                 </span>
               </div>

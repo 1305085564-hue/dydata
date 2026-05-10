@@ -31,31 +31,31 @@ export const STATUS_THEME: Record<
   PENDING: {
     label: "执行中",
     color: "text-[#D99E55]",
-    dot: "bg-[#D99E55]",
+    dot: "bg-[#D99E55] ring-1 ring-white",
     cellBar: "border-l-[#D99E55]",
   },
   SUBMITTED: {
     label: "已提交",
     color: "text-[#8AA8C7]",
-    dot: "bg-[#8AA8C7]",
+    dot: "bg-[#8AA8C7] ring-1 ring-white",
     cellBar: "border-l-[#8AA8C7]",
   },
   APPROVED: {
     label: "已通过",
     color: "text-[#6FAA7D]",
-    dot: "bg-[#6FAA7D]",
+    dot: "bg-[#6FAA7D] ring-1 ring-white",
     cellBar: "border-l-[#6FAA7D]",
   },
   REJECTED: {
     label: "需修正",
     color: "text-[#C9604D]",
-    dot: "bg-[#C9604D]",
+    dot: "bg-[#C9604D] ring-1 ring-white",
     cellBar: "border-l-[#C9604D]",
   },
   OVERDUE: {
     label: "延期",
     color: "text-zinc-500",
-    dot: "bg-zinc-400",
+    dot: "bg-zinc-400 ring-1 ring-white",
     cellBar: "border-l-zinc-400",
   },
 };
@@ -101,7 +101,7 @@ export function severityTone(severity: string) {
 }
 
 export function severityDot(severity: string) {
-  return severity === "critical" ? "bg-[#C9604D]" : "bg-[#D99E55]";
+  return severity === "critical" ? "bg-[#C9604D] ring-1 ring-white" : "bg-[#D99E55] ring-1 ring-white";
 }
 
 export function getLatestSubmission(

@@ -193,7 +193,7 @@ function SummaryBucketCard({
         {items.map((item) => (
           <div key={item.label} className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-[11px]">
             <span className="font-semibold tracking-tight text-zinc-700">{item.label}</span>
-            <span className="ml-1 tabular-nums text-zinc-400">
+            <span className="ml-1 font-mono tabular-nums text-zinc-400">
               {item.count}条 ({item.pct}%)
             </span>
           </div>
@@ -598,7 +598,7 @@ export function HitAnalyzer({
               {datum.submitter} · {formatDate(datum.published_at) ?? datum.report_date}
             </p>
           </div>
-          <div className="mt-1 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-3">
+          <div className="mt-3 grid grid-cols-2 gap-2 pt-1">
             <div>
               <p className="text-[10px] font-medium text-[var(--color-text-tertiary)]">播放量</p>
               <p className={cn("text-[13px] font-medium", datum.isHit ? "text-[#C9604D]" : "text-zinc-700")}>{formatPlayCount(datum.play)}</p>
@@ -622,7 +622,7 @@ export function HitAnalyzer({
   };
 
   const renderScatterChart = (className?: string) => (
-    <div className={cn("h-full w-full rounded-2xl border border-white/70 bg-white p-2 shadow-inner", className)}>
+    <div className={cn("h-full w-full rounded-2xl border border-zinc-200 bg-white p-2 shadow-inner", className)}>
       {scatterData.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 18, right: 18, bottom: 14, left: 0 }}>
@@ -764,7 +764,7 @@ export function HitAnalyzer({
                   className={cn(
                     "rounded-[10px] border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     activeFilter === filter.id
-                      ? "border-zinc-800 bg-zinc-800 text-white shadow-sm"
+                      ? "border-[#D97757]/40 bg-white text-[#D97757]"
                       : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-white",
                   )}
                 >
@@ -782,7 +782,7 @@ export function HitAnalyzer({
                   className={cn(
                     "rounded-[10px] border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     activeTimePreset === preset.id
-                      ? "border-zinc-900 bg-zinc-900 text-white shadow-md shadow-zinc-900/15"
+                      ? "border-[#D97757]/40 bg-white text-[#D97757]"
                       : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-white",
                   )}
                 >
@@ -796,7 +796,7 @@ export function HitAnalyzer({
             <div className="space-y-2">
               <p className="text-[12px] font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Submitters</p>
               {lockedSubmitter ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
                   <span className="font-medium">当前联动成员：</span>
                   <span className="rounded-[10px] bg-white px-2.5 py-1 font-medium text-zinc-800">{lockedSubmitter}</span>
                   <button
@@ -820,7 +820,7 @@ export function HitAnalyzer({
                   >
                     上一页
                   </button>
-                  <span className="min-w-12 text-center tabular-nums">
+                  <span className="min-w-12 text-center font-mono tabular-nums">
                     {safeSubmitterPage + 1}/{submitterPageCount}
                   </span>
                   <button
@@ -857,7 +857,7 @@ export function HitAnalyzer({
                     className={cn(
                       "min-w-0 truncate rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
                       effectiveSelectedSubmitters.includes(name)
-                        ? "border-zinc-800 bg-zinc-800 text-white"
+                        ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
                         : "border-zinc-200 bg-transparent text-zinc-600 hover:border-zinc-300 hover:bg-white",
                     )}
                   >
@@ -892,7 +892,7 @@ export function HitAnalyzer({
                     max={dateTo || dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("from", event.target.value)}
-                    className="h-8 bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="h-8 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -904,7 +904,7 @@ export function HitAnalyzer({
                     max={dateBounds?.max}
                     disabled={activeTimePreset !== "custom"}
                     onChange={(event) => updateCustomRange("to", event.target.value)}
-                    className="h-8 bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                    className="h-8 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                   />
                 </div>
               </div>
@@ -918,31 +918,31 @@ export function HitAnalyzer({
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">筛选样本</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{stats.count}</p>
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{stats.count}</p>
             <p className="mt-1 text-xs text-zinc-500">其中 {stats.validScatterCount} 条可进入散点图分析</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均播放量</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">{formatPlayCount(stats.avgPlay)}</p>
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{formatPlayCount(stats.avgPlay)}</p>
             <p className="mt-1 text-xs text-zinc-500">爆款率 {formatPercent(stats.hitRate)}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均完播率</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">
               {stats.avgCr !== null ? formatPercent(stats.avgCr) : "--"}
             </p>
             <p className="mt-1 text-xs text-zinc-500">高完播样本占比 {formatPercent(stats.highCompletionRate)}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均互动率</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">
               {stats.engagementRate !== null ? formatPercent(stats.engagementRate, 2) : "--"}
             </p>
             <p className="mt-1 text-xs text-zinc-500">均值点赞 {stats.avgLikes.toLocaleString("zh-CN")}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
             <p className="text-xs font-medium text-zinc-500">平均播放时长</p>
-            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 tabular-nums">
+            <p className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">
               {stats.avgDur !== null ? `${stats.avgDur.toFixed(1)}秒` : "--"}
             </p>
             <p className="mt-0.5 truncate text-xs text-zinc-500">
@@ -956,18 +956,18 @@ export function HitAnalyzer({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
             <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">图表分析</p>
-            <h3 className="text-[16px] font-semibold text-zinc-800">爆款特征散点图</h3>
+            <h3 className="text-[18px] font-medium text-zinc-800">爆款特征散点图</h3>
             <p className="text-xs text-[var(--color-text-secondary)]">
               先完成筛选和结果概览，再通过右上角悬浮散点图观察播放与完播的关系。
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full bg-[#C9604D]" />
+              <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
               <span className="font-medium text-zinc-600">爆款 (&gt;{formatPlayCount(hitThreshold)})</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full bg-[#A8C4B1]" />
+              <span className="h-2 w-2 rounded-full bg-[#A8C4B1] ring-1 ring-white" />
               <span className="font-medium text-zinc-600">常规视频</span>
             </div>
             {scatterSummary ? (
@@ -979,11 +979,11 @@ export function HitAnalyzer({
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="rounded-[24px] border border-white/70 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">Focused Sample</p>
-                <h4 className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{leadInsight?.title || "暂无重点样本"}</h4>
+                <h4 className="mt-1 text-[18px] font-medium text-zinc-800">{leadInsight?.title || "暂无重点样本"}</h4>
               </div>
               {leadInsight ? (
                 <span
@@ -1002,19 +1002,19 @@ export function HitAnalyzer({
                 <div className="grid gap-3 sm:grid-cols-4">
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">播放量</p>
-                    <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatPlayCount(leadInsight.play)}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatPlayCount(leadInsight.play)}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">完播率</p>
-                    <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatPercent(leadInsight.cr)}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatPercent(leadInsight.cr)}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">总互动</p>
-                    <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{leadInsight.engagement.toLocaleString("zh-CN")}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{leadInsight.engagement.toLocaleString("zh-CN")}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[11px] font-medium text-zinc-500">发布时间</p>
-                    <p className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">{formatDate(leadInsight.published_at) ?? leadInsight.report_date}</p>
+                    <p className="mt-1 text-[24px] font-semibold text-zinc-800 font-mono tabular-nums tracking-tight">{formatDate(leadInsight.published_at) ?? leadInsight.report_date}</p>
                   </div>
                 </div>
 
@@ -1057,7 +1057,7 @@ export function HitAnalyzer({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[24px] border border-white/70 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">维度说明</p>
               <div className="mt-4 space-y-3 text-sm text-zinc-600">
                 <div className="rounded-2xl bg-zinc-50 p-3">
@@ -1075,7 +1075,7 @@ export function HitAnalyzer({
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/70 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">数据摘要</p>
                 {scatterSummary ? (
@@ -1093,7 +1093,7 @@ export function HitAnalyzer({
                         <p className="text-sm font-semibold">{card.label}</p>
                         <p className="mt-1 text-xs leading-5 opacity-80">{card.description}</p>
                       </div>
-                      <span className="text-[20px] font-semibold tabular-nums">{card.count}</span>
+                      <span className="text-[20px] font-semibold font-mono tabular-nums">{card.count}</span>
                     </div>
                   </div>
                 ))}
@@ -1109,7 +1109,7 @@ export function HitAnalyzer({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[12px] font-medium uppercase tracking-wider text-zinc-400">文案分析</p>
-                <h4 className="mt-1 text-[16px] font-semibold text-zinc-800 tabular-nums">筛选文案样本</h4>
+                <h4 className="mt-1 text-[18px] font-medium text-zinc-800">筛选文案样本</h4>
               </div>
               <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600">
                 {stats.contents.length} 条

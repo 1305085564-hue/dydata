@@ -63,7 +63,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <button
             className={cn(
               "rounded-[10px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              type === "week" ? "bg-zinc-800 text-white" : "text-zinc-600 hover:bg-zinc-100"
+              type === "week" ? "bg-white shadow-sm text-zinc-800 border border-zinc-200" : "text-zinc-600 hover:bg-zinc-100"
             )}
             onClick={() => setType("week")}
           >
@@ -72,7 +72,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <button
             className={cn(
               "rounded-[10px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              type === "month" ? "bg-zinc-800 text-white" : "text-zinc-600 hover:bg-zinc-100"
+              type === "month" ? "bg-white shadow-sm text-zinc-800 border border-zinc-200" : "text-zinc-600 hover:bg-zinc-100"
             )}
             onClick={() => setType("month")}
           >
@@ -137,7 +137,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           >
             {/* 最佳方向 */}
             {insight.best_direction && (
-              <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#6FAA7D] bg-white p-6 shadow-sm">
+              <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#6FAA7D]">
                     <TrendingUp className="size-6 stroke-[1.5]" />
@@ -168,7 +168,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
             {/* 最差方向 */}
             {insight.worst_direction && (
-              <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-white p-6 shadow-sm">
+              <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#C9604D]">
                     <TrendingDown className="size-6 stroke-[1.5]" />
@@ -199,7 +199,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
             {/* 下期重点 */}
             {insight.next_period_focus && (
-              <div className="md:col-span-2 rounded-2xl bg-zinc-900 p-6 shadow-sm relative overflow-hidden">
+              <div className="md:col-span-2 rounded-2xl bg-zinc-900 p-6 relative overflow-hidden">
                 <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                   <div className="flex items-start gap-4 flex-1">
                     <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
@@ -239,7 +239,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
               )}
 
               {insight.sample_warning && insight.sample_warning.length > 0 && (
-                <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#D99E55] bg-white p-5 shadow-sm">
+                <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <AlertTriangle className="size-4 stroke-[1.5] text-[#D99E55]" />
                     <h4 className="text-[13px] font-semibold text-zinc-800">样本不足警告</h4>
@@ -265,7 +265,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
             <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-zinc-100 mb-4">
               <Sparkles className="size-8 stroke-[1.5] text-zinc-400" />
             </div>
-            <h3 className="text-[16px] font-semibold text-zinc-800 mb-2">准备好挖掘数据价值了吗？</h3>
+            <h3 className="text-[18px] font-medium text-zinc-800 mb-2">准备好挖掘数据价值了吗？</h3>
             <p className="text-[13px] text-zinc-500 leading-[1.7] max-w-md mx-auto">
               基于您选择的分析周期，AI 将深度挖掘爆款特征、分析滑铁卢原因，并为您提取下期可执行的焦点策略。
             </p>

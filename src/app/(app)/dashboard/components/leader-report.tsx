@@ -13,7 +13,6 @@ interface LeaderReportProps {
 
 /**
  * 组长日报录入
- * 法典 V1：无 font-black/shadow-xl/hover:scale；Loader 用 Skeleton
  */
 export function LeaderReport({ today, userRole }: LeaderReportProps) {
   const [fields, setFields] = useState({ topic: "", opening: "", script: "", video: "" });
@@ -98,19 +97,19 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-[16px] font-semibold tracking-tight text-zinc-900">
+        <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
           今日日报
         </h3>
         {saved && (
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/50 px-2 py-0.5 text-[10px] font-medium",
+              "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium",
               saved === "submitted" ? "text-[#6FAA7D]" : "text-[#D99E55]",
             )}
           >
             <span
               className={cn(
-                "h-1.5 w-1.5 rounded-full",
+                "h-1.5 w-1.5 rounded-full ring-1 ring-white",
                 saved === "submitted" ? "bg-[#6FAA7D]" : "bg-[#D99E55]",
               )}
             />
@@ -129,24 +128,24 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
             <textarea
               value={fields[f.key]}
               onChange={(e) => setFields((prev) => ({ ...prev, [f.key]: e.target.value }))}
-              className="h-24 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 text-[13px] font-medium leading-[1.7] text-zinc-800 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-300 focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+              className="h-24 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] font-medium leading-[1.7] text-zinc-800 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-300 focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
               placeholder={`填写${f.label}...`}
             />
           </div>
         ))}
 
-        <div className="flex justify-end gap-3 border-t border-zinc-100 pt-4">
+        <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={() => save(true)}
             disabled={saving}
-            className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             保存草稿
           </button>
           <button
             onClick={() => save(false)}
             disabled={saving}
-            className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium text-white shadow-sm transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             正式提交
           </button>

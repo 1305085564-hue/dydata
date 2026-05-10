@@ -72,7 +72,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
   }
 
   if (error && !data) {
-    return <div className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D]">{error}</div>;
+    return <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D]">{error}</div>;
   }
 
   if (!data) {
@@ -87,7 +87,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
         </p>
       </div>
       {isLoading ? <ModulesModalSkeleton /> : null}
-      {error ? <div className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D]">{error}</div> : null}
+      {error ? <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D]">{error}</div> : null}
       <AdminModulesContent
         currentUserId={data.currentUserId}
         currentUserRole={data.perm.role}

@@ -226,7 +226,7 @@ export function ViolationsReviewList({ cases }: { cases: ViolationReviewCase[] }
   if (cases.length === 0) {
     return (
       <section className="rounded-2xl border border-zinc-200 bg-white p-10 text-center shadow-sm">
-        <p className="text-[16px] font-semibold text-zinc-800">暂无需要显示的案例</p>
+        <p className="text-[14px] font-medium text-zinc-800">暂无需要显示的案例</p>
         <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">切换到全部状态，或等待员工提交新的违规话术案例。</p>
       </section>
     );
@@ -235,8 +235,8 @@ export function ViolationsReviewList({ cases }: { cases: ViolationReviewCase[] }
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">复核列表</h2>
-        <p className="text-[13px] text-zinc-500">当前列表待复核 <span className="tabular-nums">{pendingCases}</span> 条</p>
+        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">复核列表</h2>
+        <p className="text-[13px] text-zinc-500">当前列表待复核 <span className="font-mono tabular-nums">{pendingCases}</span> 条</p>
       </div>
       {cases.map((item) => (
         <ReviewCard key={item.id} item={item} />

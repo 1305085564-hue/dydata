@@ -117,7 +117,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       {/* 趋势图 */}
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">团队趋势总览</h2>
+        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">团队趋势总览</h2>
         <div className="mt-4 space-y-6">
           <ResultTrend
             data={resultTrendData}
@@ -137,7 +137,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       {/* 团队管理 */}
       {data.teamManagement.access.canView && (
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">团队与分组</h2>
+          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">团队与分组</h2>
           <div className="mt-4">
             <TeamGroupManager
               access={data.teamManagement.access}
@@ -153,7 +153,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       {/* 邀请码管理 */}
       {canManageInviteModule && (
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">邀请码管理</h2>
+          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">邀请码管理</h2>
           <div className="mt-4 space-y-6">
             <TeamManager teams={data.teams} />
             <InviteCodeManager

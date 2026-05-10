@@ -228,7 +228,7 @@ export function TeamGroupManager({
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
-            <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择团队">
                 {selectedTeamName ?? undefined}
               </SelectValue>
@@ -242,7 +242,7 @@ export function TeamGroupManager({
             </SelectContent>
           </Select>
           <Select value={effectiveSelectedGroupId} onValueChange={handleGroupChange}>
-            <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择分组">
                 {selectedGroupName ?? (effectiveSelectedGroupId === NO_GROUP ? "暂无分组" : undefined)}
               </SelectValue>
@@ -269,8 +269,8 @@ export function TeamGroupManager({
             <Badge
               className={
                 access.canEditGroups
-                  ? "bg-zinc-950 text-white"
-                  : "bg-zinc-100 text-zinc-600"
+                  ? "bg-[#D97757]/10 text-[#D97757] border border-[#D97757]/20 hover:bg-[#D97757]/10"
+                  : "bg-zinc-50 text-zinc-600 border border-zinc-200 hover:bg-zinc-50"
               }
             >
               {access.canEditGroups ? "可管理" : "只读"}
@@ -337,13 +337,13 @@ export function TeamGroupManager({
                   value={newGroupName}
                   onChange={(event) => setNewGroupName(event.target.value)}
                   placeholder="例如：第一组"
-                  className="rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label>组长</Label>
                 <Select value={newLeaderId} onValueChange={handleNewLeaderChange}>
-                  <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                  <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                     <SelectValue placeholder="选择组长">
                       {newLeaderName ?? undefined}
                     </SelectValue>
@@ -365,7 +365,7 @@ export function TeamGroupManager({
               </div>
               <Button
                 type="button"
-                className="mt-auto h-10 bg-zinc-950 text-white rounded-[10px] hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+                className="mt-auto h-10 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
                 onClick={handleCreateGroup}
                 disabled={isPending || !newGroupName.trim() || !newLeaderId}
               >
@@ -385,13 +385,13 @@ export function TeamGroupManager({
                       id="edit-group-name"
                       value={editGroupName}
                       onChange={(event) => setEditGroupName(event.target.value)}
-                      className="rounded-xl bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label>更换组长</Label>
                     <Select value={editLeaderId} onValueChange={handleEditLeaderChange}>
-                      <SelectTrigger className="h-10 w-full bg-zinc-100/70 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                      <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                         <SelectValue placeholder="选择组长">
                           {editLeaderName ?? undefined}
                         </SelectValue>
@@ -467,7 +467,8 @@ export function TeamGroupManager({
                       <Button
                         type="button"
                         size="sm"
-                        className="bg-zinc-950 text-white rounded-[10px] hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+                        variant="outline"
+                        className="bg-white border-zinc-300 text-zinc-800 rounded-[10px] hover:bg-zinc-50 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
                         onClick={handleAssignMembers}
                         disabled={isPending || checkedMemberIds.length === 0}
                       >

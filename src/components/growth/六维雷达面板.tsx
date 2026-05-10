@@ -103,7 +103,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 text-[11px] text-zinc-500">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full bg-zinc-950" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
             我
           </span>
           <span className="flex items-center gap-1">
@@ -158,8 +158,8 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
           {/* 我的区域 */}
           <polygon
             points={buildPolygonPoints(myScores, 100)}
-            fill="rgba(9,9,11,0.05)"
-            stroke="#09090B"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#D97757"
             strokeWidth="2"
           />
           {/* 对比数据点 */}
@@ -185,7 +185,7 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
                 cx={x}
                 cy={y}
                 r={isActive ? 6 : 4}
-                fill={isActive ? "#09090B" : "#52525B"}
+                fill="#D97757"
                 stroke="white"
                 strokeWidth="1.5"
                 className="cursor-pointer transition-[r,fill] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -221,14 +221,14 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
       {/* 最强 / 最弱 — 极简标签 */}
       <div className="flex items-center justify-center gap-3">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+          <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
           <span className="text-zinc-500">最强</span>
-          <span className="font-semibold text-zinc-800 tabular-nums">{capabilityCards[strongIndex]?.name}</span>
+          <span className="font-semibold text-zinc-800 font-mono tabular-nums">{capabilityCards[strongIndex]?.name}</span>
         </div>
         <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#C9604D]" />
+          <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
           <span className="text-zinc-500">最弱</span>
-          <span className="font-semibold text-zinc-800 tabular-nums">{capabilityCards[weakIndex]?.name}</span>
+          <span className="font-semibold text-zinc-800 font-mono tabular-nums">{capabilityCards[weakIndex]?.name}</span>
         </div>
       </div>
     </div>

@@ -168,7 +168,7 @@ export default async function ViolationsPage({
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{headingDesc}</p>
         </div>
         <Link href="/violations/submit">
-          <Button className="h-11 rounded-2xl bg-zinc-950 text-white hover:bg-zinc-800">
+          <Button className="h-11 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800">
             <Plus className="size-4" />
             提交新案例
           </Button>
@@ -191,7 +191,7 @@ export default async function ViolationsPage({
       />
 
       {error ? (
-        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
+        <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
           {error}
         </div>
       ) : perspective === "violation" ? (

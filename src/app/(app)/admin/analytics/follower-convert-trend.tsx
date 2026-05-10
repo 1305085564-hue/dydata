@@ -50,7 +50,7 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
       <p className="text-[12px] font-medium tracking-tight text-zinc-800">{label}</p>
-      <p className="mt-1 text-[12px] tabular-nums text-[#D97757]">
+      <p className="mt-1 text-[12px] font-mono tabular-nums text-[#D97757]">
         导粉：{payload[0].value.toLocaleString()}
       </p>
     </div>
@@ -101,7 +101,7 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
     <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-sm">
       <div className="flex flex-col gap-4 border-b border-zinc-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-[16px] font-semibold tracking-tight text-zinc-800">导粉趋势</h3>
+          <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">导粉趋势</h3>
           <p className="text-[12px] text-zinc-500">按最近 {preset === "7d" ? "7" : "30"} 天查看团队导粉变化</p>
         </div>
         <div className="inline-flex w-fit rounded-[10px] border border-zinc-200 bg-zinc-50 p-0.5">

@@ -587,7 +587,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     feedbackToast.success("截图上传成功", {
       duration: 2000,
       className:
-        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
     });
 
     try {
@@ -703,7 +703,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       feedbackToast.success("识别完成", {
         duration: 2200,
         className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
       });
     } catch (error) {
       const message = toSlotUploadErrorMessage(error);
@@ -834,7 +834,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       feedbackToast.success("数据提交成功", {
         duration: 2000,
         className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
       });
       cancelTimeoutRef.current = window.setTimeout(() => {
         onCancel?.();
@@ -866,7 +866,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               value={meta.anomalyStatus}
               onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
             >
-              <SelectTrigger className="h-10 rounded-xl bg-zinc-100/70 text-sm border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+              <SelectTrigger className="h-10 rounded-xl bg-zinc-50 text-sm border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                 <SelectValue placeholder="请选择视频状态" />
               </SelectTrigger>
               <SelectContent>
@@ -929,7 +929,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
               value={meta.anomalyStatus}
               onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
             >
-              <SelectTrigger className="h-10 rounded-lg border-transparent bg-zinc-100/70 px-3 text-[13px] font-medium text-zinc-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white focus:bg-white focus:border-zinc-200 focus:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5">
+              <SelectTrigger className="h-10 rounded-lg border-transparent bg-zinc-50 px-3 text-[13px] font-medium text-zinc-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white focus:bg-white focus:border-zinc-200 focus:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -1008,7 +1008,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 feedbackToast.success("删除成功", {
                   duration: 2000,
                   className:
-                    "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-[0_20px_60px_rgba(0,0,0,0.15)]",
+                    "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
                 });
               }}
             >
@@ -1057,7 +1057,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                       value={meta.videoUrl}
                       onChange={(event) => updateMeta("videoUrl", event.target.value)}
                       placeholder="https://www.douyin.com/video/..."
-                      className="h-11 rounded-xl bg-zinc-100/70 border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="h-11 rounded-xl bg-zinc-50 border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     />
                   </div>
                   <div className="space-y-2 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
@@ -1067,7 +1067,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                       value={meta.videoTitle}
                       onChange={(event) => updateMeta("videoTitle", event.target.value)}
                       placeholder="输入视频标题"
-                      className="h-11 rounded-xl bg-zinc-100/70 border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="h-11 rounded-xl bg-zinc-50 border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     />
                     {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
                       <p className="text-xs font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
@@ -1163,7 +1163,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                         }}
                         placeholder={meta.contentKeywords.length >= 3 ? "最多3个标签" : "输入后按空格或回车添加"}
                         disabled={meta.contentKeywords.length >= 3}
-                        className="h-9 rounded-xl bg-zinc-100/70 text-sm border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                        className="h-9 rounded-xl bg-zinc-50 text-sm border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       />
                       <Button
                         type="button"
@@ -1202,7 +1202,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                           });
                           setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
                         }}
-                        className="h-11 rounded-xl bg-zinc-100/70 border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                        className="h-11 rounded-xl bg-zinc-50 border-transparent tracking-wide focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1245,7 +1245,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                   value={meta.content}
                   onChange={(event) => updateMeta("content", event.target.value)}
                   placeholder="粘贴视频文案"
-                  className="min-h-0 w-full flex-1 resize-none rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-sm leading-6 tracking-wide outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="min-h-0 w-full flex-1 resize-none rounded-xl border border-transparent bg-zinc-50 px-4 py-3 text-sm leading-6 tracking-wide outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/10 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
                 {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
                   <p className="text-xs font-medium text-[#C9604D] shrink-0">必填，仍未填写文案</p>
@@ -1283,7 +1283,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                     value={meta.anomalyStatus}
                     onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
                   >
-                    <SelectTrigger className="h-11 rounded-lg bg-zinc-100/70 border-transparent text-[14px] font-medium text-zinc-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white focus:bg-white focus:border-zinc-200 focus:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5">
+                    <SelectTrigger className="h-11 rounded-lg bg-zinc-50 border-transparent text-[14px] font-medium text-zinc-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white focus:bg-white focus:border-zinc-200 focus:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5">
                       <SelectValue placeholder="请选择状态" />
                     </SelectTrigger>
                     <SelectContent>

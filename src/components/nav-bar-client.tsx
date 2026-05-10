@@ -157,7 +157,7 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
                     role="listbox"
                     className="absolute right-0 top-[calc(100%+6px)] z-50 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-sm"
                   >
-                    <div className="px-2.5 py-1.5 text-[9px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+                    <div className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-400">
                       切换账号
                     </div>
                     <div className="max-h-64 space-y-0.5 overflow-y-auto">

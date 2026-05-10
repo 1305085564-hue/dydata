@@ -133,17 +133,17 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
             </section>
 
             <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-base font-semibold text-foreground">完整建议</div>
+              <div className="text-[18px] font-medium text-foreground">完整建议</div>
               <div className="rounded-2xl bg-background/80 p-4 whitespace-pre-wrap text-sm leading-6 text-foreground">{advice.advice_content}</div>
             </section>
 
             <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-base font-semibold text-foreground">证据</div>
+              <div className="text-[18px] font-medium text-foreground">证据</div>
               <div className="rounded-2xl bg-background/80 p-4 whitespace-pre-wrap text-sm leading-6 text-foreground">{advice.evidence || "暂无证据"}</div>
             </section>
 
             <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-base font-semibold text-foreground">管理操作</div>
+              <div className="text-[18px] font-medium text-foreground">管理操作</div>
               <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-3 rounded-2xl bg-background/80 p-4">
                   <div className="text-sm font-medium text-foreground">下发</div>
@@ -195,7 +195,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
             </section>
 
             <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-base font-semibold text-foreground">关联视频</div>
+              <div className="text-[18px] font-medium text-foreground">关联视频</div>
               {relatedVideo ? (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   <div className="rounded-2xl bg-background/80 p-4">

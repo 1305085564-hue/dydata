@@ -150,12 +150,12 @@ export function RewriteOutput({
                     <span className="text-[12px] font-semibold tracking-tight text-zinc-800">
                       {responseMode === 'chat' ? '继续对话' : '改写结果'}
                     </span>
-                    <span className="rounded-md bg-zinc-50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
+                    <span className="rounded-md bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
                       {displayMeta.badge}
                     </span>
                     {isStreaming && (
                       <span className="inline-flex items-center gap-1 text-[10px] text-[#8A6A2F]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55] animate-pulse" />
+                        <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                         <span className="uppercase tracking-[0.25em]">Generating</span>
                       </span>
                     )}

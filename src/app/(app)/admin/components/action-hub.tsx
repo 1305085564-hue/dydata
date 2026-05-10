@@ -66,7 +66,7 @@ export function ActionHub({
 
   return (
     <div className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-      <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">工作流中心</h2>
+      <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">工作流中心</h2>
 
       <div className="mt-5 space-y-5">
         <div>
@@ -87,10 +87,10 @@ export function ActionHub({
                 >
                   <div className="mt-1.5 flex-shrink-0">
                     <div
-                      className={`size-2 rounded-full ${
+                      className={`rounded-full ${
                         effectivePendingCount > 0
-                          ? "bg-[#D99E55] animate-pulse"
-                          : "bg-[#6FAA7D]"
+                          ? "h-2 w-2 bg-[#D97757] ring-1 ring-white animate-pulse"
+                          : "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white"
                       }`}
                     />
                   </div>
@@ -136,7 +136,7 @@ export function ActionHub({
 
             <div className="group flex items-start gap-3 border-b border-zinc-100 py-3 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 last:border-b-0">
               <div className="mt-1.5 flex-shrink-0">
-                <div className="size-2 rounded-full bg-[#D99E55]" />
+                <div className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">

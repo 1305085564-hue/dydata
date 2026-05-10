@@ -49,30 +49,30 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
   }
 
   return (
-    <section className="rounded-2xl border border-white/70 bg-white/82 p-3 shadow-[var(--shadow-light)] sm:p-4">
+    <section className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-[var(--shadow-light)] sm:p-4">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Business Analytics</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Business Analytics</p>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h1 className="text-xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-2xl">经营分析总览</h1>
-              <span className="text-xs font-medium text-[var(--color-text-secondary)]">{from} 至 {to}</span>
+              <h1 className="text-xl font-semibold tracking-[-0.02em] text-zinc-800 sm:text-2xl">经营分析总览</h1>
+              <span className="text-xs font-medium text-zinc-500">{from} 至 {to}</span>
             </div>
           </div>
 
-          <div className="grid gap-1 rounded-xl border border-white/80 bg-white/88 px-3 py-2 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)] sm:min-w-[240px]">
-            <div className="inline-flex items-center gap-1.5 font-medium text-[var(--color-text-primary)]">
-              <CalendarDays className="size-3.5 text-[var(--color-primary)]" />
+          <div className="grid gap-1 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500 shadow-[var(--shadow-light)] sm:min-w-[240px]">
+            <div className="inline-flex items-center gap-1.5 font-medium text-zinc-800">
+              <CalendarDays className="size-3.5 text-[#D97757]" />
               当前分析周期
             </div>
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{from} 至 {to}</p>
+            <p className="text-sm font-semibold text-zinc-800">{from} 至 {to}</p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/75 bg-white/72 p-3">
+        <div className="rounded-xl border border-zinc-200 bg-white p-3">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold tracking-[0.08em] text-[var(--color-text-secondary)]">快捷时间切换</p>
+              <p className="text-xs font-semibold tracking-[0.08em] text-zinc-500">快捷时间切换</p>
               <div className="flex flex-wrap gap-2">
                 {presetOptions.map((option) => (
                   <Button
@@ -83,7 +83,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
                       "h-7 rounded-full px-3 text-xs transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)]]]",
                       preset === option.value
                         ? "border-transparent shadow-[var(--shadow-light)]"
-                        : "border-white/70 bg-white/88 text-[var(--color-text-secondary)]",
+                        : "border-zinc-200 bg-white text-zinc-500",
                     )}
                     onClick={() => updateRange(option.value)}
                   >
@@ -96,22 +96,22 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               {preset === "custom" ? (
                 <>
-                  <label className="space-y-1 text-xs text-[var(--color-text-secondary)]">
+                  <label className="space-y-1 text-xs text-zinc-500">
                     <span>开始日期</span>
                     <Input
                       type="date"
                       value={from}
                       onChange={(event) => updateRange("custom", { from: event.target.value, to })}
-                      className="h-9 w-[168px] border-white/80 bg-white/90"
+                      className="h-9 w-[168px] border-zinc-200 bg-white"
                     />
                   </label>
-                  <label className="space-y-1 text-xs text-[var(--color-text-secondary)]">
+                  <label className="space-y-1 text-xs text-zinc-500">
                     <span>结束日期</span>
                     <Input
                       type="date"
                       value={to}
                       onChange={(event) => updateRange("custom", { from, to: event.target.value })}
-                      className="h-9 w-[168px] border-white/80 bg-white/90"
+                      className="h-9 w-[168px] border-zinc-200 bg-white"
                     />
                   </label>
                 </>
@@ -119,7 +119,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
 
               <Link
                 href={getExportHref()}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-primary/15 bg-primary px-4 text-xs font-medium text-primary-foreground transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)]] hover:brightness-105]"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#D97757] px-4 text-xs font-medium text-white transition-transform duration-[var(--duration-micro)] ease-[var(--ease-spring)]] hover:brightness-105]"
               >
                 <Download className="size-3.5" />
                 导出数据

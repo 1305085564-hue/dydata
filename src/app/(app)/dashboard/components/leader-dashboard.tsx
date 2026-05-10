@@ -132,10 +132,9 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
   if (!board && error) {
     return (
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/50 px-6 py-10 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
           <div className="relative flex size-2 items-center justify-center">
-            <span className="absolute inline-flex size-2 rounded-full bg-[#C9604D]" />
-            <span className="absolute inline-flex size-3 rounded-full bg-[#C9604D]/15" />
+            <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
           </div>
           <div className="mt-2 space-y-1">
             <p className="flex items-center justify-center gap-1.5 text-[13px] font-semibold tracking-tight text-zinc-800">
@@ -146,7 +145,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
           </div>
           <button
             onClick={() => fetchBoard()}
-            className="mt-1 inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="mt-1 inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             <RefreshCw size={12} className="stroke-[1.5]" /> 重新加载
           </button>
@@ -171,12 +170,12 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+        <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
           组长看板
         </h2>
         <button
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-900 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+          className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
         >
           <RefreshCw size={12} className="stroke-[1.5]" /> 刷新
         </button>
@@ -185,9 +184,9 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
       {(overdueMembers.length > 0 || pendingSubmissions.length > 0) && (
         <div className="grid gap-4 sm:grid-cols-2">
           {overdueMembers.length > 0 && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-2 border-l-[#C9604D] shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#C9604D] shadow-sm">
               <div className="mb-3 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#C9604D]" />
+                <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
                 <AlertCircle size={14} className="stroke-[1.5] text-[#C9604D]" />
                 <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
                   超时未交
@@ -203,9 +202,9 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
             </div>
           )}
           {pendingSubmissions.length > 0 && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-2 border-l-[#D99E55] shadow-sm">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#D99E55] shadow-sm">
               <div className="mb-3 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55]" />
+                <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                 <Activity size={14} className="stroke-[1.5] text-[#D99E55]" />
                 <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#D99E55]">
                   待审核
@@ -230,7 +229,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50/50 text-zinc-500">
+              <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500">
                 <th className="p-5 text-[10px] font-medium uppercase tracking-[0.25em]">
                   组员
                 </th>
@@ -248,7 +247,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
               {board.members.map((member) => (
                 <tr
                   key={member.userId}
-                  className="border-b border-zinc-50 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] last:border-none hover:bg-zinc-50/50"
+                  className="border-b border-zinc-50 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] last:border-none hover:bg-zinc-50"
                 >
                   <td className="p-5 text-[13px] font-medium text-zinc-800">
                     {member.userName}
@@ -279,7 +278,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
 
       {pendingSubmissions.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-[16px] font-semibold tracking-tight text-zinc-900">
+          <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
             审核队列
           </h3>
           <div className="space-y-3">
@@ -298,10 +297,10 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="text-[13px] font-semibold text-zinc-900">
+                      <span className="text-[13px] font-semibold text-zinc-800">
                         {member?.userName ?? "未知"}
                       </span>
-                      <span className="rounded-md border border-zinc-200 bg-zinc-50/50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
                         {checkpointLabel(s.checkpoint as SopCheckpoint)}
                       </span>
                     </div>
@@ -317,7 +316,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
                   </div>
                   <button
                     onClick={() => setSelected(s)}
-                    className="shrink-0 rounded-[10px] bg-zinc-900 px-4 py-2 text-[11px] font-medium text-white shadow-sm transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="shrink-0 rounded-[10px] border border-zinc-200 bg-white px-4 py-2 text-[11px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                   >
                     审核
                   </button>

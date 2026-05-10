@@ -157,7 +157,7 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
           <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">确认、驳回并沉淀员工提交的违规/非违规话术案例</p>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] shadow-sm">
-          <span className="font-semibold text-zinc-800 tabular-nums">{pendingCount}</span>
+          <span className="font-semibold text-zinc-800 font-mono tabular-nums">{pendingCount}</span>
           <span className="ml-1 text-zinc-500">条待复核</span>
         </div>
       </div>
@@ -175,7 +175,7 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
               key={option.value}
               href={`/admin/violations?status=${option.value}${category !== "全部" ? `&category=${encodeURIComponent(category ?? "")}` : ""}${keyword ? `&q=${encodeURIComponent(keyword)}` : ""}`}
               className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
-                status === option.value ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                status === option.value ? "bg-white shadow-sm text-zinc-800 border border-zinc-200" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
               {option.label}
@@ -194,13 +194,13 @@ export default async function AdminViolationsPage({ searchParams }: AdminViolati
           ))}
         </select>
         <input type="hidden" name="status" value={status} />
-        <button className="rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800" type="submit">
+        <button className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800" type="submit">
           筛选
         </button>
       </form>
 
       {error ? (
-        <section className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#C9604D] bg-zinc-50 p-6 text-[13px] text-[#C9604D]">
+        <section className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 p-6 text-[13px] text-[#C9604D]">
           违规案例数据暂时无法读取：{error.message}
         </section>
       ) : (

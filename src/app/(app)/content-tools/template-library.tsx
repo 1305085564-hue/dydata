@@ -157,7 +157,7 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
                           <ol className="mt-2 space-y-2 text-[13px] leading-[1.7] text-zinc-800">
                             {template.structure.map((item, index) => (
                               <li key={`${template.name}-${index}`} className="flex gap-2">
-                                <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[11px] font-medium text-zinc-500 tabular-nums">
+                                <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[11px] font-medium text-zinc-500 font-mono tabular-nums">
                                   {index + 1}
                                 </span>
                                 <span>{item}</span>

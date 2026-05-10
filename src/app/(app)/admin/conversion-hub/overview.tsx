@@ -71,12 +71,12 @@ function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.35, ease: "easeOut" }}
       whileHover={{ y: -2 }}
-      className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+      className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-zinc-500">{label}</p>
-          <p className="text-[24px] font-semibold tracking-tight text-zinc-800 tabular-nums">{value}</p>
+          <p className="text-[24px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{value}</p>
           <p className="text-xs text-zinc-400">{hint}</p>
         </div>
         <div className={`rounded-xl p-2.5 ${KPI_TONES[tone]}`}>
@@ -174,7 +174,7 @@ export function ConversionHubOverview({ stats }: Props) {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[16px] font-semibold text-zinc-800">TOP 10 转化话术</h2>
+              <h2 className="text-[18px] font-medium text-zinc-800">TOP 10 转化话术</h2>
               <p className="mt-0.5 text-xs text-zinc-500">按加权转化率排序，仅展示使用 ≥3 且展示 ≥1k 的话术</p>
             </div>
             <Link
@@ -228,7 +228,7 @@ export function ConversionHubOverview({ stats }: Props) {
           transition={{ delay: 0.4, duration: 0.4, ease: "easeOut" }}
           className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
         >
-          <h2 className="text-[16px] font-semibold text-zinc-800">快捷入口</h2>
+          <h2 className="text-[18px] font-medium text-zinc-800">快捷入口</h2>
           <p className="mt-0.5 text-xs text-zinc-500">直达数据分析、每周清单与原始话术库</p>
 
           <div className="mt-4 space-y-3">
@@ -236,9 +236,9 @@ export function ConversionHubOverview({ stats }: Props) {
               <Link
                 key={href}
                 href={href}
-                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:translate-y-0 active:scale-[0.99]"
+                className="group flex items-center gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:translate-y-0 active:translate-y-0"
               >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 transition-colors group-hover:bg-zinc-950 group-hover:text-white">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700 transition-colors group-hover:bg-[#D97757] group-hover:text-white">
                   <Icon className="size-5" />
                 </div>
                 <div className="min-w-0 flex-1">

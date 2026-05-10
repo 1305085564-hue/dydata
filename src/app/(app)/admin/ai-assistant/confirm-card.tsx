@@ -53,10 +53,7 @@ export default function ConfirmCard({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3 pl-6">
         <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#D99E55] opacity-50" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#D99E55] shadow-[0_0_0_3px_rgba(217,158,85,0.15)]" />
-          </span>
+          <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#B88448]">
             Authorization Required
           </span>
@@ -75,7 +72,7 @@ export default function ConfirmCard({
           </p>
           {data.confirmationReason && (
             <div className="rounded-lg border border-zinc-200 bg-[#FBF6EC] px-3 py-2">
-              <div className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
                 Reason
               </div>
               <p className="mt-1 text-[12.5px] italic leading-relaxed text-[#8A6535]">
@@ -88,7 +85,7 @@ export default function ConfirmCard({
         {/* Details */}
         {data.details && (
           <div className="rounded-xl border border-zinc-200 bg-[#FAFAFB] p-3">
-            <div className="mb-2 text-[9px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
               Payload
             </div>
             <AssistantDetailSections details={data.details} />
@@ -154,7 +151,7 @@ export default function ConfirmCard({
             disabled={submitting}
             className={cn(
               "h-8 bg-[#D97757] px-3 text-[12px] font-medium text-white shadow-sm",
-              "hover:-translate-y-[1px] hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
+              "hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
             )}
           >
             {submitting ? (
