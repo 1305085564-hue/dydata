@@ -142,7 +142,7 @@ export function DashboardWorkspaceHeader({
               className={cn(
                 "relative min-w-24 shrink-0 rounded-[8px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                 activeTab === tab.key
-                  ? "bg-zinc-900 text-white shadow-sm"
+                  ? "bg-zinc-900 text-white"
                   : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900",
               )}
             >

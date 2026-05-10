@@ -146,7 +146,7 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
           <button
             onClick={() => save(false)}
             disabled={saving}
-            className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium text-white shadow-sm transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             正式提交
           </button>

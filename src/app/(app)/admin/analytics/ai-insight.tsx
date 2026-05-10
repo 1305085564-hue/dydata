@@ -199,7 +199,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
             {/* 下期重点 */}
             {insight.next_period_focus && (
-              <div className="md:col-span-2 rounded-2xl bg-zinc-900 p-6 shadow-sm relative overflow-hidden">
+              <div className="md:col-span-2 rounded-2xl bg-zinc-900 p-6 relative overflow-hidden">
                 <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                   <div className="flex items-start gap-4 flex-1">
                     <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">

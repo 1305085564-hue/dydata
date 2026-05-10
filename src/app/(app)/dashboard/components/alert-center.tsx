@@ -33,7 +33,7 @@ export function AlertCenter({
 
   return (
     <div className="mx-auto mb-6 max-w-6xl">
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white shadow-sm">
         <button
           type="button"
           onClick={onToggleExpanded}

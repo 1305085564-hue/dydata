@@ -39,7 +39,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                   className={cn(
                     "group relative flex w-full items-center justify-between overflow-hidden rounded-xl px-3 py-3 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isSelected
-                      ? "bg-zinc-800 text-white shadow-sm"
+                      ? "bg-zinc-800 text-white"
                       : "hover:bg-zinc-50 text-zinc-500"
                   )}
                 >
