@@ -7,7 +7,7 @@ import { AdminSecondaryNav, getAdminSecondaryNavItems } from "./admin-secondary-
 test("后台二级导航为管理员输出完整入口", () => {
   assert.deepEqual(
     getAdminSecondaryNavItems({ canManageAdmin: true, userRole: "admin", canManageViolations: true }).map((item) => item.label),
-    ["中控总览", "经营分析", "违规复核", "功能模块"],
+    ["中控总览", "经营分析", "转化中心", "违规复核", "权限模块"],
   );
 });
 
@@ -41,7 +41,7 @@ test("后台二级导航会标记当前激活入口并渲染说明", () => {
   );
 
   assert.match(html, /后台二级导航/);
-  assert.match(html, /AI 功能区/);
-  assert.match(html, /管理模型渠道、优先级切换、功能开关与提示词配置/);
+  assert.match(html, /AI 配置中心/);
+  assert.match(html, /集中管理模型渠道、功能绑定、文案改写和执行路线/);
   assert.match(html, /aria-current="page"/);
 });

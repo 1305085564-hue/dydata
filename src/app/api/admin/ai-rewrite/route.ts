@@ -252,7 +252,7 @@ export async function GET() {
     const bundle = await loadBundle(auth.supabase);
     return NextResponse.json(bundle);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "加载文案改写配置失败";
+    const message = error instanceof Error ? error.message : "加载文案改写失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

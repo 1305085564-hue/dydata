@@ -415,7 +415,7 @@ export default function AIRewriteClient() {
       const data = (await res.json()) as RewriteBundle & { error?: string };
 
       if (!res.ok || data.error) {
-        throw new Error(data.error || "加载文案改写配置失败");
+        throw new Error(data.error || "加载文案改写失败");
       }
 
       setBundle(data);
@@ -425,7 +425,7 @@ export default function AIRewriteClient() {
         context_message_limit: String(data.featureConfig?.context_message_limit ?? 30),
       });
     } catch (nextError) {
-      const message = nextError instanceof Error ? nextError.message : "加载文案改写配置失败";
+      const message = nextError instanceof Error ? nextError.message : "加载文案改写失败";
       setError(message);
       feedbackToast.error(message);
     } finally {
@@ -916,7 +916,7 @@ export default function AIRewriteClient() {
       {isLoading ? (
         <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-8 text-sm text-zinc-500">
           <Skeleton className="size-4 rounded-full" />
-          正在加载文案改写配置...
+          正在加载文案改写...
         </div>
       ) : (
         <>

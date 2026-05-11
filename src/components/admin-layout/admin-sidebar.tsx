@@ -6,10 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Blocks,
-  Bot,
   Gauge,
   Menu,
-  Pencil,
   Sparkles,
   Target,
   Video,
@@ -31,16 +29,14 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "中控总览", icon: Gauge },
+  { href: "/admin", label: "中控台", icon: Gauge },
   { href: "/admin/analytics", label: "经营分析", icon: BarChart3 },
-  { href: "/admin/content", label: "内容管理", icon: FileText },
-  { href: "/admin/videos", label: "视频管理", icon: Video },
-  { href: "/admin/violations", label: "违规复核", icon: ShieldAlert, requiresPermission: "manage_violations" },
+  { href: "/admin/videos", label: "视频资产", icon: Video },
+  { href: "/admin/content", label: "内容复盘", icon: FileText },
   { href: "/admin/conversion-hub", label: "转化中心", icon: Target },
-  { href: "/admin/modules", label: "功能模块", icon: Blocks },
-  { href: "/admin/ai-assistant", label: "AI助手", icon: Bot },
-  { href: "/admin/ai-channels", label: "AI功能区", icon: Sparkles, requiresOwner: true },
-  { href: "/admin/ai-rewrite", label: "文案改写", icon: Pencil, requiresOwner: true },
+  { href: "/admin/violations", label: "违规复核", icon: ShieldAlert, requiresPermission: "manage_violations" },
+  { href: "/admin/modules", label: "权限模块", icon: Blocks },
+  { href: "/admin/ai-channels", label: "AI 配置中心", icon: Sparkles, requiresOwner: true },
 ];
 
 function getVisibleNavItems(userRole: UserRole | null | undefined, permissions: Permissions): NavItem[] {

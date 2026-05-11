@@ -4,7 +4,7 @@ import {
   BarChart3,
   Blocks,
   Gauge,
-  Settings2,
+  Target,
   ShieldAlert,
   Sparkles,
 } from "lucide-react";
@@ -15,10 +15,10 @@ import { cn } from "@/lib/utils";
 export type AdminPanelKey =
   | "overview"
   | "analytics"
-  | "ai-channels"
-  | "ai-rewrite"
+  | "ai-config"
   | "modules"
-  | "violations";
+  | "violations"
+  | "conversion";
 
 export interface AdminSecondaryNavItem {
   href: string;
@@ -56,24 +56,35 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
   },
   {
     href: "/admin/ai-channels",
-    panel: "ai-channels",
-    label: "AI 功能区",
-    description: "管理模型渠道、优先级切换、功能开关与提示词配置。",
+    panel: "ai-config",
+    label: "AI 配置中心",
+    description: "集中管理模型渠道、功能绑定、文案改写和执行路线。",
     icon: Sparkles,
     tone: "warning",
-    match: (pathname) => pathname === "/admin/ai-channels" || pathname.startsWith("/admin/ai-channels/") || pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/"),
+    match: (pathname) =>
+      pathname === "/admin/ai-channels" ||
+      pathname.startsWith("/admin/ai-channels/") ||
+      pathname === "/admin/ai-rewrite" ||
+      pathname.startsWith("/admin/ai-rewrite/") ||
+      pathname === "/admin/ai-features" ||
+      pathname.startsWith("/admin/ai-features/"),
     requiresOwner: true,
   },
   {
-    href: "/admin/ai-rewrite",
-    panel: "ai-rewrite",
-    label: "文案改写配置",
-    description: "维护改写模板、运行规则、路由与输出约束。",
-    icon: Settings2,
-    tone: "primary",
-    match: (pathname) => pathname === "/admin/ai-rewrite" || pathname.startsWith("/admin/ai-rewrite/"),
-    requiresOwner: true,
-    hideWhenPrefixed: true,
+    href: "/admin/conversion-hub",
+    panel: "conversion",
+    label: "转化中心",
+    description: "把转化话术、违规风险、每周筛选和复核结论串成闭环。",
+    icon: Target,
+    tone: "success",
+    match: (pathname) =>
+      pathname === "/admin/conversion-hub" ||
+      pathname.startsWith("/admin/conversion-hub/") ||
+      pathname === "/admin/advice" ||
+      pathname.startsWith("/admin/advice/") ||
+      pathname === "/admin/guidance" ||
+      pathname.startsWith("/admin/guidance/"),
+    requiresAdmin: true,
   },
   {
     href: "/admin/violations",
@@ -88,8 +99,8 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
   {
     href: "/admin/modules",
     panel: "modules",
-    label: "功能模块",
-    description: "集中处理权限、数据修正、导出和审计日志。",
+    label: "权限模块",
+    description: "集中处理成员、角色、权限、团队、分组和邀请码。",
     icon: Blocks,
     tone: "warning",
     match: (pathname) => pathname === "/admin/modules" || pathname.startsWith("/admin/modules/"),

@@ -133,7 +133,9 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
               {item.category}
             </span>
           </div>
-          <p className="whitespace-pre-wrap text-base font-semibold leading-7 text-zinc-800">{item.scriptText}</p>
+          <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-base font-semibold leading-7 text-zinc-800">
+            {item.scriptText}
+          </p>
         </div>
         <div className="shrink-0 text-left text-xs leading-6 text-zinc-500 lg:text-right">
           <p>提交人：{item.submitterName}</p>
@@ -164,7 +166,7 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
       </div>
 
       {item.sceneDescription ? (
-        <div className="mt-3 rounded-2xl border border-zinc-100 bg-zinc-50/70 p-4 text-sm leading-6 text-zinc-600">
+        <div className="mt-3 max-h-32 overflow-y-auto rounded-2xl border border-zinc-100 bg-zinc-50/70 p-4 text-sm leading-6 text-zinc-600">
           {item.sceneDescription}
         </div>
       ) : null}
@@ -194,7 +196,7 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
             value={draft.adminConclusion}
             onChange={(event) => setDraft((current) => ({ ...current, adminConclusion: event.target.value }))}
             placeholder="例如：公司层面禁止这类导粉话术"
-            className="min-h-32 rounded-2xl bg-zinc-50"
+            className="max-h-48 min-h-32 overflow-y-auto rounded-2xl bg-zinc-50"
           />
         </label>
         <label className="block">
@@ -203,7 +205,7 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
             value={draft.suggestedAction}
             onChange={(event) => setDraft((current) => ({ ...current, suggestedAction: event.target.value }))}
             placeholder="例如：删除敏感词，改成评论区引导"
-            className="min-h-32 rounded-2xl bg-zinc-50"
+            className="max-h-48 min-h-32 overflow-y-auto rounded-2xl bg-zinc-50"
           />
         </label>
       </div>

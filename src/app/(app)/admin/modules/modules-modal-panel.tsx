@@ -43,7 +43,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
         const payload = (await response.json()) as AdminModulesData & { error?: string };
 
         if (!response.ok || payload.error) {
-          throw new Error(payload.error || "加载功能模块失败");
+          throw new Error(payload.error || "加载权限模块失败");
         }
 
         if (!cancelled) {
@@ -51,7 +51,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
         }
       } catch (nextError) {
         if (!cancelled) {
-          setError(nextError instanceof Error ? nextError.message : "加载功能模块失败");
+          setError(nextError instanceof Error ? nextError.message : "加载权限模块失败");
         }
       } finally {
         if (!cancelled) {
@@ -94,6 +94,8 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
         currentUserPermissions={data.perm.permissions}
         permissionManagerCapabilities={data.permissionManagerCapabilities}
         allProfiles={data.allProfiles}
+        teams={data.teams}
+        teamManagement={data.teamManagement}
         fullReports={data.fullReports}
         defaultDate={data.queryDate}
         avgPlayBySubmitter={data.avgPlayBySubmitter}

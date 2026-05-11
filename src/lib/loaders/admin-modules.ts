@@ -5,6 +5,14 @@ import { loadProfilesWithExemptionFallback } from "@/app/(app)/admin/资料加�
 import { getUserPermissions } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  filterVisibleTeamManagementProfiles,
+  isIgnoredTeamManagementUser,
+  resolveTeamManagementAccess,
+  type TeamManagementAccess,
+  type TeamManagementGroup,
+  type TeamManagementProfile,
+} from "@/lib/team-management";
 import { getTeamMeta, getTeamOptions } from "@/lib/teams";
 import type { Permissions, UserRole } from "@/types";
 
@@ -24,8 +32,18 @@ export interface AdminModulesData {
     status: string | null;
     permissions: Permissions | null;
     email: string | null;
+    team_id?: string | null;
+    group_id?: string | null;
     team_name: string | null;
   }>;
+  teams: Array<{ id: string; name: string }>;
+  teamManagement: {
+    access: TeamManagementAccess;
+    teams: Array<{ id: string; name: string }>;
+    groups: TeamManagementGroup[];
+    profiles: TeamManagementProfile[];
+    leaderCandidates: TeamManagementProfile[];
+  };
   fullReports: Parameters<typeof DataManager>[0]["reports"];
   avgPlayBySubmitter: Record<string, number>;
   dayCountBySubmitter: Record<string, number>;
@@ -114,7 +132,7 @@ export async function loadAdminModulesData({
       adminSupabase
         .from("profiles")
         .select(
-          "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, team_id, created_at"
+          "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, team_id, group_id, created_at"
         )
         .order("created_at", { ascending: true }),
     loadWithoutExemption: async () =>
@@ -124,9 +142,13 @@ export async function loadAdminModulesData({
         .order("created_at", { ascending: true }) as never,
   });
 
-  const [authUsersResult, teams] = await Promise.all([
+  const [authUsersResult, teams, groupsResult] = await Promise.all([
     adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     getTeamOptions(),
+    adminSupabase
+      .from("groups")
+      .select("id, name, team_id, leader_user_id")
+      .order("name", { ascending: true }),
   ]);
   const authUserById = new Map(
     (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]),
@@ -135,19 +157,67 @@ export async function loadAdminModulesData({
     (authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser.email ?? null]),
   );
   const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
+  const teamIdByName = new Map(teams.map((team) => [team.name, team.id]));
 
   const hydratedAllProfiles = (allProfiles ?? []).map((profile) => {
     const metadata = authUserById.get(profile.id)?.user_metadata ?? {};
     const metadataTeamName = getTeamMeta(metadata).teamName;
-    const dbTeamName = profile.team_id ? (teamNameById.get(profile.team_id) ?? null) : null;
+    const metadataTeamId = typeof metadata.team_id === "string" ? metadata.team_id : null;
+    const dbTeamId = profile.team_id ?? metadataTeamId ?? (metadataTeamName ? teamIdByName.get(metadataTeamName) ?? null : null);
+    const dbTeamName = dbTeamId ? (teamNameById.get(dbTeamId) ?? null) : null;
 
     return {
       ...profile,
+      role: profile.role as UserRole,
+      team_id: dbTeamId,
+      group_id: profile.group_id ?? null,
       email: authEmailByUserId.get(profile.id) ?? null,
       team_name: dbTeamName ?? metadataTeamName,
       permissions: (profile.permissions ?? null) as Permissions | null,
     };
   }) as AdminModulesData["allProfiles"];
+
+  const groups = ((groupsResult.data ?? []) as TeamManagementGroup[]).map((group) => ({
+    id: group.id,
+    name: group.name,
+    team_id: group.team_id ?? null,
+    leader_user_id: group.leader_user_id ?? null,
+  }));
+  const actorProfile =
+    (hydratedAllProfiles.find((profile) => profile.id === perm.userId) as TeamManagementProfile | undefined) ??
+    ({
+      id: perm.userId,
+      name: "",
+      role: perm.role,
+      permissions: perm.permissions,
+      team_id: null,
+      group_id: null,
+    } satisfies TeamManagementProfile);
+  const teamManagementAccess = resolveTeamManagementAccess(actorProfile, groups);
+  const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(
+    teamManagementAccess,
+    hydratedAllProfiles as TeamManagementProfile[],
+    groups,
+  );
+  const visibleTeamIds =
+    teamManagementAccess.teamIds === null
+      ? new Set(teams.map((team) => team.id))
+      : new Set(teamManagementAccess.teamIds);
+  const visibleTeams = teams.filter(
+    (team) =>
+      visibleTeamIds.has(team.id) ||
+      visibleTeamManagementProfiles.some((profile) => profile.team_id === team.id),
+  );
+  const visibleGroups = groups.filter((group) => {
+    if (!teamManagementAccess.canView) return false;
+    if (teamManagementAccess.groupIds) return teamManagementAccess.groupIds.includes(group.id);
+    if (teamManagementAccess.teamIds === null) return true;
+    return Boolean(group.team_id && teamManagementAccess.teamIds.includes(group.team_id));
+  });
+  const leaderCandidates = (hydratedAllProfiles as TeamManagementProfile[])
+    .filter((profile) => profile.role === "admin" && profile.permissions?.manage_members !== true)
+    .filter((profile) => Boolean(profile.team_id))
+    .filter((profile) => !isIgnoredTeamManagementUser(profile));
 
   const { data: auditLogs } = await supabase
     .from("audit_logs")
@@ -167,6 +237,14 @@ export async function loadAdminModulesData({
     perm,
     permissionManagerCapabilities,
     allProfiles: hydratedAllProfiles,
+    teams,
+    teamManagement: {
+      access: teamManagementAccess,
+      teams: visibleTeams,
+      groups: visibleGroups,
+      profiles: visibleTeamManagementProfiles,
+      leaderCandidates,
+    },
     fullReports: fullReports ?? [],
     avgPlayBySubmitter,
     dayCountBySubmitter,

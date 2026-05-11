@@ -11,9 +11,6 @@ import {
   Command,
   History,
   Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
@@ -72,7 +69,7 @@ const SHORTCUTS = [
   {
     title: "诊断异常",
     hint: "分析为什么某员工看不到某模块",
-    text: "为什么王五没有内容管理权限",
+    text: "为什么王五没有内容复盘权限",
   },
   {
     title: "重跑任务",

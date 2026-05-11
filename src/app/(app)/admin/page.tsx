@@ -9,8 +9,6 @@ import { createClient } from "@/lib/supabase/server";
 import { loadAdminPageData } from "@/lib/loaders/admin-page";
 
 import { SubmissionStatus } from "./submission-status";
-import { TeamManager } from "./team-manager";
-import { TeamGroupManager } from "./team-group-manager";
 import { ActionHub } from "./components/action-hub";
 import { MetricCardsRow } from "./components/metric-cards";
 import { JoinRequestReviewSection } from "./join-request-review-section";
@@ -60,11 +58,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     },
   ];
 
-  const profileMap = new Map(data.allProfiles.map((profile) => [profile.id, profile.name]));
-  const currentUserName = profileMap.get(user.id)?.trim() ?? "";
-  const canManageTeamModule =
-    hasPermission(data.perm.role, data.perm.permissions, "manage_invite") &&
-    (currentUserName === "闃跨" || currentUserName === "阿豪");
   const [resultTrendData, interactionTrendData] = Object.values(data.trendData) as [
     ResultTrendDatum[],
     InteractionTrendDatum[],
@@ -130,31 +123,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
       </section>
 
-      {/* 团队管理 */}
-      {data.teamManagement.access.canView && (
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">团队与分组</h2>
-          <div className="mt-4">
-            <TeamGroupManager
-              access={data.teamManagement.access}
-              teams={data.teamManagement.teams}
-              groups={data.teamManagement.groups}
-              profiles={data.teamManagement.profiles}
-              leaderCandidates={data.teamManagement.leaderCandidates}
-            />
-          </div>
-        </section>
-      )}
-
-      {/* 团队管理 */}
-      {canManageTeamModule && (
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">团队管理</h2>
-          <div className="mt-4">
-            <TeamManager teams={data.teams} />
-          </div>
-        </section>
-      )}
     </div>
   );
 }

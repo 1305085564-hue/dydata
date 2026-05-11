@@ -9,6 +9,8 @@ import { AuditLogList } from "../audit-log-list";
 import { DataManager } from "../data-manager";
 import { ExportButton } from "../export-button";
 import { PermissionManager } from "../permission-manager";
+import { TeamGroupManager } from "../team-group-manager";
+import { TeamManager } from "../team-manager";
 
 interface AdminModulesContentProps {
   currentUserId: string;
@@ -24,9 +26,13 @@ interface AdminModulesContentProps {
     name: string;
     email: string | null;
     role: string;
+    team_id?: string | null;
+    group_id?: string | null;
     team_name: string | null;
     permissions: Permissions | null;
   }>;
+  teams: Array<{ id: string; name: string }>;
+  teamManagement: Parameters<typeof TeamGroupManager>[0];
   fullReports: Parameters<typeof DataManager>[0]["reports"];
   defaultDate: string;
   avgPlayBySubmitter: Record<string, number>;
@@ -42,6 +48,8 @@ export function AdminModulesContent({
   currentUserPermissions,
   permissionManagerCapabilities,
   allProfiles,
+  teams,
+  teamManagement,
   fullReports,
   defaultDate,
   avgPlayBySubmitter,
@@ -70,7 +78,7 @@ export function AdminModulesContent({
   if (!hasVisibleModules) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-zinc-500">当前账号没有可用的功能模块权限。</p>
+        <p className="text-sm text-zinc-500">当前账号没有可用的权限模块权限。</p>
       </div>
     );
   }
@@ -114,7 +122,7 @@ export function AdminModulesContent({
 
       {canManagePermissions ? (
         <TabsContent value="permissions" className="mt-0">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
+          <div id="permissions" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
               <h2 className="text-[18px] font-medium text-zinc-800">角色与权限管理</h2>
               <p className="text-sm text-zinc-500">控制成员角色和管理权限，保持原有权限规则不变。</p>
@@ -135,12 +143,32 @@ export function AdminModulesContent({
               />
             </div>
           </div>
+          {teamManagement.access.canView ? (
+            <div id="teams-groups" className="mt-6 scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <TeamGroupManager
+                access={teamManagement.access}
+                teams={teamManagement.teams}
+                groups={teamManagement.groups}
+                profiles={teamManagement.profiles}
+                leaderCandidates={teamManagement.leaderCandidates}
+              />
+            </div>
+          ) : null}
+          {canManagePermissions ? (
+            <div id="team-directory" className="mt-6 scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="mb-4 space-y-1">
+                <h2 className="text-[18px] font-medium text-zinc-800">团队目录</h2>
+                <p className="text-sm text-zinc-500">团队名称维护归入权限模块，便于和成员、角色、分组一起处理。</p>
+              </div>
+              <TeamManager teams={teams} />
+            </div>
+          ) : null}
         </TabsContent>
       ) : null}
 
       {canEditData ? (
         <TabsContent value="data" className="mt-0">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
+          <div id="data-tools" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
               <h2 className="text-[18px] font-medium text-zinc-800">数据管理与修正</h2>
               <p className="text-sm text-zinc-500">处理异常值、补录和修正，继续复用现有后台编辑逻辑。</p>
@@ -159,7 +187,7 @@ export function AdminModulesContent({
 
       {canViewAuditLog ? (
         <TabsContent value="audit" className="mt-0">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
+          <div id="audit-log" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
               <h2 className="text-[18px] font-medium text-zinc-800">近期操作审计</h2>
               <p className="text-sm text-zinc-500">查看最近后台操作日志，保留原有日志数据来源和展示能力。</p>
@@ -171,7 +199,7 @@ export function AdminModulesContent({
 
       {canExportData ? (
         <TabsContent value="export" className="mt-0">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
+          <div id="export-data" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
               <h2 className="text-[18px] font-medium text-zinc-800">数据导出</h2>
               <p className="text-sm text-zinc-500">继续使用原有导出接口，按日期范围导出 Excel。</p>

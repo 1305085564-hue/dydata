@@ -265,7 +265,7 @@ export function ContentDetailDialog({
               {video.content && (
                 <div className="rounded-2xl bg-background/80 p-3">
                   <div className="mb-1 text-xs text-muted-foreground">文案原文</div>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                  <div className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-relaxed">
                     {contentExpanded ? video.content : video.content.slice(0, 220)}
                     {video.content.length > 220 && (
                       <button
@@ -413,7 +413,7 @@ export function ContentDetailDialog({
                       {reviewResult.actions.instructions.map((inst, i) => (
                         <li key={i} className="text-sm flex gap-2">
                           <span className="shrink-0 font-medium text-primary">{i + 1}.</span>
-                          <span>{inst}</span>
+                      <span className="break-words">{inst}</span>
                         </li>
                       ))}
                     </ol>
@@ -445,10 +445,10 @@ export function ContentDetailDialog({
                             {expanded && (
                               <div className="space-y-2 border-t border-border/30 p-3 text-xs">
                                 <div><span className="text-muted-foreground">时间：</span>{seg.time_range}</div>
-                                <div><span className="text-muted-foreground">原文：</span>{seg.segment_text}</div>
-                                <div><span className="text-muted-foreground">判断：</span>{seg.judgement}</div>
-                                <div><span className="text-muted-foreground">依据：</span>{seg.reason}</div>
-                                <div><span className="text-muted-foreground">建议：</span><span className="font-medium">{seg.suggestion}</span></div>
+                                <div className="max-h-32 overflow-y-auto break-words pr-1"><span className="text-muted-foreground">原文：</span>{seg.segment_text}</div>
+                                <div className="break-words"><span className="text-muted-foreground">判断：</span>{seg.judgement}</div>
+                                <div className="break-words"><span className="text-muted-foreground">依据：</span>{seg.reason}</div>
+                                <div className="break-words"><span className="text-muted-foreground">建议：</span><span className="font-medium">{seg.suggestion}</span></div>
                               </div>
                             )}
                           </div>
@@ -459,7 +459,7 @@ export function ContentDetailDialog({
 
                   <div className="rounded-2xl bg-background/80 p-3 space-y-2">
                     <div className="text-xs font-medium text-muted-foreground">发给成员的话</div>
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                    <div className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-relaxed">
                       {reviewResult.actions.message_for_member}
                     </div>
                   </div>
@@ -478,7 +478,7 @@ export function ContentDetailDialog({
                   {segments.map((seg) => (
                     <div key={seg.segment_order} className="rounded-xl bg-background/60 p-2 text-xs">
                       <span className="mr-1 font-medium text-primary">[{seg.segment_order + 1}] {seg.segment_type}</span>
-                      <span className="text-foreground/80">{seg.segment_text}</span>
+                      <span className="break-words text-foreground/80">{seg.segment_text}</span>
                     </div>
                   ))}
                 </div>

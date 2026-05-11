@@ -25,8 +25,6 @@ const loadModulesPanel = () =>
   import("./modules/modules-modal-panel").then((module) => module.ModulesModalPanel);
 const loadAiChannelsPanel = () =>
   import("./ai-channels/ai-channels-client").then((module) => module.default);
-const loadAiRewritePanel = () =>
-  import("./ai-rewrite/ai-rewrite-client").then((module) => module.default);
 
 const AnalyticsPanel = dynamic(loadAnalyticsPanel, {
   ssr: false,
@@ -40,16 +38,11 @@ const AiChannelsPanel = dynamic(loadAiChannelsPanel, {
   ssr: false,
   loading: () => <PanelSkeleton />,
 });
-const AiRewritePanel = dynamic(loadAiRewritePanel, {
-  ssr: false,
-  loading: () => <PanelSkeleton />,
-});
 
-const panelPreloaders: Record<Exclude<AdminPanelKey, "overview">, () => Promise<unknown>> = {
+const panelPreloaders: Record<Exclude<AdminPanelKey, "overview" | "conversion">, () => Promise<unknown>> = {
   analytics: loadAnalyticsPanel,
   modules: loadModulesPanel,
-  "ai-channels": loadAiChannelsPanel,
-  "ai-rewrite": loadAiRewritePanel,
+  "ai-config": loadAiChannelsPanel,
   violations: () => Promise.resolve(),
 };
 
@@ -121,7 +114,7 @@ export function AdminPanelLauncher({
   }
 
   function openPanel(item: AdminSecondaryNavItem) {
-    if (item.panel === "violations") {
+    if (item.panel === "violations" || item.panel === "conversion") {
       window.location.href = item.href;
       return;
     }
@@ -135,7 +128,7 @@ export function AdminPanelLauncher({
   }
 
   function preloadPanel(item: AdminSecondaryNavItem) {
-    if (item.panel === "overview") return;
+    if (item.panel === "overview" || item.panel === "conversion") return;
     void panelPreloaders[item.panel]();
   }
 
@@ -194,8 +187,7 @@ export function AdminPanelLauncher({
                   {activePanel === "overview" ? overviewContent : null}
                   {activePanel === "analytics" ? <AnalyticsPanel initialPreset="30d" /> : null}
                   {activePanel === "modules" ? <ModulesPanel initialDate={initialDate} /> : null}
-                  {activePanel === "ai-channels" ? <AiChannelsPanel /> : null}
-                  {activePanel === "ai-rewrite" ? <AiRewritePanel /> : null}
+                  {activePanel === "ai-config" ? <AiChannelsPanel /> : null}
                 </div>
               </div>
             </>

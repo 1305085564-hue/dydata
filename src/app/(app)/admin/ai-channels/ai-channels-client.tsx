@@ -405,14 +405,14 @@ export default function AIChannelsClient() {
     <div className="w-full space-y-6 px-4 py-4 sm:px-6 lg:px-8">
       {/* 极简顶部导航 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-800">AI 功能区</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-800">AI 配置中心</h1>
         <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[var(--color-text-secondary)]">
           <Link href="/admin" className="flex items-center gap-1.5 hover:text-zinc-800 transition-colors">
             返回总控台
           </Link>
           <div className="h-3.5 w-px bg-border/60" />
           <Link href="/admin/ai-rewrite" className="flex items-center gap-1.5 hover:text-zinc-800 transition-colors">
-            文案改写配置
+            文案改写
           </Link>
         </div>
       </div>

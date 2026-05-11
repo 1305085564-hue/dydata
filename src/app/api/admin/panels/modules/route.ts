@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "加载功能模块失败" },
+      { error: error instanceof Error ? error.message : "加载权限模块失败" },
       { status: 500 },
     );
   }

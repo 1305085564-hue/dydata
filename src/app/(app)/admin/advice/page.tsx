@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { loadAdminAdvicePageData } from "@/lib/loaders/admin-advice-page";
 export type { AdviceRow } from "@/lib/loaders/admin-advice-page";
@@ -21,12 +22,24 @@ export default async function AdminAdvicePage() {
   const data = await loadAdminAdvicePageData({ supabase });
 
   return (
-    <AppShell width="wide" className="pb-8">
+    <AdminWorkspaceLayout
+      eyebrow="Conversion Center"
+      title="转化中心"
+      description="把转化建议、违规风险、复核结论和动作跟进收成一条闭环。"
+      indexItems={[
+        { id: "conversion-overview", label: "闭环总览", hint: "建议、待办、AI 来源" },
+        { id: "conversion-queue", label: "建议队列", hint: "筛选、复核、动作" },
+      ]}
+      className="pb-8"
+    >
+    <AppShell width="full">
       <AppShellHero
-        eyebrow="Advice Console"
-        title="建议管理"
+        eyebrow="Advice Queue"
+        title="转化建议"
         description="按员工、账号、状态和来源查看建议闭环，并支持批量生成与复核。"
+        className="scroll-mt-8"
       >
+        <div id="conversion-overview" className="sr-only" />
         <AppShellMetricStrip
           columns={4}
           items={[
@@ -39,10 +52,12 @@ export default async function AdminAdvicePage() {
       </AppShellHero>
 
       <AppShellSection
+        className="scroll-mt-8"
         eyebrow="Advice Queue"
-        title="建议列表"
+        title="转化建议列表"
         description="筛选、复核和批量动作都集中在这里。"
       >
+        <div id="conversion-queue" className="sr-only" />
         <AdviceList
           advice={data.advice}
           profiles={data.profiles}
@@ -51,5 +66,6 @@ export default async function AdminAdvicePage() {
         />
       </AppShellSection>
     </AppShell>
+    </AdminWorkspaceLayout>
   );
 }

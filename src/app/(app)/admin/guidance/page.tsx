@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { loadGuidancePageData } from "@/lib/loaders/guidance-page";
 import { CultivationList } from "./cultivation-list";
@@ -20,12 +21,24 @@ export default async function GuidancePage() {
   const data = await loadGuidancePageData({ supabase });
 
   return (
-    <AppShell width="wide" className="pb-8">
+    <AdminWorkspaceLayout
+      eyebrow="Conversion Guidance"
+      title="转化指导"
+      description="从账号表现里筛出需要推进的人、方向和动作，作为转化中心的动作名单。"
+      indexItems={[
+        { id: "guidance-overview", label: "名单总览", hint: "账号、成员、样本" },
+        { id: "guidance-list", label: "动作名单", hint: "培养、干预、错配" },
+      ]}
+      className="pb-8"
+    >
+    <AppShell width="full">
       <AppShellHero
         eyebrow="Guidance Console"
-        title="定向培养"
-        description="按账号和近 30 天表现查看培养优先级，聚焦需要重点干预的人和方向。"
+        title="转化指导 / 动作名单"
+        description="按账号和近 30 天表现查看动作优先级，聚焦需要重点干预的人和方向。"
+        className="scroll-mt-8"
       >
+        <div id="guidance-overview" className="sr-only" />
         <AppShellMetricStrip
           columns={4}
           items={[
@@ -38,12 +51,15 @@ export default async function GuidancePage() {
       </AppShellHero>
 
       <AppShellSection
+        className="scroll-mt-8"
         eyebrow="Guidance List"
-        title="指导名单"
+        title="动作名单"
         description="按重点培养、下滑干预、方向错配三类视角查看。"
       >
+        <div id="guidance-list" className="sr-only" />
         <CultivationList accounts={data.accounts} reports={data.reports} />
       </AppShellSection>
     </AppShell>
+    </AdminWorkspaceLayout>
   );
 }

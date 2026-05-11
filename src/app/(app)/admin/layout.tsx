@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminSidebar } from "@/components/admin-layout/admin-sidebar";
 import { AdminMainArea } from "@/components/admin-layout/admin-main-area";
+import { AiAssistantFloatingWindow } from "@/components/ai-assistant/ai-assistant-floating-window";
 
 export default async function AdminLayout({
   children,
@@ -28,6 +29,9 @@ export default async function AdminLayout({
         userName={profile?.name ?? user.email ?? ""}
       />
       <AdminMainArea>{children}</AdminMainArea>
+      {profile?.role === "owner" || profile?.role === "admin" ? (
+        <AiAssistantFloatingWindow actorRole={profile.role} />
+      ) : null}
     </div>
   );
 }

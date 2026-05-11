@@ -213,7 +213,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
 
               <div className="rounded-2xl bg-background/80 p-4">
                 <div className="text-xs text-muted-foreground">内容文案</div>
-                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-foreground">
+                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-6 text-foreground">
                   {video.content?.trim() || "-"}
                 </div>
               </div>

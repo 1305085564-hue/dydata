@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const isAuthRoute = pathname === "/login" || pathname === "/register";
 
-  // AI 功能区已合并到 AI 渠道，旧链接重定向
+  // AI 配置中心统一由渠道页承载，旧链接继续重定向
   if (pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/")) {
     return NextResponse.redirect(new URL("/admin/ai-channels", request.url));
   }

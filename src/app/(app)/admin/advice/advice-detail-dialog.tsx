@@ -113,7 +113,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 shadow-sm sm:max-w-4xl">
         <DialogHeader className="border-b border-border/60 px-6 py-5 sm:px-7">
-          <DialogTitle className="text-xl font-semibold tracking-tight">建议详情</DialogTitle>
+          <DialogTitle className="text-xl font-semibold tracking-tight">转化建议详情</DialogTitle>
         </DialogHeader>
 
         {advice ? (
@@ -151,12 +151,16 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
 
             <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-[18px] font-medium text-foreground">完整建议</div>
-              <div className="rounded-2xl bg-background/80 p-4 whitespace-pre-wrap text-sm leading-6 text-foreground">{advice.advice_content}</div>
+              <div className="max-h-64 overflow-y-auto rounded-2xl bg-background/80 p-4 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+                {advice.advice_content}
+              </div>
             </section>
 
             <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
               <div className="text-[18px] font-medium text-foreground">证据</div>
-              <div className="rounded-2xl bg-background/80 p-4 whitespace-pre-wrap text-sm leading-6 text-foreground">{advice.evidence || "暂无证据"}</div>
+              <div className="max-h-56 overflow-y-auto rounded-2xl bg-background/80 p-4 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+                {advice.evidence || "暂无证据"}
+              </div>
             </section>
 
             <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
@@ -217,7 +221,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   <div className="rounded-2xl bg-background/80 p-4">
                     <div className="text-xs text-muted-foreground">视频标题</div>
-                    <div className="mt-1 text-sm font-medium text-foreground">{relatedVideo.video_title?.trim() || "未命名视频"}</div>
+                    <div className="mt-1 line-clamp-3 break-words text-sm font-medium text-foreground">{relatedVideo.video_title?.trim() || "未命名视频"}</div>
                   </div>
                   <div className="rounded-2xl bg-background/80 p-4">
                     <div className="text-xs text-muted-foreground">发布时间</div>

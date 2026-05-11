@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
 import { loadAdminVideosPageData } from "@/lib/loaders/admin-videos-page";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { VideoList } from "./video-list";
 
 export default async function AdminVideosPage() {
@@ -26,14 +27,17 @@ export default async function AdminVideosPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Video Console</p>
-        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">视频管理</h1>
-        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">按账号、负责人、日期和状态查看全部视频与 24h 快照。</p>
-      </div>
+    <AdminWorkspaceLayout
+      eyebrow="Video Assets"
+      title="视频资产"
+      description="管理原始视频资产、24h 快照、标签和异常状态；这里不做内容复盘结论。"
+      indexItems={[
+        { id: "video-asset-metrics", label: "资产总览", hint: "数量、快照、异常" },
+        { id: "video-asset-list", label: "资产列表", hint: "视频、标签、异常" },
+      ]}
+    >
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div id="video-asset-metrics" className="scroll-mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m) => (
           <div key={m.label} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{m.label}</p>
@@ -43,8 +47,8 @@ export default async function AdminVideosPage() {
         ))}
       </div>
 
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">视频列表</h2>
+      <section id="video-asset-list" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">资产列表</h2>
         <div className="mt-4">
           <VideoList
             videos={data.videos}
@@ -55,6 +59,6 @@ export default async function AdminVideosPage() {
           />
         </div>
       </section>
-    </div>
+    </AdminWorkspaceLayout>
   );
 }

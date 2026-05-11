@@ -25,9 +25,9 @@ export default async function AIChannelsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">AI Channels</p>
-        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">AI 功能区</h1>
-        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">管理模型渠道、优先级切换、功能开关与提示词配置</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">AI Config Center</p>
+        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">AI 配置中心</h1>
+        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">集中管理模型渠道、功能绑定、文案改写和执行路线</p>
       </div>
       <AIChannelsClient />
     </div>

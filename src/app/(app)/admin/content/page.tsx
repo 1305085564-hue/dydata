@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
 import { loadAdminContentPageData } from "@/lib/loaders/admin-content-page";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { ContentList } from "./content-list";
 
 export default async function AdminContentPage() {
@@ -26,14 +27,17 @@ export default async function AdminContentPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Content Console</p>
-        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">内容管理</h1>
-        <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">次日复盘工作台</p>
-      </div>
+    <AdminWorkspaceLayout
+      eyebrow="Content Review"
+      title="内容复盘"
+      description="围绕文案拆解、次日复盘、内容判断和下一步动作；原始视频资产留在视频资产页。"
+      indexItems={[
+        { id: "content-review-metrics", label: "复盘总览", hint: "已复盘、待复盘" },
+        { id: "content-review-list", label: "复盘列表", hint: "文案、判断、动作" },
+      ]}
+    >
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div id="content-review-metrics" className="scroll-mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m) => (
           <div key={m.label} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{m.label}</p>
@@ -43,7 +47,7 @@ export default async function AdminContentPage() {
         ))}
       </div>
 
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <section id="content-review-list" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">复盘列表</h2>
         <div className="mt-4">
           <ContentList
@@ -55,6 +59,6 @@ export default async function AdminContentPage() {
           />
         </div>
       </section>
-    </div>
+    </AdminWorkspaceLayout>
   );
 }
