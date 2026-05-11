@@ -10,6 +10,8 @@ import {
   normalizeVideoIdLike,
 } from "./stability";
 
+const SUBMISSION_SCREENSHOT_BUCKET_PATH = "/storage/v1/object/public/submission-screenshots/";
+
 export interface VideoSubmitValidationMetrics {
   play_count: number;
   likes: number;
@@ -90,6 +92,51 @@ function normalizeScriptFormat(value: unknown): ScriptFormat {
     : "oral";
 }
 
+function validateSubmissionAssetUrls(value: unknown): string | null {
+  if (!Array.isArray(value)) return null;
+
+  const configuredSupabaseHost = (() => {
+    const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!rawUrl) return null;
+    try {
+      return new URL(rawUrl).host;
+    } catch {
+      return null;
+    }
+  })();
+
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const url = (item as { url?: unknown }).url;
+    if (typeof url !== "string" || !url.trim()) continue;
+
+    if (url.trim().startsWith("blob:")) {
+      return "截图地址不能是本地临时地址，请重新上传截图";
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return "截图地址格式不正确，请重新上传截图";
+    }
+
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return "截图地址必须是线上可访问地址，请重新上传截图";
+    }
+
+    if (!parsed.pathname.includes(SUBMISSION_SCREENSHOT_BUCKET_PATH)) {
+      return "截图必须先上传到系统截图空间，请重新上传截图";
+    }
+
+    if (configuredSupabaseHost && parsed.host !== configuredSupabaseHost) {
+      return "截图地址不是当前项目的 Supabase 地址，请重新上传截图";
+    }
+  }
+
+  return null;
+}
+
 export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidationOutcome {
   if (!body || typeof body !== "object") {
     return { ok: false, error: "请求体格式不正确" };
@@ -104,6 +151,11 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   const title = normalizeOptionalText(payload.video_title);
   const content = normalizeOptionalText(payload.content);
   const keywords = normalizeContentKeywords(payload.content_keywords);
+  const assetUrlError = validateSubmissionAssetUrls(payload.assets);
+
+  if (assetUrlError) {
+    return { ok: false, error: assetUrlError };
+  }
 
   if (!title || !content || keywords.length === 0) {
     return { ok: false, error: "标题、文案、内容标签为必填项" };

@@ -24,6 +24,7 @@ interface DashboardWorkspaceHeaderProps {
   submittedDates: string[];
   userRole: "member" | "admin" | "owner";
   alertCount: number;
+  reviewRequestCount?: number;
 }
 
 /**
@@ -40,8 +41,10 @@ export function DashboardWorkspaceHeader({
   submittedDates,
   userRole,
   alertCount,
+  reviewRequestCount = 0,
 }: DashboardWorkspaceHeaderProps) {
   const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const reviewBadgeCount = alertCount + reviewRequestCount;
   const utilityActions = [
     { key: "data-view", label: "数据查看", icon: Eye },
     { key: "trend-view", label: "趋势查看", icon: TrendingUp },
@@ -108,6 +111,29 @@ export function DashboardWorkspaceHeader({
         </div>
       </div>
 
+      {userRole !== "member" && reviewRequestCount > 0 && (
+        <div className="flex items-center justify-between rounded-[10px] border border-zinc-200 bg-white px-3.5 py-2 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C9604D] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#C9604D]" />
+            </span>
+            <span className="text-[12px] font-medium text-zinc-700">
+              待审批
+              <span className="mx-1 font-semibold tabular-nums text-[#C9604D]">{reviewRequestCount}</span>
+              条
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onTabChange("REVIEW")}
+            className="text-[11px] font-medium text-[#D97757] transition-colors hover:text-[#C9604D]"
+          >
+            去审核 →
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2" aria-label="数据快捷入口">
           {utilityActions.map((action) => {
@@ -146,9 +172,9 @@ export function DashboardWorkspaceHeader({
               )}
             >
               {tab.label}
-              {tab.key === "REVIEW" && alertCount > 0 && (
+              {tab.key === "REVIEW" && reviewBadgeCount > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-semibold text-white">
-                  {alertCount > 9 ? "9+" : alertCount}
+                  {reviewBadgeCount > 9 ? "9+" : reviewBadgeCount}
                 </span>
               )}
             </button>

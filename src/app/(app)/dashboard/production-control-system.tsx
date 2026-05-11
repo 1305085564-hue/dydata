@@ -13,6 +13,7 @@ import {
   getSopMatrixAction,
 } from "@/app/actions/sop";
 import type { SopCheckpoint, SopMemberStatus } from "@/types";
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import {
   groupDashboardAlerts,
@@ -58,8 +59,10 @@ interface ProductionControlSystemProps {
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
+  teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
 /**
@@ -82,8 +85,10 @@ export function ProductionControlSystem({
   ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption = false,
+  userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
+  teamReviewRequests,
 }: ProductionControlSystemProps) {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("FLOW");
   const [activeCheckpoint, setActiveCheckpoint] =
@@ -247,6 +252,7 @@ export function ProductionControlSystem({
           submittedDates={submittedDates}
           userRole={userRole}
           alertCount={alertGroups.length}
+          reviewRequestCount={teamReviewRequests.length}
         />
 
         <AlertCenter
@@ -296,15 +302,17 @@ export function ProductionControlSystem({
                 ownContentDirections={ownContentDirections}
                 accountDisplayNameMap={accountDisplayNameMap}
                 hasPendingExemption={hasPendingExemption}
+                userExemptionReviewNotice={userExemptionReviewNotice}
                 userExemptionProfile={userExemptionProfile}
                 userExemptionGrants={userExemptionGrants}
+                teamReviewRequests={teamReviewRequests}
               />
             }
           />
         )}
         {activeTab === "REVIEW" &&
           (userRole === "admin" || userRole === "owner" ? (
-            <LeaderDashboard today={today} userRole={userRole} />
+            <LeaderDashboard today={today} userRole={userRole} teamReviewRequests={teamReviewRequests} />
           ) : null)}
         {activeTab === "MATRIX" &&
           (userRole === "admin" || userRole === "owner") && (

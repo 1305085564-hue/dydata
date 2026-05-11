@@ -2,6 +2,15 @@ export function formatDateOnly(date: Date) {
   return date.toISOString().split("T")[0];
 }
 
+export function formatShanghaiDateOnly(date: Date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 export function shiftDateOnly(date: Date, days: number) {
   const next = new Date(date);
   next.setDate(next.getDate() + days);

@@ -1,5 +1,6 @@
 "use client";
 
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import { VideoSubmitPanel } from "../video-submit-panel";
 import type { TodaySubmissionReportLike } from "../video-submit-panel-state";
@@ -24,8 +25,10 @@ interface DataReportStageProps {
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption: boolean;
+  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
+  teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
 /**
@@ -48,8 +51,10 @@ export function DataReportStage({
   ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption,
+  userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
+  teamReviewRequests,
 }: DataReportStageProps) {
   return (
     <div>
@@ -69,8 +74,10 @@ export function DataReportStage({
         ownContentDirections={ownContentDirections}
         accountDisplayNameMap={accountDisplayNameMap}
         hasPendingExemption={hasPendingExemption}
+        userExemptionReviewNotice={userExemptionReviewNotice}
         userExemptionProfile={userExemptionProfile}
         userExemptionGrants={userExemptionGrants}
+        teamReviewRequests={teamReviewRequests}
         embeddedChrome
       />
     </div>

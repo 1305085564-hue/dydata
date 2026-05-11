@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Check, ChevronDown, FilePenLine, History, Lock, PencilLine, ShieldAlert } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Clock, FilePenLine, History, Lock, PencilLine, ShieldAlert, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ import {
   type ExemptionProfileLike,
 } from "@/lib/豁免";
 import { DashboardForm, type DashboardReportData } from "./dashboard-form";
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import {
   getDashboardMetricGridClass,
   getDashboardStatusClass,
@@ -72,8 +73,10 @@ interface VideoSubmitPanelProps {
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
+  teamReviewRequests?: DashboardPageData["teamReviewRequests"];
   embeddedChrome?: boolean;
   selectedAccountId?: string;
   onSelectedAccountChange?: (accountId: string) => void;
@@ -140,8 +143,11 @@ export function VideoSubmitPanel({
   accountIds,
   ownContentDirections,
   accountDisplayNameMap,
+  hasPendingExemption = false,
+  userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
+  teamReviewRequests = [],
   embeddedChrome = false,
   selectedAccountId: controlledSelectedAccountId,
   onSelectedAccountChange,
@@ -175,11 +181,26 @@ export function VideoSubmitPanel({
   const [asyncAccountIds, setAsyncAccountIds] = useState<string[]>(accountIds);
   const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>(ownContentDirections);
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
+  const [dismissedPendingExemption, setDismissedPendingExemption] = useState(() => {
+    try {
+      const raw = window.localStorage.getItem("dydata:dismissed-pending-exemption");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed.date === today;
+      }
+    } catch {}
+    return false;
+  });
+  const [dismissedReviewNoticeIds, setDismissedReviewNoticeIds] = useState<Set<string>>(new Set());
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
   const violationSubmitHref = selectedAccountId
     ? `/violations/submit?account_id=${encodeURIComponent(selectedAccountId)}&prefill=1`
     : "/violations/submit";
+  const visibleReviewNotice =
+    userExemptionReviewNotice && !dismissedReviewNoticeIds.has(userExemptionReviewNotice.id)
+      ? userExemptionReviewNotice
+      : null;
   const setSelectedAccountId = useCallback(
     (accountId: string) => {
       setInternalSelectedAccountId(accountId);
@@ -204,6 +225,16 @@ export function VideoSubmitPanel({
       })
       .catch(() => {});
   }, [isTrendViewOpen, trendData]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("dydata:dismissed-exemption-review-notices");
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) {
+        setDismissedReviewNoticeIds(new Set(parsed.filter((item): item is string => typeof item === "string")));
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (!isLeaderboardOpen || leaderboardData) return;
@@ -232,6 +263,15 @@ export function VideoSubmitPanel({
       })
       .catch(() => {});
   }, [activityData, isDataViewOpen, isHistoryOpen]);
+
+  useEffect(() => {
+    if (!hasPendingExemption) {
+      setDismissedPendingExemption(false);
+      try {
+        window.localStorage.removeItem("dydata:dismissed-pending-exemption");
+      } catch {}
+    }
+  }, [hasPendingExemption]);
 
   useEffect(() => {
     if (!embeddedChrome) return;
@@ -444,6 +484,23 @@ export function VideoSubmitPanel({
     setLastSubmittedVideoId(video.id);
     setLastAiTags(aiTags);
     setIsDataViewOpen(false);
+  }
+
+  function dismissReviewNotice(noticeId: string) {
+    setDismissedReviewNoticeIds((current) => {
+      const next = new Set(current).add(noticeId);
+      try {
+        window.localStorage.setItem("dydata:dismissed-exemption-review-notices", JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+  }
+
+  function dismissPendingExemption() {
+    setDismissedPendingExemption(true);
+    try {
+      window.localStorage.setItem("dydata:dismissed-pending-exemption", JSON.stringify({ date: today }));
+    } catch {}
   }
 
   function openBackfillForDate(date: string) {
@@ -691,6 +748,59 @@ export function VideoSubmitPanel({
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
             {activeCheckpointId === 1 ? (
               <>
+            {hasPendingExemption && !dismissedPendingExemption && (
+              <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-[#FAFAFB] p-4 text-[13px] text-zinc-800">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[11px] font-medium text-[#D99E55]">
+                        <Clock className="size-3.5 stroke-[1.5]" />
+                        申请审批中
+                      </span>
+                    </div>
+                    <p className="text-[12px] leading-[1.7] text-zinc-500">
+                      你的豁免申请正在等待管理员审批，审批结果将在这里更新。
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={dismissPendingExemption}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                  >
+                    <X className="size-3.5 stroke-[1.5]" />
+                    关闭
+                  </button>
+                </div>
+              </div>
+            )}
+            {visibleReviewNotice ? (
+              <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-[#FAFAFB] p-4 text-[13px] text-zinc-800">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[11px] font-medium text-[#6FAA7D]">
+                        <Check className="size-3.5 stroke-[1.5]" />
+                        豁免结果已更新
+                      </span>
+                      <span className="text-[12px] font-medium text-zinc-500">
+                        {visibleReviewNotice.request_status === "approved" ? "申请已通过" : "申请未通过"}
+                      </span>
+                    </div>
+                    <p className="text-[12px] leading-[1.7] text-zinc-500">
+                      {visibleReviewNotice.reason?.trim() || "管理员已处理你的豁免申请，可继续按当前状态完成今日填报。"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => dismissReviewNotice(visibleReviewNotice.id)}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                  >
+                    <X className="size-3.5 stroke-[1.5]" />
+                    知道了
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {primarySummary && isPrimarySummaryMode ? (
               <div className="rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-6 text-[13px] text-zinc-800">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">

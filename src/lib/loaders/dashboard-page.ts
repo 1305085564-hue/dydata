@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
 import type { DashboardActivityReport } from "@/lib/loaders/dashboard-activity";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getExemptionStateForDate,
   type ExemptionGrantLike,
@@ -8,7 +9,7 @@ import {
 } from "@/lib/豁免";
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
-import { formatDateOnly, getSafeAccountDisplayName, uniqueNonEmpty } from "./shared";
+import { formatShanghaiDateOnly, getSafeAccountDisplayName, uniqueNonEmpty } from "./shared";
 
 type DashboardSupabase = SupabaseClient;
 
@@ -37,6 +38,30 @@ type ApprovedRequestGrantRow = {
   start_date: string | null;
   end_date: string | null;
   created_at: string | null;
+};
+
+export type UserExemptionReviewNotice = {
+  id: string;
+  request_status: "approved" | "rejected";
+  exemption_type: string;
+  exemption_category: "waive" | "leave" | null;
+  start_date: string | null;
+  end_date: string | null;
+  reason: string | null;
+  reviewed_at: string | null;
+  created_at: string | null;
+};
+
+export type DashboardReviewRequest = {
+  id: string;
+  applicant_user_id: string;
+  applicant_name: string;
+  exemption_type: string;
+  exemption_category: "waive" | "leave" | null;
+  start_date: string | null;
+  end_date: string | null;
+  reason: string | null;
+  created_at: string;
 };
 
 let profileExemptionCategoryAvailable: boolean | null = null;
@@ -176,6 +201,42 @@ async function loadHasPendingExemptionRequest(supabase: DashboardSupabase, userI
   return (data?.length ?? 0) > 0;
 }
 
+async function loadLatestExemptionReviewNotice(
+  supabase: DashboardSupabase,
+  userId: string,
+): Promise<UserExemptionReviewNotice | null> {
+  const primary = await supabase
+    .from("exemption_request")
+    .select("id, request_status, exemption_type, exemption_category, start_date, end_date, reason, reviewed_at, created_at")
+    .eq("applicant_user_id", userId)
+    .in("request_status", ["approved", "rejected"])
+    .order("reviewed_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!isMissingExemptionRequestCategoryError(primary.error)) {
+    return (primary.data as UserExemptionReviewNotice | null) ?? null;
+  }
+
+  const fallback = await supabase
+    .from("exemption_request")
+    .select("id, request_status, exemption_type, start_date, end_date, reason, reviewed_at, created_at")
+    .eq("applicant_user_id", userId)
+    .in("request_status", ["approved", "rejected"])
+    .order("reviewed_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!fallback.data) return null;
+
+  return {
+    ...(fallback.data as Omit<UserExemptionReviewNotice, "exemption_category">),
+    exemption_category: "waive",
+  };
+}
+
 export interface DashboardPageData {
   today: string;
   isExternalUser: boolean;
@@ -190,8 +251,10 @@ export interface DashboardPageData {
   todayReports: TodaySubmissionReportLike[];
   history: DashboardActivityReport[];
   hasPendingExemption: boolean;
+  userExemptionReviewNotice: UserExemptionReviewNotice | null;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
+  teamReviewRequests: DashboardReviewRequest[];
   summary: {
     totalAccounts: number;
     submittedCount: number;
@@ -251,15 +314,29 @@ export async function loadDashboardPageData({
     }),
   }));
 
-  const today = formatDateOnly(new Date());
+  const today = formatShanghaiDateOnly();
   const accountIds = displayAccounts.map((account) => account.id);
   const ownContentDirections = uniqueNonEmpty(displayAccounts.map((account) => account.content_direction));
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
+  const adminSupabase = createAdminClient();
+  const { data: currentProfileScope } = await adminSupabase
+    .from("profiles")
+    .select("role, permissions, team_id")
+    .eq("id", userId)
+    .maybeSingle();
+  const currentRole = currentProfileScope?.role ?? "member";
+  const currentPermissions = (currentProfileScope?.permissions ?? {}) as Record<string, boolean>;
+  const currentTeamId = typeof currentProfileScope?.team_id === "string" ? currentProfileScope.team_id : null;
+  const canReviewTeamRequests =
+    currentRole === "owner" ||
+    (currentRole === "admin" && currentPermissions.manage_members === true);
 
   const [
     { data: rawTodayReports },
     userExemptionGrants,
     hasPendingExemption,
+    userExemptionReviewNotice,
+    { data: teamReviewRequestRows },
   ] = await Promise.all([
     accountIds.length
       ? supabase
@@ -273,6 +350,15 @@ export async function loadDashboardPageData({
       : Promise.resolve({ data: [] }),
     loadUserExemptionGrants(supabase, userId),
     loadHasPendingExemptionRequest(supabase, userId),
+    loadLatestExemptionReviewNotice(supabase, userId),
+    canReviewTeamRequests
+      ? adminSupabase
+          .from("exemption_request")
+          .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, created_at, profiles:applicant_user_id(name, team_id)")
+          .eq("request_status", "pending")
+          .neq("applicant_user_id", userId)
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [] }),
   ]);
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
@@ -292,6 +378,37 @@ export async function loadDashboardPageData({
   const pendingCountForSummary = todayExemptionState.isExempt
     ? 0
     : Math.max(displayAccounts.length - submittedAccountIds.size, 0);
+  const teamReviewRequests = ((teamReviewRequestRows ?? []) as Array<{
+    id: string;
+    applicant_user_id: string;
+    exemption_type: string;
+    exemption_category?: "waive" | "leave" | null;
+    start_date: string | null;
+    end_date: string | null;
+    reason: string | null;
+    created_at: string;
+    profiles?: { name: string | null; team_id?: string | null } | { name: string | null; team_id?: string | null }[] | null;
+    team_id?: string | null;
+  }>)
+    .filter((request) => {
+      if (currentRole === "owner" || currentPermissions.manage_members === true) return true;
+      const profile = Array.isArray(request.profiles) ? request.profiles[0] : request.profiles;
+      return Boolean(currentTeamId) && (request.team_id ?? profile?.team_id ?? null) === currentTeamId;
+    })
+    .map((request) => {
+      const profile = Array.isArray(request.profiles) ? request.profiles[0] : request.profiles;
+      return {
+        id: request.id,
+        applicant_user_id: request.applicant_user_id,
+        applicant_name: profile?.name?.trim() || "未知成员",
+        exemption_type: request.exemption_type,
+        exemption_category: request.exemption_category ?? "waive",
+        start_date: request.start_date,
+        end_date: request.end_date,
+        reason: request.reason,
+        created_at: request.created_at,
+      };
+    });
 
   return {
     today,
@@ -307,8 +424,10 @@ export async function loadDashboardPageData({
     todayReports,
     history: [],
     hasPendingExemption,
+    userExemptionReviewNotice,
     userExemptionProfile,
     userExemptionGrants,
+    teamReviewRequests,
     summary: {
       totalAccounts: displayAccounts.length,
       submittedCount: submittedCountForSummary,

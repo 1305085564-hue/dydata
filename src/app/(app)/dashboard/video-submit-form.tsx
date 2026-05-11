@@ -105,13 +105,22 @@ type OcrApiPayload = {
     confidence_score: number;
     requires_manual_confirmation: boolean;
     recognized_fields: Record<string, string | number | boolean | null> | null;
-    confidence?: Partial<Record<"play_count" | "likes" | "comments" | "shares" | "favorites" | "follower_gain", "high" | "medium" | "low">>;
+    confidence?: Partial<Record<"play_count" | "likes" | "comments" | "shares" | "favorites" | "follower_gain" | "follower_convert", "high" | "medium" | "low">>;
     error?: string;
   };
   error?: string;
 };
 
 type OcrData = NonNullable<OcrApiPayload["data"]>;
+
+type ScreenshotUploadResponse = {
+  data?: {
+    bucket: string;
+    path: string;
+    url: string;
+  };
+  error?: string;
+};
 
 type FormMetaState = {
   videoUrl: string;
@@ -130,6 +139,7 @@ type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   fileName?: string;
   error?: string | null;
   assetUrl?: string | null;
+  previewUrl?: string | null;
   file?: File | null;
   screenshotType?: "data" | "curve" | "retention" | null;
   recognizedFields?: Record<string, string | number | boolean | null> | null;
@@ -144,6 +154,7 @@ const OVERVIEW_FIELDS: EditableMetricKey[] = [
   "comments",
   "shares",
   "favorites",
+  "follower_convert",
 ];
 
 const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
@@ -163,12 +174,13 @@ const VIDEO_STATUS_LABELS: Record<AnomalyStatus, string> = {
 
 function createInitialMeta(today: string): FormMetaState {
   const publishedAt = getDefaultPublishedAtValue();
+  const defaultBizDate = getDatePartFromDateTimeLocal(publishedAt) ?? today;
 
   return {
     videoUrl: "",
     videoTitle: "",
     content: "",
-    bizDate: today,
+    bizDate: defaultBizDate,
     publishedAt,
     publishedAtText: "",
     anomalyStatus: "正常",
@@ -176,6 +188,11 @@ function createInitialMeta(today: string): FormMetaState {
     topicTag: "复盘",
     contentKeywords: [],
   };
+}
+
+function getDatePartFromDateTimeLocal(value: string) {
+  const [datePart = ""] = value.split("T");
+  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : null;
 }
 
 function extractKeywordSuggestions(content: string): string[] {
@@ -317,7 +334,7 @@ function buildSubmissionState(
 function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>) {
   return (Object.keys(slots) as SubmissionSlotRole[])
     .map((role) => slots[role])
-    .filter((slot) => slot.assetUrl)
+    .filter((slot) => slot.assetUrl && /^https?:\/\//.test(slot.assetUrl))
     .map((slot) => ({
       role: slot.role,
       url: slot.assetUrl!,
@@ -326,6 +343,29 @@ function buildAssets(slots: Record<SubmissionSlotRole, SlotViewState>) {
       recognized_fields: slot.recognizedFields ?? null,
       screenshot_type: slot.screenshotType ?? null,
     }));
+}
+
+async function uploadSubmissionScreenshot(input: {
+  accountId: string;
+  role: SubmissionSlotRole;
+  file: File;
+}) {
+  const formData = new FormData();
+  formData.append("file", input.file);
+  formData.append("account_id", input.accountId);
+  formData.append("asset_role", input.role);
+
+  const response = await fetch("/api/submission-screenshots", {
+    method: "POST",
+    body: formData,
+  });
+
+  const payload = (await response.json()) as ScreenshotUploadResponse;
+  if (!response.ok || !payload.data?.url) {
+    throw new Error(payload.error || "截图上传失败，请稍后重试");
+  }
+
+  return payload.data.url;
 }
 
 function createSummaryOverride(
@@ -426,18 +466,19 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   // Track all created blob URLs to clean them up on unmount
   useEffect(() => {
     Object.values(slots).forEach((slot) => {
-      if (slot.assetUrl && slot.assetUrl.startsWith("blob:")) {
-        blobUrlsRef.current.add(slot.assetUrl);
+      if (slot.previewUrl && slot.previewUrl.startsWith("blob:")) {
+        blobUrlsRef.current.add(slot.previewUrl);
       }
     });
   }, [slots]);
 
   useEffect(() => {
+    const blobUrls = blobUrlsRef.current;
     return () => {
-      blobUrlsRef.current.forEach((url) => {
+      blobUrls.forEach((url) => {
         URL.revokeObjectURL(url);
       });
-      blobUrlsRef.current.clear();
+      blobUrls.clear();
     };
   }, []);
 
@@ -591,8 +632,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   }
 
   async function handleSlotUpload(role: SubmissionSlotRole, file: File) {
+    if (!account) {
+      feedbackToast.error("请先选择提交账号");
+      return;
+    }
+
     // Revoke old blob URL for this slot to avoid leak when uploading a new file over an existing one
-    const oldUrl = slots[role]?.assetUrl;
+    const oldUrl = slots[role]?.previewUrl ?? slots[role]?.assetUrl;
     if (oldUrl && oldUrl.startsWith("blob:")) {
       URL.revokeObjectURL(oldUrl);
       blobUrlsRef.current.delete(oldUrl);
@@ -608,12 +654,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         error: null,
       },
     }));
-
-    feedbackToast.success("截图上传成功", {
-      duration: 2000,
-      className:
-        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
-    });
 
     try {
       const {
@@ -632,6 +672,20 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         },
       }));
 
+      const assetUrl = await uploadSubmissionScreenshot({
+        accountId: account.id,
+        role,
+        file,
+      });
+      const previewUrl = URL.createObjectURL(file);
+      blobUrlsRef.current.add(previewUrl);
+
+      feedbackToast.success("截图已保存，正在识别", {
+        duration: 2000,
+        className:
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
+      });
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("asset_role", role);
@@ -647,7 +701,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       }
 
       const { data } = payload;
-      const assetUrl = URL.createObjectURL(file);
       const detectedType = data.screenshot_type;
       const ocrSummary = buildOcrSummary(detectedType, data.recognized_fields);
 
@@ -663,6 +716,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
           confidenceScore: data.confidence_score,
           error: data.slot_status === "failed" ? normalizedSlotError ?? OCR_FAIL_MESSAGE : normalizedSlotError,
           assetUrl,
+          previewUrl,
           screenshotType: detectedType,
           recognizedFields: data.recognized_fields,
           ocrSummary,
@@ -1193,8 +1247,9 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
                 // Cleanup Blob URL before deleting
                 const targetSlot = slots[deleteTargetRole];
-                if (targetSlot.assetUrl && targetSlot.assetUrl.startsWith("blob:")) {
-                  URL.revokeObjectURL(targetSlot.assetUrl);
+                if (targetSlot.previewUrl && targetSlot.previewUrl.startsWith("blob:")) {
+                  URL.revokeObjectURL(targetSlot.previewUrl);
+                  blobUrlsRef.current.delete(targetSlot.previewUrl);
                 }
 
                 setSlots((current) => ({
@@ -1395,12 +1450,19 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                         step={3600}
                         value={meta.publishedAt}
                         onChange={(event) => {
+                          const nextPublishedAt = event.target.value;
                           const synced = syncPublishedAtAndText({
-                            nextPublishedAt: event.target.value,
+                            nextPublishedAt,
                             nextPublishedAtText: meta.publishedAtText,
                             changedField: "published_at",
                           });
-                          setMeta((current) => ({ ...current, publishedAt: synced.publishedAt, publishedAtText: synced.publishedAtText }));
+                          const nextBizDate = !isBackfillMode && !initialSummary ? getDatePartFromDateTimeLocal(nextPublishedAt) : null;
+                          setMeta((current) => ({
+                            ...current,
+                            bizDate: nextBizDate ?? current.bizDate,
+                            publishedAt: synced.publishedAt,
+                            publishedAtText: synced.publishedAtText,
+                          }));
                         }}
                         className="h-10 rounded-[20px] bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
                       />

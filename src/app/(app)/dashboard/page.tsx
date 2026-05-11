@@ -64,8 +64,10 @@ export default async function DashboardPage() {
           ownContentDirections={data.ownContentDirections}
           accountDisplayNameMap={data.accountDisplayNameMap}
           hasPendingExemption={data.hasPendingExemption}
+          userExemptionReviewNotice={data.userExemptionReviewNotice}
           userExemptionProfile={data.userExemptionProfile}
           userExemptionGrants={data.userExemptionGrants}
+          teamReviewRequests={data.teamReviewRequests}
         />
       </DashboardAnimatedSection>
     </AppShell>

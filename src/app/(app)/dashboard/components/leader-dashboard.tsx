@@ -1,7 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Activity, AlertCircle, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { Activity, AlertCircle, Check, RefreshCw, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { reviewExemptionRequest } from "@/app/(app)/admin/actions";
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SopCheckpoint, SopMemberStatus } from "@/types";
@@ -35,17 +39,22 @@ type ReviewSubmission = {
 interface LeaderDashboardProps {
   today: string;
   userRole: "admin" | "owner";
+  teamReviewRequests?: DashboardPageData["teamReviewRequests"];
 }
 
 /**
  * 组长看板
  * 法典 V1：Loader2 → Skeleton；× 彩底；异常/待审核统一灰底 + 状态点
  */
-export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
+export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: LeaderDashboardProps) {
+  const router = useRouter();
   const [board, setBoard] = useState<LeaderBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<ReviewSubmission | null>(null);
+  const [localExemptionRequests, setLocalExemptionRequests] = useState(teamReviewRequests);
+  const [reviewingExemptionId, setReviewingExemptionId] = useState<string | null>(null);
+  const [isReviewingExemption, startReviewExemption] = useTransition();
 
   const cancelledRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -111,6 +120,10 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
     };
   }, [fetchBoard]);
 
+  useEffect(() => {
+    setLocalExemptionRequests(teamReviewRequests);
+  }, [teamReviewRequests]);
+
   if (loading && !board) {
     return (
       <div className="mx-auto max-w-6xl space-y-8">
@@ -161,6 +174,31 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
     (m) => m.isOverdue || Object.values(m.statuses).some((s) => s === "OVERDUE"),
   );
   const pendingSubmissions = board.pendingReviews;
+  const exemptionRequestCount = localExemptionRequests.length;
+
+  const handleExemptionReview = (
+    request: DashboardPageData["teamReviewRequests"][number],
+    decision: "approved" | "rejected",
+  ) => {
+    setReviewingExemptionId(request.id);
+    startReviewExemption(async () => {
+      const result = await reviewExemptionRequest({
+        requestId: request.id,
+        decision,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        setReviewingExemptionId(null);
+        return;
+      }
+
+      setLocalExemptionRequests((current) => current.filter((item) => item.id !== request.id));
+      toast.success(decision === "approved" ? "豁免申请已通过" : "豁免申请已拒绝");
+      setReviewingExemptionId(null);
+      router.refresh();
+    });
+  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -176,7 +214,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
         </button>
       </div>
 
-      {(overdueMembers.length > 0 || pendingSubmissions.length > 0) && (
+      {(overdueMembers.length > 0 || pendingSubmissions.length > 0 || exemptionRequestCount > 0) && (
         <div className="grid gap-4 sm:grid-cols-2">
           {overdueMembers.length > 0 && (
             <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#C9604D] shadow-sm">
@@ -214,6 +252,20 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+          {exemptionRequestCount > 0 && (
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#6FAA7D] shadow-sm">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
+                <Check size={14} className="stroke-[1.5] text-[#6FAA7D]" />
+                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
+                  豁免待审批
+                </span>
+              </div>
+              <div className="text-[13px] font-medium text-zinc-800">
+                {exemptionRequestCount} 条申请等待处理
               </div>
             </div>
           )}
@@ -315,6 +367,67 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
                   >
                     审核
                   </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {exemptionRequestCount > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
+            豁免审批
+          </h3>
+          <div className="space-y-3">
+            {localExemptionRequests.map((request) => {
+              const isReviewingThis = isReviewingExemption && reviewingExemptionId === request.id;
+              const categoryLabel = request.exemption_category === "leave" ? "请假" : "免交";
+              const dateRange = request.end_date && request.end_date !== request.start_date
+                ? `${request.start_date} 至 ${request.end_date}`
+                : request.start_date;
+
+              return (
+                <div
+                  key={request.id}
+                  className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm lg:flex-row lg:items-center lg:justify-between"
+                >
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[13px] font-semibold text-zinc-800">
+                        {request.applicant_name}
+                      </span>
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                        {categoryLabel}
+                      </span>
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                        {dateRange}
+                      </span>
+                    </div>
+                    <p className="line-clamp-2 text-[12px] leading-[1.7] text-zinc-500">
+                      {request.reason?.trim() || "未填写原因"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      disabled={isReviewingExemption}
+                      onClick={() => handleExemptionReview(request, "rejected")}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <X size={12} className="stroke-[1.5]" />
+                      拒绝
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isReviewingExemption}
+                      onClick={() => handleExemptionReview(request, "approved")}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[#6FAA7D] px-3 text-[11px] font-medium text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#5E986D] disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <Check size={12} className="stroke-[1.5]" />
+                      {isReviewingThis ? "处理中" : "通过"}
+                    </button>
+                  </div>
                 </div>
               );
             })}
