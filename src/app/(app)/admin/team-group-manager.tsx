@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Save, UserMinus, UsersRound } from "lucide-react";
 
@@ -48,20 +48,22 @@ export function TeamGroupManager({
   leaderCandidates,
 }: TeamGroupManagerProps) {
   const router = useRouter();
+  const [localGroups, setLocalGroups] = useState(groups);
+  const [localProfiles, setLocalProfiles] = useState(profiles);
   const [selectedTeamId, setSelectedTeamId] = useState(teams[0]?.id ?? "");
   const teamGroups = useMemo(
     () =>
-      groups
+      localGroups
         .filter((group) => group.team_id === selectedTeamId)
         .sort((a, b) => a.name.localeCompare(b.name, "zh-CN")),
-    [groups, selectedTeamId],
+    [localGroups, selectedTeamId],
   );
   const [selectedGroupId, setSelectedGroupId] = useState(teamGroups[0]?.id ?? NO_GROUP);
   const effectiveSelectedGroupId = teamGroups.some((group) => group.id === selectedGroupId)
     ? selectedGroupId
     : teamGroups[0]?.id ?? NO_GROUP;
   const currentGroup = teamGroups.find((group) => group.id === effectiveSelectedGroupId) ?? null;
-  const teamMembers = profiles.filter((profile) => profile.team_id === selectedTeamId);
+  const teamMembers = localProfiles.filter((profile) => profile.team_id === selectedTeamId);
   const groupMembers = useMemo(() => {
     if (!currentGroup) return [];
     const members = teamMembers.filter((profile) => profile.group_id === currentGroup.id);
@@ -89,8 +91,16 @@ export function TeamGroupManager({
   const [checkedMemberIds, setCheckedMemberIds] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    setLocalGroups(groups);
+  }, [groups]);
+
+  useEffect(() => {
+    setLocalProfiles(profiles);
+  }, [profiles]);
+
   function changeTeam(teamId: string) {
-    const nextGroups = groups
+    const nextGroups = localGroups
       .filter((group) => group.team_id === teamId)
       .sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
     const nextGroup = nextGroups[0] ?? null;
@@ -104,7 +114,7 @@ export function TeamGroupManager({
   }
 
   function changeGroup(groupId: string) {
-    const group = groups.find((item) => item.id === groupId) ?? null;
+    const group = localGroups.find((item) => item.id === groupId) ?? null;
     setSelectedGroupId(groupId);
     setEditGroupName(group?.name ?? "");
     setEditLeaderId(group?.leader_user_id ?? "");
@@ -134,10 +144,15 @@ export function TeamGroupManager({
   }
 
   function handleCreateGroup() {
+    const name = newGroupName.trim();
+    if (!name || !newLeaderId) return;
+
+    feedbackToast.success("已提交创建分组");
+
     startTransition(async () => {
       const result = await createGroup({
         teamId: selectedTeamId,
-        name: newGroupName,
+        name,
         leaderUserId: newLeaderId,
       });
       if (result.error) {
@@ -145,7 +160,6 @@ export function TeamGroupManager({
         return;
       }
 
-      feedbackToast.success("已创建分组");
       setNewGroupName("");
       setNewLeaderId("");
       router.refresh();
@@ -154,51 +168,85 @@ export function TeamGroupManager({
 
   function handleUpdateGroup() {
     if (!currentGroup) return;
+    const previousGroup = currentGroup;
+    const nextName = editGroupName.trim();
+    const nextLeaderId = editLeaderId;
+
+    setLocalGroups((current) =>
+      current.map((group) =>
+        group.id === previousGroup.id
+          ? { ...group, name: nextName, leader_user_id: nextLeaderId }
+          : group,
+      ),
+    );
+    feedbackToast.success("分组已更新");
 
     startTransition(async () => {
       const result = await updateGroup({
-        groupId: currentGroup.id,
-        name: editGroupName,
-        leaderUserId: editLeaderId,
+        groupId: previousGroup.id,
+        name: nextName,
+        leaderUserId: nextLeaderId,
       });
       if (result.error) {
+        setLocalGroups((current) =>
+          current.map((group) => (group.id === previousGroup.id ? previousGroup : group)),
+        );
+        setEditGroupName(previousGroup.name);
+        setEditLeaderId(previousGroup.leader_user_id ?? "");
         feedbackToast.error(result.error);
         return;
       }
 
-      feedbackToast.success("分组已更新");
       router.refresh();
     });
   }
 
   function handleAssignMembers() {
     if (!currentGroup) return;
+    const targetGroup = currentGroup;
+    const memberIds = checkedMemberIds;
+    const previousProfiles = localProfiles;
+
+    setLocalProfiles((current) =>
+      current.map((profile) =>
+        memberIds.includes(profile.id) ? { ...profile, group_id: targetGroup.id } : profile,
+      ),
+    );
+    setCheckedMemberIds([]);
+    feedbackToast.success("组员已分配");
 
     startTransition(async () => {
       const result = await assignMembersToGroup({
-        groupId: currentGroup.id,
-        memberIds: checkedMemberIds,
+        groupId: targetGroup.id,
+        memberIds,
       });
       if (result.error) {
+        setLocalProfiles(previousProfiles);
+        setCheckedMemberIds(memberIds);
         feedbackToast.error(result.error);
         return;
       }
 
-      feedbackToast.success("组员已分配");
-      setCheckedMemberIds([]);
       router.refresh();
     });
   }
 
   function handleRemoveMember(memberId: string) {
+    const previousProfiles = localProfiles;
+
+    setLocalProfiles((current) =>
+      current.map((profile) => (profile.id === memberId ? { ...profile, group_id: null } : profile)),
+    );
+    feedbackToast.success("已移回直管组员");
+
     startTransition(async () => {
       const result = await removeMemberFromGroup(memberId);
       if (result.error) {
+        setLocalProfiles(previousProfiles);
         feedbackToast.error(result.error);
         return;
       }
 
-      feedbackToast.success("已移回直管组员");
       router.refresh();
     });
   }
@@ -206,7 +254,7 @@ export function TeamGroupManager({
   function getMemberGroupLabel(member: TeamManagementProfile) {
     if (!member.group_id) return "未分配";
     if (member.group_id === currentGroup?.id) return "当前组";
-    const group = groups.find((g) => g.id === member.group_id);
+    const group = localGroups.find((g) => g.id === member.group_id);
     return group?.name ?? "未知分组";
   }
 
@@ -293,7 +341,7 @@ export function TeamGroupManager({
                   <span>
                     <span className="block font-medium text-zinc-800">{group.name}</span>
                     <span className="text-xs text-zinc-500">
-                      组长：{getProfileName(profiles, group.leader_user_id)}
+                      组长：{getProfileName(localProfiles, group.leader_user_id)}
                     </span>
                   </span>
                   <Badge className="border-zinc-200 text-zinc-700">

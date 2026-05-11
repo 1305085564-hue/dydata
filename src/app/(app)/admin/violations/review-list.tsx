@@ -89,7 +89,11 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
       return;
     }
 
+    const previousStatus = status;
+
+    setStatus(nextStatus);
     setIsSaving(nextStatus);
+    feedbackToast.success(nextStatus === "verified" ? "已确认案例" : "已驳回案例");
     try {
       const response = await fetch(`/api/violations/${item.id}/review`, {
         method: "PATCH",
@@ -106,10 +110,8 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
       if (!response.ok) {
         throw new Error(getApiErrorMessage(payload, "复核接口暂时不可用"));
       }
-
-      setStatus(nextStatus);
-      feedbackToast.success(nextStatus === "verified" ? "已确认案例" : "已驳回案例");
     } catch (error) {
+      setStatus(previousStatus);
       feedbackToast.error(error instanceof Error ? error.message : "复核失败");
     } finally {
       setIsSaving(null);

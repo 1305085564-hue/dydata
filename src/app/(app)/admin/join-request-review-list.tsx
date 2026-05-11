@@ -54,13 +54,26 @@ export function JoinRequestReviewList({ rows }: Props) {
 
   const handleReject = (id: string) => {
     if (isPending) return;
+    const rejectedRow = visibleRows.find((row) => row.id === id);
+    if (!rejectedRow) return;
+    const rejectedNote = note.trim() || null;
+
+    setVisibleRows((currentRows) => currentRows.filter((row) => row.id !== id));
+    setRejectingId(null);
+    setNote("");
+    feedbackToast.success("已驳回申请");
+
     startTransition(async () => {
-      const result = await rejectJoinRequestAction(id, note.trim() || null);
-      if (result.ok) {
-        feedbackToast.success("已驳回申请");
-        setRejectingId(null);
-        setNote("");
-      } else {
+      const result = await rejectJoinRequestAction(id, rejectedNote);
+      if (!result.ok) {
+        setVisibleRows((currentRows) => {
+          if (currentRows.some((row) => row.id === id)) return currentRows;
+          return [...currentRows, rejectedRow].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+        });
+        setRejectingId(id);
+        setNote(rejectedNote ?? "");
         feedbackToast.error(result.error);
       }
     });

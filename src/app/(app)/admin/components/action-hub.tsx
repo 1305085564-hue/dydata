@@ -55,11 +55,21 @@ export function ActionHub({
     [effectivePendingCount],
   );
 
-  function handleRequestHandled(requestId: string) {
+  function handleRequestHandled(request: ExemptionRequestRow) {
     setLocalRequests((current) =>
-      current.filter((request) => request.id !== requestId),
+      current.filter((item) => item.id !== request.id),
     );
     setHandledCount((current) => current + 1);
+  }
+
+  function handleRequestRestore(request: ExemptionRequestRow) {
+    setLocalRequests((current) => {
+      if (current.some((item) => item.id === request.id)) return current;
+      return [...current, request].sort(
+        (left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime(),
+      );
+    });
+    setHandledCount((current) => Math.max(0, current - 1));
   }
 
   const validQuickActions = quickActions.filter((item) => item.href);
@@ -127,6 +137,7 @@ export function ActionHub({
                       <豁免申请列表
                         requests={localRequests}
                         onHandled={handleRequestHandled}
+                        onRestore={handleRequestRestore}
                       />
                     </div>
                   </div>

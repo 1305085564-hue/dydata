@@ -70,6 +70,23 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
 
   function submitAction(body: Record<string, string>) {
     if (!advice) return;
+    const previousAdvice = advice;
+    const optimisticAdvice = {
+      ...advice,
+      status:
+        body.action === "assign"
+          ? "待执行"
+          : body.action === "status"
+            ? body.status
+            : body.action === "review"
+              ? "已复核"
+              : advice.status,
+      review_result:
+        body.action === "review" ? body.review_result : advice.review_result,
+    } as AdviceRow;
+
+    onUpdated(optimisticAdvice);
+    feedbackToast.success("建议已更新");
 
     startTransition(async () => {
       try {
@@ -85,8 +102,8 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
         }
 
         onUpdated(result.item as AdviceRow);
-        feedbackToast.success("建议已更新");
       } catch (error) {
+        onUpdated(previousAdvice);
         feedbackToast.error(error instanceof Error ? error.message : "更新失败");
       }
     });

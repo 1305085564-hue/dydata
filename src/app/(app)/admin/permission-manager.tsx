@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,6 +149,10 @@ export function PermissionManager({
   function handleSavePermissions() {
     const changedMembers = getChangedAdminPermissions(editableMembers, baselineMembers);
     if (changedMembers.length === 0) return;
+    const previousBaseline = baselineMembers;
+
+    setBaselineMembers(editableMembers);
+    feedbackToast.success("权限已保存");
 
     startSavingPermissions(async () => {
       const results = await Promise.all(
@@ -158,12 +161,11 @@ export function PermissionManager({
       const error = results.find((result) => result.error)?.error;
 
       if (error) {
+        setBaselineMembers(previousBaseline);
         feedbackToast.error(error);
         return;
       }
 
-      setBaselineMembers(editableMembers);
-      feedbackToast.success("权限已保存");
       router.refresh();
     });
   }
@@ -175,16 +177,22 @@ export function PermissionManager({
   }
 
   function handleRoleChange(memberId: string, newRole: "member" | "admin") {
+    const previousEditableMembers = editableMembers;
+    const previousBaselineMembers = baselineMembers;
+
+    setEditableMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
+    setBaselineMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
+    feedbackToast.success("角色已更新");
+
     startChangingRole(async () => {
       const res = await changeRole(memberId, newRole);
       if (res.error) {
+        setEditableMembers(previousEditableMembers);
+        setBaselineMembers(previousBaselineMembers);
         feedbackToast.error(res.error);
         return;
       }
 
-      setEditableMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
-      setBaselineMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
-      feedbackToast.success("角色已更新");
       router.refresh();
     });
   }
@@ -197,15 +205,25 @@ export function PermissionManager({
 
   function handleRemoveMember() {
     if (!removeTarget) return;
+    const target = removeTarget;
+    const previousEditableMembers = editableMembers;
+    const previousBaselineMembers = baselineMembers;
+
+    setEditableMembers((current) => current.filter((member) => member.id !== target.memberId));
+    setBaselineMembers((current) => current.filter((member) => member.id !== target.memberId));
+    setRemoveTarget(null);
+    feedbackToast.success(`已将 ${target.memberName} 移出团队`);
+
     startRemoving(async () => {
-      const res = await removeMember(removeTarget.memberId);
+      const res = await removeMember(target.memberId);
       if (res.error) {
+        setEditableMembers(previousEditableMembers);
+        setBaselineMembers(previousBaselineMembers);
+        setRemoveTarget(target);
         feedbackToast.error(res.error);
         return;
       }
 
-      feedbackToast.success(`已将 ${removeTarget.memberName} 移出团队`);
-      setRemoveTarget(null);
       router.refresh();
     });
   }

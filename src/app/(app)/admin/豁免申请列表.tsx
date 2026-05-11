@@ -42,19 +42,29 @@ export interface ExemptionRequestRow {
 
 interface Props {
   requests: ExemptionRequestRow[];
-  onHandled?: (requestId: string) => void;
+  onHandled?: (request: ExemptionRequestRow, decision: "approved" | "rejected") => void;
+  onRestore?: (request: ExemptionRequestRow) => void;
 }
 
 function RequestRow({
   request,
   onHandled,
+  onRestore,
 }: {
   request: ExemptionRequestRow;
-  onHandled?: (requestId: string) => void;
+  onHandled?: (request: ExemptionRequestRow, decision: "approved" | "rejected") => void;
+  onRestore?: (request: ExemptionRequestRow) => void;
 }) {
   const [isPending, startTransition] = useTransition();
 
   function handle(decision: "approved" | "rejected") {
+    onHandled?.(request, decision);
+    feedbackToast.success(
+      decision === "approved"
+        ? `已批准 ${request.applicant_name} 的豁免申请`
+        : `已拒绝 ${request.applicant_name} 的豁免申请`,
+    );
+
     startTransition(async () => {
       const result = await reviewExemptionRequest({
         requestId: request.id,
@@ -62,16 +72,9 @@ function RequestRow({
       });
 
       if (result.error) {
+        onRestore?.(request);
         feedbackToast.error(result.error);
-        return;
       }
-
-      feedbackToast.success(
-        decision === "approved"
-          ? `已批准 ${request.applicant_name} 的豁免申请`
-          : `已拒绝 ${request.applicant_name} 的豁免申请`,
-      );
-      onHandled?.(request.id);
     });
   }
 
@@ -119,18 +122,28 @@ function RequestRow({
   );
 }
 
-function ExemptionRequestList({ requests, onHandled }: Props) {
+function ExemptionRequestList({ requests, onHandled, onRestore }: Props) {
   const [localRequests, setLocalRequests] = useState(requests);
 
   useEffect(() => {
     setLocalRequests(requests);
   }, [requests]);
 
-  function handleRequestHandled(requestId: string) {
+  function handleRequestHandled(request: ExemptionRequestRow, decision: "approved" | "rejected") {
     setLocalRequests((current) =>
-      current.filter((request) => request.id !== requestId),
+      current.filter((item) => item.id !== request.id),
     );
-    onHandled?.(requestId);
+    onHandled?.(request, decision);
+  }
+
+  function handleRequestRestore(request: ExemptionRequestRow) {
+    setLocalRequests((current) => {
+      if (current.some((item) => item.id === request.id)) return current;
+      return [...current, request].sort(
+        (left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime(),
+      );
+    });
+    onRestore?.(request);
   }
 
   if (localRequests.length === 0) {
@@ -154,6 +167,7 @@ function ExemptionRequestList({ requests, onHandled }: Props) {
             key={request.id}
             request={request}
             onHandled={handleRequestHandled}
+            onRestore={handleRequestRestore}
           />
         ))}
       </TableBody>

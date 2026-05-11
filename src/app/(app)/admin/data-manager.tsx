@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Input } from "@/components/ui/input";
@@ -106,6 +106,7 @@ export function DataManager({
   dayCountByAccount = {},
 }: DataManagerProps) {
   const [date, setDate] = useState(defaultDate);
+  const [localReports, setLocalReports] = useState(reports);
   const [viewMode, setViewMode] = useState<ViewMode>("profile");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Report>>({});
@@ -114,9 +115,13 @@ export function DataManager({
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; submitter: string } | null>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    setLocalReports(reports);
+  }, [reports]);
+
   const reportsWithMeta = useMemo(
     () =>
-      reports.map((report) => {
+      localReports.map((report) => {
         const account = getAccount(report);
         return {
           ...report,
@@ -126,7 +131,7 @@ export function DataManager({
           profileName: report.submitter,
         };
       }),
-    [reports]
+    [localReports]
   );
 
   const profileGroups = useMemo(() => {
@@ -201,26 +206,53 @@ export function DataManager({
   }
 
   function handleSave(reportId: string) {
+    const originalReport = localReports.find((report) => report.id === reportId);
+    if (!originalReport) return;
+
+    const nextPatch = {
+      title: editData.title ?? "",
+      play_count: editData.play_count ?? 0,
+      completion_rate: editData.completion_rate || null,
+      avg_play_duration: editData.avg_play_duration || null,
+      bounce_rate_2s: editData.bounce_rate_2s || null,
+      completion_rate_5s: editData.completion_rate_5s || null,
+      likes: editData.likes ?? 0,
+      comments: editData.comments ?? 0,
+      shares: editData.shares ?? 0,
+      favorites: editData.favorites ?? 0,
+      follower_gain: editData.follower_gain ?? 0,
+      follower_convert: editData.follower_convert ?? null,
+    };
+
+    setLocalReports((current) =>
+      current.map((report) => (report.id === reportId ? { ...report, ...nextPatch } : report)),
+    );
+    setEditingId(null);
+    setEditData({});
+    feedbackToast.success("已更新");
+
     startTransition(async () => {
-      const result = await adminUpdateReport(reportId, {
-        title: editData.title ?? "",
-        play_count: editData.play_count ?? 0,
-        completion_rate: editData.completion_rate || null,
-        avg_play_duration: editData.avg_play_duration || null,
-        bounce_rate_2s: editData.bounce_rate_2s || null,
-        completion_rate_5s: editData.completion_rate_5s || null,
-        likes: editData.likes ?? 0,
-        comments: editData.comments ?? 0,
-        shares: editData.shares ?? 0,
-        favorites: editData.favorites ?? 0,
-        follower_gain: editData.follower_gain ?? 0,
-        follower_convert: editData.follower_convert ?? null,
-      });
+      const result = await adminUpdateReport(reportId, nextPatch);
       if (result.error) {
+        setLocalReports((current) =>
+          current.map((report) => (report.id === reportId ? originalReport : report)),
+        );
+        setEditingId(reportId);
+        setEditData({
+          title: originalReport.title,
+          play_count: originalReport.play_count,
+          completion_rate: originalReport.completion_rate,
+          avg_play_duration: originalReport.avg_play_duration,
+          bounce_rate_2s: originalReport.bounce_rate_2s,
+          completion_rate_5s: originalReport.completion_rate_5s,
+          likes: originalReport.likes,
+          comments: originalReport.comments,
+          shares: originalReport.shares,
+          favorites: originalReport.favorites,
+          follower_gain: originalReport.follower_gain,
+          follower_convert: originalReport.follower_convert,
+        });
         feedbackToast.error(result.error);
-      } else {
-        feedbackToast.success("已更新");
-        setEditingId(null);
       }
     });
   }
@@ -231,16 +263,24 @@ export function DataManager({
 
   function handleDeleteConfirm() {
     if (!deleteTarget) return;
+    const removedReport = localReports.find((report) => report.id === deleteTarget.id);
+    if (!removedReport) return;
+
+    setLocalReports((current) => current.filter((report) => report.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    feedbackToast.success("已删除");
 
     startTransition(async () => {
       const result = await adminDeleteReport(deleteTarget.id);
       if (result.error) {
+        setLocalReports((current) => {
+          if (current.some((report) => report.id === removedReport.id)) return current;
+          return [...current, removedReport].sort((left, right) =>
+            left.uploaded_at.localeCompare(right.uploaded_at),
+          );
+        });
         feedbackToast.error(result.error);
-        return;
       }
-
-      feedbackToast.success("已删除");
-      setDeleteTarget(null);
     });
   }
 
@@ -711,7 +751,7 @@ export function DataManager({
             onChange={handleDateChange}
             className="h-9 w-auto bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
-          <span className="text-sm text-zinc-500">{reports.length} 条记录</span>
+          <span className="text-sm text-zinc-500">{localReports.length} 条记录</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -733,7 +773,7 @@ export function DataManager({
         </div>
       </div>
 
-      {reports.length === 0 ? (
+      {localReports.length === 0 ? (
         <p className="py-4 text-sm text-zinc-500">该日期暂无提交记录</p>
       ) : viewMode === "profile" ? (
         <div className="space-y-6">
