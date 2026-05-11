@@ -42,10 +42,11 @@ function ExemptionModal({
   const [open, setOpen] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [reason, setReason] = useState("");
+  const [localHasPending, setLocalHasPending] = useState(hasPending);
   const [isPending, startTransition] = useTransition();
 
   function handleOpen() {
-    if (hasPending) return;
+    if (localHasPending) return;
     setSelectedDates(Array.from(new Set(initialSelectedDates.filter(Boolean))).sort());
     setReason("");
     setOpen(true);
@@ -71,27 +72,34 @@ function ExemptionModal({
       return;
     }
 
+    const submittedDates = [...selectedDates];
+    const submittedReason = reason.trim();
+
+    setLocalHasPending(true);
+    setOpen(false);
+    feedbackToast.success("申请已提交，等待管理员审批");
+
     startTransition(async () => {
       const result = await submitExemptionRequest({
         mode: "range",
         category: "waive",
-        reason: reason.trim(),
-        dates: selectedDates,
+        reason: submittedReason,
+        dates: submittedDates,
       });
 
       if (result.error) {
+        setLocalHasPending(false);
+        setSelectedDates(submittedDates);
+        setReason(submittedReason);
+        setOpen(true);
         feedbackToast.error(result.error);
-        return;
       }
-
-      feedbackToast.success("申请已提交，等待管理员审批");
-      setOpen(false);
     });
   }
 
-  const resolvedTitle = triggerTitle ?? (hasPending ? "申请审批中" : "申请豁免");
+  const resolvedTitle = triggerTitle ?? (localHasPending ? "申请审批中" : "申请豁免");
   const resolvedDescription =
-    triggerDescription ?? (hasPending ? "当前有申请正在等待审批" : "发起免交或请假申请");
+    triggerDescription ?? (localHasPending ? "当前有申请正在等待审批" : "发起免交或请假申请");
 
   return (
     <>
@@ -99,9 +107,9 @@ function ExemptionModal({
         type="button"
         variant="outline"
         size={triggerVariant === "card" ? undefined : "sm"}
-        disabled={hasPending}
+        disabled={localHasPending}
         onClick={handleOpen}
-        title={hasPending ? "申请审批中" : undefined}
+        title={localHasPending ? "申请审批中" : undefined}
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"

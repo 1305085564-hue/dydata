@@ -24,10 +24,11 @@ type Props = {
   videoId: string;
   tags: NormalizedAiTagSuggestion[];
   onConfirmed: (tags: NormalizedAiTagSuggestion[]) => void;
+  onConfirmFailed?: (tags: NormalizedAiTagSuggestion[]) => void;
   onSkipped: () => void;
 };
 
-export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Props) {
+export function VideoTagReviewCard({ videoId, tags, onConfirmed, onConfirmFailed, onSkipped }: Props) {
   const [selection, setSelection] = useState(() => buildTagFilterState(tags));
   const [isSaving, setIsSaving] = useState(false);
 
@@ -40,19 +41,29 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
   }
 
   async function handleConfirm() {
+    const previousSelection = selection;
+    const payload = VIDEO_TAG_REVIEW_DIMENSIONS.map((dimension) => {
+      const matched = tagsByDimension.get(dimension);
+      return {
+        tag_dimension: dimension,
+        tag_value: selection[dimension] || matched?.tag_value || TAG_ENUMS[dimension][0],
+        confidence: matched?.confidence ?? null,
+        reason: matched?.reason ?? null,
+      };
+    });
+
     setIsSaving(true);
+    feedbackToast.success("标签已确认");
+    onConfirmed(
+      payload.map((item) => ({
+        tag_dimension: item.tag_dimension,
+        tag_value: item.tag_value,
+        confidence: item.confidence,
+        reason: item.reason,
+      }))
+    );
 
     try {
-      const payload = VIDEO_TAG_REVIEW_DIMENSIONS.map((dimension) => {
-        const matched = tagsByDimension.get(dimension);
-        return {
-          tag_dimension: dimension,
-          tag_value: selection[dimension] || matched?.tag_value || TAG_ENUMS[dimension][0],
-          confidence: matched?.confidence ?? null,
-          reason: matched?.reason ?? null,
-        };
-      });
-
       const response = await fetch("/api/video-tags/confirm", {
         method: "POST",
         headers: {
@@ -69,17 +80,9 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onSkipped }: Pr
       if (!response.ok) {
         throw new Error(result.error || "标签确认失败");
       }
-
-      feedbackToast.success("标签已确认");
-      onConfirmed(
-        payload.map((item) => ({
-          tag_dimension: item.tag_dimension,
-          tag_value: item.tag_value,
-          confidence: item.confidence,
-          reason: item.reason,
-        }))
-      );
     } catch (error) {
+      setSelection(previousSelection);
+      onConfirmFailed?.(tags);
       feedbackToast.error((error as Error).message || "标签确认失败");
     } finally {
       setIsSaving(false);

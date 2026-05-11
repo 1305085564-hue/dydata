@@ -34,13 +34,16 @@ export function ApplyJoinDialog({ teams, trigger }: Props) {
       return;
     }
 
+    const submittedTeamId = teamId;
+    feedbackToast.success("申请已提交，等待管理员审核");
+    setOpen(false);
+    setTeamId("");
+
     startTransition(async () => {
-      const result = await submitJoinRequestAction(teamId);
-      if (result.ok) {
-        feedbackToast.success("申请已提交，等待管理员审核");
-        setOpen(false);
-        setTeamId("");
-      } else {
+      const result = await submitJoinRequestAction(submittedTeamId);
+      if (!result.ok) {
+        setTeamId(submittedTeamId);
+        setOpen(true);
         feedbackToast.error(result.error);
       }
     });

@@ -24,15 +24,21 @@ export function AddAccountDialog() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const submittedName = name;
+    const submittedDirection = contentDirection;
+
+    feedbackToast.success("账号添加已提交");
+    setOpen(false);
+    setName("");
+    setContentDirection("");
+
     startTransition(async () => {
-      const result = await createAccount(name, contentDirection);
+      const result = await createAccount(submittedName, submittedDirection);
       if (result?.error) {
+        setName(submittedName);
+        setContentDirection(submittedDirection);
+        setOpen(true);
         feedbackToast.error(result.error);
-      } else {
-        feedbackToast.success("账号添加成功");
-        setOpen(false);
-        setName("");
-        setContentDirection("");
       }
     });
   }

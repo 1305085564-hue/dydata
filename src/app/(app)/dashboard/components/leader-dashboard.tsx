@@ -12,15 +12,7 @@ import { MATRIX_CHECKPOINTS, checkpointLabel } from "./status-theme";
 
 interface LeaderBoardData {
   members: SopMemberStatus[];
-  pendingReviews: Array<{
-    id: string;
-    user_id: string;
-    checkpoint: string;
-    topic_text: string | null;
-    script_text: string | null;
-    video_url: string | null;
-    review_status: string;
-  }>;
+  pendingReviews: ReviewSubmission[];
   summary: {
     memberCount: number;
     dataReportSubmittedCount: number;
@@ -29,6 +21,16 @@ interface LeaderBoardData {
     pendingReviewCount: number;
   };
 }
+
+type ReviewSubmission = {
+    id: string;
+    user_id: string;
+    checkpoint: string;
+    topic_text: string | null;
+    script_text: string | null;
+    video_url: string | null;
+    review_status: string;
+};
 
 interface LeaderDashboardProps {
   today: string;
@@ -43,14 +45,7 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
   const [board, setBoard] = useState<LeaderBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<{
-    id: string;
-    user_id: string;
-    checkpoint: string;
-    topic_text: string | null;
-    script_text: string | null;
-    video_url: string | null;
-  } | null>(null);
+  const [selected, setSelected] = useState<ReviewSubmission | null>(null);
 
   const cancelledRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -333,9 +328,38 @@ export function LeaderDashboard({ today, userRole }: LeaderDashboardProps) {
         <ReviewDetailModal
           submission={selected}
           onClose={() => setSelected(null)}
-          onReviewed={() => {
+          onReviewed={(reviewedSubmission) => {
+            setBoard((current) => {
+              if (!current) return current;
+              const nextPendingReviews = current.pendingReviews.filter(
+                (submission) => submission.id !== reviewedSubmission.id,
+              );
+              return {
+                ...current,
+                pendingReviews: nextPendingReviews,
+                summary: {
+                  ...current.summary,
+                  pendingReviewCount: nextPendingReviews.length,
+                },
+              };
+            });
             setSelected(null);
-            fetchBoard();
+          }}
+          onReviewFailed={(failedSubmission) => {
+            setBoard((current) => {
+              if (!current || current.pendingReviews.some((submission) => submission.id === failedSubmission.id)) {
+                return current;
+              }
+              const nextPendingReviews = [...current.pendingReviews, failedSubmission];
+              return {
+                ...current,
+                pendingReviews: nextPendingReviews,
+                summary: {
+                  ...current.summary,
+                  pendingReviewCount: nextPendingReviews.length,
+                },
+              };
+            });
           }}
         />
       )}

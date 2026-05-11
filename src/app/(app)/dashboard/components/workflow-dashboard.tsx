@@ -73,9 +73,47 @@ export function WorkflowDashboard({
           ? "脚本内容录入"
           : activeCheckpoint === "VIDEO"
             ? "审片发布链接"
-            : "早会复盘确认";
+      : "早会复盘确认";
+
+  const buildOptimisticStatus = (checkpoint: SopCheckpoint): SopMemberStatus => {
+    const now = new Date().toISOString();
+    const baseMember = mine ?? emptyMember(today);
+    const nextStatus = "SUBMITTED" as const;
+    const nextSubmission = {
+      id: `optimistic-${checkpoint}-${now}`,
+      user_id: baseMember.userId,
+      team_id: baseMember.teamId,
+      group_id: baseMember.groupId,
+      status_date: today,
+      checkpoint,
+      topic_text: checkpoint === "TOPIC" || checkpoint === "SCRIPT" ? topicText : null,
+      script_text: checkpoint === "SCRIPT" ? scriptText : null,
+      video_url: checkpoint === "VIDEO" ? videoUrl : null,
+      notes: null,
+      review_status: nextStatus,
+      submitted_at: now,
+      updated_at: now,
+    };
+
+    return {
+      ...baseMember,
+      statuses: {
+        ...baseMember.statuses,
+        [checkpoint]: nextStatus,
+      },
+      submissions: [
+        nextSubmission,
+        ...baseMember.submissions.filter((submission) => submission.checkpoint !== checkpoint),
+      ],
+    };
+  };
 
   const submitCheckpoint = (checkpoint: SopCheckpoint) => {
+    const previousMine = mine ?? undefined;
+    const optimisticMine = buildOptimisticStatus(checkpoint);
+    toast.success("卡点已提交");
+    onSubmitted(optimisticMine);
+
     startSubmit(async () => {
       const result = await submitSopCheckpointAction({
         checkpoint,
@@ -86,11 +124,11 @@ export function WorkflowDashboard({
       });
 
       if (result.error) {
+        onSubmitted(previousMine);
         toast.error(result.error);
         return;
       }
 
-      toast.success("卡点已提交");
       onSubmitted(result.data?.status);
     });
   };

@@ -49,7 +49,13 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
   }, [today]);
 
   const save = async (isDraft: boolean) => {
+    const previousSaved = saved;
+    const nextSaved = isDraft ? "draft" : "submitted";
+
     setSaving(true);
+    setSaved(nextSaved);
+    toast.success(isDraft ? "草稿已保存" : "日报已提交");
+
     try {
       const res = await fetch("/api/leader-report", {
         method: "POST",
@@ -65,12 +71,12 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
       });
       const data = await res.json();
       if (!data.ok) {
+        setSaved(previousSaved);
         toast.error(data.error ?? "保存失败");
         return;
       }
-      setSaved(isDraft ? "draft" : "submitted");
-      toast.success(isDraft ? "草稿已保存" : "日报已提交");
     } catch {
+      setSaved(previousSaved);
       toast.error("网络错误");
     } finally {
       setSaving(false);

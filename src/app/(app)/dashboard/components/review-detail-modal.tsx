@@ -16,9 +16,11 @@ interface ReviewDetailModalProps {
     topic_text: string | null;
     script_text: string | null;
     video_url: string | null;
+    review_status: string;
   };
   onClose: () => void;
-  onReviewed: () => void;
+  onReviewed: (submission: ReviewDetailModalProps["submission"]) => void;
+  onReviewFailed: (submission: ReviewDetailModalProps["submission"]) => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export function ReviewDetailModal({
   submission,
   onClose,
   onReviewed,
+  onReviewFailed,
 }: ReviewDetailModalProps) {
   const [scores, setScores] = useState<SopReviewScores>({
     HOOK: 8,
@@ -43,18 +46,23 @@ export function ReviewDetailModal({
   const avg = Object.values(scores).reduce((s, v) => s + v, 0) / REVIEW_DIMENSIONS.length;
 
   const submit = (forceReject = false) => {
+    const shouldReject = forceReject || avg < 6;
+    const nextScores =
+      forceReject && avg >= 6
+        ? {
+            HOOK: 5,
+            VIEWPOINT: 5,
+            COMPLIANCE: 5,
+            PERFORMANCE_HOOK: 5,
+            YESTERDAY_REVIEW: 5,
+            CTA: 5,
+          }
+        : scores;
+
+    toast.success(shouldReject ? "已打回" : "已通过");
+    onReviewed(submission);
+
     startReview(async () => {
-      const nextScores =
-        forceReject && avg >= 6
-          ? {
-              HOOK: 5,
-              VIEWPOINT: 5,
-              COMPLIANCE: 5,
-              PERFORMANCE_HOOK: 5,
-              YESTERDAY_REVIEW: 5,
-              CTA: 5,
-            }
-          : scores;
       const result = await reviewSopCheckpointAction({
         submissionId: submission.id,
         scores: nextScores,
@@ -64,11 +72,10 @@ export function ReviewDetailModal({
             : rejectionReason || undefined,
       });
       if (result.error) {
+        onReviewFailed(submission);
         toast.error(result.error);
         return;
       }
-      toast.success(forceReject || avg < 6 ? "已打回" : "已通过");
-      onReviewed();
     });
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -15,6 +15,7 @@ type Props =
 
 export function JoinBannerClient(props: Props) {
   const [isPending, startTransition] = useTransition();
+  const [isDismissed, setIsDismissed] = useState(false);
 
   if (props.mode === "unassigned") {
     return (
@@ -36,13 +37,19 @@ export function JoinBannerClient(props: Props) {
     );
   }
 
+  if (isDismissed) {
+    return null;
+  }
+
   const handleCancel = () => {
     if (isPending) return;
+    setIsDismissed(true);
+    feedbackToast.success("已撤销申请");
+
     startTransition(async () => {
       const result = await cancelJoinRequestAction(props.requestId);
-      if (result.ok) {
-        feedbackToast.success("已撤销申请");
-      } else {
+      if (!result.ok) {
+        setIsDismissed(false);
         feedbackToast.error(result.error);
       }
     });

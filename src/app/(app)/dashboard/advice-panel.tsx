@@ -149,7 +149,27 @@ export function AdvicePanel() {
   }, [supabase]);
 
   async function updateAdviceStatus(adviceId: string, status: AdviceStatus, executedVideoId?: string | null) {
+    const previousList = adviceList;
+    const targetAdvice = previousList.find((item) => item.id === adviceId);
+    if (!targetAdvice) return false;
+
     setPendingId(adviceId);
+    setAdviceList((current) => {
+      if (ACTIVE_STATUSES.includes(status)) {
+        return current.map((item) =>
+          item.id === adviceId
+            ? {
+                ...item,
+                status,
+                executed_video_id: executedVideoId ?? item.executed_video_id,
+              }
+            : item
+        );
+      }
+
+      return current.filter((item) => item.id !== adviceId);
+    });
+    feedbackToast.success(`已更新为${status}`);
 
     try {
       const response = await fetch("/api/advice-action", {
@@ -185,10 +205,9 @@ export function AdvicePanel() {
       } else {
         setAdviceList((current) => current.filter((item) => item.id !== adviceId));
       }
-
-      feedbackToast.success(`已更新为${status}`);
       return true;
     } catch (error) {
+      setAdviceList(previousList);
       feedbackToast.error((error as Error).message || "状态更新失败");
       return false;
     } finally {

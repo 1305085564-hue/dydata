@@ -766,6 +766,7 @@ export function VideoSubmitPanel({
                 videoId={lastSubmittedVideoId}
                 tags={lastAiTags}
                 onConfirmed={(tags) => setLastAiTags(tags)}
+                onConfirmFailed={(tags) => setLastAiTags(tags)}
                 onSkipped={() => {
                   setLastSubmittedVideoId(null);
                   setLastAiTags([]);
