@@ -50,7 +50,7 @@ export function StatsCard({
         </span>
         {icon ? <span className="text-zinc-400">{icon}</span> : null}
       </div>
-      <div className={cn("mt-3 text-3xl font-semibold leading-none tracking-tight", toneClass.value)}>
+      <div className={cn("mt-3 text-[24px] font-semibold leading-none tracking-tight", toneClass.value)}>
         {value}
       </div>
       {hint ? (

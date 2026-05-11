@@ -227,7 +227,7 @@ export function SubmitForm({
           required
           rows={7}
           placeholder="原封不动粘贴话术内容"
-          className="mt-2 rounded-2xl border-zinc-200 bg-zinc-50 text-base leading-7"
+          className="mt-2 rounded-2xl border-zinc-200 bg-zinc-50 text-[14px] leading-7"
         />
       </div>
 

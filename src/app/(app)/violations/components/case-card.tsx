@@ -9,7 +9,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
   return (
     <Link
       href={`/violations/${caseItem.id}`}
-      className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300"
+      className="group block rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-5 transition-colors hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-3">
@@ -20,7 +20,7 @@ export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
               {caseItem.category || "其他"}
             </span>
           </div>
-          <p className="line-clamp-3 text-base font-semibold leading-7 text-zinc-800">
+          <p className="line-clamp-3 text-[15px] font-semibold leading-7 text-zinc-800">
             {caseItem.script_text}
           </p>
           {caseItem.status === "verified" && caseItem.admin_conclusion ? (

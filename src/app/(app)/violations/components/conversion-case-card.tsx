@@ -77,7 +77,7 @@ export function ConversionCaseCard({ caseItem }: { caseItem: ConversionCase }) {
             Conversion Rate
           </div>
           <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-3xl font-semibold tracking-tight text-[#6FAA7D]">{rate}</span>
+            <span className="text-[24px] font-semibold tracking-tight text-[#6FAA7D]">{rate}</span>
             <span className="text-sm font-semibold text-[#6FAA7D]/80">%</span>
           </div>
         </div>

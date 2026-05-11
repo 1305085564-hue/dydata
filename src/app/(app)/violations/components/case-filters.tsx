@@ -50,13 +50,13 @@ export type CaseFiltersProps = {
 
 function chipClass(active: boolean, tone: "orange" | "green" = "orange") {
   const base =
-    "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold transition-colors select-none";
+    "inline-flex h-8 items-center rounded-full border px-3 text-xs font-medium transition-colors select-none";
   if (active) {
     return tone === "orange"
-      ? `${base} border-[#D97757] bg-[#D97757] text-white shadow-sm`
-      : `${base} border-[#6FAA7D] bg-[#6FAA7D] text-white shadow-sm`;
+      ? `${base} border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757]`
+      : `${base} border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]`;
   }
-  return `${base} border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-800`;
+  return `${base} border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-800`;
 }
 
 export function CaseFilters({
@@ -135,7 +135,7 @@ export function CaseFilters({
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder={perspective === "conversion" ? "搜索转化话术内容" : "搜索话术内容"}
-          className="h-11 rounded-2xl border-zinc-200 bg-zinc-50 pl-9 focus-visible:border-zinc-300 focus-visible:ring-0"
+          className="h-11 rounded-[20px] border-transparent bg-zinc-100/70 pl-9 text-zinc-800 placeholder:text-zinc-400 focus-visible:border-zinc-200 focus-visible:bg-white focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
         />
       </label>
 

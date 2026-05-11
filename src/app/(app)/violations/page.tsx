@@ -168,7 +168,7 @@ export default async function ViolationsPage({
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{headingDesc}</p>
         </div>
         <Link href="/violations/submit">
-          <Button className="h-11 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800">
+          <Button className="h-11 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800 shadow-none">
             <Plus className="size-4" />
             提交新案例
           </Button>
