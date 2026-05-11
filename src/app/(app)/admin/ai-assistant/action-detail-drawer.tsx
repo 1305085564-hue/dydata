@@ -70,7 +70,7 @@ function resultMeta(result?: string) {
       return {
         icon: <XCircle className="h-3 w-3" />,
         text: "REJECTED",
-        dot: "h-2 w-2 bg-[#C9604D] ring-1 ring-white animate-pulse",
+        dot: "h-2 w-2 bg-[#C9604D] ring-1 ring-white",
         text_cls: "text-red-700",
       };
     case "cancelled":

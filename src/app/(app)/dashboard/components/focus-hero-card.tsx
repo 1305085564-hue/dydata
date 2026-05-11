@@ -66,7 +66,7 @@ export function FocusHeroCard({
           <h2 className="mt-3 line-clamp-1 text-[18px] font-medium tracking-tight text-zinc-800">
             {userDisplayName} · 今日节奏
           </h2>
-          <p className="mt-1 text-[12px] text-zinc-400 tabular-nums">
+          <p className="mt-1 text-[12px] text-zinc-400 font-mono tabular-nums">
             {hasData
               ? `已填报 ${stats.submittedAccounts} / ${totalAccounts} 个账号`
               : "今日首次填报后点亮"}
@@ -74,7 +74,7 @@ export function FocusHeroCard({
         </div>
         <div className="shrink-0 text-right">
           <div className="flex items-baseline justify-end gap-1.5">
-            <span className="text-[32px] font-semibold tabular-nums leading-none text-zinc-800">
+            <span className="text-[32px] font-semibold font-mono tabular-nums leading-none text-zinc-800">
               {num}
             </span>
             {unit ? (
@@ -91,7 +91,7 @@ export function FocusHeroCard({
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             转粉
           </p>
-          <p className="mt-1.5 text-[13px] font-medium tabular-nums text-zinc-800">
+          <p className="mt-1.5 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
             {hasData ? stats.followerConvert.toLocaleString("zh-CN") : "—"}
           </p>
         </div>
@@ -99,7 +99,7 @@ export function FocusHeroCard({
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             涨粉
           </p>
-          <p className="mt-1.5 text-[13px] font-medium tabular-nums text-zinc-800">
+          <p className="mt-1.5 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
             {hasData ? stats.followerGain.toLocaleString("zh-CN") : "—"}
           </p>
         </div>
@@ -107,7 +107,7 @@ export function FocusHeroCard({
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             互动总量
           </p>
-          <p className="mt-1.5 text-[13px] font-medium tabular-nums text-zinc-800">
+          <p className="mt-1.5 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
             {hasData ? stats.engagement.toLocaleString("zh-CN") : "—"}
           </p>
         </div>

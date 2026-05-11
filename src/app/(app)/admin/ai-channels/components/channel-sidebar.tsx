@@ -84,7 +84,7 @@ function StatusIndicator({ status }: { status: "healthy" | "circuit" | "disabled
     return <div className="h-2 w-2 shrink-0 rounded-full bg-[#6FAA7D] ring-1 ring-white" title="健康" />;
   }
   if (status === "circuit") {
-    return <div className="h-2 w-2 shrink-0 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" title="熔断中" />;
+    return <div className="h-2 w-2 shrink-0 rounded-full bg-[#C9604D] ring-1 ring-white" title="熔断中" />;
   }
   return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-200" title="已禁用" />;
 }

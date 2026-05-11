@@ -156,7 +156,7 @@ function StatusDot({ type }: { type: Message["type"] }) {
   if (type === "error") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white animate-pulse" />
+        <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
         <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-700">
           Rejected
         </span>

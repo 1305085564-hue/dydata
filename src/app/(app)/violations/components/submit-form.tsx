@@ -547,7 +547,7 @@ export function SubmitForm({
           disabled={isSubmitting || isUploading}
           className={cn(
             "h-11 rounded-2xl bg-zinc-900 px-6 text-white hover:bg-zinc-800",
-            isSubmitting && "animate-pulse",
+            isSubmitting && "opacity-70",
           )}
         >
           {isSubmitting ? "提交中..." : "提交案例"}

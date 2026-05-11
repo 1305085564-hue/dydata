@@ -55,7 +55,7 @@ function dotColor(result: string) {
     case "success":
       return "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white";
     case "failed":
-      return "h-2 w-2 bg-[#C9604D] ring-1 ring-white animate-pulse";
+      return "h-2 w-2 bg-[#C9604D] ring-1 ring-white";
     case "cancelled":
       return "h-1.5 w-1.5 bg-zinc-200";
     case "pending_confirm":

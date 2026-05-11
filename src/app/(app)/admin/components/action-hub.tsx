@@ -89,7 +89,7 @@ export function ActionHub({
                     <div
                       className={`rounded-full ${
                         effectivePendingCount > 0
-                          ? "h-2 w-2 bg-[#D97757] ring-1 ring-white animate-pulse"
+                          ? "h-2 w-2 bg-[#D97757] ring-1 ring-white"
                           : "h-2 w-2 bg-[#6FAA7D] ring-1 ring-white"
                       }`}
                     />
