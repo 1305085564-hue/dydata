@@ -62,6 +62,56 @@ export function AdminModulesContent({
   const canExportData = hasPermission(currentUserRole, currentUserPermissions, "export_data");
   const canViewAuditLog = hasPermission(currentUserRole, currentUserPermissions, "view_audit_log");
   const hasVisibleModules = canManagePermissions || canEditData || canExportData || canViewAuditLog;
+  const quickLinks = [
+    canManagePermissions
+      ? {
+          href: "#permissions",
+          step: "01",
+          title: "成员 / 角色 / 权限",
+          desc: "先定人和权限边界",
+        }
+      : null,
+    teamManagement.access.canView
+      ? {
+          href: "#teams-groups",
+          step: "02",
+          title: "团队 / 分组",
+          desc: "再定组织归属",
+        }
+      : null,
+    canManagePermissions
+      ? {
+          href: "#team-directory",
+          step: "03",
+          title: "团队目录",
+          desc: "维护团队名称",
+        }
+      : null,
+    canEditData
+      ? {
+          href: "#data-tools",
+          step: "04",
+          title: "数据管理",
+          desc: "修正异常数据",
+        }
+      : null,
+    canViewAuditLog
+      ? {
+          href: "#audit-log",
+          step: "05",
+          title: "操作审计",
+          desc: "回看后台变更",
+        }
+      : null,
+    canExportData
+      ? {
+          href: "#export-data",
+          step: "06",
+          title: "数据导出",
+          desc: "输出治理结果",
+        }
+      : null,
+  ].filter((item): item is { href: string; step: string; title: string; desc: string } => Boolean(item));
 
   if (!hasVisibleModules) {
     return (
@@ -72,37 +122,45 @@ export function AdminModulesContent({
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-4">
-          {canManagePermissions ? (
-            <a href="#permissions" className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm transition hover:border-zinc-300 hover:bg-white">
-              <span className="block font-semibold text-zinc-800">成员</span>
-              <span className="mt-1 block text-xs text-zinc-500">角色、权限、账号状态</span>
-            </a>
-          ) : null}
-          {teamManagement.access.canView ? (
-            <a href="#teams-groups" className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm transition hover:border-zinc-300 hover:bg-white">
-              <span className="block font-semibold text-zinc-800">团队 / 分组</span>
-              <span className="mt-1 block text-xs text-zinc-500">负责人、组长、归属</span>
-            </a>
-          ) : null}
-          {canManagePermissions ? (
-            <a href="#team-directory" className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm transition hover:border-zinc-300 hover:bg-white">
-              <span className="block font-semibold text-zinc-800">团队目录</span>
-              <span className="mt-1 block text-xs text-zinc-500">团队名称维护</span>
-            </a>
-          ) : null}
-          {canEditData || canViewAuditLog || canExportData ? (
-            <a href={canEditData ? "#data-tools" : canViewAuditLog ? "#audit-log" : "#export-data"} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm transition hover:border-zinc-300 hover:bg-white">
-              <span className="block font-semibold text-zinc-800">数据治理</span>
-              <span className="mt-1 block text-xs text-zinc-500">修正、审计、导出</span>
-            </a>
-          ) : null}
-        </div>
-      </section>
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr),260px] xl:items-start">
+      <div className="space-y-6">
+        <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl bg-zinc-50 px-4 py-3">
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                Workflow
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-zinc-800">先定人，再定组织，再治理数据</span>
+            </div>
+            <div className="rounded-xl bg-zinc-50 px-4 py-3">
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                Members
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-zinc-800">{allProfiles.length} 个成员档案</span>
+            </div>
+            <div className="rounded-xl bg-zinc-50 px-4 py-3">
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                Teams
+              </span>
+              <span className="mt-1 block text-sm font-semibold text-zinc-800">{teams.length} 个团队目录</span>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {quickLinks.slice(0, 3).map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm"
+              >
+                <span className="text-[11px] font-semibold text-[#D97757]">{item.step}</span>
+                <span className="mt-1 block font-semibold text-zinc-800">{item.title}</span>
+                <span className="mt-1 block text-xs text-zinc-500">{item.desc}</span>
+              </a>
+            ))}
+          </div>
+        </section>
 
-      {canManagePermissions ? (
+        {canManagePermissions ? (
         <>
           <div id="permissions" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
             <div className="space-y-1">
@@ -196,6 +254,32 @@ export function AdminModulesContent({
           </div>
         ) : null}
       </div>
+      </div>
+
+      <aside className="hidden xl:sticky xl:top-24 xl:block">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
+            Index Track
+          </p>
+          <div className="mt-4 space-y-1">
+            {quickLinks.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="group grid grid-cols-[32px,1fr] gap-3 rounded-xl px-2 py-2.5 transition hover:bg-zinc-50"
+              >
+                <span className="flex size-7 items-center justify-center rounded-full border border-zinc-200 text-[11px] font-semibold text-zinc-400 group-hover:border-[#D97757]/40 group-hover:text-[#D97757]">
+                  {item.step}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-zinc-800">{item.title}</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-zinc-500">{item.desc}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

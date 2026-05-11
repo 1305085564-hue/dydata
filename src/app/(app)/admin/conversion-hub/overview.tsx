@@ -11,6 +11,7 @@ import {
   MessageSquareWarning,
   ShieldCheck,
   Sparkles,
+  Target,
   TrendingUp,
 } from "lucide-react";
 
@@ -181,6 +182,33 @@ export function ConversionHubOverview({ stats }: Props) {
     },
   ];
 
+  const actionQueue = [
+    {
+      href: "/violations/submit",
+      title: "补充转化或违规话术",
+      desc: "先把案例走双路径提交，后续才有可筛选对象。",
+      signal: `${stats.conversion_cases} 条转化话术`,
+    },
+    {
+      href: "/admin/violations",
+      title: "处理本周违规风险",
+      desc: "把处罚、限流、申诉结果先复核清楚。",
+      signal: `${stats.weekly_violation_events} 个风险事件`,
+    },
+    {
+      href: "/admin/conversion-hub/weekly",
+      title: "确认每周四类清单",
+      desc: "把推广、测试、废弃、封禁落成周决策。",
+      signal: "周筛选",
+    },
+    {
+      href: "/admin/advice",
+      title: "转成建议动作",
+      desc: "把复核结论交给动作名单继续推进。",
+      signal: "执行闭环",
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -248,6 +276,47 @@ export function ConversionHubOverview({ stats }: Props) {
               </div>
               <p className="mt-3 text-sm font-semibold text-zinc-800">{title}</p>
               <p className="mt-1 text-xs leading-5 text-zinc-500">{desc}</p>
+            </Link>
+          ))}
+        </div>
+      </motion.section>
+
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+        className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-[18px] font-medium text-zinc-800">本周动作队列</h2>
+            <p className="mt-0.5 text-xs leading-5 text-zinc-500">
+              按真实处理顺序走，避免只看排行榜却没有复核和动作承接。
+            </p>
+          </div>
+          <div className="rounded-full bg-zinc-100 px-3 py-1 text-[11px] font-semibold text-zinc-500">
+            {formatWeekRange(stats.week_start)}
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {actionQueue.map((item, index) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 transition-[border-color,background-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm md:grid-cols-[auto,1fr,auto]"
+            >
+              <div className="flex size-9 items-center justify-center rounded-lg bg-zinc-100 text-sm font-semibold text-zinc-600 group-hover:bg-[#D97757] group-hover:text-white">
+                {index + 1}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-zinc-800">{item.title}</p>
+                <p className="mt-0.5 text-xs leading-5 text-zinc-500">{item.desc}</p>
+              </div>
+              <div className="flex items-center gap-2 self-center text-xs font-medium text-zinc-500">
+                <Target className="size-3.5 text-zinc-400" />
+                {item.signal}
+              </div>
             </Link>
           ))}
         </div>

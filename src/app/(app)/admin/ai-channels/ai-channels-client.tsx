@@ -12,6 +12,7 @@ import { ChannelSidebar } from "./components/channel-sidebar";
 import { ChannelDetailForm } from "./components/channel-detail-form";
 import { ChannelFeatureBindings } from "./components/channel-feature-bindings";
 import { AiChannelRow, AiFeatureApiRow, AiFeatureItem, ChannelFormState, FeatureSaveState } from "./components/types";
+import AIRewriteClient from "../ai-rewrite/ai-rewrite-client";
 import {
   FEATURE_SAVE_FEEDBACK_MS,
   applyFeaturePatch,
@@ -429,11 +430,11 @@ export default function AIChannelsClient() {
           <p className="mt-2 text-sm font-semibold text-zinc-800">功能绑定</p>
           <p className="mt-1 text-xs leading-5 text-zinc-500">把业务功能挂到渠道</p>
         </a>
-        <Link href="/admin/ai-rewrite" className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm">
+        <a href="#ai-rewrite-config" className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm">
           <MessageSquareText className="size-4 text-zinc-500" />
           <p className="mt-2 text-sm font-semibold text-zinc-800">文案改写</p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">配置套餐、模式和执行路线</p>
-        </Link>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">在本页配置套餐、模式和路线</p>
+        </a>
         <Link href="/admin/ai-assistant" className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm">
           <Bot className="size-4 text-zinc-500" />
           <p className="mt-2 text-sm font-semibold text-zinc-800">AI 助手</p>
@@ -492,22 +493,8 @@ export default function AIChannelsClient() {
                 />
               </section>
 
-              <section id="ai-rewrite-entry" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">Rewrite Config</p>
-                    <h2 className="mt-1 text-[18px] font-medium text-zinc-800">文案改写配置</h2>
-                    <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-500">
-                      固定能力套餐、展示模型、真实执行路线和字数预设仍由专用配置页维护，避免把保存逻辑揉进渠道表单。
-                    </p>
-                  </div>
-                  <Link
-                    href="/admin/ai-rewrite"
-                    className="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                  >
-                    打开文案改写配置
-                  </Link>
-                </div>
+              <section id="ai-rewrite-config" className="scroll-mt-8">
+                <AIRewriteClient embedded />
               </section>
             </div>
           </div>

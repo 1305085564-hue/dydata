@@ -317,7 +317,11 @@ function SummaryCard({
   );
 }
 
-export default function AIRewriteClient() {
+interface AIRewriteClientProps {
+  embedded?: boolean;
+}
+
+export default function AIRewriteClient({ embedded = false }: AIRewriteClientProps) {
   const [bundle, setBundle] = useState<RewriteBundle>(EMPTY_BUNDLE);
   const [runtimeForm, setRuntimeForm] = useState<RuntimeFormState>(EMPTY_RUNTIME_FORM);
   const [isLoading, setIsLoading] = useState(true);
@@ -803,7 +807,27 @@ export default function AIRewriteClient() {
   const activeEditorMeta = editor ? editorTitleMap[editor.kind] : null;
 
   return (
-    <div className="space-y-6">
+    <div className={embedded ? "space-y-5" : "space-y-6"}>
+      {embedded ? (
+        <section className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
+                Rewrite Config
+              </p>
+              <h2 className="mt-1 text-[18px] font-medium text-zinc-800">文案改写配置</h2>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-500">
+                在同一个 AI 配置中心里维护固定套餐、展示模型、真实路线、字数预设和自动流程，保存仍复用原有接口。
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => void loadBundle(true)} disabled={isRefreshing || isLoading}>
+              {isRefreshing ? <Skeleton className="size-4 rounded-full" /> : <RefreshCw className="size-4" />}
+              刷新配置
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="grid gap-4 lg:grid-cols-4">
         <SummaryCard
           icon={Bot}
@@ -831,26 +855,28 @@ export default function AIRewriteClient() {
         />
       </section>
 
-      <Card className="border-zinc-200 bg-white">
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle className="font-semibold tracking-tight">配置说明</CardTitle>
-              <CardDescription className="mt-1">
-                这页只做 owner 的文案改写后台配置。员工端仍然只看展示模型，不暴露真实渠道。
-              </CardDescription>
+      {embedded ? null : (
+        <Card className="border-zinc-200 bg-white">
+          <CardHeader>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle className="font-semibold tracking-tight">配置说明</CardTitle>
+                <CardDescription className="mt-1">
+                  这页只做 owner 的文案改写后台配置。员工端仍然只看展示模型，不暴露真实渠道。
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => void loadBundle(true)} disabled={isRefreshing || isLoading}>
+                {isRefreshing ? <Skeleton className="size-4 rounded-full" /> : <RefreshCw className="size-4" />}
+                刷新配置
+              </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={() => void loadBundle(true)} disabled={isRefreshing || isLoading}>
-              {isRefreshing ? <Skeleton className="size-4 rounded-full" /> : <RefreshCw className="size-4" />}
-              刷新配置
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm leading-6 text-zinc-500">
-          <p>首条消息固定走结果模式，默认只出 1 个主版本；第二轮开始固定进入正常聊天，不再回版本卡。</p>
-          <p>最关键的是先把“固定套餐 → 展示模型 → 真实路线”配对好，再确认输出上限和上下文条数是否符合线上体验。</p>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm leading-6 text-zinc-500">
+            <p>首条消息固定走结果模式，默认只出 1 个主版本；第二轮开始固定进入正常聊天，不再回版本卡。</p>
+            <p>最关键的是先把“固定套餐 → 展示模型 → 真实路线”配对好，再确认输出上限和上下文条数是否符合线上体验。</p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-zinc-200 bg-white">
         <CardHeader>

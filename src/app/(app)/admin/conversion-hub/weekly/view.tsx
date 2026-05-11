@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check, Inbox, Sparkles } from "lucide-react";
+import { AlertTriangle, Check, Inbox, Sparkles } from "lucide-react";
 import { useState } from "react";
+
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 export interface DecisionEntry {
   id: string;
@@ -59,15 +61,33 @@ function formatWeekRange(weekStart: string) {
 
 export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedBy }: Props) {
   const [confirming, setConfirming] = useState(false);
+  const [localConfirmedAt, setLocalConfirmedAt] = useState(confirmedAt);
 
   const handleGenerate = () => {
-    window.alert("AI 每周草稿接口待后端实现");
+    feedbackToast.warning("AI 每周草稿接口待后端实现，先从转化分析和违规复核整理候选");
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setConfirming(true);
-    window.alert("一键确认接口暂未实现（/api/conversion-hub/weekly-decisions/confirm 待上线）");
-    setConfirming(false);
+    try {
+      const response = await fetch("/api/conversion-hub/weekly-decisions/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ week_start: weekStart }),
+      });
+      const data = (await response.json()) as { data?: { confirmed_at?: string | null }; error?: { message?: string } };
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error?.message || "确认失败");
+      }
+
+      setLocalConfirmedAt(data.data?.confirmed_at ?? new Date().toISOString());
+      feedbackToast.success("本周四类清单已确认");
+    } catch (error) {
+      feedbackToast.error(error instanceof Error ? error.message : "确认失败");
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -86,7 +106,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
           <div className="rounded-[10px] border border-zinc-200 bg-white px-4 py-1.5 text-[12px] font-medium text-zinc-600">
             本周 · {formatWeekRange(weekStart)}
           </div>
-          {confirmedAt ? (
+          {localConfirmedAt ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-3 py-1.5 text-xs font-medium text-[#6FAA7D]">
               <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
               已确认
@@ -122,11 +142,11 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={confirming || Boolean(confirmedAt)}
+                disabled={confirming || Boolean(localConfirmedAt)}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Check className="size-4" />
-                {confirmedAt ? "已确认" : "一键确认整单"}
+                {localConfirmedAt ? "已确认" : confirming ? "确认中..." : "一键确认整单"}
               </button>
             </div>
           </div>
@@ -199,16 +219,31 @@ function EmptyState({
       </div>
       <h3 className="mt-4 text-[18px] font-medium text-zinc-800">本周暂无决策草稿</h3>
       <p className="mx-auto mt-1.5 max-w-md text-xs text-zinc-500">
-        周起：{weekStart}。AI 每周草稿接口待后端实现，届时会在此自动生成四类话术候选。
+        周起：{weekStart}。AI 自动生成草稿还没有后端接口，当前只能先从分析和复核页面人工整理候选。
       </p>
-      <button
-        type="button"
-        onClick={onGenerate}
-        className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:translate-y-0"
-      >
-        <Sparkles className="size-4" />
-        生成草稿
-      </button>
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <Link
+          href="/admin/conversion-hub/analytics"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:translate-y-0"
+        >
+          <Sparkles className="size-4" />
+          去看转化分析
+        </Link>
+        <Link
+          href="/admin/violations"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 active:translate-y-0"
+        >
+          <AlertTriangle className="size-4" />
+          复核违规风险
+        </Link>
+        <button
+          type="button"
+          onClick={onGenerate}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-500 transition hover:bg-zinc-50 active:translate-y-0"
+        >
+          接口待补
+        </button>
+      </div>
     </motion.section>
   );
 }
