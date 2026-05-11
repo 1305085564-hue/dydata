@@ -45,17 +45,17 @@ export function SubmissionSlotsSection({
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold tracking-tight text-zinc-800">
+          <h3 className="text-[13px] font-semibold tracking-tight text-zinc-800">
             截图上传
           </h3>
-          <p className="text-sm text-zinc-500">
+          <p className="text-[12px] leading-[1.7] text-zinc-500">
             {screenshotsRequired
               ? "上传 2 张截图（必传），AI 自动识别图片类型。可选上传第 3 张补充截图。"
               : "当前视频状态下截图改为可选。若能补传截图，系统仍会自动识别并回填数据。"}
           </p>
         </div>
         {issueCount > 0 ? (
-          <span className="rounded-full bg-[#FEFCE8] px-3 py-1 text-xs font-medium text-[#D99E55] border border-[#FEFCE8] shrink-0">
+          <span className="rounded-full bg-[#FEFCE8] px-3 py-1 text-[11px] font-medium text-[#D99E55] border border-[#FEFCE8] shrink-0">
             待处理 {issueCount}
           </span>
         ) : null}
@@ -73,9 +73,9 @@ export function SubmissionSlotsSection({
                   type="button"
                   onClick={() => setShowSlot3(true)}
                   className={cn(
-                    "w-full flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors duration-300",
+                    "w-full flex items-center justify-center gap-2 h-10 rounded-xl border text-[13px] font-medium transition-colors duration-300",
                     isHighlighted
-                      ? "border-zinc-950 bg-zinc-50 text-zinc-800 ring-2 ring-zinc-950/8"
+                      ? "border-zinc-950 bg-zinc-50 text-zinc-800 ring-1 ring-zinc-950/5"
                       : "border-dashed border-zinc-300 bg-white text-zinc-400 hover:bg-zinc-50 hover:border-zinc-400"
                   )}
                 >
@@ -104,12 +104,6 @@ export function SubmissionSlotsSection({
                 onDelete={() => onDelete(item.role)}
                 onRetry={onRetry ? () => onRetry(item.role) : undefined}
               />
-
-              {item.role === "screenshot_3" && showSlot3 && !slot.assetUrl && slot.status === "empty" && (
-                 <button type="button" onClick={() => setShowSlot3(false)} className="mt-2 text-xs text-zinc-400 hover:text-zinc-700 flex items-center justify-center gap-1 w-full mx-auto transition-colors">
-                   收起导粉截图 <ChevronUp className="size-3" />
-                 </button>
-              )}
             </motion.div>
           );
         })}

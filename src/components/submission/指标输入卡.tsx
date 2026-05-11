@@ -69,19 +69,18 @@ export function MetricInputCard({
   }
 
   return (
-    <div className="space-y-1.5 transition-colors">
+    <div className="space-y-1 transition-colors">
       <div className="flex items-center justify-between gap-1">
         <Label
           className={cn(
-            "font-medium text-zinc-500",
-            size === "primary" ? "text-[13px]" : "text-[12px]"
+            "font-medium text-zinc-500 text-[13px]"
           )}
         >
           {label}
           {optional && <span className="ml-1 font-normal opacity-60">可选</span>}
         </Label>
         {statusLabel && (
-          <span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold tracking-wide scale-90 origin-right bg-zinc-100 text-zinc-500 border border-zinc-200">
+          <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wide scale-90 origin-right bg-zinc-100 text-zinc-500 border border-zinc-200">
             {statusLabel}
           </span>
         )}
@@ -97,16 +96,17 @@ export function MetricInputCard({
           onFocus={onFocus}
           onBlur={onBlur}
           className={cn(
-            "rounded-xl pr-8 font-semibold text-zinc-800 transition-colors tracking-wide",
-            "bg-white border-zinc-200 focus:bg-white focus:border-zinc-950/30 focus:ring-1 focus:ring-zinc-950/10",
-            size === "primary" ? "h-10 text-lg" : "h-9 text-base",
+            "rounded-[20px] pr-8 font-mono tabular-nums text-zinc-800 transition-colors",
+            "bg-zinc-100/70 border-transparent text-[13px]",
+            "focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757]",
+            "h-10",
             field.source === "ocr"
-              ? "border-b-2 border-b-zinc-950 shadow-sm font-mono tracking-tight"
+              ? "border-b-2 border-b-zinc-950 shadow-sm"
               : ""
           )}
         />
         {suffix ? (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-zinc-400">
             {suffix}
           </span>
         ) : null}

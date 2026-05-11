@@ -692,17 +692,17 @@ export function VideoSubmitPanel({
             {activeCheckpointId === 1 ? (
               <>
             {primarySummary && isPrimarySummaryMode ? (
-              <div className="rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-4 text-[13px] text-zinc-800 sm:p-5">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-6 text-[13px] text-zinc-800">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#6FAA7D]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[11px] font-medium text-[#6FAA7D]">
                         <FilePenLine className="size-3.5 stroke-[1.5]" />
                         今日数据已提交
                       </span>
                     </div>
                     <div className="space-y-1.5">
-                      <div className="text-[18px] font-medium text-zinc-800">
+                      <div className="text-[14px] font-medium text-zinc-800">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
                       <div className="text-[12px] leading-[1.7] text-zinc-500">
@@ -711,13 +711,13 @@ export function VideoSubmitPanel({
                         发布时间：{primarySummary.publishedAt || "暂无"}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">播放量</div>
+                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">播放量</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.playCount ?? "--"}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">互动总量</div>
+                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">互动总量</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">
                           {(primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
@@ -726,22 +726,22 @@ export function VideoSubmitPanel({
                         </div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">涨粉</div>
+                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">涨粉</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.followerGain ?? "--"}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">完播率</div>
+                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">完播率</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.completionRate ?? "--"}</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 flex-col gap-2 lg:w-[190px]">
+                  <div className="flex shrink-0 flex-col gap-3 lg:w-[190px]">
                     <a href={violationSubmitHref}>
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-12 w-full rounded-[10px] border-zinc-200 bg-white text-zinc-800 transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 active:translate-y-0"
+                        className="h-10 w-full rounded-lg border-zinc-200 bg-white text-[13px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                       >
                         <ShieldAlert className="size-4 stroke-[1.5] text-[#D99E55]" />
                         收录违规
@@ -750,7 +750,7 @@ export function VideoSubmitPanel({
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-12 rounded-[10px] border-zinc-200 bg-white text-zinc-800 transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 active:translate-y-0"
+                      className="h-10 rounded-lg border-zinc-200 bg-white text-[13px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                       onClick={() => setRequestedMode("editToday")}
                     >
                       <PencilLine className="size-4 stroke-[1.5]" />

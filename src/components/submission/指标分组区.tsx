@@ -44,8 +44,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
     <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold tracking-tight text-zinc-800">指标录入</h3>
-          <p className="text-sm text-zinc-500">
+          <h3 className="text-[13px] font-semibold tracking-tight text-zinc-800">指标录入</h3>
+          <p className="text-[12px] leading-[1.7] text-zinc-500">
             填写核心业务数据、互动数据和留存转化数据。
           </p>
         </div>
@@ -53,12 +53,12 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
       <div className="flex flex-1 flex-col gap-8">
         {/* 核心数据 */}
-        <div className="relative pl-5">
-          <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
+        <div className="relative pl-4">
+          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
           <div className="mb-4">
-            <h3 className="text-sm font-medium text-zinc-800">核心数据</h3>
+            <h3 className="text-[13px] font-medium text-zinc-800">核心数据</h3>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-4">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -78,12 +78,12 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         </div>
 
         {/* 互动数据 */}
-        <div className="relative pl-5">
-          <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#8AA8C7]" />
+        <div className="relative pl-4">
+          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-zinc-300" />
           <div className="mb-4">
-            <h3 className="text-sm font-medium text-zinc-800">互动数据</h3>
+            <h3 className="text-[13px] font-medium text-zinc-800">互动数据</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -100,14 +100,14 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         </div>
 
         {/* 完播留存 */}
-        <div className={cn("relative pl-5", retentionOptional && "opacity-50")}>
-          <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#6FAA7D]" />
+        <div className={cn("relative pl-4", retentionOptional && "opacity-50")}>
+          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-zinc-300" />
           <div className="mb-4">
-            <h3 className="text-sm font-medium text-zinc-800">
+            <h3 className="text-[13px] font-medium text-zinc-800">
               完播留存{retentionOptional && <span className="ml-1 font-normal text-zinc-500">（可选）</span>}
             </h3>
           </div>
-          <div className={cn("grid grid-cols-2 gap-3 md:grid-cols-4", retentionOptional && "opacity-50")}>
+          <div className={cn("grid grid-cols-2 gap-4 md:grid-cols-4", retentionOptional && "opacity-50")}>
             {RETENTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}

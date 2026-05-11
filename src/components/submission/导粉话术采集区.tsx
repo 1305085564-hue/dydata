@@ -32,8 +32,8 @@ export function ScriptCaptureSection({
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           className="overflow-hidden"
         >
-          <div className="relative mt-6 pl-5">
-            <div className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-[#D97757]" />
+          <div className="relative mt-8 pl-4">
+            <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
 
             <div className="mb-4 flex items-center gap-2">
               <h3 className="text-[13px] font-semibold text-zinc-800">导粉话术</h3>
@@ -44,7 +44,7 @@ export function ScriptCaptureSection({
 
             <div
               className={cn(
-                "rounded-xl border transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                "rounded-2xl border transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 showError
                   ? "border-[#C9604D]/40 bg-zinc-50"
                   : "border-zinc-200 bg-white",
@@ -56,7 +56,7 @@ export function ScriptCaptureSection({
                 placeholder="粘贴本条视频中使用的导粉话术文案"
                 rows={4}
                 className={cn(
-                  "w-full resize-none rounded-xl border-0 bg-transparent px-4 py-3",
+                  "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
                   "text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400",
                   "outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                 )}

@@ -122,7 +122,7 @@ export function SubmissionSlotCard({
       initial={isError ? "initial" : undefined}
       animate={isError ? "animate" : undefined}
       className={cn(
-        "relative overflow-hidden rounded-xl border bg-white transition-colors duration-200",
+        "relative overflow-hidden rounded-2xl border bg-[#FAFAFB] transition-colors duration-200",
         isHighlighted ? "border-zinc-950 ring-2 ring-zinc-950/8" : "border-zinc-200",
         isWarning && "border-[#EAB308] ring-1 ring-[#EAB308]/50",
         isError && "border-[#C9604D] ring-1 ring-[#C9604D]/50",
@@ -145,7 +145,7 @@ export function SubmissionSlotCard({
         />
 
         {/* 左侧：1:1 正方形截图槽位 */}
-        <div className="w-full sm:w-[45%] aspect-square sm:aspect-auto sm:min-h-[180px] flex-shrink-0 relative border-b sm:border-b-0 sm:border-r border-zinc-100 bg-[#FAFAFB]">
+        <div className="w-full sm:w-[45%] aspect-square sm:aspect-auto sm:min-h-[180px] flex-shrink-0 relative border-b sm:border-b-0 sm:border-r border-zinc-200 bg-[#FAFAFB]">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -166,11 +166,11 @@ export function SubmissionSlotCard({
                   {title}
                 </span>
                 {required ? (
-                  <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-zinc-800 border border-zinc-200">
+                  <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-medium text-zinc-800 border border-zinc-200">
                     必传
                   </span>
                 ) : (
-                  <span className="rounded-lg bg-zinc-500/70 px-1 py-0.5 text-[10px] font-medium text-white/90">
+                  <span className="rounded-lg bg-zinc-400/70 px-1 py-0.5 text-[10px] font-medium text-white/90">
                     选传
                   </span>
                 )}
@@ -183,10 +183,10 @@ export function SubmissionSlotCard({
                 "bg-zinc-600/80 text-white/90"
               )}>
                 <span className={cn(
-                  "inline-block size-1.5 rounded-full",
-                  isSuccess && "bg-white",
-                  isError && "bg-white",
-                  isWarning && "bg-white"
+                  "inline-block h-2 w-2 rounded-full ring-1 ring-white",
+                  isSuccess && "bg-[#6FAA7D]",
+                  isError && "bg-[#C9604D]",
+                  isWarning && "bg-[#D99E55]"
                 )} />
                 {getStatusText(status)}
               </span>
@@ -265,7 +265,7 @@ export function SubmissionSlotCard({
         </div>
 
         {/* 右侧：说明与识别结果区 */}
-        <div className="flex-1 sm:w-[55%] flex flex-col relative bg-white p-3">
+        <div className="flex-1 sm:w-[55%] flex flex-col relative bg-[#FAFAFB] p-4">
           {/* 顶部描述与删除按钮 */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <p className="text-[10px] text-zinc-500 leading-snug flex-1 pr-6">{description}</p>
