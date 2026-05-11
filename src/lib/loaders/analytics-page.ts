@@ -1,10 +1,34 @@
 import type { AnalyticsRangePreset } from "@/lib/analytics-access";
 import type { AnalyticsWorkbench } from "@/app/(app)/admin/analytics/analytics-workbench";
-import { buildAnalyticsAccessContext, getPresetRange, restrictPersonRows } from "@/lib/analytics-access";
+import { getPresetRange } from "@/lib/analytics-access";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { UserRole } from "@/types";
 
 type AnalyticsSupabase = Awaited<ReturnType<typeof createClient>>;
+
+type TeamProfile = { id: string; name: string; team_id: string | null };
+
+type ReportRow = Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"][number] & {
+  user_id: string;
+  account_id?: string | null;
+  accounts?: { id: string; name: string; profile_id: string | null } | null;
+};
+
+type AccountJoin = { id: string; name: string; profile_id: string | null };
+
+function normalizeJoinedOne<T>(value: T | T[] | null | undefined): T | null {
+  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+}
+
+function getReportOwnerId(report: ReportRow) {
+  return report.accounts?.profile_id ?? report.user_id;
+}
+
+function getVideoOwnerId(video: { user_id: string; accounts?: { profile_id?: string | null } | null }) {
+  return video.accounts?.profile_id ?? video.user_id;
+}
 
 export interface AnalyticsPageData {
   range: ReturnType<typeof getPresetRange>;
@@ -37,29 +61,39 @@ export async function loadAnalyticsPageData({
   const adminSupabase = createAdminClient();
   const range = getPresetRange(preset, new Date(), { from, to });
 
-  const { data: profile } = await supabase.from("profiles").select("name, role").eq("id", userId).single();
-  const role = profile?.role ?? "member";
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, role, permissions, team_id")
+    .eq("id", userId)
+    .single();
+  const role = (profile?.role ?? "member") as UserRole;
   const currentUserName = profile?.name ?? "我";
-  const isPrivilegedUser = role === "admin" || role === "owner";
-  const access = buildAnalyticsAccessContext({
-    userId,
-    role,
-    teamId: isPrivilegedUser ? "__all__" : null,
-    demoTeamId: null,
-  });
+  const currentUserTeamId = profile?.team_id ?? null;
+  const scope = await buildDataAccessScope(adminSupabase, userId);
+  const visibleUserIds = scope?.visibleUserIds ?? [userId];
+  const isPrivilegedUser = (scope?.accessLevel ?? 1) > 1;
 
-  const teamProfiles: { id: string; name: string }[] = isPrivilegedUser
-    ? (await adminSupabase.from("profiles").select("id, name").order("name")).data ?? []
-    : [{ id: userId, name: currentUserName }];
+  let profilesQuery = adminSupabase.from("profiles").select("id, name, team_id").order("name");
+  if (scope?.kind !== "all") {
+    profilesQuery = profilesQuery.in("id", visibleUserIds);
+  }
+
+  const { data: teamProfileRows } = await profilesQuery;
+  const teamProfiles: TeamProfile[] = (teamProfileRows ?? [{ id: userId, name: currentUserName, team_id: currentUserTeamId }]).map((item) => ({
+    id: item.id,
+    name: item.name,
+    team_id: item.team_id ?? null,
+  }));
 
   const teamUserIds = teamProfiles.map((item) => item.id);
+  const teamUserIdSet = new Set(teamUserIds);
   const submitters = isPrivilegedUser ? teamProfiles.map((item) => item.name) : [currentUserName];
+
   const reportsQuery = adminSupabase
     .from("daily_reports")
     .select(
-      "id, user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+      "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id)",
     )
-    .in("user_id", teamUserIds)
     .gte("report_date", range.from)
     .lte("report_date", range.to)
     .order("report_date", { ascending: false });
@@ -67,26 +101,33 @@ export async function loadAnalyticsPageData({
   const videosQuery = includeVideoDetails
     ? adminSupabase
         .from("videos")
-        .select("*, accounts(name)")
-        .in("user_id", teamUserIds)
+        .select("*, accounts(name, profile_id)")
+        .gte("published_at", `${range.from}T00:00:00+08:00`)
+        .lte("published_at", `${range.to}T23:59:59+08:00`)
         .order("published_at", { ascending: false })
         .then((result) => {
           const nameMap = new Map(teamProfiles.map((teamProfile) => [teamProfile.id, teamProfile.name]));
           return {
             ...result,
-            data: (result.data ?? []).map((video) => ({
-              ...video,
-              profiles: { name: nameMap.get(video.user_id) ?? "未知" },
-            })),
+            data: (result.data ?? []).map((video) => {
+              const account = normalizeJoinedOne(video.accounts as AccountJoin | AccountJoin[] | null);
+              return {
+                ...video,
+                accounts: account ? { name: account.name, profile_id: account.profile_id } : null,
+                profiles: { name: nameMap.get(getVideoOwnerId({ ...video, accounts: account })) ?? nameMap.get(video.user_id) ?? "未知" },
+              };
+            }),
           };
         })
     : null;
 
-  const [{ data: reports }, videosResult] = includeVideoDetails
-    ? await Promise.all([reportsQuery, videosQuery])
-    : [await reportsQuery, null];
+  const [{ data: reports }, videosResult] = includeVideoDetails ? await Promise.all([reportsQuery, videosQuery]) : [await reportsQuery, null];
 
-  const filteredReports = access.canViewAllMembers ? reports ?? [] : restrictPersonRows(reports ?? [], { role, currentUserName });
+  const normalizedReports = ((reports ?? []) as unknown as Array<Omit<ReportRow, "accounts"> & { accounts?: AccountJoin | AccountJoin[] | null }>).map((report) => ({
+    ...report,
+    accounts: normalizeJoinedOne(report.accounts),
+  }));
+  const filteredReports = normalizedReports.filter((report) => teamUserIdSet.has(getReportOwnerId(report)));
 
   if (!includeVideoDetails) {
     return {
@@ -104,7 +145,7 @@ export async function loadAnalyticsPageData({
   }
 
   const videos = videosResult?.data ?? [];
-  const filteredVideos = (videos ?? []).filter((video) => (access.canViewAllMembers ? true : video.user_id === userId));
+  const filteredVideos = (videos ?? []).filter((video) => teamUserIdSet.has(getVideoOwnerId(video)));
   const filteredVideoIds = filteredVideos.map((video) => video.id);
   const [{ data: snapshots }, { data: videoTags }] =
     filteredVideoIds.length > 0
