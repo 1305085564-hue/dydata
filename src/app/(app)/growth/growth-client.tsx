@@ -57,7 +57,7 @@ export function GrowthClientShell({
       {/* 顶层数据仪 — 合并 Hero + Performance Snapshot */}
       <AppShellHero
         title="成长分析总览"
-        description="先看能力分布和诊断结论，再决定优先优化哪一段内容结构，避免在细节里反复试错。"
+        description="按“看弱点、找对标、拆文案、定动作”的顺序走，先定位最该补的一环。"
         meta={
           <div className="flex flex-col items-end gap-1.5">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[11px] text-zinc-500">
@@ -108,7 +108,7 @@ export function GrowthClientShell({
 
       {/* Peer Battle */}
       {pkPanel ? (
-        <AppShellSection title="同标签对比" description="和最接近你的对手对比，优先找能直接复制的差距。">
+        <AppShellSection title="找对标" description="和最接近你的对手对比，优先找能直接复制的差距。">
           <GrowthPkPanel leftName={pkPanel.leftName} rightName={pkPanel.rightName} rows={pkPanel.rows} />
         </AppShellSection>
       ) : null}

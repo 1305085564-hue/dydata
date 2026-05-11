@@ -3,7 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Upload, X } from "lucide-react";
+import { ShieldAlert, TrendingUp, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import {
   APPEAL_STATUSES,
   VIOLATION_EVENT_TYPES,
   type AppealStatus,
+  type ScriptFormat,
   type ViolationEventType,
 } from "@/lib/conversion-hub/types";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,34 @@ type UploadedScreenshot = {
   name: string;
 };
 
+type SubmissionPath = "violation" | "conversion";
+
+const PATH_OPTIONS: Array<{
+  key: SubmissionPath;
+  title: string;
+  description: string;
+  icon: typeof ShieldAlert;
+}> = [
+  {
+    key: "violation",
+    title: "提交违规话术",
+    description: "记录风险点、违规场景、危险原因、测试结果和复核建议。",
+    icon: ShieldAlert,
+  },
+  {
+    key: "conversion",
+    title: "提交转化话术",
+    description: "记录有效场景、转化结果、使用数据和沉淀理由。",
+    icon: TrendingUp,
+  },
+];
+
+const SCRIPT_FORMAT_OPTIONS: Array<{ value: ScriptFormat; label: string }> = [
+  { value: "oral", label: "口播" },
+  { value: "visual", label: "画面" },
+  { value: "mixed", label: "混合" },
+];
+
 function formatLocalNow() {
   const now = new Date();
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -42,6 +71,12 @@ function formatLocalNow() {
   const hh = pad(now.getHours());
   const mi = pad(now.getMinutes());
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function formatLocalDate() {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 function localToIso(value: string) {
@@ -64,7 +99,7 @@ export function SubmitForm({
     [accounts, initialAccountId],
   );
   const [accountId, setAccountId] = useState(validInitialAccountId);
-  const [isViolation, setIsViolation] = useState("true");
+  const [submissionPath, setSubmissionPath] = useState<SubmissionPath>("violation");
   const [category, setCategory] = useState<(typeof VIOLATION_CATEGORIES)[number]>("下粉");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -78,6 +113,12 @@ export function SubmitForm({
   const [appealStatus, setAppealStatus] = useState<AppealStatus>("未申诉");
   const [appealResult, setAppealResult] = useState("");
   const [recoveredAt, setRecoveredAt] = useState("");
+
+  // 转化使用数据
+  const [scriptFormat, setScriptFormat] = useState<ScriptFormat>("oral");
+  const [usedAt, setUsedAt] = useState(() => formatLocalDate());
+  const [views, setViews] = useState("");
+  const [follows, setFollows] = useState("");
 
   // 原因标签
   const { tags: reasonTags, isLoading: isLoadingTags, error: reasonTagsError } = useReasonTags();
@@ -137,36 +178,93 @@ export function SubmitForm({
       return;
     }
 
-    if (reasonTags.length > 0 && reasonTagIds.length === 0) {
+    if (submissionPath === "violation" && reasonTags.length > 0 && reasonTagIds.length === 0) {
       feedbackToast.error("请至少选择一个原因标签");
-      return;
-    }
-
-    const occurredIso = localToIso(occurredAt);
-    if (!occurredIso) {
-      feedbackToast.error("请填写处罚发生时间");
-      return;
-    }
-
-    const recoveredIso = showRecoveredAt && recoveredAt ? localToIso(recoveredAt) : null;
-    if (showRecoveredAt && recoveredAt && !recoveredIso) {
-      feedbackToast.error("恢复时间格式不正确");
       return;
     }
 
     setIsSubmitting(true);
     try {
       const screenshotPaths = screenshots.map((item) => item.path);
+      const sceneDescription = String(form.get("scene_description") ?? "").trim();
+      const resultText = String(form.get("result") ?? "").trim();
+      const reasonText = String(form.get("reason") ?? "").trim();
+      const reviewSuggestion = String(form.get("review_suggestion") ?? "").trim();
+
+      if (submissionPath === "conversion") {
+        const parsedViews = Number.parseInt(views || "0", 10);
+        const parsedFollows = Number.parseInt(follows || "0", 10);
+
+        if (!usedAt) {
+          feedbackToast.error("请填写使用日期");
+          return;
+        }
+        if (!Number.isFinite(parsedViews) || parsedViews < 0) {
+          feedbackToast.error("展示量不能为负数");
+          return;
+        }
+        if (!Number.isFinite(parsedFollows) || parsedFollows < 0) {
+          feedbackToast.error("涨粉数不能为负数");
+          return;
+        }
+        if (parsedFollows > parsedViews) {
+          feedbackToast.error("涨粉数不能大于展示量");
+          return;
+        }
+
+        const noteParts = [
+          sceneDescription ? `有效场景：${sceneDescription}` : null,
+          resultText ? `转化结果：${resultText}` : null,
+          reasonText ? `沉淀理由：${reasonText}` : null,
+          reviewSuggestion ? `下一步建议：${reviewSuggestion}` : null,
+        ].filter(Boolean);
+
+        const response = await fetch("/api/conversion-hub/usage-records", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            script_text: scriptText,
+            script_format: scriptFormat,
+            account_id: accountId === "none" ? null : accountId,
+            used_at: usedAt,
+            views: parsedViews,
+            follows: parsedFollows,
+            source: "manual",
+            note: noteParts.join("\n") || null,
+          }),
+        });
+        const payload: unknown = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(getApiErrorMessage(payload, "提交失败"));
+
+        const caseId = getUsageCaseId(payload);
+        feedbackToast.success("已提交转化话术并记录使用数据");
+        router.push(caseId ? `/violations/${caseId}` : "/violations");
+        router.refresh();
+        return;
+      }
+
+      const occurredIso = localToIso(occurredAt);
+      if (!occurredIso) {
+        feedbackToast.error("请填写处罚发生时间");
+        return;
+      }
+
+      const recoveredIso = showRecoveredAt && recoveredAt ? localToIso(recoveredAt) : null;
+      if (showRecoveredAt && recoveredAt && !recoveredIso) {
+        feedbackToast.error("恢复时间格式不正确");
+        return;
+      }
+
       const response = await fetch("/api/violations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           script_text: scriptText,
-          is_violation: isViolation === "true",
+          is_violation: true,
           category,
           account_id: accountId === "none" ? null : accountId,
-          scene_description: String(form.get("scene_description") ?? "").trim() || null,
-          result: String(form.get("result") ?? "").trim() || null,
+          scene_description: sceneDescription || null,
+          result: [resultText, reasonText ? `危险原因：${reasonText}` : null, reviewSuggestion ? `复核建议：${reviewSuggestion}` : null].filter(Boolean).join("\n") || null,
           screenshot_paths: screenshotPaths,
           reason_tag_ids: reasonTagIds,
         }),
@@ -217,6 +315,37 @@ export function SubmitForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid gap-3 md:grid-cols-2">
+        {PATH_OPTIONS.map(({ key, title, description, icon: Icon }) => {
+          const active = submissionPath === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSubmissionPath(key)}
+              aria-pressed={active}
+              className={cn(
+                "group flex items-start gap-3 rounded-2xl border bg-white p-5 text-left transition-[border-color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-sm",
+                active ? "border-[#D97757]/50 bg-[#D97757]/5" : "border-zinc-200 hover:border-zinc-300",
+              )}
+            >
+              <span
+                className={cn(
+                  "flex size-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                  active ? "border-[#D97757]/30 bg-white text-[#D97757]" : "border-zinc-200 bg-zinc-50 text-zinc-500",
+                )}
+              >
+                <Icon className="size-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-zinc-800">{title}</span>
+                <span className="mt-1 block text-xs leading-5 text-zinc-500">{description}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <Label htmlFor="script_text" className="text-sm font-semibold text-zinc-800">
           话术原文 <span className="text-[#C9604D]">*</span>
@@ -233,32 +362,49 @@ export function SubmitForm({
 
       <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 md:grid-cols-3">
         <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-800">判断</Label>
-          <Select value={isViolation} onValueChange={(value) => value && setIsViolation(value)}>
-            <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-              <SelectValue placeholder="是否违规" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">违规</SelectItem>
-              <SelectItem value="false">未违规可用</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label className="text-sm font-semibold text-zinc-800">
+            {submissionPath === "violation" ? "违规分类" : "话术形式"}
+          </Label>
+          {submissionPath === "violation" ? (
+            <Select value={category} onValueChange={(value) => setCategory(value as typeof category)}>
+              <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
+                <SelectValue placeholder="选择分类" />
+              </SelectTrigger>
+              <SelectContent>
+                {VIOLATION_CATEGORIES.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Select value={scriptFormat} onValueChange={(value) => setScriptFormat(value as ScriptFormat)}>
+              <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
+                <SelectValue placeholder="选择形式" />
+              </SelectTrigger>
+              <SelectContent>
+                {SCRIPT_FORMAT_OPTIONS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-800">分类</Label>
-          <Select value={category} onValueChange={(value) => setCategory(value as typeof category)}>
-            <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-              <SelectValue placeholder="选择分类" />
-            </SelectTrigger>
-            <SelectContent>
-              {VIOLATION_CATEGORIES.map((item) => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {submissionPath === "conversion" ? (
+          <div className="space-y-2">
+            <Label htmlFor="used_at" className="text-sm font-semibold text-zinc-800">使用日期</Label>
+            <Input
+              id="used_at"
+              type="date"
+              value={usedAt}
+              onChange={(event) => setUsedAt(event.currentTarget.value)}
+              className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
+            />
+          </div>
+        ) : null}
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-zinc-800">账号</Label>
           <Select value={accountId} onValueChange={(value) => value && setAccountId(value)}>
@@ -281,26 +427,50 @@ export function SubmitForm({
         <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="space-y-2">
             <Label htmlFor="scene_description" className="text-sm font-semibold text-zinc-800">
-              配套画面/导粉方式
+              {submissionPath === "violation" ? "违规场景 / 风险点" : "有效场景"}
             </Label>
             <Textarea
               id="scene_description"
               name="scene_description"
               rows={5}
-              placeholder="描述画面、导粉方式或出现问题的上下文"
+              placeholder={submissionPath === "violation" ? "描述画面、导粉方式或出现问题的上下文" : "描述这句话在什么内容、账号或人群里有效"}
               className="rounded-2xl border-zinc-200 bg-zinc-50"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="result" className="text-sm font-semibold text-zinc-800">
-              结果描述
+              {submissionPath === "violation" ? "测试结果" : "转化结果"}
             </Label>
             <Input
               id="result"
               name="result"
-              placeholder="如:限流 3 天、正常过审"
+              placeholder={submissionPath === "violation" ? "如:限流 3 天、正常过审" : "如:评论区导粉更顺、私信咨询增加"}
               className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
             />
+            <div className="space-y-2">
+              <Label htmlFor="reason" className="text-sm font-semibold text-zinc-800">
+                {submissionPath === "violation" ? "为什么危险" : "适合推广 / 测试 / 沉淀的理由"}
+              </Label>
+              <Textarea
+                id="reason"
+                name="reason"
+                rows={3}
+                placeholder={submissionPath === "violation" ? "说明容易触发平台风险的原因" : "说明为什么值得继续推广、测试或沉淀成模板"}
+                className="rounded-2xl border-zinc-200 bg-zinc-50 text-sm leading-6"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="review_suggestion" className="text-sm font-semibold text-zinc-800">
+                {submissionPath === "violation" ? "复核建议" : "下一步动作"}
+              </Label>
+              <Input
+                id="review_suggestion"
+                name="review_suggestion"
+                placeholder={submissionPath === "violation" ? "如:建议禁用、建议改写后复测" : "如:本周推广、继续 A/B 测试、沉淀模板"}
+                className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
+              />
+            </div>
+            {submissionPath === "violation" ? (
             <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4">
               <Label htmlFor="screenshots" className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-zinc-700">
                 <Upload className="size-4" />
@@ -333,9 +503,11 @@ export function SubmitForm({
                 </div>
               ) : null}
             </div>
+            ) : null}
           </div>
         </div>
 
+        {submissionPath === "violation" ? (
         <div className="rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="relative pl-5">
             <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
@@ -470,8 +642,47 @@ export function SubmitForm({
             </div>
           </div>
         </div>
+        ) : (
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <div className="relative pl-5">
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#6FAA7D]" />
+              <div className="mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-zinc-800">使用数据</h3>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">conversion</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="views" className="text-xs font-semibold text-zinc-600">展示量</Label>
+                  <Input
+                    id="views"
+                    value={views}
+                    onChange={(event) => setViews(event.currentTarget.value)}
+                    inputMode="numeric"
+                    placeholder="如: 1200"
+                    className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="follows" className="text-xs font-semibold text-zinc-600">涨粉数</Label>
+                  <Input
+                    id="follows"
+                    value={follows}
+                    onChange={(event) => setFollows(event.currentTarget.value)}
+                    inputMode="numeric"
+                    placeholder="如: 18"
+                    className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
+                  />
+                </div>
+              </div>
+              <p className="mt-4 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-3 text-xs leading-5 text-zinc-500">
+                转化路径会写入“转化话术”和“使用记录”；风险复核仍从违规路径或后续详情页补录，不在这里混成一个下拉。
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
+      {submissionPath === "violation" ? (
       <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <div className="relative pl-5">
           <div
@@ -537,6 +748,7 @@ export function SubmitForm({
           )}
         </div>
       </div>
+      ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Button type="button" variant="outline" className="h-11 rounded-2xl" onClick={() => router.push("/violations")}>
@@ -550,7 +762,7 @@ export function SubmitForm({
             isSubmitting && "opacity-70",
           )}
         >
-          {isSubmitting ? "提交中..." : "提交案例"}
+          {isSubmitting ? "提交中..." : submissionPath === "violation" ? "提交违规案例" : "提交转化话术"}
         </Button>
       </div>
     </form>
@@ -565,6 +777,13 @@ function getCreatedCaseId(payload: unknown) {
     id?: unknown;
   };
   const id = record.case?.id ?? record.data?.id ?? record.id;
+  return typeof id === "string" ? id : null;
+}
+
+function getUsageCaseId(payload: unknown) {
+  if (!payload || typeof payload !== "object") return null;
+  const data = (payload as { data?: { case_id?: unknown }; case_id?: unknown }).data;
+  const id = data?.case_id ?? (payload as { case_id?: unknown }).case_id;
   return typeof id === "string" ? id : null;
 }
 
