@@ -115,7 +115,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
       <div className="flex flex-1 flex-col gap-8">
         {/* 核心数据 */}
         <div className="relative pl-4">
-          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
+          <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D97757]/70" />
           <div className="mb-4">
             <h3 className="text-[13px] font-medium text-zinc-800">核心数据</h3>
           </div>
@@ -142,7 +142,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 互动数据 */}
         <div className="relative pl-4">
-          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-sky-400" />
+          <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-sky-400/70" />
           <div className="mb-4">
             <h3 className="text-[13px] font-medium text-zinc-800">互动数据</h3>
           </div>
@@ -166,7 +166,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 完播留存 */}
         <div className={cn("relative pl-4", retentionOptional && "opacity-50")}>
-          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-emerald-400" />
+          <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-emerald-400/70" />
           <div className="mb-4">
             <h3 className="text-[13px] font-medium text-zinc-800">
               完播留存{retentionOptional && <span className="ml-1 font-normal text-zinc-500">（可选）</span>}
