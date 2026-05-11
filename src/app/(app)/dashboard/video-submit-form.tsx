@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronUp } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
 import { createClient } from "@/lib/supabase/client";
@@ -413,6 +414,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(null);
+  const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(null);
   const [scriptText, setScriptText] = useState("");
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
@@ -534,10 +536,33 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     } else if (key === "follower_convert") {
       setFocusedRole("screenshot_3");
     }
+    // 计算左侧 ocrSummary 高亮索引
+    const slot = focusedRole ? slots[focusedRole] : null;
+    if (slot?.ocrSummary) {
+      const labelMap: Record<EditableMetricKey, string> = {
+        play_count: "播放量",
+        follower_gain: "涨粉",
+        follower_convert: "导粉",
+        likes: "点赞",
+        comments: "评论",
+        shares: "分享",
+        favorites: "收藏",
+        avg_play_duration: "均播",
+        bounce_rate_2s: "跳出",
+        completion_rate_5s: "5s完播",
+        completion_rate: "完播",
+      };
+      const keyword = labelMap[key];
+      if (keyword) {
+        const idx = slot.ocrSummary.findIndex((line) => line.includes(keyword));
+        setHighlightedOcrIndex(idx >= 0 ? idx : null);
+      }
+    }
   }
 
   function handleFieldBlur() {
     setFocusedRole(null);
+    setHighlightedOcrIndex(null);
   }
 
   function applyOverviewFields(
@@ -908,36 +933,54 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   }, [meta.anomalyStatus]);
 
   const mobileSubmitBar = (
-    <div className="fixed inset-x-0 bottom-0 z-[100] h-16 border-t border-zinc-200 bg-white px-6 md:hidden">
-      <div className="mx-auto flex h-full max-w-6xl items-center gap-4">
+    <div className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-3 pt-2 md:hidden pointer-events-none">
+      <div className="mx-auto flex h-12 w-auto max-w-[calc(100vw-24px)] items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl pointer-events-auto">
         {/* Layer 1: Form status */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center shrink-0">
           {canActuallySubmit ? (
-            <>
-              <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
-              <span className="text-[13px] text-[#6FAA7D]">可提交</span>
-            </>
+            <div className="flex items-center gap-1.5 px-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+              <span className="text-[13px] font-medium text-emerald-700">就绪</span>
+            </div>
           ) : (
             <button
               type="button"
               onClick={() => setShowIssuePopover((v) => !v)}
-              className="flex items-center gap-2"
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2 py-1 transition-all duration-150",
+                showIssuePopover
+                  ? "bg-amber-50 ring-1 ring-inset ring-amber-200"
+                  : "hover:bg-amber-50"
+              )}
+              aria-expanded={showIssuePopover}
+              aria-label={`待完善：${missingItems.length} 项，点击展开`}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-zinc-200" />
-              <span className="text-[13px] text-zinc-500">待完善</span>
+              <span className="h-2 w-2 rounded-full bg-amber-500 ring-1 ring-white" />
+              <span className="text-[13px] font-medium text-amber-700">待完善</span>
+              {missingItems.length > 0 ? (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold leading-none text-white tabular-nums">
+                  {missingItems.length}
+                </span>
+              ) : null}
+              <ChevronUp
+                className={cn(
+                  "size-3.5 text-amber-600/70 transition-transform duration-200",
+                  showIssuePopover ? "rotate-0" : "rotate-180"
+                )}
+              />
             </button>
           )}
         </div>
-        <div className="h-5 w-px bg-zinc-200" />
+        <div className="h-4 w-px bg-zinc-200 shrink-0" />
         {/* Layer 2: Video status */}
-        <div className="flex items-center gap-2">
-          <span className={cn("h-2 w-2 rounded-full ring-1 ring-white", videoStatusDotColor)} />
+        <div className="flex items-center gap-1 min-w-0">
+          <span className={cn("h-2 w-2 rounded-full ring-1 ring-white shrink-0", videoStatusDotColor)} />
           <Select
             value={meta.anomalyStatus}
             onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
           >
-            <SelectTrigger className="h-10 border border-zinc-200 rounded-lg bg-white px-3 text-[13px] text-zinc-800">
-              <SelectValue placeholder="视频状态" />
+            <SelectTrigger className="h-8 w-[80px] border-0 rounded-full bg-transparent px-1.5 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50">
+              <SelectValue placeholder="状态" />
             </SelectTrigger>
             <SelectContent>
               {ANOMALY_OPTIONS.map((option) => (
@@ -948,12 +991,12 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             </SelectContent>
           </Select>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex items-center gap-1.5 shrink-0">
           {onCancel ? (
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-lg border border-zinc-200 px-5 py-2 text-[13px] font-medium text-zinc-600 transition-colors duration-150 hover:bg-zinc-50"
+              className="rounded-full px-2.5 py-1 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
             >
               取消
             </button>
@@ -963,13 +1006,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
             form="video-submit-form"
             disabled={isSubmitting || !canActuallySubmit}
             className={cn(
-              "rounded-lg px-5 py-2 text-[13px] font-semibold text-white transition-colors duration-150",
+              "rounded-full px-4 py-1.5 text-[13px] font-semibold transition-all duration-150",
               canActuallySubmit
-                ? "bg-[#D97757] hover:bg-[#C96442]"
-                : "bg-[#D97757] opacity-50 cursor-not-allowed"
+                ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] active:translate-y-px"
+                : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
             )}
           >
-            {isSubmitting ? "提交中..." : isBackfillMode ? "提交补交" : initialSummary ? "保存修改" : "提交今日"}
+            {isSubmitting ? "提交中" : isBackfillMode ? "补交" : initialSummary ? "保存" : "提交"}
           </button>
         </div>
       </div>
@@ -977,10 +1020,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
       {showIssuePopover && missingItems.length > 0 ? (
         <div
           ref={issuePopoverRef}
-          className="absolute bottom-[calc(100%+8px)] left-6 z-[110] w-56 rounded-xl border border-zinc-200 bg-white p-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]"
+          className="absolute bottom-[calc(100%+4px)] left-6 z-[110] w-60 rounded-2xl border border-zinc-200 bg-white p-3 shadow-[0_12px_32px_-12px_rgba(15,23,42,0.18)] pointer-events-auto"
         >
-          <div className="mb-2 text-[12px] font-medium text-zinc-400">缺失项</div>
-          <div className="space-y-1">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-zinc-500">缺失项 · {missingItems.length}</span>
+          </div>
+          <div className="space-y-0.5">
             {missingItems.map((item) => (
               <button
                 key={item.label}
@@ -989,7 +1035,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                   scrollToIssueAnchor(item.anchor);
                   setShowIssuePopover(false);
                 }}
-                className="block w-full rounded-lg px-2 py-1.5 text-left text-[13px] text-zinc-600 transition-colors duration-150 hover:bg-zinc-50"
+                className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-amber-50 hover:text-amber-800"
               >
                 {item.label}
               </button>
@@ -1001,106 +1047,116 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   );
 
   const desktopSubmitBar = (
-    <div className="fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-zinc-200 bg-white px-6 hidden md:flex items-center gap-6">
-      {/* Layer 1: Form status */}
-      <div className="flex items-center gap-2">
-        {canActuallySubmit ? (
-          <>
-            <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
-            <span className="text-[13px] text-[#6FAA7D]">可提交</span>
-          </>
-        ) : (
-          <div className="relative" ref={issuePopoverRef}>
+    <div className="fixed inset-x-0 bottom-0 z-50 hidden md:flex justify-center px-6 pb-6 pointer-events-none">
+      <div
+        className="relative flex h-[52px] w-auto items-center gap-4 rounded-full border border-zinc-200/80 bg-gradient-to-b from-white to-zinc-50/90 px-4 shadow-[0_1px_0_0_rgba(255,255,255,0.9)_inset,0_20px_48px_-20px_rgba(15,23,42,0.22),0_6px_16px_-10px_rgba(15,23,42,0.12)] backdrop-blur-2xl pointer-events-auto"
+      >
+        {/* Layer 1: Form status */}
+        <div className="flex items-center shrink-0">
+          {canActuallySubmit ? (
+            <div className="flex items-center gap-2 px-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+              <span className="text-[13px] font-medium text-emerald-700">就绪</span>
+            </div>
+          ) : (
+            <div className="relative" ref={issuePopoverRef}>
+              <button
+                type="button"
+                onClick={() => setShowIssuePopover((v) => !v)}
+                className={cn(
+                  "group flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all duration-150",
+                  showIssuePopover
+                    ? "bg-amber-50 ring-1 ring-inset ring-amber-200"
+                    : "hover:bg-amber-50 hover:ring-1 hover:ring-inset hover:ring-amber-200/60"
+                )}
+                aria-expanded={showIssuePopover}
+                aria-label={`待完善：${missingItems.length} 项，点击展开`}
+              >
+                <span className="h-2 w-2 rounded-full bg-amber-500 ring-1 ring-white" />
+                <span className="text-[13px] font-medium text-amber-700">待完善</span>
+                {missingItems.length > 0 ? (
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold leading-none text-white tabular-nums">
+                    {missingItems.length}
+                  </span>
+                ) : null}
+                <ChevronUp
+                  className={cn(
+                    "size-3.5 text-amber-600/70 transition-transform duration-200",
+                    showIssuePopover ? "rotate-0" : "rotate-180"
+                  )}
+                />
+              </button>
+              {showIssuePopover && missingItems.length > 0 ? (
+                <div className="absolute bottom-[calc(100%+12px)] left-0 z-[60] w-60 rounded-2xl border border-zinc-200 bg-white p-3 shadow-[0_12px_32px_-12px_rgba(15,23,42,0.18)]">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-zinc-500">缺失项 · {missingItems.length}</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {missingItems.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => {
+                          scrollToIssueAnchor(item.anchor);
+                          setShowIssuePopover(false);
+                        }}
+                        className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-amber-50 hover:text-amber-800"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+        <div className="h-4 w-px bg-zinc-200 shrink-0" />
+        {/* Layer 2: Video status */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className={cn("h-2 w-2 rounded-full ring-1 ring-white", videoStatusDotColor)} />
+          <Select
+            value={meta.anomalyStatus}
+            onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
+          >
+            <SelectTrigger className="h-8 w-[92px] border-0 rounded-full bg-transparent px-2 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50">
+              <SelectValue placeholder="状态" />
+            </SelectTrigger>
+            <SelectContent>
+              {ANOMALY_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {VIDEO_STATUS_LABELS[option]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {/* Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onCancel ? (
             <button
               type="button"
-              onClick={() => setShowIssuePopover((v) => !v)}
-              className="flex items-center gap-2"
+              onClick={onCancel}
+              className="rounded-full px-3 py-1.5 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-zinc-200" />
-              <span className="text-[13px] text-zinc-500">待完善</span>
+              取消
             </button>
-            {showIssuePopover && missingItems.length > 0 ? (
-              <div className="absolute bottom-[calc(100%+10px)] left-0 z-[60] w-56 rounded-xl border border-zinc-200 bg-white p-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]">
-                <div className="mb-2 text-[12px] font-medium text-zinc-400">缺失项</div>
-                <div className="space-y-1">
-                  {missingItems.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => {
-                        scrollToIssueAnchor(item.anchor);
-                        setShowIssuePopover(false);
-                      }}
-                      className="block w-full rounded-lg px-2 py-1.5 text-left text-[13px] text-zinc-600 transition-colors duration-150 hover:bg-zinc-50"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
-      </div>
-      <div className="h-5 w-px bg-zinc-200" />
-      {/* Layer 2: Video status */}
-      <div className="flex items-center gap-2">
-        <span className={cn("h-2 w-2 rounded-full ring-1 ring-white", videoStatusDotColor)} />
-        <Select
-          value={meta.anomalyStatus}
-          onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-        >
-          <SelectTrigger className="h-10 border border-zinc-200 rounded-lg bg-white px-3 text-[13px] text-zinc-800">
-            <SelectValue placeholder="视频状态" />
-          </SelectTrigger>
-          <SelectContent>
-            {ANOMALY_OPTIONS.map((option) => (
-              <SelectItem key={option} value={option}>
-                {VIDEO_STATUS_LABELS[option]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="h-5 w-px bg-zinc-200" />
-      {/* Layer 3: Daily report status */}
-      <div className="flex items-center gap-2">
-        {initialSummary ? (
-          <>
-            <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
-            <span className="text-[13px] font-medium text-[#6FAA7D]">日报：已提交</span>
-          </>
-        ) : (
-          <>
-            <span className="h-2 w-2 rounded-full bg-[#D99E55] ring-1 ring-white" />
-            <span className="text-[13px] font-medium text-[#D99E55]">日报：未提交</span>
-          </>
-        )}
-      </div>
-      {/* Buttons */}
-      <div className="ml-auto flex items-center gap-3">
-        {onCancel ? (
+          ) : null}
           <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-lg border border-zinc-200 px-5 py-2 text-[13px] font-medium text-zinc-600 transition-colors duration-150 hover:bg-zinc-50"
+            type="submit"
+            form="video-submit-form"
+            disabled={isSubmitting || !canActuallySubmit}
+            className={cn(
+              "rounded-full px-5 py-1.5 text-[13px] font-semibold transition-all duration-150",
+              canActuallySubmit
+                ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] hover:shadow-[0_4px_16px_-2px_rgba(217,119,87,0.6)] hover:-translate-y-px active:translate-y-0"
+                : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
+            )}
           >
-            取消
+            {submitButtonLabel}
           </button>
-        ) : null}
-        <button
-          type="submit"
-          form="video-submit-form"
-          disabled={isSubmitting || !canActuallySubmit}
-          className={cn(
-            "rounded-lg px-5 py-2 text-[13px] font-semibold text-white transition-colors duration-150",
-            canActuallySubmit
-              ? "bg-[#D97757] hover:bg-[#C96442]"
-              : "bg-[#D97757] opacity-50 cursor-not-allowed"
-          )}
-        >
-          {submitButtonLabel}
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -1167,7 +1223,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-10 pb-[140px] md:pb-[180px]"
+        className="space-y-10 pb-[120px] md:pb-[140px]"
       >
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)] lg:gap-0">
           {/* 左侧列：截图槽位区 + 视频信息 */}
@@ -1180,6 +1236,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                 onRetry={handleSlotRetry}
                 screenshotsRequired={screenshotsRequired}
                 focusedRole={focusedRole}
+                highlightedOcrIndex={highlightedOcrIndex}
                 issueCount={
                   issueSummary.missingRequiredSlots.length +
                   issueSummary.failedRequiredSlots.length +
@@ -1276,13 +1333,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
                         {meta.contentKeywords.map((kw) => (
                           <span
                             key={kw}
-                            className="flex items-center gap-1 rounded-full border border-zinc-950 bg-zinc-50 px-3 py-1 text-[12px] text-zinc-800"
+                            className="flex items-center gap-1 rounded-full bg-[#D97757]/10 px-3 py-1 text-[12px] font-medium text-[#C96442] ring-1 ring-inset ring-[#D97757]/25"
                           >
                             {kw}
                             <button
                               type="button"
                               onClick={() => updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw))}
-                              className="ml-0.5 opacity-60 hover:opacity-100 transition-opacity"
+                              className="ml-0.5 text-[#D97757] opacity-70 hover:opacity-100 transition-opacity"
                             >
                               ×
                             </button>

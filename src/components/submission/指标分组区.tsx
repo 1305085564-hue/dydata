@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
@@ -37,8 +38,68 @@ const RETENTION_ITEMS: MetricItem[] = [
   { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%" },
 ];
 
+// Tab 顺序：播放量 → 涨粉数 → 导粉数 → 点赞数 → 评论数 → 分享数 → 收藏数 → 均播时长 → 2s跳出率 → 5s完播率 → 整体完播率
+const TAB_ORDER: EditableMetricKey[] = [
+  "play_count",
+  "follower_gain",
+  "follower_convert",
+  "likes",
+  "comments",
+  "shares",
+  "favorites",
+  "avg_play_duration",
+  "bounce_rate_2s",
+  "completion_rate_5s",
+  "completion_rate",
+];
+
 export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlurField, anomalyStatus }: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
+  const inputRefs = useRef<Record<EditableMetricKey, HTMLInputElement | null>>({
+    play_count: null,
+    follower_gain: null,
+    follower_convert: null,
+    likes: null,
+    comments: null,
+    shares: null,
+    favorites: null,
+    avg_play_duration: null,
+    bounce_rate_2s: null,
+    completion_rate_5s: null,
+    completion_rate: null,
+  });
+
+  const setRef = useCallback((key: EditableMetricKey) => (el: HTMLInputElement | null) => {
+    inputRefs.current[key] = el;
+  }, []);
+
+  const focusNext = useCallback((currentKey: EditableMetricKey) => {
+    const idx = TAB_ORDER.indexOf(currentKey);
+    if (idx >= 0 && idx < TAB_ORDER.length - 1) {
+      const nextKey = TAB_ORDER[idx + 1];
+      inputRefs.current[nextKey]?.focus();
+    }
+  }, []);
+
+  const focusPrev = useCallback((currentKey: EditableMetricKey) => {
+    const idx = TAB_ORDER.indexOf(currentKey);
+    if (idx > 0) {
+      const prevKey = TAB_ORDER[idx - 1];
+      inputRefs.current[prevKey]?.focus();
+    }
+  }, []);
+
+  const handleKeyDown = useCallback((key: EditableMetricKey) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      focusNext(key);
+    } else if (e.key === "Enter" && e.shiftKey) {
+      e.preventDefault();
+      focusPrev(key);
+    }
+  }, [focusNext, focusPrev]);
+
+  const allItems = [...CORE_ITEMS, ...INTERACTION_ITEMS, ...RETENTION_ITEMS];
 
   return (
     <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
@@ -72,6 +133,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 animationDelay={index * 150}
+                inputRef={{ current: inputRefs.current[item.key] } as React.RefObject<HTMLInputElement>}
+                onKeyDown={handleKeyDown(item.key)}
               />
             ))}
           </div>
@@ -79,7 +142,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 互动数据 */}
         <div className="relative pl-4">
-          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-zinc-300" />
+          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-sky-400" />
           <div className="mb-4">
             <h3 className="text-[13px] font-medium text-zinc-800">互动数据</h3>
           </div>
@@ -94,6 +157,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 animationDelay={(CORE_ITEMS.length + index) * 150}
+                inputRef={{ current: inputRefs.current[item.key] } as React.RefObject<HTMLInputElement>}
+                onKeyDown={handleKeyDown(item.key)}
               />
             ))}
           </div>
@@ -101,7 +166,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 完播留存 */}
         <div className={cn("relative pl-4", retentionOptional && "opacity-50")}>
-          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-zinc-300" />
+          <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-emerald-400" />
           <div className="mb-4">
             <h3 className="text-[13px] font-medium text-zinc-800">
               完播留存{retentionOptional && <span className="ml-1 font-normal text-zinc-500">（可选）</span>}
@@ -121,6 +186,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 animationDelay={index * 150}
+                inputRef={{ current: inputRefs.current[item.key] } as React.RefObject<HTMLInputElement>}
+                onKeyDown={handleKeyDown(item.key)}
               />
             ))}
           </div>
