@@ -184,9 +184,9 @@ export function SubmissionSlotCard({
               )}>
                 <span className={cn(
                   "inline-block size-1.5 rounded-full",
-                  isSuccess && "bg-white animate-pulse",
+                  isSuccess && "bg-white",
                   isError && "bg-white",
-                  isWarning && "bg-white animate-pulse"
+                  isWarning && "bg-white"
                 )} />
                 {getStatusText(status)}
               </span>
