@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   cancelJoinRequest,
   createJoinRequest,
+  listPendingRequestsForAdmin,
   resetTeamJoinServiceClientsForTest,
   reviewRequest,
   setTeamJoinServiceClientsForTest,
@@ -22,15 +23,60 @@ function createFactories(serverClient: ServerClient): ClientFactories {
   return {
     createServerClient: async () => serverClient,
     createServiceClient: () => ({
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            order: async () => ({ data: [], error: null }),
-          }),
-        }),
-      }),
+      from: () => createDefaultServiceFromBuilder(),
       auth: { admin: { listUsers: async () => ({ data: { users: [] }, error: null }) } },
     }),
+  };
+}
+
+function createDefaultServiceFromBuilder() {
+  return {
+    select: () => ({
+      eq: () => ({
+        order: async () => ({ data: [], error: null }),
+      }),
+      in: async () => ({ data: [], error: null }),
+    }),
+  };
+}
+
+function createAdminListFactories(params: {
+  requests: Array<{
+    id: string;
+    applicant_user_id: string;
+    target_team_id: string;
+    created_at: string;
+    teams?: { name: string | null } | null;
+  }>;
+  profiles: Array<{ id: string; name: string | null }>;
+  users: Array<{ id: string; email?: string }>;
+  requestSelects: string[];
+}): ClientFactories {
+  return {
+    createServerClient: async () => createInsertClient({ data: { id: "unused" }, error: null }),
+    createServiceClient: () => ({
+      from: (table: "team_join_requests" | "profiles") => {
+        if (table === "team_join_requests") {
+          return {
+            select: (columns: string) => {
+              params.requestSelects.push(columns);
+              return {
+                eq: () => ({
+                  order: async () => ({ data: params.requests, error: null }),
+                }),
+              };
+            },
+          };
+        }
+
+        return {
+          select: () => ({
+            in: async () => ({ data: params.profiles, error: null }),
+          }),
+        };
+      },
+      auth: { admin: { listUsers: async () => ({ data: { users: params.users }, error: null }) } },
+    }) as ClientFactories["createServiceClient"] extends () => infer T ? T : never,
   };
 }
 
@@ -129,4 +175,42 @@ test("reviewRequest RPC approved 返回 ok", async () => {
   const result = await reviewRequest({ requestId: "request-1", action: "approve" });
 
   assert.deepEqual(result, { ok: true, data: { status: "approved" } });
+});
+
+test("listPendingRequestsForAdmin 不依赖 team_join_requests 到 profiles 的嵌套关系", async () => {
+  const requestSelects: string[] = [];
+  setTeamJoinServiceClientsForTest(
+    createAdminListFactories({
+      requests: [
+        {
+          id: "request-1",
+          applicant_user_id: "user-1",
+          target_team_id: "team-1",
+          created_at: "2026-05-11T08:00:00.000Z",
+          teams: { name: "深圳一部" },
+        },
+      ],
+      profiles: [{ id: "user-1", name: "小陈" }],
+      users: [{ id: "user-1", email: "chen@example.com" }],
+      requestSelects,
+    }),
+  );
+
+  const result = await listPendingRequestsForAdmin();
+
+  assert.deepEqual(result, {
+    ok: true,
+    data: [
+      {
+        id: "request-1",
+        applicantUserId: "user-1",
+        applicantName: "小陈",
+        applicantEmail: "chen@example.com",
+        targetTeamId: "team-1",
+        targetTeamName: "深圳一部",
+        createdAt: "2026-05-11T08:00:00.000Z",
+      },
+    ],
+  });
+  assert.equal(requestSelects[0].includes("profiles:applicant_user_id"), false);
 });

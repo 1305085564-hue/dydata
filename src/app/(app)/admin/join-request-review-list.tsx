@@ -17,11 +17,12 @@ type Props = {
 };
 
 export function JoinRequestReviewList({ rows }: Props) {
+  const [visibleRows, setVisibleRows] = useState(rows);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  if (rows.length === 0) {
+  if (visibleRows.length === 0) {
     return (
       <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-6 text-center text-[13px] text-zinc-400">
         暂无待审申请
@@ -31,11 +32,21 @@ export function JoinRequestReviewList({ rows }: Props) {
 
   const handleApprove = (id: string) => {
     if (isPending) return;
+    const approvedRow = visibleRows.find((row) => row.id === id);
+    if (!approvedRow) return;
+
+    setVisibleRows((currentRows) => currentRows.filter((row) => row.id !== id));
+    feedbackToast.success("已同意申请");
+
     startTransition(async () => {
       const result = await approveJoinRequestAction(id, null);
-      if (result.ok) {
-        feedbackToast.success("已同意申请");
-      } else {
+      if (!result.ok) {
+        setVisibleRows((currentRows) => {
+          if (currentRows.some((row) => row.id === id)) return currentRows;
+          return [...currentRows, approvedRow].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+        });
         feedbackToast.error(result.error);
       }
     });
@@ -57,7 +68,7 @@ export function JoinRequestReviewList({ rows }: Props) {
 
   return (
     <div className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-zinc-50">
-      {rows.map((row) => {
+      {visibleRows.map((row) => {
         const isRejecting = rejectingId === row.id;
         return (
           <div key={row.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-6">

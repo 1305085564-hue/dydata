@@ -24,12 +24,12 @@ type TeamJoinRow = {
   target_team_id: string;
   created_at: string;
   teams?: { name: string | null } | null;
-  profiles?: { name: string | null } | null;
 };
 
 type RpcReviewResponse = { ok: boolean; reason?: string; status?: "approved" | "rejected" };
 
 type UserEmailRow = { id: string; email?: string };
+type ProfileNameRow = { id: string; name: string | null };
 
 type QueryResult<T> = Promise<{ data: T | null; error: PostgrestErrorLike | null; count?: number | null }>;
 
@@ -65,6 +65,12 @@ type AdminSelectBuilder = {
   };
 };
 
+type ProfileSelectBuilder = {
+  select(columns: string): {
+    in(column: string, values: string[]): QueryResult<ProfileNameRow[]>;
+  };
+};
+
 type RpcClient = {
   rpc(
     name: "review_team_join_request",
@@ -78,6 +84,7 @@ type ServerClient = RpcClient & {
 
 type AdminClient = {
   from(table: "team_join_requests"): AdminSelectBuilder;
+  from(table: "profiles"): ProfileSelectBuilder;
   auth: { admin: { listUsers(options: { perPage: number }): Promise<{ data: { users: UserEmailRow[] }; error: unknown }> } };
 };
 
@@ -181,12 +188,21 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
   const supabase = clientFactories.createServiceClient();
   const { data, error } = await supabase
     .from("team_join_requests")
-    .select("id, applicant_user_id, target_team_id, created_at, teams:target_team_id(name), profiles:applicant_user_id(name)")
+    .select("id, applicant_user_id, target_team_id, created_at, teams:target_team_id(name)")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
   if (error) {
     return { ok: false, error: error.message ?? "SELECT_FAILED" };
+  }
+
+  const applicantUserIds = Array.from(new Set((data ?? []).map((row) => row.applicant_user_id)));
+  const nameByUserId = new Map<string, string>();
+  if (applicantUserIds.length > 0) {
+    const { data: profiles } = await supabase.from("profiles").select("id, name").in("id", applicantUserIds);
+    for (const profile of profiles ?? []) {
+      nameByUserId.set(profile.id, profile.name ?? "");
+    }
   }
 
   const emailByUserId = new Map<string, string>();
@@ -203,7 +219,7 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
     data: (data ?? []).map((row) => ({
       id: row.id,
       applicantUserId: row.applicant_user_id,
-      applicantName: row.profiles?.name ?? "",
+      applicantName: nameByUserId.get(row.applicant_user_id) ?? "",
       applicantEmail: emailByUserId.get(row.applicant_user_id) ?? "",
       targetTeamId: row.target_team_id,
       targetTeamName: row.teams?.name ?? "",
