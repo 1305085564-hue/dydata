@@ -125,7 +125,7 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
                   className="absolute left-[7px] top-2 flex size-3.5 items-center justify-center rounded-full border-[3px] border-white bg-[#D97757] shadow-[0_0_0_1px_rgba(217,119,87,0.2)]"
                   aria-hidden="true"
                 />
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:border-zinc-300">
+                <div className="rounded-xl border border-zinc-200 bg-white p-4 transition-[colors,transform] hover:border-zinc-300">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
                       <Calendar className="size-3.5 text-zinc-400" strokeWidth={2.25} />
@@ -158,7 +158,7 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
                     />
                   </div>
                   {record.note ? (
-                    <p className="mt-3 whitespace-pre-wrap border-t border-dashed border-zinc-100 pt-3 text-xs leading-6 text-zinc-600">
+                    <p className="mt-3 whitespace-pre-wrap pt-3 text-xs leading-6 text-zinc-600">
                       {record.note}
                     </p>
                   ) : null}

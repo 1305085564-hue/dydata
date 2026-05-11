@@ -66,7 +66,7 @@ function EmptyEvents() {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="mx-auto size-8 text-[#6FAA7D]"
+        className="mx-auto size-8 text-zinc-400"
         aria-hidden="true"
       >
         <path d="M20 6 9 17l-5-5" />
@@ -138,7 +138,7 @@ function ScreenshotThumbs({
             fill
             unoptimized
             sizes="64px"
-            className="object-cover transition-transform group-]"
+            className="object-cover transition-transform group-hover:scale-105"
           />
         </button>
       ))}
@@ -229,7 +229,7 @@ export function EventList({ events }: { events: EventItem[] }) {
                 hidden: { opacity: 0, y: 6 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } },
               }}
-              className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:border-zinc-300"
+              className="rounded-xl border border-zinc-200 bg-white p-4 transition-[colors,transform] hover:border-zinc-300"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -288,7 +288,7 @@ export function EventList({ events }: { events: EventItem[] }) {
               <ScreenshotThumbs paths={screenshots} onOpen={setLightboxPath} />
 
               {event.note ? (
-                <p className="mt-3 whitespace-pre-wrap border-t border-dashed border-zinc-100 pt-3 text-xs leading-6 text-zinc-600">
+                <p className="mt-3 whitespace-pre-wrap pt-3 text-xs leading-6 text-zinc-600">
                   {event.note}
                 </p>
               ) : null}

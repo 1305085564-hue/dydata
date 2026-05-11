@@ -50,7 +50,7 @@ export function ConversionCaseCard({ caseItem }: { caseItem: ConversionCase }) {
   return (
     <Link
       href={`/violations/${caseItem.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:-translate-y-0.5 hover:border-zinc-300"
+      className="group relative block overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 transition-[colors,transform] hover:-translate-y-0.5 hover:border-zinc-300"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
@@ -71,7 +71,7 @@ export function ConversionCaseCard({ caseItem }: { caseItem: ConversionCase }) {
         <ArrowRight className="size-4 shrink-0 text-zinc-300 transition-transform group-hover:translate-x-1 group-hover:text-zinc-800" />
       </div>
 
-      <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-dashed border-zinc-200 pt-4">
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-4 pt-6">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
             Conversion Rate

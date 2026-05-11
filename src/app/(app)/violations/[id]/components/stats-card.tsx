@@ -40,7 +40,7 @@ export function StatsCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:border-zinc-300",
+        "rounded-xl border border-zinc-200 bg-white p-5 transition-[colors,transform] hover:border-zinc-300",
         className,
       )}
     >

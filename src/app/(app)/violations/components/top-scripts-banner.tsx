@@ -42,7 +42,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#D97757]">
@@ -63,7 +63,7 @@ export function TopScriptsBanner({ items }: { items: TopScriptEntry[] }) {
             <Link
               key={item.id}
               href={`/violations/${item.id}`}
-              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-colors hover:-translate-y-0.5"
+              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 transition-[colors,transform] hover:-translate-y-0.5"
             >
               <div className={`absolute inset-x-0 top-0 h-[3px] ${medal.rail}`} />
               <div className="flex items-center justify-between">

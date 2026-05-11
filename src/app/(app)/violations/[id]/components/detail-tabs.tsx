@@ -33,7 +33,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
   if (showTests) tabs.push({ key: "tests", label: "测试记录" });
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+    <section className="rounded-xl border border-zinc-200 bg-white">
       <div
         role="tablist"
         aria-label="详情切换"
@@ -51,7 +51,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
               className={cn(
                 "relative inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors",
                 isActive
-                  ? "bg-white text-zinc-800 shadow-sm"
+                  ? "bg-white text-zinc-800"
                   : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
               )}
             >

@@ -217,7 +217,7 @@ export function SubmitForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <Label htmlFor="script_text" className="text-sm font-semibold text-zinc-800">
           话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
@@ -231,7 +231,7 @@ export function SubmitForm({
         />
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:grid-cols-3">
+      <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 md:grid-cols-3">
         <div className="space-y-2">
           <Label className="text-sm font-semibold text-zinc-800">判断</Label>
           <Select value={isViolation} onValueChange={(value) => value && setIsViolation(value)}>
@@ -278,7 +278,7 @@ export function SubmitForm({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="space-y-2">
             <Label htmlFor="scene_description" className="text-sm font-semibold text-zinc-800">
               配套画面/导粉方式
@@ -336,7 +336,7 @@ export function SubmitForm({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="relative pl-5">
             <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
             <div className="mb-4 flex items-center gap-2">
@@ -360,7 +360,7 @@ export function SubmitForm({
                         className={cn(
                           "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
                           active
-                            ? "border-transparent bg-[#D97757] text-white shadow-[0_6px_16px_-8px_rgba(217,119,87,0.55)]"
+                            ? "border-transparent bg-[#D97757] text-white"
                             : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
                         )}
                       >
@@ -472,7 +472,7 @@ export function SubmitForm({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <div className="relative pl-5">
           <div
             className={cn(
@@ -515,7 +515,7 @@ export function SubmitForm({
                     className={cn(
                       "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
                       active
-                        ? "border-transparent bg-[#D97757] text-white shadow-[0_6px_16px_-8px_rgba(217,119,87,0.55)]"
+                        ? "border-transparent bg-[#D97757] text-white"
                         : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
                     )}
                   >

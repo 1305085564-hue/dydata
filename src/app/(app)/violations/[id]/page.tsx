@@ -314,7 +314,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
         {isConversion ? null : <TestRecordForm caseId={caseItem.id} accounts={accounts} />}
       </div>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-7">
+      <section className="rounded-xl border border-zinc-200 bg-white p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             {isConversion ? null : <StatusBadge caseItem={caseItem} />}
@@ -455,7 +455,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       {!isConversion && ((caseItem.screenshot_paths?.length ?? 0) > 0 || caseItem.scene_description || caseItem.result) ? (
         <section className="grid gap-4 lg:grid-cols-2">
           {(caseItem.screenshot_paths?.length ?? 0) > 0 ? (
-            <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+            <div className="rounded-xl border border-zinc-200 bg-white p-5">
               <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 截图
               </h2>
@@ -465,7 +465,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
             </div>
           ) : null}
           {caseItem.scene_description || caseItem.result ? (
-            <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+            <div className="rounded-xl border border-zinc-200 bg-white p-5">
               <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 上下文
               </h2>
