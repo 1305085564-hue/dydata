@@ -60,7 +60,7 @@ export function ChannelFeatureCard({
       )}
     >
       <div
-        className="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-3 cursor-pointer select-none"
+        className="flex cursor-pointer select-none flex-col justify-between gap-2 p-4 sm:flex-row sm:items-center"
         onClick={onToggleExpand}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -73,7 +73,7 @@ export function ChannelFeatureCard({
         aria-expanded={isExpanded}
         aria-controls={`feature-config-${feature.id}`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <h4 className="text-sm font-medium text-zinc-800">
             {feature.metadata.title}
           </h4>
@@ -154,11 +154,11 @@ export function ChannelFeatureCard({
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="border-t border-zinc-200 bg-zinc-50 p-4 space-y-4">
+            <div className="space-y-4 border-t border-zinc-200 bg-zinc-50 p-4">
               <div className="space-y-2">
                 <Label
                   htmlFor={`feature-channel-${feature.id}`}
-                  className="text-[11px] font-medium uppercase tracking-wider text-zinc-400"
+                  className="text-[11px] font-medium text-zinc-500"
                 >
                   指定渠道
                 </Label>
@@ -172,9 +172,16 @@ export function ChannelFeatureCard({
                 >
                   <SelectTrigger
                     id={`feature-channel-${feature.id}`}
-                    className="h-8 rounded-lg border-zinc-200 bg-white text-xs shadow-sm transition-colors focus-visible:bg-white"
+                    className="h-8 rounded-lg border-zinc-200 bg-white text-[12px] shadow-sm transition-colors focus-visible:bg-white"
                   >
-                    <SelectValue />
+                    <SelectValue>
+                      {(() => {
+                        const currentId = feature.channel_id;
+                        if (!currentId) return "系统自动分配（failover）";
+                        const found = channels.find((c) => c.id === currentId);
+                        return found?.name ?? feature.channel_name ?? "未知渠道";
+                      })()}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={AUTO_CHANNEL_VALUE}>系统自动分配（failover）</SelectItem>
@@ -193,7 +200,7 @@ export function ChannelFeatureCard({
               <div className="space-y-2">
                 <Label
                   htmlFor={`feature-model-${feature.id}`}
-                  className="text-[11px] font-medium uppercase tracking-wider text-zinc-400"
+                  className="text-[11px] font-medium text-zinc-500"
                 >
                   指定模型
                 </Label>
@@ -202,7 +209,7 @@ export function ChannelFeatureCard({
                   value={feature.model}
                   onChange={(e) => onPatch({ model: e.target.value })}
                   placeholder="留空则跟随渠道默认模型"
-                  className="rounded-lg border-zinc-200 bg-white focus-visible:bg-white h-8 text-xs shadow-sm transition-colors"
+                  className="h-8 rounded-lg border-zinc-200 bg-white text-[12px] shadow-sm transition-colors focus-visible:bg-white"
                 />
                 <p className="text-[11px] text-zinc-400">
                   当前：{feature.model.trim() || "跟随渠道默认模型"}
@@ -212,7 +219,7 @@ export function ChannelFeatureCard({
               <div className="space-y-2">
                 <Label
                   htmlFor={`feature-system-prompt-${feature.id}`}
-                  className="text-[11px] font-medium uppercase tracking-wider text-zinc-400"
+                  className="text-[11px] font-medium text-zinc-500"
                 >
                   系统提示词 (System Prompt)
                 </Label>
@@ -221,7 +228,7 @@ export function ChannelFeatureCard({
                   value={feature.system_prompt}
                   onChange={(e) => onPatch({ system_prompt: e.target.value })}
                   placeholder="留空则使用该功能默认提示词"
-                  className="min-h-[80px] resize-y rounded-lg border-zinc-200 bg-white focus-visible:bg-white text-xs shadow-sm transition-colors"
+                  className="min-h-[80px] resize-y rounded-lg border-zinc-200 bg-white text-[12px] shadow-sm transition-colors focus-visible:bg-white"
                 />
               </div>
             </div>

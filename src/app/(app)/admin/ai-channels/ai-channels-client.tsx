@@ -401,7 +401,7 @@ export default function AIChannelsClient() {
   const activeChannel = !isCreatingChannel ? channels.find((channel) => channel.id === selectedChannelId) || null : null;
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-4">
       {isLoading ? (
         <div className="flex h-64 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <div className="flex flex-col items-center gap-4 text-[var(--color-text-secondary)]">
@@ -411,7 +411,7 @@ export default function AIChannelsClient() {
           </div>
         </div>
       ) : (
-        <div id="ai-channels" className="flex flex-col gap-6 scroll-mt-8 xl:flex-row xl:items-start relative overflow-hidden">
+        <div id="ai-channels" className="relative flex flex-col gap-6 scroll-mt-8 xl:flex-row xl:items-start">
           <div className="xl:sticky xl:top-24">
             <ChannelSidebar
               channels={channels}
@@ -436,13 +436,10 @@ export default function AIChannelsClient() {
                 busyActions={busyActions}
               />
 
-              <section id="ai-features" className="scroll-mt-8 space-y-3">
-                <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">Feature Binding</p>
-                  <h2 className="mt-1 text-[16px] font-medium tracking-tight text-zinc-800">AI 功能绑定</h2>
-                  <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">
-                    当前渠道保持在左侧可见；修改功能绑定会继续走原有自动保存逻辑。
-                  </p>
+              <section id="ai-features" className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6">
+                <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+                  <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">AI 功能绑定</h2>
+                  <span className="ml-3 text-[11px] text-zinc-500">修改会走原有自动保存逻辑</span>
                 </div>
 
                 <ChannelFeatureBindings

@@ -21,9 +21,9 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
         <Badge count={channels.length} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto p-2">
         {channels.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center space-y-3 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center">
+          <div className="flex h-full flex-col items-center justify-center space-y-2 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center">
             <ShieldAlert className="size-8 stroke-[1.5] text-zinc-400" />
             <div className="space-y-1"><p className="text-[13px] font-medium text-zinc-800">暂无可用渠道</p><p className="text-[12px] text-zinc-500">点击下方按钮添加第一个渠道</p></div>
           </div>
@@ -37,7 +37,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                 <div
                   key={channel.id}
                   className={cn(
-                    "group relative flex w-full items-center justify-between overflow-hidden rounded-xl px-3 py-3 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                    "group relative flex w-full items-center justify-between overflow-hidden rounded-xl px-3 py-2 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isSelected
                       ? "bg-white border border-[#D97757]/40 text-zinc-800 shadow-sm"
                       : "hover:bg-zinc-50 text-zinc-500"
@@ -45,7 +45,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
                 >
                   <button
                     onClick={() => onSelect(channel.id)}
-                    className="flex items-center gap-3 truncate text-left flex-1 min-w-0"
+                    className="flex flex-1 min-w-0 items-center gap-2 truncate text-left"
                   >
                     <StatusIndicator status={status} />
                     <span className={cn(
@@ -65,7 +65,7 @@ export function ChannelSidebar({ channels, selectedChannelId, onSelect, onAddCli
         )}
       </div>
 
-      <div className="border-t border-zinc-200 p-3">
+      <div className="border-t border-zinc-200 p-2">
         <Button
           onClick={onAddClick}
           variant="default"

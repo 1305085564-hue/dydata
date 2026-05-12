@@ -91,7 +91,7 @@ export function ChannelDetailForm({
             {channel ? channel.name : "新增渠道"}
           </h2>
           {channel && (
-            <div className="flex flex-wrap items-center gap-3 border-l border-border/60 pl-4">
+            <div className="flex flex-wrap items-center gap-2 border-l border-border/60 pl-4">
               <Switch
                 checked={channel.is_enabled}
                 disabled={isToggling}
@@ -108,7 +108,7 @@ export function ChannelDetailForm({
         </div>
 
         {/* Right: Actions */}
-        <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
           {channel && (
             <div className="flex flex-wrap items-center gap-2 mr-2">
               <Button
@@ -158,7 +158,7 @@ export function ChannelDetailForm({
             </div>
           )}
 
-          <div className="flex items-center gap-3 pl-2 sm:border-l sm:border-border/60">
+          <div className="flex items-center gap-2 pl-2 sm:border-l sm:border-border/60">
             <span className="text-sm font-medium whitespace-nowrap">
               {isSaving ? (
                 <span className="text-[#D99E55] flex items-center gap-1.5"><Skeleton className="size-3.5 rounded-full" />保存中...</span>
@@ -193,7 +193,7 @@ export function ChannelDetailForm({
           <div className="space-y-4 sm:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">名称</Label>
+                <Label htmlFor="name" className="text-[11px] font-medium text-zinc-500">名称</Label>
                 <Input
                   id="name"
                   value={form.name}
@@ -204,7 +204,7 @@ export function ChannelDetailForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="base_url" className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">API 地址</Label>
+                <Label htmlFor="base_url" className="text-[11px] font-medium text-zinc-500">API 地址</Label>
                 <Input
                   id="base_url"
                   value={form.base_url}
@@ -216,7 +216,7 @@ export function ChannelDetailForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="api_key" className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">密钥 (API Key)</Label>
+              <Label htmlFor="api_key" className="text-[11px] font-medium text-zinc-500">密钥 (API Key)</Label>
               <Input
                 id="api_key"
                 type="password"
@@ -234,7 +234,7 @@ export function ChannelDetailForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="model" className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">默认模型</Label>
+                <Label htmlFor="model" className="text-[11px] font-medium text-zinc-500">默认模型</Label>
                 <Input
                   id="model"
                   value={form.model}
@@ -244,7 +244,7 @@ export function ChannelDetailForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="priority" className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-tertiary)]">优先级 (越小越优先)</Label>
+                <Label htmlFor="priority" className="text-[11px] font-medium text-zinc-500">优先级 (越小越优先)</Label>
                 <Input
                   id="priority"
                   type="number"
@@ -282,7 +282,7 @@ export function ChannelDetailForm({
                 )}
               </div>
               {channel.last_error_message && (
-                <div className="mt-3 space-y-1.5 rounded-lg bg-destructive/5 p-3 text-destructive border border-destructive/15 max-w-full overflow-hidden">
+                <div className="mt-2 space-y-1.5 rounded-lg border border-destructive/15 bg-destructive/5 p-4 text-destructive max-w-full overflow-hidden">
                   <div className="flex items-center gap-1.5 font-medium"><ShieldAlert className="size-3.5" />报错信息</div>
                   <div className="text-destructive/90 break-all text-[11px] leading-relaxed font-mono" title={channel.last_error_message}>
                     {channel.last_error_message}
