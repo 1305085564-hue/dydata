@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { MoreHorizontal, Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,13 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 import { PERMISSION_KEYS, PERMISSION_LABELS } from "@/types";
 import type { Permissions, UserRole } from "@/types";
-import { updatePermissions, changeRole, removeMember, resetMemberPassword } from "./actions";
+import {
+  updatePermissions,
+  changeRole,
+  resetMemberPassword,
+  updateMemberTeam,
+  removeMemberFromTeam,
+} from "./actions";
 import {
   applyRoleChangeToMember,
   canChangeMemberRole,
@@ -36,11 +42,18 @@ import {
   getPermissionManagerCapabilities,
   hasAdminPermissionChanges,
   resetMembersToBaseline,
+  resolveMemberTeamTransfer,
   type PermissionManagerMember,
 } from "./权限管理";
 
+interface TeamOption {
+  id: string;
+  name: string;
+}
+
 interface PermissionManagerProps {
   members: PermissionManagerMember[];
+  teams: TeamOption[];
   currentUserId: string;
   currentUserRole: UserRole;
   currentUserPermissions: Permissions;
@@ -49,6 +62,7 @@ interface PermissionManagerProps {
 interface RemoveTarget {
   memberId: string;
   memberName: string;
+  teamName: string;
 }
 
 interface RoleChangeTarget {
@@ -69,6 +83,16 @@ interface EditPermTarget {
   memberName: string;
 }
 
+interface MoreTarget {
+  memberId: string;
+  memberName: string;
+  memberEmail: string | null;
+  teamId: string | null;
+  teamName: string;
+  canReset: boolean;
+  canRemove: boolean;
+}
+
 type TeamFilter = "all" | string;
 
 function getTeamLabel(teamName?: string | null) {
@@ -81,55 +105,122 @@ function countEnabled(permissions: Permissions): number {
 
 interface MemberRowProps {
   member: PermissionManagerMember;
+  teams: TeamOption[];
+  actorRole: UserRole;
+  actorId: string;
+  actorPermissions: Permissions;
+  actorTeamId: string | null;
   canEditPermissions: boolean;
   canChangeRoleForThis: boolean;
-  canRemoveForThis: boolean;
   disabled: boolean;
   onRoleChange: (memberId: string, memberName: string, role: "member" | "admin") => void;
-  onOpenPasswordReset: (member: PermissionManagerMember) => void;
-  onOpenRemove: (memberId: string, memberName: string) => void;
   onOpenEditPerm: (memberId: string, memberName: string) => void;
+  onTransferTeam: (memberId: string, memberName: string, oldTeamName: string, newTeamId: string | null, newTeamName: string) => void;
+  onOpenMore: (target: MoreTarget) => void;
 }
 
 function MemberRow({
   member,
+  teams,
+  actorRole,
+  actorId,
+  actorPermissions,
+  actorTeamId,
   canEditPermissions,
   canChangeRoleForThis,
-  canRemoveForThis,
   disabled,
   onRoleChange,
-  onOpenPasswordReset,
-  onOpenRemove,
   onOpenEditPerm,
+  onTransferTeam,
+  onOpenMore,
 }: MemberRowProps) {
   const isAdmin = member.role === "admin";
   const enabledCount = isAdmin ? countEnabled(member.permissions) : 0;
   const totalCount = PERMISSION_KEYS.length;
+  const currentTeamName = getTeamLabel(member.teamName);
+
+  const teamOptionsForMember = useMemo(() => {
+    const candidates: Array<{ value: string; label: string }> = [
+      { value: "__none__", label: "未分配" },
+      ...teams.map((team) => ({ value: team.id, label: team.name })),
+    ];
+    return candidates.filter((opt) => {
+      const newTeamId = opt.value === "__none__" ? null : opt.value;
+      if (newTeamId === (member.teamId ?? null)) return true;
+      const decision = resolveMemberTeamTransfer({
+        actorRole,
+        actorId,
+        actorPermissions,
+        actorTeamId,
+        targetId: member.id,
+        targetRole: member.role,
+        targetTeamId: member.teamId ?? null,
+        newTeamId,
+      });
+      return decision.shouldApply;
+    });
+  }, [teams, member.id, member.role, member.teamId, actorRole, actorId, actorPermissions, actorTeamId]);
+
+  const canTransferTeam = teamOptionsForMember.length > 1;
+  const currentTeamValue = member.teamId ?? "__none__";
+
+  const canOpenMore = !disabled;
+  const canRemoveFromTeam = (() => {
+    const decision = resolveMemberTeamTransfer({
+      actorRole,
+      actorId,
+      actorPermissions,
+      actorTeamId,
+      targetId: member.id,
+      targetRole: member.role,
+      targetTeamId: member.teamId ?? null,
+      newTeamId: null,
+    });
+    return decision.shouldApply;
+  })();
+  const canResetPassword = (() => {
+    if (actorId === member.id) return false;
+    if (member.role === "owner") return false;
+    if (actorRole === "owner") return true;
+    if (actorRole !== "admin") return false;
+    if (actorPermissions.manage_members !== true) return false;
+    return actorTeamId === (member.teamId ?? null);
+  })();
 
   return (
-    <div className="grid grid-cols-[88px_48px_72px_minmax(0,1fr)_88px_72px_88px] items-center gap-2 py-2 text-[12px]">
+    <div className="grid grid-cols-[minmax(0,1fr)_120px_96px_72px_32px] items-center gap-3 py-2 text-[12px]">
       <span className="truncate font-medium text-zinc-800" title={member.name}>
         {member.name}
       </span>
 
-      <span
-        className={cn(
-          "inline-flex items-center justify-center rounded-[8px] border px-1 py-0.5 text-[10px] font-medium",
-          isAdmin
-            ? "bg-amber-50 text-amber-700 border-amber-200"
-            : "bg-zinc-50 text-zinc-500 border-zinc-200",
-        )}
-      >
-        {isAdmin ? "管理员" : "成员"}
-      </span>
-
-      <span className="truncate text-zinc-500" title={getTeamLabel(member.teamName)}>
-        {getTeamLabel(member.teamName)}
-      </span>
-
-      <span className="truncate text-zinc-400 tabular-nums" title={member.email ?? undefined}>
-        {member.email || "—"}
-      </span>
+      {canTransferTeam ? (
+        <Select
+          value={currentTeamValue}
+          onValueChange={(value) => {
+            const newTeamId = value === "__none__" ? null : value;
+            const newTeamName = value === "__none__"
+              ? "未分配"
+              : teams.find((t) => t.id === value)?.name ?? "未分配";
+            onTransferTeam(member.id, member.name, currentTeamName, newTeamId, newTeamName);
+          }}
+          disabled={disabled}
+        >
+          <SelectTrigger className="h-7 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
+            <SelectValue>{currentTeamName}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {teamOptionsForMember.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <span className="truncate text-zinc-500" title={currentTeamName}>
+          {currentTeamName}
+        </span>
+      )}
 
       {canChangeRoleForThis ? (
         <Select
@@ -138,7 +229,7 @@ function MemberRow({
           disabled={disabled}
         >
           <SelectTrigger className="h-7 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
-            <SelectValue />
+            <SelectValue>{isAdmin ? "管理员" : "成员"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="admin">管理员</SelectItem>
@@ -166,34 +257,33 @@ function MemberRow({
         <span className="text-center text-zinc-300">—</span>
       )}
 
-      <div className="flex items-center justify-end gap-0.5">
-        {canRemoveForThis ? (
-          <>
-            <button
-              type="button"
-              onClick={() => onOpenPasswordReset(member)}
-              disabled={disabled}
-              className="h-7 rounded-[8px] px-2 text-[12px] text-zinc-500 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              重置
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenRemove(member.id, member.name)}
-              disabled={disabled}
-              className="h-7 rounded-[8px] px-2 text-[12px] text-zinc-500 transition-[background-color,color] duration-150 hover:bg-[#C9604D]/10 hover:text-[#C9604D] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              移除
-            </button>
-          </>
-        ) : null}
-      </div>
+      <button
+        type="button"
+        onClick={() =>
+          onOpenMore({
+            memberId: member.id,
+            memberName: member.name,
+            memberEmail: member.email ?? null,
+            teamId: member.teamId ?? null,
+            teamName: currentTeamName,
+            canReset: canResetPassword,
+            canRemove: canRemoveFromTeam,
+          })
+        }
+        disabled={!canOpenMore}
+        className="flex size-7 items-center justify-center rounded-[8px] text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+        title="更多操作"
+      >
+        <MoreHorizontal className="size-4 stroke-[1.5]" />
+        <span className="sr-only">更多操作</span>
+      </button>
     </div>
   );
 }
 
 export function PermissionManager({
   members,
+  teams,
   currentUserId,
   currentUserRole,
   currentUserPermissions,
@@ -207,17 +297,20 @@ export function PermissionManager({
   const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null);
   const [passwordResetTarget, setPasswordResetTarget] = useState<PasswordResetTarget | null>(null);
   const [editPermTarget, setEditPermTarget] = useState<EditPermTarget | null>(null);
+  const [moreTarget, setMoreTarget] = useState<MoreTarget | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isRemoving, startRemoving] = useTransition();
   const [isResettingPassword, startResettingPassword] = useTransition();
+  const [isTransferringTeam, startTransferringTeam] = useTransition();
   const [pmPage, setPmPage] = useState(1);
   const [pmShowAll, setPmShowAll] = useState(false);
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const capabilities = getPermissionManagerCapabilities(currentUserRole, currentUserPermissions);
   const currentActor = editableMembers.find((member) => member.id === currentUserId);
-  const actionDisabled = isChangingRole || isSavingPermissions || isRemoving || isResettingPassword;
+  const actionDisabled =
+    isChangingRole || isSavingPermissions || isRemoving || isResettingPassword || isTransferringTeam;
 
   useEffect(() => {
     setEditableMembers(members);
@@ -377,13 +470,20 @@ export function PermissionManager({
     const previousEditableMembers = editableMembers;
     const previousBaselineMembers = baselineMembers;
 
-    setEditableMembers((current) => current.filter((member) => member.id !== target.memberId));
-    setBaselineMembers((current) => current.filter((member) => member.id !== target.memberId));
+    const applyRemoval = (list: PermissionManagerMember[]) =>
+      list.map((member) =>
+        member.id === target.memberId
+          ? { ...member, teamId: null, teamName: null }
+          : member,
+      );
+
+    setEditableMembers(applyRemoval);
+    setBaselineMembers(applyRemoval);
     setRemoveTarget(null);
     feedbackToast.success(`已将 ${target.memberName} 移出团队`);
 
     startRemoving(async () => {
-      const res = await removeMember(target.memberId);
+      const res = await removeMemberFromTeam(target.memberId);
       if (res.error) {
         setEditableMembers(previousEditableMembers);
         setBaselineMembers(previousBaselineMembers);
@@ -396,24 +496,55 @@ export function PermissionManager({
     });
   }
 
-  const openPasswordResetDialog = useCallback((member: PermissionManagerMember) => {
+  const openPasswordResetDialog = useCallback((member: { id: string; name: string; email?: string | null; teamName?: string | null }) => {
     setPasswordResetTarget({
       memberId: member.id,
       memberName: member.name,
-      memberEmail: member.email,
-      teamName: member.teamName,
+      memberEmail: member.email ?? null,
+      teamName: member.teamName ?? null,
     });
     setNewPassword("");
     setConfirmPassword("");
   }, []);
 
-  const openRemoveDialog = useCallback((memberId: string, memberName: string) => {
-    setRemoveTarget({ memberId, memberName });
-  }, []);
-
   const openEditPermDialog = useCallback((memberId: string, memberName: string) => {
     setEditPermTarget({ memberId, memberName });
   }, []);
+
+  const openMoreDialog = useCallback((target: MoreTarget) => {
+    setMoreTarget(target);
+  }, []);
+
+  const handleTransferTeam = useCallback(
+    (memberId: string, memberName: string, oldTeamName: string, newTeamId: string | null, newTeamName: string) => {
+      const previousEditableMembers = editableMembers;
+      const previousBaselineMembers = baselineMembers;
+      const nextTeam = newTeamId ? teams.find((t) => t.id === newTeamId) ?? null : null;
+
+      const applyTransfer = (list: PermissionManagerMember[]) =>
+        list.map((member) =>
+          member.id === memberId
+            ? { ...member, teamId: newTeamId, teamName: nextTeam?.name ?? null }
+            : member,
+        );
+
+      setEditableMembers(applyTransfer);
+      setBaselineMembers(applyTransfer);
+      feedbackToast.success(`已将 ${memberName} 从 ${oldTeamName} 调配至 ${newTeamName}`);
+
+      startTransferringTeam(async () => {
+        const res = await updateMemberTeam(memberId, newTeamId);
+        if (res.error) {
+          setEditableMembers(previousEditableMembers);
+          setBaselineMembers(previousBaselineMembers);
+          feedbackToast.error(res.error);
+          return;
+        }
+        router.refresh();
+      });
+    },
+    [editableMembers, baselineMembers, teams, router],
+  );
 
   function handleResetPassword() {
     if (!passwordResetTarget) return;
@@ -534,20 +665,16 @@ export function PermissionManager({
       ) : (
         <>
           <div className="grid gap-x-8 md:grid-cols-2">
-            <div className="grid grid-cols-[88px_48px_72px_minmax(0,1fr)_88px_72px_88px] items-center gap-2 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+            <div className="grid grid-cols-[minmax(0,1fr)_120px_96px_72px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
               <span>姓名</span>
-              <span className="text-center">身份</span>
               <span>团队</span>
-              <span>邮箱</span>
               <span>角色</span>
               <span className="text-center">权限</span>
               <span className="text-right">操作</span>
             </div>
-            <div className="hidden grid-cols-[88px_48px_72px_minmax(0,1fr)_88px_72px_88px] items-center gap-2 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 md:grid">
+            <div className="hidden grid-cols-[minmax(0,1fr)_120px_96px_72px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 md:grid">
               <span>姓名</span>
-              <span className="text-center">身份</span>
               <span>团队</span>
-              <span>邮箱</span>
               <span>角色</span>
               <span className="text-center">权限</span>
               <span className="text-right">操作</span>
@@ -569,18 +696,6 @@ export function PermissionManager({
                   targetTeamId: member.teamId ?? null,
                   newRole: member.role === "member" ? "admin" : "member",
                 });
-              const canRemoveForThis =
-                capabilities.canRemoveMember &&
-                canRemoveMemberTarget({
-                  actorRole: currentUserRole,
-                  actorId: currentUserId,
-                  actorPermissions: currentUserPermissions,
-                  actorTeamId: currentActor?.teamId ?? null,
-                  targetId: member.id,
-                  targetRole: member.role,
-                  targetPermissions: member.permissions,
-                  targetTeamId: member.teamId ?? null,
-                });
 
               const isLastInColumn =
                 index === pagedMembers.length - 1 ||
@@ -596,14 +711,18 @@ export function PermissionManager({
                 >
                   <MemberRow
                     member={member}
+                    teams={teams}
+                    actorRole={currentUserRole}
+                    actorId={currentUserId}
+                    actorPermissions={currentUserPermissions}
+                    actorTeamId={currentActor?.teamId ?? null}
                     canEditPermissions={capabilities.canEditPermissions}
                     canChangeRoleForThis={canChangeRoleForThis}
-                    canRemoveForThis={canRemoveForThis}
                     disabled={actionDisabled}
                     onRoleChange={requestRoleChange}
-                    onOpenPasswordReset={openPasswordResetDialog}
-                    onOpenRemove={openRemoveDialog}
                     onOpenEditPerm={openEditPermDialog}
+                    onTransferTeam={handleTransferTeam}
+                    onOpenMore={openMoreDialog}
                   />
                 </div>
               );
@@ -789,6 +908,87 @@ export function PermissionManager({
         </DialogContent>
       </Dialog>
 
+      <Dialog
+        open={moreTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setMoreTarget(null);
+        }}
+      >
+        <DialogContent className="rounded-2xl bg-white border border-zinc-200 shadow-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {moreTarget ? `${moreTarget.memberName} · 更多操作` : "更多操作"}
+            </DialogTitle>
+            <DialogDescription>
+              账号资料与高风险操作归集于此，避免主列表误触。
+            </DialogDescription>
+          </DialogHeader>
+          {moreTarget ? (
+            <div className="space-y-4">
+              <div className="space-y-1 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-[12px] text-zinc-500">
+                <div className="flex items-baseline justify-between gap-4">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">邮箱</span>
+                  <span className="truncate font-mono tabular-nums text-zinc-700" title={moreTarget.memberEmail ?? undefined}>
+                    {moreTarget.memberEmail || "未记录"}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">团队</span>
+                  <span className="truncate text-zinc-700">{moreTarget.teamName}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  disabled={!moreTarget.canReset || actionDisabled}
+                  onClick={() => {
+                    if (!moreTarget) return;
+                    openPasswordResetDialog({
+                      id: moreTarget.memberId,
+                      name: moreTarget.memberName,
+                      email: moreTarget.memberEmail,
+                      teamName: moreTarget.teamName,
+                    });
+                    setMoreTarget(null);
+                  }}
+                  className="flex items-center justify-between rounded-lg border border-zinc-200 px-4 py-2 text-[13px] text-zinc-700 transition-[background-color,border-color,color] duration-150 hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span>重置密码</span>
+                  <span className="text-[11px] text-zinc-400">为该成员设置新登录密码</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={!moreTarget.canRemove || actionDisabled}
+                  onClick={() => {
+                    if (!moreTarget) return;
+                    setRemoveTarget({
+                      memberId: moreTarget.memberId,
+                      memberName: moreTarget.memberName,
+                      teamName: moreTarget.teamName,
+                    });
+                    setMoreTarget(null);
+                  }}
+                  className="flex items-center justify-between rounded-lg border border-zinc-200 px-4 py-2 text-[13px] text-zinc-700 transition-[background-color,border-color,color] duration-150 hover:border-[#C9604D]/40 hover:bg-[#C9604D]/5 hover:text-[#C9604D] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span>移出团队</span>
+                  <span className="text-[11px] text-zinc-400">脱离团队归属，不影响账号</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              className="h-9 text-[12px] text-zinc-500 hover:text-zinc-800"
+              onClick={() => setMoreTarget(null)}
+            >
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <ConfirmDialog
         open={roleChangeTarget !== null}
         title={roleChangeTarget?.role === "member" ? "确认调整为成员" : "确认调整为管理员"}
@@ -811,9 +1011,13 @@ export function PermissionManager({
 
       <ConfirmDialog
         open={removeTarget !== null}
-        title="确认移除成员"
-        description={removeTarget ? `确定将 ${removeTarget.memberName} 移出团队吗？此操作不可撤销。` : ""}
-        confirmText="确认移除"
+        title="确认移出团队"
+        description={
+          removeTarget
+            ? `确定将 ${removeTarget.memberName} 移出 ${removeTarget.teamName} 吗？该成员仍保留账号与数据，仅脱离团队归属。`
+            : ""
+        }
+        confirmText="确认移出"
         destructive
         loading={isRemoving}
         className="rounded-2xl bg-white border border-zinc-200 shadow-sm"

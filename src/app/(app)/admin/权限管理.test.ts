@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   applyRoleChangeToMember,
+  buildMemberTeamTransferPatch,
   canChangeMemberRole,
   canRemoveMemberTarget,
   getChangedAdminPermissions,
@@ -10,6 +11,7 @@ import {
   hasAdminPermissionChanges,
   isProfileWriteApplied,
   resetMembersToBaseline,
+  resolveMemberTeamTransfer,
   type PermissionManagerMember,
 } from "./权限管理";
 
@@ -335,6 +337,148 @@ test("权限管理写入必须确认真实命中目标行", () => {
   assert.equal(isProfileWriteApplied({ id: "member-1" }), true);
   assert.equal(isProfileWriteApplied(null), false);
   assert.equal(isProfileWriteApplied({ id: null }), false);
+});
+
+test("创始人可以调配任意非创始人成员团队", () => {
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "owner",
+      actorId: "owner-1",
+      actorPermissions: {},
+      targetId: "member-1",
+      targetRole: "member",
+      targetTeamId: "team-1",
+      newTeamId: "team-2",
+    }),
+    { shouldApply: true },
+  );
+});
+
+test("负责人只能把未分配成员拉进本团队，或把本团队成员移出", () => {
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "admin",
+      actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "member-1",
+      targetRole: "member",
+      targetTeamId: null,
+      newTeamId: "team-1",
+    }),
+    { shouldApply: true },
+  );
+
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "admin",
+      actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "member-1",
+      targetRole: "member",
+      targetTeamId: "team-1",
+      newTeamId: null,
+    }),
+    { shouldApply: true },
+  );
+});
+
+test("负责人跨团队调配会被拒绝", () => {
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "admin",
+      actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "member-2",
+      targetRole: "member",
+      targetTeamId: "team-2",
+      newTeamId: "team-1",
+    }),
+    { shouldApply: false, error: "负责人只能调配本团队/未分配成员" },
+  );
+
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "admin",
+      actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "member-3",
+      targetRole: "member",
+      targetTeamId: null,
+      newTeamId: "team-2",
+    }),
+    { shouldApply: false, error: "负责人只能调配本团队/未分配成员" },
+  );
+});
+
+test("普通成员不能调配团队，目标创始人也不能被调配", () => {
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "member",
+      actorId: "member-1",
+      actorPermissions: {},
+      targetId: "member-2",
+      targetRole: "member",
+      targetTeamId: null,
+      newTeamId: "team-1",
+    }),
+    { shouldApply: false, error: "无权限" },
+  );
+
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "owner",
+      actorId: "owner-1",
+      actorPermissions: {},
+      targetId: "owner-2",
+      targetRole: "owner",
+      targetTeamId: "team-1",
+      newTeamId: "team-2",
+    }),
+    { shouldApply: false, error: "不能调配创始人的团队" },
+  );
+});
+
+test("调配自己的团队会被拒绝，相同团队幂等不需要写入", () => {
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "owner",
+      actorId: "owner-1",
+      actorPermissions: {},
+      targetId: "owner-1",
+      targetRole: "owner",
+      targetTeamId: "team-1",
+      newTeamId: "team-2",
+    }),
+    { shouldApply: false, error: "不能调配自己的团队" },
+  );
+
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "owner",
+      actorId: "owner-1",
+      actorPermissions: {},
+      targetId: "member-1",
+      targetRole: "member",
+      targetTeamId: "team-1",
+      newTeamId: "team-1",
+    }),
+    { shouldApply: false },
+  );
+});
+
+test("调配团队写入 profiles 时会同步清空 group_id", () => {
+  assert.deepEqual(buildMemberTeamTransferPatch("team-2"), {
+    team_id: "team-2",
+    group_id: null,
+  });
+  assert.deepEqual(buildMemberTeamTransferPatch(null), {
+    team_id: null,
+    group_id: null,
+  });
 });
 
 test("取消会恢复到当前基线快照", () => {

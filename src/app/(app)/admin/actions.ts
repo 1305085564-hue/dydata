@@ -30,7 +30,13 @@ import {
   type ReviewDecision,
 } from "@/lib/豁免流程";
 import type { Permissions, UserRole } from "@/types";
-import { canChangeMemberRole, canRemoveMemberTarget, isProfileWriteApplied } from "./权限管理";
+import {
+  buildMemberTeamTransferPatch,
+  canChangeMemberRole,
+  canRemoveMemberTarget,
+  isProfileWriteApplied,
+  resolveMemberTeamTransfer,
+} from "./权限管理";
 
 async function writeAuditLog(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -584,6 +590,101 @@ export async function updatePermissions(
 
   revalidatePath("/admin");
   return {};
+}
+
+async function getTeamNameMap(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+  teamIds: Array<string | null | undefined>,
+) {
+  const ids = Array.from(new Set(teamIds.filter((teamId): teamId is string => Boolean(teamId))));
+  if (ids.length === 0) return new Map<string, string>();
+
+  const { data, error } = await adminSupabase
+    .from("teams")
+    .select("id, name")
+    .in("id", ids);
+  if (error) return new Map<string, string>();
+
+  return new Map((data ?? []).map((team) => [team.id as string, team.name as string]));
+}
+
+function formatTeamName(teamId: string | null, teamNames: Map<string, string>) {
+  if (!teamId) return "未分配";
+  return teamNames.get(teamId) ?? teamId;
+}
+
+export async function updateMemberTeam(
+  targetUserId: string,
+  newTeamId: string | null,
+): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+
+  const supabase = await createClient();
+  const adminSupabase = createAdminClient();
+
+  const { data: profileRows, error: profileError } = await adminSupabase
+    .from("profiles")
+    .select("id, role, name, permissions, team_id, group_id")
+    .in("id", [perm.userId, targetUserId]);
+  if (profileError) return { error: profileError.message };
+
+  const actor = profileRows?.find((profile) => profile.id === perm.userId);
+  const target = profileRows?.find((profile) => profile.id === targetUserId);
+  if (!target) return { error: "用户不存在" };
+
+  const decision = resolveMemberTeamTransfer({
+    actorRole: perm.role,
+    actorId: perm.userId,
+    actorPermissions: perm.permissions,
+    actorTeamId: actor?.team_id ?? null,
+    targetId: targetUserId,
+    targetRole: target.role as UserRole,
+    targetTeamId: target.team_id ?? null,
+    newTeamId,
+  });
+
+  if (decision.error) return { error: decision.error };
+  if (!decision.shouldApply) return {};
+
+  const oldTeamId = target.team_id ?? null;
+  const { data: updatedProfile, error } = await adminSupabase
+    .from("profiles")
+    .update(buildMemberTeamTransferPatch(newTeamId))
+    .eq("id", targetUserId)
+    .select("id")
+    .single();
+
+  if (error) return { error: error.message };
+  if (!isProfileWriteApplied(updatedProfile)) return { error: "团队调配未生效，请刷新后重试" };
+
+  const teamNames = await getTeamNameMap(adminSupabase, [oldTeamId, newTeamId]);
+  const oldTeamName = formatTeamName(oldTeamId, teamNames);
+  const newTeamName = formatTeamName(newTeamId, teamNames);
+
+  await adminSupabase.from("member_change_log").insert({
+    user_id: targetUserId,
+    team_id: newTeamId,
+    action_type: "transfer_team",
+    operator_id: perm.userId,
+  }).then(() => {}, () => {});
+
+  await writeAuditLog(
+    supabase,
+    perm.userId,
+    "transfer_team",
+    targetUserId,
+    `将 ${target.name} 从 ${oldTeamName} 调配至 ${newTeamName}`,
+  );
+
+  revalidatePath("/admin");
+  return {};
+}
+
+export async function removeMemberFromTeam(
+  targetUserId: string,
+): Promise<{ error?: string }> {
+  return updateMemberTeam(targetUserId, null);
 }
 
 export async function removeMember(targetUserId: string): Promise<{ error?: string }> {

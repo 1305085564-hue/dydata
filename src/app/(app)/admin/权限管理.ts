@@ -46,6 +46,22 @@ export interface ChangeMemberRoleInput {
   newRole: "member" | "admin";
 }
 
+export interface TransferMemberTeamInput {
+  actorRole: UserRole;
+  actorId: string;
+  actorPermissions: Permissions;
+  actorTeamId?: string | null;
+  targetId: string;
+  targetRole: UserRole;
+  targetTeamId?: string | null;
+  newTeamId: string | null;
+}
+
+export interface MemberTeamTransferDecision {
+  shouldApply: boolean;
+  error?: string;
+}
+
 export interface AdminProfileWriteResult {
   id?: string | null;
 }
@@ -113,6 +129,41 @@ export function canRemoveMemberTarget({
   if (!actorIsTeamAdmin) return false;
   if (!actorTeamId || actorTeamId !== targetTeamId) return false;
   return targetRole === "member";
+}
+
+export function resolveMemberTeamTransfer({
+  actorRole,
+  actorId,
+  actorPermissions,
+  actorTeamId,
+  targetId,
+  targetRole,
+  targetTeamId,
+  newTeamId,
+}: TransferMemberTeamInput): MemberTeamTransferDecision {
+  const oldTeamId = targetTeamId ?? null;
+
+  if (actorId === targetId) return { shouldApply: false, error: "不能调配自己的团队" };
+  if (targetRole === "owner") return { shouldApply: false, error: "不能调配创始人的团队" };
+  if (newTeamId === oldTeamId) return { shouldApply: false };
+
+  if (actorRole === "owner") return { shouldApply: true };
+
+  const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
+  if (!actorIsTeamAdmin) return { shouldApply: false, error: "无权限" };
+  if (!actorTeamId) return { shouldApply: false, error: "负责人只能调配本团队/未分配成员" };
+
+  if (oldTeamId === null && newTeamId === actorTeamId) return { shouldApply: true };
+  if (oldTeamId === actorTeamId && newTeamId === null) return { shouldApply: true };
+
+  return { shouldApply: false, error: "负责人只能调配本团队/未分配成员" };
+}
+
+export function buildMemberTeamTransferPatch(newTeamId: string | null) {
+  return {
+    team_id: newTeamId,
+    group_id: null,
+  };
 }
 
 export function isProfileWriteApplied(result: AdminProfileWriteResult | null | undefined) {

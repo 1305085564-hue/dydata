@@ -80,6 +80,7 @@ export function AdminModulesContent({
               teamName: profile.team_name,
               permissions: (profile.permissions ?? {}) as Permissions,
             }))}
+            teams={teams}
             currentUserId={currentUserId}
             currentUserRole={currentUserRole}
             currentUserPermissions={currentUserPermissions}
