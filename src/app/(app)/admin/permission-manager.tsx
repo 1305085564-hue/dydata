@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,10 +64,133 @@ interface PasswordResetTarget {
   teamName?: string | null;
 }
 
+interface EditPermTarget {
+  memberId: string;
+  memberName: string;
+}
+
 type TeamFilter = "all" | string;
 
 function getTeamLabel(teamName?: string | null) {
   return teamName?.trim() || "深圳二部";
+}
+
+function countEnabled(permissions: Permissions): number {
+  return PERMISSION_KEYS.reduce((sum, key) => sum + (permissions[key] === true ? 1 : 0), 0);
+}
+
+interface MemberRowProps {
+  member: PermissionManagerMember;
+  canEditPermissions: boolean;
+  canChangeRoleForThis: boolean;
+  canRemoveForThis: boolean;
+  disabled: boolean;
+  onRoleChange: (memberId: string, memberName: string, role: "member" | "admin") => void;
+  onOpenPasswordReset: (member: PermissionManagerMember) => void;
+  onOpenRemove: (memberId: string, memberName: string) => void;
+  onOpenEditPerm: (memberId: string, memberName: string) => void;
+}
+
+function MemberRow({
+  member,
+  canEditPermissions,
+  canChangeRoleForThis,
+  canRemoveForThis,
+  disabled,
+  onRoleChange,
+  onOpenPasswordReset,
+  onOpenRemove,
+  onOpenEditPerm,
+}: MemberRowProps) {
+  const isAdmin = member.role === "admin";
+  const enabledCount = isAdmin ? countEnabled(member.permissions) : 0;
+  const totalCount = PERMISSION_KEYS.length;
+
+  return (
+    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_110px_80px_minmax(0,1fr)] items-center gap-4 py-3">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-[13px] font-medium text-zinc-800">{member.name}</span>
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center rounded-[10px] border px-1.5 py-0.5 text-[11px] font-medium",
+              isAdmin
+                ? "bg-amber-50 text-amber-700 border-amber-200"
+                : "bg-zinc-50 text-zinc-600 border-zinc-200",
+            )}
+          >
+            {isAdmin ? "管理员" : "成员"}
+          </span>
+        </div>
+        <p className="mt-0.5 truncate text-[11px] text-zinc-400">{member.email || "未记录邮箱"}</p>
+      </div>
+
+      <span className="truncate text-[12px] text-zinc-500">{getTeamLabel(member.teamName)}</span>
+
+      <div>
+        {canChangeRoleForThis ? (
+          <Select
+            value={member.role}
+            onValueChange={(value) => onRoleChange(member.id, member.name, value as "member" | "admin")}
+            disabled={disabled}
+          >
+            <SelectTrigger className="h-8 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">管理员</SelectItem>
+              <SelectItem value="member">成员</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <span className="text-[12px] text-zinc-400">{isAdmin ? "管理员" : "成员"}</span>
+        )}
+      </div>
+
+      <div>
+        {isAdmin && canEditPermissions ? (
+          <button
+            type="button"
+            onClick={() => onOpenEditPerm(member.id, member.name)}
+            disabled={disabled}
+            className="group inline-flex items-center gap-1 rounded-[10px] border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 transition-[background-color,border-color,color] duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <span>
+              {enabledCount}/{totalCount}
+            </span>
+            <Pencil className="size-3 stroke-[1.5] text-zinc-400 group-hover:text-zinc-600" />
+          </button>
+        ) : (
+          <span className="text-[12px] text-zinc-300">—</span>
+        )}
+      </div>
+
+      <div className="flex items-center justify-end gap-1">
+        {canRemoveForThis ? (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-[12px] text-zinc-500 hover:text-zinc-800"
+              onClick={() => onOpenPasswordReset(member)}
+              disabled={disabled}
+            >
+              重置密码
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-[12px] text-zinc-500 hover:text-[#C9604D]"
+              onClick={() => onOpenRemove(member.id, member.name)}
+              disabled={disabled}
+            >
+              移除
+            </Button>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 export function PermissionManager({
@@ -83,6 +207,7 @@ export function PermissionManager({
   const [roleChangeTarget, setRoleChangeTarget] = useState<RoleChangeTarget | null>(null);
   const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null);
   const [passwordResetTarget, setPasswordResetTarget] = useState<PasswordResetTarget | null>(null);
+  const [editPermTarget, setEditPermTarget] = useState<EditPermTarget | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isRemoving, startRemoving] = useTransition();
@@ -93,6 +218,7 @@ export function PermissionManager({
   const [searchQuery, setSearchQuery] = useState("");
   const capabilities = getPermissionManagerCapabilities(currentUserRole, currentUserPermissions);
   const currentActor = editableMembers.find((member) => member.id === currentUserId);
+  const actionDisabled = isChangingRole || isSavingPermissions || isRemoving || isResettingPassword;
 
   useEffect(() => {
     setEditableMembers(members);
@@ -147,12 +273,13 @@ export function PermissionManager({
       return haystack.includes(normalizedQuery);
     });
   }, [searchQuery, teamFilter, visibleMembers]);
-  const hasPermissionChanges = useMemo(
-    () => hasAdminPermissionChanges(editableMembers, baselineMembers),
+  const changedCount = useMemo(
+    () => getChangedAdminPermissions(editableMembers, baselineMembers).length,
     [editableMembers, baselineMembers],
   );
+  const hasPermissionChanges = changedCount > 0;
 
-  function handlePermToggle(memberId: string, key: string, checked: boolean) {
+  const handlePermToggle = useCallback((memberId: string, key: string, checked: boolean) => {
     setEditableMembers((prev) =>
       prev.map((member) =>
         member.id === memberId
@@ -160,13 +287,13 @@ export function PermissionManager({
           : member,
       ),
     );
-  }
+  }, []);
 
-  function handleCancelPermissions() {
+  const handleCancelPermissions = useCallback(() => {
     setEditableMembers((prev) => resetMembersToBaseline(prev, baselineMembers));
-  }
+  }, [baselineMembers]);
 
-  function handleSavePermissions() {
+  const handleSavePermissions = useCallback(() => {
     const changedMembers = getChangedAdminPermissions(editableMembers, baselineMembers);
     if (changedMembers.length === 0) return;
     const previousBaseline = baselineMembers;
@@ -188,50 +315,56 @@ export function PermissionManager({
 
       router.refresh();
     });
-  }
+  }, [editableMembers, baselineMembers, router]);
 
-  function requestRoleChange(memberId: string, memberName: string, newRole: "member" | "admin") {
-    const current = editableMembers.find((member) => member.id === memberId);
-    if (!current || current.role === newRole) return;
-    if (
-      !canChangeMemberRole({
-        actorRole: currentUserRole,
-        actorId: currentUserId,
-        actorPermissions: currentUserPermissions,
-        actorTeamId: currentActor?.teamId ?? null,
-        targetId: current.id,
-        targetRole: current.role,
-        targetPermissions: current.permissions,
-        targetTeamId: current.teamId ?? null,
-        newRole,
-      })
-    ) {
-      feedbackToast.error("不能调整该成员角色");
-      return;
-    }
-    setRoleChangeTarget({ memberId, memberName, role: newRole });
-  }
-
-  function handleRoleChange(memberId: string, newRole: "member" | "admin") {
-    const previousEditableMembers = editableMembers;
-    const previousBaselineMembers = baselineMembers;
-
-    setEditableMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
-    setBaselineMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
-    feedbackToast.success("角色已更新");
-
-    startChangingRole(async () => {
-      const res = await changeRole(memberId, newRole);
-      if (res.error) {
-        setEditableMembers(previousEditableMembers);
-        setBaselineMembers(previousBaselineMembers);
-        feedbackToast.error(res.error);
+  const requestRoleChange = useCallback(
+    (memberId: string, memberName: string, newRole: "member" | "admin") => {
+      const current = editableMembers.find((member) => member.id === memberId);
+      if (!current || current.role === newRole) return;
+      if (
+        !canChangeMemberRole({
+          actorRole: currentUserRole,
+          actorId: currentUserId,
+          actorPermissions: currentUserPermissions,
+          actorTeamId: currentActor?.teamId ?? null,
+          targetId: current.id,
+          targetRole: current.role,
+          targetPermissions: current.permissions,
+          targetTeamId: current.teamId ?? null,
+          newRole,
+        })
+      ) {
+        feedbackToast.error("不能调整该成员角色");
         return;
       }
+      setRoleChangeTarget({ memberId, memberName, role: newRole });
+    },
+    [editableMembers, currentUserRole, currentUserId, currentUserPermissions, currentActor],
+  );
 
-      router.refresh();
-    });
-  }
+  const handleRoleChange = useCallback(
+    (memberId: string, newRole: "member" | "admin") => {
+      const previousEditableMembers = editableMembers;
+      const previousBaselineMembers = baselineMembers;
+
+      setEditableMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
+      setBaselineMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
+      feedbackToast.success("角色已更新");
+
+      startChangingRole(async () => {
+        const res = await changeRole(memberId, newRole);
+        if (res.error) {
+          setEditableMembers(previousEditableMembers);
+          setBaselineMembers(previousBaselineMembers);
+          feedbackToast.error(res.error);
+          return;
+        }
+
+        router.refresh();
+      });
+    },
+    [editableMembers, baselineMembers, router],
+  );
 
   function confirmRoleChange() {
     if (!roleChangeTarget) return;
@@ -264,16 +397,24 @@ export function PermissionManager({
     });
   }
 
-  function openPasswordResetDialog(
-    memberId: string,
-    memberName: string,
-    memberEmail?: string | null,
-    teamName?: string | null,
-  ) {
-    setPasswordResetTarget({ memberId, memberName, memberEmail, teamName });
+  const openPasswordResetDialog = useCallback((member: PermissionManagerMember) => {
+    setPasswordResetTarget({
+      memberId: member.id,
+      memberName: member.name,
+      memberEmail: member.email,
+      teamName: member.teamName,
+    });
     setNewPassword("");
     setConfirmPassword("");
-  }
+  }, []);
+
+  const openRemoveDialog = useCallback((memberId: string, memberName: string) => {
+    setRemoveTarget({ memberId, memberName });
+  }, []);
+
+  const openEditPermDialog = useCallback((memberId: string, memberName: string) => {
+    setEditPermTarget({ memberId, memberName });
+  }, []);
 
   function handleResetPassword() {
     if (!passwordResetTarget) return;
@@ -306,207 +447,142 @@ export function PermissionManager({
     });
   }
 
+  const editingMember = editPermTarget
+    ? editableMembers.find((m) => m.id === editPermTarget.memberId) ?? null
+    : null;
+
   const pagedMembers = pmShowAll
     ? filteredMembers
     : filteredMembers.slice((pmPage - 1) * 10, pmPage * 10);
   const totalPages = Math.ceil(filteredMembers.length / 10);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">成员与权限</h2>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <Label htmlFor="team-filter" className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+            团队
+          </Label>
+          <Select
+            value={teamFilter}
+            onValueChange={(value) => {
+              setTeamFilter(value as TeamFilter);
+              setPmPage(1);
+              setPmShowAll(false);
+            }}
+          >
+            <SelectTrigger id="team-filter" className="h-9 w-[150px] bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部团队</SelectItem>
+              {teamOptions.map((teamName) => (
+                <SelectItem key={teamName} value={teamName}>
+                  {teamName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setPmPage(1);
+              setPmShowAll(false);
+            }}
+            placeholder="搜索姓名、邮箱或团队"
+            className="h-9 w-full rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-64"
+          />
+        </div>
+        <span className="text-[12px] text-zinc-400 tabular-nums">
+          显示 {filteredMembers.length} / {visibleMembers.length} 人
+        </span>
+      </div>
+
+      {capabilities.canEditPermissions && hasPermissionChanges ? (
+        <div className="flex items-center justify-between gap-4 border-l-[2px] border-l-[#D99E55] bg-zinc-50 py-2 pl-4 pr-2">
+          <p className="text-[12px] text-zinc-600 tabular-nums">
+            {changedCount} 人有未保存的权限更改
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3 text-[12px] text-zinc-500 hover:text-zinc-800"
+              onClick={handleCancelPermissions}
+              disabled={!hasPermissionChanges || actionDisabled}
+            >
+              取消
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 rounded-[10px] bg-zinc-900 px-3 text-[12px] text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
+              onClick={handleSavePermissions}
+              disabled={!hasPermissionChanges || actionDisabled}
+            >
+              {isSavingPermissions ? "保存中…" : "保存"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {filteredMembers.length === 0 ? (
-        <p className="text-sm text-zinc-500">暂无可管理成员</p>
+        <p className="py-10 text-center text-[13px] text-zinc-400">暂无可管理成员</p>
       ) : (
         <>
-          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-zinc-500">
-                成员筛选：当前显示 {filteredMembers.length} / {visibleMembers.length} 人
-              </p>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="team-filter" className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
-                  团队
-                </Label>
-                <Select
-                  value={teamFilter}
-                  onValueChange={(value) => {
-                    setTeamFilter(value as TeamFilter);
-                    setPmPage(1);
-                    setPmShowAll(false);
-                  }}
-                >
-                  <SelectTrigger id="team-filter" className="h-10 w-[150px] bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部团队</SelectItem>
-                    {teamOptions.map((teamName) => (
-                      <SelectItem key={teamName} value={teamName}>
-                        {teamName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Label htmlFor="member-search" className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400 sm:w-20">
-                搜索成员
-              </Label>
-              <Input
-                id="member-search"
-                value={searchQuery}
-                onChange={(event) => {
-                  setSearchQuery(event.target.value);
-                  setPmPage(1);
-                  setPmShowAll(false);
-                }}
-                placeholder="输入姓名、邮箱或团队"
-                className="h-10 rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:max-w-xs"
-              />
-            </div>
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_110px_80px_minmax(0,1fr)] items-center gap-4 border-b border-zinc-200 pb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+            <span>成员</span>
+            <span>团队</span>
+            <span>角色</span>
+            <span>权限</span>
+            <span className="text-right">操作</span>
           </div>
 
-          {capabilities.canEditPermissions ? (
-            <div
-              className={cn(
-                "flex flex-col gap-3 rounded-xl p-3 sm:flex-row sm:items-center sm:justify-between",
-                hasPermissionChanges
-                  ? "bg-zinc-50 border border-[#D99E55]/30 border-l-[2px] border-l-[#D99E55]"
-                  : "bg-zinc-50 border border-zinc-200"
-              )}
-            >
-              <p className="text-[13px] text-zinc-500">
-                {hasPermissionChanges ? "有未保存更改" : "管理员权限支持批量勾选后统一保存"}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  className="h-10 rounded-[10px] border-zinc-200"
-                  onClick={handleCancelPermissions}
-                  disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
-                >
-                  取消
-                </Button>
-                <Button
-                  className="h-10 rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
-                  onClick={handleSavePermissions}
-                  disabled={!hasPermissionChanges || isSavingPermissions || isChangingRole}
-                >
-                  {isSavingPermissions ? "保存中..." : "保存"}
-                </Button>
-              </div>
-            </div>
-          ) : null}
+          <div className="divide-y divide-zinc-100">
+            {pagedMembers.map((member) => {
+              const canChangeRoleForThis =
+                capabilities.canChangeRole &&
+                canChangeMemberRole({
+                  actorRole: currentUserRole,
+                  actorId: currentUserId,
+                  actorPermissions: currentUserPermissions,
+                  actorTeamId: currentActor?.teamId ?? null,
+                  targetId: member.id,
+                  targetRole: member.role,
+                  targetPermissions: member.permissions,
+                  targetTeamId: member.teamId ?? null,
+                  newRole: member.role === "member" ? "admin" : "member",
+                });
+              const canRemoveForThis =
+                capabilities.canRemoveMember &&
+                canRemoveMemberTarget({
+                  actorRole: currentUserRole,
+                  actorId: currentUserId,
+                  actorPermissions: currentUserPermissions,
+                  actorTeamId: currentActor?.teamId ?? null,
+                  targetId: member.id,
+                  targetRole: member.role,
+                  targetPermissions: member.permissions,
+                  targetTeamId: member.teamId ?? null,
+                });
 
-          <div className="space-y-0">
-            {pagedMembers.map((member) => (
-              <div key={member.id} className="py-4 border-b border-zinc-100 last:border-b-0">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-[13px] font-medium text-zinc-800">{member.name}</span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-[10px] px-2.5 py-0.5 text-[12px] font-medium",
-                        member.role === "admin"
-                          ? "bg-amber-50 text-amber-700 border border-amber-200"
-                          : "bg-zinc-50 text-zinc-600 border border-zinc-200"
-                      )}
-                    >
-                      {member.role === "admin" ? "管理员" : "成员"}
-                    </span>
-                    <span className="inline-flex items-center rounded-[10px] border border-zinc-200 px-2.5 py-0.5 text-[12px] text-zinc-500">
-                      {getTeamLabel(member.teamName)}
-                    </span>
-                    <span className="text-[13px] text-zinc-500">{member.email || "未记录邮箱"}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {capabilities.canRemoveMember &&
-                    canRemoveMemberTarget({
-                      actorRole: currentUserRole,
-                      actorId: currentUserId,
-                      actorPermissions: currentUserPermissions,
-                      actorTeamId: currentActor?.teamId ?? null,
-                      targetId: member.id,
-                      targetRole: member.role,
-                      targetPermissions: member.permissions,
-                      targetTeamId: member.teamId ?? null,
-                    }) ? (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 text-zinc-500 hover:text-zinc-800"
-                          onClick={() =>
-                            openPasswordResetDialog(
-                              member.id,
-                              member.name,
-                              member.email,
-                              member.teamName,
-                            )
-                          }
-                          disabled={
-                            isChangingRole || isSavingPermissions || isRemoving || isResettingPassword
-                          }
-                        >
-                          重置密码
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-9 text-zinc-500 hover:text-[#C9604D]"
-                          onClick={() =>
-                            setRemoveTarget({ memberId: member.id, memberName: member.name })
-                          }
-                          disabled={
-                            isChangingRole || isSavingPermissions || isRemoving || isResettingPassword
-                          }
-                        >
-                          移除
-                        </Button>
-                      </>
-                    ) : null}
-
-                    {capabilities.canChangeRole ? (
-                      <Select
-                        value={member.role}
-                        onValueChange={(value) =>
-                          requestRoleChange(member.id, member.name, value as "member" | "admin")
-                        }
-                        disabled={
-                          isChangingRole || isSavingPermissions || isRemoving || isResettingPassword
-                        }
-                      >
-                        <SelectTrigger className="h-9 w-full sm:w-28 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">管理员</SelectItem>
-                          <SelectItem value="member">成员</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : null}
-                  </div>
-                </div>
-
-                {member.role === "admin" && capabilities.canEditPermissions ? (
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 bg-zinc-50 rounded-xl p-3">
-                    {PERMISSION_KEYS.map((key) => (
-                      <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer">
-                        <Checkbox
-                          checked={member.permissions[key] === true}
-                          onCheckedChange={(checked) =>
-                            handlePermToggle(member.id, key, checked === true)
-                          }
-                          disabled={isSavingPermissions || isChangingRole}
-                        />
-                        <span className="text-zinc-700">{PERMISSION_LABELS[key]}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ))}
+              return (
+                <MemberRow
+                  key={member.id}
+                  member={member}
+                  canEditPermissions={capabilities.canEditPermissions}
+                  canChangeRoleForThis={canChangeRoleForThis}
+                  canRemoveForThis={canRemoveForThis}
+                  disabled={actionDisabled}
+                  onRoleChange={requestRoleChange}
+                  onOpenPasswordReset={openPasswordResetDialog}
+                  onOpenRemove={openRemoveDialog}
+                  onOpenEditPerm={openEditPermDialog}
+                />
+              );
+            })}
           </div>
 
           {filteredMembers.length > 10 ? (
@@ -532,7 +608,7 @@ export function PermissionManager({
                         "h-8 w-8 p-0 text-[12px] rounded-[10px]",
                         page === pmPage
                           ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60"
-                          : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                          : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50",
                       )}
                     >
                       {page}
@@ -564,6 +640,52 @@ export function PermissionManager({
           ) : null}
         </>
       )}
+
+      <Dialog
+        open={editPermTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditPermTarget(null);
+        }}
+      >
+        <DialogContent className="rounded-2xl bg-white border border-zinc-200 shadow-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {editPermTarget ? `${editPermTarget.memberName} 的权限` : "权限"}
+            </DialogTitle>
+            <DialogDescription>
+              勾选变更后点击下方保存，或关闭弹窗后在顶部批量保存。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1">
+            {editingMember
+              ? PERMISSION_KEYS.map((key) => (
+                  <label
+                    key={key}
+                    className="flex cursor-pointer items-center justify-between gap-4 rounded-lg px-2 py-2 transition-[background-color] duration-150 hover:bg-zinc-50"
+                  >
+                    <span className="text-[13px] text-zinc-700">{PERMISSION_LABELS[key]}</span>
+                    <Checkbox
+                      checked={editingMember.permissions[key] === true}
+                      onCheckedChange={(checked) =>
+                        handlePermToggle(editingMember.id, key, checked === true)
+                      }
+                      disabled={isSavingPermissions}
+                    />
+                  </label>
+                ))
+              : null}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              className="h-9 text-[12px] text-zinc-500 hover:text-zinc-800"
+              onClick={() => setEditPermTarget(null)}
+            >
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={passwordResetTarget !== null}
