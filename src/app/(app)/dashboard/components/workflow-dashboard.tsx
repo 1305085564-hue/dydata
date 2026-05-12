@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertCircle, ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { submitSopCheckpointAction } from "@/app/actions/sop";
@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import type { SopCheckpoint, SopMemberStatus } from "@/types";
 import { StatusBadge } from "./status-badge";
 import {
-  MATRIX_CHECKPOINTS,
   PRODUCTION_CHECKPOINTS,
   STATUS_THEME,
   emptyMember,
@@ -23,7 +22,6 @@ interface WorkflowDashboardProps {
   hasTodayReport: boolean;
   isPending: boolean;
   activeCheckpoint: SopCheckpoint;
-  onCheckpointChange: (checkpoint: SopCheckpoint) => void;
   onSubmitted: (nextMine?: SopMemberStatus) => void;
   dataReport: React.ReactNode;
 }
@@ -38,7 +36,6 @@ export function WorkflowDashboard({
   hasTodayReport,
   isPending,
   activeCheckpoint,
-  onCheckpointChange,
   onSubmitted,
   dataReport,
 }: WorkflowDashboardProps) {
@@ -58,10 +55,6 @@ export function WorkflowDashboard({
       ? ("APPROVED" as const)
       : (mine?.statuses.DATA_REPORT ?? "IDLE"),
   };
-  const currentStep = Math.max(
-    MATRIX_CHECKPOINTS.findIndex((checkpoint) => checkpoint.id === activeCheckpoint),
-    0,
-  );
   const scriptSubmission = mine ? getLatestSubmission(mine, "SCRIPT") : null;
   const activeStatus = statuses[activeCheckpoint];
   const stageTitle =
@@ -135,53 +128,6 @@ export function WorkflowDashboard({
 
   return (
     <div className="mx-auto max-w-6xl space-y-10">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <div className="relative flex justify-between px-2">
-          <div className="absolute left-0 top-5 z-0 h-[2px] w-full bg-zinc-200" />
-          {MATRIX_CHECKPOINTS.map((cp, idx) => {
-            const Icon = cp.icon;
-            const status = statuses[cp.id];
-            const isActive = idx === currentStep;
-            const isDone = status === "APPROVED";
-            const isRejected = status === "REJECTED";
-            const theme = STATUS_THEME[status];
-            return (
-              <button
-                key={cp.id}
-                onClick={() => onCheckpointChange(cp.id)}
-                className="relative z-10 flex flex-col items-center focus-visible:outline-none"
-              >
-                <div
-                  className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-[10px] border bg-white text-zinc-400 shadow-sm transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    isDone && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
-                    isRejected && "border-[#C9604D] text-[#C9604D]",
-                    isActive && "border-zinc-900 bg-zinc-900 text-white ring-1 ring-zinc-950/5",
-                    !isDone && !isRejected && !isActive && "border-zinc-200",
-                  )}
-                >
-                  {isDone ? (
-                    <CheckCircle2 size={18} className="stroke-[1.5]" />
-                  ) : isRejected ? (
-                    <AlertCircle size={18} className="stroke-[1.5]" />
-                  ) : (
-                    <Icon size={16} className="stroke-[1.5]" />
-                  )}
-                </div>
-                <span
-                  className={cn(
-                    "mt-3 text-center text-[10px] font-medium uppercase tracking-[0.25em] transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    isActive ? "text-zinc-800" : theme.color,
-                  )}
-                >
-                  {cp.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {activeCheckpoint === "DATA_REPORT" ? (
         <>{dataReport}</>
       ) : activeCheckpoint === "MORNING_REVIEW" ? (

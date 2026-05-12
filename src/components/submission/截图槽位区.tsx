@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
 
 import { containerVariants, itemVariants } from "@/lib/animations";
-import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
 import { SubmissionSlotCard } from "./截图槽位卡";
 
@@ -41,8 +38,6 @@ export function SubmissionSlotsSection({
   focusedRole = null,
   highlightedOcrIndex = null,
 }: SubmissionSlotsProps) {
-  const [showSlot3, setShowSlot3] = useState(false);
-
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -67,28 +62,6 @@ export function SubmissionSlotsSection({
       <div className="flex flex-col gap-4">
         {SLOT_META.map((item) => {
           const slot = slots[item.role];
-
-          if (item.role === "screenshot_3" && !showSlot3 && !slot.assetUrl && slot.status === "empty") {
-            const isHighlighted = focusedRole === item.role;
-            return (
-              <motion.div key={item.role} variants={itemVariants}>
-                <button
-                  type="button"
-                  onClick={() => setShowSlot3(true)}
-                  className={cn(
-                    "w-full flex items-center justify-center gap-2 h-11 rounded-xl border text-[13px] font-medium transition-all duration-200",
-                    isHighlighted
-                      ? "border-[#D97757] bg-[#D97757]/5 text-[#C96442] ring-1 ring-inset ring-[#D97757]/20 shadow-[0_6px_16px_-10px_rgba(217,119,87,0.45)]"
-                      : "border-dashed border-zinc-300 bg-white text-zinc-500 hover:border-[#D97757]/40 hover:bg-[#D97757]/[0.03] hover:text-[#C96442]"
-                  )}
-                >
-                  展开上传导粉截图（可选）
-                  <ChevronDown className="size-4 opacity-60" />
-                </button>
-              </motion.div>
-            );
-          }
-
           return (
             <motion.div key={item.role} variants={itemVariants}>
               <SubmissionSlotCard

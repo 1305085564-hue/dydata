@@ -26,7 +26,7 @@ import {
   setDashboardDate,
 } from "@/lib/dashboard-store";
 
-import { AlertCenter } from "./components/alert-center";
+import { AlertBeacon } from "./components/alert-beacon";
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
 import { FocusHeroCard } from "./components/focus-hero-card";
@@ -103,10 +103,6 @@ export function ProductionControlSystem({
   const [isPending, startTransition] = useTransition();
   const [alerts, setAlerts] = useState<DashboardAlertLike[]>([]);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
-  const [alertsExpanded, setAlertsExpanded] = useState(false);
-  const [expandedAlertUsers, setExpandedAlertUsers] = useState<Set<string>>(
-    new Set(),
-  );
   const submittedDates = useMemo(
     () =>
       Array.from(
@@ -226,14 +222,6 @@ export function ProductionControlSystem({
     () => groupDashboardAlerts(visibleAlerts),
     [visibleAlerts],
   );
-  const toggleAlertUser = (userKey: string) => {
-    setExpandedAlertUsers((prev) => {
-      const next = new Set(prev);
-      if (next.has(userKey)) next.delete(userKey);
-      else next.add(userKey);
-      return next;
-    });
-  };
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 antialiased">
@@ -253,16 +241,21 @@ export function ProductionControlSystem({
           userRole={userRole}
           alertCount={alertGroups.length}
           reviewRequestCount={teamReviewRequests.length}
+          activeCheckpoint={activeCheckpoint}
+          onCheckpointChange={setActiveCheckpoint}
+          checkpointStatuses={{
+            ...(mine?.statuses ?? {
+              DATA_REPORT: "IDLE",
+              MORNING_REVIEW: "IDLE",
+              TOPIC: "IDLE",
+              SCRIPT: "IDLE",
+              VIDEO: "IDLE",
+            }),
+            DATA_REPORT: todayReports.length > 0 ? "APPROVED" : (mine?.statuses.DATA_REPORT ?? "IDLE"),
+          }}
         />
 
-        <AlertCenter
-          groups={alertGroups}
-          expanded={alertsExpanded}
-          expandedUsers={expandedAlertUsers}
-          onToggleExpanded={() => setAlertsExpanded((prev) => !prev)}
-          onToggleUser={toggleAlertUser}
-          onDismissAlert={dismissAlert}
-        />
+        <AlertBeacon groups={alertGroups} onDismissAlert={dismissAlert} />
 
         {userRole === "member" && activeTab === "FLOW" && (
           <div className="mx-auto mb-6 max-w-6xl">
@@ -282,7 +275,6 @@ export function ProductionControlSystem({
             hasTodayReport={todayReports.length > 0}
             isPending={isPending}
             activeCheckpoint={activeCheckpoint}
-            onCheckpointChange={setActiveCheckpoint}
             onSubmitted={refreshSop}
             dataReport={
               <DataReportStage
