@@ -266,8 +266,8 @@ export function TeamGroupManager({
   if (!access.canView) return null;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex items-center border-l-2 border-[#D97757] pl-3">
           <h3 className="text-[15px] font-medium tracking-tight text-zinc-800">团队与分组</h3>
         </div>
@@ -353,8 +353,8 @@ export function TeamGroupManager({
             )}
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-3">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <div className="mb-2 flex items-center gap-2 text-[13px] font-medium">
               <UsersRound className="size-4" />
               直管组员
             </div>
@@ -374,7 +374,7 @@ export function TeamGroupManager({
 
         <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-4">
           {access.canEditGroups ? (
-            <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 md:grid-cols-[1fr_180px_auto]">
+            <div className="grid gap-2 rounded-2xl border border-zinc-200 bg-white p-4 md:grid-cols-[1fr_180px_auto]">
               <div className="space-y-1.5">
                 <Label htmlFor="new-group-name">创建组</Label>
                 <Input
@@ -423,7 +423,7 @@ export function TeamGroupManager({
           {currentGroup ? (
             <div className="space-y-4">
               {access.canEditGroups ? (
-                <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 md:grid-cols-[1fr_180px_auto]">
+                <div className="grid gap-2 rounded-2xl border border-zinc-200 bg-white p-4 md:grid-cols-[1fr_180px_auto]">
                   <div className="space-y-1.5">
                     <Label htmlFor="edit-group-name">编辑组名</Label>
                     <Input
@@ -470,16 +470,16 @@ export function TeamGroupManager({
               ) : null}
 
               <div className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                  <div className="mb-3 font-medium text-zinc-800">组内成员</div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="mb-2 font-medium text-zinc-800">组内成员</div>
                   <div className="space-y-2">
                     {groupMembers.length > 0 ? (
                       groupMembers.map((member) => (
                         <div
                           key={member.id}
-                          className="flex items-center justify-between gap-3 rounded-xl bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition"
+                          className="flex items-center justify-between gap-2 rounded-xl bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition"
                         >
-                          <span className="text-sm">{member.name}</span>
+                          <span className="text-[13px]">{member.name}</span>
                           {access.canEditGroups && member.role === "member" ? (
                             <Button
                               type="button"
@@ -500,14 +500,14 @@ export function TeamGroupManager({
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-zinc-500">暂无组员。</p>
+                      <p className="text-[13px] text-zinc-500">暂无组员。</p>
                     )}
                   </div>
                 </div>
 
                 {access.canEditGroups ? (
-                  <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                    <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="mb-2 flex items-center justify-between gap-2">
                       <div className="font-medium text-zinc-800">分配组员</div>
                       <Button
                         type="button"
@@ -524,11 +524,11 @@ export function TeamGroupManager({
                       {/* 未分配成员 */}
                       {unassignedMembers.length > 0 && (
                         <div className="space-y-2">
-                          <div className="text-xs font-medium text-zinc-500">未分配</div>
+                          <div className="text-[11px] font-medium text-zinc-500">未分配</div>
                           {unassignedMembers.map((member) => (
                             <label
                               key={member.id}
-                              className="flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-zinc-50 px-3 py-2 text-sm hover:bg-zinc-100 transition"
+                              className="flex cursor-pointer items-center justify-between gap-2 rounded-xl bg-zinc-50 px-3 py-2 text-[13px] hover:bg-zinc-100 transition"
                             >
                               <span className="flex items-center gap-2">
                                 <Checkbox
@@ -548,13 +548,13 @@ export function TeamGroupManager({
                         <div className="space-y-2">
                           {unassignedMembers.length > 0 && (
                             <div className="border-t border-zinc-200 pt-2">
-                              <div className="text-xs font-medium text-zinc-500">已分配</div>
+                              <div className="text-[11px] font-medium text-zinc-500">已分配</div>
                             </div>
                           )}
                           {assignedMembers.map((member) => (
                             <label
                               key={member.id}
-                              className="flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-zinc-50 px-3 py-2 text-sm hover:bg-zinc-100 transition"
+                              className="flex cursor-pointer items-center justify-between gap-2 rounded-xl bg-zinc-50 px-3 py-2 text-[13px] hover:bg-zinc-100 transition"
                             >
                               <span className="flex items-center gap-2">
                                 <Checkbox
@@ -572,7 +572,7 @@ export function TeamGroupManager({
                       )}
 
                       {unassignedMembers.length === 0 && assignedMembers.length === 0 && (
-                        <p className="text-sm text-zinc-500">无可分配成员。</p>
+                        <p className="text-[13px] text-zinc-500">无可分配成员。</p>
                       )}
                     </div>
                   </div>

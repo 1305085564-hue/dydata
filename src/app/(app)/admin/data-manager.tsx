@@ -352,7 +352,7 @@ export function DataManager({
         <TableCell colSpan={14} className="p-0">
           <div className="m-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
             <div className="mb-3 text-sm font-semibold text-zinc-800">编辑数据</div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
                 <label className="text-xs font-medium text-zinc-500">标题</label>
                 <Input
@@ -539,7 +539,7 @@ export function DataManager({
 
   function renderMobileEditPanel(report: (typeof reportsWithMeta)[number]) {
     return (
-      <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-3">
+      <div className="mt-2 space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
         <div className="text-sm font-semibold text-zinc-800">编辑数据</div>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-zinc-500">标题</label>
@@ -549,7 +549,7 @@ export function DataManager({
             className="h-8 bg-zinc-50 border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-zinc-500">播放量（万）</label>
             <Input
@@ -661,7 +661,7 @@ export function DataManager({
     const isEditing = editingId === report.id;
     return (
       <div key={report.id} className={`space-y-2 rounded-xl border border-zinc-200 bg-white p-4 ${isEditing ? "ring-1 ring-zinc-200" : ""}`}>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-2">
           <div className="space-y-1">
             <p className="text-sm font-medium text-zinc-800">{viewMode === "account" ? report.accountName : report.profileName}</p>
             <p className="max-w-[220px] truncate text-xs text-zinc-500">{report.title}</p>
@@ -743,8 +743,8 @@ export function DataManager({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
           <Input
             type="date"
             value={date}
@@ -778,8 +778,8 @@ export function DataManager({
       ) : viewMode === "profile" ? (
         <div className="space-y-6">
           {profileGroups.map((group) => (
-            <div key={group.profileId} className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div key={group.profileId} className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-[18px] font-medium text-zinc-800">{group.profileName}</h3>
@@ -798,7 +798,7 @@ export function DataManager({
                     ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-4">
                   <div>
                     <p className="text-zinc-500">总播放</p>
                     <p className="font-semibold font-mono tabular-nums text-zinc-800">{formatPlayCount(group.totalPlay)}</p>
@@ -847,7 +847,7 @@ export function DataManager({
                 </Table>
               </div>
 
-              <div className="space-y-3 md:hidden">{group.reports.map(renderMobileReportCard)}</div>
+              <div className="space-y-2 md:hidden">{group.reports.map(renderMobileReportCard)}</div>
             </div>
           ))}
         </div>
@@ -882,7 +882,7 @@ export function DataManager({
             </Table>
           </div>
 
-          <div className="space-y-3 md:hidden">{reportsWithMeta.map(renderMobileReportCard)}</div>
+          <div className="space-y-2 md:hidden">{reportsWithMeta.map(renderMobileReportCard)}</div>
         </>
       )}
 
