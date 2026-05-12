@@ -125,8 +125,12 @@ export function PermissionManager({
     canRemoveMemberTarget({
       actorRole: currentUserRole,
       actorId: currentUserId,
+      actorPermissions: currentUserPermissions,
+      actorTeamId: currentActor?.teamId ?? null,
       targetId: member.id,
       targetRole: member.role,
+      targetPermissions: member.permissions,
+      targetTeamId: member.teamId ?? null,
     }),
   );
   const visibleMembers = capabilities.canChangeRole ? roleChangeableMembers : removableMembers;
@@ -421,8 +425,12 @@ export function PermissionManager({
                     canRemoveMemberTarget({
                       actorRole: currentUserRole,
                       actorId: currentUserId,
+                      actorPermissions: currentUserPermissions,
+                      actorTeamId: currentActor?.teamId ?? null,
                       targetId: member.id,
                       targetRole: member.role,
+                      targetPermissions: member.permissions,
+                      targetTeamId: member.teamId ?? null,
                     }) ? (
                       <>
                         <Button

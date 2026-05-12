@@ -29,11 +29,11 @@ export async function executeAdminTool(input: ToolExecutionInput): Promise<ToolE
     case "getTaskStatus":
       return getTaskStatus(input.params);
     case "kickUser":
-      return kickUser(input.params, dryRun);
+      return kickUser(input.params, dryRun, input.context);
     case "changeUserRole":
       return changeUserRole(input.params, dryRun, input.context);
     case "updateUserPermissions":
-      return updateUserPermissions(input.params, dryRun);
+      return updateUserPermissions(input.params, dryRun, input.context);
     case "deleteMetrics":
       return deleteMetrics(input.params, dryRun);
     case "fillMissingData":
@@ -54,4 +54,3 @@ export async function executeAdminTool(input: ToolExecutionInput): Promise<ToolE
 }
 
 export type { ToolContext, ToolExecutionInput, ToolExecutionResult } from "./types";
-

@@ -26,8 +26,12 @@ export interface PermissionManagerCapabilities {
 export interface RemoveMemberTargetInput {
   actorRole: UserRole;
   actorId: string;
+  actorPermissions: Permissions;
+  actorTeamId?: string | null;
   targetId: string;
   targetRole: UserRole;
+  targetPermissions: Permissions;
+  targetTeamId?: string | null;
 }
 
 export interface ChangeMemberRoleInput {
@@ -95,13 +99,20 @@ export function canChangeMemberRole({
 export function canRemoveMemberTarget({
   actorRole,
   actorId,
+  actorPermissions,
+  actorTeamId,
   targetId,
   targetRole,
+  targetTeamId,
 }: RemoveMemberTargetInput) {
   if (actorId === targetId) return false;
   if (targetRole === "owner") return false;
   if (actorRole === "owner") return true;
-  return actorRole === "admin" && targetRole === "member";
+
+  const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
+  if (!actorIsTeamAdmin) return false;
+  if (!actorTeamId || actorTeamId !== targetTeamId) return false;
+  return targetRole === "member";
 }
 
 export function isProfileWriteApplied(result: AdminProfileWriteResult | null | undefined) {

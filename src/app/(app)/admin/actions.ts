@@ -595,15 +595,26 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
-  const { data: target } = await adminSupabase.from("profiles").select("role, name").eq("id", targetUserId).single();
+  const { data: profileRows, error: profileError } = await adminSupabase
+    .from("profiles")
+    .select("id, role, name, permissions, team_id")
+    .in("id", [perm.userId, targetUserId]);
+  if (profileError) return { error: profileError.message };
+
+  const actor = profileRows?.find((profile) => profile.id === perm.userId);
+  const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
     actorId: perm.userId,
+    actorPermissions: perm.permissions,
+    actorTeamId: actor?.team_id ?? null,
     targetId: targetUserId,
     targetRole: target.role as UserRole,
+    targetPermissions: (target.permissions ?? {}) as Permissions,
+    targetTeamId: target.team_id ?? null,
   })) {
-    return { error: perm.role === "admin" ? "管理员只能移除成员" : "不能移除该用户" };
+    return { error: perm.role === "admin" ? "负责人只能移除本团队组员" : "不能移除该用户" };
   }
 
   const { error: banError } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
@@ -649,15 +660,26 @@ export async function resetMemberPassword(
 
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
-  const { data: target } = await adminSupabase.from("profiles").select("role, name").eq("id", targetUserId).single();
+  const { data: profileRows, error: profileError } = await adminSupabase
+    .from("profiles")
+    .select("id, role, name, permissions, team_id")
+    .in("id", [perm.userId, targetUserId]);
+  if (profileError) return { error: profileError.message };
+
+  const actor = profileRows?.find((profile) => profile.id === perm.userId);
+  const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
     actorId: perm.userId,
+    actorPermissions: perm.permissions,
+    actorTeamId: actor?.team_id ?? null,
     targetId: targetUserId,
     targetRole: target.role as UserRole,
+    targetPermissions: (target.permissions ?? {}) as Permissions,
+    targetTeamId: target.team_id ?? null,
   })) {
-    return { error: perm.role === "admin" ? "管理员只能重置成员密码" : "不能重置该用户密码" };
+    return { error: perm.role === "admin" ? "负责人只能重置本团队组员密码" : "不能重置该用户密码" };
   }
 
   const { error } = await adminSupabase.auth.admin.updateUserById(targetUserId, {

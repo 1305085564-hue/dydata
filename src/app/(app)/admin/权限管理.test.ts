@@ -228,8 +228,10 @@ test("移除目标规则会拦住自己与越权目标", () => {
     canRemoveMemberTarget({
       actorRole: "owner",
       actorId: "owner-1",
+      actorPermissions: {},
       targetId: "member-1",
       targetRole: "member",
+      targetPermissions: {},
     }),
     true,
   );
@@ -238,8 +240,10 @@ test("移除目标规则会拦住自己与越权目标", () => {
     canRemoveMemberTarget({
       actorRole: "owner",
       actorId: "owner-1",
+      actorPermissions: {},
       targetId: "admin-1",
       targetRole: "admin",
+      targetPermissions: {},
     }),
     true,
   );
@@ -248,8 +252,10 @@ test("移除目标规则会拦住自己与越权目标", () => {
     canRemoveMemberTarget({
       actorRole: "owner",
       actorId: "owner-1",
+      actorPermissions: {},
       targetId: "owner-1",
       targetRole: "owner",
+      targetPermissions: {},
     }),
     false,
   );
@@ -258,8 +264,12 @@ test("移除目标规则会拦住自己与越权目标", () => {
     canRemoveMemberTarget({
       actorRole: "admin",
       actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
       targetId: "member-1",
       targetRole: "member",
+      targetPermissions: {},
+      targetTeamId: "team-1",
     }),
     true,
   );
@@ -268,8 +278,12 @@ test("移除目标规则会拦住自己与越权目标", () => {
     canRemoveMemberTarget({
       actorRole: "admin",
       actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
       targetId: "admin-2",
       targetRole: "admin",
+      targetPermissions: {},
+      targetTeamId: "team-1",
     }),
     false,
   );
@@ -278,8 +292,40 @@ test("移除目标规则会拦住自己与越权目标", () => {
     canRemoveMemberTarget({
       actorRole: "admin",
       actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
       targetId: "owner-1",
       targetRole: "owner",
+      targetPermissions: {},
+      targetTeamId: "team-1",
+    }),
+    false,
+  );
+
+  assert.equal(
+    canRemoveMemberTarget({
+      actorRole: "admin",
+      actorId: "admin-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "member-2",
+      targetRole: "member",
+      targetPermissions: {},
+      targetTeamId: "team-2",
+    }),
+    false,
+  );
+
+  assert.equal(
+    canRemoveMemberTarget({
+      actorRole: "admin",
+      actorId: "admin-1",
+      actorPermissions: { manage_members: false },
+      actorTeamId: "team-1",
+      targetId: "member-1",
+      targetRole: "member",
+      targetPermissions: {},
+      targetTeamId: "team-1",
     }),
     false,
   );
