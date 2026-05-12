@@ -25,7 +25,6 @@ interface DataReportStageProps {
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption: boolean;
-  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
   teamReviewRequests: DashboardPageData["teamReviewRequests"];
@@ -51,7 +50,6 @@ export function DataReportStage({
   ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption,
-  userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
   teamReviewRequests,
@@ -74,7 +72,6 @@ export function DataReportStage({
         ownContentDirections={ownContentDirections}
         accountDisplayNameMap={accountDisplayNameMap}
         hasPendingExemption={hasPendingExemption}
-        userExemptionReviewNotice={userExemptionReviewNotice}
         userExemptionProfile={userExemptionProfile}
         userExemptionGrants={userExemptionGrants}
         teamReviewRequests={teamReviewRequests}

@@ -26,7 +26,7 @@ import {
   setDashboardDate,
 } from "@/lib/dashboard-store";
 
-import { AlertBeacon } from "./components/alert-beacon";
+import { AssistantBeacon } from "./components/assistant-beacon";
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
 import { FocusHeroCard } from "./components/focus-hero-card";
@@ -103,6 +103,7 @@ export function ProductionControlSystem({
   const [isPending, startTransition] = useTransition();
   const [alerts, setAlerts] = useState<DashboardAlertLike[]>([]);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+  const [dismissedReviewNoticeIds, setDismissedReviewNoticeIds] = useState<Set<string>>(new Set());
   const submittedDates = useMemo(
     () =>
       Array.from(
@@ -215,9 +216,58 @@ export function ProductionControlSystem({
     };
   }, [today]);
 
-  const dismissAlert = (id: string) =>
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("dydata:dismissed-exemption-review-notices");
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) {
+        setDismissedReviewNoticeIds(
+          new Set(parsed.filter((item): item is string => typeof item === "string")),
+        );
+      }
+    } catch {}
+  }, []);
+
+  const dismissAlert = (id: string) => {
     setDismissedAlerts((prev) => new Set(prev).add(id));
-  const visibleAlerts = alerts.filter((a) => !dismissedAlerts.has(a.id));
+    if (userExemptionReviewNotice && id === `exemption-review-${userExemptionReviewNotice.id}`) {
+      setDismissedReviewNoticeIds((prev) => {
+        const next = new Set(prev).add(userExemptionReviewNotice.id);
+        try {
+          window.localStorage.setItem(
+            "dydata:dismissed-exemption-review-notices",
+            JSON.stringify(Array.from(next)),
+          );
+        } catch {}
+        return next;
+      });
+    }
+  };
+
+  const exemptionAlert = useMemo<DashboardAlertLike | null>(() => {
+    if (!userExemptionReviewNotice) return null;
+    if (dismissedReviewNoticeIds.has(userExemptionReviewNotice.id)) return null;
+    const approved = userExemptionReviewNotice.request_status === "approved";
+    return {
+      id: `exemption-review-${userExemptionReviewNotice.id}`,
+      severity: approved ? "info" : "critical",
+      message:
+        userExemptionReviewNotice.reason?.trim() ||
+        (approved
+          ? "管理员已批准你的豁免申请。"
+          : "管理员驳回了你的豁免申请。"),
+      userId: userId,
+      userName: userDisplayName,
+      checkpointLabel: approved ? "豁免已通过" : "豁免未通过",
+      sourceType: approved ? "exemption_approved" : "exemption_rejected",
+    };
+  }, [userExemptionReviewNotice, dismissedReviewNoticeIds, userId, userDisplayName]);
+
+  const visibleAlerts = useMemo(() => {
+    const base = alerts.filter((a) => !dismissedAlerts.has(a.id));
+    return exemptionAlert ? [exemptionAlert, ...base] : base;
+  }, [alerts, dismissedAlerts, exemptionAlert]);
+
   const alertGroups = useMemo(
     () => groupDashboardAlerts(visibleAlerts),
     [visibleAlerts],
@@ -253,9 +303,8 @@ export function ProductionControlSystem({
             }),
             DATA_REPORT: todayReports.length > 0 ? "APPROVED" : (mine?.statuses.DATA_REPORT ?? "IDLE"),
           }}
+          assistantSlot={<AssistantBeacon groups={alertGroups} onDismissAlert={dismissAlert} />}
         />
-
-        <AlertBeacon groups={alertGroups} onDismissAlert={dismissAlert} />
 
         {userRole === "member" && activeTab === "FLOW" && (
           <div className="mx-auto mb-6 max-w-6xl">
@@ -294,7 +343,6 @@ export function ProductionControlSystem({
                 ownContentDirections={ownContentDirections}
                 accountDisplayNameMap={accountDisplayNameMap}
                 hasPendingExemption={hasPendingExemption}
-                userExemptionReviewNotice={userExemptionReviewNotice}
                 userExemptionProfile={userExemptionProfile}
                 userExemptionGrants={userExemptionGrants}
                 teamReviewRequests={teamReviewRequests}

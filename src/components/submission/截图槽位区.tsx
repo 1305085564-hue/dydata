@@ -25,7 +25,6 @@ const SLOT_META: Array<{
 }> = [
   { role: "screenshot_1", title: "互动截图", description: "播放数据 + 互动数据 + 推流曲线", required: true },
   { role: "screenshot_2", title: "完播截图", description: "完播/均播/2s跳出/5s完播 + 跳出率/回看率曲线", required: true },
-  { role: "screenshot_3", title: "导粉截图（可选）", description: "补充截图", required: false },
 ];
 
 export function SubmissionSlotsSection({
@@ -47,7 +46,7 @@ export function SubmissionSlotsSection({
           </h3>
           <p className="text-[12px] leading-[1.7] text-zinc-500">
             {screenshotsRequired
-              ? "上传 2 张截图（必传），AI 自动识别图片类型。可选上传第 3 张补充截图。"
+              ? "上传 2 张截图（必传），AI 自动识别图片类型。"
               : "当前视频状态下截图改为可选。若能补传截图，系统仍会自动识别并回填数据。"}
           </p>
         </div>

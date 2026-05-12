@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import {
   Activity,
   CalendarDays,
@@ -34,6 +34,7 @@ interface DashboardWorkspaceHeaderProps {
   activeCheckpoint: SopCheckpoint;
   onCheckpointChange: (checkpoint: SopCheckpoint) => void;
   checkpointStatuses: Record<SopCheckpoint, string>;
+  assistantSlot?: ReactNode;
 }
 
 // 工序条（去掉早会复盘，保留 4 档）
@@ -68,6 +69,7 @@ export function DashboardWorkspaceHeader({
   activeCheckpoint,
   onCheckpointChange,
   checkpointStatuses,
+  assistantSlot,
 }: DashboardWorkspaceHeaderProps) {
   const dateInputRef = useRef<HTMLInputElement | null>(null);
   const reviewBadgeCount = alertCount + reviewRequestCount;
@@ -195,9 +197,14 @@ export function DashboardWorkspaceHeader({
         </div>
       )}
 
-      {/* 次行：工序 4 个（左 50%） + Tab（右） */}
-      <div className="grid grid-cols-12 items-center gap-4">
-        <div className="col-span-12 lg:col-span-7">
+      {/* 次行：工序 + Tab 融合为一张灰底卡 */}
+      <div className="relative grid grid-cols-12 items-stretch gap-0 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 shadow-sm">
+        {assistantSlot ? (
+          <div className="pointer-events-none absolute -right-2 -top-5 z-30">
+            <div className="pointer-events-auto">{assistantSlot}</div>
+          </div>
+        ) : null}
+        <div className="col-span-12 lg:col-span-7 min-w-0">
           <WorkflowStepper
             stages={WORKFLOW_STAGES}
             active={activeCheckpoint}
@@ -207,7 +214,7 @@ export function DashboardWorkspaceHeader({
         </div>
 
         <nav
-          className="col-span-12 flex gap-1 overflow-x-auto rounded-[10px] border border-zinc-200 bg-zinc-100 p-1 shadow-sm lg:col-span-5 lg:justify-end"
+          className="col-span-12 flex gap-1 overflow-x-auto rounded-[10px] lg:col-span-5 lg:justify-end"
           aria-label="工作区切换"
         >
           {tabs.map((tab) => (
@@ -216,15 +223,15 @@ export function DashboardWorkspaceHeader({
               type="button"
               onClick={() => onTabChange(tab.key)}
               className={cn(
-                "relative min-w-24 shrink-0 rounded-[8px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-1 focus-visible:ring-zinc-950/5",
+                "relative inline-flex min-w-24 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                 activeTab === tab.key
                   ? "bg-white text-zinc-800 shadow-sm"
                   : "text-zinc-500 hover:bg-white/60 hover:text-zinc-800",
               )}
             >
-              {tab.label}
+              <span>{tab.label}</span>
               {tab.key === "REVIEW" && reviewBadgeCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-semibold text-white">
+                <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#C9604D]/10 px-1 text-[10px] font-semibold tabular-nums text-[#C9604D]">
                   {reviewBadgeCount > 9 ? "9+" : reviewBadgeCount}
                 </span>
               )}
@@ -252,7 +259,7 @@ function WorkflowStepper({
   statuses: Record<SopCheckpoint, string>;
 }) {
   return (
-    <div className="relative flex items-center gap-2 rounded-[12px] border border-zinc-200 bg-white px-3 py-2 shadow-sm">
+    <div className="relative flex items-center gap-2 rounded-[10px] px-2 py-1">
       {stages.map((stage, idx) => {
         const Icon = stage.icon;
         const status = statuses[stage.id];
@@ -270,8 +277,8 @@ function WorkflowStepper({
             >
               <span
                 className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                  isActive && "border-zinc-900 bg-zinc-900 text-white",
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border transition-[background-color,color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  isActive && "border-zinc-900/80 bg-white text-zinc-900 ring-2 ring-zinc-900/10",
                   !isActive && isDone && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
                   !isActive && !isDone && isRejected && "border-[#C9604D] text-[#C9604D]",
                   !isActive && !isDone && !isRejected && "border-zinc-200 text-zinc-400 group-hover:border-zinc-300 group-hover:text-zinc-700",

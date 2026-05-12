@@ -1,3 +1,5 @@
+export type DashboardAlertSource = "sop" | "exemption_approved" | "exemption_rejected";
+
 export interface DashboardAlertLike {
   id: string;
   severity: string;
@@ -5,6 +7,7 @@ export interface DashboardAlertLike {
   userId?: string | null;
   userName: string;
   checkpointLabel?: string | null;
+  sourceType?: DashboardAlertSource;
 }
 
 export interface DashboardAlertGroup {
