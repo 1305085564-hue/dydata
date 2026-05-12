@@ -67,10 +67,10 @@ const FORMAT_OPTIONS: Array<{ value: FormatFilter; label: string }> = [
 
 function buildHref(sort: SortBy, format: FormatFilter) {
   const params = new URLSearchParams();
+  params.set("tab", "analytics");
   if (sort !== "rate") params.set("sort", sort);
   if (format !== "all") params.set("format", format);
-  const qs = params.toString();
-  return `/admin/conversion-hub/analytics${qs ? `?${qs}` : ""}`;
+  return `/admin/conversion-hub?${params.toString()}`;
 }
 
 function formatDayShort(iso: string) {

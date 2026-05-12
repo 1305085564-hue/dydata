@@ -134,10 +134,10 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/admin/conversion-hub"
+                href="/admin/conversion-hub?tab=scripts"
                 className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
               >
-                返回看板
+                返回概览
               </Link>
               <button
                 type="button"
@@ -223,14 +223,14 @@ function EmptyState({
       </p>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         <Link
-          href="/admin/conversion-hub/analytics"
+          href="/admin/conversion-hub?tab=analytics"
           className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 active:translate-y-0"
         >
           <Sparkles className="size-4" />
           去看转化分析
         </Link>
         <Link
-          href="/admin/violations"
+          href="/admin/conversion-hub?tab=violations"
           className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 active:translate-y-0"
         >
           <AlertTriangle className="size-4" />
