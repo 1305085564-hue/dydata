@@ -192,6 +192,42 @@ export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
                       </span>
                     )}
                   </Link>
+                  {item.href === "/admin/modules" && active && (
+                    <ul className="mt-0.5 ml-6 space-y-0.5 border-l border-zinc-200 py-1">
+                      <li>
+                        <a
+                          href="#permissions"
+                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
+                        >
+                          成员
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="#teams-groups"
+                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
+                        >
+                          团队
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="#team-directory"
+                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
+                        >
+                          目录
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="#data-tools"
+                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
+                        >
+                          治理
+                        </a>
+                      </li>
+                    </ul>
+                  )}
                 </li>
               );
             })}

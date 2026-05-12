@@ -38,8 +38,10 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
       indexItems={[
         { id: "permissions", label: "成员" },
         { id: "teams-groups", label: "团队" },
-        { id: "team-directory", label: "目录" },
-        { id: "data-tools", label: "治理" },
+        { label: "更多", items: [
+          { id: "team-directory", label: "目录" },
+          { id: "data-tools", label: "治理" },
+        ]},
       ]}
     >
       <AdminModulesContent

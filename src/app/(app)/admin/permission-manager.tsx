@@ -188,8 +188,8 @@ function MemberRow({
   })();
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_120px_96px_72px_32px] items-center gap-3 py-2 text-[12px]">
-      <span className="truncate font-medium text-zinc-800" title={member.name}>
+    <div className="grid grid-cols-[80px_132px_88px_64px_32px] items-center gap-3 py-2 text-[12px]">
+      <span className="truncate font-medium text-zinc-800 max-w-[80px]" title={member.name}>
         {member.name}
       </span>
 
@@ -205,7 +205,7 @@ function MemberRow({
           }}
           disabled={disabled}
         >
-          <SelectTrigger className="h-7 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
+          <SelectTrigger className="h-7 w-full min-w-0 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
             <SelectValue>{currentTeamName}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -228,7 +228,7 @@ function MemberRow({
           onValueChange={(value) => onRoleChange(member.id, member.name, value as "member" | "admin")}
           disabled={disabled}
         >
-          <SelectTrigger className="h-7 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
+          <SelectTrigger className="h-7 w-full min-w-0 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
             <SelectValue>{isAdmin ? "管理员" : "成员"}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -664,15 +664,15 @@ export function PermissionManager({
         <p className="py-10 text-center text-[13px] text-zinc-400">暂无可管理成员</p>
       ) : (
         <>
-          <div className="grid gap-x-8 md:grid-cols-2">
-            <div className="grid grid-cols-[minmax(0,1fr)_120px_96px_72px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          <div className="grid gap-x-6 md:grid-cols-2">
+            <div className="grid grid-cols-[80px_132px_88px_64px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
               <span>姓名</span>
               <span>团队</span>
               <span>角色</span>
               <span className="text-center">权限</span>
               <span className="text-right">操作</span>
             </div>
-            <div className="hidden grid-cols-[minmax(0,1fr)_120px_96px_72px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 md:grid">
+            <div className="hidden grid-cols-[80px_132px_88px_64px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 md:grid">
               <span>姓名</span>
               <span>团队</span>
               <span>角色</span>
@@ -681,7 +681,7 @@ export function PermissionManager({
             </div>
           </div>
 
-          <div className="grid gap-x-8 md:grid-cols-2">
+          <div className="grid gap-x-6 md:grid-cols-2">
             {pagedMembers.map((member, index) => {
               const canChangeRoleForThis =
                 capabilities.canChangeRole &&
