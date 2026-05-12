@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { loadGuidancePageData } from "@/lib/loaders/guidance-page";
 import { CultivationList } from "./cultivation-list";
 
@@ -24,42 +23,19 @@ export default async function GuidancePage() {
     <AdminWorkspaceLayout
       eyebrow="Conversion Guidance"
       title="转化指导"
-      description="从账号表现里筛出需要推进的人、方向和动作，作为转化中心的动作名单。"
-      indexItems={[
-        { id: "guidance-overview", label: "名单总览", hint: "账号、成员、样本" },
-        { id: "guidance-list", label: "动作名单", hint: "培养、干预、错配" },
-      ]}
+      description="从账号表现里筛出需要推进的人、方向和动作。"
+      indexItems={[]}
       className="pb-8"
     >
-    <AppShell width="full">
-      <AppShellHero
-        eyebrow="Guidance Console"
-        title="转化指导 / 动作名单"
-        description="按账号和近 30 天表现查看动作优先级，聚焦需要重点干预的人和方向。"
-        className="scroll-mt-8"
+      <section
+        id="guidance-list"
+        className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
       >
-        <div id="guidance-overview" className="sr-only" />
-        <AppShellMetricStrip
-          columns={4}
-          items={[
-            { label: "纳入账号", value: data.summary.accountCount, hint: "最近 30 天有数据的账号", tone: "primary" },
-            { label: "涉及成员", value: data.summary.ownerCount, hint: "当前参与分析的人数", tone: "neutral" },
-            { label: "样本总量", value: data.summary.reportCount, hint: "近 30 天日报样本", tone: "success" },
-            { label: "分析窗口", value: "30 天", hint: `${data.summary.monthAgo} 起`, tone: "neutral" },
-          ]}
-        />
-      </AppShellHero>
-
-      <AppShellSection
-        className="scroll-mt-8"
-        eyebrow="Guidance List"
-        title="动作名单"
-        description="按重点培养、下滑干预、方向错配三类视角查看。"
-      >
-        <div id="guidance-list" className="sr-only" />
+        <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">动作名单</h2>
+        </div>
         <CultivationList accounts={data.accounts} reports={data.reports} />
-      </AppShellSection>
-    </AppShell>
+      </section>
     </AdminWorkspaceLayout>
   );
 }

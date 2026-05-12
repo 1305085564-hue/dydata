@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -13,82 +12,78 @@ import type { MismatchItem } from "./guidance-utils";
 export function MismatchList({ items }: { items: MismatchItem[] }) {
   if (items.length === 0) {
     return (
-      <Card className="border-dashed border-zinc-200 bg-white">
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          近期未发现明显的方向错配账号
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-dashed border-zinc-200 bg-white py-10 text-center text-[13px] text-zinc-500">
+        近期未发现明显的方向错配账号
+      </div>
     );
   }
 
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-zinc-200 md:block">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>成员 / 账号</TableHead>
-              <TableHead>当前模式</TableHead>
-              <TableHead>实际表现</TableHead>
-              <TableHead>错配判断</TableHead>
-              <TableHead>建议调整</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">成员 / 账号</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">当前模式</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">实际表现</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">错配判断</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">建议调整</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((item) => (
-              <TableRow key={item.accountId}>
+              <TableRow key={item.accountId} className="h-11">
+                <TableCell className="align-top">
+                  <div className="space-y-0.5">
+                    <div className="text-[13px] font-medium text-zinc-800">{item.ownerName}</div>
+                    <div className="text-[12px] text-zinc-500">{item.accountName}</div>
+                  </div>
+                </TableCell>
+                <TableCell className="align-top">
+                  <Badge variant="outline" className="text-[12px]">{item.currentMode}</Badge>
+                </TableCell>
+                <TableCell className="align-top text-[13px] text-zinc-600">{item.actualPerformance}</TableCell>
                 <TableCell className="align-top">
                   <div className="space-y-1">
-                    <div className="font-medium text-foreground">{item.ownerName}</div>
-                    <div className="text-sm text-muted-foreground">{item.accountName}</div>
-                  </div>
-                </TableCell>
-                <TableCell className="align-top">
-                  <Badge variant="outline">{item.currentMode}</Badge>
-                </TableCell>
-                <TableCell className="align-top text-sm text-muted-foreground">{item.actualPerformance}</TableCell>
-                <TableCell className="align-top">
-                  <div className="space-y-2">
-                    <Badge variant="outline" className="border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]">
+                    <Badge variant="outline" className="border-zinc-200 bg-[#D99E55]/10 text-[12px] text-[#D99E55]">
                       {item.mismatchType}
                     </Badge>
-                    <p className="text-xs text-muted-foreground">可信度：{item.confidenceLabel}</p>
+                    <p className="text-[11px] text-zinc-400">可信度：{item.confidenceLabel}</p>
                   </div>
                 </TableCell>
-                <TableCell className="max-w-xs whitespace-normal text-sm text-muted-foreground">{item.suggestion}</TableCell>
+                <TableCell className="max-w-xs whitespace-normal text-[13px] text-zinc-600">{item.suggestion}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-2 md:hidden">
         {items.map((item) => (
-          <Card key={item.accountId} className="border-zinc-200 bg-white">
-            <CardContent className="space-y-4 pt-5">
-              <div className="space-y-1">
-                <div className="font-medium text-foreground">{item.ownerName}</div>
-                <div className="text-sm text-muted-foreground">{item.accountName}</div>
+          <div key={item.accountId} className="space-y-4 rounded-xl border border-zinc-200 bg-white p-4">
+            <div className="space-y-0.5">
+              <div className="text-[14px] font-medium text-zinc-800">{item.ownerName}</div>
+              <div className="text-[12px] text-zinc-500">{item.accountName}</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[12px]">{item.currentMode}</Badge>
+              <Badge variant="outline" className="border-zinc-200 bg-[#D99E55]/10 text-[12px] text-[#D99E55]">
+                {item.mismatchType}
+              </Badge>
+            </div>
+            <div className="space-y-2 rounded-xl bg-zinc-50 px-3 py-2 text-[13px]">
+              <div>
+                <p className="text-[11px] text-zinc-400">实际表现</p>
+                <p className="mt-1 text-zinc-700">{item.actualPerformance}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{item.currentMode}</Badge>
-                <Badge variant="outline" className="border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]">
-                  {item.mismatchType}
-                </Badge>
+              <div>
+                <p className="text-[11px] text-zinc-400">建议调整</p>
+                <p className="mt-1 text-zinc-700">{item.suggestion}</p>
               </div>
-              <div className="space-y-3 rounded-2xl bg-muted/50 px-3 py-3 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">实际表现</p>
-                  <p className="mt-1 text-foreground">{item.actualPerformance}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">建议调整</p>
-                  <p className="mt-1 text-foreground">{item.suggestion}</p>
-                </div>
-                <p className="text-xs text-muted-foreground">可信度：{item.confidenceLabel}</p>
-              </div>
-            </CardContent>
-          </Card>
+              <p className="text-[11px] text-zinc-400">可信度：{item.confidenceLabel}</p>
+            </div>
+          </div>
         ))}
       </div>
     </>

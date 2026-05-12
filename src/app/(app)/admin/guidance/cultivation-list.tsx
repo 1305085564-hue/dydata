@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -24,90 +22,77 @@ const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "mismatch", label: "方向错配" },
 ];
 
-function SummaryCard({ label, value, tone }: { label: string; value: number; tone: string }) {
-  return (
-    <Card className={`border-zinc-200 bg-white shadow-sm ${tone}`}>
-      <CardContent className="pt-6 pb-5">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-        <p className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
 function CultivationTable({ items }: { items: CultivationItem[] }) {
   if (items.length === 0) {
     return (
-      <Card className="border-dashed border-zinc-200 bg-white">
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          暂无符合条件的重点培养账号
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-dashed border-zinc-200 bg-white py-10 text-center text-[13px] text-zinc-500">
+        暂无符合条件的重点培养账号
+      </div>
     );
   }
 
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-zinc-200 md:block">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>成员 / 账号</TableHead>
-              <TableHead>分组</TableHead>
-              <TableHead>爆款率</TableHead>
-              <TableHead>进步幅度</TableHead>
-              <TableHead>建议动作</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">成员 / 账号</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">分组</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">爆款率</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">进步幅度</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">建议动作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((item) => (
-              <TableRow key={item.accountId}>
+              <TableRow key={item.accountId} className="h-11">
                 <TableCell className="align-top">
-                  <div className="space-y-1">
-                    <div className="font-medium text-foreground">{item.ownerName}</div>
-                    <div className="text-sm text-muted-foreground">{item.accountName}</div>
+                  <div className="space-y-0.5">
+                    <div className="text-[13px] font-medium text-zinc-800">{item.ownerName}</div>
+                    <div className="text-[12px] text-zinc-500">{item.accountName}</div>
                   </div>
                 </TableCell>
                 <TableCell className="align-top">
                   <div className="flex flex-wrap gap-1.5">
-                    <Badge variant="outline">{item.stageLabel}</Badge>
-                    <Badge variant="outline">{item.scaleLabel}</Badge>
-                    <Badge variant="outline">{item.formatLabel}</Badge>
+                    <Badge variant="outline" className="text-[12px]">{item.stageLabel}</Badge>
+                    <Badge variant="outline" className="text-[12px]">{item.scaleLabel}</Badge>
+                    <Badge variant="outline" className="text-[12px]">{item.formatLabel}</Badge>
                   </div>
                 </TableCell>
-                <TableCell className="font-medium">{item.metrics[0]?.value ?? "—"}</TableCell>
-                <TableCell className="font-medium text-[#6FAA7D]">{item.metrics[1]?.value ?? "—"}</TableCell>
-                <TableCell className="max-w-xs whitespace-normal text-sm text-muted-foreground">{item.action}</TableCell>
+                <TableCell className="text-[13px] font-medium text-zinc-700">{item.metrics[0]?.value ?? "—"}</TableCell>
+                <TableCell className="text-[13px] font-medium text-[#6FAA7D]">{item.metrics[1]?.value ?? "—"}</TableCell>
+                <TableCell className="max-w-xs whitespace-normal text-[13px] text-zinc-600">{item.action}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-2 md:hidden">
         {items.map((item) => (
-          <Card key={item.accountId} className="border-zinc-200 bg-white">
-            <CardContent className="space-y-4 pt-5">
-              <div className="space-y-1">
-                <div className="font-medium text-foreground">{item.ownerName}</div>
-                <div className="text-sm text-muted-foreground">{item.accountName}</div>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="outline">{item.stageLabel}</Badge>
-                <Badge variant="outline">{item.scaleLabel}</Badge>
-                <Badge variant="outline">{item.formatLabel}</Badge>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {item.metrics.map((metric) => (
-                  <div key={metric.label} className="rounded-2xl bg-muted/50 px-3 py-2">
-                    <p className="text-xs text-muted-foreground">{metric.label}</p>
-                    <p className="mt-1 font-medium text-foreground">{metric.value}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-xl bg-[#6FAA7D]/5 border border-[#6FAA7D]/15 px-3 py-3 text-[13px] text-[#6FAA7D]">{item.action}</div>
-            </CardContent>
-          </Card>
+          <div key={item.accountId} className="space-y-4 rounded-xl border border-zinc-200 bg-white p-4">
+            <div className="space-y-0.5">
+              <div className="text-[14px] font-medium text-zinc-800">{item.ownerName}</div>
+              <div className="text-[12px] text-zinc-500">{item.accountName}</div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="outline" className="text-[12px]">{item.stageLabel}</Badge>
+              <Badge variant="outline" className="text-[12px]">{item.scaleLabel}</Badge>
+              <Badge variant="outline" className="text-[12px]">{item.formatLabel}</Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[13px]">
+              {item.metrics.map((metric) => (
+                <div key={metric.label} className="rounded-xl bg-zinc-50 px-3 py-2">
+                  <p className="text-[11px] text-zinc-400">{metric.label}</p>
+                  <p className="mt-1 font-medium text-zinc-700">{metric.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl border border-[#6FAA7D]/15 bg-[#6FAA7D]/5 px-3 py-2 text-[13px] text-[#6FAA7D]">
+              {item.action}
+            </div>
+          </div>
         ))}
       </div>
     </>
@@ -118,51 +103,53 @@ export function CultivationList(props: GuidanceInput) {
   const [activeTab, setActiveTab] = useState<TabKey>("cultivation");
   const result = useMemo(() => buildGuidanceResult(props), [props]);
 
+  const counts = {
+    cultivation: result.cultivation.length,
+    intervention: result.intervention.length,
+    mismatch: result.mismatch.length,
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label="纳入账号" value={result.accountCount} tone="" />
-        <SummaryCard label="重点培养" value={result.cultivation.length} tone="" />
-        <SummaryCard label="下滑干预" value={result.intervention.length} tone="" />
-        <SummaryCard label="方向错配" value={result.mismatch.length} tone="" />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
+        <span>纳入账号 {result.accountCount}</span>
+        <span>重点培养 {counts.cultivation}</span>
+        <span>下滑干预 {counts.intervention}</span>
+        <span>方向错配 {counts.mismatch}</span>
       </div>
 
-      <Card className="border-zinc-200 bg-white shadow-sm">
-        <CardHeader className="space-y-3">
-          <CardTitle className="text-base font-semibold tracking-tight">管理名单</CardTitle>
-          <CardDescription>切换查看三张指导名单，桌面端以表格呈现，移动端自动降级为卡片列表。</CardDescription>
-          <div className="flex flex-wrap gap-2 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-sm">
-            {TABS.map((tab) => {
-              const count =
-                tab.key === "cultivation"
-                  ? result.cultivation.length
-                  : tab.key === "intervention"
-                    ? result.intervention.length
-                    : result.mismatch.length;
-              const active = activeTab === tab.key;
-              return (
-                <Button
-                  key={tab.key}
-                  variant={active ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={active ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"}
-                >
-                  {tab.label}
-                  <Badge variant={active ? "secondary" : "outline"} className="ml-1">
-                    {count}
-                  </Badge>
-                </Button>
-              );
-            })}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {activeTab === "cultivation" ? <CultivationTable items={result.cultivation} /> : null}
-          {activeTab === "intervention" ? <InterventionList items={result.intervention} /> : null}
-          {activeTab === "mismatch" ? <MismatchList items={result.mismatch} /> : null}
-        </CardContent>
-      </Card>
+      <div className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
+        {TABS.map((tab) => {
+          const count = counts[tab.key];
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-[12px] transition-[background-color,color] duration-150 ${
+                active
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              {tab.label}
+              <Badge
+                variant="outline"
+                className={`ml-0.5 text-[11px] ${
+                  active ? "border-zinc-200 bg-zinc-50" : "border-transparent bg-white/60"
+                }`}
+              >
+                {count}
+              </Badge>
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === "cultivation" ? <CultivationTable items={result.cultivation} /> : null}
+      {activeTab === "intervention" ? <InterventionList items={result.intervention} /> : null}
+      {activeTab === "mismatch" ? <MismatchList items={result.mismatch} /> : null}
     </div>
   );
 }
