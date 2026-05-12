@@ -46,7 +46,7 @@ export function AdminWorkspaceLayout({
         <aside className="hidden lg:block">
           <nav
             aria-label="页面索引"
-            className="sticky top-8 border-l border-zinc-200 text-[12px]"
+            className="sticky top-[calc(var(--app-top-offset)+1.25rem)] border-l border-zinc-200 text-[12px]"
           >
             {indexItems.map((item) => (
               <a
