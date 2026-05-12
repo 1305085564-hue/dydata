@@ -28,7 +28,7 @@ export function AdminWorkspaceLayout({
   className,
 }: AdminWorkspaceLayoutProps) {
   return (
-    <div className={cn("grid gap-8 xl:grid-cols-[minmax(0,1fr)_140px] xl:items-start", className)}>
+    <div className={cn("grid gap-8 xl:grid-cols-[minmax(0,1fr)_140px]", className)}>
       <div className="min-w-0 space-y-8">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -46,7 +46,7 @@ export function AdminWorkspaceLayout({
         <aside className="hidden xl:block">
           <nav
             aria-label="页面索引"
-            className="sticky top-8 border-l border-zinc-200 text-[12px]"
+            className="sticky top-[calc(var(--app-top-offset)+1.25rem)] border-l border-zinc-200 text-[12px]"
           >
             {indexItems.map((item) => (
               <a
