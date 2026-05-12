@@ -28,7 +28,7 @@ export function AdminWorkspaceLayout({
   className,
 }: AdminWorkspaceLayoutProps) {
   return (
-    <div className={cn("grid gap-8 xl:grid-cols-[minmax(0,1fr)_176px]", className)}>
+    <div className={cn("grid gap-8 xl:grid-cols-[minmax(0,1fr)_140px] xl:items-start", className)}>
       <div className="min-w-0 space-y-8">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -46,21 +46,15 @@ export function AdminWorkspaceLayout({
         <aside className="hidden xl:block">
           <nav
             aria-label="页面索引"
-            className="sticky top-8 space-y-2 border-l border-zinc-200 pl-4 text-[12px]"
+            className="sticky top-8 border-l border-zinc-200 text-[12px]"
           >
-            <p className="pb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">Index</p>
             {indexItems.map((item) => (
               <a
                 key={item.id}
                 href={`#${item.id}`}
-                className="group block rounded-lg px-2 py-2 text-zinc-500 transition hover:bg-white hover:text-zinc-900"
+                className="-ml-px block border-l-2 border-transparent py-1.5 pl-4 text-zinc-500 transition-[color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800"
               >
-                <span className="block font-medium">{item.label}</span>
-                {item.hint ? (
-                  <span className="mt-0.5 block line-clamp-1 text-[11px] text-zinc-400 group-hover:text-zinc-500">
-                    {item.hint}
-                  </span>
-                ) : null}
+                {item.label}
               </a>
             ))}
           </nav>

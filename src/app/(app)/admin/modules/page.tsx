@@ -36,10 +36,10 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
       title="权限模块"
       description="成员、角色、权限、团队、分组和邀请码都在这里维护；数据修正、审计和导出保留为后台治理能力。"
       indexItems={[
-        { id: "permissions", label: "成员权限", hint: "成员、角色、权限" },
-        { id: "teams-groups", label: "团队分组", hint: "团队、分组、组长" },
-        { id: "team-directory", label: "团队目录", hint: "团队名称维护" },
-        { id: "data-tools", label: "数据治理", hint: "修正、审计、导出" },
+        { id: "permissions", label: "成员" },
+        { id: "teams-groups", label: "团队" },
+        { id: "team-directory", label: "目录" },
+        { id: "data-tools", label: "治理" },
       ]}
     >
       <AdminModulesContent
