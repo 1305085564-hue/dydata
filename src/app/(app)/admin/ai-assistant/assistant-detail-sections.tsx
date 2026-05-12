@@ -11,7 +11,7 @@ export default function AssistantDetailSections({ details }: Props) {
   if (!details?.sections.length && !details?.nextSteps?.length) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {details.sections.map((section, index) => (
         <div key={`${section.title}-${index}`} className="space-y-2">
           <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export default function AssistantDetailSections({ details }: Props) {
       ))}
 
       {details.nextSteps?.length ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-3">
+        <div className="rounded-xl border border-zinc-200 bg-white p-4">
           <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
             Next Steps
           </div>

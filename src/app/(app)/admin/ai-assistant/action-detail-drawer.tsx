@@ -190,7 +190,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
           </div>
         </DialogHeader>
 
-        <div className="max-h-[75vh] space-y-5 overflow-y-auto custom-scrollbar px-6 py-5">
+        <div className="max-h-[75vh] space-y-4 overflow-y-auto custom-scrollbar px-6 py-6">
           {loading ? (
             <div className="flex flex-col items-center gap-2 py-12">
               <Skeleton className="h-4 w-24 rounded" />
@@ -267,7 +267,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                         <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-[#FAFAFB] px-3 py-1.5">
                           <CopyButton payload={formatJson(detail.toolParams)} />
                         </div>
-                        <pre className="overflow-x-auto bg-zinc-900 p-3 text-[11px] leading-relaxed text-zinc-200">
+                        <pre className="overflow-x-auto bg-zinc-900 p-4 text-[11px] leading-relaxed text-zinc-200">
                           {formatJson(detail.toolParams)}
                         </pre>
                       </CollapsibleContent>
@@ -286,7 +286,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                         <div className="flex items-center justify-end gap-2 border-t border-zinc-100 bg-[#FAFAFB] px-3 py-1.5">
                           <CopyButton payload={detail.backupSql} />
                         </div>
-                        <pre className="overflow-x-auto whitespace-pre-wrap bg-zinc-900 p-3 text-[11px] leading-relaxed text-[#D5E4D9]">
+                        <pre className="overflow-x-auto whitespace-pre-wrap bg-zinc-900 p-4 text-[11px] leading-relaxed text-[#D5E4D9]">
                           {detail.backupSql}
                         </pre>
                       </CollapsibleContent>

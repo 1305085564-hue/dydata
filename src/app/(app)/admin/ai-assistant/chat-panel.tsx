@@ -348,7 +348,7 @@ export default function ChatPanel({
                     onClick={() => sendMessage(shortcut.text)}
                     className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-[0_1px_0_rgba(0,0,0,0.02)] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:shadow-sm active:translate-y-0"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full bg-zinc-300 transition-colors group-hover:bg-[#6FAA7D]" />
@@ -444,7 +444,7 @@ export default function ChatPanel({
                       {msg.details && (
                         <div
                           className={cn(
-                            "mt-3 rounded-xl border bg-white p-3",
+                            "mt-2 rounded-xl border bg-white p-4",
                             msg.type === "result"
                               ? "border-zinc-200"
                               : msg.type === "error"
@@ -552,7 +552,7 @@ export default function ChatPanel({
 
           {/* Footer hints — Claude style tiny row */}
           <div className="mt-2 flex items-center justify-between px-2">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={onOpenHistory}
                 className="lg:hidden inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-zinc-700"
@@ -561,7 +561,7 @@ export default function ChatPanel({
                 <span>历史</span>
               </button>
             </div>
-            <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-zinc-400">
               <span className="flex items-center gap-1 normal-case tracking-wide">
                 <AtSign className="h-2.5 w-2.5" />
                 引用

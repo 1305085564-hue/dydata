@@ -84,7 +84,7 @@ export default function ConfirmCard({
 
         {/* Details */}
         {data.details && (
-          <div className="rounded-xl border border-zinc-200 bg-[#FAFAFB] p-3">
+          <div className="rounded-xl border border-zinc-200 bg-[#FAFAFB] p-4">
             <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
               Payload
             </div>
@@ -99,7 +99,7 @@ export default function ConfirmCard({
               <Terminal className="h-3 w-3" />
               Debug
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 border-t border-zinc-200 p-3">
+            <CollapsibleContent className="space-y-2 border-t border-zinc-200 p-4">
               {debug.backupSql && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-zinc-400">
