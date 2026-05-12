@@ -81,20 +81,28 @@ function formatDateTime(v: string | null) {
   }).format(d);
 }
 
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+      <h3 className="text-[14px] font-medium tracking-tight text-zinc-800">{children}</h3>
+    </div>
+  );
+}
+
 function InfoCell({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-background/80 p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm font-medium text-foreground">{children ?? value ?? "-"}</div>
+    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className="text-[11px] text-zinc-400">{label}</div>
+      <div className="mt-1 text-[13px] text-zinc-700">{children ?? value ?? "-"}</div>
     </div>
   );
 }
 
 function MetricCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-background/80 p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 text-base font-semibold text-foreground">{value}</div>
+    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className="text-[11px] text-zinc-400">{label}</div>
+      <div className="mt-1 text-[14px] font-medium text-zinc-800">{value}</div>
     </div>
   );
 }
@@ -228,21 +236,23 @@ export function ContentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-2xl border-zinc-200 bg-white">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">{video?.video_title || "内容详情"}</DialogTitle>
+          <DialogTitle className="text-[16px] font-medium tracking-tight text-zinc-800">
+            {video?.video_title || "内容详情"}
+          </DialogTitle>
         </DialogHeader>
 
         {video && (
-          <div className="space-y-4">
-            <section className="space-y-3 rounded-[24px] bg-muted/35 p-4">
-              <div className="text-sm font-semibold">基础信息</div>
-              <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-6">
+            <section className="space-y-2">
+              <SectionTitle>基础信息</SectionTitle>
+              <div className="grid gap-2 sm:grid-cols-2">
                 <InfoCell label="负责人" value={video.profiles.name} />
                 <InfoCell label="账号" value={video.accounts.name} />
                 <InfoCell label="发布时间" value={formatDateTime(video.published_at)} />
                 <InfoCell label="异常状态">
-                  <Badge variant="outline" className={`text-xs ${statusClassName[video.anomaly_status]}`}>
+                  <Badge variant="outline" className={`text-[11px] ${statusClassName[video.anomaly_status]}`}>
                     {video.anomaly_status}
                   </Badge>
                 </InfoCell>
@@ -252,7 +262,7 @@ export function ContentDetailDialog({
                       href={video.video_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="break-all text-primary underline underline-offset-2"
+                      className="break-all text-[#D97757] underline underline-offset-4"
                     >
                       {video.video_url}
                     </a>
@@ -263,14 +273,14 @@ export function ContentDetailDialog({
               </div>
 
               {video.content && (
-                <div className="rounded-2xl bg-background/80 p-3">
-                  <div className="mb-1 text-xs text-muted-foreground">文案原文</div>
-                  <div className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-relaxed">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                  <div className="mb-1 text-[11px] text-zinc-400">文案原文</div>
+                  <div className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
                     {contentExpanded ? video.content : video.content.slice(0, 220)}
                     {video.content.length > 220 && (
                       <button
                         type="button"
-                        className="ml-1 text-xs text-primary underline underline-offset-2"
+                        className="ml-1 text-[12px] text-[#D97757] underline underline-offset-4"
                         onClick={() => setContentExpanded((v) => !v)}
                       >
                         {contentExpanded ? "收起" : "展开全文"}
@@ -281,10 +291,10 @@ export function ContentDetailDialog({
               )}
             </section>
 
-            <section className="space-y-3 rounded-[24px] bg-muted/35 p-4">
-              <div className="text-sm font-semibold">结果数据</div>
+            <section className="space-y-2">
+              <SectionTitle>结果数据</SectionTitle>
               {snapshot ? (
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-2 sm:grid-cols-3">
                   <MetricCell label="播放量" value={formatNumber(snapshot.play_count)} />
                   <MetricCell label="2秒跳出率" value={formatRate(snapshot.bounce_rate_2s)} />
                   <MetricCell label="5秒完播率" value={formatRate(snapshot.completion_rate_5s)} />
@@ -296,37 +306,37 @@ export function ContentDetailDialog({
                   <MetricCell label="分享" value={formatNumber(snapshot.shares)} />
                 </div>
               ) : (
-                <div className="rounded-2xl bg-background/80 p-3 text-sm text-muted-foreground">暂无24h快照数据</div>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">暂无 24h 快照数据</div>
               )}
             </section>
 
-            <section className="space-y-3 rounded-[24px] bg-muted/35 p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">次日复盘</div>
+            <section className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <SectionTitle>次日复盘</SectionTitle>
                 {reviewed && (
-                  <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[12px] text-zinc-600">
+                  <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[11px] text-zinc-600">
                     已复盘
                   </Badge>
                 )}
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-background/80 p-3 space-y-1">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1 rounded-xl border border-zinc-200 bg-white p-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">样本可信度</span>
-                    <Badge variant="outline" className={`text-xs ${sampleLevelClass[credibility.level]}`}>
+                    <span className="text-[11px] text-zinc-400">样本可信度</span>
+                    <Badge variant="outline" className={`text-[11px] ${sampleLevelClass[credibility.level]}`}>
                       {credibility.label}
                     </Badge>
                   </div>
-                  <div className="text-xs text-muted-foreground">播放量：{snapshot ? formatNumber(snapshot.play_count) : "暂无数据"}</div>
-                  <div className="text-xs text-foreground/70">{credibility.guide}</div>
+                  <div className="text-[11px] text-zinc-500">播放量：{snapshot ? formatNumber(snapshot.play_count) : "暂无数据"}</div>
+                  <div className="text-[11px] text-zinc-500">{credibility.guide}</div>
                 </div>
 
-                <div className="rounded-2xl bg-background/80 p-3 space-y-1">
-                  <div className="text-xs text-muted-foreground">综合诊断</div>
-                  <div className="text-sm font-semibold">{reviewResult?.summary.one_line ?? "点击“一键次日复盘”生成诊断"}</div>
+                <div className="space-y-1 rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">综合诊断</div>
+                  <div className="text-[13px] font-medium text-zinc-800">{reviewResult?.summary.one_line ?? "点击上方「一键次日复盘」生成诊断"}</div>
                   {reviewResult?.anomaly_notice && (
-                    <div className="text-[12px] text-[#D99E55]">{reviewResult.anomaly_notice}</div>
+                    <div className="text-[11px] text-[#D99E55]">{reviewResult.anomaly_notice}</div>
                   )}
                 </div>
               </div>
@@ -335,7 +345,7 @@ export function ContentDetailDialog({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 rounded-xl text-xs"
+                  className="h-8 rounded-xl bg-white text-[12px]"
                   onClick={handleSegment}
                   disabled={isSegmenting || !video.content}
                 >
@@ -344,7 +354,7 @@ export function ContentDetailDialog({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 rounded-xl text-xs"
+                  className="h-8 rounded-xl bg-white text-[12px]"
                   onClick={() => handleReview(false)}
                   disabled={isReviewing || !snapshot}
                 >
@@ -352,33 +362,33 @@ export function ContentDetailDialog({
                 </Button>
               </div>
 
-              {!video.content && <div className="text-xs text-muted-foreground">暂无文案，无法拆段</div>}
-              {!snapshot && <div className="text-xs text-muted-foreground">暂无24h快照，无法触发次日复盘</div>}
+              {!video.content && <div className="text-[11px] text-zinc-500">暂无文案，无法拆段</div>}
+              {!snapshot && <div className="text-[11px] text-zinc-500">暂无 24h 快照，无法触发次日复盘</div>}
 
               {reviewResult && (
                 <>
-                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">对比结论</div>
+                  <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="text-[12px] font-medium text-zinc-700">对比结论</div>
 
                     <div className="space-y-2">
-                      <div className="text-xs text-muted-foreground">同账号30天基线</div>
+                      <div className="text-[11px] text-zinc-400">同账号 30 天基线</div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <MetricCell label="样本数" value={String(reviewResult.comparison.account_baseline.sample_count ?? 0)} />
                         <MetricCell label="播放量基线" value={formatNumber(reviewResult.comparison.account_baseline.play_count)} />
-                        <MetricCell label="2秒跳出率基线" value={formatRate(reviewResult.comparison.account_baseline.bounce_rate_2s)} />
-                        <MetricCell label="5秒完播率基线" value={formatRate(reviewResult.comparison.account_baseline.completion_rate_5s)} />
+                        <MetricCell label="2 秒跳出率基线" value={formatRate(reviewResult.comparison.account_baseline.bounce_rate_2s)} />
+                        <MetricCell label="5 秒完播率基线" value={formatRate(reviewResult.comparison.account_baseline.completion_rate_5s)} />
                         <MetricCell label="完播率基线" value={formatRate(reviewResult.comparison.account_baseline.completion_rate)} />
                         <MetricCell label="均播时长基线" value={reviewResult.comparison.account_baseline.avg_play_duration != null ? `${reviewResult.comparison.account_baseline.avg_play_duration}s` : "-"} />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="text-xs text-muted-foreground">同类基线</div>
+                      <div className="text-[11px] text-zinc-400">同类基线</div>
                       <div className="grid gap-2 sm:grid-cols-3">
-                        <MetricCell label="available" value={reviewResult.comparison.peer_baseline.available ? "true" : "false"} />
-                        <MetricCell label="sample_count" value={String(reviewResult.comparison.peer_baseline.sample_count ?? 0)} />
+                        <MetricCell label="是否可用" value={reviewResult.comparison.peer_baseline.available ? "可用" : "不可用"} />
+                        <MetricCell label="样本数" value={String(reviewResult.comparison.peer_baseline.sample_count ?? 0)} />
                         <MetricCell
-                          label="summary"
+                          label="摘要"
                           value={
                             reviewResult.comparison.peer_baseline.available
                               ? reviewResult.comparison.peer_baseline.summary || "-"
@@ -388,17 +398,17 @@ export function ContentDetailDialog({
                       </div>
                     </div>
 
-                    <div className="rounded-xl bg-muted/30 p-2 text-xs text-foreground/80">{comparisonSummary}</div>
+                    <div className="rounded-xl bg-zinc-50 p-2 text-[11px] text-zinc-600">{comparisonSummary}</div>
                   </div>
 
-                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">段落总览</div>
+                  <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="text-[12px] font-medium text-zinc-700">段落总览</div>
                     <div className="flex flex-wrap gap-2">
                       {renderedSegments.map((seg) => (
                         <button
                           key={seg.segment_order}
                           type="button"
-                          className="rounded-lg border border-border px-2 py-1 text-xs"
+                          className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50"
                           onClick={() => jumpToSegment(seg.segment_order)}
                         >
                           [{seg.segment_order + 1}] {seg.segment_type}
@@ -407,13 +417,13 @@ export function ContentDetailDialog({
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">整改指令</div>
+                  <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="text-[12px] font-medium text-zinc-700">整改指令</div>
                     <ol className="space-y-1">
                       {reviewResult.actions.instructions.map((inst, i) => (
-                        <li key={i} className="text-sm flex gap-2">
-                          <span className="shrink-0 font-medium text-primary">{i + 1}.</span>
-                      <span className="break-words">{inst}</span>
+                        <li key={i} className="flex gap-2 text-[13px]">
+                          <span className="shrink-0 font-medium text-[#D97757]">{i + 1}.</span>
+                          <span className="break-words text-zinc-700">{inst}</span>
                         </li>
                       ))}
                     </ol>
@@ -421,34 +431,34 @@ export function ContentDetailDialog({
 
                   {renderedSegments.length > 0 && (
                     <div className="space-y-2">
-                      <div className="text-xs font-medium text-foreground/70">段落详情</div>
+                      <div className="text-[11px] text-zinc-500">段落详情</div>
                       {renderedSegments.map((seg) => {
                         const expanded = expandedSegments.has(seg.segment_order);
                         return (
                           <div
                             key={seg.segment_order}
                             id={`review-segment-${seg.segment_order}`}
-                            className="rounded-xl border border-border/40 bg-background/60"
+                            className="rounded-xl border border-zinc-200 bg-white"
                           >
                             <button
                               type="button"
-                              className="flex w-full items-center gap-2 p-3 text-left"
+                              className="flex w-full items-center gap-2 p-4 text-left"
                               onClick={() => toggleSegment(seg.segment_order)}
                             >
-                              <Badge variant="outline" className={`shrink-0 text-xs ${healthClass[seg.health]}`}>
+                              <Badge variant="outline" className={`shrink-0 text-[11px] ${healthClass[seg.health]}`}>
                                 {seg.health === "ok" ? "正常" : seg.health === "warning" ? "注意" : "问题"}
                               </Badge>
-                              <span className="text-xs font-medium text-primary">[{seg.segment_order + 1}] {seg.segment_type}</span>
-                              <span className="flex-1 truncate text-xs text-muted-foreground">{seg.segment_text.slice(0, 36)}</span>
-                              <span className="text-xs text-muted-foreground">{expanded ? "▲" : "▼"}</span>
+                              <span className="text-[12px] font-medium text-[#D97757]">[{seg.segment_order + 1}] {seg.segment_type}</span>
+                              <span className="flex-1 truncate text-[12px] text-zinc-500">{seg.segment_text.slice(0, 36)}</span>
+                              <span className="text-[12px] text-zinc-400">{expanded ? "▲" : "▼"}</span>
                             </button>
                             {expanded && (
-                              <div className="space-y-2 border-t border-border/30 p-3 text-xs">
-                                <div><span className="text-muted-foreground">时间：</span>{seg.time_range}</div>
-                                <div className="max-h-32 overflow-y-auto break-words pr-1"><span className="text-muted-foreground">原文：</span>{seg.segment_text}</div>
-                                <div className="break-words"><span className="text-muted-foreground">判断：</span>{seg.judgement}</div>
-                                <div className="break-words"><span className="text-muted-foreground">依据：</span>{seg.reason}</div>
-                                <div className="break-words"><span className="text-muted-foreground">建议：</span><span className="font-medium">{seg.suggestion}</span></div>
+                              <div className="space-y-2 border-t border-zinc-100 p-4 text-[12px] text-zinc-600">
+                                <div><span className="text-zinc-400">时间：</span>{seg.time_range}</div>
+                                <div className="max-h-32 overflow-y-auto break-words"><span className="text-zinc-400">原文：</span>{seg.segment_text}</div>
+                                <div className="break-words"><span className="text-zinc-400">判断：</span>{seg.judgement}</div>
+                                <div className="break-words"><span className="text-zinc-400">依据：</span>{seg.reason}</div>
+                                <div className="break-words"><span className="text-zinc-400">建议：</span><span className="font-medium text-zinc-800">{seg.suggestion}</span></div>
                               </div>
                             )}
                           </div>
@@ -457,15 +467,15 @@ export function ContentDetailDialog({
                     </div>
                   )}
 
-                  <div className="rounded-2xl bg-background/80 p-3 space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">发给成员的话</div>
-                    <div className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-relaxed">
+                  <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="text-[12px] font-medium text-zinc-700">发给成员的话</div>
+                    <div className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
                       {reviewResult.actions.message_for_member}
                     </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="h-8 rounded-xl text-xs" onClick={handleCopy}>
+                    <Button size="sm" variant="outline" className="h-8 rounded-xl bg-white text-[12px]" onClick={handleCopy}>
                       复制整改建议
                     </Button>
                   </div>
@@ -474,11 +484,11 @@ export function ContentDetailDialog({
 
               {segments && segments.length > 0 && !reviewResult && (
                 <div className="space-y-1">
-                  <div className="text-xs font-medium text-foreground/70">文案切段（{segments.length} 段）</div>
+                  <div className="text-[11px] text-zinc-500">文案切段（{segments.length} 段）</div>
                   {segments.map((seg) => (
-                    <div key={seg.segment_order} className="rounded-xl bg-background/60 p-2 text-xs">
-                      <span className="mr-1 font-medium text-primary">[{seg.segment_order + 1}] {seg.segment_type}</span>
-                      <span className="break-words text-foreground/80">{seg.segment_text}</span>
+                    <div key={seg.segment_order} className="rounded-xl border border-zinc-200 bg-white p-2 text-[12px]">
+                      <span className="mr-1 font-medium text-[#D97757]">[{seg.segment_order + 1}] {seg.segment_type}</span>
+                      <span className="break-words text-zinc-700">{seg.segment_text}</span>
                     </div>
                   ))}
                 </div>

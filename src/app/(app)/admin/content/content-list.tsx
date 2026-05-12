@@ -409,19 +409,19 @@ export function ContentList({
           >
             <Table>
               <TableHeader className="sticky top-0 z-10">
-                <TableRow className="border-b border-zinc-200 bg-zinc-50">
-                  <TableHead className="w-16 text-[11px] uppercase tracking-wider text-zinc-500">排名</TableHead>
-                  <TableHead className="min-w-[200px] text-[11px] uppercase tracking-wider text-zinc-500">标题</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">人员</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">账号</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">发布时间</TableHead>
-                  <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">播放</TableHead>
-                  <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">2s跳出</TableHead>
-                  <TableHead className="text-right text-[11px] uppercase tracking-wider text-zinc-500">5s完播</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">样本状态</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">异常状态</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500">复盘状态</TableHead>
-                  <TableHead className="text-[11px] uppercase tracking-wider text-zinc-500"></TableHead>
+                <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
+                  <TableHead className="h-9 w-16 text-[12px] font-medium text-zinc-500">排名</TableHead>
+                  <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-zinc-500">标题</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">人员</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
+                  <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">播放</TableHead>
+                  <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">2s跳出</TableHead>
+                  <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">5s完播</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">样本状态</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">异常状态</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">复盘状态</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -453,10 +453,10 @@ export function ContentList({
                             : undefined
                         }
                       >
-                        <TableCell className="py-3 text-sm font-semibold font-mono tabular-nums text-zinc-400">
+                        <TableCell className="py-2 text-[13px] font-medium font-mono tabular-nums text-zinc-400">
                           #{index + 1}
                         </TableCell>
-                        <TableCell className="max-w-md py-3">
+                        <TableCell className="max-w-md py-2">
                           <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                             {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                           </div>
@@ -576,9 +576,9 @@ export function ContentList({
 
         {/* Right sidebar: mini timeline */}
         {filtered.length > PAGE_SIZE && (
-          <div className="hidden lg:flex flex-col items-center gap-3 py-4">
-            <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400 rotate-180" style={{ writingMode: "vertical-rl" }}>
-              Timeline
+          <div className="hidden flex-col items-center gap-4 py-4 lg:flex">
+            <span className="text-[11px] text-zinc-400" style={{ writingMode: "vertical-rl" }}>
+              时间轴
             </span>
             <MiniTimeline
               groups={timelineGroups}
@@ -586,7 +586,7 @@ export function ContentList({
               currentIndex={Math.min(currentIndex, filtered.length - 1)}
               onSeek={handleTimelineSeek}
             />
-            <span className="text-[10px] text-zinc-400 rotate-180" style={{ writingMode: "vertical-rl" }}>
+            <span className="text-[11px] text-zinc-400" style={{ writingMode: "vertical-rl" }}>
               {filtered.length} 条
             </span>
           </div>

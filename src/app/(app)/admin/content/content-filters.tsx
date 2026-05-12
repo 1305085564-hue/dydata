@@ -70,10 +70,10 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-4">
-      <div className="flex flex-wrap gap-3">
+    <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
+      <div className="flex flex-wrap gap-2">
         <Select value={filters.profileId} onValueChange={(v) => updateFilter("profileId", v ?? "all")}>
-          <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
+          <SelectTrigger className="h-9 w-36 rounded-xl bg-white text-[13px]">
             <SelectValue>{getContentFilterLabel({ type: "profile", value: filters.profileId, options: profiles })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -85,7 +85,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
         </Select>
 
         <Select value={filters.accountId} onValueChange={(v) => updateFilter("accountId", v ?? "all")}>
-          <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
+          <SelectTrigger className="h-9 w-36 rounded-xl bg-white text-[13px]">
             <SelectValue>{getContentFilterLabel({ type: "account", value: filters.accountId, options: accounts })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -97,7 +97,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
         </Select>
 
         <Select value={filters.status} onValueChange={(v) => updateFilter("status", v as AnomalyStatus | "all")}>
-          <SelectTrigger className="h-9 w-32 rounded-xl text-sm">
+          <SelectTrigger className="h-9 w-32 rounded-xl bg-white text-[13px]">
             <SelectValue>{getContentFilterLabel({ type: "status", value: filters.status })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -108,7 +108,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
         </Select>
 
         <Select value={filters.hasSnapshot} onValueChange={(v) => updateFilter("hasSnapshot", v as "all" | "yes" | "no")}>
-          <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
+          <SelectTrigger className="h-9 w-36 rounded-xl bg-white text-[13px]">
             <SelectValue>{getContentFilterLabel({ type: "hasSnapshot", value: filters.hasSnapshot })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -119,7 +119,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
         </Select>
 
         <Select value={filters.reviewed} onValueChange={(v) => updateFilter("reviewed", v as "all" | "yes" | "no")}>
-          <SelectTrigger className="h-9 w-32 rounded-xl text-sm">
+          <SelectTrigger className="h-9 w-32 rounded-xl bg-white text-[13px]">
             <SelectValue>{getContentFilterLabel({ type: "reviewed", value: filters.reviewed })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -130,7 +130,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
         </Select>
 
         <Select value={filters.rankScope} onValueChange={(v) => updateFilter("rankScope", v as "all" | "day" | "month")}>
-          <SelectTrigger className="h-9 w-36 rounded-xl text-sm">
+          <SelectTrigger className="h-9 w-36 rounded-xl bg-white text-[13px]">
             <SelectValue>{getContentFilterLabel({ type: "rankScope", value: filters.rankScope })}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -144,18 +144,18 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
           type="date"
           value={filters.startDate}
           onChange={(e) => updateFilter("startDate", e.target.value)}
-          className="h-9 w-36 rounded-xl text-sm"
+          className="h-9 w-36 rounded-xl bg-white text-[13px]"
           placeholder="开始日期"
         />
         <Input
           type="date"
           value={filters.endDate}
           onChange={(e) => updateFilter("endDate", e.target.value)}
-          className="h-9 w-36 rounded-xl text-sm"
+          className="h-9 w-36 rounded-xl bg-white text-[13px]"
           placeholder="结束日期"
         />
 
-        <Button variant="ghost" size="sm" onClick={handleReset} className="h-9 rounded-xl text-sm">
+        <Button variant="ghost" size="sm" onClick={handleReset} className="h-9 rounded-xl text-[13px]">
           重置
         </Button>
       </div>

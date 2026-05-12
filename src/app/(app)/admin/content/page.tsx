@@ -31,22 +31,22 @@ export default async function AdminContentPage({ searchParams }: Props) {
   const visibleVideos =
     view === "pending" ? data.videos.filter((video) => !reviewedSet.has(video.id)) : data.videos;
 
-  const metrics = [
-    { label: "待复盘", value: data.summary.pendingReviewCount, tone: "accent" as const },
-    { label: "已复盘", value: data.summary.reviewedCount, tone: "default" as const },
-    { label: "内容总量", value: data.summary.totalVideos, tone: "default" as const },
-    { label: "24h 样本", value: data.summary.snapshotCount, tone: "default" as const },
-  ];
-
   return (
     <AdminWorkspaceLayout
       eyebrow="Content Review"
       title="内容复盘"
       description="文案拆解、次日复盘、内容判断和下一步动作；原始视频资产留在视频资产页。"
-      indexItems={[{ id: "content-review-list", label: "复盘列表", hint: "文案、判断、动作" }]}
+      indexItems={[]}
     >
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <section
+        id="content-review-list"
+        className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
+      >
+        <div className="flex items-center justify-between border-l-2 border-[#D97757] pl-3">
+          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">复盘列表</h2>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
             <Link
               href="/admin/content?view=pending"
@@ -58,7 +58,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
               ].join(" ")}
             >
               待复盘
-              <span className="ml-1.5 text-[11px] text-[#D97757] font-mono tabular-nums">
+              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-[#D97757]">
                 {data.summary.pendingReviewCount}
               </span>
             </Link>
@@ -72,24 +72,19 @@ export default async function AdminContentPage({ searchParams }: Props) {
               ].join(" ")}
             >
               全部
-              <span className="ml-1.5 text-[11px] text-zinc-400 font-mono tabular-nums">
+              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
                 {data.summary.totalVideos}
               </span>
             </Link>
           </div>
 
-          <div className="flex items-center gap-5 text-[12px] text-zinc-500">
-            {metrics.slice(1).map((m) => (
-              <div key={m.label} className="flex items-baseline gap-1.5">
-                <span className="text-zinc-400">{m.label}</span>
-                <span className="font-mono tabular-nums text-zinc-700">{m.value}</span>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
+            <span>已复盘 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.reviewedCount}</span></span>
+            <span>内容总量 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.totalVideos}</span></span>
+            <span>24h 样本 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.snapshotCount}</span></span>
           </div>
         </div>
-      </section>
 
-      <section id="content-review-list" className="scroll-mt-8">
         <ContentList
           videos={visibleVideos}
           snapshots={data.snapshots}
