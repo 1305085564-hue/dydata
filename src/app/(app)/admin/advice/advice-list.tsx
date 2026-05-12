@@ -145,44 +145,37 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "待查看", value: stats.待查看, tone: "border-zinc-200 bg-zinc-50 text-zinc-700" },
-          { label: "待执行", value: stats.待执行, tone: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]" },
-          { label: "已执行", value: stats.已执行, tone: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]" },
-          { label: "已复核", value: stats.已复核, tone: "border-zinc-200 bg-zinc-50 text-zinc-700" },
-        ].map((card) => (
-          <div key={card.label} className={`rounded-2xl border p-5 shadow-sm ${card.tone}`}>
-            <div className="text-sm font-medium">{card.label}</div>
-            <div className="mt-3 text-3xl font-semibold tracking-tight">{card.value}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-sm font-medium text-foreground">建议池</div>
-          <div className="text-xs text-muted-foreground">当前共 {filteredRows.length} 条建议</div>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
+          <span>共 {filteredRows.length} 条</span>
+          <span>待查看 {stats.待查看}</span>
+          <span>待执行 {stats.待执行}</span>
+          <span>已执行 {stats.已执行}</span>
+          <span>已复核 {stats.已复核}</span>
         </div>
-        <Button onClick={handleGenerateBatch} disabled={isBatchRunning} className="h-11 rounded-2xl px-5">
+        <Button
+          onClick={handleGenerateBatch}
+          disabled={isBatchRunning}
+          className="h-9 rounded-xl bg-zinc-900 px-4 text-[13px] text-white hover:bg-zinc-800"
+        >
           {isBatchRunning ? "生成中..." : "一键生成建议"}
         </Button>
       </div>
 
       <AdviceFilters profiles={profiles} accounts={accounts} onFilter={setFilters} />
 
-      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4">目标员工</TableHead>
-              <TableHead>账号</TableHead>
-              <TableHead>建议摘要</TableHead>
-              <TableHead>来源</TableHead>
-              <TableHead>状态</TableHead>
-              <TableHead>创建时间</TableHead>
-              <TableHead className="px-4 text-right">操作</TableHead>
+              <TableHead className="h-9 px-4 text-[12px] font-medium text-zinc-500">目标员工</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">建议摘要</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">来源</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">状态</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">创建时间</TableHead>
+              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-zinc-500">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -192,37 +185,38 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
                 const targetAccount = pickSingle(item.target_account);
 
                 return (
-                  <TableRow key={item.id}>
-                    <TableCell className="px-4 font-medium">{targetProfile?.name || "-"}</TableCell>
-                    <TableCell>{targetAccount?.name || "-"}</TableCell>
+                  <TableRow key={item.id} className="h-10">
+                    <TableCell className="px-4 text-[13px] font-medium text-zinc-800">{targetProfile?.name || "-"}</TableCell>
+                    <TableCell className="text-[13px] text-zinc-600">{targetAccount?.name || "-"}</TableCell>
                     <TableCell className="max-w-[360px] whitespace-normal align-top">
-                      <div className="space-y-1">
-                        <div className="line-clamp-2 font-medium text-foreground">{buildSummary(item.advice_content)}</div>
-                        <div className="text-xs text-muted-foreground">{item.id.slice(0, 8)}</div>
-                      </div>
+                      <div className="line-clamp-2 text-[13px] text-zinc-700">{buildSummary(item.advice_content)}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-border/60 bg-muted/40 text-foreground">
+                      <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-[12px] text-zinc-600">
                         {SOURCE_LABELS[item.advice_source]}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={STATUS_STYLES[item.status]}>
+                      <Badge variant="outline" className={`text-[12px] ${STATUS_STYLES[item.status]}`}>
                         {item.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatDateTime(item.created_at)}</TableCell>
+                    <TableCell className="text-[12px] text-zinc-500">{formatDateTime(item.created_at)}</TableCell>
                     <TableCell className="px-4 text-right">
-                      <Button variant="outline" className="rounded-2xl bg-muted/40" onClick={() => setSelectedAdviceId(item.id)}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAdviceId(item.id)}
+                        className="text-[12px] text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline"
+                      >
                         查看详情
-                      </Button>
+                      </button>
                     </TableCell>
                   </TableRow>
                 );
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="px-4 py-16 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="px-4 py-16 text-center text-[13px] text-zinc-500">
                   当前筛选条件下暂无建议数据。
                 </TableCell>
               </TableRow>

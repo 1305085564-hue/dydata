@@ -39,6 +39,16 @@ const STATUS_STYLES = {
   已复核: "border-zinc-200 bg-zinc-100 text-zinc-700",
 } as const;
 
+type LocalStatus = "已查看" | "待执行" | "已执行" | "已忽略";
+
+function statusLabel(value: LocalStatus) {
+  return value;
+}
+
+function reviewLabel(value: ReviewResult) {
+  return value;
+}
+
 function pickSingle<T>(value: T | T[] | null | undefined): T | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;
@@ -57,10 +67,18 @@ function formatDateTime(value: string | null) {
   }).format(date);
 }
 
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+      <h3 className="text-[14px] font-medium tracking-tight text-zinc-800">{children}</h3>
+    </div>
+  );
+}
+
 export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, onUpdated }: AdviceDetailDialogProps) {
   const [reviewResult, setReviewResult] = useState<ReviewResult>("有效");
   const [isPending, startTransition] = useTransition();
-  const [localStatus, setLocalStatus] = useState<string>("已执行");
+  const [localStatus, setLocalStatus] = useState<LocalStatus>("已执行");
 
   const targetProfile = pickSingle(advice?.target_profile);
   const targetAccount = pickSingle(advice?.target_account);
@@ -111,74 +129,78 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 shadow-sm sm:max-w-4xl">
-        <DialogHeader className="border-b border-border/60 px-6 py-5 sm:px-7">
-          <DialogTitle className="text-xl font-semibold tracking-tight">转化建议详情</DialogTitle>
+      <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 sm:max-w-4xl">
+        <DialogHeader className="border-b border-zinc-200 px-6 py-4">
+          <DialogTitle className="text-[16px] font-medium tracking-tight text-zinc-800">转化建议详情</DialogTitle>
         </DialogHeader>
 
         {advice ? (
-          <div className="max-h-[80vh] space-y-6 overflow-y-auto px-6 py-6 sm:px-7">
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-2">
-                  <div className="text-lg font-semibold text-foreground">{targetProfile?.name || "未命名员工"}</div>
-                  <div className="text-sm text-muted-foreground">账号：{targetAccount?.name || "-"} · 来源：{advice.advice_source === "ai" ? "AI" : "管理员"}</div>
+          <div className="max-h-[80vh] space-y-6 overflow-y-auto px-6 py-6">
+            <section className="space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <div className="text-[15px] font-medium tracking-tight text-zinc-800">{targetProfile?.name || "未命名员工"}</div>
+                  <div className="text-[12px] text-zinc-500">账号：{targetAccount?.name || "-"} · 来源：{advice.advice_source === "ai" ? "AI" : "管理员"}</div>
                 </div>
-                <Badge variant="outline" className={STATUS_STYLES[advice.status]}>
+                <Badge variant="outline" className={`text-[12px] ${STATUS_STYLES[advice.status]}`}>
                   {advice.status}
                 </Badge>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">创建时间</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">{formatDateTime(advice.created_at)}</div>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">创建时间</div>
+                  <div className="mt-1 text-[13px] text-zinc-700">{formatDateTime(advice.created_at)}</div>
                 </div>
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">更新时间</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">{formatDateTime(advice.updated_at)}</div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">更新时间</div>
+                  <div className="mt-1 text-[13px] text-zinc-700">{formatDateTime(advice.updated_at)}</div>
                 </div>
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">下发管理员</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">{assignedProfile?.name || "-"}</div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">下发管理员</div>
+                  <div className="mt-1 text-[13px] text-zinc-700">{assignedProfile?.name || "-"}</div>
                 </div>
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">复核结果</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">{advice.review_result || "-"}</div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">复核结果</div>
+                  <div className="mt-1 text-[13px] text-zinc-700">{advice.review_result || "-"}</div>
                 </div>
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-[18px] font-medium text-foreground">完整建议</div>
-              <div className="max-h-64 overflow-y-auto rounded-2xl bg-background/80 p-4 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+            <section className="space-y-2">
+              <SectionTitle>完整建议</SectionTitle>
+              <div className="max-h-64 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
                 {advice.advice_content}
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-[18px] font-medium text-foreground">证据</div>
-              <div className="max-h-56 overflow-y-auto rounded-2xl bg-background/80 p-4 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+            <section className="space-y-2">
+              <SectionTitle>证据</SectionTitle>
+              <div className="max-h-56 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
                 {advice.evidence || "暂无证据"}
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-[18px] font-medium text-foreground">管理操作</div>
+            <section className="space-y-2">
+              <SectionTitle>管理操作</SectionTitle>
               <div className="grid gap-4 lg:grid-cols-3">
-                <div className="space-y-3 rounded-2xl bg-background/80 p-4">
-                  <div className="text-sm font-medium text-foreground">下发</div>
-                  <div className="text-xs text-muted-foreground">记录当前管理员并将状态更新为待执行。</div>
-                  <Button className="w-full rounded-2xl" disabled={isPending} onClick={() => submitAction({ action: "assign", actor: currentUserId })}>
+                <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[12px] font-medium text-zinc-700">下发</div>
+                  <div className="text-[11px] text-zinc-500">记录当前管理员并将状态更新为待执行。</div>
+                  <Button
+                    className="h-9 w-full rounded-xl bg-zinc-900 text-[13px] text-white hover:bg-zinc-800"
+                    disabled={isPending}
+                    onClick={() => submitAction({ action: "assign", actor: currentUserId })}
+                  >
                     {isPending ? "提交中..." : "标记为待执行"}
                   </Button>
                 </div>
 
-                <div className="space-y-3 rounded-2xl bg-background/80 p-4">
-                  <div className="text-sm font-medium text-foreground">状态更新</div>
-                  <Select value={localStatus} onValueChange={(value) => setLocalStatus(value || "已执行")}>
-                    <SelectTrigger className="h-11 rounded-2xl bg-muted/35">
-                      <SelectValue placeholder="选择状态" />
+                <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[12px] font-medium text-zinc-700">状态更新</div>
+                  <Select value={localStatus} onValueChange={(value) => setLocalStatus((value || "已执行") as LocalStatus)}>
+                    <SelectTrigger className="h-9 rounded-xl bg-white text-[13px]">
+                      <SelectValue>{statusLabel(localStatus)}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="已查看">已查看</SelectItem>
@@ -187,16 +209,21 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                       <SelectItem value="已忽略">已忽略</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" className="w-full rounded-2xl bg-muted/40" disabled={isPending} onClick={() => submitAction({ action: "status", status: localStatus })}>
+                  <Button
+                    variant="outline"
+                    className="h-9 w-full rounded-xl bg-white text-[13px]"
+                    disabled={isPending}
+                    onClick={() => submitAction({ action: "status", status: localStatus })}
+                  >
                     应用状态
                   </Button>
                 </div>
 
-                <div className="space-y-3 rounded-2xl bg-background/80 p-4">
-                  <div className="text-sm font-medium text-foreground">复核</div>
+                <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[12px] font-medium text-zinc-700">复核</div>
                   <Select value={reviewResult} onValueChange={(value) => setReviewResult(value as ReviewResult)}>
-                    <SelectTrigger className="h-11 rounded-2xl bg-muted/35">
-                      <SelectValue placeholder="选择复核结果" />
+                    <SelectTrigger className="h-9 rounded-xl bg-white text-[13px]">
+                      <SelectValue>{reviewLabel(reviewResult)}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="有效">有效</SelectItem>
@@ -204,34 +231,39 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                       <SelectItem value="不确定">不确定</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" className="w-full rounded-2xl bg-muted/40" disabled={isPending} onClick={() => submitAction({ action: "review", review_result: reviewResult })}>
+                  <Button
+                    variant="outline"
+                    className="h-9 w-full rounded-xl bg-white text-[13px]"
+                    disabled={isPending}
+                    onClick={() => submitAction({ action: "review", review_result: reviewResult })}
+                  >
                     提交复核
                   </Button>
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-background/80 p-4 text-xs text-muted-foreground">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[11px] text-zinc-500">
                 当前复核人：{reviewedProfile?.name || "-"}
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-[18px] font-medium text-foreground">关联视频</div>
+            <section className="space-y-2">
+              <SectionTitle>关联视频</SectionTitle>
               {relatedVideo ? (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  <div className="rounded-2xl bg-background/80 p-4">
-                    <div className="text-xs text-muted-foreground">视频标题</div>
-                    <div className="mt-1 line-clamp-3 break-words text-sm font-medium text-foreground">{relatedVideo.video_title?.trim() || "未命名视频"}</div>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="text-[11px] text-zinc-400">视频标题</div>
+                    <div className="mt-1 line-clamp-3 break-words text-[13px] text-zinc-700">{relatedVideo.video_title?.trim() || "未命名视频"}</div>
                   </div>
-                  <div className="rounded-2xl bg-background/80 p-4">
-                    <div className="text-xs text-muted-foreground">发布时间</div>
-                    <div className="mt-1 text-sm font-medium text-foreground">{formatDateTime(relatedVideo.published_at)}</div>
+                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="text-[11px] text-zinc-400">发布时间</div>
+                    <div className="mt-1 text-[13px] text-zinc-700">{formatDateTime(relatedVideo.published_at)}</div>
                   </div>
-                  <div className="rounded-2xl bg-background/80 p-4">
-                    <div className="text-xs text-muted-foreground">视频链接</div>
-                    <div className="mt-1 text-sm font-medium text-foreground break-all">
+                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="text-[11px] text-zinc-400">视频链接</div>
+                    <div className="mt-1 break-all text-[13px] text-zinc-700">
                       {relatedVideo.video_url ? (
-                        <a href={relatedVideo.video_url} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">
+                        <a href={relatedVideo.video_url} target="_blank" rel="noreferrer" className="text-[#D97757] underline underline-offset-4">
                           {relatedVideo.video_url}
                         </a>
                       ) : (
@@ -241,7 +273,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl bg-background/80 p-4 text-sm text-muted-foreground">暂无关联视频。</div>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">暂无关联视频。</div>
               )}
             </section>
           </div>
