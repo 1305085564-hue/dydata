@@ -91,7 +91,7 @@ function StatusStrip({ counts }: { counts: OverviewCounts | null }) {
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-2 rounded-2xl border border-zinc-200 bg-white px-5 py-3 shadow-sm">
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-y border-zinc-100 py-3">
       {items.map((item) => (
         <div key={item.label} className="flex items-baseline gap-2">
           <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">{item.label}</span>

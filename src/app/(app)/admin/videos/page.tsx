@@ -97,16 +97,14 @@ export default async function AdminVideosPage({ searchParams }: Props) {
         ) : null}
       </section>
 
-      <section id="video-asset-list" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <div className="mt-0">
-          <VideoList
-            videos={visibleVideos}
-            snapshots={data.snapshots}
-            profiles={data.profiles}
-            accounts={data.accounts}
-            videoTags={data.videoTags}
-          />
-        </div>
+      <section id="video-asset-list" className="scroll-mt-8">
+        <VideoList
+          videos={visibleVideos}
+          snapshots={data.snapshots}
+          profiles={data.profiles}
+          accounts={data.accounts}
+          videoTags={data.videoTags}
+        />
       </section>
     </AdminWorkspaceLayout>
   );

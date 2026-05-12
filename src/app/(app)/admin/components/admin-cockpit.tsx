@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ChevronRight,
-  FileCheck2,
   ShieldAlert,
   UserCheck2,
   Video,
@@ -112,7 +111,7 @@ function StatusBar({ date }: { date: string }) {
   const exemptions = data?.pending_exemptions ?? 0;
 
   return (
-    <div className="grid grid-cols-2 gap-6 rounded-2xl border border-zinc-200 bg-white px-6 py-4 shadow-sm md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-8 gap-y-3 border-y border-zinc-100 py-3 md:grid-cols-4">
       <StatCell label="待筛视频" value={videos} tone="warning" />
       <StatCell label="待审违规" value={violations} tone="danger" />
       <StatCell label="待催交成员" value={submissions} tone="warning" />
@@ -137,7 +136,7 @@ function QueueCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm">
+    <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white">
       <header className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
         <div className="flex items-center gap-2">
           <span className="text-zinc-500">{icon}</span>
@@ -156,7 +155,7 @@ function QueueCard({
           <ChevronRight className="size-3 stroke-[1.5]" />
         </Link>
       </header>
-      <div className="flex-1 px-5 py-3">
+      <div className="flex-1 px-5 py-2">
         {count === 0 ? (
           <p className="py-8 text-center text-[12px] text-zinc-400">{empty}</p>
         ) : (
@@ -182,12 +181,12 @@ function PendingVideosQueue({ date }: { date: string }) {
       empty="今天的视频都已打标且无异常"
       viewAllHref="/admin/videos?view=pending"
     >
-      <ul className="space-y-2">
+      <ul className="divide-y divide-zinc-100">
         {rows.slice(0, 6).map((row) => (
           <li key={row.id}>
             <Link
               href={`/admin/videos?focus=${row.id}`}
-              className="group flex items-start justify-between gap-3 rounded-lg px-2 py-2 transition-[background-color] duration-150 hover:bg-zinc-50"
+              className="group flex items-start justify-between gap-3 py-2 transition-[color] duration-150 hover:text-zinc-900"
             >
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-medium tracking-tight text-zinc-800">
@@ -232,14 +231,14 @@ function PendingViolationsQueue() {
       empty="当前没有需要复核的违规案例"
       viewAllHref="/admin/conversion-hub?tab=violations"
     >
-      <ul className="space-y-2">
+      <ul className="divide-y divide-zinc-100">
         {rows.slice(0, 6).map((row) => {
           const risk = RISK_LABEL[row.risk_level ?? ""] ?? null;
           return (
             <li key={row.id}>
               <Link
                 href={`/admin/conversion-hub?tab=violations&focus=${row.id}`}
-                className="group block rounded-lg px-2 py-2 transition-[background-color] duration-150 hover:bg-zinc-50"
+                className="group block py-2 transition-[color] duration-150 hover:text-zinc-900"
               >
                 <div className="flex items-start justify-between gap-3">
                   <p className="line-clamp-2 text-[13px] tracking-tight text-zinc-700">
@@ -330,7 +329,7 @@ function AnomalyBanner({ date }: { date: string }) {
   return (
     <Link
       href="/admin/modules?focus=exemption"
-      className="flex items-center justify-between gap-3 rounded-2xl border border-[#D99E55]/30 bg-[#D99E55]/5 px-5 py-3 transition-[background-color] duration-150 hover:bg-[#D99E55]/10"
+      className="flex items-center justify-between gap-3 border-l-2 border-[#D99E55] bg-[#D99E55]/5 px-5 py-3 transition-[background-color] duration-150 hover:bg-[#D99E55]/10"
     >
       <div className="flex items-center gap-3">
         <AlertTriangle className="size-4 stroke-[1.5] text-[#D99E55]" />
@@ -346,17 +345,13 @@ function AnomalyBanner({ date }: { date: string }) {
 export function AdminCockpit({ date }: { date: string }) {
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
-          Operating Cockpit
-        </p>
-        <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
           管理员中控台
         </h1>
-        <p className="mt-1 flex items-center gap-1.5 text-[13px] leading-[1.7] text-zinc-500">
-          <FileCheck2 className="size-3.5 stroke-[1.5]" />
-          今天要处理的事都在下面
-        </p>
+        <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
+          Operating Cockpit
+        </span>
       </div>
 
       <StatusBar date={date} />

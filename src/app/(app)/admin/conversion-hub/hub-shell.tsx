@@ -84,7 +84,7 @@ function StatusStrip({ weekStart, counts }: { weekStart: string; counts: Pipelin
     { label: "待落动作", value: counts?.advice_pending ?? 0, tone: "neutral" as const },
   ];
   return (
-    <div className="grid grid-cols-2 gap-6 rounded-2xl border border-zinc-200 bg-white px-6 py-4 shadow-sm md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-8 gap-y-3 border-y border-zinc-100 py-3 md:grid-cols-4">
       {items.map((item) => {
         const toneClass = {
           neutral: "text-zinc-800",
@@ -125,7 +125,7 @@ function TabNav({ active }: { active: HubTabKey }) {
   );
 
   return (
-    <nav className="flex flex-wrap gap-1 rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm" aria-label="转化中心分区">
+    <nav className="flex flex-wrap gap-6 border-b border-zinc-200" aria-label="转化中心分区">
       {TABS.map((tab) => {
         const isActive = active === tab.key;
         const Icon = tab.icon;
@@ -134,10 +134,10 @@ function TabNav({ active }: { active: HubTabKey }) {
             key={tab.key}
             href={buildHref(tab.key)}
             className={cn(
-              "group flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-medium tracking-tight transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0",
+              "group -mb-px flex items-center gap-1.5 border-b-2 px-1 pb-2 pt-1 text-[13px] font-medium tracking-tight transition-[color,border-color] duration-150",
               isActive
-                ? "bg-zinc-900 text-white"
-                : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800",
+                ? "border-zinc-900 text-zinc-900"
+                : "border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800",
             )}
             aria-current={isActive ? "page" : undefined}
           >
@@ -198,7 +198,7 @@ export function ConversionHubShell(props: HubShellProps) {
             话术 → 违规 → 筛选 → 分析 → 动作，五步都在这里
           </p>
         </div>
-        <div className="rounded-xl border border-zinc-200 bg-white px-4 py-1.5 text-[12px] font-medium text-zinc-600">
+        <div className="text-[12px] font-medium text-zinc-500">
           本周 · {formatWeekRange(props.weekStart)}
         </div>
       </div>
@@ -234,7 +234,7 @@ export function ConversionHubShell(props: HubShellProps) {
         <button
           type="button"
           onClick={() => router.push("/admin/conversion-hub?tab=violations&status=submitted")}
-          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[#C9604D]/30 bg-[#C9604D]/5 px-5 py-3 text-left transition-[background-color] duration-150 hover:bg-[#C9604D]/10"
+          className="flex w-full items-center justify-between gap-3 border-l-2 border-[#C9604D] bg-[#C9604D]/5 px-5 py-3 text-left transition-[background-color] duration-150 hover:bg-[#C9604D]/10"
         >
           <div className="flex items-center gap-3">
             <MessageSquareWarning className="size-4 stroke-[1.5] text-[#C9604D]" />
