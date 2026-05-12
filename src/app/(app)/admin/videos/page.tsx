@@ -39,10 +39,17 @@ export default async function AdminVideosPage({ searchParams }: Props) {
       eyebrow="Video Assets"
       title="视频资产"
       description="原始视频资产、24h 快照、标签和异常状态；不做内容复盘结论。"
-      indexItems={[{ id: "video-asset-list", label: "资产列表", hint: "视频、标签、异常" }]}
+      indexItems={[]}
     >
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <section
+        id="video-asset-list"
+        className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
+      >
+        <div className="flex items-center justify-between border-l-2 border-[#D97757] pl-3">
+          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">资产列表</h2>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
             <Link
               href="/admin/videos?view=pending"
@@ -54,7 +61,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
               ].join(" ")}
             >
               待处理
-              <span className="ml-1.5 text-[11px] text-[#D97757] font-mono tabular-nums">
+              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-[#D97757]">
                 {pendingCount}
               </span>
             </Link>
@@ -68,25 +75,16 @@ export default async function AdminVideosPage({ searchParams }: Props) {
               ].join(" ")}
             >
               全部
-              <span className="ml-1.5 text-[11px] text-zinc-400 font-mono tabular-nums">
+              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
                 {data.summary.totalVideos}
               </span>
             </Link>
           </div>
 
-          <div className="flex items-center gap-5 text-[12px] text-zinc-500">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-zinc-400">已打标</span>
-              <span className="font-mono tabular-nums text-zinc-700">{data.summary.taggedVideos}</span>
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-zinc-400">24h 快照</span>
-              <span className="font-mono tabular-nums text-zinc-700">{data.summary.snapshotCount}</span>
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-zinc-400">异常</span>
-              <span className="font-mono tabular-nums text-[#C9604D]">{data.summary.abnormalCount}</span>
-            </div>
+          <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
+            <span>已打标 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.taggedVideos}</span></span>
+            <span>24h 快照 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.snapshotCount}</span></span>
+            <span>异常 <span className="ml-0.5 font-mono tabular-nums text-[#C9604D]">{data.summary.abnormalCount}</span></span>
           </div>
         </div>
 
@@ -95,9 +93,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
             待处理 = 未打标 <span className="text-zinc-400">或</span> 状态异常。
           </p>
         ) : null}
-      </section>
 
-      <section id="video-asset-list" className="scroll-mt-8">
         <VideoList
           videos={visibleVideos}
           snapshots={data.snapshots}

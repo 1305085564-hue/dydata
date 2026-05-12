@@ -75,6 +75,23 @@ function formatPercent(value: number | null | undefined) {
   return `${(value * 100).toFixed(2)}%`;
 }
 
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+      <h3 className="text-[14px] font-medium tracking-tight text-zinc-800">{children}</h3>
+    </div>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className="text-[11px] text-zinc-400">{label}</div>
+      <div className="mt-1 text-[13px] text-zinc-700">{value}</div>
+    </div>
+  );
+}
+
 function renderSnapshotFields(snapshot: VideoMetricsSnapshot) {
   const fields: Array<{ label: string; value: string }> = [
     { label: "快照类型", value: snapshot.snapshot_type },
@@ -97,12 +114,7 @@ function renderSnapshotFields(snapshot: VideoMetricsSnapshot) {
     { label: "抓取时间", value: formatDateTime(snapshot.captured_at) },
   ];
 
-  return fields.map((field) => (
-    <div key={field.label} className="rounded-2xl bg-muted/50 p-4">
-      <div className="text-xs text-muted-foreground">{field.label}</div>
-      <div className="mt-1 text-sm font-medium text-foreground">{field.value}</div>
-    </div>
-  ));
+  return fields.map((field) => <MetricCard key={field.label} label={field.label} value={field.value} />);
 }
 
 export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, onTagsSaved }: VideoDetailDialogProps) {
@@ -163,121 +175,103 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 shadow-sm sm:max-w-4xl">
-        <DialogHeader className="border-b border-border/60 px-6 py-5 sm:px-7">
-          <DialogTitle className="text-xl font-semibold tracking-tight">视频详情</DialogTitle>
+      <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 sm:max-w-4xl">
+        <DialogHeader className="border-b border-zinc-200 px-6 py-4">
+          <DialogTitle className="text-[16px] font-medium tracking-tight text-zinc-800">视频详情</DialogTitle>
         </DialogHeader>
 
         {video ? (
-          <div className="max-h-[80vh] space-y-6 overflow-y-auto px-6 py-6 sm:px-7">
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-2">
-                  <div className="text-lg font-semibold text-foreground">
+          <div className="max-h-[80vh] space-y-6 overflow-y-auto px-6 py-6">
+            <section className="space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <div className="text-[15px] font-medium tracking-tight text-zinc-800">
                     {video.video_title?.trim() || "未命名视频"}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-[12px] text-zinc-500">
                     账号：{video.accounts.name} · 负责人：{video.profiles.name}
                   </div>
                 </div>
-                <Badge variant="outline" className={statusClassName[video.anomaly_status]}>
+                <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
                   {video.anomaly_status}
                 </Badge>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">发布时间</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">
-                    {formatDateTime(video.published_at)}
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">视频链接</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <MetricCard label="发布时间" value={formatDateTime(video.published_at)} />
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">视频链接</div>
+                  <div className="mt-1 text-[13px]">
                     {video.video_url ? (
                       <a
                         href={video.video_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="break-all text-primary underline underline-offset-4"
+                        className="break-all text-[#D97757] underline underline-offset-4"
                       >
                         {video.video_url}
                       </a>
                     ) : (
-                      "-"
+                      <span className="text-zinc-500">-</span>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-background/80 p-4">
-                <div className="text-xs text-muted-foreground">内容文案</div>
-                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-6 text-foreground">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <div className="text-[11px] text-zinc-400">内容文案</div>
+                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
                   {video.content?.trim() || "-"}
                 </div>
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-base font-semibold text-foreground">核心计算指标</div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">互动率</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">
-                    {formatPercent(snapshot ? interactionRate(snapshot) : null)}
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">粉转率</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">
-                    {formatPercent(snapshot ? followerConversionRate(snapshot) : null)}
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">导粉率</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">
-                    {formatPercent(snapshot ? fanConversionRate(snapshot) : null)}
-                  </div>
-                </div>
-                <div className="rounded-2xl bg-background/80 p-4">
-                  <div className="text-xs text-muted-foreground">主页访问率</div>
-                  <div className="mt-1 text-sm font-medium text-foreground">
-                    {formatPercent(snapshot ? homepageVisitRate(snapshot) : null)}
-                  </div>
-                </div>
+            <section className="space-y-2">
+              <SectionTitle>核心计算指标</SectionTitle>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard label="互动率" value={formatPercent(snapshot ? interactionRate(snapshot) : null)} />
+                <MetricCard label="粉转率" value={formatPercent(snapshot ? followerConversionRate(snapshot) : null)} />
+                <MetricCard label="导粉率" value={formatPercent(snapshot ? fanConversionRate(snapshot) : null)} />
+                <MetricCard label="主页访问率" value={formatPercent(snapshot ? homepageVisitRate(snapshot) : null)} />
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-base font-semibold text-foreground">标签信息</div>
-                <Button type="button" variant="outline" className="rounded-2xl bg-background/80" onClick={handleSaveTags} disabled={isSaving}>
+            <section className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <SectionTitle>标签信息</SectionTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-8 rounded-xl bg-white text-[12px]"
+                  onClick={handleSaveTags}
+                  disabled={isSaving}
+                >
                   {isSaving ? "保存中..." : "保存标签"}
                 </Button>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-3">
                 {VIDEO_TAG_REVIEW_DIMENSIONS.map((dimension) => {
                   const tag = tags.find((item) => item.tag_dimension === dimension) ?? null;
                   const status = getTagReviewStatus(tag?.confidence ?? null);
+                  const selectedValue = selection[dimension] || tag?.tag_value || "";
                   return (
-                    <div key={dimension} className="space-y-3 rounded-2xl bg-background/80 p-4">
+                    <div key={dimension} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm font-medium text-foreground">{dimension}</div>
+                        <div className="text-[12px] font-medium text-zinc-700">{dimension}</div>
                         <Badge
                           variant="outline"
-                          className={
+                          className={`text-[11px] ${
                             status === "可信"
                               ? "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]"
                               : "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]"
-                          }
+                          }`}
                         >
                           {status}
                         </Badge>
                       </div>
 
                       <Select
-                        value={selection[dimension] || tag?.tag_value || ""}
+                        value={selectedValue}
                         onValueChange={(value) =>
                           setSelection((current) => ({
                             ...current,
@@ -285,8 +279,8 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
                           }))
                         }
                       >
-                        <SelectTrigger className="h-11 rounded-2xl bg-muted/35">
-                          <SelectValue placeholder={`选择${dimension}`} />
+                        <SelectTrigger className="h-9 rounded-xl bg-white text-[13px]">
+                          <SelectValue>{selectedValue || `选择${dimension}`}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {TAG_ENUMS[dimension].map((option) => (
@@ -297,7 +291,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
                         </SelectContent>
                       </Select>
 
-                      <div className="space-y-1 text-xs text-muted-foreground">
+                      <div className="space-y-0.5 text-[11px] text-zinc-500">
                         <div>来源：{tag?.source === "manual" ? "手动" : "AI"}</div>
                         <div>置信度：{tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}</div>
                         <div className="line-clamp-3">理由：{tag?.reason || "-"}</div>
@@ -308,14 +302,14 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
               </div>
             </section>
 
-            <section className="space-y-4 rounded-2xl bg-muted/35 p-5">
-              <div className="text-base font-semibold text-foreground">快照明细</div>
+            <section className="space-y-2">
+              <SectionTitle>快照明细</SectionTitle>
               {snapshot ? (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {renderSnapshotFields(snapshot)}
                 </div>
               ) : (
-                <div className="rounded-2xl bg-background/80 p-4 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
                   暂无快照数据。
                 </div>
               )}

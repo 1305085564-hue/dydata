@@ -53,6 +53,10 @@ const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [
   "未满24h",
 ];
 
+function statusLabel(value: AnomalyStatus | "all") {
+  return value === "all" ? "全部状态" : value;
+}
+
 export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps) {
   const [filters, setFilters] = useState<VideoFilterValue>(INITIAL_FILTERS);
 
@@ -77,11 +81,20 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
     setFilters(INITIAL_FILTERS);
   }
 
+  const profileLabel =
+    filters.profileId === "all"
+      ? "全部负责人"
+      : profiles.find((item) => item.id === filters.profileId)?.name ?? "全部负责人";
+  const accountLabel =
+    filters.accountId === "all"
+      ? "全部账号"
+      : accounts.find((item) => item.id === filters.accountId)?.name ?? "全部账号";
+
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-foreground">负责人</div>
+        <div className="space-y-1">
+          <div className="text-[12px] text-zinc-500">负责人</div>
           <Select
             value={filters.profileId}
             onValueChange={(value) => updateFilter("profileId", value || "all")}
@@ -90,8 +103,8 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
               ...profiles.map((profile) => ({ value: profile.id, label: profile.name })),
             ]}
           >
-            <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
-              <SelectValue placeholder="全部负责人" />
+            <SelectTrigger className="h-9 w-full rounded-xl bg-white text-[13px]">
+              <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部负责人</SelectItem>
@@ -104,8 +117,8 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-foreground">账号</div>
+        <div className="space-y-1">
+          <div className="text-[12px] text-zinc-500">账号</div>
           <Select
             value={filters.accountId}
             onValueChange={(value) => updateFilter("accountId", value || "all")}
@@ -114,8 +127,8 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
               ...accounts.map((account) => ({ value: account.id, label: account.name })),
             ]}
           >
-            <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
-              <SelectValue placeholder="全部账号" />
+            <SelectTrigger className="h-9 w-full rounded-xl bg-white text-[13px]">
+              <SelectValue>{accountLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部账号</SelectItem>
@@ -128,46 +141,50 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-foreground">开始日期</div>
+        <div className="space-y-1">
+          <div className="text-[12px] text-zinc-500">开始日期</div>
           <Input
             type="date"
             value={filters.startDate}
             onChange={(event) => updateFilter("startDate", event.target.value)}
-            className="h-11 rounded-2xl bg-background/80"
+            className="h-9 rounded-xl bg-white text-[13px]"
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-foreground">结束日期</div>
+        <div className="space-y-1">
+          <div className="text-[12px] text-zinc-500">结束日期</div>
           <Input
             type="date"
             value={filters.endDate}
             onChange={(event) => updateFilter("endDate", event.target.value)}
-            className="h-11 rounded-2xl bg-background/80"
+            className="h-9 rounded-xl bg-white text-[13px]"
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-foreground">状态</div>
+        <div className="space-y-1">
+          <div className="text-[12px] text-zinc-500">状态</div>
           <div className="flex gap-2">
             <Select
               value={filters.status}
               onValueChange={(value) => updateFilter("status", (value || "all") as VideoFilterValue["status"])}
-              items={STATUS_OPTIONS.map((status) => ({ value: status, label: status === "all" ? "全部状态" : status }))}
+              items={STATUS_OPTIONS.map((status) => ({ value: status, label: statusLabel(status) }))}
             >
-              <SelectTrigger className="h-11 w-full rounded-2xl bg-background/80">
-                <SelectValue placeholder="全部状态" />
+              <SelectTrigger className="h-9 w-full rounded-xl bg-white text-[13px]">
+                <SelectValue>{statusLabel(filters.status)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((status) => (
                   <SelectItem key={status} value={status}>
-                    {status === "all" ? "全部状态" : status}
+                    {statusLabel(status)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" className="h-11 rounded-2xl bg-background/80 px-4" onClick={handleReset}>
+            <Button
+              variant="outline"
+              className="h-9 rounded-xl bg-white px-4 text-[13px]"
+              onClick={handleReset}
+            >
               重置
             </Button>
           </div>
@@ -180,8 +197,8 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           { label: "表达形式", key: "formatTags" as const, options: TAG_ENUMS["表达形式"] },
           { label: "CTA类型", key: "ctaTags" as const, options: TAG_ENUMS["CTA类型"] },
         ].map((group) => (
-          <div key={group.label} className="space-y-2 rounded-2xl border border-border/60 bg-background/60 p-4">
-            <div className="text-sm font-medium text-foreground">{group.label}</div>
+          <div key={group.label} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+            <div className="text-[12px] text-zinc-500">{group.label}</div>
             <div className="flex flex-wrap gap-2">
               {group.options.map((option) => {
                 const active = filters[group.key].includes(option);
@@ -191,7 +208,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
                     type="button"
                     onClick={() => toggleArrayFilter(group.key, option)}
                     className={[
-                      "rounded-full border px-3 py-1.5 text-xs transition-colors",
+                      "rounded-full border px-3 py-1 text-[11px] transition-colors",
                       active
                         ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
                         : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100",
