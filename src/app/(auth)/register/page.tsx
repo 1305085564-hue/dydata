@@ -10,6 +10,8 @@ type RegisterFormState = {
   error: string | null;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RegisterPage() {
   const teams = await getTeamOptions();
 
