@@ -1,57 +1,106 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
 import { loadAdminVideosPageData } from "@/lib/loaders/admin-videos-page";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { VideoList } from "./video-list";
 
-export default async function AdminVideosPage() {
+type VideoView = "pending" | "all";
+
+interface Props {
+  searchParams: Promise<{ view?: string }>;
+}
+
+function normalizeView(value: string | undefined): VideoView {
+  return value === "all" ? "all" : "pending";
+}
+
+export default async function AdminVideosPage({ searchParams }: Props) {
   const perm = await getUserPermissions();
+  if (!perm) redirect("/login");
+  if (!isAdminLevel(perm.role)) redirect("/dashboard");
 
-  if (!perm) {
-    redirect("/login");
-  }
-
-  if (!isAdminLevel(perm.role)) {
-    redirect("/dashboard");
-  }
+  const params = await searchParams;
+  const view = normalizeView(params.view);
 
   const supabase = await createClient();
   const data = await loadAdminVideosPageData({ supabase });
 
-  const metrics = [
-    { label: "视频总量", value: data.summary.totalVideos, hint: "当前已录入视频" },
-    { label: "已打标签", value: data.summary.taggedVideos, hint: "已有标签结果" },
-    { label: "24h 快照", value: data.summary.snapshotCount, hint: "已生成的快照数" },
-    { label: "异常视频", value: data.summary.abnormalCount, hint: "需要优先排查" },
-  ];
+  const taggedSet = new Set(data.videoTags.map((tag) => tag.video_id));
+  const pendingVideos = data.videos.filter(
+    (video) => !taggedSet.has(video.id) || video.anomaly_status !== "正常",
+  );
+  const visibleVideos = view === "pending" ? pendingVideos : data.videos;
+  const pendingCount = pendingVideos.length;
 
   return (
     <AdminWorkspaceLayout
       eyebrow="Video Assets"
       title="视频资产"
-      description="管理原始视频资产、24h 快照、标签和异常状态；这里不做内容复盘结论。"
-      indexItems={[
-        { id: "video-asset-metrics", label: "资产总览", hint: "数量、快照、异常" },
-        { id: "video-asset-list", label: "资产列表", hint: "视频、标签、异常" },
-      ]}
+      description="原始视频资产、24h 快照、标签和异常状态；不做内容复盘结论。"
+      indexItems={[{ id: "video-asset-list", label: "资产列表", hint: "视频、标签、异常" }]}
     >
-
-      <div id="video-asset-metrics" className="scroll-mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((m) => (
-          <div key={m.label} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{m.label}</p>
-            <p className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{m.value}</p>
-            <p className="mt-2 text-[12px] leading-[1.7] text-zinc-400">{m.hint}</p>
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+            <Link
+              href="/admin/videos?view=pending"
+              className={[
+                "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                view === "pending"
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700",
+              ].join(" ")}
+            >
+              待处理
+              <span className="ml-1.5 text-[11px] text-[#D97757] font-mono tabular-nums">
+                {pendingCount}
+              </span>
+            </Link>
+            <Link
+              href="/admin/videos?view=all"
+              className={[
+                "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                view === "all"
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700",
+              ].join(" ")}
+            >
+              全部
+              <span className="ml-1.5 text-[11px] text-zinc-400 font-mono tabular-nums">
+                {data.summary.totalVideos}
+              </span>
+            </Link>
           </div>
-        ))}
-      </div>
+
+          <div className="flex items-center gap-5 text-[12px] text-zinc-500">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-zinc-400">已打标</span>
+              <span className="font-mono tabular-nums text-zinc-700">{data.summary.taggedVideos}</span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-zinc-400">24h 快照</span>
+              <span className="font-mono tabular-nums text-zinc-700">{data.summary.snapshotCount}</span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-zinc-400">异常</span>
+              <span className="font-mono tabular-nums text-[#C9604D]">{data.summary.abnormalCount}</span>
+            </div>
+          </div>
+        </div>
+
+        {view === "pending" ? (
+          <p className="text-[12px] leading-[1.7] text-zinc-500">
+            待处理 = 未打标 <span className="text-zinc-400">或</span> 状态异常。
+          </p>
+        ) : null}
+      </section>
 
       <section id="video-asset-list" className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">资产列表</h2>
-        <div className="mt-4">
+        <div className="mt-0">
           <VideoList
-            videos={data.videos}
+            videos={visibleVideos}
             snapshots={data.snapshots}
             profiles={data.profiles}
             accounts={data.accounts}
