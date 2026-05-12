@@ -560,7 +560,7 @@ export function SubmitForm({
                   <Label className="text-xs font-semibold text-zinc-600">申诉状态</Label>
                   <Select value={appealStatus} onValueChange={(value) => value && setAppealStatus(value as AppealStatus)}>
                     <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-                      <SelectValue />
+                      <SelectValue>{appealStatus}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {APPEAL_STATUSES.map((status) => (

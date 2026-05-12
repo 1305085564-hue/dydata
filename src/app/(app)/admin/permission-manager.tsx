@@ -606,7 +606,7 @@ export function PermissionManager({
             }}
           >
             <SelectTrigger id="team-filter" className="h-9 w-[150px] bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
-              <SelectValue />
+              <SelectValue>{teamFilter === "all" ? "全部团队" : teamFilter}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部团队</SelectItem>

@@ -200,7 +200,7 @@ export function MarketForm({ initialData, onSaved }: MarketFormProps) {
                 onValueChange={(value) => updateField("marketSentiment", value as MarketSentiment)}
               >
                 <SelectTrigger className="h-10 w-full rounded-xl px-3">
-                  <SelectValue />
+                  <SelectValue>{form.marketSentiment}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {SENTIMENT_OPTIONS.map((option) => (
