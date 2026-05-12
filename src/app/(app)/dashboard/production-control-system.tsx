@@ -312,6 +312,7 @@ export function ProductionControlSystem({
               todayReports={todayReports}
               totalAccounts={accounts.length}
               userDisplayName={userDisplayName}
+              userRole={userRole}
               today={today}
             />
           </div>

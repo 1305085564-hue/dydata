@@ -3,11 +3,13 @@
 import { useMemo } from "react";
 
 import type { TodaySubmissionReportLike } from "../video-submit-panel-state";
+import { ProfileEditDialog } from "@/components/profile-edit-dialog";
 
 interface FocusHeroCardProps {
   todayReports: TodaySubmissionReportLike[];
   totalAccounts: number;
   userDisplayName: string;
+  userRole: string;
   today: string;
 }
 
@@ -28,6 +30,7 @@ export function FocusHeroCard({
   todayReports,
   totalAccounts,
   userDisplayName,
+  userRole,
   today,
 }: FocusHeroCardProps) {
   const stats = useMemo(() => {
@@ -63,9 +66,12 @@ export function FocusHeroCard({
               {today}
             </span>
           </div>
-          <h2 className="mt-3 line-clamp-1 text-[18px] font-medium tracking-tight text-zinc-800">
-            {userDisplayName} · 今日节奏
-          </h2>
+          <div className="mt-3 flex items-center gap-2">
+            <h2 className="line-clamp-1 text-[18px] font-medium tracking-tight text-zinc-800">
+              {userDisplayName} · 今日节奏
+            </h2>
+            <ProfileEditDialog currentName={userDisplayName} role={userRole} />
+          </div>
           <p className="mt-1 text-[12px] text-zinc-400 font-mono tabular-nums">
             {hasData
               ? `已填报 ${stats.submittedAccounts} / ${totalAccounts} 个账号`

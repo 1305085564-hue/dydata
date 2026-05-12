@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Check, ChevronDown, LogOut, Zap } from "lucide-react";
+import { Check, ChevronDown, LogOut, Settings, Zap } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { getNavItems } from "@/components/nav-bar-items";
@@ -14,6 +14,7 @@ import {
   subscribeDashboardStore,
   setDashboardAccount,
 } from "@/lib/dashboard-store";
+import { ProfileEditDialog } from "./profile-edit-dialog";
 
 interface Account {
   id: string;
@@ -196,32 +197,44 @@ export function NavBarClient({ name, role, showAdmin, accounts = [] }: NavBarCli
                         );
                       })}
                     </div>
+                    <div className="mt-1 border-t border-zinc-100 pt-1">
+                      <ProfileEditDialog currentName={name} role={role} trigger="menu-item">
+                        <div className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800">
+                          <Settings className="size-3.5 stroke-[1.5] shrink-0" />
+                          <span>编辑资料</span>
+                        </div>
+                      </ProfileEditDialog>
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
-              <>
-                <div className="hidden items-center gap-2 sm:flex">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white ">
-                    {initial}
+              <div className="flex items-center gap-2">
+                <ProfileEditDialog currentName={name} role={role} trigger="menu-item">
+                  <div className="group flex items-center gap-2 rounded-2xl border border-transparent px-2 py-1.5 transition-[background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-px hover:border-zinc-200 hover:bg-white">
+                    <div className="hidden items-center gap-2 sm:flex">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white ">
+                        {initial}
+                      </div>
+                      <div className="min-w-0 flex items-center gap-1.5">
+                        <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
+                        {selectedAccount && (
+                          <>
+                            <span className="text-[10px] text-zinc-300">|</span>
+                            <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">
+                      {name}
+                    </span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white sm:hidden">
+                      {initial}
+                    </div>
                   </div>
-                  <div className="min-w-0 flex items-center gap-1.5">
-                    <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
-                    {selectedAccount && (
-                      <>
-                        <span className="text-[10px] text-zinc-300">|</span>
-                        <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">
-                  {name}
-                </span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white sm:hidden">
-                  {initial}
-                </div>
-              </>
+                </ProfileEditDialog>
+              </div>
             )}
             <form action={signOut}>
               <Button

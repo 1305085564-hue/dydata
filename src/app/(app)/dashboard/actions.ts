@@ -190,6 +190,31 @@ export async function submitExemptionRequest(input: {
   return {};
 }
 
+export async function updateProfile(name: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "请先登录" };
+
+  const trimmed = name?.trim();
+  if (!trimmed) return { error: "显示名称不能为空" };
+  if (trimmed.length > 20) return { error: "显示名称最多 20 个字符" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ name: trimmed })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/growth");
+  revalidatePath("/analytics");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
 export async function createAccount(name: string, contentDirection?: string) {
   const supabase = await createClient();
   const {
