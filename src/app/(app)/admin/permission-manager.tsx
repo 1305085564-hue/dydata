@@ -29,6 +29,7 @@ import type { Permissions, UserRole } from "@/types";
 import { updatePermissions, changeRole, removeMember, resetMemberPassword } from "./actions";
 import {
   applyRoleChangeToMember,
+  canChangeMemberRole,
   canRemoveMemberTarget,
   getChangedAdminPermissions,
   getPermissionManagerCapabilities,
@@ -91,6 +92,7 @@ export function PermissionManager({
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const capabilities = getPermissionManagerCapabilities(currentUserRole, currentUserPermissions);
+  const currentActor = editableMembers.find((member) => member.id === currentUserId);
 
   useEffect(() => {
     setEditableMembers(members);
@@ -105,6 +107,20 @@ export function PermissionManager({
   }, [members]);
 
   const nonOwners = editableMembers.filter((member) => member.id !== currentUserId);
+  const roleChangeableMembers = nonOwners.filter((member) => {
+    const nextRole = member.role === "member" ? "admin" : "member";
+    return canChangeMemberRole({
+      actorRole: currentUserRole,
+      actorId: currentUserId,
+      actorPermissions: currentUserPermissions,
+      actorTeamId: currentActor?.teamId ?? null,
+      targetId: member.id,
+      targetRole: member.role,
+      targetPermissions: member.permissions,
+      targetTeamId: member.teamId ?? null,
+      newRole: nextRole,
+    });
+  });
   const removableMembers = nonOwners.filter((member) =>
     canRemoveMemberTarget({
       actorRole: currentUserRole,
@@ -113,7 +129,7 @@ export function PermissionManager({
       targetRole: member.role,
     }),
   );
-  const visibleMembers = capabilities.canChangeRole ? nonOwners : removableMembers;
+  const visibleMembers = capabilities.canChangeRole ? roleChangeableMembers : removableMembers;
   const filteredMembers = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -173,6 +189,22 @@ export function PermissionManager({
   function requestRoleChange(memberId: string, memberName: string, newRole: "member" | "admin") {
     const current = editableMembers.find((member) => member.id === memberId);
     if (!current || current.role === newRole) return;
+    if (
+      !canChangeMemberRole({
+        actorRole: currentUserRole,
+        actorId: currentUserId,
+        actorPermissions: currentUserPermissions,
+        actorTeamId: currentActor?.teamId ?? null,
+        targetId: current.id,
+        targetRole: current.role,
+        targetPermissions: current.permissions,
+        targetTeamId: current.teamId ?? null,
+        newRole,
+      })
+    ) {
+      feedbackToast.error("不能调整该成员角色");
+      return;
+    }
     setRoleChangeTarget({ memberId, memberName, role: newRole });
   }
 

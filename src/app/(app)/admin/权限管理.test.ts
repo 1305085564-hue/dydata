@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   applyRoleChangeToMember,
+  canChangeMemberRole,
   canRemoveMemberTarget,
   getChangedAdminPermissions,
   getPermissionManagerCapabilities,
@@ -132,7 +133,7 @@ test("成员管理能力会按 owner 与 admin 权限返回", () => {
     getPermissionManagerCapabilities("admin", { manage_members: true }),
     {
       canEditPermissions: false,
-      canChangeRole: false,
+      canChangeRole: true,
       canRemoveMember: true,
     },
   );
@@ -144,6 +145,81 @@ test("成员管理能力会按 owner 与 admin 权限返回", () => {
       canChangeRole: false,
       canRemoveMember: false,
     },
+  );
+});
+
+test("负责人可以把本团队组员调整为管理员，但不能越权设负责人", () => {
+  assert.equal(
+    canChangeMemberRole({
+      actorRole: "admin",
+      actorId: "manager-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "member-1",
+      targetRole: "member",
+      targetPermissions: {},
+      targetTeamId: "team-1",
+      newRole: "admin",
+    }),
+    true,
+  );
+
+  assert.equal(
+    canChangeMemberRole({
+      actorRole: "admin",
+      actorId: "manager-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "member-2",
+      targetRole: "member",
+      targetPermissions: {},
+      targetTeamId: "team-2",
+      newRole: "admin",
+    }),
+    false,
+  );
+
+  assert.equal(
+    canChangeMemberRole({
+      actorRole: "admin",
+      actorId: "manager-1",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
+      targetId: "manager-2",
+      targetRole: "admin",
+      targetPermissions: { manage_members: true },
+      targetTeamId: "team-1",
+      newRole: "member",
+    }),
+    false,
+  );
+});
+
+test("创始人仍可调整非 owner 成员角色", () => {
+  assert.equal(
+    canChangeMemberRole({
+      actorRole: "owner",
+      actorId: "owner-1",
+      actorPermissions: {},
+      targetId: "member-1",
+      targetRole: "member",
+      targetPermissions: {},
+      newRole: "admin",
+    }),
+    true,
+  );
+
+  assert.equal(
+    canChangeMemberRole({
+      actorRole: "owner",
+      actorId: "owner-1",
+      actorPermissions: {},
+      targetId: "owner-2",
+      targetRole: "owner",
+      targetPermissions: {},
+      newRole: "admin",
+    }),
+    false,
   );
 });
 

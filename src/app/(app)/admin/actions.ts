@@ -30,7 +30,7 @@ import {
   type ReviewDecision,
 } from "@/lib/豁免流程";
 import type { Permissions, UserRole } from "@/types";
-import { canRemoveMemberTarget, isProfileWriteApplied } from "./权限管理";
+import { canChangeMemberRole, canRemoveMemberTarget, isProfileWriteApplied } from "./权限管理";
 
 async function writeAuditLog(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -677,7 +677,7 @@ export async function changeRole(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (perm.role !== "owner") return { error: "仅创始人可操作" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
 
   if (targetUserId === perm.userId) return { error: "不能修改自己的角色" };
 
@@ -686,9 +686,32 @@ export async function changeRole(
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
-  const { data: target } = await adminSupabase.from("profiles").select("role, name").eq("id", targetUserId).single();
+  const { data: profileRows, error: profileError } = await adminSupabase
+    .from("profiles")
+    .select("id, role, name, permissions, team_id")
+    .in("id", [perm.userId, targetUserId]);
+  if (profileError) return { error: profileError.message };
+
+  const actor = profileRows?.find((profile) => profile.id === perm.userId);
+  const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
   if (target.role === "owner") return { error: "不能修改其他创始人" };
+
+  if (
+    !canChangeMemberRole({
+      actorRole: perm.role,
+      actorId: perm.userId,
+      actorPermissions: perm.permissions,
+      actorTeamId: actor?.team_id ?? null,
+      targetId: targetUserId,
+      targetRole: target.role as UserRole,
+      targetPermissions: (target.permissions ?? {}) as Permissions,
+      targetTeamId: target.team_id ?? null,
+      newRole,
+    })
+  ) {
+    return { error: perm.role === "owner" ? "不能修改该用户角色" : "负责人只能调整本团队组员和组长" };
+  }
 
   const updateData: { role: string; permissions?: Record<string, never> } = { role: newRole };
   if (newRole === "member") updateData.permissions = {};

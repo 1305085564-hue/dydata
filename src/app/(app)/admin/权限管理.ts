@@ -12,6 +12,7 @@ export interface PermissionManagerMember {
   name: string;
   email?: string | null;
   role: UserRole;
+  teamId?: string | null;
   teamName?: string | null;
   permissions: Permissions;
 }
@@ -27,6 +28,18 @@ export interface RemoveMemberTargetInput {
   actorId: string;
   targetId: string;
   targetRole: UserRole;
+}
+
+export interface ChangeMemberRoleInput {
+  actorRole: UserRole;
+  actorId: string;
+  actorPermissions: Permissions;
+  actorTeamId?: string | null;
+  targetId: string;
+  targetRole: UserRole;
+  targetPermissions: Permissions;
+  targetTeamId?: string | null;
+  newRole: "member" | "admin";
 }
 
 export interface AdminProfileWriteResult {
@@ -49,9 +62,34 @@ export function getPermissionManagerCapabilities(
 
   return {
     canEditPermissions: false,
-    canChangeRole: false,
+    canChangeRole: canRemoveMember,
     canRemoveMember,
   };
+}
+
+export function canChangeMemberRole({
+  actorRole,
+  actorId,
+  actorPermissions,
+  actorTeamId,
+  targetId,
+  targetRole,
+  targetPermissions,
+  targetTeamId,
+  newRole,
+}: ChangeMemberRoleInput) {
+  if (actorId === targetId) return false;
+  if (targetRole === "owner") return false;
+
+  if (actorRole === "owner") return true;
+
+  const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
+  if (!actorIsTeamAdmin) return false;
+  if (!actorTeamId || actorTeamId !== targetTeamId) return false;
+  if (targetRole !== "member" && targetRole !== "admin") return false;
+  if (targetRole === "admin" && targetPermissions.manage_members === true) return false;
+  if (newRole === "admin") return targetRole === "member";
+  return targetRole === "admin";
 }
 
 export function canRemoveMemberTarget({

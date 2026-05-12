@@ -175,6 +175,7 @@ export function AdminModulesContent({
                   name: profile.name,
                   email: profile.email,
                   role: profile.role as UserRole,
+                  teamId: profile.team_id,
                   teamName: profile.team_name,
                   permissions: (profile.permissions ?? {}) as Permissions,
                 }))}
