@@ -38,20 +38,18 @@ export function ViolationsReviewTab({ data }: { data: ViolationsTabData }) {
   const { cases, pendingCount, status, category, keyword, errorMessage } = data;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Violation Review</p>
-          <h2 className="mt-1 text-[18px] font-medium tracking-tight text-zinc-800">违规复核队列</h2>
-        </div>
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-[13px]">
-          当前筛选 <span className="font-semibold text-zinc-800 font-mono tabular-nums">{pendingCount}</span>
-          <span className="ml-1 text-zinc-500">条待复核</span>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">违规复核队列</h2>
+          <span className="ml-3 text-[12px] text-zinc-500">
+            当前筛选 <span className="font-mono tabular-nums text-zinc-700">{pendingCount}</span> 条
+          </span>
         </div>
       </div>
 
       <form
-        className="grid gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm lg:grid-cols-[1fr_auto_auto]"
+        className="grid gap-2 rounded-2xl border border-zinc-200 bg-white p-4 lg:grid-cols-[1fr_auto_auto_auto]"
         action="/admin/conversion-hub"
         method="get"
       >
@@ -61,7 +59,7 @@ export function ViolationsReviewTab({ data }: { data: ViolationsTabData }) {
           name="q"
           defaultValue={keyword}
           placeholder="搜索话术原文"
-          className="h-10 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none transition-[border-color,background-color] duration-150 focus:border-zinc-400 focus:bg-white"
+          className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-[13px] outline-none transition-[border-color] duration-150 focus:border-zinc-400"
         />
         <div className="flex flex-wrap gap-1.5">
           {STATUS_OPTIONS.map((option) => (
@@ -70,8 +68,8 @@ export function ViolationsReviewTab({ data }: { data: ViolationsTabData }) {
               href={buildFilterHref({ status: option.value, category, keyword })}
               className={
                 status === option.value
-                  ? "rounded-xl bg-zinc-900 px-3 py-2 text-sm font-medium text-white"
-                  : "rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-600 transition-[background-color,color] duration-150 hover:bg-zinc-50 hover:text-zinc-800"
+                  ? "rounded-xl border border-[#D97757]/40 bg-[#D97757]/10 px-3 py-1.5 text-[12px] font-medium text-[#D97757]"
+                  : "rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-600 transition-[background-color,color] duration-150 hover:bg-zinc-50 hover:text-zinc-800"
               }
             >
               {option.label}
@@ -81,7 +79,7 @@ export function ViolationsReviewTab({ data }: { data: ViolationsTabData }) {
         <select
           name="category"
           defaultValue={category}
-          className="h-10 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 outline-none"
+          className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-[13px] text-zinc-700 outline-none"
         >
           {CATEGORY_OPTIONS.map((option) => (
             <option key={option} value={option}>
@@ -90,7 +88,7 @@ export function ViolationsReviewTab({ data }: { data: ViolationsTabData }) {
           ))}
         </select>
         <button
-          className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-[background-color] duration-150 hover:bg-zinc-800"
+          className="h-9 rounded-xl bg-zinc-900 px-4 text-[13px] font-medium text-white transition-[background-color] duration-150 hover:bg-zinc-800"
           type="submit"
         >
           筛选

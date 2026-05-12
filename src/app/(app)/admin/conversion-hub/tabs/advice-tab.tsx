@@ -85,9 +85,11 @@ export function AdviceTab() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">建议动作队列</h2>
+        <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">建议动作队列</h2>
+        </div>
         <Link
           href="/admin/advice"
           className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] transition-[color] duration-150 hover:text-[#C46A49]"
@@ -104,9 +106,9 @@ export function AdviceTab() {
             <li key={row.id}>
               <Link
                 href={`/violations/${row.case_id}`}
-                className="group block rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:bg-zinc-50"
+                className="group block rounded-2xl border border-zinc-200 bg-white px-4 py-4 transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:bg-zinc-50"
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-2 text-[13px] leading-snug text-zinc-700">
                       {row.script_text}
