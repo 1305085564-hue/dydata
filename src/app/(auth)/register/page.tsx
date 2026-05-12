@@ -13,8 +13,6 @@ type RegisterFormState = {
 export const dynamic = "force-dynamic";
 
 export default async function RegisterPage() {
-  const teams = await getTeamOptions();
-
   async function registerAction(
     _: RegisterFormState,
     formData: FormData,
@@ -25,6 +23,7 @@ export default async function RegisterPage() {
     const email = formData.get("email")?.toString().trim() ?? "";
     const password = formData.get("password")?.toString() ?? "";
     const teamId = formData.get("teamId")?.toString().trim() ?? "";
+    const teams = await getTeamOptions();
     const selectedTeam = teams.find((team) => team.id === teamId);
 
     if (!name || !email || !password) {
@@ -97,5 +96,5 @@ export default async function RegisterPage() {
     redirect("/dashboard?just_registered=1");
   }
 
-  return <RegisterForm action={registerAction} teams={teams} />;
+  return <RegisterForm action={registerAction} initialTeams={[]} />;
 }

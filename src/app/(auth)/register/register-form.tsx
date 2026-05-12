@@ -18,7 +18,7 @@ type RegisterFormState = {
 
 type RegisterFormProps = {
   action: (state: RegisterFormState, formData: FormData) => Promise<RegisterFormState>;
-  teams: TeamOption[];
+  initialTeams: TeamOption[];
 };
 
 type PasswordStrengthLevel = "weak" | "medium" | "strong";
@@ -57,18 +57,21 @@ function getPasswordStrengthIndex(level: PasswordStrengthLevel | null) {
   return passwordStrengthConfig.findIndex((item) => item.level === level) + 1;
 }
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full" disabled={pending} type="submit">
+    <Button className="w-full" disabled={pending || disabled} type="submit">
       {pending ? "注册中" : "创建账号"}
     </Button>
   );
 }
 
-export function RegisterForm({ action, teams }: RegisterFormProps) {
+export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
   const [state, formAction] = useActionState(action, initialState);
+  const [teams, setTeams] = useState(initialTeams);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(initialTeams.length === 0);
+  const [teamLoadError, setTeamLoadError] = useState(false);
   const [password, setPassword] = useState("");
   const passwordStrengthLevel = useMemo(() => getPasswordStrengthLevel(password), [password]);
   const passwordStrengthIndex = getPasswordStrengthIndex(passwordStrengthLevel);
@@ -81,6 +84,33 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
       feedbackToast.error(state.error);
     }
   }, [state.error]);
+
+  useEffect(() => {
+    if (initialTeams.length > 0) return;
+
+    let alive = true;
+    fetch("/api/register-teams", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("load teams failed");
+        return response.json() as Promise<{ teams: TeamOption[] }>;
+      })
+      .then((payload) => {
+        if (!alive) return;
+        setTeams(payload.teams);
+        setTeamLoadError(payload.teams.length === 0);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setTeamLoadError(true);
+      })
+      .finally(() => {
+        if (alive) setIsLoadingTeams(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [initialTeams.length]);
 
   return (
     <AuthShell title="创建 DYData 账号" subtitle="注册后提交入团申请，管理员审核通过即可查看团队数据">
@@ -102,10 +132,11 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
               name="teamId"
               className="flex h-8 w-full rounded-lg border border-transparent bg-zinc-50 px-3 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               defaultValue=""
+              disabled={isLoadingTeams || teams.length === 0}
               required
             >
               <option value="" disabled>
-                请选择目标团队
+                {isLoadingTeams ? "正在加载团队" : "请选择目标团队"}
               </option>
               {teams.map((team) => (
                 <option key={team.id} value={team.id}>
@@ -113,7 +144,9 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
                 </option>
               ))}
             </select>
-            <p className="text-[12px] text-zinc-400">提交后由管理员审核，通过后将归属该团队</p>
+            <p className="text-[12px] text-zinc-400">
+              {teamLoadError ? "团队列表暂时加载失败，请刷新后重试" : "提交后由管理员审核，通过后将归属该团队"}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -153,7 +186,7 @@ export function RegisterForm({ action, teams }: RegisterFormProps) {
             ) : null}
           </div>
 
-          <SubmitButton />
+          <SubmitButton disabled={isLoadingTeams || teams.length === 0} />
 
           <Link
             className="flex w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2 text-[13px] font-medium tracking-tight text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-100 hover:text-zinc-800 active:translate-y-0"
