@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { callStructuredAi } from "@/lib/ai/shared";
-import { buildGrowthInsightPrompt, GROWTH_INSIGHT_PROMPT_VERSION } from "@/lib/ai/growth-prompts";
+import { buildGrowthInsightPromptAsync, GROWTH_INSIGHT_PROMPT_VERSION } from "@/lib/ai/growth-prompts";
 
 type GrowthInsightResult = {
   diagnosis: string;
@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
   const inputBundleId: string = bundleRow.id;
 
   try {
-    const prompt = buildGrowthInsightPrompt(inputBundle);
+    const prompt = await buildGrowthInsightPromptAsync(inputBundle);
     const aiResult = await callStructuredAi({ prompt, maxTokens: 1200, featureKey: "growth_insight" });
     const insight = parseInsight(aiResult.jsonString);
 

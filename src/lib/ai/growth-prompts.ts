@@ -11,7 +11,31 @@ export type GrowthAdvicePromptInput = {
   benchmarkSamples: unknown;
 };
 
-export function buildGrowthInsightPrompt(bundle: Record<string, unknown>) {
+export function buildGrowthInsightPromptFromTemplate(template: string, bundle: Record<string, unknown>) {
+  return [
+    template,
+    "",
+    "输入数据 JSON：",
+    JSON.stringify(bundle, null, 2),
+  ].join("\n");
+}
+
+export function buildGrowthAdvicePromptFromTemplate(
+  template: string,
+  { userId, accountId, ...payload }: GrowthAdvicePromptInput,
+) {
+  return [
+    template,
+    "",
+    `用户 ID：${userId}`,
+    `账号 ID：${accountId}`,
+    "",
+    "输入数据 JSON：",
+    JSON.stringify(payload, null, 2),
+  ].join("\n");
+}
+
+export function buildGrowthInsightBasePrompt() {
   return [
     "你是抖音增长复盘助手。",
     "任务：只负责 /growth 页里的“一句话结论、问题证据、归因、改写建议”这 4 块。",
@@ -33,13 +57,10 @@ export function buildGrowthInsightPrompt(bundle: Record<string, unknown>) {
     "- scene -> 问题证据",
     "- cause -> 归因说明",
     "- rewrite -> 改写建议",
-    "",
-    "输入数据 JSON：",
-    JSON.stringify(bundle, null, 2),
   ].join("\n");
 }
 
-export function buildGrowthAdvicePrompt({ userId, accountId, ...payload }: GrowthAdvicePromptInput) {
+export function buildGrowthAdviceBasePrompt() {
   return [
     "你是抖音增长动作助手。",
     "任务：只负责 /growth 页里的“参考示例、下一步动作”，diagnosis 只做兜底补位。",
@@ -55,15 +76,29 @@ export function buildGrowthAdvicePrompt({ userId, accountId, ...payload }: Growt
     "6. reference 只管给参照，不要写执行步骤；action 只管写动作，不要再解释问题背景。",
     "7. 三段都要避免废话，不能出现“持续优化”“继续加油”这类句子。",
     "",
-    `用户 ID：${userId}`,
-    `账号 ID：${accountId}`,
-    "",
     "页面区块对应：",
     "- diagnosis -> insight 不可用时的兜底摘要",
     "- reference -> 参考示例",
     "- action -> 下一步动作",
-    "",
-    "输入数据 JSON：",
-    JSON.stringify(payload, null, 2),
   ].join("\n");
+}
+
+export function buildGrowthInsightPrompt(bundle: Record<string, unknown>) {
+  return buildGrowthInsightPromptFromTemplate(buildGrowthInsightBasePrompt(), bundle);
+}
+
+export function buildGrowthAdvicePrompt(input: GrowthAdvicePromptInput) {
+  return buildGrowthAdvicePromptFromTemplate(buildGrowthAdviceBasePrompt(), input);
+}
+
+export async function buildGrowthInsightPromptAsync(bundle: Record<string, unknown>) {
+  const { loadFeaturePrompt } = await import("./load-feature-prompt");
+  const template = await loadFeaturePrompt("growth_insight", buildGrowthInsightBasePrompt());
+  return buildGrowthInsightPromptFromTemplate(template, bundle);
+}
+
+export async function buildGrowthAdvicePromptAsync(input: GrowthAdvicePromptInput) {
+  const { loadFeaturePrompt } = await import("./load-feature-prompt");
+  const template = await loadFeaturePrompt("growth_advice", buildGrowthAdviceBasePrompt());
+  return buildGrowthAdvicePromptFromTemplate(template, input);
 }

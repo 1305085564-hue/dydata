@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { callAiJson, extractJsonString } from "@/lib/ai/client"
-import { buildGrowthAdvicePrompt } from "@/lib/ai/growth-prompts"
+import { buildGrowthAdvicePromptAsync } from "@/lib/ai/growth-prompts"
 import { createClient } from "@/lib/supabase/server"
 
 type GrowthAdviceRequestBody = {
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   // 防越权：忽略前端传的 userId，强制用服务端认证的 user.id
   body.userId = user.id
 
-  const prompt = buildGrowthAdvicePrompt(body)
+  const prompt = await buildGrowthAdvicePromptAsync(body)
 
   try {
     const result = await callAiJson(prompt, { maxTokens: 1200, featureKey: "growth_advice" })
