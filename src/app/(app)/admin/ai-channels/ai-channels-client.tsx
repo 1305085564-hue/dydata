@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Bot, MessageSquareText, Route, Settings2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -12,7 +10,6 @@ import { ChannelSidebar } from "./components/channel-sidebar";
 import { ChannelDetailForm } from "./components/channel-detail-form";
 import { ChannelFeatureBindings } from "./components/channel-feature-bindings";
 import { AiChannelRow, AiFeatureApiRow, AiFeatureItem, ChannelFormState, FeatureSaveState } from "./components/types";
-import AIRewriteClient from "../ai-rewrite/ai-rewrite-client";
 import {
   FEATURE_SAVE_FEEDBACK_MS,
   applyFeaturePatch,
@@ -404,49 +401,13 @@ export default function AIChannelsClient() {
   const activeChannel = !isCreatingChannel ? channels.find((channel) => channel.id === selectedChannelId) || null : null;
 
   return (
-    <div className="w-full space-y-6 px-4 py-4 sm:px-6 lg:px-8">
-      {/* 极简顶部导航 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-800">AI 配置中心</h1>
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[var(--color-text-secondary)]">
-          <Link href="/admin" className="flex items-center gap-1.5 hover:text-zinc-800 transition-colors">
-            返回总控台
-          </Link>
-          <div className="h-3.5 w-px bg-border/60" />
-          <Link href="/admin/ai-rewrite" className="flex items-center gap-1.5 hover:text-zinc-800 transition-colors">
-            文案改写
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid gap-3 lg:grid-cols-4">
-        <a href="#ai-channels" className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm">
-          <Settings2 className="size-4 text-zinc-500" />
-          <p className="mt-2 text-sm font-semibold text-zinc-800">渠道选择</p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">维护真实渠道和健康状态</p>
-        </a>
-        <a href="#ai-features" className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm">
-          <Route className="size-4 text-zinc-500" />
-          <p className="mt-2 text-sm font-semibold text-zinc-800">功能绑定</p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">把业务功能挂到渠道</p>
-        </a>
-        <a href="#ai-rewrite-config" className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm">
-          <MessageSquareText className="size-4 text-zinc-500" />
-          <p className="mt-2 text-sm font-semibold text-zinc-800">文案改写</p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">在本页配置套餐、模式和路线</p>
-        </a>
-        <Link href="/admin/ai-assistant" className="rounded-xl border border-zinc-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm">
-          <Bot className="size-4 text-zinc-500" />
-          <p className="mt-2 text-sm font-semibold text-zinc-800">AI 助手</p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">打开浮动助手和历史能力</p>
-        </Link>
-      </div>
-
+    <div className="w-full space-y-5">
       {isLoading ? (
         <div className="flex h-64 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <div className="flex flex-col items-center gap-4 text-[var(--color-text-secondary)]">
             <Skeleton className="size-8 rounded-full" />
-            <p className="font-medium text-zinc-800">加载数据中...</p><p className="text-xs text-zinc-500">正在获取渠道与绑定配置</p>
+            <p className="text-[13px] font-medium text-zinc-800">加载数据中…</p>
+            <p className="text-[12px] text-zinc-500">正在获取渠道与绑定配置</p>
           </div>
         </div>
       ) : (
@@ -478,8 +439,8 @@ export default function AIChannelsClient() {
               <section id="ai-features" className="scroll-mt-8 space-y-3">
                 <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">Feature Binding</p>
-                  <h2 className="mt-1 text-[18px] font-medium text-zinc-800">AI 功能绑定</h2>
-                  <p className="mt-1 text-sm leading-6 text-zinc-500">
+                  <h2 className="mt-1 text-[16px] font-medium tracking-tight text-zinc-800">AI 功能绑定</h2>
+                  <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">
                     当前渠道保持在左侧可见；修改功能绑定会继续走原有自动保存逻辑。
                   </p>
                 </div>
@@ -491,10 +452,6 @@ export default function AIChannelsClient() {
                   saveStates={featureSaveStates}
                   onFeaturePatch={handleFeaturePatch}
                 />
-              </section>
-
-              <section id="ai-rewrite-config" className="scroll-mt-8">
-                <AIRewriteClient embedded />
               </section>
             </div>
           </div>
