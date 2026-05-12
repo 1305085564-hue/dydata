@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { KeyRound, Pencil, UserMinus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,8 +107,8 @@ function MemberRow({
   const totalCount = PERMISSION_KEYS.length;
 
   return (
-    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_110px_80px_minmax(0,1fr)] items-center gap-4 py-3">
-      <div className="min-w-0">
+    <div className="flex items-center gap-4 py-2">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate text-[13px] font-medium text-zinc-800">{member.name}</span>
           <span
@@ -122,19 +122,19 @@ function MemberRow({
             {isAdmin ? "管理员" : "成员"}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-[11px] text-zinc-400">{member.email || "未记录邮箱"}</p>
+        <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+          {member.email || "未记录邮箱"} · {getTeamLabel(member.teamName)}
+        </p>
       </div>
 
-      <span className="truncate text-[12px] text-zinc-500">{getTeamLabel(member.teamName)}</span>
-
-      <div>
+      <div className="flex shrink-0 items-center gap-1.5">
         {canChangeRoleForThis ? (
           <Select
             value={member.role}
             onValueChange={(value) => onRoleChange(member.id, member.name, value as "member" | "admin")}
             disabled={disabled}
           >
-            <SelectTrigger className="h-8 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
+            <SelectTrigger className="h-8 w-[92px] bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -142,50 +142,45 @@ function MemberRow({
               <SelectItem value="member">成员</SelectItem>
             </SelectContent>
           </Select>
-        ) : (
-          <span className="text-[12px] text-zinc-400">{isAdmin ? "管理员" : "成员"}</span>
-        )}
-      </div>
+        ) : null}
 
-      <div>
         {isAdmin && canEditPermissions ? (
           <button
             type="button"
             onClick={() => onOpenEditPerm(member.id, member.name)}
             disabled={disabled}
-            className="group inline-flex items-center gap-1 rounded-[10px] border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600 transition-[background-color,border-color,color] duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="group inline-flex items-center gap-1 rounded-[10px] border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11px] font-medium tabular-nums text-zinc-600 transition-[background-color,border-color,color] duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+            title="编辑权限"
           >
             <span>
               {enabledCount}/{totalCount}
             </span>
             <Pencil className="size-3 stroke-[1.5] text-zinc-400 group-hover:text-zinc-600" />
           </button>
-        ) : (
-          <span className="text-[12px] text-zinc-300">—</span>
-        )}
-      </div>
+        ) : null}
 
-      <div className="flex items-center justify-end gap-1">
         {canRemoveForThis ? (
           <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-[12px] text-zinc-500 hover:text-zinc-800"
+            <button
+              type="button"
               onClick={() => onOpenPasswordReset(member)}
               disabled={disabled}
+              className="flex size-8 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+              title="重置密码"
             >
-              重置密码
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-[12px] text-zinc-500 hover:text-[#C9604D]"
+              <KeyRound className="size-3.5 stroke-[1.5]" />
+              <span className="sr-only">重置密码</span>
+            </button>
+            <button
+              type="button"
               onClick={() => onOpenRemove(member.id, member.name)}
               disabled={disabled}
+              className="flex size-8 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-[#C9604D]/10 hover:text-[#C9604D] disabled:cursor-not-allowed disabled:opacity-50"
+              title="移除成员"
             >
-              移除
-            </Button>
+              <UserMinus className="size-3.5 stroke-[1.5]" />
+              <span className="sr-only">移除成员</span>
+            </button>
           </>
         ) : null}
       </div>
@@ -457,8 +452,10 @@ export function PermissionManager({
   const totalPages = Math.ceil(filteredMembers.length / 10);
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">成员与权限</h2>
+    <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6">
+      <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+        <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">成员与权限</h2>
+      </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -532,16 +529,8 @@ export function PermissionManager({
         <p className="py-10 text-center text-[13px] text-zinc-400">暂无可管理成员</p>
       ) : (
         <>
-          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_110px_80px_minmax(0,1fr)] items-center gap-4 border-b border-zinc-200 pb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            <span>成员</span>
-            <span>团队</span>
-            <span>角色</span>
-            <span>权限</span>
-            <span className="text-right">操作</span>
-          </div>
-
-          <div className="divide-y divide-zinc-100">
-            {pagedMembers.map((member) => {
+          <div className="grid gap-x-8 md:grid-cols-2">
+            {pagedMembers.map((member, index) => {
               const canChangeRoleForThis =
                 capabilities.canChangeRole &&
                 canChangeMemberRole({
@@ -568,19 +557,30 @@ export function PermissionManager({
                   targetTeamId: member.teamId ?? null,
                 });
 
+              const isLastInColumn =
+                index === pagedMembers.length - 1 ||
+                (pagedMembers.length % 2 === 0 && index === pagedMembers.length - 2);
+
               return (
-                <MemberRow
+                <div
                   key={member.id}
-                  member={member}
-                  canEditPermissions={capabilities.canEditPermissions}
-                  canChangeRoleForThis={canChangeRoleForThis}
-                  canRemoveForThis={canRemoveForThis}
-                  disabled={actionDisabled}
-                  onRoleChange={requestRoleChange}
-                  onOpenPasswordReset={openPasswordResetDialog}
-                  onOpenRemove={openRemoveDialog}
-                  onOpenEditPerm={openEditPermDialog}
-                />
+                  className={cn(
+                    "border-zinc-100",
+                    isLastInColumn ? "" : "border-b",
+                  )}
+                >
+                  <MemberRow
+                    member={member}
+                    canEditPermissions={capabilities.canEditPermissions}
+                    canChangeRoleForThis={canChangeRoleForThis}
+                    canRemoveForThis={canRemoveForThis}
+                    disabled={actionDisabled}
+                    onRoleChange={requestRoleChange}
+                    onOpenPasswordReset={openPasswordResetDialog}
+                    onOpenRemove={openRemoveDialog}
+                    onOpenEditPerm={openEditPermDialog}
+                  />
+                </div>
               );
             })}
           </div>

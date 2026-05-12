@@ -88,7 +88,10 @@ export function AdminModulesContent({
       ) : null}
 
       {canManagePermissions && teamManagement.access.canView ? (
-        <section id="teams-groups" className="scroll-mt-8">
+        <section
+          id="teams-groups"
+          className="scroll-mt-8 rounded-2xl border border-zinc-200 bg-white p-6"
+        >
           <TeamGroupManager
             access={teamManagement.access}
             teams={teamManagement.teams}
@@ -100,16 +103,26 @@ export function AdminModulesContent({
       ) : null}
 
       {canManagePermissions ? (
-        <section id="team-directory" className="scroll-mt-8">
-          <h2 className="mb-3 text-[15px] font-medium tracking-tight text-zinc-800">团队目录</h2>
+        <section
+          id="team-directory"
+          className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
+        >
+          <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+            <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">团队目录</h2>
+          </div>
           <TeamManager teams={teams} />
         </section>
       ) : null}
 
       {canEditData || canExportData ? (
-        <section id="data-tools" className="scroll-mt-8 space-y-4">
-          <div className="flex items-end justify-between gap-3">
-            <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">数据治理</h2>
+        <section
+          id="data-tools"
+          className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
+        >
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+              <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">数据治理</h2>
+            </div>
             {canExportData ? <ExportButton /> : null}
           </div>
           {canEditData ? (

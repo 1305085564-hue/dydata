@@ -268,11 +268,8 @@ export function TeamGroupManager({
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-zinc-800">团队与分组</h3>
-          <p className="text-sm text-zinc-500">
-            负责人管理团队下的组，组长只查看自己组的成员。
-          </p>
+        <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+          <h3 className="text-[15px] font-medium tracking-tight text-zinc-800">团队与分组</h3>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
