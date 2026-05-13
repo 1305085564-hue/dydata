@@ -2,8 +2,9 @@ import { createClient as createServiceRoleClient } from "@supabase/supabase-js";
 
 import { callAi, extractJsonString, type AiMessage } from "@/lib/ai/client";
 import { createClient } from "@/lib/supabase/server";
+import { canUseAiCopywriting } from "@/lib/permission-utils";
 import { toBoolean, toTrimmedString } from "@/lib/type-guards";
-import type { UserRole } from "@/types";
+import type { Permissions, UserRole } from "@/types";
 
 type MinimalClient = ReturnType<typeof createServiceRoleClient>;
 
@@ -1067,12 +1068,18 @@ export async function requireRewriteActor() {
 
   const { data: profile, error } = await authClient
     .from("profiles")
-    .select("id, name, role")
+    .select("id, name, role, permissions")
     .eq("id", user.id)
     .single();
 
   if (error || !profile) {
     return { error: "用户信息不存在", status: 403 as const };
+  }
+
+  const role = profile.role as UserRole;
+  const permissions = (profile.permissions ?? {}) as Permissions;
+  if (!canUseAiCopywriting(role, permissions)) {
+    return { error: "无权限", status: 403 as const };
   }
 
   return {
@@ -1081,7 +1088,7 @@ export async function requireRewriteActor() {
     actor: {
       userId: profile.id,
       name: profile.name ?? null,
-      role: profile.role as UserRole,
+      role,
     } satisfies RewriteActor,
   };
 }

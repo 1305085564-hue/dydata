@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 
 import { RewriteWorkbench } from "@/components/content-tools/rewrite";
 import { createClient } from "@/lib/supabase/server";
+import { canUseAiCopywriting } from "@/lib/permission-utils";
+import type { Permissions, UserRole } from "@/types";
 
 export const metadata: Metadata = {
   title: 'AI 文案改写 | 抖音数据平台',
@@ -17,6 +19,19 @@ export default async function RewritePage() {
 
   if (!user) {
     redirect("/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, permissions")
+    .eq("id", user.id)
+    .single();
+
+  const role = (profile?.role ?? "member") as UserRole;
+  const permissions = (profile?.permissions ?? {}) as Permissions;
+
+  if (!canUseAiCopywriting(role, permissions)) {
+    redirect("/content-tools");
   }
 
   return (

@@ -12,6 +12,7 @@ import { Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ActionDetailDrawer from "./action-detail-drawer";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 type ActionType = "all" | "query" | "modify" | "delete" | "retry_task" | "config_change" | "diagnosis";
 
@@ -25,7 +26,7 @@ type ActionRecord = {
 };
 
 type HistorySidebarProps = {
-  actorRole: "admin" | "owner";
+  actorRole: UserRole;
   refreshKey: number;
   mobile?: boolean;
   mobileOpen?: boolean;

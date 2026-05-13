@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 type ActionDetail = {
   id: string;
@@ -43,7 +44,7 @@ type ActionDetail = {
 
 type Props = {
   id: string;
-  actorRole?: "admin" | "owner";
+  actorRole?: UserRole;
   onClose: () => void;
 };
 

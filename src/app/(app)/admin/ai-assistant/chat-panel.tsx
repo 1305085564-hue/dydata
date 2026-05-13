@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AssistantDebug, AssistantDetails } from "@/lib/admin-ai/presentation";
+import type { UserRole } from "@/types";
 import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
 import AssistantDetailSections from "./assistant-detail-sections";
@@ -50,7 +51,7 @@ type Message = {
 };
 
 type ChatPanelProps = {
-  actorRole: "admin" | "owner";
+  actorRole: UserRole;
   onHistoryRefresh: () => void;
   onOpenHistory: () => void;
 };

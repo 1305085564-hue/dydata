@@ -4,7 +4,7 @@ export type NavItem = {
   match: (pathname: string) => boolean;
 };
 
-export function getNavItems(input: { showAdmin: boolean }): NavItem[] {
+export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boolean }): NavItem[] {
   const items: NavItem[] = [
     {
       href: "/dashboard",
@@ -21,12 +21,15 @@ export function getNavItems(input: { showAdmin: boolean }): NavItem[] {
       label: "违规库",
       match: (pathname) => pathname.startsWith("/violations"),
     },
-    {
+  ];
+
+  if (input.showAiCopywriting !== false) {
+    items.push({
       href: "/content-tools/rewrite",
       label: "AI助手",
       match: (pathname) => pathname === "/content-tools/rewrite",
-    },
-  ];
+    });
+  }
 
   if (input.showAdmin) {
     items.push({

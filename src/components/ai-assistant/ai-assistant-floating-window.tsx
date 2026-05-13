@@ -5,9 +5,10 @@ import { Bot, X } from "lucide-react";
 
 import ChatPanel from "@/app/(app)/admin/ai-assistant/chat-panel";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 interface AiAssistantFloatingWindowProps {
-  actorRole: "admin" | "owner";
+  actorRole: UserRole;
 }
 
 export function AiAssistantFloatingWindow({ actorRole }: AiAssistantFloatingWindowProps) {

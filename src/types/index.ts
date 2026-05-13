@@ -5,7 +5,7 @@ export type ExemptionCategory = "waive" | "leave";
 export type LeaderboardRange = "today" | "week" | "month";
 export type LeaderboardType = "overall" | "tag" | "progress";
 
-export const PERMISSION_KEYS = [
+export const ADMIN_PERMISSION_KEYS = [
   "view_all_data",
   "edit_data",
   "export_data",
@@ -16,6 +16,18 @@ export const PERMISSION_KEYS = [
   "manage_violations",
 ] as const;
 
+export const AI_PERMISSION_KEYS = [
+  "use_ai_copywriting",
+  "use_ai_management",
+] as const;
+
+export const PERMISSION_KEYS = [
+  ...ADMIN_PERMISSION_KEYS,
+  ...AI_PERMISSION_KEYS,
+] as const;
+
+export type AdminPermissionKey = (typeof ADMIN_PERMISSION_KEYS)[number];
+export type AiPermissionKey = (typeof AI_PERMISSION_KEYS)[number];
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];
 
 export type Permissions = Partial<Record<PermissionKey, boolean>>;
@@ -29,6 +41,13 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   view_audit_log: "查看操作日志",
   manage_members: "管理成员状态",
   manage_violations: "违规话术复核",
+  use_ai_copywriting: "AI 文案助手",
+  use_ai_management: "AI 管理助手",
+};
+
+export const PERMISSION_DESCRIPTIONS: Partial<Record<PermissionKey, string>> = {
+  use_ai_copywriting: "使用文案改写工具生成爆款文案",
+  use_ai_management: "使用后台 AI 助手查询与执行管理操作",
 };
 
 export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
@@ -40,6 +59,13 @@ export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
   view_audit_log: false,
   manage_members: false,
   manage_violations: false,
+  use_ai_copywriting: true,
+  use_ai_management: true,
+};
+
+export const DEFAULT_MEMBER_PERMISSIONS: Permissions = {
+  use_ai_copywriting: false,
+  use_ai_management: false,
 };
 
 export interface Profile {

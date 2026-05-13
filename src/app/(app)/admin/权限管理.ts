@@ -3,8 +3,9 @@ import type { PermissionKey, Permissions, UserRole } from "@/types";
 
 function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
   if (role === "owner") return true;
-  if (role !== "admin") return false;
-  return permissions[key] === true;
+  if (role === "admin") return permissions[key] === true;
+  if (role === "member") return permissions[key] === true;
+  return false;
 }
 
 export interface PermissionManagerMember {
@@ -204,7 +205,7 @@ function isPermissionEnabled(permissions: Permissions, key: (typeof PERMISSION_K
   return permissions[key] === true;
 }
 
-function hasSameAdminPermissions(
+function hasSamePermissions(
   editableMember: PermissionManagerMember,
   baselineMember?: PermissionManagerMember
 ) {
@@ -222,8 +223,8 @@ export function getChangedAdminPermissions(
   const baselineMap = new Map(baselineMembers.map((member) => [member.id, member]));
 
   return editableMembers
-    .filter((member) => member.role === "admin")
-    .filter((member) => !hasSameAdminPermissions(member, baselineMap.get(member.id)))
+    .filter((member) => member.role === "admin" || member.role === "member")
+    .filter((member) => !hasSamePermissions(member, baselineMap.get(member.id)))
     .map(cloneMember);
 }
 

@@ -26,3 +26,13 @@ test("非管理员看不到后台管理入口", () => {
     ["/dashboard", "/growth", "/violations", "/content-tools/rewrite"]
   );
 });
+
+test("未授予 AI 文案权限时隐藏 AI 助手入口", () => {
+  const items = getNavItems({ showAdmin: false, showAiCopywriting: false });
+
+  assert.deepEqual(
+    items.map((item) => item.href),
+    ["/dashboard", "/growth", "/violations"]
+  );
+});
+

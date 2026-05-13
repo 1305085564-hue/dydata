@@ -5,9 +5,10 @@ import { PanelLeftClose, PanelLeft, Plus } from "lucide-react";
 import ChatPanel from "./chat-panel";
 import HistorySidebar from "./history-sidebar";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 type Props = {
-  actorRole: "admin" | "owner";
+  actorRole: UserRole;
 };
 
 export default function AIAssistantClient({ actorRole }: Props) {

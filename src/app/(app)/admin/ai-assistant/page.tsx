@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { canUseAiManagement } from "@/lib/permission-utils";
 import { redirect } from "next/navigation";
 import AIAssistantClient from "./ai-assistant-client";
+import type { Permissions, UserRole } from "@/types";
 
 export default async function AIAssistantPage() {
   const supabase = await createClient();
@@ -12,13 +14,16 @@ export default async function AIAssistantPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, permissions")
     .eq("id", user.id)
     .single();
 
-  if (!profile || (profile.role !== "admin" && profile.role !== "owner")) {
+  const role = (profile?.role ?? "member") as UserRole;
+  const permissions = (profile?.permissions ?? {}) as Permissions;
+
+  if (!canUseAiManagement(role, permissions)) {
     redirect("/dashboard");
   }
 
-  return <AIAssistantClient actorRole={profile.role} />;
+  return <AIAssistantClient actorRole={role} />;
 }

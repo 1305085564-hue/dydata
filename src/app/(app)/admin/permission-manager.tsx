@@ -25,8 +25,8 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
-import { PERMISSION_KEYS, PERMISSION_LABELS } from "@/types";
-import type { Permissions, UserRole } from "@/types";
+import { PERMISSION_KEYS, ADMIN_PERMISSION_KEYS, AI_PERMISSION_KEYS, PERMISSION_LABELS, PERMISSION_DESCRIPTIONS } from "@/types";
+import type { PermissionKey, Permissions, UserRole } from "@/types";
 import {
   updatePermissions,
   changeRole,
@@ -99,8 +99,14 @@ function getTeamLabel(teamName?: string | null) {
   return teamName?.trim() || "深圳二部";
 }
 
-function countEnabled(permissions: Permissions): number {
-  return PERMISSION_KEYS.reduce((sum, key) => sum + (permissions[key] === true ? 1 : 0), 0);
+function getEditableKeys(role: UserRole): readonly PermissionKey[] {
+  if (role === "admin") return PERMISSION_KEYS;
+  if (role === "member") return AI_PERMISSION_KEYS;
+  return [];
+}
+
+function countEnabled(permissions: Permissions, keys: readonly PermissionKey[]): number {
+  return keys.reduce((sum, key) => sum + (permissions[key] === true ? 1 : 0), 0);
 }
 
 interface MemberRowProps {
@@ -135,8 +141,9 @@ function MemberRow({
   onOpenMore,
 }: MemberRowProps) {
   const isAdmin = member.role === "admin";
-  const enabledCount = isAdmin ? countEnabled(member.permissions) : 0;
-  const totalCount = PERMISSION_KEYS.length;
+  const editableKeys = getEditableKeys(member.role);
+  const enabledCount = countEnabled(member.permissions, editableKeys);
+  const totalCount = editableKeys.length;
   const currentTeamName = getTeamLabel(member.teamName);
 
   const teamOptionsForMember = useMemo(() => {
@@ -240,13 +247,13 @@ function MemberRow({
         <span className="text-zinc-400">{isAdmin ? "管理员" : "成员"}</span>
       )}
 
-      {isAdmin && canEditPermissions ? (
+      {totalCount > 0 && canEditPermissions ? (
         <button
           type="button"
           onClick={() => onOpenEditPerm(member.id, member.name)}
           disabled={disabled}
           className="group inline-flex h-7 items-center justify-center gap-1 rounded-[8px] border border-zinc-200 bg-zinc-50 text-[11px] font-medium tabular-nums text-zinc-600 transition-[background-color,border-color,color] duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-          title="编辑权限"
+          title={isAdmin ? "编辑权限" : "编辑 AI 授权"}
         >
           <span>
             {enabledCount}/{totalCount}
@@ -797,12 +804,18 @@ export function PermissionManager({
               {editPermTarget ? `${editPermTarget.memberName} 的权限` : "权限"}
             </DialogTitle>
             <DialogDescription>
-              勾选变更后点击下方保存，或关闭弹窗后在顶部批量保存。
+              {editingMember?.role === "member"
+                ? "组员默认不开放 AI 能力，按需勾选即可。"
+                : "勾选变更后点击下方保存，或关闭弹窗后在顶部批量保存。"}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-1">
-            {editingMember
-              ? PERMISSION_KEYS.map((key) => (
+          <div className="space-y-4">
+            {editingMember?.role === "admin" ? (
+              <div className="space-y-1">
+                <p className="px-2 pt-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                  管理员权限
+                </p>
+                {ADMIN_PERMISSION_KEYS.map((key) => (
                   <label
                     key={key}
                     className="flex cursor-pointer items-center justify-between gap-4 rounded-lg px-2 py-2 transition-[background-color] duration-150 hover:bg-zinc-50"
@@ -816,8 +829,37 @@ export function PermissionManager({
                       disabled={isSavingPermissions}
                     />
                   </label>
-                ))
-              : null}
+                ))}
+              </div>
+            ) : null}
+            {editingMember ? (
+              <div className="space-y-1">
+                <p className="px-2 pt-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                  AI 能力
+                </p>
+                {AI_PERMISSION_KEYS.map((key) => (
+                  <label
+                    key={key}
+                    className="flex cursor-pointer items-start justify-between gap-4 rounded-lg px-2 py-2 transition-[background-color] duration-150 hover:bg-zinc-50"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] text-zinc-700">{PERMISSION_LABELS[key]}</p>
+                      {PERMISSION_DESCRIPTIONS[key] ? (
+                        <p className="mt-0.5 text-[11px] text-zinc-400">{PERMISSION_DESCRIPTIONS[key]}</p>
+                      ) : null}
+                    </div>
+                    <Checkbox
+                      checked={editingMember.permissions[key] === true}
+                      onCheckedChange={(checked) =>
+                        handlePermToggle(editingMember.id, key, checked === true)
+                      }
+                      disabled={isSavingPermissions}
+                      className="mt-0.5"
+                    />
+                  </label>
+                ))}
+              </div>
+            ) : null}
           </div>
           <DialogFooter>
             <Button

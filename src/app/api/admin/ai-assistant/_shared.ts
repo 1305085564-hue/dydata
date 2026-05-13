@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { canUseAiManagement } from "@/lib/permission-utils";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
 import type { Permissions, UserRole } from "@/types";
 
@@ -32,7 +33,10 @@ export async function requireAdminActor() {
     return { error: "用户信息不存在", status: 403 as const };
   }
 
-  if (profile.role !== "admin" && profile.role !== "owner") {
+  const role = profile.role as UserRole;
+  const permissions = (profile.permissions ?? {}) as Permissions;
+
+  if (!canUseAiManagement(role, permissions)) {
     return { error: "无权限", status: 403 as const };
   }
 
@@ -40,8 +44,8 @@ export async function requireAdminActor() {
     supabase,
     actor: {
       userId: profile.id,
-      role: profile.role as UserRole,
-      permissions: (profile.permissions ?? {}) as Permissions,
+      role,
+      permissions,
       name: profile.name ?? null,
     } satisfies AdminActor,
   };

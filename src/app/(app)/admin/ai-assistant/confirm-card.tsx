@@ -11,9 +11,10 @@ import { Copy, CheckCircle2, XCircle, Terminal } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import AssistantDetailSections from "./assistant-detail-sections";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 type ConfirmCardProps = {
-  actorRole: "admin" | "owner";
+  actorRole: UserRole;
   data: {
     toolName: string;
     confirmationMessage?: string;

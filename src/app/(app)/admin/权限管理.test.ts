@@ -34,7 +34,7 @@ const baselineMembers: PermissionManagerMember[] = [
   },
 ];
 
-test("仅比较管理员权限变更并忽略 undefined 与 false 的差异", () => {
+test("仅比较可编辑的权限变更并忽略 undefined 与 false 的差异", () => {
   const editableMembers: PermissionManagerMember[] = [
     {
       id: "admin-1",
@@ -50,9 +50,7 @@ test("仅比较管理员权限变更并忽略 undefined 与 false 的差异", ()
       id: "member-1",
       name: "成员乙",
       role: "member",
-      permissions: {
-        edit_data: true,
-      },
+      permissions: {},
     },
   ];
 
@@ -60,7 +58,7 @@ test("仅比较管理员权限变更并忽略 undefined 与 false 的差异", ()
   assert.deepEqual(getChangedAdminPermissions(editableMembers, baselineMembers), []);
 });
 
-test("保存时仅返回发生权限变化的管理员", () => {
+test("保存时返回所有发生权限变化的成员（含 admin 与 member 的 AI 授权）", () => {
   const editableMembers: PermissionManagerMember[] = [
     {
       id: "admin-1",
@@ -77,7 +75,7 @@ test("保存时仅返回发生权限变化的管理员", () => {
       name: "成员乙",
       role: "member",
       permissions: {
-        edit_data: true,
+        use_ai_copywriting: true,
       },
     },
   ];
@@ -92,6 +90,14 @@ test("保存时仅返回发生权限变化的管理员", () => {
         view_all_data: true,
         edit_data: true,
         export_data: true,
+      },
+    },
+    {
+      id: "member-1",
+      name: "成员乙",
+      role: "member",
+      permissions: {
+        use_ai_copywriting: true,
       },
     },
   ]);
