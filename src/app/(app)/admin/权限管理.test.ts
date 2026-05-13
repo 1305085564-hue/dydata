@@ -10,8 +10,10 @@ import {
   getPermissionManagerCapabilities,
   hasAdminPermissionChanges,
   isProfileWriteApplied,
+  resolvePermissionUpdate,
   resetMembersToBaseline,
   resolveMemberTeamTransfer,
+  sanitizeMemberPermissions,
   type PermissionManagerMember,
 } from "./权限管理";
 
@@ -101,6 +103,95 @@ test("保存时返回所有发生权限变化的成员（含 admin 与 member �
       },
     },
   ]);
+});
+
+test("owner 给 admin 改权限时会完整保留所有权限 key", () => {
+  const newPermissions = {
+    view_all_data: true,
+    manage_members: true,
+    use_ai_copywriting: false,
+    use_ai_management: true,
+  };
+
+  assert.deepEqual(
+    resolvePermissionUpdate({
+      actorRole: "owner",
+      actorId: "owner-1",
+      targetId: "admin-1",
+      targetRole: "admin",
+      newPermissions,
+    }),
+    { permissions: newPermissions },
+  );
+});
+
+test("owner 给 member 改权限时只写入 AI 权限 key", () => {
+  const newPermissions = {
+    view_all_data: true,
+    manage_members: true,
+    use_ai_copywriting: true,
+    use_ai_management: false,
+  };
+
+  assert.deepEqual(sanitizeMemberPermissions(newPermissions), {
+    use_ai_copywriting: true,
+    use_ai_management: false,
+  });
+
+  assert.deepEqual(
+    resolvePermissionUpdate({
+      actorRole: "owner",
+      actorId: "owner-1",
+      targetId: "member-1",
+      targetRole: "member",
+      newPermissions,
+    }),
+    {
+      permissions: {
+        use_ai_copywriting: true,
+        use_ai_management: false,
+      },
+    },
+  );
+});
+
+test("非 owner 调用权限更新会被拒绝", () => {
+  assert.deepEqual(
+    resolvePermissionUpdate({
+      actorRole: "admin",
+      actorId: "admin-1",
+      targetId: "member-1",
+      targetRole: "member",
+      newPermissions: { use_ai_copywriting: true },
+    }),
+    { error: "仅创始人可操作" },
+  );
+});
+
+test("不能修改自己的权限", () => {
+  assert.deepEqual(
+    resolvePermissionUpdate({
+      actorRole: "owner",
+      actorId: "owner-1",
+      targetId: "owner-1",
+      targetRole: "owner",
+      newPermissions: { use_ai_management: true },
+    }),
+    { error: "不能修改自己的权限" },
+  );
+});
+
+test("不能修改其他 owner 的权限", () => {
+  assert.deepEqual(
+    resolvePermissionUpdate({
+      actorRole: "owner",
+      actorId: "owner-1",
+      targetId: "owner-2",
+      targetRole: "owner",
+      newPermissions: { use_ai_management: true },
+    }),
+    { error: "不能修改创始人的权限" },
+  );
 });
 
 test("角色改为成员时清空权限，改回管理员时保留当前本地权限", () => {

@@ -1,4 +1,4 @@
-import { PERMISSION_KEYS } from "@/types";
+import { AI_PERMISSION_KEYS, PERMISSION_KEYS } from "@/types";
 import type { PermissionKey, Permissions, UserRole } from "@/types";
 
 function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
@@ -65,6 +65,46 @@ export interface MemberTeamTransferDecision {
 
 export interface AdminProfileWriteResult {
   id?: string | null;
+}
+
+export interface PermissionUpdateInput {
+  actorRole: UserRole;
+  actorId: string;
+  targetId: string;
+  targetRole: UserRole;
+  newPermissions: Permissions;
+}
+
+export type PermissionUpdateDecision =
+  | { permissions: Permissions; error?: never }
+  | { permissions?: never; error: string };
+
+export function sanitizeMemberPermissions(newPermissions: Permissions): Permissions {
+  const sanitized: Permissions = {};
+
+  for (const key of AI_PERMISSION_KEYS) {
+    if (typeof newPermissions[key] === "boolean") {
+      sanitized[key] = newPermissions[key];
+    }
+  }
+
+  return sanitized;
+}
+
+export function resolvePermissionUpdate({
+  actorRole,
+  actorId,
+  targetId,
+  targetRole,
+  newPermissions,
+}: PermissionUpdateInput): PermissionUpdateDecision {
+  if (actorRole !== "owner") return { error: "仅创始人可操作" };
+  if (actorId === targetId) return { error: "不能修改自己的权限" };
+  if (targetRole === "owner") return { error: "不能修改创始人的权限" };
+  if (targetRole === "admin") return { permissions: newPermissions };
+  if (targetRole === "member") return { permissions: sanitizeMemberPermissions(newPermissions) };
+
+  return { error: "用户角色无效" };
 }
 
 export function getPermissionManagerCapabilities(

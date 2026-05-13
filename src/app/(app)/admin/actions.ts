@@ -35,6 +35,7 @@ import {
   canChangeMemberRole,
   canRemoveMemberTarget,
   isProfileWriteApplied,
+  resolvePermissionUpdate,
   resolveMemberTeamTransfer,
 } from "./权限管理";
 
@@ -571,14 +572,26 @@ export async function updatePermissions(
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
-  if (targetUserId === perm.userId) return { error: "不能修改自己的权限" };
+  const { data: target, error: targetError } = await adminSupabase
+    .from("profiles")
+    .select("role")
+    .eq("id", targetUserId)
+    .maybeSingle();
+  if (targetError) return { error: targetError.message };
+  if (!target) return { error: "用户不存在" };
 
-  const { data: target } = await adminSupabase.from("profiles").select("role").eq("id", targetUserId).single();
-  if (target?.role !== "admin") return { error: "只能修改管理员的权限" };
+  const decision = resolvePermissionUpdate({
+    actorRole: perm.role,
+    actorId: perm.userId,
+    targetId: targetUserId,
+    targetRole: target.role as UserRole,
+    newPermissions,
+  });
+  if (decision.error) return { error: decision.error };
 
   const { data: updatedProfile, error } = await adminSupabase
     .from("profiles")
-    .update({ permissions: newPermissions })
+    .update({ permissions: decision.permissions })
     .eq("id", targetUserId)
     .select("id")
     .single();
