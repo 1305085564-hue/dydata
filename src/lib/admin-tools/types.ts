@@ -1,8 +1,10 @@
 import type { Permissions, UserRole } from "@/types";
+import type { BusinessRole } from "@/lib/business-role";
 
 export type ToolContext = {
   actorId: string;
   actorRole: UserRole;
+  actorBusinessRole: BusinessRole;
   actorPermissions: Permissions;
 };
 

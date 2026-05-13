@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { canAccessOwner, getScopeKind, inferAccessLevel, type DataAccessScope } from "./data-access-scope";
+import {
+  canAccessOwner,
+  getScopeKind,
+  inferAccessLevel,
+  inferBusinessAccessLevel,
+  type DataAccessScope,
+} from "./data-access-scope";
 
 test("inferAccessLevel prefers explicit level and falls back to legacy role permissions", () => {
   assert.equal(inferAccessLevel("member", {}, 2), 2);
@@ -18,10 +24,18 @@ test("getScopeKind maps company levels to data ranges", () => {
   assert.equal(getScopeKind(4), "all");
 });
 
+test("business roles map to scoped data ranges", () => {
+  assert.equal(inferBusinessAccessLevel("owner"), 4);
+  assert.equal(inferBusinessAccessLevel("team_admin"), 3);
+  assert.equal(inferBusinessAccessLevel("group_leader"), 2);
+  assert.equal(inferBusinessAccessLevel("member"), 1);
+});
+
 test("canAccessOwner only allows visible owners unless scope is all", () => {
   const scope: DataAccessScope = {
     userId: "u1",
     role: "member",
+    businessRole: "member",
     permissions: {},
     accessLevel: 2,
     teamId: "t1",

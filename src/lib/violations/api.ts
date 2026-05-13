@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
+import {
+  normalizePermissionsForBusinessRole,
+  resolveBusinessRole,
+  type BusinessGroup,
+  type BusinessRole,
+} from "@/lib/business-role";
+import { hasPermission as hasUnifiedPermission } from "@/lib/permission-utils";
 import { createClient } from "@/lib/supabase/server";
 import type {
   PermissionKey,
@@ -90,9 +97,7 @@ export function isViolationRiskLevel(value: unknown): value is ViolationRiskLeve
 }
 
 export function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey) {
-  if (role === "owner") return true;
-  if (role !== "admin") return false;
-  return permissions[key] === true;
+  return hasUnifiedPermission(role, permissions, key);
 }
 
 export async function getAuthenticatedContext() {
@@ -111,16 +116,33 @@ export async function getUserProfile(
 ) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, role, permissions, team_id")
+    .select("id, role, permissions, team_id, group_id")
     .eq("id", userId)
     .single();
 
   if (error || !data) return null;
+  const { data: ledGroups } = await supabase
+    .from("groups")
+    .select("id, team_id, leader_user_id")
+    .eq("leader_user_id", userId);
+  const role = data.role as UserRole;
+  const rawPermissions = (data.permissions ?? {}) as Permissions;
+  const businessRole = resolveBusinessRole(
+    {
+      id: data.id as string,
+      role,
+      permissions: rawPermissions,
+      team_id: (data.team_id ?? null) as string | null,
+      group_id: (data.group_id ?? null) as string | null,
+    },
+    (ledGroups ?? []) as BusinessGroup[],
+  );
 
   return {
     id: data.id as string,
-    role: data.role as UserRole,
-    permissions: (data.permissions ?? {}) as Permissions,
+    role,
+    businessRole,
+    permissions: normalizePermissionsForBusinessRole(businessRole, rawPermissions),
     team_id: (data.team_id ?? null) as string | null,
   };
 }
@@ -131,7 +153,7 @@ export async function requireViolationAdmin(
 ) {
   const profile = await getUserProfile(supabase, user.id);
   if (!profile) return { ok: false as const, response: jsonForbidden() };
-  if (!hasPermission(profile.role, profile.permissions, "manage_violations")) {
+  if (!hasUnifiedPermission(profile.businessRole as BusinessRole, profile.permissions, "manage_violations")) {
     return { ok: false as const, response: jsonForbidden("缺少违规话术复核权限") };
   }
   return { ok: true as const, profile };

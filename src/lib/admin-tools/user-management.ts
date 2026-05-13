@@ -1,5 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { canChangeMemberRole, canRemoveMemberTarget, isProfileWriteApplied } from "@/app/(app)/admin/权限管理";
+import {
+  canChangeMemberRole,
+  canRemoveMemberTarget,
+  isProfileWriteApplied,
+  sanitizePermissions,
+} from "@/app/(app)/admin/权限管理";
+import { canManagePermissionsForTarget } from "@/lib/business-role";
 import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
 import { toOptionalString, toSafeString } from "./utils";
@@ -162,10 +168,6 @@ export async function updateUserPermissions(
   dryRun: boolean,
   context: ToolContext,
 ): Promise<ToolExecutionResult> {
-  if (context.actorRole !== "owner") {
-    return { success: false, error: "仅创始人可修改用户权限" };
-  }
-
   const userId = toOptionalString(params.userId);
   const permissions = params.permissions as Record<string, boolean> | undefined;
   if (!userId || !permissions || typeof permissions !== "object") {
@@ -174,16 +176,24 @@ export async function updateUserPermissions(
   if (userId === context.actorId) return { success: false, error: "不能修改自己的权限" };
 
   const service = createAdminClient();
-  const { data: before } = await service.from("profiles").select("id, role, permissions").eq("id", userId).single();
-  if (!before) return { success: false, error: "用户不存在" };
-  if (before.role !== "admin") return { success: false, error: "只能修改管理员的权限" };
+  const profilesResult = await loadActorAndTargetProfiles(service, context.actorId, userId);
+  if ("error" in profilesResult) return { success: false, error: profilesResult.error };
+  const { actor, target: before } = profilesResult;
+  if (!actor || !before) return { success: false, error: "用户不存在" };
+  if (!canManagePermissionsForTarget(actor, before)) {
+    return {
+      success: false,
+      error: context.actorBusinessRole === "team_admin" ? "负责人只能修改本团队权限" : "无权限",
+    };
+  }
 
   const backupSql = `UPDATE profiles SET permissions='${JSON.stringify(before.permissions ?? {})}'::jsonb WHERE id='${userId}';`;
-  if (dryRun) return { success: true, backupSql, beforeSnapshot: before, affectedData: { userId, permissions } };
+  const sanitizedPermissions = sanitizePermissions(permissions);
+  if (dryRun) return { success: true, backupSql, beforeSnapshot: before, affectedData: { userId, permissions: sanitizedPermissions } };
 
   const { data: updatedProfile, error } = await service
     .from("profiles")
-    .update({ permissions })
+    .update({ permissions: sanitizedPermissions })
     .eq("id", userId)
     .select("id")
     .single();

@@ -36,7 +36,7 @@ export function parseBucket(request: NextRequest) {
 }
 
 export async function requireAdminServiceClient() {
-  const auth = await requireAdminActor();
+  const auth = await requireAdminActor({ requiredPermission: "manage_violations" });
   if ("error" in auth) {
     return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
   }

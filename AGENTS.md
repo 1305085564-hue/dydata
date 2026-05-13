@@ -17,8 +17,10 @@
 
 ## 角色权限
 - 代码 `role` 只有三种：`owner` / `admin` / `member`
-- 业务按四级理解：`owner` 全局最高；负责人 = `admin` + `manage_members=true`；组长 = `admin` + `groups.leader_user_id`；组员 = `member`，默认无权限，可授权
+- 代码统一用 `businessRole` 表达四级：`owner` / `team_admin` / `group_leader` / `member`
+- `owner` 全局全权限；负责人 = `admin` + `manage_members=true`，团队内管理等同 owner；组长 = `admin` + `groups.leader_user_id`，负责本组内容和数据；组员 = `member`
 - 权限开关看 `permissions`，范围看 `team_id` / `group_id` / `groups.leader_user_id`
+- 默认值：`owner` 永远全权限；负责人缺失权限默认 true、显式 false 保留；组长默认内容/数据/文案能力；组员默认无权限
 - `admin` 和 `member` 可授权范围相同，都是 `PERMISSION_KEYS`
 - 区别只在默认值，不在可授权范围
 - 首个 `owner`：`1305085564@qq.com`
@@ -35,17 +37,21 @@
 - `AI_MODEL=claude-sonnet-4-6`
 
 ## 页面结构
-- `/login`、`/register`：登录注册
-- `/dashboard`：员工填报、趋势图、排行榜
-- `/growth`：成长分析
-- `/analytics`：数据分析
-- `/admin`：管理后台
-- `/admin/analytics`：经营分析
+| 路径 | 说明 |
+|------|------|
+| `/login`、`/register` | 登录注册 |
+| `/dashboard` | 员工填报、趋势图、排行榜 |
+| `/growth` | 成长分析 |
+| `/analytics` | 数据分析 |
+| `/admin` | 管理后台 |
+| `/admin/analytics` | 经营分析 |
 
 ## 定时任务
-- 每日催交：每天 11:15，Vercel cron
-- 周报：每周一 9:00，外部 cron
-- 月报：每月 1 日 9:00，外部 cron
+| 任务 | 时间 | 来源 |
+|------|------|------|
+| 每日催交 | 每天 11:15 | Vercel cron |
+| 周报 | 每周一 9:00 | 外部 cron |
+| 月报 | 每月 1 日 9:00 | 外部 cron |
 
 ## 排查方法
 1. 先确认 Vercel 最近部署是否成功。
@@ -59,6 +65,11 @@
 9. 开发 Focus、Hover 或选中联动反馈时，检查目标区块在所有 `if-else` 和状态分支（折叠、加载中、空占位）的表现，确保反馈不断裂。
 10. Claude Code 启动时如果 cwd 是家目录，先读 `~/.claude/memory/MEMORY.md` 找活跃项目指针，不要直接说"不知道哪个项目"。
 11. 动 UI 前先读目标页面的设计文档（产品定位、能力边界、信息架构）。视觉标准可共享，功能模块必须按各页面独立定位设计。前端传到 request body 的字段如果后端不接收（grep 无命中），立刻删，这是错搬/幽灵功能的危险信号。
+
+## 踩坑记录
+- 组件 API 误用：使用项目封装 UI 组件前，先看源码 Props 定义，不要默认套 Radix/shadcn 原版写法。
+- UI 联动遗漏：做 Focus、Hover、选中联动时，必须覆盖折叠、加载、空状态等所有渲染形态。
+- 重构机械复制：拆表单或复制相邻字段时，逐行核对字段专属校验、`data-missing` 和错误文案。
 
 ## 前端协作
 - 多批次前端改动默认走 Gemini + Codex 联动：Gemini 先出分批方案 → 我把关纠偏 → Gemini 按确认方案执行 → Codex 审代码 → 再决定补问题还是进下一轮
@@ -129,6 +140,7 @@
 ### 日志规则
 
 - 关键链路和持续项目，只维护一份主日志
+- 格式保持一行：关键改动 + 结果
 - Kimi、Codex、小龙虾都只认这一份日志，不单独维护第二份
 - 补充日志入口保留为历史映射，但不再作为独立日志层
 

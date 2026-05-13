@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import type { AdviceStatus, ReviewResult } from "@/types";
 
@@ -24,7 +24,7 @@ export async function PATCH(
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  if (!isAdminLevel(permission.role)) {
+  if (!hasPermission(permission.businessRole, permission.permissions, "view_analytics")) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 

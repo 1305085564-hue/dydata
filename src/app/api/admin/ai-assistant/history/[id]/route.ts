@@ -7,7 +7,7 @@ type Params = {
 };
 
 export async function GET(_request: NextRequest, context: Params) {
-  const auth = await requireAdminActor();
+  const auth = await requireAdminActor({ requiredPermission: "use_ai_management" });
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -22,7 +22,7 @@ export async function GET(_request: NextRequest, context: Params) {
     )
     .eq("id", id);
 
-  if (actor.role === "admin") {
+  if (actor.businessRole !== "owner") {
     query = query.eq("admin_id", actor.userId);
   }
 
@@ -33,7 +33,7 @@ export async function GET(_request: NextRequest, context: Params) {
   }
 
   const { data: profile } = await supabase.from("profiles").select("id, name").eq("id", action.admin_id).single();
-  const canViewDebug = actor.role === "owner";
+  const canViewDebug = actor.businessRole === "owner" || actor.businessRole === "team_admin";
 
   return NextResponse.json({
     action: {

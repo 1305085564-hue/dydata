@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { normalizePermissionsForBusinessRole, resolveBusinessRole } from "@/lib/business-role";
+import type { BusinessRole } from "@/lib/business-role";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { build团队趋势数据 } from "@/lib/趋势图";
@@ -69,7 +71,7 @@ async function loadPendingExemptionRequests(supabase: AdminSupabase) {
 
 export interface AdminPageData {
   queryDate: string;
-  perm: { role: UserRole; permissions: Permissions };
+  perm: { role: UserRole; businessRole: BusinessRole; permissions: Permissions };
   permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
   profiles: AdminProfileRow[];
   accountRows: Array<{
@@ -120,7 +122,7 @@ export async function loadAdminPageData({
 }): Promise<AdminPageData | null> {
   const perm = await getUserPermissions();
   if (!perm) return null;
-  const permissionManagerCapabilities = getPermissionManagerCapabilities(perm.role, perm.permissions);
+  const permissionManagerCapabilities = getPermissionManagerCapabilities(perm.role, perm.permissions, perm.businessRole);
   const queryDate = searchDate || new Date().toISOString().split("T")[0];
 
   const adminSupabase = createAdminClient();
@@ -259,8 +261,15 @@ export async function loadAdminPageData({
     team_id: group.team_id ?? null,
     leader_user_id: group.leader_user_id ?? null,
   }));
+  const normalizedHydratedProfiles = hydratedProfiles.map((profile) => {
+    const businessRole = resolveBusinessRole(profile, groups);
+    return {
+      ...profile,
+      permissions: normalizePermissionsForBusinessRole(businessRole, profile.permissions ?? {}),
+    };
+  });
   const actorProfile =
-    hydratedProfiles.find((profile) => profile.id === perm.userId) ??
+    normalizedHydratedProfiles.find((profile) => profile.id === perm.userId) ??
     ({
       id: perm.userId,
       name: "",
@@ -270,7 +279,7 @@ export async function loadAdminPageData({
       group_id: null,
     } satisfies TeamManagementProfile);
   const teamManagementAccess = resolveTeamManagementAccess(actorProfile, groups);
-  const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(teamManagementAccess, hydratedProfiles, groups);
+  const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(teamManagementAccess, normalizedHydratedProfiles, groups);
   const visibleTeamIds =
     teamManagementAccess.teamIds === null
       ? new Set(teams.map((team) => team.id))
@@ -286,7 +295,7 @@ export async function loadAdminPageData({
     if (teamManagementAccess.teamIds === null) return true;
     return Boolean(group.team_id && teamManagementAccess.teamIds.includes(group.team_id));
   });
-  const leaderCandidates = hydratedProfiles
+  const leaderCandidates = normalizedHydratedProfiles
     .filter((profile) => profile.role === "admin" && profile.permissions?.manage_members !== true)
     .filter((profile) => Boolean(profile.team_id))
     .filter((profile) => !isIgnoredTeamManagementUser(profile));
@@ -296,7 +305,7 @@ export async function loadAdminPageData({
     loadPendingExemptionRequests(supabase),
   ]);
 
-  const profileMap = new Map(hydratedProfiles.map((profile) => [profile.id, profile.name]));
+  const profileMap = new Map(normalizedHydratedProfiles.map((profile) => [profile.id, profile.name]));
   const logsWithNames = (auditLogs ?? []).map((log) => ({
     ...log,
     target: log.target ?? undefined,
@@ -340,9 +349,9 @@ export async function loadAdminPageData({
     activeUserIds,
   );
 
-  const totalProfiles = hydratedProfiles.length;
-  const activeProfilesCount = hydratedProfiles.filter((profile) => (profile.status ?? "active") === "active").length;
-  const exemptProfilesCount = hydratedProfiles.filter((profile) => profile.status === "exempt").length;
+  const totalProfiles = normalizedHydratedProfiles.length;
+  const activeProfilesCount = normalizedHydratedProfiles.filter((profile) => (profile.status ?? "active") === "active").length;
+  const exemptProfilesCount = normalizedHydratedProfiles.filter((profile) => profile.status === "exempt").length;
   const todayReportCount = (dateReports ?? []).length;
   const pendingRequestCount = exemptionRequests.length;
   const latestLogAction = logsWithNames[0]?.action ?? null;
@@ -360,7 +369,7 @@ export async function loadAdminPageData({
     dayCountBySubmitter,
     avgPlayByAccount,
     dayCountByAccount,
-    allProfiles: hydratedProfiles,
+    allProfiles: normalizedHydratedProfiles,
     teams,
     teamManagement: {
       access: teamManagementAccess,
@@ -375,11 +384,11 @@ export async function loadAdminPageData({
     topSummaryCards: [],
     quickActions: [
       perm.role === "owner" ? { label: "AI 配置中心", description: "管理渠道、功能绑定与文案改写", href: "/admin/ai-channels" } : null,
-      perm.role === "admin" || perm.role === "owner"
+      hasPermission(perm.businessRole, perm.permissions, "use_ai_management")
         ? { label: "后台 AI 助手", description: "使用右下角浮窗处理操作与诊断" }
         : null,
-      hasPermission(perm.role, perm.permissions, "export_data") ? { label: "导出数据", description: "快速发给业务复盘" } : null,
-      hasPermission(perm.role, perm.permissions, "edit_data") ? { label: "处理异常数据", description: "优先检查今日异常值" } : null,
+      hasPermission(perm.businessRole, perm.permissions, "export_data") ? { label: "导出数据", description: "快速发给业务复盘" } : null,
+      hasPermission(perm.businessRole, perm.permissions, "edit_data") ? { label: "处理异常数据", description: "优先检查今日异常值" } : null,
     ].filter((item): item is { label: string; description: string; href?: string } => item !== null),
     summary: {
       totalProfiles,

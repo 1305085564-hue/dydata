@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { loadAdminAdvicePageData } from "@/lib/loaders/admin-advice-page";
 export type { AdviceRow } from "@/lib/loaders/admin-advice-page";
@@ -13,7 +13,7 @@ export default async function AdminAdvicePage() {
     redirect("/login");
   }
 
-  if (!isAdminLevel(permission.role)) {
+  if (!hasPermission(permission.businessRole, permission.permissions, "view_analytics")) {
     redirect("/dashboard");
   }
 

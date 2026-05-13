@@ -10,8 +10,10 @@
 
 ## 角色权限
 - 代码 role 只有三种：owner / admin / member
-- 业务按四级理解：owner 全局最高；负责人 = admin + manage_members=true；组长 = admin + groups.leader_user_id；组员 = member，默认无权限，可授权
+- 代码统一用 businessRole 表达四级：owner / team_admin / group_leader / member
+- owner 全局全权限；负责人 = admin + manage_members=true，团队内管理等同 owner；组长 = admin + groups.leader_user_id，负责本组内容和数据；组员 = member
 - 权限开关看 permissions，范围看 team_id / group_id / groups.leader_user_id
+- 默认值：owner 永远全权限；负责人缺失权限默认 true、显式 false 保留；组长默认内容/数据/文案能力；组员默认无权限
 - admin 和 member 可授权范围相同，都是 PERMISSION_KEYS
 - 区别只在默认值，不在可授权范围
 - 首个 owner：1305085564@qq.com（profiles.id = a689874f-12f1-43e1-8e20-87e2195fe041）
@@ -29,8 +31,8 @@
 | /dashboard | 员工填报 + 趋势图 + 排行榜 | 登录 |
 | /growth | 成长分析（诊断+标杆+PK+AI建议） | 登录 |
 | /analytics | 数据分析（member只看自己） | 登录 |
-| /admin | 管理后台（豁免+权限+踢人） | admin/owner |
-| /admin/analytics | 经营分析（趋势+爆款+AI洞察） | admin/owner |
+| /admin | 管理后台（豁免+权限+踢人） | 按 businessRole + permissions |
+| /admin/analytics | 经营分析（趋势+爆款+AI洞察） | 按 businessRole + permissions |
 
 ## 定时任务
 | 任务 | 时间 | 来源 |

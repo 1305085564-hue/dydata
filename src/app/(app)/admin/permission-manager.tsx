@@ -25,6 +25,7 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
+import type { BusinessRole } from "@/lib/business-role";
 import { PERMISSION_KEYS, ADMIN_PERMISSION_KEYS, AI_PERMISSION_KEYS, PERMISSION_LABELS, PERMISSION_DESCRIPTIONS } from "@/types";
 import type { PermissionKey, Permissions, UserRole } from "@/types";
 import {
@@ -56,6 +57,7 @@ interface PermissionManagerProps {
   teams: TeamOption[];
   currentUserId: string;
   currentUserRole: UserRole;
+  currentUserBusinessRole?: BusinessRole;
   currentUserPermissions: Permissions;
 }
 
@@ -292,6 +294,7 @@ export function PermissionManager({
   teams,
   currentUserId,
   currentUserRole,
+  currentUserBusinessRole,
   currentUserPermissions,
 }: PermissionManagerProps) {
   const router = useRouter();
@@ -313,7 +316,7 @@ export function PermissionManager({
   const [pmShowAll, setPmShowAll] = useState(false);
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const capabilities = getPermissionManagerCapabilities(currentUserRole, currentUserPermissions);
+  const capabilities = getPermissionManagerCapabilities(currentUserRole, currentUserPermissions, currentUserBusinessRole);
   const currentActor = editableMembers.find((member) => member.id === currentUserId);
   const actionDisabled =
     isChangingRole || isSavingPermissions || isRemoving || isResettingPassword || isTransferringTeam;

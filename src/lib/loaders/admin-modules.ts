@@ -2,6 +2,8 @@ import type { AuditLogList } from "@/app/(app)/admin/audit-log-list";
 import type { DataManager } from "@/app/(app)/admin/data-manager";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
 import { loadProfilesWithExemptionFallback } from "@/app/(app)/admin/资料加载";
+import { normalizePermissionsForBusinessRole, resolveBusinessRole } from "@/lib/business-role";
+import type { BusinessRole } from "@/lib/business-role";
 import { getUserPermissions } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -23,12 +25,12 @@ type AdminSupabase = Awaited<ReturnType<typeof createClient>>;
 export interface AdminModulesData {
   currentUserId: string;
   queryDate: string;
-  perm: { role: UserRole; permissions: Permissions };
+  perm: { role: UserRole; businessRole: BusinessRole; permissions: Permissions };
   permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
   allProfiles: Array<{
     id: string;
     name: string;
-    role: string;
+    role: UserRole;
     status: string | null;
     permissions: Permissions | null;
     email: string | null;
@@ -66,7 +68,7 @@ export async function loadAdminModulesData({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const permissionManagerCapabilities = getPermissionManagerCapabilities(perm.role, perm.permissions);
+  const permissionManagerCapabilities = getPermissionManagerCapabilities(perm.role, perm.permissions, perm.businessRole);
   const queryDate = searchDate || new Date().toISOString().split("T")[0];
 
   const { data: fullReports } = await supabase
@@ -183,8 +185,15 @@ export async function loadAdminModulesData({
     team_id: group.team_id ?? null,
     leader_user_id: group.leader_user_id ?? null,
   }));
+  const normalizedHydratedProfiles = hydratedAllProfiles.map((profile) => {
+    const businessRole = resolveBusinessRole(profile, groups);
+    return {
+      ...profile,
+      permissions: normalizePermissionsForBusinessRole(businessRole, profile.permissions ?? {}),
+    };
+  }) as AdminModulesData["allProfiles"];
   const actorProfile =
-    (hydratedAllProfiles.find((profile) => profile.id === perm.userId) as TeamManagementProfile | undefined) ??
+    (normalizedHydratedProfiles.find((profile) => profile.id === perm.userId) as TeamManagementProfile | undefined) ??
     ({
       id: perm.userId,
       name: "",
@@ -196,7 +205,7 @@ export async function loadAdminModulesData({
   const teamManagementAccess = resolveTeamManagementAccess(actorProfile, groups);
   const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(
     teamManagementAccess,
-    hydratedAllProfiles as TeamManagementProfile[],
+    normalizedHydratedProfiles as TeamManagementProfile[],
     groups,
   );
   const visibleTeamIds =
@@ -214,7 +223,7 @@ export async function loadAdminModulesData({
     if (teamManagementAccess.teamIds === null) return true;
     return Boolean(group.team_id && teamManagementAccess.teamIds.includes(group.team_id));
   });
-  const leaderCandidates = (hydratedAllProfiles as TeamManagementProfile[])
+  const leaderCandidates = (normalizedHydratedProfiles as TeamManagementProfile[])
     .filter((profile) => profile.role === "admin" && profile.permissions?.manage_members !== true)
     .filter((profile) => Boolean(profile.team_id))
     .filter((profile) => !isIgnoredTeamManagementUser(profile));
@@ -225,7 +234,7 @@ export async function loadAdminModulesData({
     .order("created_at", { ascending: false })
     .limit(50);
 
-  const profileMap = new Map(hydratedAllProfiles.map((profile) => [profile.id, profile.name]));
+  const profileMap = new Map(normalizedHydratedProfiles.map((profile) => [profile.id, profile.name]));
   const logsWithNames = (auditLogs ?? []).map((log) => ({
     ...log,
     user_name: profileMap.get(log.user_id) ?? undefined,
@@ -236,7 +245,7 @@ export async function loadAdminModulesData({
     queryDate,
     perm,
     permissionManagerCapabilities,
-    allProfiles: hydratedAllProfiles,
+    allProfiles: normalizedHydratedProfiles,
     teams,
     teamManagement: {
       access: teamManagementAccess,

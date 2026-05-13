@@ -116,6 +116,7 @@ test("owner 给 admin 改权限时会完整保留所有权限 key", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
+      actorBusinessRole: "owner",
       actorId: "owner-1",
       targetId: "admin-1",
       targetRole: "admin",
@@ -148,6 +149,7 @@ test("owner 给 member 改权限时会完整保留所有权限 key", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
+      actorBusinessRole: "owner",
       actorId: "owner-1",
       targetId: "member-1",
       targetRole: "member",
@@ -166,16 +168,47 @@ test("owner 给 member 改权限时会完整保留所有权限 key", () => {
   );
 });
 
-test("非 owner 调用权限更新会被拒绝", () => {
+test("负责人可以修改本团队成员权限，但不能跨团队", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "admin",
-      actorId: "admin-1",
+      actorBusinessRole: "team_admin",
+      actorId: "manager-1",
+      actorTeamId: "team-1",
+      targetId: "member-1",
+      targetRole: "member",
+      targetTeamId: "team-1",
+      newPermissions: { use_ai_copywriting: true },
+    }),
+    { permissions: { use_ai_copywriting: true } },
+  );
+
+  assert.deepEqual(
+    resolvePermissionUpdate({
+      actorRole: "admin",
+      actorBusinessRole: "team_admin",
+      actorId: "manager-1",
+      actorTeamId: "team-1",
+      targetId: "member-2",
+      targetRole: "member",
+      targetTeamId: "team-2",
+      newPermissions: { use_ai_copywriting: true },
+    }),
+    { error: "负责人只能修改本团队权限" },
+  );
+});
+
+test("组长调用权限更新会被拒绝", () => {
+  assert.deepEqual(
+    resolvePermissionUpdate({
+      actorRole: "admin",
+      actorBusinessRole: "group_leader",
+      actorId: "leader-1",
       targetId: "member-1",
       targetRole: "member",
       newPermissions: { use_ai_copywriting: true },
     }),
-    { error: "仅创始人可操作" },
+    { error: "无权限" },
   );
 });
 
@@ -183,6 +216,7 @@ test("不能修改自己的权限", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
+      actorBusinessRole: "owner",
       actorId: "owner-1",
       targetId: "owner-1",
       targetRole: "owner",
@@ -196,6 +230,7 @@ test("不能修改其他 owner 的权限", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
+      actorBusinessRole: "owner",
       actorId: "owner-1",
       targetId: "owner-2",
       targetRole: "owner",
@@ -240,9 +275,9 @@ test("成员管理能力会按 owner 与 admin 权限返回", () => {
   );
 
   assert.deepEqual(
-    getPermissionManagerCapabilities("admin", { manage_members: true }),
+    getPermissionManagerCapabilities("admin", { manage_members: true }, "team_admin"),
     {
-      canEditPermissions: false,
+      canEditPermissions: true,
       canChangeRole: true,
       canRemoveMember: true,
     },

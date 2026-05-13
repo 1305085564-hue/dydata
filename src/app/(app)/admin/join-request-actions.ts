@@ -2,27 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { reviewRequest } from "@/lib/team-join/service";
 
 export type ReviewActionResult = { ok: true } | { ok: false; error: string };
 
 async function ensureAdmin(): Promise<{ ok: true } | { ok: false; error: string }> {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth?.user;
-
-  if (!user) {
+  const permission = await getUserPermissions();
+  if (!permission) {
     return { ok: false, error: "请先登录" };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile || (profile.role !== "admin" && profile.role !== "owner")) {
+  if (!hasPermission(permission.businessRole, permission.permissions, "manage_members")) {
     return { ok: false, error: "仅管理员可执行" };
   }
 

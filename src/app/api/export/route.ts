@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getTeamMeta } from "@/lib/teams";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
+import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
 import { formatShanghaiDateTime } from "@/lib/日报";
 
 export async function GET(request: NextRequest) {
@@ -17,17 +19,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, role")
-    .eq("id", user.id)
-    .single();
+  const permissionInfo = await getUserPermissions();
+  if (!permissionInfo || !hasPermission(permissionInfo.businessRole, permissionInfo.permissions, "export_data")) {
+    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
 
-  const role = profile?.role ?? "member";
-  const currentTeamId = getTeamMeta(user.user_metadata).teamId;
-
-  if (!currentTeamId && role !== "admin" && role !== "owner") {
-    return NextResponse.json({ error: "No team available" }, { status: 400 });
+  const scope = await buildDataAccessScope(adminSupabase, user.id);
+  if (!scope) {
+    return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -42,8 +41,10 @@ export async function GET(request: NextRequest) {
     .order("report_date", { ascending: false })
     .order("submitter", { ascending: true });
 
-  if (role !== "admin" && role !== "owner") {
-    query = query.eq("user_id", user.id);
+  if (scope.kind !== "all") {
+    query = scope.visibleUserIds.length > 0
+      ? query.in("user_id", scope.visibleUserIds)
+      : query.eq("user_id", user.id);
   }
 
   if (from) query = query.gte("report_date", from);
@@ -55,31 +56,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const authUsersResult = await adminSupabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-
-  if (authUsersResult.error) {
-    return NextResponse.json({ error: authUsersResult.error.message }, { status: 500 });
-  }
-
-  const teamIdByUserId = new Map(
-    (authUsersResult.data?.users ?? []).map((authUser) => [
-      authUser.id,
-      getTeamMeta(authUser.user_metadata).teamId,
-    ]),
-  );
-
-  const filteredRows =
-    role === "admin" || role === "owner"
-      ? (data ?? []).filter((row) => {
-          if (!currentTeamId) return true;
-          return teamIdByUserId.get(row.user_id) === currentTeamId;
-        })
-      : (data ?? []);
-
-  const rows = filteredRows.map((report) => ({
+  const rows = (data ?? []).map((report) => ({
     日期: report.report_date,
     提交人: report.submitter,
     视频标题: report.title,

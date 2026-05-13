@@ -15,7 +15,7 @@ export default async function GuidancePage() {
 
   const perm = await getUserPermissions();
   if (!perm) redirect("/login");
-  if (!hasPermission(perm.role, perm.permissions, "view_analytics")) redirect("/dashboard");
+  if (!hasPermission(perm.businessRole, perm.permissions, "view_analytics")) redirect("/dashboard");
 
   const data = await loadGuidancePageData({ supabase });
 

@@ -1,4 +1,5 @@
 import { hasPermission } from "@/lib/permission-utils";
+import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions, UserRole } from "@/types";
 
 import { DataManager } from "../data-manager";
@@ -10,6 +11,7 @@ import { TeamManager } from "../team-manager";
 interface AdminModulesContentProps {
   currentUserId: string;
   currentUserRole: UserRole;
+  currentUserBusinessRole?: BusinessRole;
   currentUserPermissions: Permissions;
   permissionManagerCapabilities: {
     canRemoveMember: boolean;
@@ -40,6 +42,7 @@ interface AdminModulesContentProps {
 export function AdminModulesContent({
   currentUserId,
   currentUserRole,
+  currentUserBusinessRole,
   currentUserPermissions,
   permissionManagerCapabilities,
   allProfiles,
@@ -56,8 +59,9 @@ export function AdminModulesContent({
     permissionManagerCapabilities.canRemoveMember ||
     permissionManagerCapabilities.canChangeRole ||
     permissionManagerCapabilities.canEditPermissions;
-  const canEditData = hasPermission(currentUserRole, currentUserPermissions, "edit_data");
-  const canExportData = hasPermission(currentUserRole, currentUserPermissions, "export_data");
+  const effectiveRole = currentUserBusinessRole ?? currentUserRole;
+  const canEditData = hasPermission(effectiveRole, currentUserPermissions, "edit_data");
+  const canExportData = hasPermission(effectiveRole, currentUserPermissions, "export_data");
   const hasVisibleModules = canManagePermissions || canEditData || canExportData;
 
   if (!hasVisibleModules) {
@@ -83,6 +87,7 @@ export function AdminModulesContent({
             teams={teams}
             currentUserId={currentUserId}
             currentUserRole={currentUserRole}
+            currentUserBusinessRole={currentUserBusinessRole}
             currentUserPermissions={currentUserPermissions}
           />
         </section>

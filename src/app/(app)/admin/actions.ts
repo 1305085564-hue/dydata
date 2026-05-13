@@ -567,14 +567,13 @@ export async function updatePermissions(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (perm.role !== "owner") return { error: "仅创始人可操作" };
 
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
   const { data: target, error: targetError } = await adminSupabase
     .from("profiles")
-    .select("role")
+    .select("role, team_id")
     .eq("id", targetUserId)
     .maybeSingle();
   if (targetError) return { error: targetError.message };
@@ -582,9 +581,12 @@ export async function updatePermissions(
 
   const decision = resolvePermissionUpdate({
     actorRole: perm.role,
+    actorBusinessRole: perm.businessRole,
     actorId: perm.userId,
+    actorTeamId: perm.teamId,
     targetId: targetUserId,
     targetRole: target.role as UserRole,
+    targetTeamId: target.team_id ?? null,
     newPermissions,
   });
   if (decision.error) return { error: decision.error };

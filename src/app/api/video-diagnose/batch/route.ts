@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import {
   createBatchSummary,
   listBatchCandidates,
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  if (!isAdminLevel(permission.role)) {
+  if (!hasPermission(permission.businessRole, permission.permissions, "view_analytics")) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 

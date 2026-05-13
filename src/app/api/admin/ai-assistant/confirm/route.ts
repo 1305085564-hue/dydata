@@ -8,7 +8,7 @@ import type { AdminAiToolName } from "@/lib/admin-ai/core";
 import { requireAdminActor, toBoolean, toTrimmedString } from "../_shared";
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminActor();
+  const auth = await requireAdminActor({ requiredPermission: "use_ai_management" });
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
     context: {
       actorId: actor.userId,
       actorRole: actor.role,
+      actorBusinessRole: actor.businessRole,
       actorPermissions: actor.permissions,
     },
   });

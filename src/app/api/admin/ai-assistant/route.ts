@@ -173,7 +173,7 @@ function parseAiDecision(raw: string): {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminActor();
+  const auth = await requireAdminActor({ requiredPermission: "use_ai_management" });
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -251,6 +251,7 @@ export async function POST(request: NextRequest) {
         context: {
           actorId: actor.userId,
           actorRole: actor.role,
+          actorBusinessRole: actor.businessRole,
           actorPermissions: actor.permissions,
         },
         dryRun: true,
@@ -275,7 +276,7 @@ export async function POST(request: NextRequest) {
         result: dryRunResult,
       });
       const debug: AssistantDebug | undefined =
-        actor.role === "owner"
+        actor.businessRole === "owner" || actor.businessRole === "team_admin"
           ? {
               toolName,
               toolParams: params,
@@ -326,6 +327,7 @@ export async function POST(request: NextRequest) {
       context: {
         actorId: actor.userId,
         actorRole: actor.role,
+        actorBusinessRole: actor.businessRole,
         actorPermissions: actor.permissions,
       },
     });

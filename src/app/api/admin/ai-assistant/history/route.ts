@@ -9,7 +9,7 @@ function toPositiveInt(value: string, fallback: number) {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAdminActor();
+  const auth = await requireAdminActor({ requiredPermission: "use_ai_management" });
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (actor.role === "admin") {
+  if (actor.businessRole !== "owner") {
     query = query.eq("admin_id", actor.userId);
   }
   if (actionType) {

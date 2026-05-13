@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getNavigationAccess } from "@/lib/analytics-access";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
+import { getUserPermissions } from "@/lib/permissions";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
-import type { Permissions } from "@/types";
 import { NavBarClient } from "./nav-bar-client";
 
 export async function NavBar() {
@@ -19,10 +19,12 @@ export async function NavBar() {
     .eq("id", user.id)
     .single();
 
-  const role = profile?.role ?? "member";
-  const permissions = (profile?.permissions ?? {}) as Permissions;
-  const navigation = getNavigationAccess(role);
-  const showAiCopywriting = canUseAiCopywriting(role, permissions);
+  const permissionInfo = await getUserPermissions();
+  const role = permissionInfo?.role ?? profile?.role ?? "member";
+  const businessRole = permissionInfo?.businessRole ?? role;
+  const permissions = permissionInfo?.permissions ?? {};
+  const navigation = getNavigationAccess(businessRole, permissions);
+  const showAiCopywriting = canUseAiCopywriting(businessRole, permissions);
 
   const { data: accounts } = await supabase
     .from("accounts")

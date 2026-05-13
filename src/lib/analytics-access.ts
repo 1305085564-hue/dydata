@@ -1,10 +1,13 @@
-import type { UserRole } from "@/types";
+import { hasPermission } from "@/lib/permission-utils";
+import type { BusinessRole } from "@/lib/business-role";
+import type { Permissions, UserRole } from "@/types";
 
 export type AnalyticsRangePreset = "7d" | "30d" | "month" | "custom";
 
 interface BuildAnalyticsAccessContextInput {
   userId: string;
-  role: UserRole;
+  role: UserRole | BusinessRole;
+  permissions?: Permissions;
   teamId: string | null;
   demoTeamId: string | null;
 }
@@ -48,27 +51,42 @@ function shiftDays(date: Date, days: number) {
   return next;
 }
 
-export function buildAnalyticsAccessContext({ userId, role, teamId, demoTeamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
+function canAccessAdminShell(role: UserRole | BusinessRole, permissions: Permissions = {}) {
+  if (role === "owner" || role === "admin" || role === "team_admin" || role === "group_leader") return true;
+  return (
+    hasPermission(role, permissions, "view_all_data") ||
+    hasPermission(role, permissions, "edit_data") ||
+    hasPermission(role, permissions, "export_data") ||
+    hasPermission(role, permissions, "manage_invite") ||
+    hasPermission(role, permissions, "view_analytics") ||
+    hasPermission(role, permissions, "view_audit_log") ||
+    hasPermission(role, permissions, "manage_members") ||
+    hasPermission(role, permissions, "manage_violations") ||
+    hasPermission(role, permissions, "use_ai_management")
+  );
+}
+
+export function buildAnalyticsAccessContext({ userId, role, permissions = {}, teamId, demoTeamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
   const effectiveTeamId = teamId ?? demoTeamId ?? null;
-  const canViewAllMembers = role === "admin" || role === "owner";
+  const canViewAllMembers = role === "admin" || role === "team_admin" || hasPermission(role, permissions, "view_all_data");
 
   return {
     userId,
-    role,
+    role: role === "team_admin" || role === "group_leader" ? "admin" : role,
     effectiveTeamId,
     canViewAllMembers,
     isDemoFallback: !teamId && Boolean(demoTeamId),
   };
 }
 
-export function canAccessAdminPath(pathname: string, role: UserRole) {
-  return role === "admin" || role === "owner";
+export function canAccessAdminPath(pathname: string, role: UserRole | BusinessRole, permissions: Permissions = {}) {
+  return canAccessAdminShell(role, permissions);
 }
 
-export function getNavigationAccess(role: UserRole): NavigationAccess {
+export function getNavigationAccess(role: UserRole | BusinessRole, permissions: Permissions = {}): NavigationAccess {
   return {
-    showAnalytics: role === "admin" || role === "owner",
-    showAdmin: role === "admin" || role === "owner",
+    showAnalytics: role === "admin" || role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data"),
+    showAdmin: canAccessAdminShell(role, permissions),
   };
 }
 

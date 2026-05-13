@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "view 只能是 pending 或 all" }, { status: 400 });
   }
 
-  const auth = await requireAdminActor();
+  const auth = await requireAdminActor({ requiredPermission: "view_analytics" });
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

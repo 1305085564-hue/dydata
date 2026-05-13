@@ -1,9 +1,10 @@
 import { NavBar } from "@/components/nav-bar";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { createClient } from "@/lib/supabase/server";
+import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiManagement } from "@/lib/permission-utils";
 import { AiAssistantFloatingWindow } from "@/components/ai-assistant/ai-assistant-floating-window";
-import type { Permissions, UserRole } from "@/types";
+import type { UserRole } from "@/types";
 
 import { JoinBanner } from "./_components/join-banner";
 
@@ -17,18 +18,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let floatingRole: UserRole = "member";
 
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, permissions")
-      .eq("id", user.id)
-      .single();
+    const permissionInfo = await getUserPermissions();
 
-    if (profile) {
-      const role = profile.role as UserRole;
-      const permissions = (profile.permissions ?? {}) as Permissions;
-      if (canUseAiManagement(role, permissions)) {
+    if (permissionInfo) {
+      if (canUseAiManagement(permissionInfo.businessRole, permissionInfo.permissions)) {
         showFloatingAssistant = true;
-        floatingRole = role;
+        floatingRole = permissionInfo.role;
       }
     }
   }

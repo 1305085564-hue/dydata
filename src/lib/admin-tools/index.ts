@@ -8,8 +8,7 @@ import { retryContentBreakdown, retryDailyReview, clearCache } from "./task-mana
 import { diagnoseIssue } from "./diagnosis";
 
 function hasToolPermission(input: ToolContext, toolName: AdminAiToolName) {
-  if (input.actorRole === "owner") return true;
-  if (input.actorRole !== "admin") return false;
+  if (input.actorBusinessRole === "owner") return true;
   const required = TOOL_PERMISSION_MAP[toolName];
   return input.actorPermissions?.[required] === true;
 }

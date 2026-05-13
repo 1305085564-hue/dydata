@@ -47,6 +47,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
       <AdminModulesContent
         currentUserId={data.currentUserId}
         currentUserRole={data.perm.role}
+        currentUserBusinessRole={data.perm.businessRole}
         currentUserPermissions={data.perm.permissions}
         permissionManagerCapabilities={data.permissionManagerCapabilities}
         allProfiles={data.allProfiles}

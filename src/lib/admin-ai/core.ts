@@ -1,3 +1,4 @@
+import type { BusinessRole } from "@/lib/business-role";
 import type { PermissionKey, UserRole } from "@/types";
 
 export const ADMIN_AI_ALLOWED_TOOLS = [
@@ -76,16 +77,28 @@ export function shouldRequireConfirmation(tool: AdminAiToolName, context: RiskCo
   return isHighRiskAction(tool, context);
 }
 
-export function canViewByRole(actorRole: UserRole, actorId: string, rowAdminId: string) {
-  if (actorRole === "owner") return true;
-  if (actorRole !== "admin") return false;
+export function canViewByBusinessRole(actorBusinessRole: BusinessRole, actorId: string, rowAdminId: string) {
+  if (actorBusinessRole === "owner") return true;
   return actorId === rowAdminId;
 }
 
-export function filterActionsByRole<T extends { admin_id: string }>(rows: T[], actor: { role: UserRole; userId: string }) {
-  if (actor.role === "owner") return rows;
-  if (actor.role !== "admin") return [];
+export function filterActionsByBusinessRole<T extends { admin_id: string }>(
+  rows: T[],
+  actor: { businessRole: BusinessRole; userId: string },
+) {
+  if (actor.businessRole === "owner") return rows;
   return rows.filter((row) => row.admin_id === actor.userId);
+}
+
+export function canViewByRole(actorRole: UserRole, actorId: string, rowAdminId: string) {
+  return canViewByBusinessRole(actorRole === "owner" ? "owner" : "member", actorId, rowAdminId);
+}
+
+export function filterActionsByRole<T extends { admin_id: string }>(rows: T[], actor: { role: UserRole; userId: string }) {
+  return filterActionsByBusinessRole(rows, {
+    businessRole: actor.role === "owner" ? "owner" : "member",
+    userId: actor.userId,
+  });
 }
 
 export const ADMIN_AI_SYSTEM_PROMPT = `你是 DYData 管理后台站内 AI 助手。

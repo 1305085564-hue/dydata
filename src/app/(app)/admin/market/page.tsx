@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { loadAdminMarketPageData } from "@/lib/loaders/admin-market-page";
 import { MarketForm } from "./market-form";
@@ -13,7 +13,7 @@ export default async function MarketPage() {
     redirect("/login");
   }
 
-  if (!isAdminLevel(permission.role)) {
+  if (!hasPermission(permission.businessRole, permission.permissions, "view_analytics")) {
     redirect("/dashboard");
   }
 

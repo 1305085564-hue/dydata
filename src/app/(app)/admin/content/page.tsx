@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, isAdminLevel } from "@/lib/permissions";
+import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { loadAdminContentPageData } from "@/lib/loaders/admin-content-page";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { ContentList } from "./content-list";
@@ -19,7 +19,7 @@ function normalizeView(value: string | undefined): ContentView {
 export default async function AdminContentPage({ searchParams }: Props) {
   const perm = await getUserPermissions();
   if (!perm) redirect("/login");
-  if (!isAdminLevel(perm.role)) redirect("/dashboard");
+  if (!hasPermission(perm.businessRole, perm.permissions, "view_analytics")) redirect("/dashboard");
 
   const params = await searchParams;
   const view = normalizeView(params.view);

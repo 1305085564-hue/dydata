@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessAdminPath } from "@/lib/analytics-access";
+import { getUserPermissions } from "@/lib/permissions";
 import { AdminSidebar } from "@/components/admin-layout/admin-sidebar";
 import { AdminMainArea } from "@/components/admin-layout/admin-main-area";
 
@@ -20,13 +21,15 @@ export default async function AdminLayout({
     .select("name, role, permissions")
     .eq("id", user.id)
     .single();
-  if (!canAccessAdminPath("/admin", profile?.role ?? "member")) redirect("/dashboard");
+  const permissionInfo = await getUserPermissions();
+  if (!permissionInfo) redirect("/dashboard");
+  if (!canAccessAdminPath("/admin", permissionInfo.businessRole, permissionInfo.permissions)) redirect("/dashboard");
 
   return (
     <div className="flex min-h-[100dvh] bg-[#F4F4F5]">
       <AdminSidebar
-        userRole={profile?.role ?? "member"}
-        permissions={profile?.permissions ?? {}}
+        userRole={permissionInfo.role}
+        permissions={permissionInfo.permissions}
         userName={profile?.name ?? user.email ?? ""}
       />
       <AdminMainArea>{children}</AdminMainArea>

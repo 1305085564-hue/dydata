@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { jsonBadRequest, jsonForbidden, jsonNotFound, jsonServerError, jsonUnauthorized } from "@/lib/violations/api";
 
@@ -13,7 +14,7 @@ function normalizeWeekStart(value: unknown) {
 export async function POST(request: NextRequest) {
   const permissions = await getUserPermissions();
   if (!permissions) return jsonUnauthorized();
-  if (permissions.role !== "owner" && permissions.role !== "admin") {
+  if (!hasPermission(permissions.businessRole, permissions.permissions, "manage_violations")) {
     return jsonForbidden("缺少每周筛选确认权限");
   }
 

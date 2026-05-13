@@ -1,18 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
-import { canUseAiManagement } from "@/lib/permission-utils";
+import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
-import type { Permissions, UserRole } from "@/types";
+import type { BusinessRole } from "@/lib/business-role";
+import type { PermissionKey, Permissions, UserRole } from "@/types";
 
 export { toBoolean, toObject, toTrimmedString };
 
 export type AdminActor = {
   userId: string;
   role: UserRole;
+  businessRole: BusinessRole;
   permissions: Permissions;
   name: string | null;
 };
 
-export async function requireAdminActor() {
+type RequireAdminActorOptions = {
+  requiredPermission?: PermissionKey;
+};
+
+function hasAnyAdminPermission(businessRole: BusinessRole, permissions: Permissions) {
+  if (businessRole === "owner" || businessRole === "team_admin" || businessRole === "group_leader") return true;
+  return (
+    hasPermission(businessRole, permissions, "view_all_data") ||
+    hasPermission(businessRole, permissions, "edit_data") ||
+    hasPermission(businessRole, permissions, "export_data") ||
+    hasPermission(businessRole, permissions, "manage_invite") ||
+    hasPermission(businessRole, permissions, "view_analytics") ||
+    hasPermission(businessRole, permissions, "view_audit_log") ||
+    hasPermission(businessRole, permissions, "manage_members") ||
+    hasPermission(businessRole, permissions, "manage_violations") ||
+    hasPermission(businessRole, permissions, "use_ai_management")
+  );
+}
+
+export async function requireAdminActor(options: RequireAdminActorOptions = {}) {
   const supabase = await createClient();
 
   const {
@@ -33,10 +55,16 @@ export async function requireAdminActor() {
     return { error: "用户信息不存在", status: 403 as const };
   }
 
-  const role = profile.role as UserRole;
-  const permissions = (profile.permissions ?? {}) as Permissions;
+  const permissionInfo = await getUserPermissions();
+  if (!permissionInfo) {
+    return { error: "用户信息不存在", status: 403 as const };
+  }
 
-  if (!canUseAiManagement(role, permissions)) {
+  const allowed = options.requiredPermission
+    ? hasPermission(permissionInfo.businessRole, permissionInfo.permissions, options.requiredPermission)
+    : hasAnyAdminPermission(permissionInfo.businessRole, permissionInfo.permissions);
+
+  if (!allowed) {
     return { error: "无权限", status: 403 as const };
   }
 
@@ -44,8 +72,9 @@ export async function requireAdminActor() {
     supabase,
     actor: {
       userId: profile.id,
-      role,
-      permissions,
+      role: permissionInfo.role,
+      businessRole: permissionInfo.businessRole,
+      permissions: permissionInfo.permissions,
       name: profile.name ?? null,
     } satisfies AdminActor,
   };

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callAiText } from "@/lib/ai/client";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
+import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
@@ -13,14 +17,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin" && profile?.role !== "owner") {
+  const permissionInfo = await getUserPermissions();
+  if (!permissionInfo || !hasPermission(permissionInfo.businessRole, permissionInfo.permissions, "view_analytics")) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
+  const adminSupabase = createAdminClient();
+  const scope = await buildDataAccessScope(adminSupabase, user.id);
+  if (!scope) {
+    return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
   }
 
   const body = await request.json();
@@ -30,11 +34,17 @@ export async function POST(request: NextRequest) {
   const since = new Date(Date.now() - days * 86400000).toISOString().split("T")[0];
   const label = type === "month" ? "月" : "周";
 
-  const { data: reports, error } = await supabase
+  let query = adminSupabase
     .from("daily_reports")
     .select("submitter, title, report_date, play_count, completion_rate, avg_play_duration, likes, comments, shares, favorites, content")
     .gte("report_date", since)
     .order("report_date", { ascending: true });
+  if (scope.kind !== "all") {
+    query = scope.visibleUserIds.length > 0
+      ? query.in("user_id", scope.visibleUserIds)
+      : query.eq("user_id", user.id);
+  }
+  const { data: reports, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

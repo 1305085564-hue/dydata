@@ -1,4 +1,9 @@
 import { PERMISSION_KEYS } from "@/types";
+import {
+  canManagePermissionsForTarget,
+  type BusinessGroup,
+  type BusinessRole,
+} from "@/lib/business-role";
 import type { PermissionKey, Permissions, UserRole } from "@/types";
 
 function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
@@ -69,10 +74,14 @@ export interface AdminProfileWriteResult {
 
 export interface PermissionUpdateInput {
   actorRole: UserRole;
+  actorBusinessRole: BusinessRole;
   actorId: string;
+  actorTeamId?: string | null;
   targetId: string;
   targetRole: UserRole;
+  targetTeamId?: string | null;
   newPermissions: Permissions;
+  groups?: BusinessGroup[];
 }
 
 export type PermissionUpdateDecision =
@@ -93,14 +102,34 @@ export function sanitizePermissions(newPermissions: Permissions): Permissions {
 
 export function resolvePermissionUpdate({
   actorRole,
+  actorBusinessRole,
   actorId,
+  actorTeamId,
   targetId,
   targetRole,
+  targetTeamId,
   newPermissions,
+  groups = [],
 }: PermissionUpdateInput): PermissionUpdateDecision {
-  if (actorRole !== "owner") return { error: "仅创始人可操作" };
-  if (actorId === targetId) return { error: "不能修改自己的权限" };
-  if (targetRole === "owner") return { error: "不能修改创始人的权限" };
+  if (!canManagePermissionsForTarget(
+    {
+      id: actorId,
+      role: actorRole,
+      permissions: actorBusinessRole === "team_admin" ? { manage_members: true } : {},
+      team_id: actorTeamId ?? null,
+    },
+    {
+      id: targetId,
+      role: targetRole,
+      team_id: targetTeamId ?? null,
+    },
+    groups,
+  )) {
+    if (actorId === targetId) return { error: "不能修改自己的权限" };
+    if (targetRole === "owner") return { error: "不能修改创始人的权限" };
+    return { error: actorBusinessRole === "team_admin" ? "负责人只能修改本团队权限" : "无权限" };
+  }
+
   if (targetRole === "admin" || targetRole === "member") {
     return { permissions: sanitizePermissions(newPermissions) };
   }
@@ -111,8 +140,17 @@ export function resolvePermissionUpdate({
 export function getPermissionManagerCapabilities(
   role: UserRole,
   permissions: Permissions,
+  businessRole?: BusinessRole,
 ): PermissionManagerCapabilities {
-  if (role === "owner") {
+  if (businessRole === "owner" || role === "owner") {
+    return {
+      canEditPermissions: true,
+      canChangeRole: true,
+      canRemoveMember: true,
+    };
+  }
+
+  if (businessRole === "team_admin") {
     return {
       canEditPermissions: true,
       canChangeRole: true,
