@@ -1,4 +1,4 @@
-import { AI_PERMISSION_KEYS, PERMISSION_KEYS } from "@/types";
+import { PERMISSION_KEYS } from "@/types";
 import type { PermissionKey, Permissions, UserRole } from "@/types";
 
 function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
@@ -79,10 +79,10 @@ export type PermissionUpdateDecision =
   | { permissions: Permissions; error?: never }
   | { permissions?: never; error: string };
 
-export function sanitizeMemberPermissions(newPermissions: Permissions): Permissions {
+export function sanitizePermissions(newPermissions: Permissions): Permissions {
   const sanitized: Permissions = {};
 
-  for (const key of AI_PERMISSION_KEYS) {
+  for (const key of PERMISSION_KEYS) {
     if (typeof newPermissions[key] === "boolean") {
       sanitized[key] = newPermissions[key];
     }
@@ -101,8 +101,9 @@ export function resolvePermissionUpdate({
   if (actorRole !== "owner") return { error: "仅创始人可操作" };
   if (actorId === targetId) return { error: "不能修改自己的权限" };
   if (targetRole === "owner") return { error: "不能修改创始人的权限" };
-  if (targetRole === "admin") return { permissions: newPermissions };
-  if (targetRole === "member") return { permissions: sanitizeMemberPermissions(newPermissions) };
+  if (targetRole === "admin" || targetRole === "member") {
+    return { permissions: sanitizePermissions(newPermissions) };
+  }
 
   return { error: "用户角色无效" };
 }

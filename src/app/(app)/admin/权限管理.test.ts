@@ -13,7 +13,7 @@ import {
   resolvePermissionUpdate,
   resetMembersToBaseline,
   resolveMemberTeamTransfer,
-  sanitizeMemberPermissions,
+  sanitizePermissions,
   type PermissionManagerMember,
 } from "./权限管理";
 
@@ -125,15 +125,22 @@ test("owner 给 admin 改权限时会完整保留所有权限 key", () => {
   );
 });
 
-test("owner 给 member 改权限时只写入 AI 权限 key", () => {
+test("owner 给 member 改权限时会完整保留所有权限 key", () => {
   const newPermissions = {
     view_all_data: true,
     manage_members: true,
+    view_analytics: true,
+    manage_violations: true,
     use_ai_copywriting: true,
     use_ai_management: false,
+    unknown_permission: true,
   };
 
-  assert.deepEqual(sanitizeMemberPermissions(newPermissions), {
+  assert.deepEqual(sanitizePermissions(newPermissions), {
+    view_all_data: true,
+    view_analytics: true,
+    manage_members: true,
+    manage_violations: true,
     use_ai_copywriting: true,
     use_ai_management: false,
   });
@@ -148,6 +155,10 @@ test("owner 给 member 改权限时只写入 AI 权限 key", () => {
     }),
     {
       permissions: {
+        view_all_data: true,
+        view_analytics: true,
+        manage_members: true,
+        manage_violations: true,
         use_ai_copywriting: true,
         use_ai_management: false,
       },

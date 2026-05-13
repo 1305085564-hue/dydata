@@ -9,9 +9,11 @@
 - 域名 DNS 在 Cloudflare，但部署 × 走 Cloudflare Workers
 
 ## 角色权限
-- owner：创始人，唯一，所有权限
-- admin：管理员，权限由 owner 配置（profiles.permissions jsonb，7 个 key）
-- member：普通成员，只能填报和查看自己数据
+- 代码 role 只有三种：owner / admin / member
+- 业务按四级理解：owner 全局最高；负责人 = admin + manage_members=true；组长 = admin + groups.leader_user_id；组员 = member，默认无权限，可授权
+- 权限开关看 permissions，范围看 team_id / group_id / groups.leader_user_id
+- admin 和 member 可授权范围相同，都是 PERMISSION_KEYS
+- 区别只在默认值，不在可授权范围
 - 首个 owner：1305085564@qq.com（profiles.id = a689874f-12f1-43e1-8e20-87e2195fe041）
 
 ## 环境变量

@@ -100,8 +100,7 @@ function getTeamLabel(teamName?: string | null) {
 }
 
 function getEditableKeys(role: UserRole): readonly PermissionKey[] {
-  if (role === "admin") return PERMISSION_KEYS;
-  if (role === "member") return AI_PERMISSION_KEYS;
+  if (role === "admin" || role === "member") return PERMISSION_KEYS;
   return [];
 }
 
@@ -804,16 +803,14 @@ export function PermissionManager({
               {editPermTarget ? `${editPermTarget.memberName} 的权限` : "权限"}
             </DialogTitle>
             <DialogDescription>
-              {editingMember?.role === "member"
-                ? "组员默认不开放 AI 能力，按需勾选即可。"
-                : "勾选变更后点击下方保存，或关闭弹窗后在顶部批量保存。"}
+              勾选变更后点击下方保存，或关闭弹窗后在顶部批量保存。
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {editingMember?.role === "admin" ? (
+            {editingMember ? (
               <div className="space-y-1">
                 <p className="px-2 pt-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                  管理员权限
+                  后台权限
                 </p>
                 {ADMIN_PERMISSION_KEYS.map((key) => (
                   <label
