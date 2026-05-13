@@ -86,7 +86,7 @@ ${dataStr}
 保持简洁专业，禁止套话空话。`;
 
   try {
-    const result = await callAiText(prompt, { maxTokens: 2000 });
+    const result = await callAiText(prompt, { maxTokens: 2000, featureKey: "ai_insight" });
     const insight = result.content;
 
     return NextResponse.json({ insight, type, since, count: reports.length });

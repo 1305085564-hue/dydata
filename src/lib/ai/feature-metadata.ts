@@ -124,6 +124,33 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
     outputSummary: "summary / reasons / actions，用于沉淀建议记录。",
     recommendedWhen: "需要把问题转成待执行建议时用它。",
   },
+  video_tag: {
+    group: "其他已有 AI 能力",
+    title: "视频标签生成",
+    location: "视频提交 / 标签生成链路",
+    purpose: "根据视频文案自动生成分类标签（题材、表达形式、CTA 类型）。",
+    inputSummary: "视频文案文本。",
+    outputSummary: "JSON 格式的标签数组，包含 tag_dimension、tag_value、confidence、reason。",
+    recommendedWhen: "需要为视频自动打标签时用它。",
+  },
+  ai_insight: {
+    group: "其他已有 AI 能力",
+    title: "AI 洞察",
+    location: "AI 洞察接口",
+    purpose: "基于团队数据生成简短洞察和建议。",
+    inputSummary: "团队近 N 天日报数据汇总。",
+    outputSummary: "3 条简短洞察，每条一句话。",
+    recommendedWhen: "需要快速获取数据洞察时用它。",
+  },
+  report_insight: {
+    group: "其他已有 AI 能力",
+    title: "周报/月报洞察",
+    location: "周报 / 月报生成链路",
+    purpose: "为周报/月报生成 AI 洞察段落。",
+    inputSummary: "周期内团队日报数据汇总。",
+    outputSummary: "3 条简短洞察，附加到报告内容中。",
+    recommendedWhen: "生成周报/月报时需要 AI 洞察段落时用它。",
+  },
 };
 
 export type AiFeatureKey = keyof typeof AI_FEATURE_METADATA;

@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     const aiResult = await callAiText(
       `你是抖音数据分析师。以下是团队近${days}天数据，请用中文给出3条简短洞察（每条一句话）：\n${dataStr}`,
-      { maxTokens: 500 },
+      { maxTokens: 500, featureKey: "report_insight" },
     );
     aiSection = `\n\n**🤖 AI 洞察**\n${aiResult.content}`;
   } catch {

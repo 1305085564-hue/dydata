@@ -45,7 +45,7 @@ function buildTagPrompt(content: string) {
 
 async function generateAiTags(content: string) {
   try {
-    const result = await callAiJson(buildTagPrompt(content), { maxTokens: 1200, timeoutMs: 12000 });
+    const result = await callAiJson(buildTagPrompt(content), { maxTokens: 1200, timeoutMs: 12000, featureKey: "video_tag" });
     const jsonText = extractJsonFromContent(result.content);
     if (!jsonText) return [];
     const parsed = JSON.parse(jsonText) as { tags?: RawAiTagSuggestion[] };
