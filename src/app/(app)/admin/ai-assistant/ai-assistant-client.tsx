@@ -20,9 +20,9 @@ export default function AIAssistantClient({ actorRole }: Props) {
   const startNewSession = () => setSessionKey((v) => v + 1);
 
   return (
-    <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F9F9FB]">
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F4F4F5]">
       {/* Top bar */}
-      <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-[#F9F9FB] px-3">
+      <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-[#F4F4F5] px-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setHistoryOpen((v) => !v)}
@@ -55,7 +55,7 @@ export default function AIAssistantClient({ actorRole }: Props) {
         {/* Left: History */}
         <aside
           className={cn(
-            "relative hidden shrink-0 flex-col border-r border-zinc-200 bg-[#F9F9FB] transition-[width] duration-300 ease-out lg:flex",
+            "relative hidden shrink-0 flex-col border-r border-zinc-200 bg-[#F4F4F5] transition-[width] duration-300 ease-out lg:flex",
             historyOpen ? "w-[200px]" : "w-0 overflow-hidden"
           )}
         >

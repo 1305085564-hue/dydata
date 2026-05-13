@@ -278,7 +278,7 @@ export default function HistorySidebar({
   if (mobile) {
     return (
       <Dialog open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-[#F9F9FB] border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+        <DialogContent className="h-[85vh] w-full max-w-md p-0 flex flex-col bg-[#F4F4F5] border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
           <DialogHeader className="px-4 py-3 border-b border-zinc-200 bg-white shrink-0 flex flex-row items-center justify-between">
             <DialogTitle className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
               操作历史
