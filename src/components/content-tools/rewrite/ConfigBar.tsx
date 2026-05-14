@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Check, Lock, X } from 'lucide-react';
+import { Lock, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BootstrapPayload } from '../types';
 
@@ -36,7 +36,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export function ConfigBar({
   bootstrap,
   isChatStage,
-  activeFixedMode,
   customControlsLocked,
   interactionControlsDisabled,
   selectedFixedModeId,
@@ -146,7 +145,7 @@ export function ConfigBar({
 
             <div className="space-y-3">
               <label className="block space-y-1.5">
-                <span className="text-[11px] font-medium text-zinc-500">展示模型</span>
+                <span className="text-[11px] font-medium text-zinc-500">真实模型</span>
                 <select
                   value={selectedModelViewId}
                   onChange={(e) => onModelViewChange(e.target.value)}
@@ -158,7 +157,7 @@ export function ConfigBar({
                       : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus:border-zinc-950'
                   )}
                 >
-                  <option value="">无附加模型</option>
+                  <option value="">默认真实模型</option>
                   {bootstrap.modelViews.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.label}

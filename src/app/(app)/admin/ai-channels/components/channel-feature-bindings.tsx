@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { AiChannelRow, AiFeatureItem } from "./types";
-import { ChannelFeatureCard } from "./channel-feature-card";
-import { buildFeatureGroups } from "./utils";
+import { useEffect, useMemo, useState } from "react";
 import { Info } from "lucide-react";
 import { motion } from "framer-motion";
+
+import type { AiChannelRow, AiFeatureItem, FeatureSaveState } from "./types";
+import { buildFeatureGroups } from "./utils";
+import { FeatureMasterList } from "./feature-master-list";
+import { FeatureDetailPanel } from "./feature-detail-panel";
+
+const SELECTED_FEATURE_STORAGE_KEY = "dydata:admin:ai-channels:selected-feature-id";
 
 interface ChannelFeatureBindingsProps {
   channelId: string | null;
   channels: AiChannelRow[];
   features: AiFeatureItem[];
-  saveStates: Record<string, "idle" | "pending" | "saving" | "saved" | "error">;
+  saveStates: Record<string, FeatureSaveState>;
   onFeaturePatch: (id: string, patch: Record<string, unknown>) => void;
 }
 
@@ -20,92 +24,74 @@ export function ChannelFeatureBindings({
   channels,
   features,
   saveStates,
-  onFeaturePatch
+  onFeaturePatch,
 }: ChannelFeatureBindingsProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const toggleExpand = (id: string) => {
-    setExpandedId(prev => prev === id ? null : id);
-  };
-
   const featureGroups = useMemo(() => buildFeatureGroups(features), [features]);
+  const flatFeatures = useMemo(() => featureGroups.flatMap((group) => group.features), [featureGroups]);
+
+  const [selectedFeatureIdRaw, setSelectedFeatureIdRaw] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.sessionStorage.getItem(SELECTED_FEATURE_STORAGE_KEY);
+  });
+
+  const selectedFeatureId = useMemo(() => {
+    if (flatFeatures.length === 0) return null;
+    if (selectedFeatureIdRaw && flatFeatures.some((feature) => feature.id === selectedFeatureIdRaw)) {
+      return selectedFeatureIdRaw;
+    }
+    return flatFeatures[0].id;
+  }, [flatFeatures, selectedFeatureIdRaw]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (selectedFeatureId) {
+      window.sessionStorage.setItem(SELECTED_FEATURE_STORAGE_KEY, selectedFeatureId);
+    } else {
+      window.sessionStorage.removeItem(SELECTED_FEATURE_STORAGE_KEY);
+    }
+  }, [selectedFeatureId]);
 
   if (!channelId) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-6 rounded-2xl bg-transparent p-8 md:p-16 text-center flex flex-col items-center justify-center"
+        className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-white p-12 text-center"
       >
-        <Info className="size-8 text-muted-foreground/30 mb-3" />
-        <h3 className="text-base font-medium text-zinc-800">请在左侧选择渠道，或新建一个渠道</h3>
+        <Info className="mb-3 size-7 stroke-[1.5] text-zinc-400" />
+        <h3 className="text-[14px] font-medium text-zinc-800">先在左侧选择渠道，或新建一个渠道</h3>
+        <p className="mt-1 text-[12px] text-zinc-500">渠道决定 AI 功能默认接管，配置项在选定后会出现在这里。</p>
       </motion.div>
     );
   }
 
-  return (
-    <div className="mt-8 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-zinc-800">功能接管</h2>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-2 max-w-sm">
-            当前渠道仅作为对照视角。每个功能都可独立指定接管渠道和模型，留空则由系统自动接管。
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-1.5 text-xs text-zinc-500 border-l-2 border-zinc-950 bg-zinc-50">
-          <div className="flex items-center gap-1.5"><Info className="size-3.5" /> 提示：</div>
-          <div className="flex flex-col sm:flex-row sm:gap-2">
-            <span>渠道留空 = 默认自动 (failover)</span>
-            <span className="hidden sm:inline">|</span>
-            <span>模型留空 = 跟随渠道默认模型</span>
-          </div>
-        </div>
+  if (featureGroups.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white py-12 text-center text-[13px] text-zinc-500">
+        没有找到任何功能配置
       </div>
+    );
+  }
 
-      {featureGroups.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="py-12 text-center text-sm text-muted-foreground border border-dashed border-border/40 rounded-2xl"
-        >
-          没有找到任何功能配置
-        </motion.div>
-      ) : (
-        <div className="space-y-10">
-          {featureGroups.map((group, index) => (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              key={group.group}
-              className="space-y-4"
-            >
-              <h3 className="text-sm font-medium text-zinc-800 flex items-center gap-2 pl-1">
-                {group.group}
-                <span className="text-[10px] font-normal text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-full">
-                  {group.features.length}
-                </span>
-              </h3>
+  const selectedFeature = flatFeatures.find((feature) => feature.id === selectedFeatureId) ?? null;
 
-              <div className="flex flex-col gap-2">
-                {group.features.map((feature) => (
-                  <ChannelFeatureCard
-                    key={feature.id}
-                    feature={feature}
-                    channels={channels}
-                    currentChannelId={channelId}
-                    isExpanded={expandedId === feature.id}
-                    saveState={saveStates[feature.id] || "idle"}
-                    onToggleExpand={() => toggleExpand(feature.id)}
-                    onPatch={(patch) => onFeaturePatch(feature.id, patch)}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+  return (
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+      <FeatureMasterList
+        groups={featureGroups}
+        selectedFeatureId={selectedFeatureId}
+        saveStates={saveStates}
+        onSelect={setSelectedFeatureIdRaw}
+      />
+
+      <FeatureDetailPanel
+        feature={selectedFeature}
+        channels={channels}
+        saveState={selectedFeature ? saveStates[selectedFeature.id] ?? "idle" : "idle"}
+        onPatch={(patch) => {
+          if (selectedFeature) onFeaturePatch(selectedFeature.id, patch);
+        }}
+      />
     </div>
   );
 }

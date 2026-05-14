@@ -218,6 +218,7 @@ export type RewriteBootstrapPayload = {
 type RewriteConfigBundle = {
   feature: RewriteFeatureRow | null;
   modelViews: RewriteModelViewRow[];
+  modelRoutes: RewriteModelRouteRow[];
   fixedModes: RewriteFixedModeRow[];
   modes: RewriteModeRow[];
   lengthPresets: RewriteLengthPresetRow[];
@@ -528,12 +529,43 @@ function inferStoredResponseMode(value: Record<string, unknown>, versionsLength:
   return versionsLength > 0 ? "versions" : "chat";
 }
 
-function toModelOption(row: RewriteModelViewRow): RewriteModelOption {
+function getRouteChannel(route: RewriteModelRouteRow) {
+  return normalizeJoinedRow(route.channel);
+}
+
+function isUsableModelRoute(route: RewriteModelRouteRow) {
+  const channel = getRouteChannel(route);
+  return route.is_enabled && Boolean(route.actual_model.trim()) && channel?.is_enabled !== false;
+}
+
+function pickPrimaryModelRoute(
+  routes: RewriteModelRouteRow[],
+  modelViewId: string,
+  workflowStepId: string | null = null,
+) {
+  const matches = routes.filter(
+    (route) =>
+      route.model_view_id === modelViewId &&
+      isUsableModelRoute(route) &&
+      (workflowStepId ? route.workflow_step_id === workflowStepId : route.workflow_step_id === null),
+  );
+
+  return matches[0] ?? routes.find((route) => route.model_view_id === modelViewId && isUsableModelRoute(route)) ?? null;
+}
+
+function toModelOption(row: RewriteModelViewRow, routes: RewriteModelRouteRow[] = []): RewriteModelOption {
+  const route = pickPrimaryModelRoute(routes, row.id);
+  const channel = route ? getRouteChannel(route) : null;
+
   return {
     id: row.id,
     key: row.key,
-    label: row.label,
-    description: row.description,
+    label: route?.actual_model ?? row.label,
+    description: route
+      ? channel?.name
+        ? `渠道：${channel.name}`
+        : "真实模型"
+      : row.description,
     isDefault: row.is_default,
   };
 }
@@ -1097,6 +1129,7 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
   const [
     featureResult,
     modelViewsResult,
+    modelRoutesResult,
     fixedModesResult,
     modesResult,
     lengthPresetsResult,
@@ -1113,6 +1146,15 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
       .select("id, key, label, description, sort_order, is_enabled, is_default")
       .eq("is_enabled", true)
       .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    service
+      .from("rewrite_model_routes")
+      .select(
+        "id, model_view_id, workflow_step_id, channel_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
+      )
+      .eq("is_enabled", true)
+      .order("priority", { ascending: true })
+      .order("weight", { ascending: false })
       .order("created_at", { ascending: true }),
     service
       .from("rewrite_fixed_modes")
@@ -1151,6 +1193,7 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
   return {
     feature: (featureResult.data ?? null) as RewriteFeatureRow | null,
     modelViews: (modelViewsResult.data ?? []) as RewriteModelViewRow[],
+    modelRoutes: (modelRoutesResult.data ?? []) as RewriteModelRouteRow[],
     fixedModes: (fixedModesResult.data ?? []) as RewriteFixedModeRow[],
     modes: (modesResult.data ?? []) as RewriteModeRow[],
     lengthPresets: (lengthPresetsResult.data ?? []) as RewriteLengthPresetRow[],
@@ -1225,6 +1268,9 @@ export async function getRewriteBootstrapPayload(service: MinimalClient): Promis
   const config = await loadRewriteConfig(service);
   const outputTokenLimit = clampRewriteOutputTokenLimit(config.feature?.output_token_limit);
   const contextMessageLimit = clampRewriteContextMessageLimit(config.feature?.context_message_limit);
+  const availableModelViews = config.modelViews.filter((row) => pickPrimaryModelRoute(config.modelRoutes, row.id));
+  const modelViews = availableModelViews.length > 0 ? availableModelViews : config.modelViews;
+  const availableModelViewIds = new Set(modelViews.map((row) => row.id));
 
   return {
     feature: {
@@ -1241,13 +1287,13 @@ export async function getRewriteBootstrapPayload(service: MinimalClient): Promis
     defaults: {
       autoModeEnabled: false,
       fixedModeId: null,
-      modelViewId: pickDefaultRow(config.modelViews)?.id ?? null,
+      modelViewId: pickDefaultRow(modelViews)?.id ?? null,
       modeId: null,
       lengthPresetId: pickDefaultRow(config.lengthPresets)?.id ?? null,
       workflowId: null,
     },
-    fixedModes: config.fixedModes.map(toFixedModeOption),
-    modelViews: config.modelViews.map(toModelOption),
+    fixedModes: config.fixedModes.filter((row) => availableModelViewIds.has(row.model_view_id)).map(toFixedModeOption),
+    modelViews: modelViews.map((row) => toModelOption(row, config.modelRoutes)),
     modes: config.modes.map(toModeOption),
     lengthPresets: config.lengthPresets.map(toLengthPresetOption),
     workflow: null,
@@ -1268,7 +1314,7 @@ export async function resolveRewriteSelections(
   ensureRewriteFeatureEnabled(config.feature);
 
   if (config.modelViews.length === 0) {
-    throw new Error("未配置可用的展示模型");
+    throw new Error("未配置可用的真实模型");
   }
   if (config.lengthPresets.length === 0) {
     throw new Error("未配置输出长度预设");
@@ -1295,18 +1341,21 @@ export async function resolveRewriteSelections(
       ? findByIdOrKey(config.modelViews, requestedModelViewId, requestedModelViewKey)
       : null;
   if ((requestedModelViewId || requestedModelViewKey) && !explicitModelView) {
-    throw new Error("展示模型不存在");
+    throw new Error("真实模型不存在");
   }
 
   const fixedModeModelView = fixedMode
     ? config.modelViews.find((row) => row.id === fixedMode.model_view_id) ?? null
     : null;
   if (fixedMode && !fixedModeModelView) {
-    throw new Error("固定模式绑定的展示模型不存在");
+    throw new Error("固定模式绑定的真实模型不存在");
   }
   const modelView = fixedModeModelView ?? explicitModelView ?? pickDefaultRow(config.modelViews);
   if (!modelView) {
-    throw new Error("展示模型不存在");
+    throw new Error("真实模型不存在");
+  }
+  if (!pickPrimaryModelRoute(config.modelRoutes, modelView.id)) {
+    throw new Error("当前真实模型未配置可用执行渠道");
   }
 
   let mode: RewriteModeRow | null = null;
@@ -1384,7 +1433,7 @@ async function loadOptionMaps(
     lengthPresetIds: string[];
   },
 ) {
-  const [fixedModesResult, modelViewsResult, modesResult, lengthPresetsResult] = await Promise.all([
+  const [fixedModesResult, modelViewsResult, modelRoutesResult, modesResult, lengthPresetsResult] = await Promise.all([
     input.fixedModeIds.length
       ? service
           .from("rewrite_fixed_modes")
@@ -1397,6 +1446,17 @@ async function loadOptionMaps(
           .select("id, key, label, description, sort_order, is_enabled, is_default")
           .in("id", input.modelViewIds)
       : Promise.resolve({ data: [] as RewriteModelViewRow[] }),
+    input.modelViewIds.length
+      ? service
+          .from("rewrite_model_routes")
+          .select(
+            "id, model_view_id, workflow_step_id, channel_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
+          )
+          .in("model_view_id", input.modelViewIds)
+          .eq("is_enabled", true)
+          .order("priority", { ascending: true })
+          .order("weight", { ascending: false })
+      : Promise.resolve({ data: [] as RewriteModelRouteRow[] }),
     input.modeIds.length
       ? service
           .from("rewrite_modes")
@@ -1421,7 +1481,10 @@ async function loadOptionMaps(
     modelViewMap: new Map(
       (((modelViewsResult as { data?: RewriteModelViewRow[] }).data ?? []) as RewriteModelViewRow[]).map((row) => [
         row.id,
-        toModelOption(row),
+        toModelOption(
+          row,
+          ((modelRoutesResult as { data?: RewriteModelRouteRow[] }).data ?? []) as RewriteModelRouteRow[],
+        ),
       ]),
     ),
     modeMap: new Map(
@@ -1933,7 +1996,7 @@ async function executeRewriteStep(input: {
   });
 
   if (routes.length === 0) {
-    throw new Error("当前展示模型未配置真实执行路线");
+    throw new Error("当前真实模型未配置可用执行渠道");
   }
 
   const systemMessage = buildCombinedRewriteSystemMessage({
@@ -2005,7 +2068,7 @@ async function executeRewriteStep(input: {
         status: "success",
         modelViewId: stepModelView.id,
         modelViewKey: stepModelView.key,
-        modelViewLabel: stepModelView.label,
+        modelViewLabel: route.actual_model,
         routeId: route.id,
         channelId: route.channel_id,
         channelName: channelName ?? aiResult.channelName,
@@ -2061,7 +2124,7 @@ function buildAssistantPayload(input: {
       lengthPresetId: input.selections.lengthPreset.id,
       workflowId: input.selections.workflow?.id ?? null,
       fixedMode: input.selections.fixedMode ? toFixedModeOption(input.selections.fixedMode) : null,
-      modelView: toModelOption(input.selections.modelView),
+      modelView: toModelOption(input.selections.modelView, input.config.modelRoutes),
       mode: input.selections.mode ? toModeOption(input.selections.mode) : null,
       lengthPreset: toLengthPresetOption(input.selections.lengthPreset),
       workflow: input.selections.workflow

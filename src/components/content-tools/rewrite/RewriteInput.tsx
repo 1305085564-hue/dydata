@@ -132,7 +132,7 @@ export function RewriteInput({
 
             <div className="space-y-4">
               <label className="block space-y-1.5">
-                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">展示模型</span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">真实模型</span>
                 <select
                   value={selectedModelViewId}
                   onChange={(e) => onModelViewChange(e.target.value)}
@@ -144,7 +144,7 @@ export function RewriteInput({
                       : 'border-zinc-200 text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5',
                   )}
                 >
-                  <option value="">无附加模型</option>
+                  <option value="">默认真实模型</option>
                   {bootstrap.modelViews.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.label}

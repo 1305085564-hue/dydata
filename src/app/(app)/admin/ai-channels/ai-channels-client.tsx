@@ -1,12 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Plus } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { AI_CHANNELS_CHANGED } from "@/components/admin-layout/admin-sidebar";
 
-import { ChannelSidebar } from "./components/channel-sidebar";
 import { ChannelDetailForm } from "./components/channel-detail-form";
 import { ChannelFeatureBindings } from "./components/channel-feature-bindings";
 import { AiChannelRow, AiFeatureApiRow, AiFeatureItem, ChannelFormState, FeatureSaveState } from "./components/types";
@@ -23,14 +27,32 @@ import {
 } from "./components/utils";
 
 const DEBOUNCE_MS = 500;
-const SELECTION_STORAGE_KEY = "dydata:admin:ai-channels:selected-channel-id";
+
+function notifyChannelsChanged() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(AI_CHANNELS_CHANGED));
+}
+
+function getChannelStatusColor(channel: AiChannelRow): string {
+  if (!channel.is_enabled) return "bg-zinc-200";
+  if (channel.unhealthy_until && new Date(channel.unhealthy_until).getTime() > Date.now()) {
+    return "bg-[#C9604D]";
+  }
+  return "bg-[#6FAA7D]";
+}
 
 export default function AIChannelsClient() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlChannelParam = searchParams.get("channel");
+
   // State
   const [channels, setChannels] = useState<AiChannelRow[]>([]);
   const [features, setFeatures] = useState<AiFeatureItem[]>([]);
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
-  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
+    urlChannelParam && urlChannelParam !== "__new__" ? urlChannelParam : null,
+  );
+  const [isCreatingChannel, setIsCreatingChannel] = useState(urlChannelParam === "__new__");
 
   // Loading & Action State
   const [isLoading, setIsLoading] = useState(true);
@@ -65,12 +87,27 @@ export default function AIChannelsClient() {
     isCreatingChannelRef.current = isCreatingChannel;
   }, [isCreatingChannel]);
 
-  const updateSelection = useCallback((nextChannelId: string | null, nextIsCreatingChannel = false) => {
-    selectedChannelIdRef.current = nextChannelId;
-    isCreatingChannelRef.current = nextIsCreatingChannel;
-    setSelectedChannelId(nextChannelId);
-    setIsCreatingChannel(nextIsCreatingChannel);
-  }, []);
+  const updateSelection = useCallback(
+    (nextChannelId: string | null, nextIsCreatingChannel = false) => {
+      selectedChannelIdRef.current = nextChannelId;
+      isCreatingChannelRef.current = nextIsCreatingChannel;
+      setSelectedChannelId(nextChannelId);
+      setIsCreatingChannel(nextIsCreatingChannel);
+
+      if (typeof window === "undefined") return;
+      const params = new URLSearchParams(window.location.search);
+      if (nextIsCreatingChannel) {
+        params.set("channel", "__new__");
+      } else if (nextChannelId) {
+        params.set("channel", nextChannelId);
+      } else {
+        params.delete("channel");
+      }
+      const qs = params.toString();
+      router.replace(`/admin/ai-channels${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [router],
+  );
 
   const clearFeatureSaveTimer = (id: string) => {
     const timer = timersRef.current[id];
@@ -153,27 +190,25 @@ export default function AIChannelsClient() {
     }
     didInitRef.current = true;
 
-    if (typeof window !== "undefined") {
-      const storedSelection = window.sessionStorage.getItem(SELECTION_STORAGE_KEY);
-      if (storedSelection) {
-        selectedChannelIdRef.current = storedSelection;
-        setSelectedChannelId(storedSelection);
-      }
-    }
-
     void loadData();
   }, [loadData]);
 
+  // Sync URL → state when sidebar/back-button changes ?channel
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (isCreatingChannel || !selectedChannelId) {
-      window.sessionStorage.removeItem(SELECTION_STORAGE_KEY);
+    if (!didInitRef.current) return;
+    const desiredCreating = urlChannelParam === "__new__";
+    const desiredId = !desiredCreating && urlChannelParam ? urlChannelParam : null;
+    if (
+      desiredCreating === isCreatingChannelRef.current &&
+      desiredId === selectedChannelIdRef.current
+    ) {
       return;
     }
-
-    window.sessionStorage.setItem(SELECTION_STORAGE_KEY, selectedChannelId);
-  }, [isCreatingChannel, selectedChannelId]);
+    selectedChannelIdRef.current = desiredId;
+    isCreatingChannelRef.current = desiredCreating;
+    setSelectedChannelId(desiredId);
+    setIsCreatingChannel(desiredCreating);
+  }, [urlChannelParam]);
 
   useEffect(() => () => {
     Object.values(timersRef.current).forEach((timer) => {
@@ -222,6 +257,7 @@ export default function AIChannelsClient() {
       }
 
       feedbackToast.success(id ? "渠道已更新" : "渠道已新增");
+      notifyChannelsChanged();
       await loadData(true);
       return true;
     } catch (err) {
@@ -297,6 +333,9 @@ export default function AIChannelsClient() {
         }
       }
 
+      if (action === "toggle" || action === "recover" || action === "delete") {
+        notifyChannelsChanged();
+      }
       await loadData(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : "操作失败";
@@ -400,32 +439,91 @@ export default function AIChannelsClient() {
 
   const activeChannel = !isCreatingChannel ? channels.find((channel) => channel.id === selectedChannelId) || null : null;
 
+  const buildChannelHref = (channelId: string | "__new__") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("channel", channelId);
+    return `/admin/ai-channels?${params.toString()}`;
+  };
+
   return (
     <div className="w-full space-y-4">
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <div className="flex flex-col items-center gap-4 text-[var(--color-text-secondary)]">
-            <Skeleton className="size-8 rounded-full" />
-            <p className="text-[13px] font-medium text-zinc-800">加载数据中…</p>
-            <p className="text-[12px] text-zinc-500">正在获取渠道与绑定配置</p>
+        <div className="flex h-48 items-center justify-center rounded-2xl border border-zinc-200 bg-white">
+          <div className="flex flex-col items-center gap-3 text-[var(--color-text-secondary)]">
+            <Skeleton className="size-6 rounded-full" />
+            <p className="text-[12px] font-medium text-zinc-800">加载中…</p>
           </div>
         </div>
       ) : (
-        <div id="ai-channels" className="relative flex flex-col gap-6 scroll-mt-8 xl:flex-row xl:items-start">
-          <div className="xl:sticky xl:top-24">
-            <ChannelSidebar
-              channels={channels}
-              selectedChannelId={isCreatingChannel ? null : selectedChannelId}
-              onSelect={(id) => updateSelection(id, false)}
-              onAddClick={() => updateSelection(null, true)}
-            />
-          </div>
+        <div id="ai-channels" className="relative scroll-mt-8">
+          {/* Top row: Channel list (left, 260px) + Channel detail form (right, fluid) */}
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-stretch">
+            {/* Left: Channel list — 与下方「AI 功能绑定」master 列表 260px 对齐 */}
+            <aside
+              aria-label="渠道列表"
+              className="flex w-full flex-col gap-2 self-stretch rounded-2xl border border-zinc-200 bg-zinc-50 p-3 xl:w-[260px] xl:shrink-0"
+            >
+              <div className="flex items-center justify-between px-2">
+                <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                  渠道
+                </p>
+                <Link
+                  href={buildChannelHref("__new__")}
+                  className={cn(
+                    "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors duration-150",
+                    isCreatingChannel ? "text-[#D97757]" : "text-zinc-400 hover:text-zinc-600",
+                  )}
+                >
+                  <Plus className="size-3 stroke-[1.5]" />
+                  <span>添加</span>
+                </Link>
+              </div>
 
-          <div
-            key={activeChannel?.id ?? (isCreatingChannel ? "new" : "empty")}
-            className="flex-1 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
-          >
-            <div className="space-y-6">
+              {channels.length === 0 ? (
+                <p className="px-2 py-3 text-center text-[11px] text-zinc-400">暂无渠道</p>
+              ) : (
+                <ul className="space-y-1">
+                  {channels.map((channel) => {
+                    const active = !isCreatingChannel && selectedChannelId === channel.id;
+                    return (
+                      <li key={channel.id}>
+                        <Link
+                          href={buildChannelHref(channel.id)}
+                          aria-current={active ? "page" : undefined}
+                          className={cn(
+                            "group relative flex items-center gap-2 overflow-hidden rounded-lg px-3 py-2.5 text-[13px] leading-[1.5] tracking-tight transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                            active
+                              ? "bg-white font-semibold text-zinc-800 ring-1 ring-inset ring-[#D97757]/30"
+                              : "font-medium text-zinc-600 hover:bg-white hover:text-zinc-800",
+                          )}
+                        >
+                          {active && (
+                            <span
+                              className="pointer-events-none absolute inset-y-1.5 left-0 w-[2px] rounded-r-full bg-[#D97757]"
+                              aria-hidden
+                            />
+                          )}
+                          <span className="min-w-0 flex-1 truncate pl-1">{channel.name}</span>
+                          <span
+                            className={cn(
+                              "h-1.5 w-1.5 shrink-0 rounded-full",
+                              getChannelStatusColor(channel),
+                            )}
+                            aria-hidden
+                          />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </aside>
+
+            {/* Right: Channel detail form */}
+            <div
+              key={activeChannel?.id ?? (isCreatingChannel ? "new" : "empty")}
+              className="flex min-w-0 flex-1 animate-in fade-in duration-300 ease-out fill-mode-both [&>*]:flex-1"
+            >
               <ChannelDetailForm
                 channel={activeChannel}
                 onSave={handleSaveChannel}
@@ -435,23 +533,24 @@ export default function AIChannelsClient() {
                 onDeleteClick={setDeleteTarget}
                 busyActions={busyActions}
               />
-
-              <section id="ai-features" className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6">
-                <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-                  <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">AI 功能绑定</h2>
-                  <span className="ml-3 text-[11px] text-zinc-500">修改会走原有自动保存逻辑</span>
-                </div>
-
-                <ChannelFeatureBindings
-                  channelId={activeChannel?.id ?? null}
-                  channels={channels}
-                  features={features}
-                  saveStates={featureSaveStates}
-                  onFeaturePatch={handleFeaturePatch}
-                />
-              </section>
             </div>
           </div>
+
+          {/* AI Feature Bindings (full width) */}
+          <section id="ai-features" className="mt-6 scroll-mt-8 space-y-4">
+            <div className="flex flex-col gap-1 border-l-2 border-[#D97757] pl-3">
+              <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">AI 功能绑定</h2>
+              <p className="text-[12px] text-zinc-500">每个功能可独立指定接管渠道与模型，留空走 failover；编辑实时自动保存。</p>
+            </div>
+
+            <ChannelFeatureBindings
+              channelId={activeChannel?.id ?? null}
+              channels={channels}
+              features={features}
+              saveStates={featureSaveStates}
+              onFeaturePatch={handleFeaturePatch}
+            />
+          </section>
         </div>
       )}
 

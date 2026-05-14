@@ -62,6 +62,12 @@ type FeatureConfigRow = {
   context_message_limit: number | null;
 };
 
+type OwnerSupabase = Awaited<ReturnType<typeof requireOwnerActor>> extends infer T
+  ? T extends { supabase: infer S }
+    ? S
+    : never
+  : never;
+
 const DEFAULTABLE_TABLES = new Map<
   Exclude<RewriteEntity, "model_route" | "workflow_step">,
   string
@@ -242,6 +248,75 @@ function normalizeId(value: unknown) {
   return toTrimmedString(value) || null;
 }
 
+function buildInternalModelViewKey(actualModel: string) {
+  const normalized = actualModel
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 56);
+
+  return `real_${normalized || "model"}`;
+}
+
+async function updateInternalModelViewLabel(
+  supabase: OwnerSupabase,
+  modelViewId: string,
+  actualModel: string,
+) {
+  const { error } = await supabase
+    .from("rewrite_model_views")
+    .update({
+      label: actualModel,
+      description: `真实模型：${actualModel}`,
+      is_enabled: true,
+    })
+    .eq("id", modelViewId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function ensureInternalModelViewForActualModel(
+  supabase: OwnerSupabase,
+  actualModel: string,
+) {
+  const key = buildInternalModelViewKey(actualModel);
+  const { data: existing, error: lookupError } = await supabase
+    .from("rewrite_model_views")
+    .select("id")
+    .eq("key", key)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw new Error(lookupError.message);
+  }
+
+  if (existing?.id) {
+    await updateInternalModelViewLabel(supabase, existing.id, actualModel);
+    return existing.id as string;
+  }
+
+  const { data, error } = await supabase
+    .from("rewrite_model_views")
+    .insert({
+      key,
+      label: actualModel,
+      description: `真实模型：${actualModel}`,
+      sort_order: 100,
+      is_default: false,
+      is_enabled: true,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    throw new Error(error?.message ?? "创建真实模型失败");
+  }
+
+  return data.id as string;
+}
+
 export async function GET() {
   const auth = await requireOwnerActor();
   if ("error" in auth) {
@@ -285,7 +360,7 @@ export async function POST(request: NextRequest) {
       const label = toTrimmedString(body.label);
 
       if (!key || !label) {
-        return badRequest("展示模型缺少 key 或 label");
+        return badRequest("内部模型缺少 key 或 label");
       }
 
       const { data, error } = await supabase
@@ -302,7 +377,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error || !data) {
-        throw new Error(error?.message ?? "创建展示模型失败");
+        throw new Error(error?.message ?? "创建内部模型失败");
       }
 
       createdId = data.id;
@@ -345,13 +420,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (entity === "model_route") {
-      const modelViewId = normalizeId(body.model_view_id);
+      let modelViewId = normalizeId(body.model_view_id);
       const channelId = normalizeId(body.channel_id);
       const actualModel = toTrimmedString(body.actual_model);
 
-      if (!modelViewId || !channelId || !actualModel) {
-        return badRequest("路由缺少展示模型、渠道或真实模型");
+      if (!channelId || !actualModel) {
+        return badRequest("真实模型缺少渠道或模型名");
       }
+
+      modelViewId ??= await ensureInternalModelViewForActualModel(supabase, actualModel);
 
       const { data, error } = await supabase
         .from("rewrite_model_routes")
@@ -368,7 +445,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error || !data) {
-        throw new Error(error?.message ?? "创建执行路线失败");
+        throw new Error(error?.message ?? "创建真实模型失败");
       }
 
       createdId = data.id;
@@ -567,12 +644,12 @@ export async function PUT(request: NextRequest) {
 
       if (body.key !== undefined) {
         const key = toTrimmedString(body.key);
-        if (!key) return badRequest("展示模型 key 不能为空");
+        if (!key) return badRequest("内部模型 key 不能为空");
         patch.key = key;
       }
       if (body.label !== undefined) {
         const label = toTrimmedString(body.label);
-        if (!label) return badRequest("展示模型 label 不能为空");
+        if (!label) return badRequest("内部模型 label 不能为空");
         patch.label = label;
       }
       if (body.description !== undefined) patch.description = toNullableString(body.description);
@@ -611,7 +688,7 @@ export async function PUT(request: NextRequest) {
       }
       if (body.model_view_id !== undefined) {
         const modelViewId = normalizeId(body.model_view_id);
-        if (!modelViewId) return badRequest("绑定展示模型不能为空");
+        if (!modelViewId) return badRequest("绑定真实模型不能为空");
         patch.model_view_id = modelViewId;
       }
       if (body.length_preset_id !== undefined) patch.length_preset_id = normalizeId(body.length_preset_id);
@@ -626,10 +703,11 @@ export async function PUT(request: NextRequest) {
 
     if (entity === "model_route") {
       const patch: Record<string, unknown> = {};
+      let actualModelForSync: string | null = null;
 
       if (body.model_view_id !== undefined) {
         const modelViewId = normalizeId(body.model_view_id);
-        if (!modelViewId) return badRequest("展示模型不能为空");
+        if (!modelViewId) return badRequest("真实模型不能为空");
         patch.model_view_id = modelViewId;
       }
       if (body.workflow_step_id !== undefined) patch.workflow_step_id = normalizeId(body.workflow_step_id);
@@ -642,6 +720,7 @@ export async function PUT(request: NextRequest) {
         const actualModel = toTrimmedString(body.actual_model);
         if (!actualModel) return badRequest("真实模型不能为空");
         patch.actual_model = actualModel;
+        actualModelForSync = actualModel;
       }
       if (body.priority !== undefined) patch.priority = toPriority(body.priority, 100);
       if (body.weight !== undefined) patch.weight = toPriority(body.weight, 100);
@@ -651,6 +730,19 @@ export async function PUT(request: NextRequest) {
 
       const { error } = await supabase.from("rewrite_model_routes").update(patch).eq("id", id);
       if (error) throw new Error(error.message);
+
+      if (actualModelForSync && body.model_view_id === undefined) {
+        const { data: route, error: routeError } = await supabase
+          .from("rewrite_model_routes")
+          .select("model_view_id")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (routeError) throw new Error(routeError.message);
+        if (route?.model_view_id) {
+          await updateInternalModelViewLabel(supabase, route.model_view_id as string, actualModelForSync);
+        }
+      }
     }
 
     if (entity === "mode") {
