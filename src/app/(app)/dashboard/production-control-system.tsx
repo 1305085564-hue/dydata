@@ -1,30 +1,15 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+/**
+ * 生产控制系统 · 主编排
+ * 只负责组合子组件、传递数据；状态逻辑在 use-dashboard-orchestration.ts
+ */
 
-import {
-  getMyTodaySopStatusAction,
-  getSopMatrixAction,
-} from "@/app/actions/sop";
-import type { SopCheckpoint, SopMemberStatus } from "@/types";
+import type { SopMemberStatus } from "@/types";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
-import {
-  groupDashboardAlerts,
-  type DashboardAlertLike,
-} from "./alert-groups";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
-import {
-  initDashboardStore,
-  setDashboardAccount,
-  setDashboardDate,
-} from "@/lib/dashboard-store";
+import { setDashboardDate } from "@/lib/dashboard-store";
 
 import { AssistantBeacon } from "./components/assistant-beacon";
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
@@ -33,7 +18,7 @@ import { FocusHeroCard } from "./components/focus-hero-card";
 import { GlobalMatrix } from "./components/global-matrix";
 import { LeaderDashboard } from "./components/leader-dashboard";
 import { WorkflowDashboard } from "./components/workflow-dashboard";
-import type { WorkspaceTab } from "./components/status-theme";
+import { useDashboardOrchestration } from "./components/use-dashboard-orchestration";
 
 interface ProductionControlSystemProps {
   initialMine: SopMemberStatus | null;
@@ -65,11 +50,6 @@ interface ProductionControlSystemProps {
   teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
-/**
- * 生产控制系统 · 主编排
- * 只负责组合、数据编排、事件分发；视觉细节全部下沉到 ./components/*
- * 法典 V1：main 背景用 bg-zinc-50；× 毛玻璃
- */
 export function ProductionControlSystem({
   initialMine,
   initialMatrix,
@@ -90,188 +70,37 @@ export function ProductionControlSystem({
   userExemptionGrants,
   teamReviewRequests,
 }: ProductionControlSystemProps) {
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("FLOW");
-  const [activeCheckpoint, setActiveCheckpoint] =
-    useState<SopCheckpoint>("DATA_REPORT");
-  const [selectedAccountId, setSelectedAccountId] = useState(
-    accounts[0]?.id ?? "",
-  );
-  const [activeBizDate, setActiveBizDate] = useState(today);
-  const pendingDashboardActionRef = useRef<string | null>(null);
-  const [mine, setMine] = useState(initialMine);
-  const [matrix, setMatrix] = useState(initialMatrix);
-  const [isPending, startTransition] = useTransition();
-  const [alerts, setAlerts] = useState<DashboardAlertLike[]>([]);
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
-  const [dismissedReviewNoticeIds, setDismissedReviewNoticeIds] = useState<Set<string>>(new Set());
-  const submittedDates = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          todayReports
-            .map((report) => report.report_date)
-            .filter((date): date is string => Boolean(date)),
-        ),
-      ),
-    [todayReports],
-  );
-
-  useEffect(() => {
-    initDashboardStore({
-      accounts,
-      selectedAccountId,
-      activeBizDate,
-    });
-
-    function handleExternalAction(event: Event) {
-      const detail = (
-        event as CustomEvent<{ key?: string; accountId?: string; date?: string }>
-      ).detail;
-      if (detail?.key === "set-account" && detail.accountId) {
-        setSelectedAccountId(detail.accountId);
-        setActiveBizDate(today);
-        setDashboardAccount(detail.accountId);
-      }
-      if (detail?.key === "set-date" && detail.date) {
-        setActiveBizDate(detail.date);
-        setDashboardDate(detail.date);
-      }
-    }
-
-    window.addEventListener("dydata-dashboard-action", handleExternalAction);
-    return () =>
-      window.removeEventListener("dydata-dashboard-action", handleExternalAction);
-  }, [accounts, selectedAccountId, activeBizDate, today]);
-
-  const refreshSop = (nextMine?: SopMemberStatus) => {
-    if (nextMine) setMine(nextMine);
-
-    startTransition(async () => {
-      const isAdminOrOwner = userRole === "admin" || userRole === "owner";
-      const sharedPromise = isAdminOrOwner
-        ? getSopMatrixAction({ statusDate: today })
-        : Promise.resolve({ data: null });
-
-      const [mineResult, sharedResult] = await Promise.all([
-        getMyTodaySopStatusAction({ statusDate: today }),
-        sharedPromise,
-      ]);
-
-      if (mineResult.data) setMine(mineResult.data);
-      if (isAdminOrOwner && sharedResult.data) {
-        setMatrix(sharedResult.data);
-      }
-    });
-  };
-
-  const openReviewTarget = () => {
-    setActiveTab("REVIEW");
-  };
-
-  const dispatchDashboardAction = (key: string) => {
-    window.dispatchEvent(
-      new CustomEvent("dydata-dashboard-action", { detail: { key } }),
-    );
-  };
-
-  const openDashboardTool = (key: string) => {
-    if (activeTab === "FLOW" && activeCheckpoint === "DATA_REPORT") {
-      dispatchDashboardAction(key);
-      return;
-    }
-
-    pendingDashboardActionRef.current = key;
-    setActiveTab("FLOW");
-    setActiveCheckpoint("DATA_REPORT");
-  };
-
-  useEffect(() => {
-    if (
-      !pendingDashboardActionRef.current ||
-      activeTab !== "FLOW" ||
-      activeCheckpoint !== "DATA_REPORT"
-    )
-      return;
-
-    const action = pendingDashboardActionRef.current;
-    pendingDashboardActionRef.current = null;
-    dispatchDashboardAction(action);
-  }, [activeCheckpoint, activeTab]);
-
-  useEffect(() => {
-    let active = true;
-    const fetchAlerts = async () => {
-      try {
-        const res = await fetch(`/api/sop/alerts?statusDate=${today}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (active && data.ok) setAlerts(data.alerts ?? []);
-      } catch {}
-    };
-    fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60_000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [today]);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem("dydata:dismissed-exemption-review-notices");
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(parsed)) {
-        setDismissedReviewNoticeIds(
-          new Set(parsed.filter((item): item is string => typeof item === "string")),
-        );
-      }
-    } catch {}
-  }, []);
-
-  const dismissAlert = (id: string) => {
-    setDismissedAlerts((prev) => new Set(prev).add(id));
-    if (userExemptionReviewNotice && id === `exemption-review-${userExemptionReviewNotice.id}`) {
-      setDismissedReviewNoticeIds((prev) => {
-        const next = new Set(prev).add(userExemptionReviewNotice.id);
-        try {
-          window.localStorage.setItem(
-            "dydata:dismissed-exemption-review-notices",
-            JSON.stringify(Array.from(next)),
-          );
-        } catch {}
-        return next;
-      });
-    }
-  };
-
-  const exemptionAlert = useMemo<DashboardAlertLike | null>(() => {
-    if (!userExemptionReviewNotice) return null;
-    if (dismissedReviewNoticeIds.has(userExemptionReviewNotice.id)) return null;
-    const approved = userExemptionReviewNotice.request_status === "approved";
-    return {
-      id: `exemption-review-${userExemptionReviewNotice.id}`,
-      severity: approved ? "info" : "critical",
-      message:
-        userExemptionReviewNotice.reason?.trim() ||
-        (approved
-          ? "管理员已批准你的豁免申请。"
-          : "管理员驳回了你的豁免申请。"),
-      userId: userId,
-      userName: userDisplayName,
-      checkpointLabel: approved ? "豁免已通过" : "豁免未通过",
-      sourceType: approved ? "exemption_approved" : "exemption_rejected",
-    };
-  }, [userExemptionReviewNotice, dismissedReviewNoticeIds, userId, userDisplayName]);
-
-  const visibleAlerts = useMemo(() => {
-    const base = alerts.filter((a) => !dismissedAlerts.has(a.id));
-    return exemptionAlert ? [exemptionAlert, ...base] : base;
-  }, [alerts, dismissedAlerts, exemptionAlert]);
-
-  const alertGroups = useMemo(
-    () => groupDashboardAlerts(visibleAlerts),
-    [visibleAlerts],
-  );
+  const {
+    activeTab,
+    setActiveTab,
+    activeCheckpoint,
+    setActiveCheckpoint,
+    selectedAccountId,
+    setSelectedAccountId,
+    activeBizDate,
+    setActiveBizDate,
+    mine,
+    matrix,
+    isPending,
+    submittedDates,
+    alertGroups,
+    refreshSop,
+    openReviewTarget,
+    openDashboardTool,
+    dismissAlert,
+  } = useDashboardOrchestration({
+    initialMine,
+    initialMatrix,
+    today,
+    userDisplayName,
+    userRole,
+    accounts,
+    userId,
+    todayReports,
+    hasPendingExemption,
+    userExemptionReviewNotice,
+    teamReviewRequests,
+  });
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 antialiased">

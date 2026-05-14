@@ -1,0 +1,106 @@
+/* 全局关键帧动画 */
+
+@keyframes auth-glow-drift {
+  0% {
+    transform: translate3d(-8%, -6%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(10%, 8%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(18%, 16%, 0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes glow-green {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(111, 170, 125, 0.2), 0 0 0 0 rgba(111, 170, 125, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(111, 170, 125, 0.35), 0 0 0 4px rgba(111, 170, 125, 0.08);
+  }
+}
+
+@keyframes glow-amber {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(217, 158, 85, 0.2), 0 0 0 0 rgba(217, 158, 85, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(217, 158, 85, 0.35), 0 0 0 4px rgba(217, 158, 85, 0.08);
+  }
+}
+
+@keyframes glow-red {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(201, 96, 77, 0.2), 0 0 0 0 rgba(201, 96, 77, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(201, 96, 77, 0.35), 0 0 0 4px rgba(201, 96, 77, 0.08);
+  }
+}
+
+@keyframes scan {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes fake-progress {
+  0% { width: 0%; }
+  30% { width: 40%; }
+  70% { width: 80%; }
+  100% { width: 95%; }
+}
+
+/* 无障碍：减弱动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .auth-glow-spot {
+    animation: none;
+  }
+
+  .input-focus-line::after,
+  .typewriter-cursor,
+  .animate-shimmer,
+  .animate-shake,
+  .animate-pulse-soft {
+    transition: none;
+    animation: none !important;
+  }
+}
