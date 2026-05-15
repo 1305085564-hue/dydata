@@ -54,6 +54,9 @@ type ChatPanelProps = {
   actorRole: UserRole;
   onHistoryRefresh: () => void;
   onOpenHistory: () => void;
+  prepareSend?: (text: string) => Promise<string> | string;
+  prefilledInput?: string;
+  prefillToken?: number;
 };
 
 const SHORTCUTS = [
@@ -185,6 +188,9 @@ export default function ChatPanel({
   actorRole,
   onHistoryRefresh,
   onOpenHistory,
+  prepareSend,
+  prefilledInput,
+  prefillToken,
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -204,6 +210,14 @@ export default function ChatPanel({
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 48), 200)}px`;
   }, [input]);
+
+  useEffect(() => {
+    if (prefilledInput === undefined) return;
+    setInput(prefilledInput);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+  }, [prefilledInput, prefillToken]);
 
   const hasMessages = messages.length > 0;
   const canSend = input.trim().length > 0 && !loading;
@@ -236,11 +250,12 @@ export default function ChatPanel({
     setLoading(true);
 
     try {
+      const payloadText = prepareSend ? await prepareSend(text) : text;
       const res = await fetch("/api/admin/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: text,
+          message: payloadText,
           conversationId,
         }),
       });

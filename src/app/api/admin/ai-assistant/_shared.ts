@@ -25,11 +25,12 @@ function hasAnyAdminPermission(businessRole: BusinessRole, permissions: Permissi
     hasPermission(businessRole, permissions, "view_all_data") ||
     hasPermission(businessRole, permissions, "edit_data") ||
     hasPermission(businessRole, permissions, "export_data") ||
-    hasPermission(businessRole, permissions, "manage_invite") ||
     hasPermission(businessRole, permissions, "view_analytics") ||
-    hasPermission(businessRole, permissions, "view_audit_log") ||
     hasPermission(businessRole, permissions, "manage_members") ||
     hasPermission(businessRole, permissions, "manage_violations") ||
+    hasPermission(businessRole, permissions, "view_conversion_hub") ||
+    hasPermission(businessRole, permissions, "view_content_review") ||
+    hasPermission(businessRole, permissions, "manage_video_assets") ||
     hasPermission(businessRole, permissions, "use_ai_management")
   );
 }

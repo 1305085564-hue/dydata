@@ -33,15 +33,11 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
   return (
     <AdminWorkspaceLayout
       eyebrow="Permission Modules"
-      title="权限模块"
-      description="成员、角色、权限、团队、分组和邀请码都在这里维护；数据修正、审计和导出保留为后台治理能力。"
+      title="团队与成员"
+      description="成员权限管理、团队与分组维护"
       indexItems={[
-        { id: "permissions", label: "成员" },
-        { id: "teams-groups", label: "团队" },
-        { label: "更多", items: [
-          { id: "team-directory", label: "目录" },
-          { id: "data-tools", label: "治理" },
-        ]},
+        { id: "members", label: "成员权限" },
+        { id: "teams", label: "团队与分组" },
       ]}
     >
       <AdminModulesContent
@@ -59,7 +55,6 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
         dayCountBySubmitter={data.dayCountBySubmitter}
         avgPlayByAccount={data.avgPlayByAccount}
         dayCountByAccount={data.dayCountByAccount}
-        logsWithNames={data.logsWithNames}
       />
     </AdminWorkspaceLayout>
   );

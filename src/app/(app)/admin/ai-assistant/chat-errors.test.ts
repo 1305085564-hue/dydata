@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getAiAssistantErrorMessage } from "./chat-errors.ts";
+import { getAiAssistantErrorMessage } from "./chat-errors";
 
 test("admin_actions 权限不足时提示审计表权限未开放", () => {
   assert.equal(

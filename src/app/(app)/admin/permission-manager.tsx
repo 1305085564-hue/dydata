@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Pencil } from "lucide-react";
+import { ChevronRight, Sparkles, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,11 +23,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
+import { useAlertContextStore } from "@/components/ai-assistant/alert-context-store";
 import type { BusinessRole } from "@/lib/business-role";
-import { PERMISSION_KEYS, ADMIN_PERMISSION_KEYS, AI_PERMISSION_KEYS, PERMISSION_LABELS, PERMISSION_DESCRIPTIONS } from "@/types";
+import {
+  ADMIN_PERMISSION_KEYS,
+  AI_PERMISSION_KEYS,
+  PERMISSION_KEYS,
+  PERMISSION_LABELS,
+  PERMISSION_DESCRIPTIONS,
+} from "@/types";
 import type { PermissionKey, Permissions, UserRole } from "@/types";
 import {
   updatePermissions,
@@ -39,10 +55,7 @@ import {
   applyRoleChangeToMember,
   canChangeMemberRole,
   canRemoveMemberTarget,
-  getChangedAdminPermissions,
   getPermissionManagerCapabilities,
-  hasAdminPermissionChanges,
-  resetMembersToBaseline,
   resolveMemberTeamTransfer,
   type PermissionManagerMember,
 } from "./权限管理";
@@ -80,22 +93,29 @@ interface PasswordResetTarget {
   teamName?: string | null;
 }
 
-interface EditPermTarget {
-  memberId: string;
-  memberName: string;
-}
-
-interface MoreTarget {
-  memberId: string;
-  memberName: string;
-  memberEmail: string | null;
-  teamId: string | null;
-  teamName: string;
-  canReset: boolean;
-  canRemove: boolean;
-}
-
 type TeamFilter = "all" | string;
+
+interface AiSuggestionResponse {
+  status: "normal" | "warning" | "critical";
+  summary: string;
+  suggestions: Array<{
+    label: string;
+    description: string;
+    action: {
+      type: "execute_tool" | "navigate";
+      toolName?: string;
+      toolArgs?: Record<string, unknown>;
+      href?: string;
+    };
+  }>;
+  generatedAt: string;
+}
+
+interface AiSuggestionState {
+  memberId: string;
+  data: AiSuggestionResponse | null;
+  loading: boolean;
+}
 
 function getTeamLabel(teamName?: string | null) {
   return teamName?.trim() || "深圳二部";
@@ -110,182 +130,66 @@ function countEnabled(permissions: Permissions, keys: readonly PermissionKey[]):
   return keys.reduce((sum, key) => sum + (permissions[key] === true ? 1 : 0), 0);
 }
 
-interface MemberRowProps {
-  member: PermissionManagerMember;
-  teams: TeamOption[];
-  actorRole: UserRole;
-  actorId: string;
-  actorPermissions: Permissions;
-  actorTeamId: string | null;
-  canEditPermissions: boolean;
-  canChangeRoleForThis: boolean;
-  disabled: boolean;
-  onRoleChange: (memberId: string, memberName: string, role: "member" | "admin") => void;
-  onOpenEditPerm: (memberId: string, memberName: string) => void;
-  onTransferTeam: (memberId: string, memberName: string, oldTeamName: string, newTeamId: string | null, newTeamName: string) => void;
-  onOpenMore: (target: MoreTarget) => void;
+function arePermissionsEqual(a: Permissions, b: Permissions): boolean {
+  return PERMISSION_KEYS.every((key) => (a[key] === true) === (b[key] === true));
 }
 
-function MemberRow({
-  member,
-  teams,
-  actorRole,
-  actorId,
-  actorPermissions,
-  actorTeamId,
-  canEditPermissions,
-  canChangeRoleForThis,
-  disabled,
-  onRoleChange,
-  onOpenEditPerm,
-  onTransferTeam,
-  onOpenMore,
-}: MemberRowProps) {
+interface MemberRowProps {
+  member: PermissionManagerMember;
+  isActive: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
   const isAdmin = member.role === "admin";
   const editableKeys = getEditableKeys(member.role);
   const enabledCount = countEnabled(member.permissions, editableKeys);
   const totalCount = editableKeys.length;
   const currentTeamName = getTeamLabel(member.teamName);
 
-  const teamOptionsForMember = useMemo(() => {
-    const candidates: Array<{ value: string; label: string }> = [
-      { value: "__none__", label: "未分配" },
-      ...teams.map((team) => ({ value: team.id, label: team.name })),
-    ];
-    return candidates.filter((opt) => {
-      const newTeamId = opt.value === "__none__" ? null : opt.value;
-      if (newTeamId === (member.teamId ?? null)) return true;
-      const decision = resolveMemberTeamTransfer({
-        actorRole,
-        actorId,
-        actorPermissions,
-        actorTeamId,
-        targetId: member.id,
-        targetRole: member.role,
-        targetTeamId: member.teamId ?? null,
-        newTeamId,
-      });
-      return decision.shouldApply;
-    });
-  }, [teams, member.id, member.role, member.teamId, actorRole, actorId, actorPermissions, actorTeamId]);
-
-  const canTransferTeam = teamOptionsForMember.length > 1;
-  const currentTeamValue = member.teamId ?? "__none__";
-
-  const canOpenMore = !disabled;
-  const canRemoveFromTeam = (() => {
-    const decision = resolveMemberTeamTransfer({
-      actorRole,
-      actorId,
-      actorPermissions,
-      actorTeamId,
-      targetId: member.id,
-      targetRole: member.role,
-      targetTeamId: member.teamId ?? null,
-      newTeamId: null,
-    });
-    return decision.shouldApply;
-  })();
-  const canResetPassword = (() => {
-    if (actorId === member.id) return false;
-    if (member.role === "owner") return false;
-    if (actorRole === "owner") return true;
-    if (actorRole !== "admin") return false;
-    if (actorPermissions.manage_members !== true) return false;
-    return actorTeamId === (member.teamId ?? null);
-  })();
-
   return (
-    <div className="grid grid-cols-[80px_132px_88px_64px_32px] items-center gap-3 py-2 text-[12px]">
-      <span className="truncate font-medium text-zinc-800 max-w-[80px]" title={member.name}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "group grid w-full grid-cols-[1fr_120px_72px_72px_16px] items-center gap-4 rounded-xl px-4 py-3 text-left text-[13px]",
+        "transition-[background-color,border-color] duration-150",
+        "border border-transparent",
+        isActive
+          ? "bg-zinc-50 border-zinc-200"
+          : "hover:bg-zinc-50",
+        disabled && "cursor-not-allowed opacity-50",
+      )}
+    >
+      <span className="truncate font-medium text-zinc-800" title={member.name}>
         {member.name}
       </span>
-
-      {canTransferTeam ? (
-        <Select
-          value={currentTeamValue}
-          onValueChange={(value) => {
-            const newTeamId = value === "__none__" ? null : value;
-            const newTeamName = value === "__none__"
-              ? "未分配"
-              : teams.find((t) => t.id === value)?.name ?? "未分配";
-            onTransferTeam(member.id, member.name, currentTeamName, newTeamId, newTeamName);
-          }}
-          disabled={disabled}
-        >
-          <SelectTrigger className="h-7 w-full min-w-0 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
-            <SelectValue>{currentTeamName}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {teamOptionsForMember.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <span className="truncate text-zinc-500" title={currentTeamName}>
-          {currentTeamName}
-        </span>
-      )}
-
-      {canChangeRoleForThis ? (
-        <Select
-          value={member.role}
-          onValueChange={(value) => onRoleChange(member.id, member.name, value as "member" | "admin")}
-          disabled={disabled}
-        >
-          <SelectTrigger className="h-7 w-full min-w-0 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] text-[12px]">
-            <SelectValue>{isAdmin ? "管理员" : "成员"}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="admin">管理员</SelectItem>
-            <SelectItem value="member">成员</SelectItem>
-          </SelectContent>
-        </Select>
-      ) : (
-        <span className="text-zinc-400">{isAdmin ? "管理员" : "成员"}</span>
-      )}
-
-      {totalCount > 0 && canEditPermissions ? (
-        <button
-          type="button"
-          onClick={() => onOpenEditPerm(member.id, member.name)}
-          disabled={disabled}
-          className="group inline-flex h-7 items-center justify-center gap-1 rounded-[8px] border border-zinc-200 bg-zinc-50 text-[11px] font-medium tabular-nums text-zinc-600 transition-[background-color,border-color,color] duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-          title={isAdmin ? "编辑权限" : "编辑 AI 授权"}
-        >
-          <span>
-            {enabledCount}/{totalCount}
-          </span>
-          <Pencil className="size-3 stroke-[1.5] text-zinc-400 group-hover:text-zinc-600" />
-        </button>
-      ) : (
-        <span className="text-center text-zinc-300">—</span>
-      )}
-
-      <button
-        type="button"
-        onClick={() =>
-          onOpenMore({
-            memberId: member.id,
-            memberName: member.name,
-            memberEmail: member.email ?? null,
-            teamId: member.teamId ?? null,
-            teamName: currentTeamName,
-            canReset: canResetPassword,
-            canRemove: canRemoveFromTeam,
-          })
-        }
-        disabled={!canOpenMore}
-        className="flex size-7 items-center justify-center rounded-[8px] text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
-        title="更多操作"
+      <span className="truncate text-zinc-500" title={currentTeamName}>
+        {currentTeamName}
+      </span>
+      <span
+        className={cn(
+          "inline-flex h-6 items-center justify-center rounded-xl px-2 text-[11px] font-medium tracking-tight",
+          isAdmin
+            ? "bg-[#D97757]/10 text-[#D97757]"
+            : "bg-zinc-100 text-zinc-600",
+        )}
       >
-        <MoreHorizontal className="size-4 stroke-[1.5]" />
-        <span className="sr-only">更多操作</span>
-      </button>
-    </div>
+        {isAdmin ? "管理员" : "成员"}
+      </span>
+      <span className="text-right font-mono text-[12px] tabular-nums text-zinc-500">
+        {totalCount > 0 ? `${enabledCount}/${totalCount}` : "—"}
+      </span>
+      <ChevronRight
+        className={cn(
+          "size-4 stroke-[1.5] text-zinc-300 transition-colors duration-150",
+          "group-hover:text-zinc-500",
+          isActive && "text-zinc-700",
+        )}
+      />
+    </button>
   );
 }
 
@@ -298,15 +202,12 @@ export function PermissionManager({
   currentUserPermissions,
 }: PermissionManagerProps) {
   const router = useRouter();
-  const [editableMembers, setEditableMembers] = useState(members);
   const [baselineMembers, setBaselineMembers] = useState(members);
   const [isSavingPermissions, startSavingPermissions] = useTransition();
   const [isChangingRole, startChangingRole] = useTransition();
   const [roleChangeTarget, setRoleChangeTarget] = useState<RoleChangeTarget | null>(null);
   const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null);
   const [passwordResetTarget, setPasswordResetTarget] = useState<PasswordResetTarget | null>(null);
-  const [editPermTarget, setEditPermTarget] = useState<EditPermTarget | null>(null);
-  const [moreTarget, setMoreTarget] = useState<MoreTarget | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isRemoving, startRemoving] = useTransition();
@@ -316,13 +217,23 @@ export function PermissionManager({
   const [pmShowAll, setPmShowAll] = useState(false);
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const capabilities = getPermissionManagerCapabilities(currentUserRole, currentUserPermissions, currentUserBusinessRole);
-  const currentActor = editableMembers.find((member) => member.id === currentUserId);
+
+  const [sheetMemberId, setSheetMemberId] = useState<string | null>(null);
+  const [draftPermissions, setDraftPermissions] = useState<Permissions>({});
+  const [aiSuggestion, setAiSuggestion] = useState<AiSuggestionState | null>(null);
+  const [executingKey, setExecutingKey] = useState<string | null>(null);
+  const { requestAssistantOpen } = useAlertContextStore();
+
+  const capabilities = getPermissionManagerCapabilities(
+    currentUserRole,
+    currentUserPermissions,
+    currentUserBusinessRole,
+  );
+  const currentActor = baselineMembers.find((member) => member.id === currentUserId);
   const actionDisabled =
     isChangingRole || isSavingPermissions || isRemoving || isResettingPassword || isTransferringTeam;
 
   useEffect(() => {
-    setEditableMembers(members);
     setBaselineMembers(members);
   }, [members]);
 
@@ -333,7 +244,7 @@ export function PermissionManager({
     return unique.sort((left, right) => left.localeCompare(right, "zh-CN"));
   }, [members]);
 
-  const nonOwners = editableMembers.filter((member) => member.id !== currentUserId);
+  const nonOwners = baselineMembers.filter((member) => member.id !== currentUserId);
   const roleChangeableMembers = nonOwners.filter((member) => {
     const nextRole = member.role === "member" ? "admin" : "member";
     return canChangeMemberRole({
@@ -374,53 +285,165 @@ export function PermissionManager({
       return haystack.includes(normalizedQuery);
     });
   }, [searchQuery, teamFilter, visibleMembers]);
-  const changedCount = useMemo(
-    () => getChangedAdminPermissions(editableMembers, baselineMembers).length,
-    [editableMembers, baselineMembers],
-  );
-  const hasPermissionChanges = changedCount > 0;
 
-  const handlePermToggle = useCallback((memberId: string, key: string, checked: boolean) => {
-    setEditableMembers((prev) =>
-      prev.map((member) =>
-        member.id === memberId
-          ? { ...member, permissions: { ...member.permissions, [key]: checked } }
-          : member,
-      ),
-    );
+  const sheetMember = sheetMemberId
+    ? baselineMembers.find((member) => member.id === sheetMemberId) ?? null
+    : null;
+  const sheetEditableKeys = sheetMember ? getEditableKeys(sheetMember.role) : [];
+  const hasDraftChanges = sheetMember
+    ? !arePermissionsEqual(sheetMember.permissions, draftPermissions)
+    : false;
+
+  const requestOpenSheet = useCallback(
+    (memberId: string) => {
+      if (sheetMemberId === memberId) return;
+      if (sheetMemberId && hasDraftChanges) {
+        feedbackToast.error("当前成员还有未保存的权限改动");
+        return;
+      }
+      const next = baselineMembers.find((member) => member.id === memberId);
+      if (!next) return;
+      setSheetMemberId(memberId);
+      setDraftPermissions({ ...next.permissions });
+      setAiSuggestion(null);
+    },
+    [sheetMemberId, hasDraftChanges, baselineMembers],
+  );
+
+  const closeSheet = useCallback(() => {
+    setSheetMemberId(null);
+    setDraftPermissions({});
+    setAiSuggestion(null);
   }, []);
 
-  const handleCancelPermissions = useCallback(() => {
-    setEditableMembers((prev) => resetMembersToBaseline(prev, baselineMembers));
-  }, [baselineMembers]);
+  const fetchAiSuggestion = useCallback(async () => {
+    if (!sheetMember) return;
+    setAiSuggestion({ memberId: sheetMember.id, data: null, loading: true });
+    try {
+      const res = await fetch("/api/admin/member-ai-suggestion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: sheetMember.id }),
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as AiSuggestionResponse;
+      setAiSuggestion({ memberId: sheetMember.id, data, loading: false });
+    } catch {
+      feedbackToast.error("获取 AI 建议失败");
+      setAiSuggestion(null);
+    }
+  }, [sheetMember]);
 
-  const handleSavePermissions = useCallback(() => {
-    const changedMembers = getChangedAdminPermissions(editableMembers, baselineMembers);
-    if (changedMembers.length === 0) return;
+  function buildExecuteToolPrompt(
+    suggestion: AiSuggestionResponse["suggestions"][number],
+  ) {
+    const argsBlob =
+      suggestion.action.toolArgs && Object.keys(suggestion.action.toolArgs).length > 0
+        ? `\n参数：${JSON.stringify(suggestion.action.toolArgs)}`
+        : "";
+    return `请帮我执行：${suggestion.label}（${suggestion.description}，工具 ${suggestion.action.toolName ?? "未指定"}）${argsBlob}`;
+  }
+
+  const fallbackToAssistant = useCallback(
+    (suggestion: AiSuggestionResponse["suggestions"][number]) => {
+      requestAssistantOpen();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("dydata:assistant-prefill", {
+            detail: { text: buildExecuteToolPrompt(suggestion) },
+          }),
+        );
+      }
+    },
+    [requestAssistantOpen],
+  );
+
+  const handleExecuteSuggestion = useCallback(
+    async (
+      suggestion: AiSuggestionResponse["suggestions"][number],
+      key: string,
+    ) => {
+      if (executingKey) return;
+      if (suggestion.action.type === "navigate" && suggestion.action.href) {
+        router.push(suggestion.action.href);
+        return;
+      }
+      if (!suggestion.action.toolName) {
+        fallbackToAssistant(suggestion);
+        return;
+      }
+      setExecutingKey(key);
+      try {
+        const res = await fetch("/api/admin/execute-tool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toolName: suggestion.action.toolName,
+            toolArgs: suggestion.action.toolArgs ?? {},
+          }),
+        });
+        if (res.status === 409) {
+          toast.message("该动作需要确认，已切换到 AI 对话流");
+          fallbackToAssistant(suggestion);
+          return;
+        }
+        const json = (await res.json().catch(() => null)) as
+          | { success?: boolean; error?: string }
+          | null;
+        if (!res.ok || !json?.success) {
+          toast.error(json?.error || "执行失败，已切换到 AI 对话流");
+          fallbackToAssistant(suggestion);
+          return;
+        }
+        toast.success(`${suggestion.label}：执行完成`);
+        void fetchAiSuggestion();
+      } catch {
+        toast.error("网络异常，已切换到 AI 对话流");
+        fallbackToAssistant(suggestion);
+      } finally {
+        setExecutingKey(null);
+      }
+    },
+    [executingKey, router, fetchAiSuggestion, fallbackToAssistant],
+  );
+
+  const handlePermToggle = useCallback((key: PermissionKey, checked: boolean) => {
+    setDraftPermissions((prev) => ({ ...prev, [key]: checked }));
+  }, []);
+
+  const handleSaveSheet = useCallback(() => {
+    if (!sheetMember) return;
+    if (!hasDraftChanges) return;
+    const memberId = sheetMember.id;
     const previousBaseline = baselineMembers;
+    const nextPermissions: Permissions = { ...draftPermissions };
 
-    setBaselineMembers(editableMembers);
+    setBaselineMembers((prev) =>
+      prev.map((member) =>
+        member.id === memberId ? { ...member, permissions: nextPermissions } : member,
+      ),
+    );
     feedbackToast.success("权限已保存");
 
     startSavingPermissions(async () => {
-      const results = await Promise.all(
-        changedMembers.map((member) => updatePermissions(member.id, member.permissions)),
-      );
-      const error = results.find((result) => result.error)?.error;
-
-      if (error) {
+      const result = await updatePermissions(memberId, nextPermissions);
+      if (result.error) {
         setBaselineMembers(previousBaseline);
-        feedbackToast.error(error);
+        feedbackToast.error(result.error);
         return;
       }
-
       router.refresh();
     });
-  }, [editableMembers, baselineMembers, router]);
+  }, [sheetMember, hasDraftChanges, draftPermissions, baselineMembers, router]);
+
+  const handleResetDraft = useCallback(() => {
+    if (!sheetMember) return;
+    setDraftPermissions({ ...sheetMember.permissions });
+  }, [sheetMember]);
 
   const requestRoleChange = useCallback(
     (memberId: string, memberName: string, newRole: "member" | "admin") => {
-      const current = editableMembers.find((member) => member.id === memberId);
+      const current = baselineMembers.find((member) => member.id === memberId);
       if (!current || current.role === newRole) return;
       if (
         !canChangeMemberRole({
@@ -440,31 +463,30 @@ export function PermissionManager({
       }
       setRoleChangeTarget({ memberId, memberName, role: newRole });
     },
-    [editableMembers, currentUserRole, currentUserId, currentUserPermissions, currentActor],
+    [baselineMembers, currentUserRole, currentUserId, currentUserPermissions, currentActor],
   );
 
   const handleRoleChange = useCallback(
     (memberId: string, newRole: "member" | "admin") => {
-      const previousEditableMembers = editableMembers;
       const previousBaselineMembers = baselineMembers;
 
-      setEditableMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
       setBaselineMembers((prev) => applyRoleChangeToMember(prev, memberId, newRole));
+      if (sheetMemberId === memberId) {
+        setDraftPermissions((prev) => (newRole === "member" ? {} : prev));
+      }
       feedbackToast.success("角色已更新");
 
       startChangingRole(async () => {
         const res = await changeRole(memberId, newRole);
         if (res.error) {
-          setEditableMembers(previousEditableMembers);
           setBaselineMembers(previousBaselineMembers);
           feedbackToast.error(res.error);
           return;
         }
-
         router.refresh();
       });
     },
-    [editableMembers, baselineMembers, router],
+    [baselineMembers, sheetMemberId, router],
   );
 
   function confirmRoleChange() {
@@ -476,75 +498,70 @@ export function PermissionManager({
   function handleRemoveMember() {
     if (!removeTarget) return;
     const target = removeTarget;
-    const previousEditableMembers = editableMembers;
     const previousBaselineMembers = baselineMembers;
 
-    const applyRemoval = (list: PermissionManagerMember[]) =>
-      list.map((member) =>
+    setBaselineMembers((prev) =>
+      prev.map((member) =>
         member.id === target.memberId
           ? { ...member, teamId: null, teamName: null }
           : member,
-      );
-
-    setEditableMembers(applyRemoval);
-    setBaselineMembers(applyRemoval);
+      ),
+    );
     setRemoveTarget(null);
+    if (sheetMemberId === target.memberId) {
+      closeSheet();
+    }
     feedbackToast.success(`已将 ${target.memberName} 移出团队`);
 
     startRemoving(async () => {
       const res = await removeMemberFromTeam(target.memberId);
       if (res.error) {
-        setEditableMembers(previousEditableMembers);
         setBaselineMembers(previousBaselineMembers);
         setRemoveTarget(target);
         feedbackToast.error(res.error);
         return;
       }
-
       router.refresh();
     });
   }
 
-  const openPasswordResetDialog = useCallback((member: { id: string; name: string; email?: string | null; teamName?: string | null }) => {
-    setPasswordResetTarget({
-      memberId: member.id,
-      memberName: member.name,
-      memberEmail: member.email ?? null,
-      teamName: member.teamName ?? null,
-    });
-    setNewPassword("");
-    setConfirmPassword("");
-  }, []);
-
-  const openEditPermDialog = useCallback((memberId: string, memberName: string) => {
-    setEditPermTarget({ memberId, memberName });
-  }, []);
-
-  const openMoreDialog = useCallback((target: MoreTarget) => {
-    setMoreTarget(target);
-  }, []);
+  const openPasswordResetDialog = useCallback(
+    (member: { id: string; name: string; email?: string | null; teamName?: string | null }) => {
+      setPasswordResetTarget({
+        memberId: member.id,
+        memberName: member.name,
+        memberEmail: member.email ?? null,
+        teamName: member.teamName ?? null,
+      });
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    [],
+  );
 
   const handleTransferTeam = useCallback(
-    (memberId: string, memberName: string, oldTeamName: string, newTeamId: string | null, newTeamName: string) => {
-      const previousEditableMembers = editableMembers;
+    (
+      memberId: string,
+      memberName: string,
+      oldTeamName: string,
+      newTeamId: string | null,
+      newTeamName: string,
+    ) => {
       const previousBaselineMembers = baselineMembers;
       const nextTeam = newTeamId ? teams.find((t) => t.id === newTeamId) ?? null : null;
 
-      const applyTransfer = (list: PermissionManagerMember[]) =>
-        list.map((member) =>
+      setBaselineMembers((prev) =>
+        prev.map((member) =>
           member.id === memberId
             ? { ...member, teamId: newTeamId, teamName: nextTeam?.name ?? null }
             : member,
-        );
-
-      setEditableMembers(applyTransfer);
-      setBaselineMembers(applyTransfer);
+        ),
+      );
       feedbackToast.success(`已将 ${memberName} 从 ${oldTeamName} 调配至 ${newTeamName}`);
 
       startTransferringTeam(async () => {
         const res = await updateMemberTeam(memberId, newTeamId);
         if (res.error) {
-          setEditableMembers(previousEditableMembers);
           setBaselineMembers(previousBaselineMembers);
           feedbackToast.error(res.error);
           return;
@@ -552,7 +569,7 @@ export function PermissionManager({
         router.refresh();
       });
     },
-    [editableMembers, baselineMembers, teams, router],
+    [baselineMembers, teams, router],
   );
 
   function handleResetPassword() {
@@ -586,9 +603,67 @@ export function PermissionManager({
     });
   }
 
-  const editingMember = editPermTarget
-    ? editableMembers.find((m) => m.id === editPermTarget.memberId) ?? null
-    : null;
+  const sheetTeamOptions = useMemo(() => {
+    if (!sheetMember) return [] as Array<{ value: string; label: string }>;
+    const candidates: Array<{ value: string; label: string }> = [
+      { value: "__none__", label: "未分配" },
+      ...teams.map((team) => ({ value: team.id, label: team.name })),
+    ];
+    return candidates.filter((opt) => {
+      const newTeamId = opt.value === "__none__" ? null : opt.value;
+      if (newTeamId === (sheetMember.teamId ?? null)) return true;
+      const decision = resolveMemberTeamTransfer({
+        actorRole: currentUserRole,
+        actorId: currentUserId,
+        actorPermissions: currentUserPermissions,
+        actorTeamId: currentActor?.teamId ?? null,
+        targetId: sheetMember.id,
+        targetRole: sheetMember.role,
+        targetTeamId: sheetMember.teamId ?? null,
+        newTeamId,
+      });
+      return decision.shouldApply;
+    });
+  }, [sheetMember, teams, currentUserRole, currentUserId, currentUserPermissions, currentActor]);
+
+  const sheetCanChangeRole =
+    capabilities.canChangeRole && sheetMember
+      ? canChangeMemberRole({
+          actorRole: currentUserRole,
+          actorId: currentUserId,
+          actorPermissions: currentUserPermissions,
+          actorTeamId: currentActor?.teamId ?? null,
+          targetId: sheetMember.id,
+          targetRole: sheetMember.role,
+          targetPermissions: sheetMember.permissions,
+          targetTeamId: sheetMember.teamId ?? null,
+          newRole: sheetMember.role === "member" ? "admin" : "member",
+        })
+      : false;
+
+  const sheetCanRemove = sheetMember
+    ? resolveMemberTeamTransfer({
+        actorRole: currentUserRole,
+        actorId: currentUserId,
+        actorPermissions: currentUserPermissions,
+        actorTeamId: currentActor?.teamId ?? null,
+        targetId: sheetMember.id,
+        targetRole: sheetMember.role,
+        targetTeamId: sheetMember.teamId ?? null,
+        newTeamId: null,
+      }).shouldApply
+    : false;
+
+  const sheetCanResetPassword = sheetMember
+    ? (() => {
+        if (currentUserId === sheetMember.id) return false;
+        if (sheetMember.role === "owner") return false;
+        if (currentUserRole === "owner") return true;
+        if (currentUserRole !== "admin") return false;
+        if (currentUserPermissions.manage_members !== true) return false;
+        return (currentActor?.teamId ?? null) === (sheetMember.teamId ?? null);
+      })()
+    : false;
 
   const pagedMembers = pmShowAll
     ? filteredMembers
@@ -596,14 +671,17 @@ export function PermissionManager({
   const totalPages = Math.ceil(filteredMembers.length / 20);
 
   return (
-    <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6">
+    <div className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6">
       <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">成员与权限</h2>
+        <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">成员与权限</h2>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Label htmlFor="team-filter" className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+        <div className="flex flex-1 flex-wrap items-center gap-4">
+          <Label
+            htmlFor="team-filter"
+            className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400"
+          >
             团队
           </Label>
           <Select
@@ -614,7 +692,10 @@ export function PermissionManager({
               setPmShowAll(false);
             }}
           >
-            <SelectTrigger id="team-filter" className="h-9 w-[150px] bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+            <SelectTrigger
+              id="team-filter"
+              className="h-9 w-[150px] border-transparent bg-zinc-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-200 focus:bg-white focus:shadow-sm"
+            >
               <SelectValue>{teamFilter === "all" ? "全部团队" : teamFilter}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -634,108 +715,36 @@ export function PermissionManager({
               setPmShowAll(false);
             }}
             placeholder="搜索姓名、邮箱或团队"
-            className="h-9 w-full rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-64"
+            className="h-9 w-full rounded-xl border-transparent bg-zinc-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-200 focus:bg-white focus:shadow-sm sm:w-64"
           />
         </div>
-        <span className="text-[12px] text-zinc-400 tabular-nums">
+        <span className="font-mono text-[12px] tabular-nums text-zinc-400">
           显示 {filteredMembers.length} / {visibleMembers.length} 人
         </span>
       </div>
-
-      {capabilities.canEditPermissions && hasPermissionChanges ? (
-        <div className="flex items-center justify-between gap-4 border-l-[2px] border-l-[#D99E55] bg-zinc-50 py-2 pl-4 pr-2">
-          <p className="text-[12px] text-zinc-600 tabular-nums">
-            {changedCount} 人有未保存的权限更改
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-3 text-[12px] text-zinc-500 hover:text-zinc-800"
-              onClick={handleCancelPermissions}
-              disabled={!hasPermissionChanges || actionDisabled}
-            >
-              取消
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 rounded-[10px] bg-zinc-900 px-3 text-[12px] text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
-              onClick={handleSavePermissions}
-              disabled={!hasPermissionChanges || actionDisabled}
-            >
-              {isSavingPermissions ? "保存中…" : "保存"}
-            </Button>
-          </div>
-        </div>
-      ) : null}
 
       {filteredMembers.length === 0 ? (
         <p className="py-10 text-center text-[13px] text-zinc-400">暂无可管理成员</p>
       ) : (
         <>
-          <div className="grid gap-x-6 md:grid-cols-2">
-            <div className="grid grid-cols-[80px_132px_88px_64px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-              <span>姓名</span>
-              <span>团队</span>
-              <span>角色</span>
-              <span className="text-center">权限</span>
-              <span className="text-right">操作</span>
-            </div>
-            <div className="hidden grid-cols-[80px_132px_88px_64px_32px] items-center gap-3 border-b border-zinc-200 pb-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 md:grid">
-              <span>姓名</span>
-              <span>团队</span>
-              <span>角色</span>
-              <span className="text-center">权限</span>
-              <span className="text-right">操作</span>
-            </div>
+          <div className="grid grid-cols-[1fr_120px_72px_72px_16px] items-center gap-4 border-b border-zinc-200 px-4 pb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+            <span>姓名</span>
+            <span>团队</span>
+            <span>角色</span>
+            <span className="text-right">权限</span>
+            <span aria-hidden />
           </div>
 
-          <div className="grid gap-x-6 md:grid-cols-2">
-            {pagedMembers.map((member, index) => {
-              const canChangeRoleForThis =
-                capabilities.canChangeRole &&
-                canChangeMemberRole({
-                  actorRole: currentUserRole,
-                  actorId: currentUserId,
-                  actorPermissions: currentUserPermissions,
-                  actorTeamId: currentActor?.teamId ?? null,
-                  targetId: member.id,
-                  targetRole: member.role,
-                  targetPermissions: member.permissions,
-                  targetTeamId: member.teamId ?? null,
-                  newRole: member.role === "member" ? "admin" : "member",
-                });
-
-              const isLastInColumn =
-                index === pagedMembers.length - 1 ||
-                (pagedMembers.length % 2 === 0 && index === pagedMembers.length - 2);
-
-              return (
-                <div
-                  key={member.id}
-                  className={cn(
-                    "border-zinc-100",
-                    isLastInColumn ? "" : "border-b",
-                  )}
-                >
-                  <MemberRow
-                    member={member}
-                    teams={teams}
-                    actorRole={currentUserRole}
-                    actorId={currentUserId}
-                    actorPermissions={currentUserPermissions}
-                    actorTeamId={currentActor?.teamId ?? null}
-                    canEditPermissions={capabilities.canEditPermissions}
-                    canChangeRoleForThis={canChangeRoleForThis}
-                    disabled={actionDisabled}
-                    onRoleChange={requestRoleChange}
-                    onOpenEditPerm={openEditPermDialog}
-                    onTransferTeam={handleTransferTeam}
-                    onOpenMore={openMoreDialog}
-                  />
-                </div>
-              );
-            })}
+          <div className="space-y-1">
+            {pagedMembers.map((member) => (
+              <MemberRow
+                key={member.id}
+                member={member}
+                isActive={sheetMemberId === member.id}
+                disabled={actionDisabled}
+                onClick={() => requestOpenSheet(member.id)}
+              />
+            ))}
           </div>
 
           {filteredMembers.length > 20 ? (
@@ -747,7 +756,7 @@ export function PermissionManager({
                     size="sm"
                     disabled={pmPage === 1}
                     onClick={() => setPmPage((page) => page - 1)}
-                    className="h-8 px-3 text-[12px] rounded-[10px] border-zinc-200"
+                    className="h-8 rounded-xl border-zinc-200 px-3 text-[12px]"
                   >
                     上一页
                   </Button>
@@ -758,10 +767,10 @@ export function PermissionManager({
                       variant={page === pmPage ? "default" : "outline"}
                       onClick={() => setPmPage(page)}
                       className={cn(
-                        "h-8 w-8 p-0 text-[12px] rounded-[10px]",
+                        "h-8 w-8 rounded-xl p-0 text-[12px]",
                         page === pmPage
-                          ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60"
-                          : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50",
+                          ? "border-[#D97757]/40 bg-white text-[#D97757] hover:border-[#D97757]/60 hover:bg-white"
+                          : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50",
                       )}
                     >
                       {page}
@@ -772,7 +781,7 @@ export function PermissionManager({
                     size="sm"
                     disabled={pmPage === totalPages}
                     onClick={() => setPmPage((page) => page + 1)}
-                    className="h-8 px-3 text-[12px] rounded-[10px] border-zinc-200"
+                    className="h-8 rounded-xl border-zinc-200 px-3 text-[12px]"
                   >
                     下一页
                   </Button>
@@ -781,7 +790,7 @@ export function PermissionManager({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[12px] text-zinc-500 h-8"
+                className="h-8 text-[12px] text-zinc-500"
                 onClick={() => {
                   setPmShowAll((value) => !value);
                   if (pmShowAll) setPmPage(1);
@@ -794,84 +803,364 @@ export function PermissionManager({
         </>
       )}
 
-      <Dialog
-        open={editPermTarget !== null}
+      <Sheet
+        open={sheetMember !== null}
         onOpenChange={(open) => {
-          if (!open) setEditPermTarget(null);
+          if (!open) closeSheet();
         }}
       >
-        <DialogContent className="rounded-2xl bg-white border border-zinc-200 shadow-sm">
-          <DialogHeader>
-            <DialogTitle>
-              {editPermTarget ? `${editPermTarget.memberName} 的权限` : "权限"}
-            </DialogTitle>
-            <DialogDescription>
-              勾选变更后点击下方保存，或关闭弹窗后在顶部批量保存。
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {editingMember ? (
-              <div className="space-y-1">
-                <p className="px-2 pt-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                  后台权限
-                </p>
-                {ADMIN_PERMISSION_KEYS.map((key) => (
-                  <label
-                    key={key}
-                    className="flex cursor-pointer items-center justify-between gap-4 rounded-lg px-2 py-2 transition-[background-color] duration-150 hover:bg-zinc-50"
+        <SheetContent side="right" className="w-[480px] sm:max-w-none">
+          {sheetMember ? (
+            <>
+              <SheetHeader>
+                <div className="flex items-center gap-2">
+                  <SheetTitle>{sheetMember.name}</SheetTitle>
+                  <span
+                    className={cn(
+                      "inline-flex h-5 items-center justify-center rounded-xl px-2 text-[11px] font-medium tracking-tight",
+                      sheetMember.role === "admin"
+                        ? "bg-[#D97757]/10 text-[#D97757]"
+                        : "bg-zinc-100 text-zinc-600",
+                    )}
                   >
-                    <span className="text-[13px] text-zinc-700">{PERMISSION_LABELS[key]}</span>
-                    <Checkbox
-                      checked={editingMember.permissions[key] === true}
-                      onCheckedChange={(checked) =>
-                        handlePermToggle(editingMember.id, key, checked === true)
-                      }
-                      disabled={isSavingPermissions}
-                    />
-                  </label>
-                ))}
-              </div>
-            ) : null}
-            {editingMember ? (
-              <div className="space-y-1">
-                <p className="px-2 pt-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                  AI 能力
-                </p>
-                {AI_PERMISSION_KEYS.map((key) => (
-                  <label
-                    key={key}
-                    className="flex cursor-pointer items-start justify-between gap-4 rounded-lg px-2 py-2 transition-[background-color] duration-150 hover:bg-zinc-50"
+                    {sheetMember.role === "admin" ? "管理员" : "成员"}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={aiSuggestion?.loading}
+                    onClick={fetchAiSuggestion}
+                    className="h-8 rounded-xl border-zinc-200 px-3 text-[12px] text-zinc-700 hover:bg-zinc-50"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] text-zinc-700">{PERMISSION_LABELS[key]}</p>
-                      {PERMISSION_DESCRIPTIONS[key] ? (
-                        <p className="mt-0.5 text-[11px] text-zinc-400">{PERMISSION_DESCRIPTIONS[key]}</p>
-                      ) : null}
+                    {aiSuggestion?.loading ? (
+                      <>
+                        <Loader2 className="mr-1 size-3.5 animate-spin" />
+                        思考中…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-1 size-3.5" />
+                        AI 建议
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-[12px] text-zinc-500">
+                  {getTeamLabel(sheetMember.teamName)}
+                  {sheetMember.email ? (
+                    <span className="ml-2 font-mono tabular-nums text-zinc-400">
+                      {sheetMember.email}
+                    </span>
+                  ) : null}
+                </p>
+              </SheetHeader>
+
+              <SheetBody className="space-y-6">
+                {aiSuggestion?.data ? (
+                  <div
+                    className={cn(
+                      "mb-3 rounded-xl border-l-2 bg-zinc-50/50 p-3",
+                      aiSuggestion.data.status === "critical"
+                        ? "border-l-[#B42318]"
+                        : aiSuggestion.data.status === "warning"
+                          ? "border-l-[#EAB308]"
+                          : "border-l-zinc-300",
+                    )}
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex h-5 items-center justify-center rounded-lg px-2 text-[11px] font-medium",
+                            aiSuggestion.data.status === "critical"
+                              ? "bg-[#B42318]/10 text-[#B42318]"
+                              : aiSuggestion.data.status === "warning"
+                                ? "bg-[#EAB308]/10 text-[#EAB308]"
+                                : "bg-zinc-100 text-zinc-600",
+                          )}
+                        >
+                          {aiSuggestion.data.status === "critical"
+                            ? "需关注"
+                            : aiSuggestion.data.status === "warning"
+                              ? "警告"
+                              : "正常"}
+                        </span>
+                        <span className="text-[12px] text-zinc-400">
+                          AI 分析于{" "}
+                          {new Date(aiSuggestion.data.generatedAt).toLocaleTimeString("zh-CN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAiSuggestion(null)}
+                        className="rounded-lg p-1 text-zinc-400 transition-colors hover:bg-zinc-200/50 hover:text-zinc-600"
+                      >
+                        <X className="size-3.5" />
+                      </button>
                     </div>
-                    <Checkbox
-                      checked={editingMember.permissions[key] === true}
-                      onCheckedChange={(checked) =>
-                        handlePermToggle(editingMember.id, key, checked === true)
+                    <p className="mb-3 text-[13px] text-zinc-700">
+                      {aiSuggestion.data.summary}
+                    </p>
+                    <div className="space-y-2">
+                      {aiSuggestion.data.suggestions.map((suggestion, index) => {
+                        const key = `${suggestion.label}-${index}`;
+                        const isBusy = executingKey === key;
+                        return (
+                          <div
+                            key={key}
+                            className="flex items-start justify-between gap-3"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[13px] font-medium text-zinc-800">
+                                {suggestion.label}
+                              </p>
+                              <p className="text-[12px] text-zinc-500">
+                                {suggestion.description}
+                              </p>
+                            </div>
+                            {suggestion.action.type === "navigate" &&
+                            suggestion.action.href ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  router.push(suggestion.action.href!)
+                                }
+                                className="h-8 shrink-0 rounded-xl border-zinc-200 px-3 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                              >
+                                前往
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={Boolean(executingKey)}
+                                onClick={() =>
+                                  void handleExecuteSuggestion(suggestion, key)
+                                }
+                                className="h-8 shrink-0 rounded-xl border-zinc-200 px-3 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                              >
+                                {isBusy ? (
+                                  <>
+                                    <Loader2 className="mr-1 size-3.5 animate-spin" />
+                                    执行中…
+                                  </>
+                                ) : (
+                                  "执行"
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                {sheetEditableKeys.length > 0 ? (
+                  <>
+                    <section className="space-y-2">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                        后台权限
+                      </p>
+                      <div className="rounded-xl border border-zinc-200">
+                        {ADMIN_PERMISSION_KEYS.map((key, index) => (
+                          <label
+                            key={key}
+                            className={cn(
+                              "flex cursor-pointer items-center justify-between gap-4 px-4 py-2 transition-[background-color] duration-150 hover:bg-zinc-50",
+                              index !== ADMIN_PERMISSION_KEYS.length - 1 &&
+                                "border-b border-zinc-200",
+                            )}
+                          >
+                            <span className="text-[13px] text-zinc-700">
+                              {PERMISSION_LABELS[key]}
+                            </span>
+                            <Checkbox
+                              checked={draftPermissions[key] === true}
+                              onCheckedChange={(checked) =>
+                                handlePermToggle(key, checked === true)
+                              }
+                              disabled={
+                                isSavingPermissions || !capabilities.canEditPermissions
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="space-y-2">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                        AI 能力
+                      </p>
+                      <div className="rounded-xl border border-zinc-200">
+                        {AI_PERMISSION_KEYS.map((key, index) => (
+                          <label
+                            key={key}
+                            className={cn(
+                              "flex cursor-pointer items-start justify-between gap-4 px-4 py-2 transition-[background-color] duration-150 hover:bg-zinc-50",
+                              index !== AI_PERMISSION_KEYS.length - 1 &&
+                                "border-b border-zinc-200",
+                            )}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[13px] text-zinc-700">
+                                {PERMISSION_LABELS[key]}
+                              </p>
+                              {PERMISSION_DESCRIPTIONS[key] ? (
+                                <p className="mt-0.5 text-[11px] text-zinc-400">
+                                  {PERMISSION_DESCRIPTIONS[key]}
+                                </p>
+                              ) : null}
+                            </div>
+                            <Checkbox
+                              checked={draftPermissions[key] === true}
+                              onCheckedChange={(checked) =>
+                                handlePermToggle(key, checked === true)
+                              }
+                              disabled={
+                                isSavingPermissions || !capabilities.canEditPermissions
+                              }
+                              className="mt-0.5"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </section>
+                  </>
+                ) : null}
+
+                <section className="space-y-4 border-t border-zinc-200 pt-6">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                    成员操作
+                  </p>
+
+                  <div className="space-y-2">
+                    <Label className="text-[12px] text-zinc-600">角色</Label>
+                    <Select
+                      value={sheetMember.role}
+                      onValueChange={(value) =>
+                        requestRoleChange(
+                          sheetMember.id,
+                          sheetMember.name,
+                          value as "member" | "admin",
+                        )
                       }
-                      disabled={isSavingPermissions}
-                      className="mt-0.5"
-                    />
-                  </label>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              className="h-9 text-[12px] text-zinc-500 hover:text-zinc-800"
-              onClick={() => setEditPermTarget(null)}
-            >
-              关闭
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                      disabled={!sheetCanChangeRole || actionDisabled}
+                    >
+                      <SelectTrigger className="h-9 border-zinc-200 bg-white text-[13px]">
+                        <SelectValue>
+                          {sheetMember.role === "admin" ? "管理员" : "成员"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">管理员</SelectItem>
+                        <SelectItem value="member">成员</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[12px] text-zinc-600">团队</Label>
+                    <Select
+                      value={sheetMember.teamId ?? "__none__"}
+                      onValueChange={(value) => {
+                        const newTeamId = value === "__none__" ? null : value;
+                        const newTeamName =
+                          value === "__none__"
+                            ? "未分配"
+                            : teams.find((t) => t.id === value)?.name ?? "未分配";
+                        handleTransferTeam(
+                          sheetMember.id,
+                          sheetMember.name,
+                          getTeamLabel(sheetMember.teamName),
+                          newTeamId,
+                          newTeamName,
+                        );
+                      }}
+                      disabled={sheetTeamOptions.length <= 1 || actionDisabled}
+                    >
+                      <SelectTrigger className="h-9 border-zinc-200 bg-white text-[13px]">
+                        <SelectValue>{getTeamLabel(sheetMember.teamName)}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sheetTeamOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!sheetCanResetPassword || actionDisabled}
+                      onClick={() =>
+                        openPasswordResetDialog({
+                          id: sheetMember.id,
+                          name: sheetMember.name,
+                          email: sheetMember.email,
+                          teamName: sheetMember.teamName,
+                        })
+                      }
+                      className="h-9 rounded-xl border-zinc-200 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                    >
+                      重置密码
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!sheetCanRemove || actionDisabled}
+                      onClick={() =>
+                        setRemoveTarget({
+                          memberId: sheetMember.id,
+                          memberName: sheetMember.name,
+                          teamName: getTeamLabel(sheetMember.teamName),
+                        })
+                      }
+                      className="h-9 rounded-xl border-zinc-200 text-[12px] text-[#C9604D] hover:border-[#C9604D]/40 hover:bg-[#C9604D]/5"
+                    >
+                      移出团队
+                    </Button>
+                  </div>
+                </section>
+              </SheetBody>
+
+              <SheetFooter>
+                <Button
+                  variant="ghost"
+                  className="h-9 px-3 text-[12px] text-zinc-500 hover:text-zinc-800"
+                  onClick={() => {
+                    if (hasDraftChanges) {
+                      handleResetDraft();
+                    }
+                    closeSheet();
+                  }}
+                  disabled={actionDisabled}
+                >
+                  取消
+                </Button>
+                <Button
+                  className="h-9 rounded-xl bg-zinc-950 px-4 text-[12px] text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-[1px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0"
+                  onClick={handleSaveSheet}
+                  disabled={
+                    !hasDraftChanges || !capabilities.canEditPermissions || actionDisabled
+                  }
+                >
+                  {isSavingPermissions ? "保存中…" : "保存"}
+                </Button>
+              </SheetFooter>
+            </>
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       <Dialog
         open={passwordResetTarget !== null}
@@ -883,7 +1172,10 @@ export function PermissionManager({
           }
         }}
       >
-        <DialogContent className="rounded-2xl bg-white border border-zinc-200 shadow-sm" showCloseButton={!isResettingPassword}>
+        <DialogContent
+          className="rounded-2xl border border-zinc-200 bg-white shadow-sm"
+          showCloseButton={!isResettingPassword}
+        >
           <DialogHeader>
             <DialogTitle>重置密码</DialogTitle>
             <DialogDescription>
@@ -894,7 +1186,7 @@ export function PermissionManager({
           </DialogHeader>
           <div className="space-y-4">
             {passwordResetTarget ? (
-              <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-500">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-[13px] text-zinc-500">
                 <p>{passwordResetTarget.memberEmail || "未记录邮箱"}</p>
                 <p>{getTeamLabel(passwordResetTarget.teamName)}</p>
               </div>
@@ -909,7 +1201,7 @@ export function PermissionManager({
                 placeholder="至少 6 位"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
-                className="rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="rounded-xl border-transparent bg-zinc-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-200 focus:bg-white focus:shadow-sm"
               />
             </div>
             <div className="space-y-2">
@@ -922,14 +1214,14 @@ export function PermissionManager({
                 placeholder="再次输入新密码"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
-                className="rounded-lg bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="rounded-xl border-transparent bg-zinc-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-200 focus:bg-white focus:shadow-sm"
               />
             </div>
           </div>
-          <DialogFooter className="bg-white border-zinc-200">
+          <DialogFooter className="border-zinc-200 bg-white">
             <Button
               variant="outline"
-              className="rounded-[10px] border-zinc-200"
+              className="rounded-xl border-zinc-200"
               onClick={() => {
                 setPasswordResetTarget(null);
                 setNewPassword("");
@@ -940,92 +1232,11 @@ export function PermissionManager({
               取消
             </Button>
             <Button
-              className="rounded-[10px] bg-zinc-900 text-white hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
+              className="rounded-xl bg-zinc-950 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-[1px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0"
               onClick={handleResetPassword}
               disabled={isResettingPassword}
             >
               {isResettingPassword ? "提交中..." : "确认重置"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={moreTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setMoreTarget(null);
-        }}
-      >
-        <DialogContent className="rounded-2xl bg-white border border-zinc-200 shadow-sm">
-          <DialogHeader>
-            <DialogTitle>
-              {moreTarget ? `${moreTarget.memberName} · 更多操作` : "更多操作"}
-            </DialogTitle>
-            <DialogDescription>
-              账号资料与高风险操作归集于此，避免主列表误触。
-            </DialogDescription>
-          </DialogHeader>
-          {moreTarget ? (
-            <div className="space-y-4">
-              <div className="space-y-1 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-[12px] text-zinc-500">
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">邮箱</span>
-                  <span className="truncate font-mono tabular-nums text-zinc-700" title={moreTarget.memberEmail ?? undefined}>
-                    {moreTarget.memberEmail || "未记录"}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">团队</span>
-                  <span className="truncate text-zinc-700">{moreTarget.teamName}</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  disabled={!moreTarget.canReset || actionDisabled}
-                  onClick={() => {
-                    if (!moreTarget) return;
-                    openPasswordResetDialog({
-                      id: moreTarget.memberId,
-                      name: moreTarget.memberName,
-                      email: moreTarget.memberEmail,
-                      teamName: moreTarget.teamName,
-                    });
-                    setMoreTarget(null);
-                  }}
-                  className="flex items-center justify-between rounded-lg border border-zinc-200 px-4 py-2 text-[13px] text-zinc-700 transition-[background-color,border-color,color] duration-150 hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span>重置密码</span>
-                  <span className="text-[11px] text-zinc-400">为该成员设置新登录密码</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={!moreTarget.canRemove || actionDisabled}
-                  onClick={() => {
-                    if (!moreTarget) return;
-                    setRemoveTarget({
-                      memberId: moreTarget.memberId,
-                      memberName: moreTarget.memberName,
-                      teamName: moreTarget.teamName,
-                    });
-                    setMoreTarget(null);
-                  }}
-                  className="flex items-center justify-between rounded-lg border border-zinc-200 px-4 py-2 text-[13px] text-zinc-700 transition-[background-color,border-color,color] duration-150 hover:border-[#C9604D]/40 hover:bg-[#C9604D]/5 hover:text-[#C9604D] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span>移出团队</span>
-                  <span className="text-[11px] text-zinc-400">脱离团队归属，不影响账号</span>
-                </button>
-              </div>
-            </div>
-          ) : null}
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              className="h-9 text-[12px] text-zinc-500 hover:text-zinc-800"
-              onClick={() => setMoreTarget(null)}
-            >
-              关闭
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1044,7 +1255,7 @@ export function PermissionManager({
         confirmText="确认调整"
         destructive={roleChangeTarget?.role === "member"}
         loading={isChangingRole}
-        className="rounded-2xl bg-white border border-zinc-200 shadow-sm"
+        className="rounded-2xl border border-zinc-200 bg-white shadow-sm"
         onConfirm={confirmRoleChange}
         onOpenChange={(open) => {
           if (!open) setRoleChangeTarget(null);
@@ -1062,7 +1273,7 @@ export function PermissionManager({
         confirmText="确认移出"
         destructive
         loading={isRemoving}
-        className="rounded-2xl bg-white border border-zinc-200 shadow-sm"
+        className="rounded-2xl border border-zinc-200 bg-white shadow-sm"
         onConfirm={handleRemoveMember}
         onOpenChange={(open) => {
           if (!open) setRemoveTarget(null);

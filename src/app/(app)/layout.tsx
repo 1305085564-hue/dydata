@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiManagement } from "@/lib/permission-utils";
 import { AiAssistantFloatingWindow } from "@/components/ai-assistant/ai-assistant-floating-window";
+import { AlertContextProvider } from "@/components/ai-assistant/alert-context-store";
 import type { UserRole } from "@/types";
 
 import { JoinBanner } from "./_components/join-banner";
@@ -29,14 +30,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="app-shell">
-      <NavBar />
-      <main className="app-main min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+1.25rem)] sm:px-6">
-        <JoinBanner />
-        {children}
-      </main>
-      <ScrollToTop />
-      {showFloatingAssistant ? <AiAssistantFloatingWindow actorRole={floatingRole} /> : null}
-    </div>
+    <AlertContextProvider>
+      <div className="app-shell">
+        <NavBar />
+        <main className="app-main min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+1.25rem)] sm:px-6">
+          <JoinBanner />
+          {children}
+        </main>
+        <ScrollToTop />
+        {showFloatingAssistant ? <AiAssistantFloatingWindow actorRole={floatingRole} /> : null}
+      </div>
+    </AlertContextProvider>
   );
 }

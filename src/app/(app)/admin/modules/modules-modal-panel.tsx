@@ -102,7 +102,6 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
         dayCountBySubmitter={data.dayCountBySubmitter}
         avgPlayByAccount={data.avgPlayByAccount}
         dayCountByAccount={data.dayCountByAccount}
-        logsWithNames={data.logsWithNames}
       />
     </div>
   );

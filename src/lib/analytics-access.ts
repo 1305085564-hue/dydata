@@ -57,11 +57,12 @@ function canAccessAdminShell(role: UserRole | BusinessRole, permissions: Permiss
     hasPermission(role, permissions, "view_all_data") ||
     hasPermission(role, permissions, "edit_data") ||
     hasPermission(role, permissions, "export_data") ||
-    hasPermission(role, permissions, "manage_invite") ||
     hasPermission(role, permissions, "view_analytics") ||
-    hasPermission(role, permissions, "view_audit_log") ||
     hasPermission(role, permissions, "manage_members") ||
     hasPermission(role, permissions, "manage_violations") ||
+    hasPermission(role, permissions, "view_conversion_hub") ||
+    hasPermission(role, permissions, "view_content_review") ||
+    hasPermission(role, permissions, "manage_video_assets") ||
     hasPermission(role, permissions, "use_ai_management")
   );
 }

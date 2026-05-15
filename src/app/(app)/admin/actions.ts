@@ -873,7 +873,7 @@ export async function changeRole(
 export async function createTeam(teamName: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_invite")) return { error: "无权限" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
 
   const normalizedName = teamName.trim();
   if (!normalizedName) return { error: "请输入团队名称" };
