@@ -98,20 +98,20 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-zinc-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">导粉趋势</h3>
+    <div className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-0.5">
+          <h3 className="text-[14px] font-medium tracking-tight text-zinc-800">导粉趋势</h3>
           <p className="text-[12px] text-zinc-500">按最近 {preset === "7d" ? "7" : "30"} 天查看团队导粉变化</p>
         </div>
-        <div className="inline-flex w-fit rounded-[10px] border border-zinc-200 bg-zinc-50 p-0.5">
+        <div className="inline-flex w-fit rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
           {(["7d", "30d"] as Preset[]).map((p) => (
             <Button
               key={p}
               size="sm"
               variant="ghost"
               className={cn(
-                "h-7 rounded-[10px] px-2 text-[11px] font-medium text-zinc-500 shadow-none transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                "h-7 rounded-md px-2 text-[11px] font-medium text-zinc-500 shadow-none transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 preset === p && "bg-white text-zinc-800 shadow-sm"
               )}
               onClick={() => setPreset(p)}
@@ -121,8 +121,8 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
           ))}
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={160}>
+        <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid {...CHART_GRID_PROPS} />
           <XAxis dataKey="date" tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
           <YAxis
@@ -143,6 +143,6 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
           />
         </LineChart>
       </ResponsiveContainer>
-    </section>
+    </div>
   );
 }

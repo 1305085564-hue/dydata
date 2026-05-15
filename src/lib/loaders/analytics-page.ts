@@ -18,6 +18,22 @@ type ReportRow = Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"][num
 
 type AccountJoin = { id: string; name: string; profile_id: string | null };
 
+function formatDate(date: Date) {
+  return date.toISOString().split("T")[0];
+}
+
+function shiftDays(dateString: string, days: number) {
+  const next = new Date(`${dateString}T00:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + days);
+  return formatDate(next);
+}
+
+function getInclusiveRangeDays(from: string, to: string) {
+  const fromDate = new Date(`${from}T00:00:00.000Z`);
+  const toDate = new Date(`${to}T00:00:00.000Z`);
+  return Math.floor((toDate.getTime() - fromDate.getTime()) / 86_400_000) + 1;
+}
+
 function normalizeJoinedOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value ?? null;
 }
@@ -38,6 +54,7 @@ export interface AnalyticsPageData {
   currentUserName: string;
   submitters: string[];
   filteredReports: Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"];
+  previousPeriodReports: Parameters<typeof AnalyticsWorkbench>[0]["previousPeriodReports"];
   filteredVideos: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideos"];
   filteredSnapshots: Parameters<typeof AnalyticsWorkbench>[0]["filteredSnapshots"];
   filteredVideoTags: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideoTags"];
@@ -88,6 +105,10 @@ export async function loadAnalyticsPageData({
   const teamUserIds = teamProfiles.map((item) => item.id);
   const teamUserIdSet = new Set(teamUserIds);
   const submitters = isPrivilegedUser ? teamProfiles.map((item) => item.name) : [currentUserName];
+  const currentRangeDays = getInclusiveRangeDays(range.from, range.to);
+  const shouldLoadPreviousPeriod = currentRangeDays <= 90;
+  const previousPeriodFrom = shiftDays(range.from, -currentRangeDays);
+  const previousPeriodTo = shiftDays(range.from, -1);
 
   const reportsQuery = adminSupabase
     .from("daily_reports")
@@ -97,6 +118,17 @@ export async function loadAnalyticsPageData({
     .gte("report_date", range.from)
     .lte("report_date", range.to)
     .order("report_date", { ascending: false });
+
+  const previousPeriodReportsQuery = shouldLoadPreviousPeriod
+    ? adminSupabase
+        .from("daily_reports")
+        .select(
+          "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id)",
+        )
+        .gte("report_date", previousPeriodFrom)
+        .lte("report_date", previousPeriodTo)
+        .order("report_date", { ascending: false })
+    : null;
 
   const videosQuery = includeVideoDetails
     ? adminSupabase
@@ -121,13 +153,25 @@ export async function loadAnalyticsPageData({
         })
     : null;
 
-  const [{ data: reports }, videosResult] = includeVideoDetails ? await Promise.all([reportsQuery, videosQuery]) : [await reportsQuery, null];
+  const [reportsResult, previousPeriodReportsResult, videosResult] = includeVideoDetails
+    ? await Promise.all([reportsQuery, previousPeriodReportsQuery ?? Promise.resolve({ data: [] }), videosQuery])
+    : [await reportsQuery, previousPeriodReportsQuery ? await previousPeriodReportsQuery : { data: [] }, null];
+
+  const reports = reportsResult.data;
+  const previousPeriodReports = previousPeriodReportsResult.data;
 
   const normalizedReports = ((reports ?? []) as unknown as Array<Omit<ReportRow, "accounts"> & { accounts?: AccountJoin | AccountJoin[] | null }>).map((report) => ({
     ...report,
     accounts: normalizeJoinedOne(report.accounts),
   }));
   const filteredReports = normalizedReports.filter((report) => teamUserIdSet.has(getReportOwnerId(report)));
+  const normalizedPreviousPeriodReports = ((previousPeriodReports ?? []) as unknown as Array<
+    Omit<ReportRow, "accounts"> & { accounts?: AccountJoin | AccountJoin[] | null }
+  >).map((report) => ({
+    ...report,
+    accounts: normalizeJoinedOne(report.accounts),
+  }));
+  const filteredPreviousPeriodReports = normalizedPreviousPeriodReports.filter((report) => teamUserIdSet.has(getReportOwnerId(report)));
 
   if (!includeVideoDetails) {
     return {
@@ -138,6 +182,7 @@ export async function loadAnalyticsPageData({
       currentUserName,
       submitters,
       filteredReports,
+      previousPeriodReports: filteredPreviousPeriodReports,
       filteredVideos: [],
       filteredSnapshots: [],
       filteredVideoTags: [],
@@ -165,6 +210,7 @@ export async function loadAnalyticsPageData({
     currentUserName,
     submitters,
     filteredReports,
+    previousPeriodReports: filteredPreviousPeriodReports,
     filteredVideos,
     filteredSnapshots,
     filteredVideoTags,

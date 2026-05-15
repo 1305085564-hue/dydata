@@ -749,38 +749,35 @@ export function HitAnalyzer({
     : null;
 
   return (
-    <div className="space-y-6" aria-label="爆款分析">
+    <div className="space-y-3" aria-label="爆款分析">
       {floatingScatterLayer}
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="space-y-3">
-          <div className="grid gap-2 xl:grid-cols-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="mr-2 text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">Quick Filters</span>
-              {filters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={cn(
-                    "rounded-[10px] border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    activeFilter === filter.id
-                      ? "border-[#D97757]/40 bg-white text-[#D97757]"
-                      : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-white",
-                  )}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="mr-2 text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">时间周期</span>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">Quick Filters</span>
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                className={cn(
+                  "rounded-lg border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  activeFilter === filter.id
+                    ? "border-[#D97757]/40 bg-white text-[#D97757]"
+                    : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-white",
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">时间周期</span>
               {timePresetOptions.map((preset) => (
                 <button
                   key={preset.id}
                   onClick={() => applyTimePreset(preset.id)}
                   className={cn(
-                    "rounded-[10px] border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                    "rounded-lg border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     activeTimePreset === preset.id
                       ? "border-[#D97757]/40 bg-white text-[#D97757]"
                       : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-white",
@@ -792,48 +789,48 @@ export function HitAnalyzer({
             </div>
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)]">
+          <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)]">
             <div className="space-y-2">
               <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">Submitters</p>
               {lockedSubmitter ? (
                 <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
                   <span className="font-medium">当前联动成员：</span>
-                  <span className="rounded-[10px] bg-white px-2.5 py-1 font-medium text-zinc-800">{lockedSubmitter}</span>
+                  <span className="rounded-lg bg-white px-2.5 py-1 font-medium text-zinc-800">{lockedSubmitter}</span>
                   <button
                     type="button"
                     onClick={() => onLockedSubmitterChange?.(null)}
-                    className="rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 font-medium text-zinc-700 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
+                    className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1 font-medium text-zinc-700 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
                   >
                     清除
                   </button>
                 </div>
               ) : null}
-              <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
                 <span className="rounded-full bg-white px-2.5 py-1 font-medium">已选 {effectiveSelectedSubmitters.length} 人</span>
-              {submitterPageCount > 1 ? (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
-                  <button
-                    type="button"
-                    onClick={() => setSubmitterPage((current) => Math.max(0, current - 1))}
-                    disabled={safeSubmitterPage === 0}
-                    className="inline-flex h-7 min-w-7 items-center justify-center rounded-[10px] border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
-                  >
-                    上一页
-                  </button>
-                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-[10px] border border-[#D97757]/40 bg-white px-2 text-[12px] font-medium text-[#D97757] font-mono tabular-nums">
-                    {safeSubmitterPage + 1}
-                  </span>
-                  <span className="text-[12px] text-zinc-400 font-mono tabular-nums">/ {submitterPageCount}</span>
-                  <button
-                    type="button"
-                    onClick={() => setSubmitterPage((current) => Math.min(submitterPageCount - 1, current + 1))}
-                    disabled={safeSubmitterPage >= submitterPageCount - 1}
-                    className="inline-flex h-7 min-w-7 items-center justify-center rounded-[10px] border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
-                  >
-                    下一页
-                  </button>
-                </div>
-              ) : null}
+                {submitterPageCount > 1 ? (
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
+                    <button
+                      type="button"
+                      onClick={() => setSubmitterPage((current) => Math.max(0, current - 1))}
+                      disabled={safeSubmitterPage === 0}
+                      className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                    >
+                      上一页
+                    </button>
+                    <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#D97757]/40 bg-white px-2 text-[12px] font-medium text-[#D97757] font-mono tabular-nums">
+                      {safeSubmitterPage + 1}
+                    </span>
+                    <span className="text-[12px] text-zinc-400 font-mono tabular-nums">/ {submitterPageCount}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSubmitterPage((current) => Math.min(submitterPageCount - 1, current + 1))}
+                      disabled={safeSubmitterPage >= submitterPageCount - 1}
+                      className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                    >
+                      下一页
+                    </button>
+                  </div>
+                ) : null}
               </div>
               <div className="flex max-h-[5.9rem] flex-wrap gap-1.5 overflow-hidden">
                 {submitters

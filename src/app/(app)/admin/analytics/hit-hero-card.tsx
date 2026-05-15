@@ -44,9 +44,9 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
 
   if (!top || !top.play_count) {
     return (
-      <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-zinc-200 bg-white px-8 py-8">
+      <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-zinc-200 bg-white px-5 py-4">
         <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Hit Spotlight</p>
-        <p className="mt-4 text-[14px] text-zinc-500">当前筛选范围暂无可聚焦的视频样本</p>
+        <p className="mt-2 text-[13px] text-zinc-500">当前筛选范围暂无可聚焦的视频样本</p>
       </div>
     );
   }
@@ -57,8 +57,8 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
   const completion = parsePercent(top.completion_rate);
 
   return (
-    <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-white px-8 py-8">
-      <div className="flex items-start justify-between gap-6">
+    <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-white px-5 py-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
@@ -71,7 +71,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
               </span>
             ) : null}
           </div>
-          <h2 className="mt-3 line-clamp-1 text-[18px] font-medium tracking-tight text-zinc-800">
+          <h2 className="mt-2 line-clamp-1 text-[14px] font-medium tracking-tight text-zinc-800">
             {top.title || "未命名视频"}
           </h2>
           <p className="mt-1 text-[12px] text-zinc-400 font-mono tabular-nums">
@@ -80,24 +80,24 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
         </div>
         <div className="shrink-0 text-right">
           <div className="flex items-baseline justify-end gap-1.5">
-            <span className="text-[32px] font-semibold font-mono tabular-nums leading-none text-zinc-800">
+            <span className="text-[24px] font-semibold font-mono tabular-nums leading-none text-zinc-800">
               {num}
             </span>
             {unit ? (
               <span className="text-[12px] font-normal text-zinc-400">{unit}</span>
             ) : null}
           </div>
-          <p className="mt-2 text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
+          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             Play Count
           </p>
         </div>
       </div>
-      <div className="mt-6 grid grid-cols-3 gap-6 border-t border-zinc-100 pt-5">
+      <div className="mt-3 grid grid-cols-3 gap-4 border-t border-zinc-200 pt-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             完播率
           </p>
-          <p className="mt-1.5 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
+          <p className="mt-1 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
             {completion !== null ? `${completion.toFixed(1)}%` : "—"}
           </p>
         </div>
@@ -105,7 +105,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             互动总量
           </p>
-          <p className="mt-1.5 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
+          <p className="mt-1 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
             {engagement.toLocaleString("zh-CN")}
           </p>
         </div>
@@ -113,7 +113,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
           <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
             点赞
           </p>
-          <p className="mt-1.5 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
+          <p className="mt-1 text-[13px] font-medium font-mono tabular-nums text-zinc-800">
             {(top.likes ?? 0).toLocaleString("zh-CN")}
           </p>
         </div>

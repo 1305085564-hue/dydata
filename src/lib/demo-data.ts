@@ -611,6 +611,7 @@ export function getDemoAnalyticsPageData() {
     currentUserName: DEMO_VIEWER.name,
     submitters: demoProfiles.map((profile) => profile.name),
     filteredReports: demoReports,
+    previousPeriodReports: [],
     filteredVideos: demoVideos.map((video) => ({
       ...video,
       accounts: { name: video.account_name },

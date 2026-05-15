@@ -11,6 +11,7 @@ import { AiInsight } from "./ai-insight";
 import type { AnalyticsVideoRow } from "./视频结论卡-类型";
 import { FollowerConvertTrend } from "./follower-convert-trend";
 import { HitHeroCard } from "./hit-hero-card";
+import { KpiSummary } from "./kpi-summary";
 import { Button } from "@/components/ui/button";
 
 interface ReportRow {
@@ -39,6 +40,7 @@ interface AnalyticsWorkbenchProps {
   userId: string;
   isPrivilegedUser: boolean;
   filteredReports: ReportRow[];
+  previousPeriodReports: ReportRow[];
   filteredVideos: AnalyticsVideoRow[];
   filteredSnapshots: VideoMetricsSnapshot[];
   filteredVideoTags: VideoTag[];
@@ -49,6 +51,7 @@ export function AnalyticsWorkbench({
   userId,
   isPrivilegedUser,
   filteredReports,
+  previousPeriodReports,
   submitters,
 }: AnalyticsWorkbenchProps) {
   const [focusedSectionId, setFocusedSectionId] = useState<string | null>(null);
@@ -57,6 +60,14 @@ export function AnalyticsWorkbench({
   const scopedReports = useMemo(
     () => (lockedSubmitter ? filteredReports.filter((report) => report.submitter === lockedSubmitter) : filteredReports),
     [filteredReports, lockedSubmitter],
+  );
+
+  const scopedPreviousPeriodReports = useMemo(
+    () =>
+      lockedSubmitter
+        ? previousPeriodReports.filter((report) => report.submitter === lockedSubmitter)
+        : previousPeriodReports,
+    [previousPeriodReports, lockedSubmitter],
   );
 
   const scopedReportsForTimeAnalysis = useMemo(
@@ -99,6 +110,11 @@ export function AnalyticsWorkbench({
       ),
     },
     {
+      id: "time-analysis",
+      title: "时间维度分析",
+      content: <TimeAnalysis reports={scopedReportsForTimeAnalysis} />,
+    },
+    {
       id: "personnel-analysis",
       title: isPrivilegedUser ? "人员深度分析" : "我的表现分析",
       content: (
@@ -111,11 +127,6 @@ export function AnalyticsWorkbench({
       ),
     },
     {
-      id: "time-analysis",
-      title: "时间维度分析",
-      content: <TimeAnalysis reports={scopedReportsForTimeAnalysis} />,
-    },
-    {
       id: "ai-insight",
       title: "AI 洞察",
       content: <AiInsight scopeEntityId={userId} />,
@@ -123,8 +134,9 @@ export function AnalyticsWorkbench({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <HitHeroCard reports={scopedReports} scopeLabel={lockedSubmitter} />
+      <KpiSummary reports={scopedReports} previousPeriodReports={scopedPreviousPeriodReports} />
 
       <div className="space-y-3">
 

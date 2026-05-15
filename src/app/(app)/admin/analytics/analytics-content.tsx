@@ -6,6 +6,7 @@ interface AnalyticsContentProps {
   userId: string;
   isPrivilegedUser: boolean;
   filteredReports: Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"];
+  previousPeriodReports: Parameters<typeof AnalyticsWorkbench>[0]["previousPeriodReports"];
   filteredVideos: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideos"];
   filteredSnapshots: VideoMetricsSnapshot[];
   filteredVideoTags: VideoTag[];
@@ -16,6 +17,7 @@ export function AnalyticsContent({
   userId,
   isPrivilegedUser,
   filteredReports,
+  previousPeriodReports,
   filteredVideos,
   filteredSnapshots,
   filteredVideoTags,
@@ -26,6 +28,7 @@ export function AnalyticsContent({
       userId={userId}
       isPrivilegedUser={isPrivilegedUser}
       filteredReports={filteredReports}
+      previousPeriodReports={previousPeriodReports}
       filteredVideos={filteredVideos}
       filteredSnapshots={filteredSnapshots}
       filteredVideoTags={filteredVideoTags}
