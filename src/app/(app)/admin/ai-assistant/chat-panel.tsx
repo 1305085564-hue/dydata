@@ -530,7 +530,7 @@ export default function ChatPanel({
         <div className="mx-auto max-w-[768px]">
           <div
             className={cn(
-              "group relative flex items-end gap-1.5 rounded-[20px] border bg-white px-2.5 py-2 transition-colors",
+              "group relative flex items-end gap-1.5 rounded-xl border bg-white px-2.5 py-2 transition-colors",
               "border-zinc-200",
               "focus-within:border-zinc-950 focus-within:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.06)]"
             )}

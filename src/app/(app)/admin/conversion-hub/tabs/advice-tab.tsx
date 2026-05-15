@@ -88,7 +88,7 @@ export function AdviceTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">建议动作队列</h2>
+          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">建议动作队列</h2>
         </div>
         <Link
           href="/admin/advice"

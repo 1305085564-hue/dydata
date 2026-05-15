@@ -51,8 +51,8 @@ export function SubmissionSlotsSection({
           </p>
         </div>
         {issueCount > 0 ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 shrink-0">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55] shrink-0">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
             待处理 {issueCount}
           </span>
         ) : null}

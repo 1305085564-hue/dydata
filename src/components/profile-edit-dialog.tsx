@@ -32,10 +32,10 @@ function roleLabel(role: string) {
 
 function roleBadgeClass(role: string) {
   if (role === "owner")
-    return "bg-[#D97757]/10 text-[#D97757] border-[#D97757]/20";
+    return "border-[#D97757]/40 text-[#D97757]";
   if (role === "admin")
-    return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-zinc-50 text-zinc-600 border-zinc-200";
+    return "border-zinc-200 text-zinc-700";
+  return "border-zinc-200 text-zinc-500";
 }
 
 export function ProfileEditDialog({

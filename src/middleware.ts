@@ -16,9 +16,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/ai-channels", request.url));
   }
 
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL(hasAuthCookie ? "/dashboard" : "/login", request.url));
-  }
+  // 首页已改为落地页，不再自动跳转；已登录用户通过页面内逻辑跳转
+  // if (pathname === "/") { ... }
 
   if (!hasAuthCookie && (isDashboardRoute || isAdminRoute)) {
     return NextResponse.redirect(new URL("/login", request.url));

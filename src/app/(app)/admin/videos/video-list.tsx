@@ -254,9 +254,9 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                     <TableCell className="text-[12px] text-zinc-500">{video.accounts.name}</TableCell>
                     <TableCell className="text-[12px] text-zinc-500">{video.profiles.name}</TableCell>
                     <TableCell className="text-[12px] text-zinc-500">{formatDateTime(video.published_at)}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-700">{formatNumber(snapshot?.play_count)}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-700">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-700">{formatNumber(snapshot?.follower_gain)}</TableCell>
+                    <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
+                    <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
+                    <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>

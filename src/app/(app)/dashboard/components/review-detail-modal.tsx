@@ -205,7 +205,7 @@ export function ReviewDetailModal({
           <textarea
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
-            className="mb-4 h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[12px] text-zinc-600 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+            className="mb-4 h-20 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[12px] text-zinc-600 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5 focus:bg-white"
             placeholder="打回时必须填写原因..."
           />
 

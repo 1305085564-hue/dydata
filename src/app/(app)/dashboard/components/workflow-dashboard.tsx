@@ -171,7 +171,7 @@ export function WorkflowDashboard({
                     value={topicText}
                     onChange={(event) => setTopicText(event.target.value)}
                     className={cn(
-                      "w-full resize-none rounded-xl border border-zinc-200 bg-white p-5 text-[13px] font-medium leading-[1.7] text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:border-zinc-950/20 focus:outline-none focus:ring-1 focus:ring-zinc-950/5",
+                      "w-full resize-none rounded-xl border border-zinc-200 bg-white p-5 text-[13px] font-medium leading-[1.7] text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                       activeCheckpoint === "TOPIC" ? "h-56 text-[14px]" : "h-24",
                     )}
                     placeholder="写选题核心，例如：为什么说今天的反弹不是安全信号？"
@@ -182,7 +182,7 @@ export function WorkflowDashboard({
                   <textarea
                     value={scriptText}
                     onChange={(event) => setScriptText(event.target.value)}
-                    className="h-80 w-full resize-none rounded-xl border border-zinc-200 bg-white p-8 text-[14px] font-medium leading-[1.7] text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:border-zinc-950/20 focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    className="h-80 w-full resize-none rounded-xl border border-zinc-200 bg-white p-8 text-[14px] font-medium leading-[1.7] text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                     placeholder="请在此输入 1000-1300 字的脚本详情..."
                   />
                 ) : null}
@@ -191,7 +191,7 @@ export function WorkflowDashboard({
                   <input
                     value={videoUrl}
                     onChange={(event) => setVideoUrl(event.target.value)}
-                    className="rounded-xl border border-zinc-200 bg-white px-5 py-5 text-[14px] font-medium text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus:border-zinc-950/20 focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    className="rounded-xl border border-zinc-200 bg-white px-5 py-5 text-[14px] font-medium text-zinc-800 tracking-wide transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                     placeholder="粘贴抖音成片链接，审核中心可直接跳转"
                   />
                 ) : null}

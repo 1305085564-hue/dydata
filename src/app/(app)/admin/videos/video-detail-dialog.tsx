@@ -177,7 +177,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 sm:max-w-4xl">
         <DialogHeader className="border-b border-zinc-200 px-6 py-4">
-          <DialogTitle className="text-[16px] font-medium tracking-tight text-zinc-800">视频详情</DialogTitle>
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">视频详情</DialogTitle>
         </DialogHeader>
 
         {video ? (
@@ -185,7 +185,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="text-[15px] font-medium tracking-tight text-zinc-800">
+                  <div className="text-[18px] font-medium tracking-tight text-zinc-800">
                     {video.video_title?.trim() || "未命名视频"}
                   </div>
                   <div className="text-[12px] text-zinc-500">

@@ -391,7 +391,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                             )
                           }
                           className={cn(
-                            "group relative aspect-square min-h-5 rounded-lg border transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                            "group relative aspect-square min-h-5 rounded-lg border transition duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                             getIntensityClass(cell.medianPlay, heatmapData.maxMedianPlay),
                             cell.count > 0 ? "hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm" : "opacity-65 hover:opacity-80",
                             isWindowCell && "ring-1 ring-[#D97757]/40",

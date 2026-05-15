@@ -131,7 +131,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 sm:max-w-4xl">
         <DialogHeader className="border-b border-zinc-200 px-6 py-4">
-          <DialogTitle className="text-[16px] font-medium tracking-tight text-zinc-800">转化建议详情</DialogTitle>
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">转化建议详情</DialogTitle>
         </DialogHeader>
 
         {advice ? (
@@ -139,7 +139,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="text-[15px] font-medium tracking-tight text-zinc-800">{targetProfile?.name || "未命名员工"}</div>
+                  <div className="text-[18px] font-medium tracking-tight text-zinc-800">{targetProfile?.name || "未命名员工"}</div>
                   <div className="text-[12px] text-zinc-500">账号：{targetAccount?.name || "-"} · 来源：{advice.advice_source === "ai" ? "AI" : "管理员"}</div>
                 </div>
                 <Badge variant="outline" className={`text-[12px] ${STATUS_STYLES[advice.status]}`}>

@@ -673,7 +673,7 @@ export function PermissionManager({
   return (
     <div className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6">
       <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">成员与权限</h2>
+        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">成员与权限</h2>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

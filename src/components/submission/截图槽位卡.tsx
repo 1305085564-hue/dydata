@@ -136,9 +136,9 @@ export function SubmissionSlotCard({
         // 高亮态（空槽位）
         highlightActive && isEmpty && "border-dashed border-[#D97757] bg-[#FDF9F7]",
         // 状态色覆盖（优先级高于高亮）
-        isWarning && "border-amber-300 ring-1 ring-amber-200 shadow-[0_8px_24px_-16px_rgba(245,158,11,0.35)]",
-        isError && "border-rose-300 ring-1 ring-rose-200 shadow-[0_8px_24px_-16px_rgba(244,63,94,0.35)]",
-        isSuccess && "border-emerald-300 ring-1 ring-emerald-200 shadow-[0_8px_24px_-16px_rgba(16,185,129,0.3)]"
+        isWarning && "border-zinc-200 border-l-[2px] border-l-[#D99E55]",
+        isError && "border-zinc-200 border-l-[2px] border-l-[#C9604D]",
+        isSuccess && "border-zinc-200 border-l-[2px] border-l-[#6FAA7D]"
       )}
     >
       <div className="flex flex-col sm:flex-row items-stretch">
@@ -190,9 +190,9 @@ export function SubmissionSlotCard({
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-md ring-1 ring-inset shadow-sm",
-                  isSuccess && "bg-emerald-50/90 text-emerald-700 ring-emerald-200",
-                  isError && "bg-rose-50/90 text-rose-700 ring-rose-200",
-                  isWarning && "bg-amber-50/90 text-amber-700 ring-amber-200",
+                  isSuccess && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#6FAA7D]",
+                  isError && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#C9604D]",
+                  isWarning && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55]",
                   !isSuccess && !isError && !isWarning && "bg-white/85 text-zinc-600 ring-zinc-200/80"
                 )}
               >
@@ -200,7 +200,7 @@ export function SubmissionSlotCard({
                   className={cn(
                     "inline-block h-1.5 w-1.5 rounded-full",
                     isSuccess && "bg-emerald-500",
-                    isError && "bg-rose-500 animate-pulse",
+                    isError && "bg-rose-500",
                     isWarning && "bg-amber-500",
                     !isSuccess && !isError && !isWarning && "bg-zinc-400"
                   )}
@@ -255,7 +255,7 @@ export function SubmissionSlotCard({
                   </div>
                 ) : (
                   <>
-                    <div className="flex size-11 items-center justify-center rounded-2xl bg-white border border-zinc-200 text-zinc-400 shadow-sm transition-all duration-200 group-hover:text-[#D97757] group-hover:border-[#D97757]/30 group-hover:shadow-[0_6px_16px_-6px_rgba(217,119,87,0.35)] group-hover:-translate-y-0.5">
+                    <div className="flex size-11 items-center justify-center rounded-2xl bg-white border border-zinc-200 text-zinc-400 shadow-sm transition-[color,border-color,box-shadow,transform] duration-200 group-hover:text-[#D97757] group-hover:border-[#D97757]/30 group-hover:shadow-[0_6px_16px_-6px_rgba(217,119,87,0.35)] group-hover:-translate-y-0.5">
                       <UploadCloud className="size-5" />
                     </div>
                     <p className="text-[10px] font-medium text-zinc-500 px-2 text-center leading-tight transition-colors group-hover:text-zinc-700">
@@ -294,7 +294,7 @@ export function SubmissionSlotCard({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0 rounded-full text-zinc-300 transition-all duration-150 hover:bg-rose-50 hover:text-rose-600 hover:scale-110"
+                  className="h-7 w-7 p-0 rounded-full text-zinc-300 transition-[color,background-color,transform] duration-150 hover:bg-zinc-100 hover:text-zinc-600 hover:scale-110"
                   onClick={onDelete}
                 >
                   <Trash2 className="size-3.5" />
@@ -305,23 +305,23 @@ export function SubmissionSlotCard({
 
           <div className="flex flex-col gap-2 flex-1 relative">
             {isWarning ? (
-              <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-200/80">
+              <div className="flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] font-medium text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55]">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
                 请确认识别结果
               </div>
             ) : null}
 
             {isError ? (
-              <div className="space-y-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-[11px] text-rose-700 leading-snug ring-1 ring-inset ring-rose-200/80">
+              <div className="space-y-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] text-zinc-700 leading-snug border border-zinc-200 border-l-[2px] border-l-[#C9604D]">
                 <div className="flex items-start gap-1.5 font-medium">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0 mt-1 animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0 mt-1" />
                   <span>{error || OCR_FAIL_MESSAGE}</span>
                 </div>
                 {onRetry && error === NETWORK_RETRY_MESSAGE ? (
                   <button
                     type="button"
                     onClick={onRetry}
-                    className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-all duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
+                    className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
                   >
                     重试上传
                   </button>
@@ -340,7 +340,7 @@ export function SubmissionSlotCard({
                     <li
                       key={item}
                       className={cn(
-                        "leading-snug text-[10.5px] rounded-md px-1.5 py-0.5 transition-all duration-200",
+                        "leading-snug text-[10.5px] rounded-md px-1.5 py-0.5 transition-[color,background-color,border-color,box-shadow] duration-200",
                         highlightedOcrIndex === idx
                           ? "bg-[#D97757]/10 text-[#C96442] font-medium ring-1 ring-inset ring-[#D97757]/20"
                           : "text-zinc-600"

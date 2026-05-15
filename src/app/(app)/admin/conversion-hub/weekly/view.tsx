@@ -86,7 +86,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">每周四类清单</h2>
+          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">每周四类清单</h2>
           <span className="ml-3 text-[12px] text-zinc-500">推广 / 测试 / 废弃 / 封禁</span>
         </div>
         {localConfirmedAt ? (
@@ -151,7 +151,7 @@ function BucketCard({ bucket, index }: { bucket: DecisionBucket; index: number }
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xl leading-none">{bucket.emoji}</span>
-          <h3 className={`text-[15px] font-medium ${tone.title}`}>{bucket.label}</h3>
+          <h3 className={`text-[18px] font-medium ${tone.title}`}>{bucket.label}</h3>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${tone.badge}`}>
             {bucket.entries.length} 条
           </span>
@@ -199,7 +199,7 @@ function EmptyState({
       <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-zinc-50">
         <Inbox className="size-7 text-zinc-400" />
       </div>
-      <h3 className="mt-4 text-[15px] font-medium text-zinc-800">本周暂无决策草稿</h3>
+      <h3 className="mt-4 text-[18px] font-medium text-zinc-800">本周暂无决策草稿</h3>
       <p className="mx-auto mt-1 max-w-md text-[11px] text-zinc-500">
         周起：{weekStart}。AI 自动生成草稿还没有后端接口，当前只能先从分析和复核页面人工整理候选。
       </p>

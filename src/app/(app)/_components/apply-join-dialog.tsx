@@ -54,7 +54,7 @@ export function ApplyJoinDialog({ teams, trigger }: Props) {
       <DialogTrigger render={<span>{trigger}</span>} />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-[15px] font-semibold tracking-tight text-zinc-800">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
             申请加入团队
           </DialogTitle>
           <DialogDescription className="text-[13px] text-zinc-500">

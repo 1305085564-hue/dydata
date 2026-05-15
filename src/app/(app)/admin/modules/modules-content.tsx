@@ -125,7 +125,7 @@ export function AdminModulesContent({
             <TabsContent value="teams" id="teams" className="mt-6 scroll-mt-8">
               <section className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6">
                 <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-                  <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">
+                  <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">
                     团队与分组
                   </h2>
                 </div>
@@ -162,7 +162,7 @@ export function AdminModulesContent({
               <div className="flex items-center gap-3">
                 <span className="block h-4 w-[2px] bg-[#D97757]" aria-hidden />
                 <div>
-                  <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">
+                  <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">
                     数据治理
                   </h2>
                   <p className="mt-0.5 text-[12px] text-zinc-500">

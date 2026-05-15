@@ -135,7 +135,7 @@ export function CaseFilters({
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder={perspective === "conversion" ? "搜索转化话术内容" : "搜索话术内容"}
-          className="h-11 rounded-[20px] border-transparent bg-zinc-100/70 pl-9 text-zinc-800 placeholder:text-zinc-400 focus-visible:border-zinc-200 focus-visible:bg-white focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+          className="h-11 rounded-xl border-transparent bg-zinc-100/70 pl-9 text-zinc-800 placeholder:text-zinc-400 focus-visible:border-zinc-200 focus-visible:bg-white focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
         />
       </label>
 

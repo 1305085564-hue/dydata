@@ -56,7 +56,7 @@ export function ScriptsTab({ data }: { data: ScriptsTabData }) {
       <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-            <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">TOP 10 转化话术</h2>
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">TOP 10 转化话术</h2>
             <span className="ml-3 text-[11px] text-zinc-500">加权转化率，使用 ≥3 且展示 ≥1k</span>
           </div>
           <Link

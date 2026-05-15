@@ -46,7 +46,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
         className="scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-4"
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">资产列表</h2>
+          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">资产列表</h2>
 
           <div
             className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5"

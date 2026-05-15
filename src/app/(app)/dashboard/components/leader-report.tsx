@@ -134,7 +134,7 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
             <textarea
               value={fields[f.key]}
               onChange={(e) => setFields((prev) => ({ ...prev, [f.key]: e.target.value }))}
-              className="h-24 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] font-medium leading-[1.7] text-zinc-800 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-300 focus:border-zinc-950/20 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+              className="h-24 w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] font-medium leading-[1.7] text-zinc-800 transition-[border-color,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5 focus:bg-white"
               placeholder={`填写${f.label}...`}
             />
           </div>

@@ -238,7 +238,7 @@ export function ContentDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-2xl border-zinc-200 bg-white">
         <DialogHeader>
-          <DialogTitle className="text-[16px] font-medium tracking-tight text-zinc-800">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
             {video?.video_title || "内容详情"}
           </DialogTitle>
         </DialogHeader>

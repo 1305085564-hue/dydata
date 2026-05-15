@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { loadAdminPageData } from "@/lib/loaders/admin-page";
+import { getUserPermissions } from "@/lib/permissions";
+import { canAccessAdminPath } from "@/lib/analytics-access";
 
 import {
   AdminQueueSection,
@@ -22,6 +24,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   if (!user) redirect("/login");
 
+  const permissionInfo = await getUserPermissions();
+  if (!permissionInfo) redirect("/dashboard");
+  if (!canAccessAdminPath("/admin", permissionInfo.businessRole, permissionInfo.permissions))
+    redirect("/dashboard");
+
   const params = await searchParams;
   const data = await loadAdminPageData({
     supabase,
@@ -31,7 +38,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (!data) redirect("/login");
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <AdminStatusSection date={data.queryDate} />
       <AiAlertPanel />
       <AdminQueueSection date={data.queryDate} />

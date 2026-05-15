@@ -43,7 +43,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
         className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
       >
         <div className="flex items-center justify-between border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">复盘列表</h2>
+          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">复盘列表</h2>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4">

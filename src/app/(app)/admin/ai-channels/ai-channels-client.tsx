@@ -539,7 +539,7 @@ export default function AIChannelsClient() {
           {/* AI Feature Bindings (full width) */}
           <section id="ai-features" className="mt-6 scroll-mt-8 space-y-4">
             <div className="flex flex-col gap-1 border-l-2 border-[#D97757] pl-3">
-              <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">AI 功能绑定</h2>
+              <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">AI 功能绑定</h2>
               <p className="text-[12px] text-zinc-500">每个功能可独立指定接管渠道与模型，留空走 failover；编辑实时自动保存。</p>
             </div>
 

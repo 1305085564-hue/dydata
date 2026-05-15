@@ -48,20 +48,20 @@ function getStatusBadge(field: SubmissionFieldState) {
   if (score >= 0.95) {
     return {
       label: "AI 已识别",
-      className: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100",
+      className: "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#6FAA7D]",
       dotClass: "bg-emerald-500",
     };
   }
   if (score >= 0.80) {
     return {
       label: "待确认",
-      className: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100",
+      className: "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55]",
       dotClass: "bg-amber-500",
     };
   }
   return {
     label: "请核对",
-    className: "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-100",
+    className: "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#C9604D]",
     dotClass: "bg-rose-500",
   };
 }
@@ -164,7 +164,7 @@ export function MetricInputCard({
           onBlur={onBlur}
           onKeyDown={onKeyDown}
           className={cn(
-            "rounded-[20px] pr-8 font-mono tabular-nums text-zinc-800 transition-colors",
+            "rounded-xl pr-8 font-mono tabular-nums text-zinc-800 transition-colors",
             "bg-zinc-100/70 border-transparent text-[13px]",
             "focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757]",
             "h-10",

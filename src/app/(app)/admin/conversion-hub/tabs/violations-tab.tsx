@@ -41,7 +41,7 @@ export function ViolationsReviewTab({ data }: { data: ViolationsTabData }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">违规复核队列</h2>
+          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">违规复核队列</h2>
           <span className="ml-3 text-[12px] text-zinc-500">
             当前筛选 <span className="font-mono tabular-nums text-zinc-700">{pendingCount}</span> 条
           </span>

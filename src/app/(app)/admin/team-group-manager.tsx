@@ -269,7 +269,7 @@ export function TeamGroupManager({
     <div className="space-y-4">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-          <h3 className="text-[15px] font-medium tracking-tight text-zinc-800">团队与分组</h3>
+          <h3 className="text-[24px] font-semibold tracking-tight text-zinc-800">团队与分组</h3>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
