@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronUp } from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronUp, Sparkles, Loader2, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
 import { MotionCard } from "@/components/ui/motion-card";
@@ -34,7 +35,7 @@ import type {
   Video,
   VideoTagReviewDimension,
 } from "@/types";
-import { 提交成功卡 } from "@/components/submission/提交成功卡";
+
 import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
@@ -65,6 +66,21 @@ import type {
   TodaySubmissionSummary,
 } from "./video-submit-panel-state";
 
+interface SampleQualityIssue {
+  severity: "critical" | "warning" | "info";
+  field?: string;
+  title: string;
+  detail: string;
+  suggestedFix?: "edit_field" | "reupload_screenshot" | "manual_review";
+}
+
+interface SampleQualityResponse {
+  reportId: string;
+  overallStatus: "pass" | "warning" | "fail";
+  issues: SampleQualityIssue[];
+  checkedAt: string;
+}
+
 interface VideoSubmitFormProps {
   account: { id: string; name: string; display_name: string; content_direction: string | null } | null;
   userId: string;
@@ -72,6 +88,7 @@ interface VideoSubmitFormProps {
   mode: SubmitPanelMode;
   initialSummary: TodaySubmissionSummary | null;
   initialBizDate?: string | null;
+  submittedViewActive?: boolean;
   onSubmitted: (
     video: Video,
     aiTags: Array<{
@@ -83,6 +100,7 @@ interface VideoSubmitFormProps {
     summaryOverride?: TodaySubmissionReportLike | null,
   ) => void;
   onCancel?: () => void;
+  onRequestEdit?: () => void;
 }
 
 
@@ -443,7 +461,18 @@ function buildIssueHintText(messages: string[]) {
   return `${messages[0]}；另外还有 ${messages.length - 1} 处问题`;
 }
 
-export function VideoSubmitForm({ account, userId, today, mode, initialSummary, initialBizDate = null, onSubmitted, onCancel }: VideoSubmitFormProps) {
+export function VideoSubmitForm({
+  account,
+  userId,
+  today,
+  mode,
+  initialSummary,
+  initialBizDate = null,
+  submittedViewActive = false,
+  onSubmitted,
+  onCancel,
+  onRequestEdit,
+}: VideoSubmitFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today));
   const [fields, setFields] = useState<SubmissionState["fields"]>(() => createEditableFields());
@@ -451,6 +480,11 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [submittedVideo, setSubmittedVideo] = useState<Video | null>(null);
+  const [qualityCheck, setQualityCheck] = useState<{
+    data: SampleQualityResponse | null;
+    loading: boolean;
+  }>({ data: null, loading: false });
   const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(null);
@@ -483,6 +517,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   }, []);
 
   useEffect(() => {
+    if (submittedViewActive) return;
     // Clear previously generated blobs when switching accounts or initializing
     blobUrlsRef.current.forEach((url) => {
       URL.revokeObjectURL(url);
@@ -506,11 +541,13 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
     setFields(createEditableFields());
     setSlots(createEditableSlots());
     setIsSubmitted(false);
+    setSubmittedVideo(null);
+    setQualityCheck({ data: null, loading: false });
     setDeleteTargetRole(null);
     setKeywordInput("");
     setScriptText("");
     setFocusedRole(null);
-  }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today]);
+  }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today, submittedViewActive]);
 
   const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
@@ -604,6 +641,41 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
   function handleFieldBlur() {
     setFocusedRole(null);
     setHighlightedOcrIndex(null);
+  }
+
+  async function handleQualityCheck() {
+    if (!submittedVideo) return;
+    setQualityCheck({ data: null, loading: true });
+    try {
+      const res = await fetch("/api/dashboard/sample-quality-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId: submittedVideo.id }),
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as SampleQualityResponse;
+      setQualityCheck({ data, loading: false });
+    } catch {
+      feedbackToast.error("AI 检查失败");
+      setQualityCheck({ data: null, loading: false });
+    }
+  }
+
+  function handleFixIssue(issue: SampleQualityIssue) {
+    if (issue.suggestedFix === "edit_field") {
+      onRequestEdit?.();
+    } else if (issue.suggestedFix === "reupload_screenshot") {
+      setIsSubmitted(false);
+      setQualityCheck({ data: null, loading: false });
+      setSlots((current) => ({
+        ...current,
+        screenshot_1: { ...createEditableSlots().screenshot_1 },
+        screenshot_2: { ...createEditableSlots().screenshot_2 },
+        screenshot_3: { ...createEditableSlots().screenshot_3 },
+      }));
+    } else if (issue.suggestedFix === "manual_review") {
+      toast.message("请联系管理员复核");
+    }
   }
 
   function applyOverviewFields(
@@ -908,6 +980,7 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
       const aiTags = !isVideo(payload) && Array.isArray(payload.ai_tags) ? payload.ai_tags : [];
       const summaryOverride = createSummaryOverride(account.id, meta, fields);
+      setSubmittedVideo(submittedVideo);
       setIsSubmitted(true);
       onSubmitted(submittedVideo, aiTags, summaryOverride);
       feedbackToast.success("数据提交成功", {
@@ -915,9 +988,6 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
         className:
           "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
       });
-      cancelTimeoutRef.current = window.setTimeout(() => {
-        onCancel?.();
-      }, 2200);
     } catch (error) {
       feedbackToast.error((error as Error).message || "提交失败，请稍后重试");
     } finally {
@@ -1227,8 +1297,134 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
   return (
     <>
-      <AnimatePresence>{isSubmitted ? <提交成功卡 bizDate={meta.bizDate} /> : null}</AnimatePresence>
+      {isSubmitted ? (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-4 pb-6"
+        >
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
+            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#ECFDF3] text-[#067647]">
+              <CheckCircle className="size-8" />
+            </div>
+            <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
+              数据提交成功
+            </h3>
+            <p className="mt-2 text-[13px] text-zinc-500">
+              归属日期：{meta.bizDate}
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setSubmittedVideo(null);
+                  setQualityCheck({ data: null, loading: false });
+                  onCancel?.();
+                }}
+                className="h-9 rounded-xl border-zinc-200 px-4 text-[12px] text-zinc-700 hover:bg-zinc-50"
+              >
+                返回
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={qualityCheck.loading}
+                onClick={handleQualityCheck}
+                className="h-9 rounded-xl border-zinc-200 px-4 text-[12px] text-zinc-700 hover:bg-zinc-50"
+              >
+                {qualityCheck.loading ? (
+                  <>
+                    <Loader2 className="mr-1 size-3.5 animate-spin" />
+                    AI 分析中…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-1 size-3.5" />
+                    AI 检查样本质量
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
 
+          {qualityCheck.data ? (
+            <div className="rounded-xl border border-zinc-200 bg-white p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <span
+                  className={cn(
+                    "inline-flex h-5 items-center justify-center rounded-lg px-2 text-[11px] font-medium",
+                    qualityCheck.data.overallStatus === "pass"
+                      ? "bg-[#067647]/10 text-[#067647]"
+                      : qualityCheck.data.overallStatus === "warning"
+                        ? "bg-[#EAB308]/10 text-[#EAB308]"
+                        : "bg-[#B42318]/10 text-[#B42318]",
+                  )}
+                >
+                  {qualityCheck.data.overallStatus === "pass"
+                    ? "通过"
+                    : qualityCheck.data.overallStatus === "warning"
+                      ? "警告"
+                      : "未通过"}
+                </span>
+                <span className="text-[12px] text-zinc-400">
+                  检查于{" "}
+                  {new Date(qualityCheck.data.checkedAt).toLocaleTimeString(
+                    "zh-CN",
+                    { hour: "2-digit", minute: "2-digit" },
+                  )}
+                </span>
+              </div>
+              <div className="space-y-3">
+                {qualityCheck.data.issues.map((issue, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between gap-3"
+                  >
+                    <div className="flex min-w-0 flex-1 items-start gap-2">
+                      {issue.severity === "critical" ? (
+                        <XCircle className="mt-0.5 size-4 shrink-0 text-[#B42318]" />
+                      ) : issue.severity === "warning" ? (
+                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#EAB308]" />
+                      ) : (
+                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-[#067647]" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-medium text-zinc-800">
+                          {issue.title}
+                        </p>
+                        <p className="text-[12px] text-zinc-500">
+                          {issue.detail}
+                        </p>
+                      </div>
+                    </div>
+                    {issue.suggestedFix ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={issue.suggestedFix === "manual_review"}
+                        onClick={() => handleFixIssue(issue)}
+                        className="h-8 shrink-0 rounded-xl border-zinc-200 px-3 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                      >
+                        {issue.suggestedFix === "edit_field"
+                          ? "修改"
+                          : issue.suggestedFix === "reupload_screenshot"
+                            ? "重传"
+                            : "需复核"}
+                      </Button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </motion.div>
+      ) : null}
+
+      {!isSubmitted ? (
+        <>
       <Dialog open={deleteTargetRole !== null} onOpenChange={(open) => !open && setDeleteTargetRole(null)}>
         <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-sm">
           <DialogHeader className="px-6 pt-6">
@@ -1579,6 +1775,8 @@ export function VideoSubmitForm({ account, userId, today, mode, initialSummary, 
 
       {mounted ? createPortal(desktopSubmitBar, document.body) : null}
       {mounted ? createPortal(mobileSubmitBar, document.body) : null}
+        </>
+      ) : null}
     </>
   );
 }

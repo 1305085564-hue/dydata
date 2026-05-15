@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload.ts";
+import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 
 test("多个关键词会保留为 3 条独立标签", () => {
   const payload = buildManualTagPayload({

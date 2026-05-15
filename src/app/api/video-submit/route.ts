@@ -174,6 +174,13 @@ export async function POST(request: NextRequest) {
     }
     return acc;
   }, {});
+  const ocrAssets = normalized.assets.map((asset) => ({
+    role: asset.role,
+    screenshot_type: asset.screenshot_type ?? null,
+    confidence_score: asset.confidence_score ?? null,
+    confirmed: Boolean(asset.confirmed),
+    recognized_fields: asset.recognized_fields ?? null,
+  }));
 
   const curveScreenshotUrl = normalized.assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
   const retentionScreenshotUrl = normalized.assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
@@ -197,10 +204,11 @@ export async function POST(request: NextRequest) {
     bounce_rate_2s: normalized.metrics.bounce_rate_2s,
     completion_rate_5s: normalized.metrics.completion_rate_5s,
     avg_play_ratio: null,
-    vs_previous: normalized.published_at_text || Object.keys(ocrSummary).length
+    vs_previous: normalized.published_at_text || Object.keys(ocrSummary).length || ocrAssets.length
       ? {
           published_at_text: normalized.published_at_text ?? null,
           ocr_summary: Object.keys(ocrSummary).length ? ocrSummary : null,
+          ocr_assets: ocrAssets.length ? ocrAssets : null,
         }
       : null,
     screenshot_urls: screenshotUrls.length ? screenshotUrls : null,

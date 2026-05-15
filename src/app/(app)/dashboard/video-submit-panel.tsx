@@ -164,6 +164,7 @@ export function VideoSubmitPanel({
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<MonthReport | null>(null);
+  const [submittedViewActive, setSubmittedViewActive] = useState(false);
   const [lastSubmittedVideoId, setLastSubmittedVideoId] = useState<string | null>(null);
   const [lastAiTags, setLastAiTags] = useState<Array<{
     tag_dimension: VideoTagReviewDimension;
@@ -463,6 +464,7 @@ export function VideoSubmitPanel({
       setActiveBizDate(summaryOverride.report_date);
     }
 
+    setSubmittedViewActive(true);
     setRequestedMode(null);
     setLastSubmittedVideoId(video.id);
     setLastAiTags(aiTags);
@@ -863,19 +865,27 @@ export function VideoSubmitPanel({
               </div>
             ) : null}
 
-            {selectedAccount && !shouldShowBlockedStateCard && (!isPrimarySummaryMode || activeBizDate !== today) ? (
+            {selectedAccount && !shouldShowBlockedStateCard && (!isPrimarySummaryMode || activeBizDate !== today || submittedViewActive) ? (
               <VideoSubmitForm
-                key={`form-${selectedAccount.id}-${activeBizDate}-${primaryMode}`}
+                key={`form-${selectedAccount.id}-${activeBizDate}`}
                 account={selectedAccount}
                 userId={userId}
                 today={today}
                 mode={primaryMode}
-                initialSummary={primaryMode === "backfill" ? null : primarySummary}
+                initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}
                 initialBizDate={primaryMode === "backfill" ? activeBizDate : null}
+                submittedViewActive={submittedViewActive}
                 onSubmitted={handleSubmitted}
                 onCancel={() => {
+                  setSubmittedViewActive(false);
                   setRequestedMode(null);
                   setActiveBizDate(today);
+                }}
+                onRequestEdit={() => {
+                  setSubmittedViewActive(false);
+                  if (activeDateReport) {
+                    setEditingReport(activeDateReport);
+                  }
                 }}
               />
             ) : null}

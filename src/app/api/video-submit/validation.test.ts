@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeContentKeywords, validateVideoSubmitPayload } from "./validation.ts";
-import { buildStableUuid, buildSubmissionFingerprint, buildSubmissionRecordId } from "./stability.ts";
+import { normalizeContentKeywords, validateVideoSubmitPayload } from "./validation";
+import { buildStableUuid, buildSubmissionFingerprint, buildSubmissionRecordId } from "./stability";
 
 test("提交接口要求标题、文案、内容标签至少一个", () => {
   const result = validateVideoSubmitPayload({
