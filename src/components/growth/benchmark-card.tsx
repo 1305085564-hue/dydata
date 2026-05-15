@@ -177,7 +177,7 @@ export function BenchmarkCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-zinc-200 bg-zinc-50 px-5 py-3">
+      <div className="flex items-center justify-between bg-zinc-50 px-5 py-3">
         <span className="text-[13px] text-zinc-500">
           从代表样本里拆你最需要补的动作细节
         </span>

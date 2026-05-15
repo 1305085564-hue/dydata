@@ -104,7 +104,7 @@ export function RewriteHistory({
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 border-t border-zinc-200 px-3 py-2">
+      <div className="shrink-0 px-3 pt-3 pb-2">
         <p className="truncate text-[10px] uppercase tracking-[0.2em] text-zinc-400">
           {featureLabel}
         </p>

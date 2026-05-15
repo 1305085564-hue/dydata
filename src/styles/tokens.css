@@ -2,7 +2,7 @@
 /* 将 shadcn 组件库的 CSS 变量映射到法典 hex 色值 */
 
 :root {
-  --background: #F4F4F5;                 /* L0 zinc-100 */
+  --background: #F0F0F1;                 /* L0 微加深背景 */
   --foreground: #27272A;                 /* zinc-800 主文字 */
   --card: #FAFAFB;                       /* L1 zinc-50 */
   --card-foreground: #27272A;
@@ -10,11 +10,11 @@
   --popover-foreground: #27272A;
   --primary: #D97757;                    /* 暖橙 主 CTA */
   --primary-foreground: #FFFFFF;
-  --secondary: #F4F4F5;
+  --secondary: #F0F0F1;
   --secondary-foreground: #27272A;
   --muted: #FAFAFB;
   --muted-foreground: #71717A;           /* zinc-500 次要文字 */
-  --accent: #F4F4F5;
+  --accent: #F0F0F1;
   --accent-foreground: #27272A;
   --destructive: #C9604D;                /* 法典异常色 */
   --border: #E4E4E7;                     /* zinc-200 */
@@ -31,7 +31,7 @@
   --sidebar-foreground: #27272A;
   --sidebar-primary: #D97757;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F4F4F5;
+  --sidebar-accent: #F0F0F1;
   --sidebar-accent-foreground: #27272A;
   --sidebar-border: #E4E4E7;
   --sidebar-ring: rgba(9, 9, 11, 0.05);

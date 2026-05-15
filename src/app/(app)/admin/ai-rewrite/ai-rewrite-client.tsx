@@ -24,13 +24,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1720,12 +1721,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
         </div>
       )}
 
-      <Dialog open={Boolean(editor)} onOpenChange={(open) => (!open ? closeEditor() : null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{activeEditorMeta ? activeEditorMeta[editor?.mode ?? "create"] : "编辑配置"}</DialogTitle>
-            <DialogDescription>{activeEditorMeta?.description}</DialogDescription>
-          </DialogHeader>
+      <Sheet open={Boolean(editor)} onOpenChange={(open) => (!open ? closeEditor() : null)}>
+        <SheetContent side="right" className="w-full max-w-3xl">
+          <SheetHeader>
+            <SheetTitle>{activeEditorMeta ? activeEditorMeta[editor?.mode ?? "create"] : "编辑配置"}</SheetTitle>
+            <SheetDescription>{activeEditorMeta?.description}</SheetDescription>
+          </SheetHeader>
+          <SheetBody>
 
           {editor?.kind === "fixed_mode" ? (
             <div className="grid gap-4 md:grid-cols-2">
@@ -2030,7 +2032,8 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
             </div>
           ) : null}
 
-          <DialogFooter>
+          </SheetBody>
+          <SheetFooter>
             <Button variant="outline" onClick={() => closeEditor()} disabled={isSubmitting}>
               取消
             </Button>
@@ -2038,9 +2041,9 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               {isSubmitting ? <Skeleton className="size-4 rounded-full" /> : null}
               保存
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

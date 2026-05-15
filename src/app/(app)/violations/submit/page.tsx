@@ -32,7 +32,7 @@ export default async function SubmitViolationPage({
     typeof resolvedSearchParams.account_id === "string" ? resolvedSearchParams.account_id : null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 py-8">
+    <div className="mx-auto max-w-6xl space-y-6 py-8">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-400">Submit Case</p>
         <h1 className="mt-2 text-[24px] font-semibold tracking-tight text-zinc-800">提交话术案例</h1>

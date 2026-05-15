@@ -19,7 +19,7 @@ export default async function HomePage() {
   if (user) redirect("/dashboard");
 
   return (
-    <div className="min-h-screen bg-[#F4F4F5]">
+    <div className="min-h-screen bg-[var(--color-bg)]">
       <main className="mx-auto max-w-7xl px-6 lg:px-12">
         {/* Header */}
         <nav className="flex items-center justify-between py-8">

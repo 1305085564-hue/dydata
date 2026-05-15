@@ -591,7 +591,7 @@ export function VideoSubmitPanel({
           "mx-auto max-w-6xl overflow-hidden rounded-2xl border border-zinc-200 bg-white",
         )}>
           {!embeddedChrome ? (
-          <CardHeader className="space-y-0 border-b border-zinc-200 bg-[#F4F4F5] p-0">
+          <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
             <div className="space-y-6 px-6 py-7 sm:px-8 sm:py-8">
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                 <div className="min-w-0">
@@ -664,7 +664,7 @@ export function VideoSubmitPanel({
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-zinc-200 bg-[#F4F4F5] px-4 py-4">
+              <div className="rounded-2xl border border-zinc-200 bg-[var(--color-bg)] px-4 py-4">
                 <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
                   <div className="space-y-1">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400">Today</div>

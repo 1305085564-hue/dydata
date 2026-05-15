@@ -1,7 +1,7 @@
 /* 阿禅美学标准 V1 法典 Token —— 全站唯一真源 */
 :root {
-  /* 法典二 底色三层（× shadow 做层级，仅由底色 + 1px zinc-200 border 构成） */
-  --color-bg: #F4F4F5;           /* L0 zinc-100 页面背景 */
+  /* 法典二 底色三层 + 微阴影辅助层级 */
+  --color-bg: #F0F0F1;           /* L0 页面背景（微加深，与白卡对比 ~15pt） */
   --color-surface: #FAFAFB;      /* L1 zinc-50 卡片、主面板 */
   --color-focus: #FFFFFF;        /* L2 焦点区、Modal、Focus 态输入、激活 Tab */
 
@@ -40,12 +40,12 @@
 
   /* 法典 8.4 主 CTA 弥散阴影（≤ 3% 透明度） */
   --shadow-primary: 0 2px 8px rgba(217, 119, 87, 0.03);
-  /* 法典二 × shadow 做层级；但悬浮层允许极轻 shadow-sm */
+  /* 法典二 微阴影辅助层级（底色加深后，shadow 辅助白卡浮起） */
   --shadow-light: 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-medium: 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-heavy: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 0 0 0 rgba(0, 0, 0, 0);
-  --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.06);
   --shadow-float: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.06);
 
@@ -56,7 +56,7 @@
   --nav-blur: none;
 
   /* Admin 专用 token —— 沿用法典色值 */
-  --admin-bg: #F4F4F5;
+  --admin-bg: #F0F0F1;
   --admin-surface: #FAFAFB;
   --admin-border: #E4E4E7;
   --admin-text-primary: #27272A;

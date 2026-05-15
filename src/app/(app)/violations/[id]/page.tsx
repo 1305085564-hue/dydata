@@ -277,7 +277,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
 
   if (error || !caseItem) {
     return (
-      <div className="mx-auto max-w-5xl space-y-5 py-8">
+      <div className="mx-auto max-w-6xl space-y-5 py-8">
         <Link
           href="/violations"
           className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-800"
