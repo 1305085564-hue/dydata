@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadAdminPageData } from "@/lib/loaders/admin-page";
 
-import { AdminCockpit } from "./components/admin-cockpit";
+import {
+  AdminQueueSection,
+  AdminStatusSection,
+} from "./components/admin-cockpit";
+import { AiAlertPanel } from "./components/ai-alert-panel";
 import { JoinRequestReviewSection } from "./join-request-review-section";
 
 interface AdminPageProps {
@@ -28,7 +32,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <div className="space-y-5">
-      <AdminCockpit date={data.queryDate} />
+      <AdminStatusSection date={data.queryDate} />
+      <AiAlertPanel />
+      <AdminQueueSection date={data.queryDate} />
       <JoinRequestReviewSection />
     </div>
   );

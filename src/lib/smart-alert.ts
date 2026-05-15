@@ -213,14 +213,14 @@ export function generateSmartAlerts(input: {
   now?: Date;
 }) {
   const now = input.now ?? new Date();
-  const steadyDeclines = createSteadyDeclineAlerts(buildSteadyDeclineCandidates(input.reports), now);
-  const spikes = createSpikeAlerts(buildSpikeCandidates(input.reports, now), now);
-  const noSubmissions = createNoSubmissionAlerts(buildNoSubmissionCandidates(input.profiles, input.reports, now), now);
+  const steadyDeclines = createSteadyDeclineAlerts(detectSteadyDecline(input.reports), now);
+  const spikes = createSpikeAlerts(detectSpike(input.reports, now), now);
+  const noSubmissions = createNoSubmissionAlerts(detectNoSubmission(input.profiles, input.reports, now), now);
 
   return [...steadyDeclines, ...spikes, ...noSubmissions];
 }
 
-function buildSteadyDeclineCandidates(reports: AlertReport[]): SteadyDeclineCandidate[] {
+export function detectSteadyDecline(reports: AlertReport[]): SteadyDeclineCandidate[] {
   const grouped = new Map<string, AlertReport[]>();
 
   for (const report of reports) {
@@ -262,7 +262,7 @@ function buildSteadyDeclineCandidates(reports: AlertReport[]): SteadyDeclineCand
   });
 }
 
-function buildSpikeCandidates(reports: AlertReport[], now: Date): SpikeCandidate[] {
+export function detectSpike(reports: AlertReport[], now: Date): SpikeCandidate[] {
   const reportsByAccount = new Map<string, AlertReport[]>();
 
   for (const report of reports) {
@@ -309,7 +309,7 @@ function buildSpikeCandidates(reports: AlertReport[], now: Date): SpikeCandidate
   });
 }
 
-function buildNoSubmissionCandidates(profiles: AlertProfile[], reports: AlertReport[], now: Date): NoSubmissionCandidate[] {
+export function detectNoSubmission(profiles: AlertProfile[], reports: AlertReport[], now: Date): NoSubmissionCandidate[] {
   const reportDatesByUser = new Map<string, Set<string>>();
 
   for (const report of reports) {

@@ -11,7 +11,6 @@ import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
 import { setDashboardDate } from "@/lib/dashboard-store";
 
-import { AssistantBeacon } from "./components/assistant-beacon";
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
 import { FocusHeroCard } from "./components/focus-hero-card";
@@ -87,7 +86,6 @@ export function ProductionControlSystem({
     refreshSop,
     openReviewTarget,
     openDashboardTool,
-    dismissAlert,
   } = useDashboardOrchestration({
     initialMine,
     initialMatrix,
@@ -132,7 +130,7 @@ export function ProductionControlSystem({
             }),
             DATA_REPORT: todayReports.length > 0 ? "APPROVED" : (mine?.statuses.DATA_REPORT ?? "IDLE"),
           }}
-          assistantSlot={<AssistantBeacon groups={alertGroups} onDismissAlert={dismissAlert} />}
+          assistantSlot={undefined}
         />
 
         {userRole === "member" && activeTab === "FLOW" && (

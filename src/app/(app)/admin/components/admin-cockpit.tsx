@@ -342,7 +342,7 @@ function AnomalyBanner({ date }: { date: string }) {
   );
 }
 
-export function AdminCockpit({ date }: { date: string }) {
+export function AdminStatusSection({ date }: { date: string }) {
   return (
     <div className="space-y-5">
       <div className="flex items-baseline gap-3">
@@ -356,12 +356,25 @@ export function AdminCockpit({ date }: { date: string }) {
 
       <StatusBar date={date} />
       <AnomalyBanner date={date} />
+    </div>
+  );
+}
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <PendingVideosQueue date={date} />
-        <PendingViolationsQueue />
-        <PendingSubmissionsQueue date={date} />
-      </div>
+export function AdminQueueSection({ date }: { date: string }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <PendingVideosQueue date={date} />
+      <PendingViolationsQueue />
+      <PendingSubmissionsQueue date={date} />
+    </div>
+  );
+}
+
+export function AdminCockpit({ date }: { date: string }) {
+  return (
+    <div className="space-y-5">
+      <AdminStatusSection date={date} />
+      <AdminQueueSection date={date} />
     </div>
   );
 }
