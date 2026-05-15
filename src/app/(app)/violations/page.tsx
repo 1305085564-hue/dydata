@@ -241,7 +241,7 @@ function EmptyState({ title, hint }: { title: string; hint: string }) {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       </div>
-      <h2 className="mt-4 text-base font-semibold text-zinc-800">{title}</h2>
+      <h2 className="mt-4 text-[18px] font-semibold text-zinc-800">{title}</h2>
       <p className="mt-2 text-sm text-zinc-500">{hint}</p>
     </div>
   );

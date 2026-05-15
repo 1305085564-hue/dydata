@@ -241,7 +241,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
         ) : (
           <Card className="rounded-2xl border border-dashed border-border/70 bg-white/70 lg:col-span-3">
             <CardHeader>
-              <CardTitle className="text-base">Top Performers</CardTitle>
+              <CardTitle className="text-[18px]">Top Performers</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">暂无 24h 视频快照，无法生成头部表现卡片。</p>
@@ -252,7 +252,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
 
       <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base font-semibold tracking-tight">每日视频数趋势</CardTitle>
+          <CardTitle className="text-[18px] font-semibold tracking-tight">每日视频数趋势</CardTitle>
         </CardHeader>
         <CardContent>
           {trendData.some((item) => item.count > 0) ? (
@@ -287,7 +287,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
 
       <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base font-semibold tracking-tight">视频排行榜</CardTitle>
+          <CardTitle className="text-[18px] font-semibold tracking-tight">视频排行榜</CardTitle>
         </CardHeader>
         <CardContent>
           {rankedVideos.length > 0 ? (

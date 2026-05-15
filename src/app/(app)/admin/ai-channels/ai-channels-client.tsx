@@ -449,7 +449,7 @@ export default function AIChannelsClient() {
     <div className="w-full space-y-4">
       {isLoading ? (
         <div className="flex h-48 items-center justify-center rounded-2xl border border-zinc-200 bg-white">
-          <div className="flex flex-col items-center gap-3 text-[var(--color-text-secondary)]">
+          <div className="flex flex-col items-center gap-3 text-zinc-500">
             <Skeleton className="size-6 rounded-full" />
             <p className="text-[12px] font-medium text-zinc-800">加载中…</p>
           </div>

@@ -339,7 +339,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           </div>
         </div>
 
-        <p className="mt-6 whitespace-pre-wrap text-lg font-semibold leading-7 tracking-wide text-zinc-800 sm:text-xl sm:leading-8">
+        <p className="mt-6 whitespace-pre-wrap text-[18px] font-semibold leading-7 tracking-wide text-zinc-800">
           {caseItem.script_text}
         </p>
 

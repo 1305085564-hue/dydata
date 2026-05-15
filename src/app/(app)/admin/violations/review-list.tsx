@@ -133,7 +133,7 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
               {item.category}
             </span>
           </div>
-          <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-base font-semibold leading-7 text-zinc-800">
+          <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-[18px] font-semibold leading-7 text-zinc-800">
             {item.scriptText}
           </p>
         </div>

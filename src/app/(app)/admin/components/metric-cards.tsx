@@ -40,8 +40,8 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
     <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        isClickable && "cursor-pointer hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm hover:border-zinc-300 group"
+        "relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        isClickable && "cursor-pointer hover:shadow-sm hover:border-zinc-300 group"
       )}
     >
       <div className="flex items-start justify-between">

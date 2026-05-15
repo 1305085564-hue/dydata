@@ -591,28 +591,28 @@ export function HitAnalyzer({
             </div>
           ) : null}
           <div>
-            <p className="line-clamp-2 text-sm font-semibold leading-tight text-[var(--color-text-primary)]">
+            <p className="line-clamp-2 text-sm font-semibold leading-tight text-zinc-800">
               {datum.title || "无标题视频"}
             </p>
-            <p className="mt-1 text-[11px] text-[var(--color-text-secondary)]">
+            <p className="mt-1 text-[11px] text-zinc-500">
               {datum.submitter} · {formatDate(datum.published_at) ?? datum.report_date}
             </p>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 pt-1">
             <div>
-              <p className="text-[10px] font-medium text-[var(--color-text-tertiary)]">播放量</p>
+              <p className="text-[10px] font-medium text-zinc-400">播放量</p>
               <p className={cn("text-[13px] font-medium", datum.isHit ? "text-[#C9604D]" : "text-zinc-700")}>{formatPlayCount(datum.play)}</p>
             </div>
             <div>
-              <p className="text-[10px] font-medium text-[var(--color-text-tertiary)]">完播率</p>
+              <p className="text-[10px] font-medium text-zinc-400">完播率</p>
               <p className="text-[13px] font-medium text-zinc-800">{formatPercent(datum.cr)}</p>
             </div>
             <div>
-              <p className="text-[10px] font-medium text-[var(--color-text-tertiary)]">总互动</p>
+              <p className="text-[10px] font-medium text-zinc-400">总互动</p>
               <p className="text-[13px] font-medium text-zinc-800">{datum.engagement.toLocaleString("zh-CN")}</p>
             </div>
             <div>
-              <p className="text-[10px] font-medium text-[var(--color-text-tertiary)]">提交人</p>
+              <p className="text-[10px] font-medium text-zinc-400">提交人</p>
               <p className="text-[13px] font-medium text-zinc-800">{datum.submitter}</p>
             </div>
           </div>
@@ -665,12 +665,12 @@ export function HitAnalyzer({
             {scatterSummary ? (
               <ReferenceLine
                 x={scatterSummary.highCompletionLine}
-                stroke="var(--color-primary, #D97757)"
+                stroke="#D97757"
                 strokeDasharray="4 4"
                 label={{
                   position: "insideBottomRight",
                   value: formatPercent(scatterSummary.highCompletionLine),
-                  fill: "var(--color-primary, #D97757)",
+                  fill: "#D97757",
                   fontSize: 11,
                   fontWeight: 600,
                 }}
@@ -755,7 +755,7 @@ export function HitAnalyzer({
       <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">Quick Filters</span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">Quick Filters</span>
             {filters.map((filter) => (
               <button
                 key={filter.id}
@@ -771,7 +771,7 @@ export function HitAnalyzer({
               </button>
             ))}
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">时间周期</span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">时间周期</span>
               {timePresetOptions.map((preset) => (
                 <button
                   key={preset.id}
@@ -791,7 +791,7 @@ export function HitAnalyzer({
 
           <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.82fr)]">
             <div className="space-y-2">
-              <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[var(--color-text-secondary)]">Submitters</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">Submitters</p>
               {lockedSubmitter ? (
                 <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-600">
                   <span className="font-medium">当前联动成员：</span>
@@ -955,7 +955,7 @@ export function HitAnalyzer({
           <div className="space-y-1">
             <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">图表分析</p>
             <h3 className="text-[18px] font-medium text-zinc-800">爆款特征散点图</h3>
-            <p className="text-xs text-[var(--color-text-secondary)]">
+            <p className="text-xs text-zinc-500">
               先完成筛选和结果概览，再通过右上角悬浮散点图观察播放与完播的关系。
             </p>
           </div>

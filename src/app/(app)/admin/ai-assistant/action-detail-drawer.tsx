@@ -8,11 +8,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetBody,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Copy,
   Terminal,
@@ -155,9 +156,9 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
   const status = resultMeta(detail?.result);
 
   return (
-    <Dialog open={!!id} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-0 shadow-sm">
-        <DialogHeader className="relative shrink-0 border-b border-zinc-200 bg-white px-6 pb-4 pt-5">
+    <Sheet open={!!id} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="right" className="w-full max-w-2xl bg-[#FAFAFB]">
+        <SheetHeader className="bg-white">
           <div className="absolute left-0 top-0 h-full w-[3px] bg-zinc-300" />
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -171,9 +172,9 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                   </code>
                 )}
               </div>
-              <DialogTitle className="mt-2 text-[18px] font-semibold leading-tight tracking-tight text-zinc-800">
+              <SheetTitle className="mt-2 text-[18px] font-semibold leading-tight tracking-tight">
                 {loading ? "加载中..." : detail?.description || "—"}
-              </DialogTitle>
+              </SheetTitle>
             </div>
             {detail?.result && (
               <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#FAFAFB] px-2.5 py-1">
@@ -189,9 +190,10 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               </div>
             )}
           </div>
-        </DialogHeader>
+        </SheetHeader>
 
-        <div className="max-h-[75vh] space-y-4 overflow-y-auto custom-scrollbar px-6 py-6">
+        <SheetBody>
+        <div className="space-y-4 py-2">
           {loading ? (
             <div className="flex flex-col items-center gap-2 py-12">
               <Skeleton className="h-4 w-24 rounded" />
@@ -298,7 +300,8 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
             </>
           ) : null}
         </div>
-      </DialogContent>
-    </Dialog>
+        </SheetBody>
+      </SheetContent>
+    </Sheet>
   );
 }

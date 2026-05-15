@@ -6,11 +6,12 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetBody,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -128,14 +129,15 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl rounded-2xl border-zinc-200 bg-white p-0 sm:max-w-4xl">
-        <DialogHeader className="border-b border-zinc-200 px-6 py-4">
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">转化建议详情</DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full max-w-3xl">
+        <SheetHeader>
+          <SheetTitle className="text-[18px] font-medium tracking-tight">转化建议详情</SheetTitle>
+        </SheetHeader>
+        <SheetBody>
 
         {advice ? (
-          <div className="max-h-[80vh] space-y-6 overflow-y-auto px-6 py-6">
+          <div className="space-y-6">
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
@@ -278,7 +280,8 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
             </section>
           </div>
         ) : null}
-      </DialogContent>
-    </Dialog>
+      </SheetBody>
+      </SheetContent>
+    </Sheet>
   );
 }

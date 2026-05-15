@@ -193,7 +193,7 @@ export function PersonnelAnalysis({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
           <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">{title}</h3>
-          <p className="text-sm text-[var(--color-text-secondary)]">改为双列紧凑卡片后，桌面端能同时看到更多成员对比。</p>
+          <p className="text-sm text-zinc-500">改为双列紧凑卡片后，桌面端能同时看到更多成员对比。</p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-zinc-50 p-1">
           {([

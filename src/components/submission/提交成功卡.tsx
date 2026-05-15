@@ -20,7 +20,7 @@ export function 提交成功卡({ bizDate }: SubmissionSuccessCardProps) {
         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[color:rgba(52,199,89,0.14)] text-[var(--color-success)]">
           <CheckCircle2 className="size-8" />
         </div>
-        <h3 className="text-xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
+        <h3 className="text-[24px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">
           数据提交成功
         </h3>
         <p className="mt-2 text-sm text-[var(--color-text-secondary)]">归属日期：{bizDate}</p>

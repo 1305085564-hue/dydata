@@ -168,7 +168,7 @@ function BucketCard({ bucket, index }: { bucket: DecisionBucket; index: number }
             <Link
               key={entry.id}
               href={`/violations/${entry.id}`}
-              className="block rounded-lg border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-sm"
+              className="block rounded-lg border border-zinc-200 bg-white p-4 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:shadow-sm"
             >
               <p className="line-clamp-2 text-[13px] leading-snug text-zinc-800">{entry.script_text}</p>
               {entry.reason ? (

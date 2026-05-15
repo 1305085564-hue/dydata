@@ -287,7 +287,7 @@ export function DashboardForm({
                           type="date"
                           defaultValue={existingData?.report_date ?? today}
                           required
-                          className="h-10 bg-background/80 text-base"
+                          className="h-10 bg-background/80 text-[14px]"
                         />
                       </div>
                     </div>

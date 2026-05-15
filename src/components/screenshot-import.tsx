@@ -273,7 +273,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
           <Upload className="size-6" />
         </div>
         <div className="space-y-2">
-          <p className="text-base font-medium text-foreground">拖拽截图到这里，或点击选择图片</p>
+          <p className="text-[14px] font-medium text-foreground">拖拽截图到这里，或点击选择图片</p>
           <p className="text-sm text-muted-foreground">支持 jpg、png、webp，单张最大 8MB</p>
           {fileName ? <p className="text-sm text-foreground">当前文件：{fileName}</p> : null}
         </div>

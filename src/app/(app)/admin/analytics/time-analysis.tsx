@@ -232,7 +232,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.72fr)]">
         <div className="space-y-1">
           <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">时间维度分析</h3>
-          <p className="max-w-2xl text-xs leading-5 text-[var(--color-text-secondary)]">
+          <p className="max-w-2xl text-xs leading-5 text-zinc-500">
             保留 7 x 24 热力图结构，用播放中位数观察一周内各发布时间的表现；悬停可预览，点击可锁定右侧详情。
           </p>
         </div>

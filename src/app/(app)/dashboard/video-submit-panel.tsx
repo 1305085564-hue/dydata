@@ -939,13 +939,13 @@ export function VideoSubmitPanel({
             <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-text-tertiary)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
                     Daily Detail
                   </p>
-                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-zinc-800)]">
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-zinc-800">
                     {activeBizDate} 的提交情况
                   </h3>
-                  <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+                  <p className="text-sm leading-6 text-zinc-500">
                     选择日期后，可查看当日状态；免交和请假会独立展示，不再落入未交/漏交逻辑。
                   </p>
                 </div>

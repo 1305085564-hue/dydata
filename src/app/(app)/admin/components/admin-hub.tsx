@@ -118,8 +118,8 @@ function HubCardItem({ card }: { card: HubCard }) {
     <Link
       href={card.href}
       className={cn(
-        "group relative flex flex-col rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-5 transition-[transform,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        "hover:-translate-y-px hover:border-[#D97757]/30 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+        "group relative flex flex-col rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "hover:border-[#D97757]/30 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
       )}
     >
       <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#D97757]/10 text-[#D97757]">

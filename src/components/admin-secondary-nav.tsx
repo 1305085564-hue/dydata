@@ -180,7 +180,7 @@ export function AdminSecondaryNav({
               <span className="admin-subnav-link-icon dashboard-top-action-icon flex size-11 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
                 <Icon className="size-5" />
               </span>
-              <span className="admin-subnav-link-title dashboard-top-action-title flex-1 pt-1 text-base font-semibold tracking-[-0.02em] text-zinc-800">
+              <span className="admin-subnav-link-title dashboard-top-action-title flex-1 pt-1 text-[18px] font-semibold tracking-[-0.02em] text-zinc-800">
                 {item.label}
               </span>
             </div>

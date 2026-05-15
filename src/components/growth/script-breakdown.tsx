@@ -14,10 +14,10 @@ import { cn } from "@/lib/utils";
 type SegmentTone = "primary" | "warning" | "success" | "danger" | "neutral";
 
 const toneMap = {
-  primary: "border-[color:var(--color-primary)]/20 bg-[color:var(--color-primary)]/10 text-[var(--color-primary)]",
-  warning: "border-[color:var(--color-warning)]/20 bg-[color:var(--color-warning)]/10 text-[var(--color-warning)]",
-  success: "border-[color:var(--color-success)]/20 bg-[color:var(--color-success)]/10 text-[var(--color-success)]",
-  danger: "border-[color:var(--color-danger)]/20 bg-[color:var(--color-danger)]/10 text-[var(--color-danger)]",
+  primary: "border-[#D97757]/20 bg-[#D97757]/10 text-[#D97757]",
+  warning: "border-[#D99E55]/20 bg-[#D99E55]/10 text-[#D99E55]",
+  success: "border-[#6FAA7D]/20 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  danger: "border-[#C9604D]/20 bg-[#C9604D]/10 text-[#C9604D]",
   neutral: "border-zinc-200 bg-white text-zinc-500",
 } as const;
 

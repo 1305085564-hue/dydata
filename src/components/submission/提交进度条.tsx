@@ -31,7 +31,7 @@ export function 提交进度条({ currentStage }: SubmissionProgressProps) {
                 className={cn(
                   badgeClass(active ? "primary" : "neutral"),
                   "h-8 rounded-[var(--radius-xl)] px-3 text-xs font-semibold",
-                  current && "ring-2 ring-[color:var(--color-primary)]/15"
+                  current && "ring-2 ring-[#D97757]/15"
                 )}
               >
                 {stage}

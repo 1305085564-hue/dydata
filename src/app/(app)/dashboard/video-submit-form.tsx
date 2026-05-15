@@ -1071,10 +1071,10 @@ export function VideoSubmitForm({
               type="button"
               onClick={() => setShowIssuePopover((v) => !v)}
               className={cn(
-                "flex items-center gap-1 rounded-full px-2 py-1 transition-all duration-150",
+                "flex items-center gap-1 rounded-full px-2 py-1 transition-[background-color,box-shadow] duration-150",
                 showIssuePopover
-                  ? "bg-amber-50 ring-1 ring-inset ring-amber-200"
-                  : "hover:bg-amber-50"
+                  ? "bg-zinc-50 ring-1 ring-inset ring-zinc-200"
+                  : "hover:bg-zinc-50"
               )}
               aria-expanded={showIssuePopover}
               aria-label={`待完善：${missingItems.length} 项，点击展开`}
@@ -1130,7 +1130,7 @@ export function VideoSubmitForm({
             form="video-submit-form"
             disabled={isSubmitting || !canActuallySubmit}
             className={cn(
-              "rounded-full px-4 py-1.5 text-[13px] font-semibold transition-all duration-150",
+              "rounded-full px-4 py-1.5 text-[13px] font-semibold transition-[transform,background-color,box-shadow] duration-150",
               canActuallySubmit
                 ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] active:translate-y-px"
                 : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
@@ -1159,7 +1159,7 @@ export function VideoSubmitForm({
                   scrollToIssueAnchor(item.anchor);
                   setShowIssuePopover(false);
                 }}
-                className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-amber-50 hover:text-amber-800"
+                className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-zinc-50 hover:text-zinc-800"
               >
                 {item.label}
               </button>
@@ -1188,10 +1188,10 @@ export function VideoSubmitForm({
                 type="button"
                 onClick={() => setShowIssuePopover((v) => !v)}
                 className={cn(
-                  "group flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all duration-150",
+                  "group flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-[background-color,box-shadow] duration-150",
                   showIssuePopover
-                    ? "bg-amber-50 ring-1 ring-inset ring-amber-200"
-                    : "hover:bg-amber-50 hover:ring-1 hover:ring-inset hover:ring-amber-200/60"
+                    ? "bg-zinc-50 ring-1 ring-inset ring-zinc-200"
+                    : "hover:bg-zinc-50 hover:ring-1 hover:ring-inset hover:ring-zinc-200/60"
                 )}
                 aria-expanded={showIssuePopover}
                 aria-label={`待完善：${missingItems.length} 项，点击展开`}
@@ -1225,7 +1225,7 @@ export function VideoSubmitForm({
                           scrollToIssueAnchor(item.anchor);
                           setShowIssuePopover(false);
                         }}
-                        className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-amber-50 hover:text-amber-800"
+                        className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-zinc-50 hover:text-zinc-800"
                       >
                         {item.label}
                       </button>
@@ -1272,7 +1272,7 @@ export function VideoSubmitForm({
             form="video-submit-form"
             disabled={isSubmitting || !canActuallySubmit}
             className={cn(
-              "rounded-full px-5 py-1.5 text-[13px] font-semibold transition-all duration-150",
+              "rounded-full px-5 py-1.5 text-[13px] font-semibold transition-[transform,background-color,box-shadow] duration-150",
               canActuallySubmit
                 ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] hover:shadow-[0_4px_16px_-2px_rgba(217,119,87,0.6)] hover:-translate-y-px active:translate-y-0"
                 : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
@@ -1508,7 +1508,7 @@ export function VideoSubmitForm({
                       value={meta.videoUrl}
                       onChange={(event) => updateMeta("videoUrl", event.target.value)}
                       placeholder="https://www.douyin.com/video/..."
-                      className="h-10 rounded-[20px] bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
+                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
                     />
                   </div>
                   <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
@@ -1518,7 +1518,7 @@ export function VideoSubmitForm({
                       value={meta.videoTitle}
                       onChange={(event) => updateMeta("videoTitle", event.target.value)}
                       placeholder="输入视频标题"
-                      className="h-10 rounded-[20px] bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
+                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
                     />
                     {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
                       <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
@@ -1614,7 +1614,7 @@ export function VideoSubmitForm({
                         }}
                         placeholder={meta.contentKeywords.length >= 3 ? "最多3个标签" : "输入后按空格或回车添加"}
                         disabled={meta.contentKeywords.length >= 3}
-                        className="h-10 rounded-[20px] bg-zinc-100/70 text-[13px] border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
+                        className="h-10 rounded-xl bg-zinc-100/70 text-[13px] border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
                       />
                       <Button
                         type="button"
@@ -1660,12 +1660,12 @@ export function VideoSubmitForm({
                             publishedAtText: synced.publishedAtText,
                           }));
                         }}
-                        className="h-10 rounded-[20px] bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
+                        className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-[13px] font-medium text-zinc-500">上传时间</Label>
-                      <div className="flex h-10 items-center rounded-[20px] border border-zinc-200 bg-zinc-100/70 px-3 text-[13px] text-zinc-500">
+                      <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-zinc-100/70 px-3 text-[13px] text-zinc-500">
                         {meta.uploadedAt}
                       </div>
                     </div>
@@ -1703,7 +1703,7 @@ export function VideoSubmitForm({
                   value={meta.content}
                   onChange={(event) => updateMeta("content", event.target.value)}
                   placeholder="粘贴视频文案"
-                  className="min-h-[120px] w-full flex-1 resize-y rounded-[20px] border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
+                  className="min-h-[120px] w-full flex-1 resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
                 />
                 {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
                   <p className="text-[12px] font-medium text-[#C9604D] shrink-0">必填，仍未填写文案</p>

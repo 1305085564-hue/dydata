@@ -5,11 +5,12 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetBody,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { getSampleCredibility } from "@/lib/next-day-review";
 import type { NextDayReviewResult, Video, VideoMetricsSnapshot } from "@/types";
 
@@ -235,13 +236,14 @@ export function ContentDetailDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-2xl border-zinc-200 bg-white">
-        <DialogHeader>
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full max-w-3xl">
+        <SheetHeader>
+          <SheetTitle className="text-[18px] font-medium tracking-tight">
             {video?.video_title || "内容详情"}
-          </DialogTitle>
-        </DialogHeader>
+          </SheetTitle>
+        </SheetHeader>
+        <SheetBody>
 
         {video && (
           <div className="space-y-6">
@@ -496,7 +498,8 @@ export function ContentDetailDialog({
             </section>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+        </SheetBody>
+      </SheetContent>
+    </Sheet>
   );
 }
