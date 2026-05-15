@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { loadProfilesWithExemptionFallback } from "./资料加载.ts";
+import { loadProfilesWithExemptionFallback } from "./资料加载";
 
 test("豁免字段查询成功时直接返回完整数据", async () => {
   const result = await loadProfilesWithExemptionFallback({

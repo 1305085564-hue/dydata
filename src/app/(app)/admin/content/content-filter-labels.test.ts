@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getContentFilterLabel } from "./content-filter-labels.ts";
+import { getContentFilterLabel } from "./content-filter-labels";
 
 test("内容管理筛选显示当前中文名称，而不是裸 all", () => {
   assert.equal(getContentFilterLabel({ type: "profile", value: "all", options: [] }), "全部人员");

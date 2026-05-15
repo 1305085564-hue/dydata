@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { runTasksWithConcurrency } from "./batch-runner.ts";
+import { runTasksWithConcurrency } from "./batch-runner";
 
 test("批量诊断按并发上限执行，而不是完全串行", async () => {
   let running = 0;

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getNavItems } from "./nav-bar-items.ts";
+import { getNavItems } from "./nav-bar-items";
 
 test("管理员导航包含后台管理入口", () => {
   const items = getNavItems({ showAdmin: true });
@@ -35,4 +35,3 @@ test("未授予 AI 文案权限时隐藏 AI 助手入口", () => {
     ["/dashboard", "/growth", "/violations"]
   );
 });
-

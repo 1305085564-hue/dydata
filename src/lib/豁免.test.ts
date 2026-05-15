@@ -8,7 +8,7 @@ import {
   getExemptionDatesForMonth,
   getExemptionStateForDate,
   type ExemptionFormValues,
-} from "./豁免.ts";
+} from "./豁免";
 
 test("单日免交在指定日期生效并返回绿色语义标签", () => {
   const profile = buildExemptionFields({

@@ -1,11 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-// @ts-expect-error node test 直接加载 ts 模块
 const loadModule = async () => {
-  const mod = await import("./豁免流程.ts").catch(() => null);
+  const mod = await import("./豁免流程").catch(() => null);
   if (!mod) return null;
-  return (mod.default ?? mod) as typeof import("./豁免流程.ts");
+  return mod as typeof import("./豁免流程");
 };
 
 test("buildGrantDraft 会把语义分类写入 grant 和 profile 投影", async () => {
