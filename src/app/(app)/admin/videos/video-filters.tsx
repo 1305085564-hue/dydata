@@ -91,8 +91,8 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       : accounts.find((item) => item.id === filters.accountId)?.name ?? "全部账号";
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-3">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
         <div className="space-y-1">
           <div className="text-[12px] text-zinc-500">负责人</div>
           <Select
@@ -191,15 +191,20 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
+      <div className="mt-3 divide-y divide-zinc-100">
         {[
           { label: "题材", key: "topicTags" as const, options: TAG_ENUMS["题材"] },
           { label: "表达形式", key: "formatTags" as const, options: TAG_ENUMS["表达形式"] },
           { label: "CTA类型", key: "ctaTags" as const, options: TAG_ENUMS["CTA类型"] },
         ].map((group) => (
-          <div key={group.label} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-            <div className="text-[12px] text-zinc-500">{group.label}</div>
-            <div className="flex flex-wrap gap-2">
+          <div
+            key={group.label}
+            className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5"
+          >
+            <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+              {group.label}
+            </span>
+            <div className="flex flex-1 flex-wrap gap-2">
               {group.options.map((option) => {
                 const active = filters[group.key].includes(option);
                 return (
@@ -208,7 +213,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
                     type="button"
                     onClick={() => toggleArrayFilter(group.key, option)}
                     className={[
-                      "rounded-full border px-3 py-1 text-[11px] transition-colors",
+                      "rounded-lg border px-2.5 py-1 text-[11px] transition-colors",
                       active
                         ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
                         : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100",

@@ -38,23 +38,24 @@ export default async function AdminVideosPage({ searchParams }: Props) {
     <AdminWorkspaceLayout
       eyebrow="Video Assets"
       title="视频资产"
-      description="原始视频资产、24h 快照、标签和异常状态；不做内容复盘结论。"
+      description="原始视频、24h 快照、标签与异常状态"
       indexItems={[]}
     >
       <section
         id="video-asset-list"
-        className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
+        className="scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-4"
       >
-        <div className="flex items-center justify-between border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[15px] font-medium tracking-tight text-zinc-800">资产列表</h2>
-        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-[#D97757] pl-3">
+          <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">资产列表</h2>
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+          <div
+            className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5"
+            title="待处理 = 未打标 或 状态异常"
+          >
             <Link
               href="/admin/videos?view=pending"
               className={[
-                "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                 view === "pending"
                   ? "bg-white text-zinc-800 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-700",
@@ -68,7 +69,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
             <Link
               href="/admin/videos?view=all"
               className={[
-                "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                 view === "all"
                   ? "bg-white text-zinc-800 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-700",
@@ -81,18 +82,27 @@ export default async function AdminVideosPage({ searchParams }: Props) {
             </Link>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
-            <span>已打标 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.taggedVideos}</span></span>
-            <span>24h 快照 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.snapshotCount}</span></span>
-            <span>异常 <span className="ml-0.5 font-mono tabular-nums text-[#C9604D]">{data.summary.abnormalCount}</span></span>
+          <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
+            <span>
+              已打标
+              <span className="ml-0.5 font-mono tabular-nums text-zinc-700">
+                {data.summary.taggedVideos}
+              </span>
+            </span>
+            <span>
+              24h 快照
+              <span className="ml-0.5 font-mono tabular-nums text-zinc-700">
+                {data.summary.snapshotCount}
+              </span>
+            </span>
+            <span>
+              异常
+              <span className="ml-0.5 font-mono tabular-nums text-[#C9604D]">
+                {data.summary.abnormalCount}
+              </span>
+            </span>
           </div>
         </div>
-
-        {view === "pending" ? (
-          <p className="text-[12px] leading-[1.7] text-zinc-500">
-            待处理 = 未打标 <span className="text-zinc-400">或</span> 状态异常。
-          </p>
-        ) : null}
 
         <VideoList
           videos={visibleVideos}

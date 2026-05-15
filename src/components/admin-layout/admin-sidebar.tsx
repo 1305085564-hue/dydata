@@ -128,7 +128,7 @@ export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[170px] flex-col border-r border-zinc-200 bg-[#FAFAFB] transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-zinc-200 bg-[#FAFAFB] transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] lg:static lg:translate-x-0 lg:shrink-0 lg:min-w-[240px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -177,7 +177,7 @@ export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
                         active ? "text-zinc-800" : "text-zinc-400 group-hover:text-zinc-500",
                       )}
                     />
-                    <span className="flex-1 truncate">{item.label}</span>
+                    <span className="flex-1 truncate whitespace-nowrap">{item.label}</span>
                     {badgeValue > 0 && (
                       <span
                         className={cn(
@@ -192,6 +192,26 @@ export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
                       </span>
                     )}
                   </Link>
+                  {item.href === "/admin/modules" && active && (
+                    <ul className="mt-0.5 ml-6 space-y-0.5 border-l border-zinc-200 py-1">
+                      <li>
+                        <a
+                          href="#members"
+                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
+                        >
+                          成员权限
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="#teams"
+                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
+                        >
+                          团队与分组
+                        </a>
+                      </li>
+                    </ul>
+                  )}
                 </li>
               );
             })}
