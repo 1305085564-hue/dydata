@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
 import { Badge } from "@/components/ui/badge";
@@ -80,11 +79,14 @@ function matchesDateRange(item: AdviceAction, filters: AdviceFilterValue) {
 }
 
 export function AdviceList({ advice, profiles, accounts, currentUserId }: AdviceListProps) {
-  const router = useRouter();
   const [filters, setFilters] = useState<AdviceFilterValue>(INITIAL_FILTERS);
   const [rows, setRows] = useState(advice);
   const [selectedAdviceId, setSelectedAdviceId] = useState<string | null>(null);
   const [isBatchRunning, startBatchRun] = useTransition();
+
+  useEffect(() => {
+    setRows(advice);
+  }, [advice]);
 
   const filteredRows = useMemo(() => {
     return rows.filter((item) => {
@@ -114,6 +116,19 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
     setRows((current) => current.map((item) => (item.id === updated.id ? updated : item)));
   }
 
+  async function refreshRows() {
+    const response = await fetch("/api/admin/advice-actions", {
+      cache: "no-store",
+    });
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !Array.isArray(result.advice)) {
+      throw new Error(result.error || "刷新建议列表失败");
+    }
+
+    setRows(result.advice as AdviceRow[]);
+  }
+
   function handleGenerateBatch() {
     startBatchRun(async () => {
       try {
@@ -136,8 +151,12 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
         }
 
         const failedCount = Array.isArray(result.failed) ? result.failed.length : 0;
+        try {
+          await refreshRows();
+        } catch (refreshError) {
+          feedbackToast.warning(refreshError instanceof Error ? refreshError.message : "建议列表刷新失败，请稍后手动刷新");
+        }
         feedbackToast.success(`已生成 ${result.diagnosed} 条建议${failedCount ? `，失败 ${failedCount} 条` : ""}`);
-        router.refresh();
       } catch (error) {
         feedbackToast.error(error instanceof Error ? error.message : "批量生成失败");
       }

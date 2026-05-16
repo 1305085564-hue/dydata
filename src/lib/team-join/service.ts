@@ -10,7 +10,7 @@ export type AdminRequestRow = {
   id: string;
   applicantUserId: string;
   applicantName: string;
-  applicantEmail: string;
+  applicantEmail: string | null;
   targetTeamId: string;
   targetTeamName: string;
   createdAt: string;
@@ -205,22 +205,13 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
     }
   }
 
-  const emailByUserId = new Map<string, string>();
-  const usersResult = await supabase.auth.admin.listUsers({ perPage: 200 });
-
-  if (!usersResult.error) {
-    for (const user of usersResult.data.users) {
-      emailByUserId.set(user.id, user.email ?? "");
-    }
-  }
-
   return {
     ok: true,
     data: (data ?? []).map((row) => ({
       id: row.id,
       applicantUserId: row.applicant_user_id,
       applicantName: nameByUserId.get(row.applicant_user_id) ?? "",
-      applicantEmail: emailByUserId.get(row.applicant_user_id) ?? "",
+      applicantEmail: null,
       targetTeamId: row.target_team_id,
       targetTeamName: row.teams?.name ?? "",
       createdAt: row.created_at,

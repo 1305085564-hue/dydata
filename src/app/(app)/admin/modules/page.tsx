@@ -49,12 +49,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
         allProfiles={data.allProfiles}
         teams={data.teams}
         teamManagement={data.teamManagement}
-        fullReports={data.fullReports}
         defaultDate={data.queryDate}
-        avgPlayBySubmitter={data.avgPlayBySubmitter}
-        dayCountBySubmitter={data.dayCountBySubmitter}
-        avgPlayByAccount={data.avgPlayByAccount}
-        dayCountByAccount={data.dayCountByAccount}
       />
     </AdminWorkspaceLayout>
   );

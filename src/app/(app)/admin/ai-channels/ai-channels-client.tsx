@@ -224,6 +224,16 @@ export default function AIChannelsClient() {
     setBusyActions((prev) => ({ ...prev, [key]: isBusy }));
   };
 
+  const upsertChannelInState = useCallback((nextChannel: AiChannelRow) => {
+    setChannels((prev) => {
+      const hasTarget = prev.some((channel) => channel.id === nextChannel.id);
+      const nextChannels = hasTarget
+        ? prev.map((channel) => (channel.id === nextChannel.id ? nextChannel : channel))
+        : [...prev, nextChannel];
+      return sortChannels(nextChannels);
+    });
+  }, []);
+
   // Channel Actions
   const handleSaveChannel = async (form: ChannelFormState, id?: string) => {
     if (!form.name || !form.base_url || !form.priority) {
@@ -252,13 +262,30 @@ export default function AIChannelsClient() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "保存失败");
 
-      if (!id && data.channel?.id) {
-        updateSelection(data.channel.id, false);
+      const savedChannel = data.channel as AiChannelRow | undefined;
+      if (savedChannel?.id) {
+        upsertChannelInState(savedChannel);
+
+        if (id) {
+          setFeatures((prev) =>
+            prev.map((feature) =>
+              feature.channel_id === savedChannel.id
+                ? {
+                    ...feature,
+                    channel_name: savedChannel.name,
+                  }
+                : feature,
+            ),
+          );
+        } else {
+          updateSelection(savedChannel.id, false);
+        }
+      } else {
+        await loadData(true);
       }
 
       feedbackToast.success(id ? "渠道已更新" : "渠道已新增");
       notifyChannelsChanged();
-      await loadData(true);
       return true;
     } catch (err) {
       feedbackToast.error(err instanceof Error ? err.message : "保存失败");
@@ -302,8 +329,31 @@ export default function AIChannelsClient() {
         feedbackToast.success(`${action === "ocr_test" ? "截图 OCR" : "文本"}测试成功${data.elapsed_ms ? ` (${data.elapsed_ms}ms)` : ""}`);
       } else if (action === "toggle") {
         feedbackToast.success(isEnabled ? "已启用渠道" : "已禁用渠道");
+        const toggledChannel = data.channel as AiChannelRow | undefined;
+        if (toggledChannel?.id) {
+          upsertChannelInState(toggledChannel);
+        } else {
+          await loadData(true);
+        }
       } else if (action === "recover") {
         feedbackToast.success("已手动恢复渠道");
+        const recoveredChannel = data.channel as Partial<AiChannelRow> | undefined;
+        if (recoveredChannel?.id) {
+          setChannels((prev) =>
+            prev.map((channel) =>
+              channel.id === recoveredChannel.id
+                ? {
+                    ...channel,
+                    unhealthy_until: recoveredChannel.unhealthy_until ?? null,
+                    consecutive_failures: recoveredChannel.consecutive_failures ?? 0,
+                    last_error_message: null,
+                  }
+                : channel,
+            ),
+          );
+        } else {
+          await loadData(true);
+        }
       } else {
         feedbackToast.success("已删除渠道");
 
@@ -336,7 +386,6 @@ export default function AIChannelsClient() {
       if (action === "toggle" || action === "recover" || action === "delete") {
         notifyChannelsChanged();
       }
-      await loadData(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : "操作失败";
       feedbackToast.error(message);

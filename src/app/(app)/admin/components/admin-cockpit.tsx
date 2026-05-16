@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -11,39 +11,12 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-
-type CockpitSummary = {
-  pending_videos: number;
-  pending_violations: number;
-  pending_submissions: number;
-  pending_exemptions: number;
-};
-
-type PendingVideoRow = {
-  id: string;
-  account_name: string;
-  report_date: string;
-  has_tags: boolean;
-  anomaly_flag: boolean;
-  submitted_by_name: string | null;
-};
-
-type PendingViolationRow = {
-  id: string;
-  script_text: string;
-  category: string | null;
-  risk_level: string | null;
-  created_at: string;
-  submitted_by_name: string | null;
-};
-
-type PendingSubmissionRow = {
-  profile_id: string;
-  name: string;
-  team_id: string | null;
-  team_name: string | null;
-  last_report_date: string | null;
-};
+import type {
+  CockpitSummary,
+  PendingSubmissionRow,
+  PendingVideoRow,
+  PendingViolationRow,
+} from "./admin-first-screen-loader";
 
 const RISK_LABEL: Record<string, { text: string; className: string }> = {
   high: { text: "高", className: "text-[#C9604D] bg-[#C9604D]/10" },
@@ -51,9 +24,9 @@ const RISK_LABEL: Record<string, { text: string; className: string }> = {
   low: { text: "低", className: "text-zinc-500 bg-zinc-100" },
 };
 
-function useSafeFetch<T>(url: string, intervalMs = 60_000) {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null = null) {
+  const [data, setData] = useState<T | null>(initialData);
+  const [loading, setLoading] = useState(initialData === null);
   const [error, setError] = useState<string | null>(null);
 
   const run = useCallback(async () => {
@@ -72,7 +45,7 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000) {
 
   useEffect(() => {
     let active = true;
-    void run();
+    if (initialData === null) void run();
     const id = setInterval(() => {
       if (active) void run();
     }, intervalMs);
@@ -80,7 +53,7 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000) {
       active = false;
       clearInterval(id);
     };
-  }, [run, intervalMs]);
+  }, [run, intervalMs, initialData]);
 
   return { data, loading, error };
 }
@@ -103,12 +76,11 @@ function StatCell({ label, value, tone }: { label: string; value: number; tone: 
   );
 }
 
-function StatusBar({ date }: { date: string }) {
-  const { data } = useSafeFetch<CockpitSummary>(`/api/admin/cockpit/summary?date=${date}`, 30_000);
-  const videos = data?.pending_videos ?? 0;
-  const violations = data?.pending_violations ?? 0;
-  const submissions = data?.pending_submissions ?? 0;
-  const exemptions = data?.pending_exemptions ?? 0;
+function StatusBar({ summary }: { summary: CockpitSummary | null }) {
+  const videos = summary?.pending_videos ?? 0;
+  const violations = summary?.pending_violations ?? 0;
+  const submissions = summary?.pending_submissions ?? 0;
+  const exemptions = summary?.pending_exemptions ?? 0;
 
   return (
     <div className="grid grid-cols-2 gap-x-12 gap-y-3 border-y border-zinc-100 py-3 md:grid-cols-4">
@@ -168,10 +140,11 @@ function QueueCard({
   );
 }
 
-function PendingVideosQueue({ date }: { date: string }) {
+function PendingVideosQueue({ date, initialRows }: { date: string; initialRows: PendingVideoRow[] }) {
   const { data } = useSafeFetch<{ data: PendingVideoRow[] }>(
     `/api/admin/cockpit/pending-videos?date=${date}&limit=10`,
     30_000,
+    { data: initialRows },
   );
   const rows = data?.data ?? [];
 
@@ -218,10 +191,11 @@ function PendingVideosQueue({ date }: { date: string }) {
   );
 }
 
-function PendingViolationsQueue() {
+function PendingViolationsQueue({ initialRows }: { initialRows: PendingViolationRow[] }) {
   const { data } = useSafeFetch<{ data: PendingViolationRow[] }>(
     `/api/admin/cockpit/pending-violations?limit=10`,
     30_000,
+    { data: initialRows },
   );
   const rows = data?.data ?? [];
 
@@ -270,10 +244,11 @@ function PendingViolationsQueue() {
   );
 }
 
-function PendingSubmissionsQueue({ date }: { date: string }) {
+function PendingSubmissionsQueue({ date, initialRows }: { date: string; initialRows: PendingSubmissionRow[] }) {
   const { data } = useSafeFetch<{ data: PendingSubmissionRow[] }>(
     `/api/admin/cockpit/pending-submissions?date=${date}`,
     60_000,
+    { data: initialRows },
   );
   const rows = data?.data ?? [];
 
@@ -305,9 +280,8 @@ function PendingSubmissionsQueue({ date }: { date: string }) {
   );
 }
 
-function AnomalyBanner({ date }: { date: string }) {
-  const { data } = useSafeFetch<CockpitSummary>(`/api/admin/cockpit/summary?date=${date}`, 60_000);
-  const exemptions = data?.pending_exemptions ?? 0;
+function AnomalyBanner({ summary }: { summary: CockpitSummary | null }) {
+  const exemptions = summary?.pending_exemptions ?? 0;
   if (exemptions === 0) return null;
   return (
     <Link
@@ -325,7 +299,13 @@ function AnomalyBanner({ date }: { date: string }) {
   );
 }
 
-export function AdminStatusSection({ date }: { date: string }) {
+export function AdminStatusSection({ date, initialSummary = null }: { date: string; initialSummary?: CockpitSummary | null }) {
+  const { data: summary } = useSafeFetch<CockpitSummary>(
+    `/api/admin/cockpit/summary?date=${date}`,
+    30_000,
+    initialSummary,
+  );
+
   return (
     <div className="space-y-5">
       <div className="flex items-baseline gap-3">
@@ -337,18 +317,34 @@ export function AdminStatusSection({ date }: { date: string }) {
         </span>
       </div>
 
-      <StatusBar date={date} />
-      <AnomalyBanner date={date} />
+      <StatusBar summary={summary} />
+      <AnomalyBanner summary={summary} />
     </div>
   );
 }
 
-export function AdminQueueSection({ date }: { date: string }) {
+export function AdminQueueSection({
+  date,
+  initialData,
+}: {
+  date: string;
+  initialData?: {
+    pendingVideos: PendingVideoRow[];
+    pendingViolations: PendingViolationRow[];
+    pendingSubmissions: PendingSubmissionRow[];
+  };
+}) {
+  const resolvedInitialData = initialData ?? {
+    pendingVideos: [],
+    pendingViolations: [],
+    pendingSubmissions: [],
+  };
+
   return (
     <div className="grid gap-4 lg:grid-cols-3 items-stretch">
-      <PendingVideosQueue date={date} />
-      <PendingViolationsQueue />
-      <PendingSubmissionsQueue date={date} />
+      <PendingVideosQueue date={date} initialRows={resolvedInitialData.pendingVideos} />
+      <PendingViolationsQueue initialRows={resolvedInitialData.pendingViolations} />
+      <PendingSubmissionsQueue date={date} initialRows={resolvedInitialData.pendingSubmissions} />
     </div>
   );
 }

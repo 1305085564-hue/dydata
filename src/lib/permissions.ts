@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -11,6 +12,7 @@ import type { Permissions, UserRole } from "@/types";
 
 interface UserPermissionInfo {
   userId: string;
+  name: string | null;
   role: UserRole;
   businessRole: BusinessRole;
   permissions: Permissions;
@@ -19,7 +21,7 @@ interface UserPermissionInfo {
   ledGroupIds: string[];
 }
 
-export async function getUserPermissions(): Promise<UserPermissionInfo | null> {
+const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> => {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -27,7 +29,7 @@ export async function getUserPermissions(): Promise<UserPermissionInfo | null> {
   const adminSupabase = createAdminClient();
   const { data: profile } = await adminSupabase
     .from("profiles")
-    .select("id, role, permissions, team_id, group_id")
+    .select("id, name, role, permissions, team_id, group_id")
     .eq("id", user.id)
     .single();
 
@@ -53,6 +55,7 @@ export async function getUserPermissions(): Promise<UserPermissionInfo | null> {
 
   return {
     userId: user.id,
+    name: profile.name ?? null,
     role,
     businessRole,
     permissions: normalizePermissionsForBusinessRole(businessRole, rawPermissions),
@@ -60,6 +63,10 @@ export async function getUserPermissions(): Promise<UserPermissionInfo | null> {
     groupId: profile.group_id ?? null,
     ledGroupIds: groups.map((group) => group.id),
   };
+});
+
+export async function getUserPermissions(): Promise<UserPermissionInfo | null> {
+  return loadUserPermissions();
 }
 
 export { hasPermission, isAdminLevel };

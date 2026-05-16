@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -9,18 +10,15 @@ import {
 } from "@/components/ui/dialog";
 import { DataManager } from "./data-manager";
 import { ExportButton } from "./export-button";
+import type { AdminGovernanceData } from "@/lib/loaders/admin-modules";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 interface GovernanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   canExportData: boolean;
   canEditData: boolean;
-  fullReports: Parameters<typeof DataManager>[0]["reports"];
   defaultDate: string;
-  avgPlayBySubmitter: Record<string, number>;
-  dayCountBySubmitter: Record<string, number>;
-  avgPlayByAccount: Record<string, number>;
-  dayCountByAccount: Record<string, number>;
 }
 
 export function GovernanceDialog({
@@ -28,13 +26,52 @@ export function GovernanceDialog({
   onOpenChange,
   canExportData,
   canEditData,
-  fullReports,
   defaultDate,
-  avgPlayBySubmitter,
-  dayCountBySubmitter,
-  avgPlayByAccount,
-  dayCountByAccount,
 }: GovernanceDialogProps) {
+  const [selectedDate, setSelectedDate] = useState(defaultDate);
+  const [data, setData] = useState<AdminGovernanceData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setSelectedDate(defaultDate);
+  }, [defaultDate]);
+
+  useEffect(() => {
+    if (!open || !canEditData) return;
+
+    let cancelled = false;
+
+    async function load() {
+      setIsLoading(true);
+
+      try {
+        const response = await fetch(`/api/admin/modules/governance?date=${encodeURIComponent(selectedDate)}`);
+        const payload = (await response.json()) as AdminGovernanceData & { error?: string };
+
+        if (!response.ok) {
+          throw new Error(payload.error || "加载数据管理失败");
+        }
+        if (cancelled) return;
+
+        setData(payload);
+      } catch (error) {
+        if (cancelled) return;
+        setData(null);
+        feedbackToast.error(error instanceof Error ? error.message : "加载数据管理失败");
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, canEditData, selectedDate]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[768px] !max-w-[calc(100vw-2rem)] h-[384px] rounded-2xl border border-zinc-200 bg-white p-0 flex flex-col">
@@ -63,14 +100,25 @@ export function GovernanceDialog({
                   数据修正
                 </h3>
               </div>
-              <DataManager
-                reports={fullReports}
-                defaultDate={defaultDate}
-                avgPlayBySubmitter={avgPlayBySubmitter}
-                dayCountBySubmitter={dayCountBySubmitter}
-                avgPlayByAccount={avgPlayByAccount}
-                dayCountByAccount={dayCountByAccount}
-              />
+              {isLoading ? (
+                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-[13px] text-zinc-500">
+                  正在加载当日数据…
+                </div>
+              ) : data ? (
+                <DataManager
+                  reports={data.fullReports}
+                  defaultDate={data.queryDate}
+                  avgPlayBySubmitter={data.avgPlayBySubmitter}
+                  dayCountBySubmitter={data.dayCountBySubmitter}
+                  avgPlayByAccount={data.avgPlayByAccount}
+                  dayCountByAccount={data.dayCountByAccount}
+                  onDateChange={setSelectedDate}
+                />
+              ) : (
+                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-[13px] text-zinc-500">
+                  当前日期没有可用数据。
+                </div>
+              )}
             </section>
           ) : null}
         </div>

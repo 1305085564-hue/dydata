@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { AIConfigShell, type AIConfigTabKey } from "./ai-config-shell";
-import AIRewriteClient from "../ai-rewrite/ai-rewrite-client";
 
 interface Props {
   searchParams: Promise<{ tab?: string }>;
@@ -41,7 +40,6 @@ export default async function AIChannelsPage({ searchParams }: Props) {
       title="AI 配置中心"
       description="渠道、功能绑定、文案改写集中维护。"
       indexItems={[]}
-      actions={<AIRewriteClient embedded />}
     >
       <AIConfigShell initialTab={initialTab} />
     </AdminWorkspaceLayout>

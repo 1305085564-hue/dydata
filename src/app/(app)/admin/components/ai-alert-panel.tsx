@@ -9,7 +9,7 @@ import type { Alert, AlertAggregationResult, AlertSeverity } from "@/lib/alert-s
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-import { AiAlertRow } from "./ai-alert-card";
+import type { DashboardAlertsData } from "./admin-first-screen-loader";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -104,12 +104,18 @@ function getPrimaryExecuteAction(alert: Alert) {
   return alert.suggestedActions.find((a) => a.type === "execute_tool" && a.toolName) ?? null;
 }
 
-export function AiAlertPanel() {
+export function AiAlertPanel({
+  initialData = null,
+  initialUpdatedAt = null,
+}: {
+  initialData?: DashboardAlertsData | null;
+  initialUpdatedAt?: number | null;
+}) {
   const [state, setState] = useState<FetchState>({
-    data: null,
-    loading: true,
+    data: initialData,
+    loading: initialData === null,
     error: null,
-    lastUpdatedAt: null,
+    lastUpdatedAt: initialUpdatedAt,
     refreshing: false,
   });
   const [now, setNow] = useState(() => Date.now());
@@ -160,7 +166,7 @@ export function AiAlertPanel() {
 
   useEffect(() => {
     mountedRef.current = true;
-    void runFetch(false);
+    if (initialData === null) void runFetch(false);
     const intervalId = window.setInterval(() => {
       void runFetch(false);
     }, POLL_INTERVAL_MS);
@@ -176,10 +182,12 @@ export function AiAlertPanel() {
       window.clearInterval(tickId);
       window.removeEventListener("dydata:alerts-refresh", onExternalRefresh);
     };
-  }, [runFetch]);
+  }, [initialData, runFetch]);
 
-  const allAlerts = state.data?.alerts ?? [];
-  const alertGroups = useMemo(() => groupAlertsByTemplate(allAlerts), [allAlerts]);
+  const alertGroups = useMemo(
+    () => groupAlertsByTemplate(state.data?.alerts ?? []),
+    [state.data?.alerts],
+  );
   const summary = state.data?.summary;
 
   useEffect(() => {

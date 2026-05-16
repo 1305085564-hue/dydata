@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Activity, AlertCircle, Check, RefreshCw, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { reviewExemptionRequest } from "@/app/(app)/admin/actions";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
@@ -47,7 +46,6 @@ interface LeaderDashboardProps {
  * 法典 V1：Loader2 → Skeleton；× 彩底；异常/待审核统一灰底 + 状态点
  */
 export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: LeaderDashboardProps) {
-  const router = useRouter();
   const [board, setBoard] = useState<LeaderBoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,7 +194,6 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
       setLocalExemptionRequests((current) => current.filter((item) => item.id !== request.id));
       toast.success(decision === "approved" ? "豁免申请已通过" : "豁免申请已拒绝");
       setReviewingExemptionId(null);
-      router.refresh();
     });
   };
 
@@ -207,7 +204,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
           组长看板
         </h2>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => fetchBoard()}
           className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
         >
           <RefreshCw size={12} className="stroke-[1.5]" /> 刷新

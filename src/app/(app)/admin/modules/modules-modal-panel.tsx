@@ -83,7 +83,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
     <div className="space-y-4">
       <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
         <p className="text-[13px] leading-[1.7] text-zinc-500">
-          这个面板只在打开时按需加载权限、数据修正和审计日志，不再复用首页的重型后台总 loader。
+          这个面板只在打开时按需加载权限模块，不再复用首页的重型后台总 loader。
         </p>
       </div>
       {isLoading ? <ModulesModalSkeleton /> : null}
@@ -96,12 +96,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
         allProfiles={data.allProfiles}
         teams={data.teams}
         teamManagement={data.teamManagement}
-        fullReports={data.fullReports}
         defaultDate={data.queryDate}
-        avgPlayBySubmitter={data.avgPlayBySubmitter}
-        dayCountBySubmitter={data.dayCountBySubmitter}
-        avgPlayByAccount={data.avgPlayByAccount}
-        dayCountByAccount={data.dayCountByAccount}
       />
     </div>
   );

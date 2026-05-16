@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { UserPlus } from "lucide-react";
 
 import { listPendingRequestsForAdmin } from "@/lib/team-join/service";
@@ -5,7 +6,21 @@ import { listPendingRequestsForAdmin } from "@/lib/team-join/service";
 import { JoinRequestReviewList } from "./join-request-review-list";
 
 export async function JoinRequestReviewSection() {
-  const result = await listPendingRequestsForAdmin();
+  const resultPromise = listPendingRequestsForAdmin();
+
+  return (
+    <Suspense fallback={<JoinRequestReviewSkeleton />}>
+      <JoinRequestReviewContent resultPromise={resultPromise} />
+    </Suspense>
+  );
+}
+
+async function JoinRequestReviewContent({
+  resultPromise,
+}: {
+  resultPromise: ReturnType<typeof listPendingRequestsForAdmin>;
+}) {
+  const result = await resultPromise;
 
   if (!result.ok) {
     return (
@@ -45,6 +60,20 @@ export async function JoinRequestReviewSection() {
       <div className="mt-4">
         <JoinRequestReviewList rows={rows} />
       </div>
+    </section>
+  );
+}
+
+function JoinRequestReviewSkeleton() {
+  return (
+    <section className="rounded-2xl border border-zinc-200 bg-white p-6">
+      <div className="flex items-baseline gap-3">
+        <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">入团申请审核</h2>
+        <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-400">
+          加载中
+        </span>
+      </div>
+      <div className="mt-4 h-16 rounded-lg bg-zinc-50" />
     </section>
   );
 }

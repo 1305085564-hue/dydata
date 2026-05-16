@@ -25,14 +25,8 @@ export default async function AdminVideosPage({ searchParams }: Props) {
   const view = normalizeView(params.view);
 
   const supabase = await createClient();
-  const data = await loadAdminVideosPageData({ supabase });
-
-  const taggedSet = new Set(data.videoTags.map((tag) => tag.video_id));
-  const pendingVideos = data.videos.filter(
-    (video) => !taggedSet.has(video.id) || video.anomaly_status !== "正常",
-  );
-  const visibleVideos = view === "pending" ? pendingVideos : data.videos;
-  const pendingCount = pendingVideos.length;
+  const data = await loadAdminVideosPageData({ supabase, view });
+  const pendingCount = data.summary.pendingCount;
 
   return (
     <AdminWorkspaceLayout
@@ -105,7 +99,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
         </div>
 
         <VideoList
-          videos={visibleVideos}
+          videos={data.videos}
           snapshots={data.snapshots}
           profiles={data.profiles}
           accounts={data.accounts}

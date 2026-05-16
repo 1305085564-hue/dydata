@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Plus, Save, UserMinus, UsersRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +46,6 @@ export function TeamGroupManager({
   profiles,
   leaderCandidates,
 }: TeamGroupManagerProps) {
-  const router = useRouter();
   const [localGroups, setLocalGroups] = useState(groups);
   const [localProfiles, setLocalProfiles] = useState(profiles);
   const [selectedTeamId, setSelectedTeamId] = useState(teams[0]?.id ?? "");
@@ -146,6 +144,7 @@ export function TeamGroupManager({
   function handleCreateGroup() {
     const name = newGroupName.trim();
     if (!name || !newLeaderId) return;
+    const previousGroups = localGroups;
 
     feedbackToast.success("已提交创建分组");
 
@@ -160,9 +159,21 @@ export function TeamGroupManager({
         return;
       }
 
+      if (!result.group) {
+        setLocalGroups(previousGroups);
+        feedbackToast.error("分组创建成功，但未拿到最新分组数据，请刷新后查看");
+        return;
+      }
+
+      setLocalGroups((current) =>
+        [...current, result.group!].sort((a, b) => a.name.localeCompare(b.name, "zh-CN")),
+      );
+      setSelectedGroupId(result.group.id);
+      setEditGroupName(result.group.name);
+      setEditLeaderId(result.group.leader_user_id ?? "");
+
       setNewGroupName("");
       setNewLeaderId("");
-      router.refresh();
     });
   }
 
@@ -196,8 +207,6 @@ export function TeamGroupManager({
         feedbackToast.error(result.error);
         return;
       }
-
-      router.refresh();
     });
   }
 
@@ -226,8 +235,6 @@ export function TeamGroupManager({
         feedbackToast.error(result.error);
         return;
       }
-
-      router.refresh();
     });
   }
 
@@ -246,8 +253,6 @@ export function TeamGroupManager({
         feedbackToast.error(result.error);
         return;
       }
-
-      router.refresh();
     });
   }
 

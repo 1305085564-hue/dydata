@@ -26,7 +26,8 @@ export type HubTabKey = "scripts" | "violations" | "weekly" | "analytics" | "adv
 export interface HubShellProps {
   weekStart: string;
   activeTab: HubTabKey;
-  violations: ViolationsTabData;
+  violations: ViolationsTabData | null;
+  pendingViolationsCount: number;
   weeklyBuckets: DecisionBucket[] | null;
   weeklyConfirmedAt: string | null;
   weeklyGeneratedBy: "ai" | "manual" | null;
@@ -34,7 +35,7 @@ export interface HubShellProps {
   analyticsTrend: TrendDay[];
   analyticsSort: "rate" | "usage" | "views";
   analyticsFormat: "all" | "oral" | "visual" | "mixed";
-  scripts: ScriptsTabData;
+  scripts: ScriptsTabData | null;
 }
 
 const TABS: Array<{ key: HubTabKey; label: string; icon: React.ComponentType<{ className?: string }> }> = [
@@ -102,7 +103,8 @@ export function ConversionHubShell(props: HubShellProps) {
   const tab = props.activeTab;
 
   const weekRange = useMemo(() => formatWeekRange(props.weekStart), [props.weekStart]);
-  const hasPendingViolations = props.violations.pendingCount > 0 && tab !== "violations";
+  const pendingViolationsCount = tab === "violations" ? (props.violations?.pendingCount ?? 0) : props.pendingViolationsCount;
+  const hasPendingViolations = pendingViolationsCount > 0 && tab !== "violations";
 
   return (
     <AdminWorkspaceLayout
@@ -120,8 +122,8 @@ export function ConversionHubShell(props: HubShellProps) {
         <TabNav active={tab} />
 
         <div>
-          {tab === "scripts" && <ScriptsTab data={props.scripts} />}
-          {tab === "violations" && <ViolationsReviewTab data={props.violations} />}
+          {tab === "scripts" && props.scripts ? <ScriptsTab data={props.scripts} /> : null}
+          {tab === "violations" && props.violations ? <ViolationsReviewTab data={props.violations} /> : null}
           {tab === "weekly" && (
             <WeeklyDecisionView
               weekStart={props.weekStart}
@@ -150,7 +152,7 @@ export function ConversionHubShell(props: HubShellProps) {
             <div className="flex items-center gap-2">
               <MessageSquareWarning className="size-4 stroke-[1.5] text-[#C9604D]" />
               <p className="text-[13px] tracking-tight text-zinc-700">
-                有 <span className="font-semibold text-[#C9604D]">{props.violations.pendingCount}</span> 条违规案例待复核
+                有 <span className="font-semibold text-[#C9604D]">{pendingViolationsCount}</span> 条违规案例待复核
               </p>
             </div>
             <ArrowRight className="size-4 stroke-[1.5] text-zinc-400" />

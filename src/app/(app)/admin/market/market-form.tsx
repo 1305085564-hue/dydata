@@ -19,7 +19,7 @@ import type { MarketContextDaily, MarketSentiment } from "@/types";
 
 interface MarketFormProps {
   initialData?: MarketContextDaily | null;
-  onSaved?: () => void;
+  onSaved?: (row: MarketContextDaily) => void;
 }
 
 interface MarketFormState {
@@ -117,10 +117,19 @@ export function MarketForm({ initialData, onSaved }: MarketFormProps) {
       }
 
       feedbackToast.success(isEditMode ? "市场环境已更新" : "市场环境已保存");
+      const savedRow: MarketContextDaily = {
+        ...(initialData ?? {}),
+        context_date: form.contextDate,
+        is_trading_day: form.isTradingDay,
+        market_change: marketChange,
+        market_sentiment: form.marketSentiment,
+        hot_sectors: hotSectors,
+        source: "manual",
+      } as MarketContextDaily;
       if (!isEditMode) {
         resetForm();
       }
-      onSaved?.();
+      onSaved?.(savedRow);
     });
   }
 

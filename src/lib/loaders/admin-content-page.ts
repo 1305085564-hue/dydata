@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
 
-type LoaderSupabase = SupabaseClient<any, "public", any>;
+type LoaderSupabase = SupabaseClient;
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -50,7 +50,13 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
   }));
 }
 
-export async function loadAdminContentPageData({ supabase }: { supabase: LoaderSupabase }): Promise<AdminContentPageData> {
+export async function loadAdminContentPageData({
+  supabase,
+  view = "pending",
+}: {
+  supabase: LoaderSupabase;
+  view?: "pending" | "all";
+}): Promise<AdminContentPageData> {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -58,7 +64,6 @@ export async function loadAdminContentPageData({ supabase }: { supabase: LoaderS
 
   const [
     { data: videosRaw },
-    { data: snapshots },
     { data: profiles },
     { data: accounts },
     { data: reviewedResults },
@@ -68,11 +73,6 @@ export async function loadAdminContentPageData({ supabase }: { supabase: LoaderS
       .select(CONTENT_VIDEO_SELECT)
       .order("published_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false }),
-    supabase
-      .from("video_metrics_snapshots")
-      .select(CONTENT_SNAPSHOT_SELECT)
-      .eq("snapshot_type", "24h")
-      .order("captured_at", { ascending: false }),
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     supabase.from("accounts").select("id, name").order("name", { ascending: true }),
     serviceClient
@@ -99,10 +99,23 @@ export async function loadAdminContentPageData({ supabase }: { supabase: LoaderS
     ),
   );
 
-  const snapshotCount = (snapshots ?? []).filter((snapshot) => snapshot.snapshot_type === "24h").length;
+  const reviewedVideoIdSet = new Set(reviewedVideoIds);
+  const pendingVideos = videos.filter((video) => !reviewedVideoIdSet.has(video.id));
+  const visibleVideos = view === "pending" ? pendingVideos : videos;
+  const visibleVideoIds = visibleVideos.map((video) => video.id);
+  const { data: snapshots } =
+    visibleVideoIds.length > 0
+      ? await supabase
+          .from("video_metrics_snapshots")
+          .select(CONTENT_SNAPSHOT_SELECT)
+          .eq("snapshot_type", "24h")
+          .in("video_id", visibleVideoIds)
+          .order("captured_at", { ascending: false })
+      : { data: [] };
+  const snapshotCount = (snapshots ?? []).length;
 
   return {
-    videos,
+    videos: visibleVideos,
     snapshots: (snapshots ?? []) as VideoMetricsSnapshot[],
     profiles: (profiles ?? []).map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" })),
     accounts: (accounts ?? []).map((account) => ({ id: account.id, name: account.name ?? "未命名账号" })),
@@ -111,7 +124,7 @@ export async function loadAdminContentPageData({ supabase }: { supabase: LoaderS
       totalVideos: videos.length,
       reviewedCount: reviewedVideoIds.length,
       snapshotCount,
-      pendingReviewCount: Math.max(videos.length - reviewedVideoIds.length, 0),
+      pendingReviewCount: pendingVideos.length,
     },
   };
 }

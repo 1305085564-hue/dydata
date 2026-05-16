@@ -1,4 +1,3 @@
-import type { AuditLogList } from "@/app/(app)/admin/audit-log-list";
 import type { DataManager } from "@/app/(app)/admin/data-manager";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
 import { loadProfilesWithExemptionFallback } from "@/app/(app)/admin/资料加载";
@@ -46,12 +45,105 @@ export interface AdminModulesData {
     profiles: TeamManagementProfile[];
     leaderCandidates: TeamManagementProfile[];
   };
+}
+
+export interface AdminGovernanceData {
+  queryDate: string;
   fullReports: Parameters<typeof DataManager>[0]["reports"];
   avgPlayBySubmitter: Record<string, number>;
   dayCountBySubmitter: Record<string, number>;
   avgPlayByAccount: Record<string, number>;
   dayCountByAccount: Record<string, number>;
-  logsWithNames: Parameters<typeof AuditLogList>[0]["logs"];
+}
+
+export function calculateAverageStats<Row>(
+  rows: Row[] | null | undefined,
+  getKey: (row: Row) => string | null | undefined,
+  getValue: (row: Row) => number | null | undefined,
+) {
+  const avgByKey: Record<string, number> = {};
+  const dayCountByKey: Record<string, number> = {};
+  const sums = new Map<string, { total: number; count: number }>();
+
+  for (const row of rows ?? []) {
+    const key = getKey(row) ?? "";
+    if (!key) continue;
+
+    const current = sums.get(key) ?? { total: 0, count: 0 };
+    current.total += getValue(row) ?? 0;
+    current.count += 1;
+    sums.set(key, current);
+  }
+
+  for (const [key, { total, count }] of sums) {
+    if (count > 0) avgByKey[key] = Math.round(total / count);
+    dayCountByKey[key] = count;
+  }
+
+  return { avgByKey, dayCountByKey };
+}
+
+async function loadGovernanceAverages(supabase: AdminSupabase, queryDate: string) {
+  const sevenDaysAgo = shiftDateOnly(new Date(), -7);
+  const [{ data: recentForAvg }, { data: recentAccountAvg }] = await Promise.all([
+    supabase
+      .from("daily_reports")
+      .select("submitter, play_count")
+      .gte("report_date", sevenDaysAgo)
+      .neq("report_date", queryDate),
+    supabase
+      .from("daily_reports")
+      .select("account_id, play_count")
+      .gte("report_date", sevenDaysAgo)
+      .neq("report_date", queryDate),
+  ]);
+
+  const { avgByKey: avgPlayBySubmitter, dayCountByKey: dayCountBySubmitter } = calculateAverageStats(
+    recentForAvg,
+    (row) => row.submitter,
+    (row) => row.play_count,
+  );
+  const { avgByKey: avgPlayByAccount, dayCountByKey: dayCountByAccount } = calculateAverageStats(
+    recentAccountAvg,
+    (row) => row.account_id,
+    (row) => row.play_count,
+  );
+
+  return {
+    avgPlayBySubmitter,
+    dayCountBySubmitter,
+    avgPlayByAccount,
+    dayCountByAccount,
+  };
+}
+
+export async function loadAdminGovernanceData({
+  supabase,
+  searchDate,
+}: {
+  supabase: AdminSupabase;
+  searchDate?: string;
+}): Promise<AdminGovernanceData | null> {
+  const perm = await getUserPermissions();
+  if (!perm) return null;
+
+  const queryDate = searchDate || new Date().toISOString().split("T")[0];
+  const [{ data: fullReports }, averages] = await Promise.all([
+    supabase
+      .from("daily_reports")
+      .select(
+        "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id, content_direction, presentation_format)"
+      )
+      .eq("report_date", queryDate)
+      .order("uploaded_at", { ascending: false }),
+    loadGovernanceAverages(supabase, queryDate),
+  ]);
+
+  return {
+    queryDate,
+    fullReports: fullReports ?? [],
+    ...averages,
+  };
 }
 
 export async function loadAdminModulesData({
@@ -70,63 +162,6 @@ export async function loadAdminModulesData({
 
   const permissionManagerCapabilities = getPermissionManagerCapabilities(perm.role, perm.permissions, perm.businessRole);
   const queryDate = searchDate || new Date().toISOString().split("T")[0];
-
-  const { data: fullReports } = await supabase
-    .from("daily_reports")
-    .select(
-      "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id, content_direction, presentation_format)"
-    )
-    .eq("report_date", queryDate)
-    .order("uploaded_at", { ascending: false });
-
-  const sevenDaysAgo = shiftDateOnly(new Date(), -7);
-  const [{ data: recentForAvg }, { data: recentAccountAvg }] = await Promise.all([
-    supabase
-      .from("daily_reports")
-      .select("submitter, play_count")
-      .gte("report_date", sevenDaysAgo)
-      .neq("report_date", queryDate),
-    supabase
-      .from("daily_reports")
-      .select("account_id, play_count")
-      .gte("report_date", sevenDaysAgo)
-      .neq("report_date", queryDate),
-  ]);
-
-  const avgPlayBySubmitter: Record<string, number> = {};
-  const dayCountBySubmitter: Record<string, number> = {};
-  const avgPlayByAccount: Record<string, number> = {};
-  const dayCountByAccount: Record<string, number> = {};
-
-  const submitterSums = new Map<string, { total: number; count: number }>();
-  for (const row of recentForAvg ?? []) {
-    const key = row.submitter ?? "";
-    const current = submitterSums.get(key) ?? { total: 0, count: 0 };
-    current.total += row.play_count ?? 0;
-    current.count += 1;
-    submitterSums.set(key, current);
-  }
-
-  for (const [name, { total, count }] of submitterSums) {
-    if (count > 0) avgPlayBySubmitter[name] = Math.round(total / count);
-    dayCountBySubmitter[name] = count;
-  }
-
-  const accountSums = new Map<string, { total: number; count: number }>();
-  for (const row of recentAccountAvg ?? []) {
-    const key = row.account_id ?? "";
-    if (!key) continue;
-
-    const current = accountSums.get(key) ?? { total: 0, count: 0 };
-    current.total += row.play_count ?? 0;
-    current.count += 1;
-    accountSums.set(key, current);
-  }
-
-  for (const [accountId, { total, count }] of accountSums) {
-    if (count > 0) avgPlayByAccount[accountId] = Math.round(total / count);
-    dayCountByAccount[accountId] = count;
-  }
 
   const adminSupabase = createAdminClient();
   const { data: allProfiles } = await loadProfilesWithExemptionFallback({
@@ -228,18 +263,6 @@ export async function loadAdminModulesData({
     .filter((profile) => Boolean(profile.team_id))
     .filter((profile) => !isIgnoredTeamManagementUser(profile));
 
-  const { data: auditLogs } = await supabase
-    .from("audit_logs")
-    .select("id, created_at, user_id, action, target, detail")
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const profileMap = new Map(normalizedHydratedProfiles.map((profile) => [profile.id, profile.name]));
-  const logsWithNames = (auditLogs ?? []).map((log) => ({
-    ...log,
-    user_name: profileMap.get(log.user_id) ?? undefined,
-  }));
-
   return {
     currentUserId: user.id,
     queryDate,
@@ -254,11 +277,5 @@ export async function loadAdminModulesData({
       profiles: visibleTeamManagementProfiles,
       leaderCandidates,
     },
-    fullReports: fullReports ?? [],
-    avgPlayBySubmitter,
-    dayCountBySubmitter,
-    avgPlayByAccount,
-    dayCountByAccount,
-    logsWithNames,
   };
 }

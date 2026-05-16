@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 import { AdminSidebar } from "@/components/admin-layout/admin-sidebar";
@@ -10,19 +9,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, role, permissions")
-    .eq("id", user.id)
-    .single();
   const permissionInfo = await getUserPermissions();
-  if (!permissionInfo) redirect("/dashboard");
+  if (!permissionInfo) redirect("/login");
   if (!canAccessAdminPath("/admin", permissionInfo.businessRole, permissionInfo.permissions)) redirect("/dashboard");
 
   return (
@@ -30,7 +18,7 @@ export default async function AdminLayout({
       <AdminSidebar
         userRole={permissionInfo.role}
         permissions={permissionInfo.permissions}
-        userName={profile?.name ?? user.email ?? ""}
+        userName={permissionInfo.name ?? "未命名成员"}
       />
       <AdminMainArea>{children}</AdminMainArea>
     </div>

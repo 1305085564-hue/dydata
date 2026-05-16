@@ -63,6 +63,7 @@ interface DataManagerProps {
   dayCountBySubmitter?: Record<string, number>;
   avgPlayByAccount?: Record<string, number>;
   dayCountByAccount?: Record<string, number>;
+  onDateChange?: (date: string) => void;
 }
 
 type ViewMode = "profile" | "account";
@@ -104,6 +105,7 @@ export function DataManager({
   dayCountBySubmitter = {},
   avgPlayByAccount = {},
   dayCountByAccount = {},
+  onDateChange,
 }: DataManagerProps) {
   const [date, setDate] = useState(defaultDate);
   const [localReports, setLocalReports] = useState(reports);
@@ -178,8 +180,15 @@ export function DataManager({
   }, [reportsWithMeta]);
 
   function handleDateChange(e: ChangeEvent<HTMLInputElement>) {
-    setDate(e.target.value);
-    router.push(`/admin?date=${e.target.value}`);
+    const nextDate = e.target.value;
+    setDate(nextDate);
+
+    if (onDateChange) {
+      onDateChange(nextDate);
+      return;
+    }
+
+    router.push(`/admin?date=${nextDate}`);
   }
 
   function startEdit(r: Report) {

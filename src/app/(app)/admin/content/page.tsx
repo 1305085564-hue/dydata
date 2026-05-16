@@ -25,11 +25,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
   const view = normalizeView(params.view);
 
   const supabase = await createClient();
-  const data = await loadAdminContentPageData({ supabase });
-
-  const reviewedSet = new Set(data.reviewedVideoIds);
-  const visibleVideos =
-    view === "pending" ? data.videos.filter((video) => !reviewedSet.has(video.id)) : data.videos;
+  const data = await loadAdminContentPageData({ supabase, view });
 
   return (
     <AdminWorkspaceLayout
@@ -86,7 +82,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
         </div>
 
         <ContentList
-          videos={visibleVideos}
+          videos={data.videos}
           snapshots={data.snapshots}
           profiles={data.profiles}
           accounts={data.accounts}

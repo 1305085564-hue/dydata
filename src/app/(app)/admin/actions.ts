@@ -870,7 +870,7 @@ export async function changeRole(
   return {};
 }
 
-export async function createTeam(teamName: string): Promise<{ error?: string }> {
+export async function createTeam(teamName: string): Promise<{ error?: string; team?: { id: string; name: string } }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
   if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
@@ -884,9 +884,13 @@ export async function createTeam(teamName: string): Promise<{ error?: string }> 
   }
 
   const adminSupabase = createAdminClient();
-  const { error } = await adminSupabase.from("teams").insert({
-    name: normalizedName,
-  });
+  const { data: createdTeam, error } = await adminSupabase
+    .from("teams")
+    .insert({
+      name: normalizedName,
+    })
+    .select("id, name")
+    .single();
   if (error) return { error: error.message };
 
   const supabase = await createClient();
@@ -894,7 +898,14 @@ export async function createTeam(teamName: string): Promise<{ error?: string }> 
 
   revalidatePath("/admin");
   revalidatePath("/register");
-  return {};
+  return {
+    team: createdTeam
+      ? {
+          id: createdTeam.id,
+          name: createdTeam.name ?? normalizedName,
+        }
+      : undefined,
+  };
 }
 
 export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
@@ -939,7 +950,7 @@ export async function createGroup(input: {
   teamId: string;
   name: string;
   leaderUserId: string;
-}): Promise<{ error?: string }> {
+}): Promise<{ error?: string; group?: { id: string; name: string; team_id: string | null; leader_user_id: string | null } }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
 
@@ -958,21 +969,34 @@ export async function createGroup(input: {
       return { error: "该团队下已有同名组" };
     }
 
-    const { error } = await adminSupabase.from("groups").insert({
-      team_id: input.teamId,
-      name: normalizedName,
-      leader_user_id: input.leaderUserId,
-    });
+    const { data: createdGroup, error } = await adminSupabase
+      .from("groups")
+      .insert({
+        team_id: input.teamId,
+        name: normalizedName,
+        leader_user_id: input.leaderUserId,
+      })
+      .select("id, name, team_id, leader_user_id")
+      .single();
     if (error) return { error: error.message };
 
     const supabase = await createClient();
     await writeAuditLog(supabase, perm.userId, "create_group", input.teamId, `${normalizedName}|leader=${leader.name}`);
+    revalidatePath("/admin");
+
+    return {
+      group: createdGroup
+        ? {
+            id: createdGroup.id,
+            name: createdGroup.name,
+            team_id: createdGroup.team_id ?? null,
+            leader_user_id: createdGroup.leader_user_id ?? null,
+          }
+        : undefined,
+    };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "创建组失败" };
   }
-
-  revalidatePath("/admin");
-  return {};
 }
 
 export async function updateGroup(input: {

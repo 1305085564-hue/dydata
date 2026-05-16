@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-import { loadAdminPageData } from "@/lib/loaders/admin-page";
 import { getUserPermissions } from "@/lib/permissions";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 
@@ -10,6 +8,7 @@ import {
   AdminStatusSection,
 } from "./components/admin-cockpit";
 import { AiAlertPanel } from "./components/ai-alert-panel";
+import { loadAdminFirstScreenData } from "./components/admin-first-screen-loader";
 import { JoinRequestReviewSection } from "./join-request-review-section";
 
 interface AdminPageProps {
@@ -17,31 +16,30 @@ interface AdminPageProps {
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
   const permissionInfo = await getUserPermissions();
-  if (!permissionInfo) redirect("/dashboard");
+  if (!permissionInfo) redirect("/login");
   if (!canAccessAdminPath("/admin", permissionInfo.businessRole, permissionInfo.permissions))
     redirect("/dashboard");
 
   const params = await searchParams;
-  const data = await loadAdminPageData({
-    supabase,
-    searchDate: params.date,
-  });
-
-  if (!data) redirect("/login");
+  const queryDate = params.date || new Date().toISOString().split("T")[0];
+  const initialData = await loadAdminFirstScreenData(queryDate);
 
   return (
     <div className="space-y-8">
-      <AdminStatusSection date={data.queryDate} />
-      <AdminQueueSection date={data.queryDate} />
-      <AiAlertPanel />
+      <AdminStatusSection date={queryDate} initialSummary={initialData.summary} />
+      <AdminQueueSection
+        date={queryDate}
+        initialData={{
+          pendingVideos: initialData.pendingVideos,
+          pendingViolations: initialData.pendingViolations,
+          pendingSubmissions: initialData.pendingSubmissions,
+        }}
+      />
+      <AiAlertPanel
+        initialData={initialData.alerts}
+        initialUpdatedAt={initialData.alertsUpdatedAt}
+      />
       <JoinRequestReviewSection />
     </div>
   );

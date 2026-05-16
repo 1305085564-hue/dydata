@@ -239,7 +239,6 @@ export function SubmitForm({
         const caseId = getUsageCaseId(payload);
         feedbackToast.success("已提交转化话术并记录使用数据");
         router.push(caseId ? `/violations/${caseId}` : "/violations");
-        router.refresh();
         return;
       }
 
@@ -305,7 +304,6 @@ export function SubmitForm({
       }
 
       router.push(caseId ? `/violations/${caseId}` : "/violations");
-      router.refresh();
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "提交失败");
     } finally {

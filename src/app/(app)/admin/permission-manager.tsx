@@ -239,10 +239,10 @@ export function PermissionManager({
 
   const teamOptions = useMemo(() => {
     const unique = Array.from(
-      new Set(members.map((member) => getTeamLabel(member.teamName))),
+      new Set(baselineMembers.map((member) => getTeamLabel(member.teamName))),
     );
     return unique.sort((left, right) => left.localeCompare(right, "zh-CN"));
-  }, [members]);
+  }, [baselineMembers]);
 
   const nonOwners = baselineMembers.filter((member) => member.id !== currentUserId);
   const roleChangeableMembers = nonOwners.filter((member) => {
@@ -432,9 +432,8 @@ export function PermissionManager({
         feedbackToast.error(result.error);
         return;
       }
-      router.refresh();
     });
-  }, [sheetMember, hasDraftChanges, draftPermissions, baselineMembers, router]);
+  }, [sheetMember, hasDraftChanges, draftPermissions, baselineMembers]);
 
   const handleResetDraft = useCallback(() => {
     if (!sheetMember) return;
@@ -483,10 +482,9 @@ export function PermissionManager({
           feedbackToast.error(res.error);
           return;
         }
-        router.refresh();
       });
     },
-    [baselineMembers, sheetMemberId, router],
+    [baselineMembers, sheetMemberId],
   );
 
   function confirmRoleChange() {
@@ -521,7 +519,6 @@ export function PermissionManager({
         feedbackToast.error(res.error);
         return;
       }
-      router.refresh();
     });
   }
 
@@ -566,10 +563,9 @@ export function PermissionManager({
           feedbackToast.error(res.error);
           return;
         }
-        router.refresh();
       });
     },
-    [baselineMembers, teams, router],
+    [baselineMembers, teams],
   );
 
   function handleResetPassword() {
@@ -599,7 +595,6 @@ export function PermissionManager({
       setPasswordResetTarget(null);
       setNewPassword("");
       setConfirmPassword("");
-      router.refresh();
     });
   }
 

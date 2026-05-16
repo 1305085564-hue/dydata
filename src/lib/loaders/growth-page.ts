@@ -17,7 +17,7 @@ import {
 import type { MetricsAccount, MetricsReport } from "@/lib/metrics";
 import { shiftDateOnly } from "./shared";
 
-type GrowthSupabase = SupabaseClient<any, "public", any>;
+type GrowthSupabase = SupabaseClient;
 type ProfileRow = { id: string; name: string | null };
 type DailyReportRow = MetricsReport & { content?: string | null };
 type GrowthReport = MetricsReport & { content?: string | null; submitter?: string };
@@ -102,15 +102,39 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
     };
   }
 
-  const [scriptDocumentsResult, scriptSegmentsResult] = await Promise.all([
-    supabase.from("script_document").select("id, content_item_id, raw_text, estimated_duration_sec"),
-    supabase.from("script_segment").select("id, script_document_id, segment_type, segment_order, content, start_sec, end_sec"),
-  ]);
+  const contentItemIds = contentItems.map((item) => item.id);
 
-  if (
-    isMissingContentScriptSchemaError(scriptDocumentsResult.error) ||
-    isMissingContentScriptSchemaError(scriptSegmentsResult.error)
-  ) {
+  const scriptDocumentsResult = await supabase
+    .from("script_document")
+    .select("id, content_item_id, raw_text, estimated_duration_sec")
+    .in("content_item_id", contentItemIds);
+
+  if (isMissingContentScriptSchemaError(scriptDocumentsResult.error)) {
+    contentScriptSchemaAvailable = false;
+    return {
+      contentItems: [],
+      scriptDocuments: [],
+      scriptSegments: [],
+    };
+  }
+
+  const scriptDocuments = (scriptDocumentsResult.data ?? []) as ScriptDocumentRow[];
+  if (!scriptDocuments.length) {
+    contentScriptSchemaAvailable = true;
+    return {
+      contentItems,
+      scriptDocuments,
+      scriptSegments: [],
+    };
+  }
+
+  const scriptDocumentIds = scriptDocuments.map((document) => document.id);
+  const scriptSegmentsResult = await supabase
+    .from("script_segment")
+    .select("id, script_document_id, segment_type, segment_order, content, start_sec, end_sec")
+    .in("script_document_id", scriptDocumentIds);
+
+  if (isMissingContentScriptSchemaError(scriptSegmentsResult.error)) {
     contentScriptSchemaAvailable = false;
     return {
       contentItems: [],
@@ -122,7 +146,7 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
   contentScriptSchemaAvailable = true;
   return {
     contentItems,
-    scriptDocuments: (scriptDocumentsResult.data ?? []) as ScriptDocumentRow[],
+    scriptDocuments,
     scriptSegments: (scriptSegmentsResult.data ?? []) as ScriptSegmentRow[],
   };
 }
@@ -245,7 +269,8 @@ export async function loadGrowthPageData({
   }));
 
   const myAccountIds = myAccounts.map((account) => account.id);
-  const myAllReports = teamReportsWithSubmitter.filter((report) => myAccountIds.includes(report.account_id));
+  const myAccountIdSet = new Set(myAccountIds);
+  const myAllReports = teamReportsWithSubmitter.filter((report) => myAccountIdSet.has(report.account_id));
 
   const needsVirtualData = myAllReports.length < 3;
   const virtualReports = needsVirtualData
@@ -260,16 +285,30 @@ export async function loadGrowthPageData({
   const capabilityCards = buildGrowthDimensionCards({ myReports: effectiveMyReports, teamReports: teamReportsWithSubmitter });
   const weakestDimensions = getWeakestDimensions(effectiveMyReports, teamReportsWithSubmitter);
 
+  const contentItemById = new Map(contentItems.map((item) => [item.id, item]));
   const contentItemByAccountAndDate = new Map(contentItems.map((item) => [`${item.account_id ?? ""}-${item.biz_date}`, item]));
-  const latestReport = [...myAllReports].sort((left, right) => right.report_date.localeCompare(left.report_date))[0] ?? null;
+  const latestReport = myAllReports.reduce<GrowthReport | null>((latest, current) => {
+    if (!latest) return current;
+    return current.report_date > latest.report_date ? current : latest;
+  }, null);
   const linkedContentItem = latestReport ? contentItemByAccountAndDate.get(`${latestReport.account_id}-${latestReport.report_date}`) ?? null : null;
-  const linkedScriptDocument = linkedContentItem
-    ? scriptDocuments.find((document) => document.content_item_id === linkedContentItem.id) ?? null
-    : null;
+  const scriptDocumentByContentItemId = new Map(scriptDocuments.map((document) => [document.content_item_id, document]));
+  const linkedScriptDocument = linkedContentItem ? scriptDocumentByContentItemId.get(linkedContentItem.id) ?? null : null;
+  const scriptSegmentsByDocumentId = new Map<string, ScriptSegmentRow[]>();
+  for (const segment of scriptSegments) {
+    const list = scriptSegmentsByDocumentId.get(segment.script_document_id);
+    if (list) {
+      list.push(segment);
+    } else {
+      scriptSegmentsByDocumentId.set(segment.script_document_id, [segment]);
+    }
+  }
+  for (const [documentId, segments] of scriptSegmentsByDocumentId) {
+    segments.sort((left, right) => (left.segment_order ?? 0) - (right.segment_order ?? 0));
+    scriptSegmentsByDocumentId.set(documentId, segments);
+  }
   const linkedScriptSegments = linkedScriptDocument
-    ? scriptSegments
-        .filter((segment) => segment.script_document_id === linkedScriptDocument.id)
-        .sort((left, right) => (left.segment_order ?? 0) - (right.segment_order ?? 0))
+    ? (scriptSegmentsByDocumentId.get(linkedScriptDocument.id) ?? [])
         .map((segment) => ({
           id: segment.id,
           segmentType: segment.segment_type,
@@ -281,14 +320,14 @@ export async function loadGrowthPageData({
 
   const scriptSegmentsByAccountId = new Map<string, Array<{ content: string }>>();
   for (const document of scriptDocuments) {
-    const contentItem = contentItems.find((item) => item.id === document.content_item_id);
+    const contentItem = contentItemById.get(document.content_item_id);
     const accountId = contentItem?.account_id;
     if (!accountId) continue;
-    const segments = scriptSegments.filter((segment) => segment.script_document_id === document.id);
+    const segments = scriptSegmentsByDocumentId.get(document.id) ?? [];
     if (!segments.length) continue;
     scriptSegmentsByAccountId.set(
       accountId,
-      segments.sort((left, right) => (left.segment_order ?? 0) - (right.segment_order ?? 0)).map((segment) => ({ content: segment.content })),
+      segments.map((segment) => ({ content: segment.content })),
     );
   }
 
@@ -303,15 +342,25 @@ export async function loadGrowthPageData({
   });
 
   const myTags = collectTags(myAccounts);
+  const myTagsSet = new Set(myTags);
   const pkOpponentAccount = allAccounts.find(
-    (account) => account.profile_id !== userId && [account.content_direction, account.presentation_format].some((tag) => tag && myTags.includes(tag)),
+    (account) => account.profile_id !== userId && [account.content_direction, account.presentation_format].some((tag) => Boolean(tag && myTagsSet.has(tag))),
   );
+  const reportsByAccountId = new Map<string, GrowthReport[]>();
+  for (const report of teamReportsWithSubmitter) {
+    const list = reportsByAccountId.get(report.account_id);
+    if (list) {
+      list.push(report);
+    } else {
+      reportsByAccountId.set(report.account_id, [report]);
+    }
+  }
   const pkPanel = pkOpponentAccount
     ? buildPkComparisonData({
         leftName: profile?.name ?? userEmail ?? "我",
         rightName: profileNameMap.get(pkOpponentAccount.profile_id) ?? pkOpponentAccount.name,
         leftReports: effectiveMyReports,
-        rightReports: teamReportsWithSubmitter.filter((report) => report.account_id === pkOpponentAccount.id),
+        rightReports: reportsByAccountId.get(pkOpponentAccount.id) ?? [],
       })
     : null;
 
@@ -330,12 +379,20 @@ export async function loadGrowthPageData({
   });
 
   const ratingToScore = (label: string): number => (label === "强" ? 85 : label === "中" ? 65 : 40);
-  const allProfileIds = Array.from(new Set(allAccounts.map((account) => account.profile_id)));
-  const teamMembers = allProfileIds
+  const accountIdsByProfileId = new Map<string, string[]>();
+  for (const account of allAccounts) {
+    const accountIds = accountIdsByProfileId.get(account.profile_id);
+    if (accountIds) {
+      accountIds.push(account.id);
+    } else {
+      accountIdsByProfileId.set(account.profile_id, [account.id]);
+    }
+  }
+  const teamMembers = Array.from(accountIdsByProfileId.keys())
     .filter((profileId) => profileId !== userId)
     .map((profileId) => {
-      const memberAccountIds = allAccounts.filter((account) => account.profile_id === profileId).map((account) => account.id);
-      const memberReports = teamReportsWithSubmitter.filter((report) => memberAccountIds.includes(report.account_id));
+      const memberAccountIds = accountIdsByProfileId.get(profileId) ?? [];
+      const memberReports = memberAccountIds.flatMap((accountId) => reportsByAccountId.get(accountId) ?? []);
       if (memberReports.length < 3) return null;
       const memberCards = buildGrowthDimensionCards({ myReports: memberReports, teamReports: teamReportsWithSubmitter });
       return {

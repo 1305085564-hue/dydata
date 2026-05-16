@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useState, useTransition } from "react";
 import { Plus, Trash2, UsersRound } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,23 +14,16 @@ import {
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { hasPermission } from "@/lib/permission-utils";
-import { cn } from "@/lib/utils";
 import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions, UserRole } from "@/types";
 
-import { DataManager } from "../data-manager";
-import { ExportButton } from "../export-button";
 import { GovernanceDialog } from "../governance-dialog";
 import { PermissionManager } from "../permission-manager";
 import { TeamGroupManager } from "../team-group-manager";
-import { TeamManager } from "../team-manager";
 import { createTeam, deleteTeam } from "../actions";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { useRouter } from "next/navigation";
-import { useEffect, useTransition } from "react";
 
 interface AdminModulesContentProps {
   currentUserId: string;
@@ -54,24 +47,20 @@ interface AdminModulesContentProps {
   }>;
   teams: Array<{ id: string; name: string }>;
   teamManagement: Parameters<typeof TeamGroupManager>[0];
-  fullReports: Parameters<typeof DataManager>[0]["reports"];
   defaultDate: string;
-  avgPlayBySubmitter: Record<string, number>;
-  dayCountBySubmitter: Record<string, number>;
-  avgPlayByAccount: Record<string, number>;
-  dayCountByAccount: Record<string, number>;
 }
 
 function ManageTeamSheet({
   teams,
   open,
   onOpenChange,
+  onTeamsChange,
 }: {
   teams: Array<{ id: string; name: string }>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTeamsChange: Dispatch<SetStateAction<Array<{ id: string; name: string }>>>;
 }) {
-  const router = useRouter();
   const [teamName, setTeamName] = useState("");
   const [localTeams, setLocalTeams] = useState(teams);
   const [isPending, startTransition] = useTransition();
@@ -87,6 +76,7 @@ function ManageTeamSheet({
     const optimisticTeam = { id: `pending-${Date.now()}`, name: normalizedName };
 
     setLocalTeams((current) => [...current, optimisticTeam]);
+    onTeamsChange((current) => [...current, optimisticTeam]);
     setTeamName("");
     feedbackToast.success(`已新增团队：${normalizedName}`);
 
@@ -96,12 +86,21 @@ function ManageTeamSheet({
         setLocalTeams((current) =>
           current.filter((team) => team.id !== optimisticTeam.id),
         );
+        onTeamsChange((current) =>
+          current.filter((team) => team.id !== optimisticTeam.id),
+        );
         setTeamName(normalizedName);
         feedbackToast.error(result.error);
         return;
       }
 
-      router.refresh();
+      const createdTeam = result.team ?? { id: optimisticTeam.id, name: normalizedName };
+      setLocalTeams((current) =>
+        current.map((team) => (team.id === optimisticTeam.id ? createdTeam : team)),
+      );
+      onTeamsChange((current) =>
+        current.map((team) => (team.id === optimisticTeam.id ? createdTeam : team)),
+      );
     });
   }
 
@@ -111,6 +110,7 @@ function ManageTeamSheet({
     const previousTeams = localTeams;
 
     setLocalTeams((current) => current.filter((team) => team.id !== target.id));
+    onTeamsChange((current) => current.filter((team) => team.id !== target.id));
     setDeleteTarget(null);
     feedbackToast.success(`已删除团队：${target.name}`);
 
@@ -118,11 +118,10 @@ function ManageTeamSheet({
       const result = await deleteTeam(target.id);
       if (result.error) {
         setLocalTeams(previousTeams);
+        onTeamsChange(previousTeams);
         feedbackToast.error(result.error);
         return;
       }
-
-      router.refresh();
     });
   }
 
@@ -213,15 +212,15 @@ export function AdminModulesContent({
   allProfiles,
   teams,
   teamManagement,
-  fullReports,
   defaultDate,
-  avgPlayBySubmitter,
-  dayCountBySubmitter,
-  avgPlayByAccount,
-  dayCountByAccount,
 }: AdminModulesContentProps) {
   const [governanceOpen, setGovernanceOpen] = useState(false);
   const [manageTeamOpen, setManageTeamOpen] = useState(false);
+  const [localTeams, setLocalTeams] = useState(teams);
+
+  useEffect(() => {
+    setLocalTeams(teams);
+  }, [teams]);
 
   const canManagePermissions =
     permissionManagerCapabilities.canRemoveMember ||
@@ -303,7 +302,7 @@ export function AdminModulesContent({
                   teamName: profile.team_name,
                   permissions: (profile.permissions ?? {}) as Permissions,
                 }))}
-                teams={teams}
+                teams={localTeams}
                 currentUserId={currentUserId}
                 currentUserRole={currentUserRole}
                 currentUserBusinessRole={currentUserBusinessRole}
@@ -317,7 +316,7 @@ export function AdminModulesContent({
               <section className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6">
                 <TeamGroupManager
                   access={teamManagement.access}
-                  teams={teamManagement.teams}
+                  teams={localTeams}
                   groups={teamManagement.groups}
                   profiles={teamManagement.profiles}
                   leaderCandidates={teamManagement.leaderCandidates}
@@ -329,9 +328,10 @@ export function AdminModulesContent({
       ) : null}
 
       <ManageTeamSheet
-        teams={teams}
+        teams={localTeams}
         open={manageTeamOpen}
         onOpenChange={setManageTeamOpen}
+        onTeamsChange={setLocalTeams}
       />
 
       <GovernanceDialog
@@ -339,12 +339,7 @@ export function AdminModulesContent({
         onOpenChange={setGovernanceOpen}
         canExportData={canExportData}
         canEditData={canEditData}
-        fullReports={fullReports}
         defaultDate={defaultDate}
-        avgPlayBySubmitter={avgPlayBySubmitter}
-        dayCountBySubmitter={dayCountBySubmitter}
-        avgPlayByAccount={avgPlayByAccount}
-        dayCountByAccount={dayCountByAccount}
       />
     </div>
   );

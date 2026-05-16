@@ -20,7 +20,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
-      <main className="mx-auto max-w-7xl px-6 lg:px-12">
+      <main className="mx-auto max-w-7xl px-6 lg:px-12 2xl:max-w-[88rem]">
         {/* Header */}
         <nav className="flex items-center justify-between py-8">
           <Link href="/" className="flex items-center gap-2">
@@ -37,7 +37,7 @@ export default async function HomePage() {
         </nav>
 
         {/* Hero */}
-        <section className="grid grid-cols-1 items-center gap-12 py-12 md:grid-cols-2 md:gap-16 md:py-24">
+        <section className="grid grid-cols-1 items-center gap-12 py-12 md:grid-cols-2 md:gap-16 md:py-24 2xl:gap-20">
           {/* Left */}
           <div className="space-y-8">
             <div className="space-y-4">
@@ -138,7 +138,7 @@ export default async function HomePage() {
         </section>
 
         {/* Features */}
-        <section className="border-t border-[#E4E4E7] py-24">
+        <section className="border-t border-[#E4E4E7] py-24 2xl:py-28">
           <div className="mb-16 space-y-4 text-center">
             <h2 className="text-[24px] font-semibold text-[#27272A]">
               一套系统，覆盖内容团队全链路
@@ -146,7 +146,7 @@ export default async function HomePage() {
             <div className="mx-auto h-1 w-12 rounded-full bg-[#D97757]" />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:gap-8">
             {/* Card 1 */}
             <div className="group rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.03)]">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-[#E4E4E7] bg-white text-[#D97757]">

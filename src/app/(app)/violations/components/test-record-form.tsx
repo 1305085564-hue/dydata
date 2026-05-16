@@ -58,7 +58,7 @@ export function TestRecordForm({
 
       feedbackToast.success("测试记录已追加");
       setOpen(false);
-      router.refresh();
+      router.replace(`/violations/${caseId}?t=${Date.now()}`);
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "追加测试失败");
     } finally {

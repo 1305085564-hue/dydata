@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,24 +40,30 @@ function getSentimentVariant(sentiment: MarketContextDaily["market_sentiment"]) 
 }
 
 export function MarketList({ initialData }: MarketListProps) {
+  const [rows, setRows] = useState(initialData);
   const [editingRow, setEditingRow] = useState<MarketContextDaily | null>(null);
-  const [isRefreshing, startTransition] = useTransition();
-  const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    setRows(initialData);
+  }, [initialData]);
 
   function handleEdit(row: MarketContextDaily) {
     setEditingRow(row);
   }
 
-  function handleSaved() {
-    setEditingRow(null);
-    startTransition(async () => {
-      await supabase
-        .from("market_context_daily")
-        .select("id")
-        .limit(1);
-      router.refresh();
+  function handleSaved(updatedRow: MarketContextDaily) {
+    setRows((current) => {
+      const nextRows = current.some((row) => row.id === updatedRow.id || row.context_date === updatedRow.context_date)
+        ? current.map((row) =>
+            row.id === updatedRow.id || row.context_date === updatedRow.context_date ? { ...row, ...updatedRow } : row,
+          )
+        : [updatedRow, ...current];
+
+      return nextRows
+        .slice()
+        .sort((left, right) => right.context_date.localeCompare(left.context_date));
     });
+    setEditingRow(null);
   }
 
   return (
@@ -72,11 +76,11 @@ export function MarketList({ initialData }: MarketListProps) {
         <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/60">
           <CardTitle>最近 30 天记录</CardTitle>
           <span className="text-xs text-muted-foreground">
-            {isRefreshing ? "刷新中..." : `共 ${initialData.length} 条`}
+            共 {rows.length} 条
           </span>
         </CardHeader>
         <CardContent className="pt-5">
-          {initialData.length === 0 ? (
+          {rows.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground">
               暂无市场环境记录
             </div>
@@ -96,13 +100,13 @@ export function MarketList({ initialData }: MarketListProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {initialData.map((row) => {
+                  {rows.map((row) => {
                     const shanghai = Number(row.market_change?.["上证"] ?? 0);
                     const shenzhen = Number(row.market_change?.["深成指"] ?? 0);
                     const chinext = Number(row.market_change?.["创业板"] ?? 0);
 
                     return (
-                      <TableRow key={row.id}>
+                      <TableRow key={row.id ?? row.context_date}>
                         <TableCell className="font-medium">{row.context_date}</TableCell>
                         <TableCell>{row.is_trading_day ? "✅" : "❌"}</TableCell>
                         <TableCell className={getNumberClassName(shanghai)}>

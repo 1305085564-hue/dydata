@@ -36,14 +36,16 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const data = await measureAsync("dashboard.pageData", () =>
-    loadDashboardPageData({
-      supabase,
-      userId: user.id,
-    }),
-  );
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  const userRole = ((profile?.role as UserRole | undefined) ?? "member") as UserRole;
+  const [data, profile] = await Promise.all([
+    measureAsync("dashboard.pageData", () =>
+      loadDashboardPageData({
+        supabase,
+        userId: user.id,
+      }),
+    ),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+  ]);
+  const userRole = ((profile.data?.role as UserRole | undefined) ?? "member") as UserRole;
   const sopData = await safeLoadSopData(data.today, userRole);
 
   return (

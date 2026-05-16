@@ -214,6 +214,18 @@ async function loadViolationsTab(params: {
   };
 }
 
+async function loadViolationsPendingCount() {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("violation_cases")
+    .select("id", { count: "exact", head: true })
+    .eq("is_deleted", false)
+    .eq("purpose", "violation")
+    .eq("status", "submitted");
+
+  return count ?? 0;
+}
+
 async function loadScriptsTab(weekStart: string): Promise<ScriptsTabData> {
   const supabase = createAdminClient();
   const [totalCasesResult, conversionCasesResult, weeklyUsageResult, topCasesResult] = await Promise.all([
@@ -347,11 +359,12 @@ export default async function ConversionHubPage({ searchParams }: HubPageProps) 
   const sort = normalizeSort(params.sort);
   const format = normalizeFormat(params.format);
 
-  const [violations, scripts, weekly, analytics] = await Promise.all([
-    loadViolationsTab({ status, category, keyword }),
-    loadScriptsTab(weekStart),
-    loadWeeklyTab(weekStart),
-    loadAnalyticsTab(sort, format),
+  const [violations, pendingViolationsCount, scripts, weekly, analytics] = await Promise.all([
+    activeTab === "violations" ? loadViolationsTab({ status, category, keyword }) : Promise.resolve(null),
+    activeTab === "violations" ? Promise.resolve(0) : loadViolationsPendingCount(),
+    activeTab === "scripts" ? loadScriptsTab(weekStart) : Promise.resolve(null),
+    activeTab === "weekly" ? loadWeeklyTab(weekStart) : Promise.resolve(null),
+    activeTab === "analytics" ? loadAnalyticsTab(sort, format) : Promise.resolve(null),
   ]);
 
   return (
@@ -359,11 +372,12 @@ export default async function ConversionHubPage({ searchParams }: HubPageProps) 
       weekStart={weekStart}
       activeTab={activeTab}
       violations={violations}
-      weeklyBuckets={weekly.buckets}
-      weeklyConfirmedAt={weekly.confirmedAt}
-      weeklyGeneratedBy={weekly.generatedBy}
-      analyticsRows={analytics.rows}
-      analyticsTrend={analytics.trend}
+      pendingViolationsCount={pendingViolationsCount}
+      weeklyBuckets={weekly?.buckets ?? null}
+      weeklyConfirmedAt={weekly?.confirmedAt ?? null}
+      weeklyGeneratedBy={weekly?.generatedBy ?? null}
+      analyticsRows={analytics?.rows ?? []}
+      analyticsTrend={analytics?.trend ?? []}
       analyticsSort={sort}
       analyticsFormat={format}
       scripts={scripts}
