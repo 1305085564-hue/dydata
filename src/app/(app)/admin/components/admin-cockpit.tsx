@@ -87,9 +87,9 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000) {
 
 function StatCell({ label, value, tone }: { label: string; value: number; tone: "neutral" | "warning" | "danger" }) {
   const toneClass = {
-    neutral: "text-zinc-800",
-    warning: value > 0 ? "text-[#D99E55]" : "text-zinc-800",
-    danger: value > 0 ? "text-[#C9604D]" : "text-zinc-800",
+    neutral: value === 0 ? "text-zinc-400" : "text-zinc-800",
+    warning: value > 0 ? "text-[#D99E55]" : "text-zinc-400",
+    danger: value > 0 ? "text-[#C9604D]" : "text-zinc-400",
   }[tone];
   return (
     <div className="flex flex-col">
@@ -114,7 +114,7 @@ function StatusBar({ date }: { date: string }) {
     <div className="grid grid-cols-2 gap-x-12 gap-y-3 border-y border-zinc-100 py-3 md:grid-cols-4">
       <StatCell label="待筛视频" value={videos} tone="warning" />
       <StatCell label="待审违规" value={violations} tone="danger" />
-      <StatCell label="待催交成员" value={submissions} tone="warning" />
+      <StatCell label="待催交成员" value={submissions} tone="neutral" />
       <StatCell label="待审豁免" value={exemptions} tone="neutral" />
     </div>
   );
@@ -136,7 +136,7 @@ function QueueCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white">
+    <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white min-h-[200px]">
       <header className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
         <div className="flex items-center gap-2">
           <span className="text-zinc-500">{icon}</span>
@@ -155,9 +155,11 @@ function QueueCard({
           <ChevronRight className="size-3 stroke-[1.5]" />
         </Link>
       </header>
-      <div className="flex-1 px-5 py-2">
+      <div className="flex flex-1 px-5 py-2">
         {count === 0 ? (
-          <p className="py-8 text-center text-[12px] text-zinc-400">{empty}</p>
+          <div className="flex flex-1 items-center justify-center py-6">
+            <p className="text-[12px] text-zinc-400">{empty}</p>
+          </div>
         ) : (
           children
         )}
@@ -275,16 +277,6 @@ function PendingSubmissionsQueue({ date }: { date: string }) {
   );
   const rows = data?.data ?? [];
 
-  const groupedByTeam = useMemo(() => {
-    const map = new Map<string, PendingSubmissionRow[]>();
-    for (const row of rows) {
-      const key = row.team_name ?? "未分组";
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(row);
-    }
-    return Array.from(map.entries());
-  }, [rows]);
-
   return (
     <QueueCard
       title="待催交成员"
@@ -293,28 +285,19 @@ function PendingSubmissionsQueue({ date }: { date: string }) {
       empty="所有在岗成员今天都已交报"
       viewAllHref="/admin"
     >
-      <ul className="space-y-3">
-        {groupedByTeam.slice(0, 4).map(([team, list]) => (
-          <li key={team}>
-            <p className="mb-1 text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
-              {team}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {list.slice(0, 12).map((row) => (
-                <span
-                  key={row.profile_id}
-                  className="rounded-full bg-zinc-50 px-2 py-0.5 text-[12px] text-zinc-600"
-                  title={row.last_report_date ? `上次提交 ${row.last_report_date}` : "尚无提交记录"}
-                >
-                  {row.name}
-                </span>
-              ))}
-              {list.length > 12 && (
-                <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[12px] text-zinc-400">
-                  +{list.length - 12}
-                </span>
-              )}
-            </div>
+      <ul className="w-full divide-y divide-zinc-100">
+        {rows.slice(0, 8).map((row) => (
+          <li key={row.profile_id} className="flex items-center gap-2 py-1.5">
+            <span className="min-w-[60px] truncate text-[11px] text-zinc-400">
+              {row.team_name ?? "未分组"}
+            </span>
+            <span className="text-zinc-300">·</span>
+            <span className="flex-1 truncate text-[13px] text-zinc-700">{row.name}</span>
+            {row.last_report_date ? (
+              <span className="shrink-0 text-[11px] text-zinc-400 tabular-nums">
+                {row.last_report_date}
+              </span>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -362,7 +345,7 @@ export function AdminStatusSection({ date }: { date: string }) {
 
 export function AdminQueueSection({ date }: { date: string }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-3 items-stretch">
       <PendingVideosQueue date={date} />
       <PendingViolationsQueue />
       <PendingSubmissionsQueue date={date} />

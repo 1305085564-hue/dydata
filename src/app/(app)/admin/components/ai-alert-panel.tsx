@@ -357,7 +357,7 @@ export function AiAlertPanel() {
           今日暂无待办，AI 没扫到需要处理的事情。
         </PanelMessage>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {alertGroups.map((group) => (
             <section
               key={group.groupKey}
@@ -366,7 +366,7 @@ export function AiAlertPanel() {
               <button
                 type="button"
                 onClick={() => handleToggle(group.groupKey, !openMap[group.groupKey])}
-                className="flex w-full items-center justify-between px-4 py-2.5 transition hover:bg-zinc-50"
+                className="flex w-full items-center justify-between px-4 py-2 transition hover:bg-zinc-50"
               >
                 <div className="flex items-center gap-2.5">
                   <span className={cn("size-1.5 rounded-full", SEVERITY_DOT[group.severity])} />
