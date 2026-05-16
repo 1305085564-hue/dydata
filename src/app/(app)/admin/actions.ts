@@ -897,6 +897,44 @@ export async function createTeam(teamName: string): Promise<{ error?: string }> 
   return {};
 }
 
+export async function deleteTeam(teamId: string): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+
+  const adminSupabase = createAdminClient();
+
+  // Check if team has members
+  const { data: members, error: membersError } = await adminSupabase
+    .from("profiles")
+    .select("id")
+    .eq("team_id", teamId)
+    .limit(1);
+  if (membersError) return { error: membersError.message };
+  if (members && members.length > 0) return { error: "该团队下还有成员，无法删除" };
+
+  // Check if team has groups
+  const { data: groups, error: groupsError } = await adminSupabase
+    .from("groups")
+    .select("id")
+    .eq("team_id", teamId)
+    .limit(1);
+  if (groupsError) return { error: groupsError.message };
+  if (groups && groups.length > 0) return { error: "该团队下还有分组，无法删除" };
+
+  const { data: team } = await adminSupabase.from("teams").select("name").eq("id", teamId).single();
+
+  const { error } = await adminSupabase.from("teams").delete().eq("id", teamId);
+  if (error) return { error: error.message };
+
+  const supabase = await createClient();
+  await writeAuditLog(supabase, perm.userId, "delete_team", teamId, team?.name ?? teamId);
+
+  revalidatePath("/admin");
+  revalidatePath("/register");
+  return {};
+}
+
 export async function createGroup(input: {
   teamId: string;
   name: string;

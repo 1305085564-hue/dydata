@@ -665,17 +665,14 @@ export function PermissionManager({
       })()
     : false;
 
+  const PAGE_SIZE = 24;
   const pagedMembers = pmShowAll
     ? filteredMembers
-    : filteredMembers.slice((pmPage - 1) * 20, pmPage * 20);
-  const totalPages = Math.ceil(filteredMembers.length / 20);
+    : filteredMembers.slice((pmPage - 1) * PAGE_SIZE, pmPage * PAGE_SIZE);
+  const totalPages = Math.ceil(filteredMembers.length / PAGE_SIZE);
 
   return (
     <div className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6">
-      <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">成员与权限</h2>
-      </div>
-
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-4">
           <Label
@@ -735,7 +732,7 @@ export function PermissionManager({
             <span aria-hidden />
           </div>
 
-          <div className="space-y-1">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
             {pagedMembers.map((member) => (
               <MemberRow
                 key={member.id}
@@ -747,7 +744,7 @@ export function PermissionManager({
             ))}
           </div>
 
-          {filteredMembers.length > 20 ? (
+          {filteredMembers.length > PAGE_SIZE ? (
             <div className="flex flex-col items-center gap-2 pt-2">
               {!pmShowAll && totalPages > 1 ? (
                 <div className="flex flex-wrap items-center justify-center gap-1">

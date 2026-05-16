@@ -268,9 +268,7 @@ export function TeamGroupManager({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-          <h3 className="text-[24px] font-semibold tracking-tight text-zinc-800">团队与分组</h3>
-        </div>
+        <div />
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
             <SelectTrigger className="h-10 w-full bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">

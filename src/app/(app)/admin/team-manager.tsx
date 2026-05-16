@@ -51,40 +51,18 @@ export function TeamManager({ teams }: TeamManagerProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1 space-y-1.5">
-          <Label htmlFor="new-team-name">新增团队名称</Label>
-          <Input
-            id="new-team-name"
-            value={teamName}
-            onChange={(event) => setTeamName(event.target.value)}
-            placeholder="例如：上海一部"
-            className="h-10 rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
-          />
-        </div>
-        <Button
-          onClick={handleCreate}
-          disabled={isPending || !teamName.trim()}
-          className="h-10 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
-        >
-          {isPending ? "创建中..." : "新增团队"}
-        </Button>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-[13px] font-medium text-zinc-800">当前团队</p>
-        <div className="flex flex-wrap gap-2">
-          {localTeams.map((team) => (
-            <Badge
-              key={team.id}
-              variant="outline"
-              className="rounded-[10px] px-3 py-1"
-            >
-              {team.name}
-            </Badge>
-          ))}
-        </div>
+    <div className="space-y-2">
+      <p className="text-[13px] font-medium text-zinc-800">当前团队</p>
+      <div className="flex flex-wrap gap-2">
+        {localTeams.map((team) => (
+          <Badge
+            key={team.id}
+            variant="outline"
+            className="rounded-[10px] px-3 py-1"
+          >
+            {team.name}
+          </Badge>
+        ))}
       </div>
     </div>
   );
