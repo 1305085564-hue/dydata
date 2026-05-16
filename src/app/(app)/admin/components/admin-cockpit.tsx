@@ -96,7 +96,7 @@ function StatCell({ label, value, tone }: { label: string; value: number; tone: 
       <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
         {label}
       </span>
-      <span className={cn("mt-1 text-[22px] font-semibold tracking-tight font-mono tabular-nums", toneClass)}>
+      <span className={cn("mt-1 text-[18px] font-semibold tracking-tight font-mono tabular-nums", toneClass)}>
         {value}
       </span>
     </div>
@@ -111,7 +111,7 @@ function StatusBar({ date }: { date: string }) {
   const exemptions = data?.pending_exemptions ?? 0;
 
   return (
-    <div className="grid grid-cols-2 gap-x-8 gap-y-3 border-y border-zinc-100 py-3 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-12 gap-y-3 border-y border-zinc-100 py-3 md:grid-cols-4">
       <StatCell label="待筛视频" value={videos} tone="warning" />
       <StatCell label="待审违规" value={violations} tone="danger" />
       <StatCell label="待催交成员" value={submissions} tone="warning" />
@@ -142,7 +142,7 @@ function QueueCard({
           <span className="text-zinc-500">{icon}</span>
           <h3 className="text-[13px] font-medium tracking-tight text-zinc-800">{title}</h3>
           {count > 0 && (
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 font-mono tabular-nums">
               {count}
             </span>
           )}
@@ -182,7 +182,7 @@ function PendingVideosQueue({ date }: { date: string }) {
       viewAllHref="/admin/videos?view=pending"
     >
       <ul className="divide-y divide-zinc-100">
-        {rows.slice(0, 6).map((row) => (
+        {rows.slice(0, 5).map((row) =>(
           <li key={row.id}>
             <Link
               href={`/admin/videos?focus=${row.id}`}
@@ -232,7 +232,7 @@ function PendingViolationsQueue() {
       viewAllHref="/admin/conversion-hub?tab=violations"
     >
       <ul className="divide-y divide-zinc-100">
-        {rows.slice(0, 6).map((row) => {
+        {rows.slice(0, 5).map((row) => {
           const risk = RISK_LABEL[row.risk_level ?? ""] ?? null;
           return (
             <li key={row.id}>

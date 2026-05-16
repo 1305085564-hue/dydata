@@ -40,8 +40,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   return (
     <div className="space-y-8">
       <AdminStatusSection date={data.queryDate} />
-      <AiAlertPanel />
       <AdminQueueSection date={data.queryDate} />
+      <AiAlertPanel />
       <JoinRequestReviewSection />
     </div>
   );

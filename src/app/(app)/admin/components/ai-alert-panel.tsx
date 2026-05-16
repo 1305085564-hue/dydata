@@ -1,20 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCw, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ChevronDown, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
-import type {
-  AlertAggregationResult,
-  AlertSeverity,
-} from "@/lib/alert-sources/types";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import type { Alert, AlertAggregationResult, AlertSeverity } from "@/lib/alert-sources/types";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
-import { AiAlertCard } from "./ai-alert-card";
+import { AiAlertRow } from "./ai-alert-card";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -52,6 +47,14 @@ type FetchState = {
   refreshing: boolean;
 };
 
+interface AlertGroup {
+  groupKey: string;
+  label: string;
+  severity: SeverityKey;
+  count: number;
+  alerts: Alert[];
+}
+
 function formatRelative(now: number, ts: number | null) {
   if (!ts) return null;
   const delta = Math.max(0, Math.round((now - ts) / 1000));
@@ -59,6 +62,46 @@ function formatRelative(now: number, ts: number | null) {
   if (delta < 60) return `${delta} 秒前更新`;
   if (delta < 3600) return `${Math.floor(delta / 60)} 分钟前更新`;
   return `${Math.floor(delta / 3600)} 小时前更新`;
+}
+
+function groupAlertsByTemplate(alerts: Alert[]): AlertGroup[] {
+  const map = new Map<string, Alert[]>();
+  for (const alert of alerts) {
+    const key = alert.title.trim();
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(alert);
+  }
+
+  const groups: AlertGroup[] = [];
+  for (const [label, list] of map.entries()) {
+    const sorted = list.sort((a, b) => {
+      const diff = SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity);
+      if (diff !== 0) return diff;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+    const topSeverity = sorted[0]?.severity ?? "info";
+    groups.push({
+      groupKey: label,
+      label,
+      severity: topSeverity,
+      count: sorted.length,
+      alerts: sorted,
+    });
+  }
+
+  return groups.sort((a, b) => {
+    const sevDiff = SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity);
+    if (sevDiff !== 0) return sevDiff;
+    return b.count - a.count;
+  });
+}
+
+function getPrimaryNavigate(alert: Alert) {
+  return alert.suggestedActions.find((a) => a.type === "navigate" && a.href) ?? null;
+}
+
+function getPrimaryExecuteAction(alert: Alert) {
+  return alert.suggestedActions.find((a) => a.type === "execute_tool" && a.toolName) ?? null;
 }
 
 export function AiAlertPanel() {
@@ -72,12 +115,10 @@ export function AiAlertPanel() {
   const [now, setNow] = useState(() => Date.now());
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
-  const userToggledRef = useRef<Set<SeverityKey>>(new Set());
-  const [openMap, setOpenMap] = useState<Record<SeverityKey, boolean>>({
-    critical: false,
-    warning: false,
-    info: false,
-  });
+  const userToggledRef = useRef<Set<string>>(new Set());
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  const [selectedMap, setSelectedMap] = useState<Record<string, Set<string>>>({});
+  const [executingGroup, setExecutingGroup] = useState<string | null>(null);
 
   const runFetch = useCallback(async (manual: boolean) => {
     abortRef.current?.abort();
@@ -137,25 +178,110 @@ export function AiAlertPanel() {
     };
   }, [runFetch]);
 
-  const grouped = state.data?.groupedBySeverity;
+  const allAlerts = state.data?.alerts ?? [];
+  const alertGroups = useMemo(() => groupAlertsByTemplate(allAlerts), [allAlerts]);
   const summary = state.data?.summary;
 
   useEffect(() => {
-    if (!grouped) return;
+    if (alertGroups.length === 0) return;
     setOpenMap((prev) => {
-      const firstNonEmpty = SEVERITY_ORDER.find((sev) => grouped[sev].length > 0);
+      const firstNonEmpty = alertGroups.find((g) => g.count > 0);
       const next = { ...prev };
-      for (const sev of SEVERITY_ORDER) {
-        if (userToggledRef.current.has(sev)) continue;
-        next[sev] = sev === firstNonEmpty;
+      for (const g of alertGroups) {
+        if (userToggledRef.current.has(g.groupKey)) continue;
+        next[g.groupKey] = g.groupKey === firstNonEmpty?.groupKey;
       }
       return next;
     });
-  }, [grouped]);
+  }, [alertGroups]);
 
-  const handleToggle = (sev: SeverityKey, open: boolean) => {
-    userToggledRef.current.add(sev);
-    setOpenMap((prev) => ({ ...prev, [sev]: open }));
+  const handleToggle = (groupKey: string, open: boolean) => {
+    userToggledRef.current.add(groupKey);
+    setOpenMap((prev) => ({ ...prev, [groupKey]: open }));
+  };
+
+  const isSelected = (groupKey: string, alertId: string) =>
+    selectedMap[groupKey]?.has(alertId) ?? false;
+
+  const selectedCount = (groupKey: string) => selectedMap[groupKey]?.size ?? 0;
+
+  const toggleSelect = (groupKey: string, alertId: string) => {
+    setSelectedMap((prev) => {
+      const next = { ...prev };
+      const set = new Set(next[groupKey] ?? []);
+      if (set.has(alertId)) {
+        set.delete(alertId);
+      } else {
+        set.add(alertId);
+      }
+      next[groupKey] = set;
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (groupKey: string, alerts: Alert[]) => {
+    setSelectedMap((prev) => {
+      const next = { ...prev };
+      const current = next[groupKey] ?? new Set<string>();
+      if (current.size === alerts.length) {
+        next[groupKey] = new Set();
+      } else {
+        next[groupKey] = new Set(alerts.map((a) => a.id));
+      }
+      return next;
+    });
+  };
+
+  const handleBatchExecute = async (group: AlertGroup) => {
+    const selectedIds = selectedMap[group.groupKey];
+    if (!selectedIds || selectedIds.size === 0) return;
+
+    const targets = group.alerts.filter((a) => selectedIds.has(a.id));
+    const actionable = targets.filter((a) => getPrimaryExecuteAction(a));
+    if (actionable.length === 0) {
+      toast.error("选中的告警中没有可执行的批量动作");
+      return;
+    }
+
+    setExecutingGroup(group.groupKey);
+    let success = 0;
+    let fail = 0;
+
+    for (const alert of actionable) {
+      const action = getPrimaryExecuteAction(alert);
+      if (!action) continue;
+      try {
+        const res = await fetch(
+          `/api/admin/dashboard-alerts/${encodeURIComponent(alert.id)}/execute`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              toolName: action.toolName,
+              toolArgs: action.toolArgs ?? {},
+            }),
+          },
+        );
+        if (res.ok) {
+          success++;
+        } else {
+          fail++;
+        }
+      } catch {
+        fail++;
+      }
+    }
+
+    setExecutingGroup(null);
+    if (fail === 0) {
+      toast.success(`批量执行完成：${success} 条成功`);
+    } else {
+      toast.error(`批量执行：${success} 条成功 / ${fail} 条失败`);
+    }
+
+    setSelectedMap((prev) => ({ ...prev, [group.groupKey]: new Set() }));
+    window.dispatchEvent(new CustomEvent("dydata:alerts-refresh"));
   };
 
   const totalAlerts = summary?.total ?? 0;
@@ -232,37 +358,155 @@ export function AiAlertPanel() {
         </PanelMessage>
       ) : (
         <div className="space-y-2">
-          {SEVERITY_ORDER.map((sev) => {
-            const list = grouped?.[sev] ?? [];
-            if (list.length === 0) return null;
-            return (
-              <Collapsible
-                key={sev}
-                open={openMap[sev]}
-                onOpenChange={(o) => handleToggle(sev, o)}
+          {alertGroups.map((group) => (
+            <section
+              key={group.groupKey}
+              className="rounded-2xl border border-zinc-200 bg-white"
+            >
+              <button
+                type="button"
+                onClick={() => handleToggle(group.groupKey, !openMap[group.groupKey])}
+                className="flex w-full items-center justify-between px-4 py-2.5 transition hover:bg-zinc-50"
               >
-                <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left transition hover:bg-zinc-50">
-                  <span className="flex items-center gap-2">
-                    <span className={cn("size-2 rounded-full", SEVERITY_DOT[sev])} />
-                    <span className={cn("text-[13px] font-medium", SEVERITY_TEXT[sev])}>
-                      {SEVERITY_LABEL[sev]}
+                <div className="flex items-center gap-2.5">
+                  <span className={cn("size-1.5 rounded-full", SEVERITY_DOT[group.severity])} />
+                  <span className="text-[13px] font-medium text-zinc-800">{group.label}</span>
+                  <span className="text-[12px] text-zinc-400">
+                    {group.count} {group.count > 1 ? "条" : "条"}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 text-zinc-400 transition duration-150",
+                    openMap[group.groupKey] && "rotate-180",
+                  )}
+                />
+              </button>
+
+              {openMap[group.groupKey] && (
+                <>
+                  {/* 批量动作条 */}
+                  <div className="sticky top-0 z-10 flex items-center gap-2 border-y border-zinc-100 bg-zinc-50/80 px-4 py-1.5 backdrop-blur">
+                    <Checkbox
+                      checked={
+                        selectedCount(group.groupKey) === group.count && group.count > 0
+                      }
+                      onCheckedChange={() => toggleSelectAll(group.groupKey, group.alerts)}
+                    />
+                    <span className="text-[11px] text-zinc-500">
+                      已选 {selectedCount(group.groupKey)} / {group.count}
                     </span>
-                    <span className="text-[12px] text-zinc-400">({list.length})</span>
-                  </span>
-                  <span className="text-[11px] text-zinc-400 transition group-data-[panel-open]:rotate-180">
-                    ▾
-                  </span>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="space-y-2 pt-2">
-                    {list.map((alert) => (
-                      <AiAlertCard key={alert.id} alert={alert} />
-                    ))}
+                    <div className="ml-auto flex gap-1.5">
+                      <button
+                        type="button"
+                        disabled={
+                          executingGroup === group.groupKey || selectedCount(group.groupKey) === 0
+                        }
+                        onClick={() => void handleBatchExecute(group)}
+                        className="inline-flex h-6 items-center rounded-md border border-zinc-200 px-2.5 text-[11px] text-zinc-700 transition hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {executingGroup === group.groupKey ? (
+                          <>
+                            <Loader2 className="mr-1 size-3 animate-spin" />
+                            执行中…
+                          </>
+                        ) : (
+                          "一键执行"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toast.message("AI 助手功能即将上线");
+                        }}
+                        className="inline-flex h-6 items-center rounded-md bg-zinc-900 px-2.5 text-[11px] text-white transition hover:bg-zinc-800"
+                      >
+                        <Sparkles className="mr-1 size-3" strokeWidth={1.75} />
+                        问问 AI
+                      </button>
+                    </div>
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          })}
+
+                  {/* 密集行 */}
+                  <ul className="divide-y divide-zinc-100">
+                    {group.alerts.map((alert) => {
+                      const navigate = getPrimaryNavigate(alert);
+                      const primaryEntity = alert.affectedEntities[0];
+                      return (
+                        <li key={alert.id}>
+                          {navigate ? (
+                            <Link
+                              href={navigate.href!}
+                              className="group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60"
+                            >
+                              <div
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleSelect(group.groupKey, alert.id);
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleSelect(group.groupKey, alert.id);
+                                  }
+                                }}
+                                className="flex items-center"
+                              >
+                                <Checkbox
+                                  checked={isSelected(group.groupKey, alert.id)}
+                                  onCheckedChange={() => toggleSelect(group.groupKey, alert.id)}
+                                />
+                              </div>
+                              <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-800">
+                                {primaryEntity?.name ?? "—"}
+                              </span>
+                              <span className="flex-1 truncate text-[12px] text-zinc-500">
+                                {alert.detail ?? alert.title}
+                              </span>
+                              <ArrowRight className="size-3.5 text-zinc-400 opacity-0 transition duration-150 group-hover:opacity-100" />
+                            </Link>
+                          ) : (
+                            <div className="group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60">
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleSelect(group.groupKey, alert.id);
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    toggleSelect(group.groupKey, alert.id);
+                                  }
+                                }}
+                                className="flex items-center"
+                              >
+                                <Checkbox
+                                  checked={isSelected(group.groupKey, alert.id)}
+                                  onCheckedChange={() => toggleSelect(group.groupKey, alert.id)}
+                                />
+                              </div>
+                              <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-800">
+                                {primaryEntity?.name ?? "—"}
+                              </span>
+                              <span className="flex-1 truncate text-[12px] text-zinc-500">
+                                {alert.detail ?? alert.title}
+                              </span>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+            </section>
+          ))}
         </div>
       )}
     </section>
