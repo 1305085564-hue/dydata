@@ -24,15 +24,15 @@ const SEVERITY_LABEL: Record<SeverityKey, string> = {
 };
 
 const SEVERITY_DOT: Record<SeverityKey, string> = {
-  critical: "bg-[#B42318]",
-  warning: "bg-[#EAB308]",
-  info: "bg-[#444CE7]",
+  critical: "bg-[#A05D5D]",
+  warning: "bg-[#B8895E]",
+  info: "bg-zinc-400",
 };
 
 const SEVERITY_TEXT: Record<SeverityKey, string> = {
-  critical: "text-[#B42318]",
-  warning: "text-[#A77A0E]",
-  info: "text-[#444CE7]",
+  critical: "text-[#A05D5D]",
+  warning: "text-[#8C6A48]",
+  info: "text-zinc-500",
 };
 
 type ApiResponse = AlertAggregationResult & {
@@ -384,9 +384,9 @@ export function AiAlertPanel() {
               </button>
 
               {openMap[group.groupKey] && (
-                <>
+                <div className="max-h-[420px] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-track]:bg-transparent">
                   {/* 批量动作条 */}
-                  <div className="sticky top-0 z-10 flex items-center gap-2 border-y border-zinc-100 bg-zinc-50/80 px-4 py-1.5 backdrop-blur">
+                  <div className="sticky top-0 z-10 flex items-center gap-2 border-y border-zinc-100 bg-zinc-50/90 px-4 py-1.5 backdrop-blur">
                     <Checkbox
                       checked={
                         selectedCount(group.groupKey) === group.count && group.count > 0
@@ -503,7 +503,7 @@ export function AiAlertPanel() {
                       );
                     })}
                   </ul>
-                </>
+                </div>
               )}
             </section>
           ))}

@@ -77,17 +77,17 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
 
   const linkClass = (href: string, active = pathname === href) =>
     cn(
-      "inline-flex h-8 shrink-0 items-center rounded-xl px-3 text-[12px] font-medium transition-[background-color,color,box-shadow,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+      "inline-flex h-8 shrink-0 items-center rounded-xl border px-3 text-[12px] font-medium transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
       active
-        ? "bg-white text-zinc-800 shadow-sm"
-        : "text-zinc-500 hover:-translate-y-[1px] hover:bg-white hover:text-zinc-800 active:translate-y-0",
+        ? "border-zinc-200/80 bg-white text-zinc-800"
+        : "border-transparent text-zinc-500 hover:-translate-y-[1px] hover:bg-white hover:text-zinc-800 active:translate-y-0",
     );
 
   return (
     <nav className="fixed inset-x-0 top-0 z-40 border-b border-zinc-200 bg-[#FAFAFB] pt-[max(env(safe-area-inset-top),0px)]">
       <div className="mx-auto px-3 sm:px-6">
         <div className="flex min-h-[var(--app-nav-height)] items-center gap-3 px-2 py-2 sm:gap-4 sm:px-3.5">
-          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
               className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-px hover:bg-zinc-50"
@@ -105,7 +105,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
               </div>
             </Link>
             <div
-              className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               aria-label="主导航"
             >
               {navItems.map((item) => (
