@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { ArrowUp, Columns2 } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputBarProps {
@@ -9,8 +9,6 @@ interface ChatInputBarProps {
   isSending: boolean;
   isChatStage: boolean;
   activeFixedModeName: string | null;
-  bothOpen: boolean;
-  onToggleBoth: () => void;
   onInputChange: (text: string) => void;
   onSend: () => void;
 }
@@ -20,8 +18,6 @@ export function ChatInputBar({
   isSending,
   isChatStage,
   activeFixedModeName,
-  bothOpen,
-  onToggleBoth,
   onInputChange,
   onSend,
 }: ChatInputBarProps) {
@@ -70,19 +66,6 @@ export function ChatInputBar({
               isSending && 'cursor-not-allowed opacity-60'
             )}
           />
-          <button
-            type="button"
-            onClick={onToggleBoth}
-            className={cn(
-              'mb-0.5 hidden lg:flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors',
-              bothOpen
-                ? 'bg-zinc-100 text-zinc-700'
-                : 'bg-white text-zinc-400 border border-zinc-200 hover:text-zinc-700 hover:border-zinc-300'
-            )}
-            title={bothOpen ? '收起侧边栏' : '展开侧边栏'}
-          >
-            <Columns2 className="h-4 w-4" strokeWidth={1.5} />
-          </button>
           <button
             type="button"
             onClick={onSend}

@@ -1,14 +1,37 @@
 'use client';
 
-import React, { useState } from 'react';
-import { PanelLeftClose, PanelLeft, Plus, Sliders, Columns2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { PanelLeftClose, PanelLeft, Plus, Sliders, Layout } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRewriteLogic } from './useRewriteLogic';
 import { RewriteHistory } from './RewriteHistory';
 import { RewriteOutput } from './RewriteOutput';
 import { ConfigBar } from './ConfigBar';
 import { ChatInputBar } from './ChatInputBar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { Conversation, Message, BootstrapPayload } from '../types';
+
+const STORAGE_KEY_HISTORY = 'rewrite-history-default-open';
+const STORAGE_KEY_CONFIG = 'rewrite-config-default-open';
+
+function getStoredDefault(key: string, fallback: boolean): boolean {
+  if (typeof window === 'undefined') return fallback;
+  const raw = window.localStorage.getItem(key);
+  if (raw === null) return fallback;
+  return raw === 'true';
+}
+
+function setStoredDefault(key: string, value: boolean) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(key, String(value));
+}
 
 function getConversationTag(conversation: Conversation) {
   if (conversation.selected.fixedMode) return conversation.selected.fixedMode.name;
@@ -51,15 +74,42 @@ function getMessageDisplayMeta(message: Message, bootstrap: BootstrapPayload) {
 
 export function RewriteWorkbench() {
   const { state, actions } = useRewriteLogic();
+
   const [historyOpen, setHistoryOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [historyPinned, setHistoryPinned] = useState(false);
+  const [configPinned, setConfigPinned] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const bothOpen = historyOpen && configOpen;
-  const toggleBoth = () => {
-    const next = !bothOpen;
-    setHistoryOpen(next);
-    setConfigOpen(next);
-  };
+  useEffect(() => {
+    const historyDefault = getStoredDefault(STORAGE_KEY_HISTORY, false);
+    const configDefault = getStoredDefault(STORAGE_KEY_CONFIG, false);
+    setHistoryOpen(historyDefault);
+    setConfigOpen(configDefault);
+    setHistoryPinned(historyDefault);
+    setConfigPinned(configDefault);
+    setMounted(true);
+  }, []);
+
+  const toggleHistory = useCallback(() => {
+    setHistoryOpen((v) => !v);
+  }, []);
+
+  const toggleConfig = useCallback(() => {
+    setConfigOpen((v) => !v);
+  }, []);
+
+  const handleHistoryPin = useCallback((pinned: boolean) => {
+    setHistoryPinned(pinned);
+    setHistoryOpen(pinned);
+    setStoredDefault(STORAGE_KEY_HISTORY, pinned);
+  }, []);
+
+  const handleConfigPin = useCallback((pinned: boolean) => {
+    setConfigPinned(pinned);
+    setConfigOpen(pinned);
+    setStoredDefault(STORAGE_KEY_CONFIG, pinned);
+  }, []);
 
   if (state.errorState) {
     return (
@@ -109,13 +159,21 @@ export function RewriteWorkbench() {
       {/* Top bar */}
       <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3">
         <div className="flex items-center gap-2">
+          {/* History toggle button — now with text label */}
           <button
-            onClick={() => setHistoryOpen((v) => !v)}
-            className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800"
-            title={historyOpen ? '收起历史' : '展开历史'}
+            onClick={toggleHistory}
+            className={cn(
+              'hidden lg:inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+              historyOpen
+                ? 'bg-zinc-200 text-zinc-800'
+                : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800'
+            )}
+            title={historyOpen ? '收起历史栏' : '展开历史栏'}
           >
             {historyOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeft className="h-3.5 w-3.5" />}
+            <span>历史</span>
           </button>
+
           <div className="flex items-center gap-2 px-1">
             <span className="relative flex h-1.5 w-1.5">
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
@@ -135,8 +193,10 @@ export function RewriteWorkbench() {
             <Plus className="h-3 w-3" />
             <span className="tracking-wide">新对话</span>
           </button>
+
+          {/* Config toggle button */}
           <button
-            onClick={() => setConfigOpen((v) => !v)}
+            onClick={toggleConfig}
             className={cn(
               'inline-flex items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-[11px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0',
               configOpen
@@ -148,6 +208,49 @@ export function RewriteWorkbench() {
             <Sliders className="h-3 w-3" />
             <span className="tracking-wide">{activeBadge} · {activeModelLabel}</span>
           </button>
+
+          {/* Layout settings dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-700"
+              title="布局设置"
+            >
+              <Layout className="h-3.5 w-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={4} className="w-44">
+              <DropdownMenuLabel>侧边栏默认状态</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleHistoryPin(true)}
+                className={cn(historyPinned && 'bg-accent')}
+              >
+                <PanelLeft className="h-3.5 w-3.5" />
+                <span>历史栏默认展开</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleHistoryPin(false)}
+                className={cn(!historyPinned && 'bg-accent')}
+              >
+                <PanelLeftClose className="h-3.5 w-3.5" />
+                <span>历史栏默认收起</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleConfigPin(true)}
+                className={cn(configPinned && 'bg-accent')}
+              >
+                <Sliders className="h-3.5 w-3.5" />
+                <span>配置栏默认展开</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleConfigPin(false)}
+                className={cn(!configPinned && 'bg-accent')}
+              >
+                <PanelLeftClose className="h-3.5 w-3.5" />
+                <span>配置栏默认收起</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -197,8 +300,6 @@ export function RewriteWorkbench() {
             isSending={state.isSending}
             isChatStage={state.isChatStage}
             activeFixedModeName={state.activeFixedMode?.name ?? null}
-            bothOpen={bothOpen}
-            onToggleBoth={toggleBoth}
             onInputChange={actions.setInputText}
             onSend={() => actions.handleSend()}
           />
