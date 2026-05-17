@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PanelLeftClose, PanelLeft, Plus, Sliders } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Plus, Sliders, Columns2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRewriteLogic } from './useRewriteLogic';
 import { RewriteHistory } from './RewriteHistory';
@@ -51,8 +51,15 @@ function getMessageDisplayMeta(message: Message, bootstrap: BootstrapPayload) {
 
 export function RewriteWorkbench() {
   const { state, actions } = useRewriteLogic();
-  const [historyOpen, setHistoryOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+
+  const bothOpen = historyOpen && configOpen;
+  const toggleBoth = () => {
+    const next = !bothOpen;
+    setHistoryOpen(next);
+    setConfigOpen(next);
+  };
 
   if (state.errorState) {
     return (
@@ -60,7 +67,7 @@ export function RewriteWorkbench() {
         <div className="relative max-w-sm overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
-            System Error
+            系统错误
           </p>
           <h3 className="mt-2 text-[18px] font-medium tracking-tight text-zinc-800">
             {state.errorState.title}
@@ -83,7 +90,7 @@ export function RewriteWorkbench() {
             <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-pulse [animation-delay:300ms]" />
           </div>
           <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
-            Entering Workstation
+            进入工作台
           </span>
         </div>
       </div>
@@ -114,7 +121,7 @@ export function RewriteWorkbench() {
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
             </span>
             <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
-              Rewrite Studio
+              文案改写
             </span>
           </div>
         </div>
@@ -149,9 +156,13 @@ export function RewriteWorkbench() {
         {/* Left: History */}
         <aside
           className={cn(
-            'relative hidden shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 transition-[width] duration-300 ease-out lg:flex',
-            historyOpen ? 'w-[220px]' : 'w-0 overflow-hidden'
+            'relative hidden shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 lg:flex',
+            historyOpen ? 'w-[240px]' : 'w-0 overflow-hidden'
           )}
+          style={{
+            transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transformOrigin: 'left center',
+          }}
         >
           <RewriteHistory
             conversations={state.conversations}
@@ -186,6 +197,8 @@ export function RewriteWorkbench() {
             isSending={state.isSending}
             isChatStage={state.isChatStage}
             activeFixedModeName={state.activeFixedMode?.name ?? null}
+            bothOpen={bothOpen}
+            onToggleBoth={toggleBoth}
             onInputChange={actions.setInputText}
             onSend={() => actions.handleSend()}
           />
@@ -194,9 +207,14 @@ export function RewriteWorkbench() {
         {/* Right: Config panel */}
         <aside
           className={cn(
-            'relative hidden shrink-0 flex-col border-l border-zinc-200 bg-zinc-50 transition-[width] duration-300 ease-out lg:flex',
+            'relative hidden shrink-0 flex-col border-l border-zinc-200 bg-white lg:flex',
             configOpen ? 'w-[260px]' : 'w-0 overflow-hidden'
           )}
+          style={{
+            transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+            transformOrigin: 'right center',
+            boxShadow: '-8px 0 24px -12px rgba(15, 23, 42, 0.08)',
+          }}
         >
           <ConfigBar
             bootstrap={state.bootstrap}

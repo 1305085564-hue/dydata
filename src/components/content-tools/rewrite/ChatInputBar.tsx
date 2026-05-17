@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Columns2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputBarProps {
@@ -9,6 +9,8 @@ interface ChatInputBarProps {
   isSending: boolean;
   isChatStage: boolean;
   activeFixedModeName: string | null;
+  bothOpen: boolean;
+  onToggleBoth: () => void;
   onInputChange: (text: string) => void;
   onSend: () => void;
 }
@@ -18,6 +20,8 @@ export function ChatInputBar({
   isSending,
   isChatStage,
   activeFixedModeName,
+  bothOpen,
+  onToggleBoth,
   onInputChange,
   onSend,
 }: ChatInputBarProps) {
@@ -39,7 +43,7 @@ export function ChatInputBar({
   const canSend = inputText.trim() && !isSending;
 
   return (
-    <div className="shrink-0 bg-[#FAFAFB] px-4 pb-4 pt-2">
+    <div className="shrink-0 bg-[#FAFAFB] px-4 pb-2 pt-2">
       <div className="mx-auto max-w-3xl">
         <div
           className={cn(
@@ -68,12 +72,25 @@ export function ChatInputBar({
           />
           <button
             type="button"
+            onClick={onToggleBoth}
+            className={cn(
+              'mb-0.5 hidden lg:flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors',
+              bothOpen
+                ? 'bg-zinc-100 text-zinc-700'
+                : 'bg-white text-zinc-400 border border-zinc-200 hover:text-zinc-700 hover:border-zinc-300'
+            )}
+            title={bothOpen ? '收起侧边栏' : '展开侧边栏'}
+          >
+            <Columns2 className="h-4 w-4" strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
             onClick={onSend}
             disabled={!canSend}
             className={cn(
-              'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+              'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-colors',
               canSend
-                ? 'bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0'
+                ? 'bg-[#D97757] text-white hover:bg-[#C96442]'
                 : 'bg-zinc-100 text-zinc-400'
             )}
             title={canSend ? '发送' : '输入内容后可发送'}

@@ -49,7 +49,7 @@ export function RewriteOutput({
             <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.15s]" />
             <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce" />
           </div>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">Loading</span>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">加载中</span>
         </div>
       </div>
     );
@@ -156,7 +156,7 @@ export function RewriteOutput({
                     {isStreaming && (
                       <span className="inline-flex items-center gap-1 text-[10px] text-[#8A6A2F]">
                         <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
-                        <span className="uppercase tracking-[0.25em]">Generating</span>
+                        <span className="uppercase tracking-[0.25em]">生成中</span>
                       </span>
                     )}
                   </div>
@@ -188,7 +188,7 @@ export function RewriteOutput({
                                 )}
                               >
                                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                                {copied ? 'Copied' : 'Copy'}
+                                {copied ? '已复制' : '复制'}
                               </button>
                             </div>
                             <div className="px-3.5 py-3 text-[14px] leading-[1.7] text-zinc-800">
@@ -212,7 +212,7 @@ export function RewriteOutput({
                         )}
                       >
                         {copiedKey === message.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                        {copiedKey === message.id ? 'Copied' : 'Copy'}
+                        {copiedKey === message.id ? '已复制' : '复制'}
                       </button>
                       <div className="text-[14px] leading-[1.7] text-zinc-800">
                         <p className="whitespace-pre-wrap">{chatText || '...'}</p>
@@ -224,7 +224,7 @@ export function RewriteOutput({
                   {responseMode === 'versions' && message.structuredResult?.final?.notes?.length ? (
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
                       <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                        Notes
+                        备注
                       </p>
                       <ul className="mt-1.5 space-y-0.5 text-[12.5px] leading-[1.7] text-zinc-500">
                         {message.structuredResult.final.notes.map((note, index) => (

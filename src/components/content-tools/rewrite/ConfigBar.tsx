@@ -54,7 +54,7 @@ export function ConfigBar({
       <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-3">
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
-            Workspace
+            工作区
           </span>
         </div>
         {onClose && (
@@ -72,7 +72,7 @@ export function ConfigBar({
         <div className="space-y-5">
           {/* Fixed modes */}
           <div className="space-y-2.5">
-            <SectionLabel>Package</SectionLabel>
+            <SectionLabel>改写套餐</SectionLabel>
             <div className="space-y-1.5">
               {bootstrap.fixedModes.map((fixedMode) => {
                 const active = fixedMode.id === selectedFixedModeId;
@@ -83,23 +83,18 @@ export function ConfigBar({
                     onClick={() => onToggleFixedMode(fixedMode.id)}
                     disabled={interactionControlsDisabled}
                     className={cn(
-                      'group relative w-full overflow-hidden rounded-xl border p-3 text-left transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                      'group relative w-full overflow-hidden rounded-xl border p-3 text-left transition-colors',
                       interactionControlsDisabled && 'cursor-not-allowed opacity-50',
                       active
-                        ? 'border-[#D97757] bg-zinc-50 shadow-sm'
-                        : 'border-zinc-200 bg-white hover:-translate-y-[1px] hover:border-zinc-300 active:translate-y-0'
+                        ? 'border-[#D97757] bg-zinc-50'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300'
                     )}
                   >
                     {active && (
-                      <div className="absolute left-0 top-0 h-full w-[3px] bg-[#D97757]" />
+                      <div className="absolute left-0 top-0 h-full w-[2px] bg-[#D97757]" />
                     )}
                     <div className="flex items-center justify-between">
-                      <span
-                        className={cn(
-                          'text-[13px] font-semibold',
-                          active ? 'text-zinc-800' : 'text-zinc-800'
-                        )}
-                      >
+                      <span className="text-[13px] font-medium text-zinc-800">
                         {fixedMode.name}
                       </span>
                       {active && (
@@ -132,13 +127,13 @@ export function ConfigBar({
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1">
               <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
-                Custom
+                自定义
               </span>
               <div className="h-px flex-1 bg-zinc-200" />
               {customControlsLocked && (
                 <span className="inline-flex items-center gap-1 rounded-md bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 ring-1 ring-zinc-200">
                   <Lock className="h-2.5 w-2.5" />
-                  Locked
+                  已锁定
                 </span>
               )}
             </div>
@@ -151,10 +146,10 @@ export function ConfigBar({
                   onChange={(e) => onModelViewChange(e.target.value)}
                   disabled={customControlsLocked}
                   className={cn(
-                    'w-full rounded-xl border bg-white px-3 py-2 text-[13px] outline-none transition',
+                    'w-full rounded-lg border bg-white px-3 py-2 text-[13px] outline-none transition',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-100 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5'
+                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
                   )}
                 >
                   <option value="">默认真实模型</option>
@@ -173,10 +168,10 @@ export function ConfigBar({
                   onChange={(e) => onModeChange(e.target.value || null)}
                   disabled={customControlsLocked}
                   className={cn(
-                    'w-full rounded-xl border bg-white px-3 py-2 text-[13px] outline-none transition',
+                    'w-full rounded-lg border bg-white px-3 py-2 text-[13px] outline-none transition',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-100 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5'
+                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
                   )}
                 >
                   <option value="">无附加模式</option>
@@ -195,10 +190,10 @@ export function ConfigBar({
                   onChange={(e) => onLengthChange(e.target.value)}
                   disabled={customControlsLocked}
                   className={cn(
-                    'w-full rounded-xl border bg-white px-3 py-2 text-[13px] outline-none transition',
+                    'w-full rounded-lg border bg-white px-3 py-2 text-[13px] outline-none transition',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-100 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5'
+                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
                   )}
                 >
                   {bootstrap.lengthPresets.map((item) => (
@@ -214,7 +209,7 @@ export function ConfigBar({
           {isChatStage && (
             <div className="rounded-xl border border-zinc-200 bg-white p-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
-                Session Context
+                会话状态
               </p>
               <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
                 已进入对话模式。切换配置会应用到下一轮回复，不影响历史。
