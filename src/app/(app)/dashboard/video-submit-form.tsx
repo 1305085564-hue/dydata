@@ -494,7 +494,6 @@ export function VideoSubmitForm({
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(null);
   const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(null);
   const [scriptText, setScriptText] = useState("");
-  const [showDraftBanner, setShowDraftBanner] = useState(false);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
@@ -549,13 +548,11 @@ export function VideoSubmitForm({
     }));
     setScriptText(draft.scriptText);
     setKeywordInput(draft.keywordInput);
-    setShowDraftBanner(false);
     feedbackToast.success("草稿已恢复");
   }, [restoreDraft]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
-    setShowDraftBanner(false);
   }, [clearDraft]);
 
   // 草稿状态 → 通知中心本地条目（不再占用主页空间）
