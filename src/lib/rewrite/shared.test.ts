@@ -433,6 +433,98 @@ function pushAiSuccess(recommendedText: string, summary = "处理完成") {
   });
 }
 
+test("嵌套 JSON 主版本会自动解包，不再把整段协议文本当正文展示", () => {
+  const nested = rewrite.__internal.normalizeStoredRewriteResult(
+    {
+      responseMode: "versions",
+      versions: [
+        {
+          title: "主版本",
+          content: JSON.stringify({
+            responseMode: "versions",
+            title: "两篇文案的因果链与逻辑链梳理",
+            summary: "把论证链拆清楚",
+            versions: [
+              {
+                title: "因果链与逻辑链拆解",
+                content: "第一篇先讲因果，第二篇再讲轮动。",
+              },
+            ],
+          }),
+        },
+      ],
+    },
+    "",
+    "主版本",
+  );
+
+  assert.equal(nested.title, "两篇文案的因果链与逻辑链梳理");
+  assert.equal(nested.summary, "把论证链拆清楚");
+  assert.equal(nested.versions[0]?.title, "因果链与逻辑链拆解");
+  assert.equal(nested.versions[0]?.content, "第一篇先讲因果，第二篇再讲轮动。");
+});
+
+test("模型返回套壳 JSON 时，会在写库前自动解包成正常主版本", async () => {
+  const db = buildBaseDb();
+  const service = createFakeService(db);
+
+  aiQueue.push({
+    content: JSON.stringify({
+      responseMode: "versions",
+      title: "主版本",
+      summary: "外层误包了一层",
+      versions: [
+        {
+          title: "主版本",
+          content: JSON.stringify({
+            responseMode: "versions",
+            title: "两篇文案的因果链与逻辑链梳理",
+            summary: "把论证链拆清楚",
+            versions: [
+              {
+                title: "因果链与逻辑链拆解",
+                content: "第一篇先讲因果，第二篇再讲轮动。",
+              },
+            ],
+            notes: ["保留论证顺序"],
+          }),
+        },
+      ],
+    }),
+    model: "claude-sonnet-4-6",
+    channelName: "主渠道",
+    elapsedMs: 321,
+  });
+
+  const payload = await rewrite.handleRewriteChat({
+    service: service as never,
+    actor: buildActor(),
+    message: "帮我整理文案中的因果链和逻辑链",
+    autoModeEnabled: false,
+    modelViewId: "model-default",
+    modeId: "mode-sharp",
+    lengthPresetId: "length-default",
+  });
+
+  assert.equal(payload.message.content.includes('{"responseMode"'), false);
+  assert.equal(payload.message.structuredResult?.final.title, "两篇文案的因果链与逻辑链梳理");
+  assert.equal(payload.message.structuredResult?.final.summary, "把论证链拆清楚");
+  assert.equal(payload.message.structuredResult?.final.versions[0]?.title, "因果链与逻辑链拆解");
+  assert.equal(payload.message.structuredResult?.final.versions[0]?.content, "第一篇先讲因果，第二篇再讲轮动。");
+
+  const savedAssistant = db.rewrite_messages.find((row) => row.role === "assistant");
+  assert.ok(savedAssistant);
+  assert.equal(typeof savedAssistant.content, "string");
+  assert.equal(String(savedAssistant.content).includes('{"responseMode"'), false);
+  const savedStructuredResult = savedAssistant.structured_result as {
+    final: { versions: Array<{ content: string }> };
+  };
+  assert.equal(
+    savedStructuredResult.final.versions[0]?.content,
+    "第一篇先讲因果，第二篇再讲轮动。",
+  );
+});
+
 function buildActor() {
   return {
     userId: "user-1",

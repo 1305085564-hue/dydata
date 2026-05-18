@@ -7,10 +7,11 @@ import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机"
 import { SubmissionSlotCard } from "./截图槽位卡";
 
 interface SubmissionSlotsProps {
-  slots: Record<SubmissionSlotRole, SubmissionSlotState & { fileName?: string; error?: string | null; assetUrl?: string | null; ocrSummary?: string[] }>;
+  slots: Record<SubmissionSlotRole, SubmissionSlotState & { fileName?: string; error?: string | null; assetUrl?: string | null; ocrSummary?: string[]; errorCode?: string | null }>;
   onSelectFile: (role: SubmissionSlotRole, file: File) => void;
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
+  onManualFill?: (role: SubmissionSlotRole) => void;
   issueCount?: number;
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
@@ -32,6 +33,7 @@ export function SubmissionSlotsSection({
   onSelectFile,
   onDelete,
   onRetry,
+  onManualFill,
   issueCount = 0,
   screenshotsRequired = true,
   focusedRole = null,
@@ -79,6 +81,8 @@ export function SubmissionSlotsSection({
                 onSelectFile={(file) => onSelectFile(item.role, file)}
                 onDelete={() => onDelete(item.role)}
                 onRetry={onRetry ? () => onRetry(item.role) : undefined}
+                onManualFill={onManualFill ? () => onManualFill(item.role) : undefined}
+                errorCode={slot.errorCode}
               />
             </motion.div>
           );

@@ -25,6 +25,7 @@ import {
   type ViolationEventType,
 } from "@/lib/conversion-hub/types";
 import { cn } from "@/lib/utils";
+import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
 import { VIOLATION_CATEGORIES } from "./format";
 import type { ViolationAccount } from "./types";
 import { useReasonTags } from "./use-reason-tags";
@@ -130,11 +131,25 @@ export function SubmitForm({
 
   async function uploadScreenshots(files: FileList | null) {
     if (!files?.length) return;
-    const nextFiles = Array.from(files).slice(0, Math.max(5 - screenshots.length, 0));
+    let nextFiles = Array.from(files).slice(0, Math.max(5 - screenshots.length, 0));
     if (!nextFiles.length) {
       feedbackToast.warning("最多上传 5 张截图");
       return;
     }
+
+    // 客户端大小预校验：超限的文件跳过并提示
+    const validFiles: File[] = [];
+    for (const file of nextFiles) {
+      if (file.size > UPLOAD_LIMITS.violationScreenshot) {
+        feedbackToast.error(
+          `${file.name} 超过 ${formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)} 限制，请压缩后重试`
+        );
+      } else {
+        validFiles.push(file);
+      }
+    }
+    if (!validFiles.length) return;
+    nextFiles = validFiles;
 
     setIsUploading(true);
     try {
@@ -480,9 +495,15 @@ export function SubmitForm({
                 accept="image/png,image/jpeg,image/webp"
                 multiple
                 disabled={isUploading || screenshots.length >= 5}
-                onChange={(event) => uploadScreenshots(event.currentTarget.files)}
+                onChange={(event) => {
+                  uploadScreenshots(event.currentTarget.files);
+                  event.currentTarget.value = "";
+                }}
                 className="mt-3 h-11 rounded-2xl bg-white"
               />
+              <p className="mt-1.5 text-[11px] text-zinc-400">
+                支持 JPG/PNG/WEBP，单张最大 {formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)}
+              </p>
               {screenshots.length ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {screenshots.map((item) => (

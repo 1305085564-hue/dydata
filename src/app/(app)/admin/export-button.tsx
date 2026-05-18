@@ -23,8 +23,12 @@ export function ExportButton() {
 
       const res = await fetch(url);
       if (!res.ok) {
-        const err = await res.json();
-        feedbackToast.error(err.error || "导出失败");
+        const err = await res.json().catch(() => ({ error: "导出失败" }));
+        if (err.error === "数据量过大" && err.message) {
+          feedbackToast.error(err.message);
+        } else {
+          feedbackToast.error(err.error || "导出失败");
+        }
         return;
       }
 

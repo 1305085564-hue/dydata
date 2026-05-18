@@ -2,6 +2,7 @@ import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/
 import { DemoModeChip } from "@/components/demo/demo-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/demo/demo-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getDemoAdminContentData } from "@/lib/demo-data";
 
@@ -75,12 +76,12 @@ export default function DemoAdminContentPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <Button type="button" size="sm" disabled>
+                  <DemoButton type="button" size="sm" actionName="查看详情">
                     查看详情
-                  </Button>
-                  <Button type="button" size="sm" variant="outline" disabled>
+                  </DemoButton>
+                  <DemoButton type="button" size="sm" variant="outline" actionName="发次日复盘">
                     发次日复盘
-                  </Button>
+                  </DemoButton>
                 </div>
               </CardContent>
             </Card>

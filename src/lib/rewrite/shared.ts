@@ -752,6 +752,15 @@ export function normalizeStoredRewriteResult(
           : []
       : [];
 
+  const nestedUnwrapped =
+    responseMode === "versions" && safeVersions[0]?.content
+      ? unwrapNestedRewriteResult(safeVersions[0].content, fallbackTitle)
+      : null;
+
+  if (nestedUnwrapped) {
+    return nestedUnwrapped;
+  }
+
   return {
     responseMode,
     title: trimOrNull(value.title),
@@ -764,6 +773,27 @@ export function normalizeStoredRewriteResult(
     recommendedText:
       responseMode === "versions" ? pickRecommendedText(safeVersions) || fallbackText || "" : fallbackText || "",
   };
+}
+
+function unwrapNestedRewriteResult(content: string, fallbackTitle: string): NormalizedRewriteResult | null {
+  const jsonString = extractJsonString(content.trim());
+  if (!jsonString) return null;
+
+  try {
+    const parsed = JSON.parse(jsonString) as Record<string, unknown>;
+    const hasRewriteShape =
+      parsed.responseMode === "chat" ||
+      parsed.responseMode === "versions" ||
+      Array.isArray(parsed.versions) ||
+      typeof parsed.summary === "string" ||
+      typeof parsed.title === "string";
+
+    if (!hasRewriteShape) return null;
+
+    return normalizeStoredRewriteResult(parsed, content, fallbackTitle);
+  } catch {
+    return null;
+  }
 }
 
 export function normalizeRewriteResult(

@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { AI_CHANNELS_CHANGED } from "@/components/admin-layout/admin-sidebar";
 
 import { ChannelDetailForm } from "./components/channel-detail-form";
@@ -133,8 +134,8 @@ export default function AIChannelsClient() {
 
     try {
       const [cRes, fRes] = await Promise.all([
-        fetch("/api/admin/ai-channels", { cache: "no-store" }),
-        fetch("/api/admin/ai-features", { cache: "no-store" }),
+        fetchWithTimeout("/api/admin/ai-channels", { cache: "no-store" }),
+        fetchWithTimeout("/api/admin/ai-features", { cache: "no-store" }),
       ]);
 
       const cData = await cRes.json();
@@ -247,7 +248,7 @@ export default function AIChannelsClient() {
 
     setBusy("save", true);
     try {
-      const res = await fetch("/api/admin/ai-channels", {
+      const res = await fetchWithTimeout("/api/admin/ai-channels", {
         method: id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -301,25 +302,25 @@ export default function AIChannelsClient() {
     try {
       let res: Response;
       if (action === "test" || action === "ocr_test") {
-        res = await fetch("/api/admin/ai-channels/test", {
+        res = await fetchWithTimeout("/api/admin/ai-channels/test", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ channel_id: id, test_kind: action === "ocr_test" ? "ocr" : "text" }),
         });
       } else if (action === "recover") {
-        res = await fetch("/api/admin/ai-channels/recover", {
+        res = await fetchWithTimeout("/api/admin/ai-channels/recover", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ channel_id: id }),
         });
       } else if (action === "toggle") {
-        res = await fetch("/api/admin/ai-channels", {
+        res = await fetchWithTimeout("/api/admin/ai-channels", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id, is_enabled: isEnabled }),
         });
       } else {
-        res = await fetch(`/api/admin/ai-channels?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+        res = await fetchWithTimeout(`/api/admin/ai-channels?id=${encodeURIComponent(id)}`, { method: "DELETE" });
       }
 
       const data = await res.json();
@@ -430,7 +431,7 @@ export default function AIChannelsClient() {
     setFeatureSaveStates((p) => ({ ...p, [id]: "saving" }));
 
     try {
-      const res = await fetch("/api/admin/ai-features", {
+      const res = await fetchWithTimeout("/api/admin/ai-features", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

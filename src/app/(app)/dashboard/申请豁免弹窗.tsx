@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { ShieldAlert } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Bell, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,6 +44,8 @@ function ExemptionModal({
   const [reason, setReason] = useState("");
   const [localHasPending, setLocalHasPending] = useState(hasPending);
   const [isPending, startTransition] = useTransition();
+  const [remindCount, setRemindCount] = useState<number | null>(null);
+  const [remindCountLoading, setRemindCountLoading] = useState(false);
 
   function handleOpen() {
     if (localHasPending) return;
@@ -51,6 +53,29 @@ function ExemptionModal({
     setReason("");
     setOpen(true);
   }
+
+  // 弹窗打开时加载催交次数
+  useEffect(() => {
+    if (!open) {
+      setRemindCount(null);
+      return;
+    }
+    setRemindCountLoading(true);
+    fetch(`/api/remind/count?date=${today}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("加载失败");
+        return res.json();
+      })
+      .then((data) => {
+        setRemindCount(typeof data.count === "number" ? data.count : null);
+      })
+      .catch(() => {
+        setRemindCount(null);
+      })
+      .finally(() => {
+        setRemindCountLoading(false);
+      });
+  }, [open, today]);
 
   function toggleDate(date: string) {
     setSelectedDates((current) => {
@@ -192,6 +217,31 @@ function ExemptionModal({
                     </div>
                   )}
                 </div>
+
+                {/* 催交记录提示 */}
+                {remindCount !== null && remindCount > 0 && (
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 rounded-xl border px-4 py-3 text-[13px]",
+                      remindCount > 2
+                        ? "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#D99E55]"
+                        : "border-zinc-200 bg-[#FAFAFB] text-zinc-600",
+                    )}
+                  >
+                    <Bell className="size-4 shrink-0 stroke-[1.5]" />
+                    <span>
+                      该日期前后您已被催交{" "}
+                      <span className="font-semibold tabular-nums">{remindCount}</span>{" "}
+                      次
+                    </span>
+                  </div>
+                )}
+                {remindCountLoading && (
+                  <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-[#FAFAFB] px-4 py-3 text-[13px] text-zinc-400">
+                    <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-500" />
+                    加载催交记录...
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <p className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-800">

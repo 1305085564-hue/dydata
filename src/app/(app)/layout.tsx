@@ -7,6 +7,7 @@ import { AlertContextProvider } from "@/components/ai-assistant/alert-context-st
 import type { UserRole } from "@/types";
 
 import { JoinBanner } from "./_components/join-banner";
+import { NetworkStatusBar } from "@/components/network-status-bar";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const permissionInfo = await getUserPermissions();
@@ -21,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AlertContextProvider>
       <div className="app-shell">
+        <NetworkStatusBar />
         <NavBar />
         <main className="app-main min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+1.25rem)] sm:px-6">
           <JoinBanner />

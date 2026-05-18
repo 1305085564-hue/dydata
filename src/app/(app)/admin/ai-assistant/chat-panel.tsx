@@ -19,6 +19,7 @@ import ConfirmCard from "./confirm-card";
 import { getAiAssistantErrorMessage } from "./chat-errors";
 import AssistantDetailSections from "./assistant-detail-sections";
 import { cn } from "@/lib/utils";
+import { fetchWithTimeout } from "@/lib/fetch-timeout";
 
 type ToolCall = {
   toolName: string;
@@ -251,7 +252,7 @@ export default function ChatPanel({
 
     try {
       const payloadText = prepareSend ? await prepareSend(text) : text;
-      const res = await fetch("/api/admin/ai-assistant", {
+      const res = await fetchWithTimeout("/api/admin/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -287,7 +288,7 @@ export default function ChatPanel({
 
     setConfirmingActionId(message.actionId);
     try {
-      const res = await fetch("/api/admin/ai-assistant/confirm", {
+      const res = await fetchWithTimeout("/api/admin/ai-assistant/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

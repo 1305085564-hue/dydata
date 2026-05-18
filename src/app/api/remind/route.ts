@@ -11,7 +11,7 @@ import {
 } from "@/lib/remind-submission";
 import { buildReminderContent } from "@/lib/飞书提醒";
 import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
-import type { ExemptionCategory, UserStatus } from "@/types";
+import type { ExemptionCategory, ExemptionRequestStatus, UserStatus } from "@/types";
 
 const REMIND_SOURCE_LABEL = "Vercel Cron /api/remind v2";
 
@@ -37,6 +37,43 @@ type ReportRow = {
   account_id: string | null;
   report_date: string;
 };
+
+type ExemptionRequestRow = {
+  applicant_user_id: string;
+  request_status: ExemptionRequestStatus;
+  start_date: string;
+  end_date: string | null;
+};
+
+function isExemptByRequest(requests: ExemptionRequestRow[], userId: string, date: string): boolean {
+  return requests.some((req) => {
+    if (req.applicant_user_id !== userId) return false;
+    if (req.request_status !== "pending" && req.request_status !== "approved") return false;
+    if (!req.end_date) {
+      return req.start_date === date;
+    }
+    return req.start_date <= date && date <= req.end_date;
+  });
+}
+
+type RemindLogInsert = {
+  target_date: string;
+  user_id: string;
+  user_name: string;
+  status: "success" | "failed";
+  is_exempted: boolean;
+  exempt_reason?: string | null;
+  response_body?: string | null;
+};
+
+async function insertRemindLog(supabase: unknown, log: RemindLogInsert) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("remind_logs").insert(log);
+  } catch {
+    // 静默失败，不影响主流程
+  }
+}
 
 export async function GET(request: NextRequest) {
   if (!isCronAuthorized(request)) {
@@ -68,6 +105,7 @@ export async function GET(request: NextRequest) {
     { data: profiles, error: profilesError },
     { data: accounts, error: accountsError },
     { data: reports, error: reportsError },
+    { data: exemptionRequests, error: exemptionRequestsError },
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -81,7 +119,16 @@ export async function GET(request: NextRequest) {
       .select("user_id, account_id, report_date")
       .gte("report_date", sevenDaysAgo)
       .lte("report_date", today),
+    supabase
+      .from("exemption_request")
+      .select("applicant_user_id, request_status, start_date, end_date")
+      .in("request_status", ["pending", "approved"])
+      .lte("start_date", today)
+      .or(`end_date.is.null,end_date.gte.${sevenDaysAgo}`),
   ]);
+
+  // exemption_request 查询失败不应阻断主流程
+  const activeExemptionRequests = (exemptionRequests ?? []) as ExemptionRequestRow[];
 
   if (profilesError) {
     return NextResponse.json({ error: profilesError.message }, { status: 500 });
@@ -106,8 +153,18 @@ export async function GET(request: NextRequest) {
     reports: (reports ?? []) as ReportRow[],
     today,
   });
-  const unsubmitted = all.filter((user) => !user.submitted);
-  const submittedCount = all.length - unsubmitted.length;
+
+  // 过滤已申请豁免（pending/approved）的成员
+  const unsubmittedWithExemptionCheck = all
+    .filter((user) => !user.submitted)
+    .map((user) => ({
+      ...user,
+      isExemptByRequest: isExemptByRequest(activeExemptionRequests, user.user_id, today),
+    }));
+
+  const unsubmitted = unsubmittedWithExemptionCheck.filter((user) => !user.isExemptByRequest);
+  const exemptedSkipped = unsubmittedWithExemptionCheck.filter((user) => user.isExemptByRequest);
+  const submittedCount = all.length - unsubmittedWithExemptionCheck.length;
 
   if (unsubmitted.length === 0) {
     return NextResponse.json({ message: "All members have submitted today." });
@@ -131,6 +188,18 @@ export async function GET(request: NextRequest) {
     today,
     sourceLabel: REMIND_SOURCE_LABEL,
   });
+
+  // 记录已豁免跳过成员到 remind_logs
+  for (const member of exemptedSkipped) {
+    await insertRemindLog(supabase, {
+      target_date: today,
+      user_id: member.user_id,
+      user_name: member.name,
+      status: "success",
+      is_exempted: true,
+      exempt_reason: "已申请豁免（pending/approved）",
+    });
+  }
 
   const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
   if (!webhookUrl) {
@@ -173,12 +242,35 @@ export async function GET(request: NextRequest) {
 
   if (!response.ok) {
     const text = await response.text();
+    // 记录发送失败的催交日志
+    for (const member of unsubmitted) {
+      await insertRemindLog(supabase, {
+        target_date: today,
+        user_id: member.user_id,
+        user_name: member.name,
+        status: "failed",
+        is_exempted: false,
+        response_body: text.slice(0, 500),
+      });
+    }
     return NextResponse.json({ error: `Feishu webhook failed: ${text}` }, { status: 500 });
+  }
+
+  // 记录发送成功的催交日志
+  for (const member of unsubmitted) {
+    await insertRemindLog(supabase, {
+      target_date: today,
+      user_id: member.user_id,
+      user_name: member.name,
+      status: "success",
+      is_exempted: false,
+    });
   }
 
   return NextResponse.json({
     ok: true,
     unsubmitted: unsubmitted.map((user) => user.name),
+    exemptedSkipped: exemptedSkipped.map((user) => user.name),
     escalated: escalatedMembers.map((member) => member.name),
     escalationManager: escalationManager?.name ?? null,
     total: all.length,

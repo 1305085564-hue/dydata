@@ -4,6 +4,7 @@ import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/demo/demo-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getDemoAdminOverviewData } from "@/lib/demo-data";
@@ -69,9 +70,9 @@ export default function DemoAdminPage() {
                       <p className="text-sm font-semibold text-[var(--color-text-primary)]">{item.label}</p>
                       <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">{item.description}</p>
                     </div>
-                    <Button type="button" size="sm" variant="outline" disabled>
+                    <DemoButton type="button" size="sm" variant="outline" actionName={item.label}>
                       仅演示
-                    </Button>
+                    </DemoButton>
                   </div>
                 </div>
               ))}
@@ -109,9 +110,9 @@ export default function DemoAdminPage() {
                     <TableCell>{row.accountCount}</TableCell>
                     <TableCell>{row.todaySubmitted ? "已提交" : "待提交"}</TableCell>
                     <TableCell className="text-right">
-                      <Button type="button" size="sm" variant="outline" disabled>
+                      <DemoButton type="button" size="sm" variant="outline" actionName="成员管理">
                         管理
-                      </Button>
+                      </DemoButton>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 
@@ -153,8 +154,8 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
     if (file.size <= 0) {
       return "图片为空或已损坏，请重新上传";
     }
-    if (file.size > 8 * 1024 * 1024) {
-      return "图片不能超过 8MB";
+    if (file.size > UPLOAD_LIMITS.ocr) {
+      return `图片不能超过 ${formatSizeLimit(UPLOAD_LIMITS.ocr)}`;
     }
     return null;
   }
@@ -274,7 +275,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         </div>
         <div className="space-y-2">
           <p className="text-[14px] font-medium text-foreground">拖拽截图到这里，或点击选择图片</p>
-          <p className="text-sm text-muted-foreground">支持 jpg、png、webp，单张最大 8MB</p>
+          <p className="text-sm text-muted-foreground">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
           {fileName ? <p className="text-sm text-foreground">当前文件：{fileName}</p> : null}
         </div>
       </div>

@@ -6,6 +6,7 @@ import { ResultTrend } from "@/components/charts/result-trend";
 import { InteractionTrend } from "@/components/charts/interaction-trend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/demo/demo-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getDemoDashboardPageData } from "@/lib/demo-data";
@@ -50,9 +51,9 @@ export default function DemoDashboardPage() {
                   <p className="text-sm font-semibold text-[var(--color-text-primary)]">账号选择</p>
                   <p className="mt-1 text-xs text-[var(--color-text-secondary)]">演示中默认展示 2 个账号入口，支持展开查看今日提报明细。</p>
                 </div>
-                <Button type="button" variant="outline" size="sm" disabled>
+                <DemoButton type="button" variant="outline" size="sm" actionName="切换账号">
                   切换账号
-                </Button>
+                </DemoButton>
               </div>
               <div className="mt-3">
                 <DemoTodayReportPanel accounts={data.accounts} reportsByAccountId={data.reportsByAccountId} />
@@ -81,12 +82,12 @@ export default function DemoDashboardPage() {
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Button type="button" disabled>
+                <DemoButton type="button" actionName="提交今日数据">
                   提交今日数据
-                </Button>
-                <Button type="button" variant="outline" disabled>
+                </DemoButton>
+                <DemoButton type="button" variant="outline" actionName="导入截图">
                   导入截图
-                </Button>
+                </DemoButton>
               </div>
             </div>
           </CardContent>
@@ -155,9 +156,9 @@ export default function DemoDashboardPage() {
                   <TableCell className="text-right">{Math.round((report.play_count ?? 0) / 10000)}万</TableCell>
                   <TableCell className="text-right">{report.follower_gain}</TableCell>
                   <TableCell className="text-right">
-                    <Button type="button" variant="outline" size="sm" disabled>
+                    <DemoButton type="button" variant="outline" size="sm" actionName="查看">
                       查看
-                    </Button>
+                    </DemoButton>
                   </TableCell>
                 </TableRow>
               ))}

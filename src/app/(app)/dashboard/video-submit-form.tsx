@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChevronUp, Sparkles, Loader2, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
+import { ChevronUp, Sparkles, Loader2, XCircle, AlertTriangle, CheckCircle, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 
@@ -52,8 +52,10 @@ import {
 import {
   NETWORK_RETRY_MESSAGE,
   OCR_FAIL_MESSAGE,
+  resolveOcrErrorMessage,
   toSlotUploadErrorMessage,
 } from "@/components/submission/截图上传错误";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import {
   syncPublishedAtAndText,
   toManualFieldState,
@@ -125,6 +127,7 @@ type OcrApiPayload = {
     recognized_fields: Record<string, string | number | boolean | null> | null;
     confidence?: Partial<Record<"play_count" | "likes" | "comments" | "shares" | "favorites" | "follower_gain" | "follower_convert", "high" | "medium" | "low">>;
     error?: string;
+    error_code?: string;
   };
   error?: string;
 };
@@ -490,12 +493,76 @@ export function VideoSubmitForm({
   const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(null);
   const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(null);
   const [scriptText, setScriptText] = useState("");
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  const draftKey = useMemo(() => `dydata.draft.videoSubmit.${userId}`, [userId]);
+
+  type DraftData = {
+    meta: FormMetaState;
+    fields: SubmissionState["fields"];
+    slots: Record<SubmissionSlotRole, SlotViewState>;
+    scriptText: string;
+    keywordInput: string;
+  };
+
+  const draftData: DraftData = useMemo(
+    () => ({
+      meta,
+      fields,
+      slots: {
+        screenshot_1: { ...slots.screenshot_1, file: null, previewUrl: null },
+        screenshot_2: { ...slots.screenshot_2, file: null, previewUrl: null },
+        screenshot_3: { ...slots.screenshot_3, file: null, previewUrl: null },
+      },
+      scriptText,
+      keywordInput,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [meta, fields, slots, scriptText, keywordInput]
+  );
+
+  const { hasDraft, restoreDraft, clearDraft, lastSavedAt } = useFormDraft<DraftData>(
+    draftKey,
+    draftData,
+    [meta, fields, slots, scriptText, keywordInput]
+  );
+
+  // Show draft banner when draft exists and form is not submitted
+  useEffect(() => {
+    if (hasDraft && !isSubmitted && !submittedViewActive && !initialSummary) {
+      setShowDraftBanner(true);
+    } else {
+      setShowDraftBanner(false);
+    }
+  }, [hasDraft, isSubmitted, submittedViewActive, initialSummary]);
+
+  const handleRestoreDraft = useCallback(() => {
+    const draft = restoreDraft();
+    if (!draft) return;
+
+    setMeta(draft.meta);
+    setFields(draft.fields);
+    setSlots((current) => ({
+      screenshot_1: { ...current.screenshot_1, ...draft.slots.screenshot_1, file: null, previewUrl: null },
+      screenshot_2: { ...current.screenshot_2, ...draft.slots.screenshot_2, file: null, previewUrl: null },
+      screenshot_3: { ...current.screenshot_3, ...draft.slots.screenshot_3, file: null, previewUrl: null },
+    }));
+    setScriptText(draft.scriptText);
+    setKeywordInput(draft.keywordInput);
+    setShowDraftBanner(false);
+    feedbackToast.success("草稿已恢复");
+  }, [restoreDraft]);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearDraft();
+    setShowDraftBanner(false);
+  }, [clearDraft]);
 
   // Track all created blob URLs to clean them up on unmount
   useEffect(() => {
@@ -776,7 +843,11 @@ export function VideoSubmitForm({
       const detectedType = data.screenshot_type;
       const ocrSummary = buildOcrSummary(detectedType, data.recognized_fields);
 
-      const normalizedSlotError = data.error ? toSlotUploadErrorMessage(data.error) : null;
+      const resolvedError = data.error_code
+        ? resolveOcrErrorMessage(data.error_code)
+        : data.error
+          ? toSlotUploadErrorMessage(data.error)
+          : null;
 
       setSlots((current) => ({
         ...current,
@@ -786,7 +857,7 @@ export function VideoSubmitForm({
           confirmed: data.slot_status === "confirmed",
           requiresManualConfirmation: data.requires_manual_confirmation,
           confidenceScore: data.confidence_score,
-          error: data.slot_status === "failed" ? normalizedSlotError ?? OCR_FAIL_MESSAGE : normalizedSlotError,
+          error: data.slot_status === "failed" ? resolvedError ?? OCR_FAIL_MESSAGE : resolvedError,
           assetUrl,
           previewUrl,
           screenshotType: detectedType,
@@ -796,7 +867,7 @@ export function VideoSubmitForm({
       }));
 
       if (data.slot_status === "failed") {
-        feedbackToast.error(normalizedSlotError || OCR_FAIL_MESSAGE);
+        feedbackToast.error(resolvedError || OCR_FAIL_MESSAGE);
         return;
       }
 
@@ -988,6 +1059,7 @@ export function VideoSubmitForm({
         className:
           "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
       });
+      clearDraft();
     } catch (error) {
       feedbackToast.error((error as Error).message || "提交失败，请稍后重试");
     } finally {
@@ -1295,6 +1367,58 @@ export function VideoSubmitForm({
     );
   }
 
+  const draftBanner = showDraftBanner ? (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2 }}
+      className="mb-6 rounded-xl border border-[#D99E55]/40 bg-[#FDF9F3] px-4 py-3"
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 shrink-0">
+          <AlertTriangle className="size-4 text-[#D99E55]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] text-zinc-800">
+            检测到未提交的草稿
+            {lastSavedAt ? (
+              <span className="text-zinc-500">
+                （最后保存于{" "}
+                {lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+                ）
+              </span>
+            ) : null}
+            ，是否恢复？
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRestoreDraft}
+              className="inline-flex h-7 items-center rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442]"
+            >
+              恢复草稿
+            </button>
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="inline-flex h-7 items-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
+            >
+              丢弃，重新填写
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowDraftBanner(false)}
+          className="shrink-0 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
+    </motion.div>
+  ) : null;
+
   return (
     <>
       {isSubmitted ? (
@@ -1468,6 +1592,8 @@ export function VideoSubmitForm({
         </DialogContent>
       </Dialog>
 
+      {draftBanner}
+
       <motion.form
         id="video-submit-form"
         onSubmit={handleSubmit}
@@ -1485,6 +1611,23 @@ export function VideoSubmitForm({
                 onSelectFile={handleSlotUpload}
                 onDelete={(role) => setDeleteTargetRole(role)}
                 onRetry={handleSlotRetry}
+                onManualFill={(role) => {
+                  setSlots((current) => ({
+                    ...current,
+                    [role]: {
+                      ...current[role],
+                      status: "empty",
+                      confirmed: false,
+                      error: null,
+                      assetUrl: null,
+                      previewUrl: null,
+                      file: null,
+                      fileName: undefined,
+                      recognizedFields: null,
+                      ocrSummary: undefined,
+                    },
+                  }));
+                }}
                 screenshotsRequired={screenshotsRequired}
                 focusedRole={focusedRole}
                 highlightedOcrIndex={highlightedOcrIndex}

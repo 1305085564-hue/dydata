@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  Bell,
   ChevronRight,
   ShieldAlert,
   UserCheck2,
@@ -11,17 +12,27 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { fetchWithTimeout } from "@/lib/fetch-timeout";
+import type { SopMemberStatus, SopCheckpoint } from "@/types";
 import type {
   CockpitSummary,
   PendingSubmissionRow,
   PendingVideoRow,
   PendingViolationRow,
 } from "./admin-first-screen-loader";
+import { RemindLogDialog } from "./remind-log-dialog";
 
 const RISK_LABEL: Record<string, { text: string; className: string }> = {
   high: { text: "高", className: "text-[#C9604D] bg-[#C9604D]/10" },
   medium: { text: "中", className: "text-[#D99E55] bg-[#D99E55]/10" },
   low: { text: "低", className: "text-zinc-500 bg-zinc-100" },
+};
+
+/* ── SOP 检查点 → 队列卡片映射 ── */
+const SOP_CHECKPOINT_MAP: Record<string, SopCheckpoint[]> = {
+  "待筛视频": ["VIDEO"],
+  "待审违规": ["SCRIPT", "TOPIC"],
+  "待催交成员": ["DATA_REPORT", "MORNING_REVIEW"],
 };
 
 function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null = null) {
@@ -31,7 +42,7 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null
 
   const run = useCallback(async () => {
     try {
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetchWithTimeout(url, { credentials: "include" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as T;
       setData(json);
@@ -56,6 +67,33 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null
   }, [run, intervalMs, initialData]);
 
   return { data, loading, error };
+}
+
+function useSopOverdueCount(date: string) {
+  const { data } = useSafeFetch<{ ok: boolean; members: SopMemberStatus[] }>(
+    `/api/sop/status?date=${date}`,
+    60_000,
+    null,
+  );
+
+  const members = data?.ok ? data.members : [];
+
+  const counts = useCallback(
+    (checkpoints: SopCheckpoint[]) => {
+      let count = 0;
+      for (const member of members) {
+        for (const cp of checkpoints) {
+          if (member.statuses[cp] === "OVERDUE") {
+            count++;
+          }
+        }
+      }
+      return count;
+    },
+    [members],
+  );
+
+  return { counts };
 }
 
 function StatCell({ label, value, tone }: { label: string; value: number; tone: "neutral" | "warning" | "danger" }) {
@@ -92,12 +130,22 @@ function StatusBar({ summary }: { summary: CockpitSummary | null }) {
   );
 }
 
+function OverdueBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-semibold text-white shadow-sm">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 function QueueCard({
   title,
   icon,
   count,
   empty,
   viewAllHref,
+  overdueCount,
   children,
 }: {
   title: string;
@@ -105,12 +153,13 @@ function QueueCard({
   count: number;
   empty: string;
   viewAllHref: string;
+  overdueCount?: number;
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white min-h-[200px]">
+    <section className="relative flex flex-col rounded-2xl border border-zinc-200 bg-white min-h-[200px]">
       <header className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2">
           <span className="text-zinc-500">{icon}</span>
           <h3 className="text-[13px] font-medium tracking-tight text-zinc-800">{title}</h3>
           {count > 0 && (
@@ -118,6 +167,7 @@ function QueueCard({
               {count}
             </span>
           )}
+          <OverdueBadge count={overdueCount ?? 0} />
         </div>
         <Link
           href={viewAllHref}
@@ -140,7 +190,15 @@ function QueueCard({
   );
 }
 
-function PendingVideosQueue({ date, initialRows }: { date: string; initialRows: PendingVideoRow[] }) {
+function PendingVideosQueue({
+  date,
+  initialRows,
+  overdueCount,
+}: {
+  date: string;
+  initialRows: PendingVideoRow[];
+  overdueCount: number;
+}) {
   const { data } = useSafeFetch<{ data: PendingVideoRow[] }>(
     `/api/admin/cockpit/pending-videos?date=${date}&limit=10`,
     30_000,
@@ -155,6 +213,7 @@ function PendingVideosQueue({ date, initialRows }: { date: string; initialRows: 
       count={rows.length}
       empty="今天的视频都已打标且无异常"
       viewAllHref="/admin/videos?view=pending"
+      overdueCount={overdueCount}
     >
       <ul className="divide-y divide-zinc-100">
         {rows.slice(0, 5).map((row) =>(
@@ -191,7 +250,13 @@ function PendingVideosQueue({ date, initialRows }: { date: string; initialRows: 
   );
 }
 
-function PendingViolationsQueue({ initialRows }: { initialRows: PendingViolationRow[] }) {
+function PendingViolationsQueue({
+  initialRows,
+  overdueCount,
+}: {
+  initialRows: PendingViolationRow[];
+  overdueCount: number;
+}) {
   const { data } = useSafeFetch<{ data: PendingViolationRow[] }>(
     `/api/admin/cockpit/pending-violations?limit=10`,
     30_000,
@@ -206,6 +271,7 @@ function PendingViolationsQueue({ initialRows }: { initialRows: PendingViolation
       count={rows.length}
       empty="当前没有需要复核的违规案例"
       viewAllHref="/admin/conversion-hub?tab=violations"
+      overdueCount={overdueCount}
     >
       <ul className="divide-y divide-zinc-100">
         {rows.slice(0, 5).map((row) => {
@@ -244,39 +310,62 @@ function PendingViolationsQueue({ initialRows }: { initialRows: PendingViolation
   );
 }
 
-function PendingSubmissionsQueue({ date, initialRows }: { date: string; initialRows: PendingSubmissionRow[] }) {
+function PendingSubmissionsQueue({
+  date,
+  initialRows,
+  overdueCount,
+}: {
+  date: string;
+  initialRows: PendingSubmissionRow[];
+  overdueCount: number;
+}) {
   const { data } = useSafeFetch<{ data: PendingSubmissionRow[] }>(
     `/api/admin/cockpit/pending-submissions?date=${date}`,
     60_000,
     { data: initialRows },
   );
   const rows = data?.data ?? [];
+  const [remindLogOpen, setRemindLogOpen] = useState(false);
 
   return (
-    <QueueCard
-      title="待催交成员"
-      icon={<UserCheck2 className="size-4 stroke-[1.5]" />}
-      count={rows.length}
-      empty="所有在岗成员今天都已交报"
-      viewAllHref="/admin"
-    >
-      <ul className="w-full divide-y divide-zinc-100">
-        {rows.slice(0, 8).map((row) => (
-          <li key={row.profile_id} className="flex items-center gap-2 py-1.5">
-            <span className="min-w-[60px] truncate text-[11px] text-zinc-400">
-              {row.team_name ?? "未分组"}
-            </span>
-            <span className="text-zinc-300">·</span>
-            <span className="flex-1 truncate text-[13px] text-zinc-700">{row.name}</span>
-            {row.last_report_date ? (
-              <span className="shrink-0 text-[11px] text-zinc-400 tabular-nums">
-                {row.last_report_date}
+    <>
+      <QueueCard
+        title="待催交成员"
+        icon={<UserCheck2 className="size-4 stroke-[1.5]" />}
+        count={rows.length}
+        empty="所有在岗成员今天都已交报"
+        viewAllHref="/admin"
+        overdueCount={overdueCount}
+      >
+        <ul className="w-full divide-y divide-zinc-100">
+          {rows.slice(0, 8).map((row) => (
+            <li key={row.profile_id} className="flex items-center gap-2 py-1.5">
+              <span className="min-w-[60px] truncate text-[11px] text-zinc-400">
+                {row.team_name ?? "未分组"}
               </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </QueueCard>
+              <span className="text-zinc-300">·</span>
+              <span className="flex-1 truncate text-[13px] text-zinc-700">{row.name}</span>
+              {row.last_report_date ? (
+                <span className="shrink-0 text-[11px] text-zinc-400 tabular-nums">
+                  {row.last_report_date}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-2 flex justify-end border-t border-zinc-100 pt-2">
+          <button
+            type="button"
+            onClick={() => setRemindLogOpen(true)}
+            className="inline-flex items-center gap-1 text-[11px] text-zinc-400 transition-colors hover:text-zinc-700"
+          >
+            <Bell className="size-3 stroke-[1.5]" />
+            查看历史
+          </button>
+        </div>
+      </QueueCard>
+      <RemindLogDialog date={date} open={remindLogOpen} onOpenChange={setRemindLogOpen} />
+    </>
   );
 }
 
@@ -340,11 +429,24 @@ export function AdminQueueSection({
     pendingSubmissions: [],
   };
 
+  const { counts } = useSopOverdueCount(date);
+
   return (
     <div className="grid gap-4 lg:grid-cols-3 items-stretch">
-      <PendingVideosQueue date={date} initialRows={resolvedInitialData.pendingVideos} />
-      <PendingViolationsQueue initialRows={resolvedInitialData.pendingViolations} />
-      <PendingSubmissionsQueue date={date} initialRows={resolvedInitialData.pendingSubmissions} />
+      <PendingVideosQueue
+        date={date}
+        initialRows={resolvedInitialData.pendingVideos}
+        overdueCount={counts(SOP_CHECKPOINT_MAP["待筛视频"])}
+      />
+      <PendingViolationsQueue
+        initialRows={resolvedInitialData.pendingViolations}
+        overdueCount={counts(SOP_CHECKPOINT_MAP["待审违规"])}
+      />
+      <PendingSubmissionsQueue
+        date={date}
+        initialRows={resolvedInitialData.pendingSubmissions}
+        overdueCount={counts(SOP_CHECKPOINT_MAP["待催交成员"])}
+      />
     </div>
   );
 }

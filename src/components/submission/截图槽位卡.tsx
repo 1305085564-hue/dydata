@@ -6,9 +6,11 @@ import { useRef, useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { SPRING_EASE, shakeVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
-import { NETWORK_RETRY_MESSAGE, OCR_FAIL_MESSAGE } from "./截图上传错误";
+import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
+import { NETWORK_RETRY_MESSAGE, OCR_FAIL_MESSAGE, resolveOcrErrorMessage } from "./截图上传错误";
 import type { SubmissionSlotRole, SubmissionSlotStatus } from "./提交状态机";
 
 interface SubmissionSlotCardProps {
@@ -27,6 +29,8 @@ interface SubmissionSlotCardProps {
   onSelectFile: (file: File) => void;
   onDelete: () => void;
   onRetry?: () => void;
+  onManualFill?: () => void;
+  errorCode?: string | null;
 }
 
 const ACCEPT = ".jpg,.jpeg,.png,.webp";
@@ -63,6 +67,8 @@ export function SubmissionSlotCard({
   onSelectFile,
   onDelete,
   onRetry,
+  onManualFill,
+  errorCode,
 }: SubmissionSlotCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isProcessing = status === "uploading" || status === "recognizing";
@@ -150,6 +156,13 @@ export function SubmissionSlotCard({
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (file) {
+              if (file.size > UPLOAD_LIMITS.screenshot) {
+                feedbackToast.error(
+                  `文件超过 ${formatSizeLimit(UPLOAD_LIMITS.screenshot)} 限制，请压缩后重试`
+                );
+                event.target.value = "";
+                return;
+              }
               onSelectFile(file);
             }
             event.target.value = "";
@@ -166,6 +179,12 @@ export function SubmissionSlotCard({
               event.preventDefault();
               const file = event.dataTransfer.files?.[0];
               if (file) {
+                if (file.size > UPLOAD_LIMITS.screenshot) {
+                  feedbackToast.error(
+                    `文件超过 ${formatSizeLimit(UPLOAD_LIMITS.screenshot)} 限制，请压缩后重试`
+                  );
+                  return;
+                }
                 onSelectFile(file);
               }
             }}
@@ -261,6 +280,9 @@ export function SubmissionSlotCard({
                     <p className="text-[10px] font-medium text-zinc-500 px-2 text-center leading-tight transition-colors group-hover:text-zinc-700">
                       点击或拖拽上传
                     </p>
+                    <p className="text-[9px] text-zinc-400 px-2 text-center leading-tight">
+                      支持 JPG/PNG/WEBP，最大 {formatSizeLimit(UPLOAD_LIMITS.screenshot)}
+                    </p>
                   </>
                 )}
               </div>
@@ -315,17 +337,38 @@ export function SubmissionSlotCard({
               <div className="space-y-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] text-zinc-700 leading-snug border border-zinc-200 border-l-[2px] border-l-[#C9604D]">
                 <div className="flex items-start gap-1.5 font-medium">
                   <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0 mt-1" />
-                  <span>{error || OCR_FAIL_MESSAGE}</span>
+                  <span>{errorCode ? resolveOcrErrorMessage(errorCode) : error || OCR_FAIL_MESSAGE}</span>
                 </div>
-                {onRetry && error === NETWORK_RETRY_MESSAGE ? (
-                  <button
-                    type="button"
-                    onClick={onRetry}
-                    className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
-                  >
-                    重试上传
-                  </button>
-                ) : null}
+                <div className="flex items-center gap-1.5">
+                  {onRetry && error === NETWORK_RETRY_MESSAGE ? (
+                    <button
+                      type="button"
+                      onClick={onRetry}
+                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
+                    >
+                      重新识别
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onRetry) onRetry();
+                      }}
+                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
+                    >
+                      重新识别
+                    </button>
+                  )}
+                  {onManualFill ? (
+                    <button
+                      type="button"
+                      onClick={onManualFill}
+                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-zinc-600 hover:text-white hover:ring-zinc-600"
+                    >
+                      手动填写
+                    </button>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 

@@ -423,7 +423,7 @@ export function PermissionManager({
         member.id === memberId ? { ...member, permissions: nextPermissions } : member,
       ),
     );
-    feedbackToast.success("权限已保存");
+    feedbackToast.success("权限已保存，成员下次刷新页面后生效");
 
     startSavingPermissions(async () => {
       const result = await updatePermissions(memberId, nextPermissions);
@@ -1125,29 +1125,34 @@ export function PermissionManager({
                 </section>
               </SheetBody>
 
-              <SheetFooter>
-                <Button
-                  variant="ghost"
-                  className="h-9 px-3 text-[12px] text-zinc-500 hover:text-zinc-800"
-                  onClick={() => {
-                    if (hasDraftChanges) {
-                      handleResetDraft();
+              <SheetFooter className="flex-col items-stretch gap-2">
+                <p className="text-[11px] text-zinc-400">
+                  * 权限变更将在成员下次访问页面时生效
+                </p>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    className="h-9 px-3 text-[12px] text-zinc-500 hover:text-zinc-800"
+                    onClick={() => {
+                      if (hasDraftChanges) {
+                        handleResetDraft();
+                      }
+                      closeSheet();
+                    }}
+                    disabled={actionDisabled}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    className="h-9 rounded-xl bg-zinc-950 px-4 text-[12px] text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-[1px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0"
+                    onClick={handleSaveSheet}
+                    disabled={
+                      !hasDraftChanges || !capabilities.canEditPermissions || actionDisabled
                     }
-                    closeSheet();
-                  }}
-                  disabled={actionDisabled}
-                >
-                  取消
-                </Button>
-                <Button
-                  className="h-9 rounded-xl bg-zinc-950 px-4 text-[12px] text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-[1px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0"
-                  onClick={handleSaveSheet}
-                  disabled={
-                    !hasDraftChanges || !capabilities.canEditPermissions || actionDisabled
-                  }
-                >
-                  {isSavingPermissions ? "保存中…" : "保存"}
-                </Button>
+                  >
+                    {isSavingPermissions ? "保存中…" : "保存"}
+                  </Button>
+                </div>
               </SheetFooter>
             </>
           ) : null}

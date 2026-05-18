@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { CheckCircle2, CircleSlash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, CircleSlash2, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 import { cn } from "@/lib/utils";
+
+// TODO-SPRINT4-任务3：驳回模板原因
+const REJECT_TEMPLATES = [
+  { id: "incomplete", label: "资料不全", text: "提交的资料不完整，请补充后重新提交" },
+  { id: "unclear", label: "证据不清晰", text: "截图/证据不清晰，请重新上传" },
+  { id: "wrong_category", label: "分类错误", text: "案例分类选择错误，请核对后重新提交" },
+  { id: "duplicate", label: "重复提交", text: "该案例已存在，请勿重复提交" },
+  { id: "other", label: "其他原因", text: "" },
+] as const;
 
 export type ViolationReviewStatus = "submitted" | "verified" | "rejected" | "archived";
 export type ViolationRiskLevel = "high" | "medium" | "low" | null;
@@ -39,6 +48,58 @@ interface ReviewDraft {
   riskLevel: Exclude<ViolationRiskLevel, null>;
   adminConclusion: string;
   suggestedAction: string;
+}
+
+interface StoredDraft {
+  riskLevel: Exclude<ViolationRiskLevel, null>;
+  adminConclusion: string;
+  suggestedAction: string;
+  savedAt: number;
+}
+
+function getDraftKey(caseId: string): string {
+  return `dydata.draft.review.${caseId}`;
+}
+
+function loadStoredDraft(caseId: string): StoredDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(getDraftKey(caseId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredDraft;
+    if (!parsed.riskLevel || typeof parsed.adminConclusion !== "string" || typeof parsed.suggestedAction !== "string") {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredDraft(caseId: string, draft: ReviewDraft): void {
+  if (typeof window === "undefined") return;
+  try {
+    const stored: StoredDraft = { ...draft, savedAt: Date.now() };
+    localStorage.setItem(getDraftKey(caseId), JSON.stringify(stored));
+  } catch {
+    // localStorage 可能已满，静默失败
+  }
+}
+
+function clearStoredDraft(caseId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(getDraftKey(caseId));
+  } catch {
+    // 忽略
+  }
+}
+
+function formatSavedAt(timestamp: number): string {
+  const d = new Date(timestamp);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mi}`;
 }
 
 const RISK_OPTIONS: Array<{ value: ReviewDraft["riskLevel"]; label: string; className: string }> = [
@@ -76,12 +137,61 @@ function getStatusClassName(status: ViolationReviewStatus) {
 }
 
 function ReviewCard({ item }: { item: ViolationReviewCase }) {
-  const [draft, setDraft] = useState<ReviewDraft>(() => getInitialDraft(item));
+  const [draft, setDraft] = useState<ReviewDraft>(() => {
+    const stored = loadStoredDraft(item.id);
+    if (stored) {
+      return {
+        riskLevel: stored.riskLevel,
+        adminConclusion: stored.adminConclusion,
+        suggestedAction: stored.suggestedAction,
+      };
+    }
+    return getInitialDraft(item);
+  });
   const [status, setStatus] = useState<ViolationReviewStatus>(item.status);
   const [isSaving, setIsSaving] = useState<"verified" | "rejected" | null>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(() => {
+    const stored = loadStoredDraft(item.id);
+    return stored?.savedAt ?? null;
+  });
+  const [showRejectTemplate, setShowRejectTemplate] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   const totalTests = item.passCount + item.failCount;
   const passRate = totalTests > 0 ? Math.round((item.passCount / totalTests) * 100) : null;
+
+  // 页面加载后如果 item 状态已变（非 submitted），清除草稿
+  useEffect(() => {
+    if (item.status !== "submitted") {
+      clearStoredDraft(item.id);
+      setSavedAt(null);
+    }
+  }, [item.status, item.id]);
+
+  function handleSaveDraft() {
+    saveStoredDraft(item.id, draft);
+    setSavedAt(Date.now());
+    feedbackToast.success("已暂存草稿");
+  }
+
+  function handleRestoreDraft() {
+    const stored = loadStoredDraft(item.id);
+    if (!stored) return;
+    setDraft({
+      riskLevel: stored.riskLevel,
+      adminConclusion: stored.adminConclusion,
+      suggestedAction: stored.suggestedAction,
+    });
+    feedbackToast.success("草稿已恢复");
+  }
+
+  function handleSelectTemplate(templateId: string) {
+    setSelectedTemplateId(templateId);
+    const template = REJECT_TEMPLATES.find((t) => t.id === templateId);
+    if (template) {
+      setDraft((current) => ({ ...current, adminConclusion: template.text }));
+    }
+  }
 
   async function submitReview(nextStatus: "verified" | "rejected") {
     if (!draft.adminConclusion.trim()) {
@@ -93,6 +203,8 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
 
     setStatus(nextStatus);
     setIsSaving(nextStatus);
+    clearStoredDraft(item.id);
+    setSavedAt(null);
     feedbackToast.success(nextStatus === "verified" ? "已确认案例" : "已驳回案例");
     try {
       const response = await fetch(`/api/violations/${item.id}/review`, {
@@ -192,10 +304,26 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
         </div>
         <label className="block">
           <span className="mb-2 block text-xs font-semibold text-zinc-500">管理员结论</span>
+          {showRejectTemplate ? (
+            <div className="mb-2">
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => handleSelectTemplate(e.target.value)}
+                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-3 text-[13px] text-zinc-700 outline-none"
+              >
+                <option value="">选择驳回原因模板（可选）</option>
+                {REJECT_TEMPLATES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           <Textarea
             value={draft.adminConclusion}
             onChange={(event) => setDraft((current) => ({ ...current, adminConclusion: event.target.value }))}
-            placeholder="例如：公司层面禁止这类导粉话术"
+            placeholder={showRejectTemplate ? "可继续编辑驳回原因" : "例如：公司层面禁止这类导粉话术"}
             className="max-h-48 min-h-32 overflow-y-auto rounded-2xl bg-zinc-50"
           />
         </label>
@@ -210,8 +338,48 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
         </label>
       </div>
 
-      <div className="mt-5 flex flex-wrap justify-end gap-2">
-        <Button type="button" variant="outline" disabled={Boolean(isSaving)} onClick={() => submitReview("rejected")}>
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+        {savedAt && status === "submitted" ? (
+          <span className="mr-auto text-[12px] text-zinc-400">
+            上次暂存于 {formatSavedAt(savedAt)}
+          </span>
+        ) : null}
+        {savedAt && status === "submitted" ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={Boolean(isSaving)}
+            onClick={handleRestoreDraft}
+            className="h-8 text-[12px] text-zinc-500 hover:text-zinc-800"
+          >
+            <RotateCcw className="mr-1 size-3.5" />
+            恢复草稿
+          </Button>
+        ) : null}
+        {status === "submitted" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={Boolean(isSaving)}
+            onClick={handleSaveDraft}
+            className="h-8 text-[12px]"
+          >
+            暂存
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={Boolean(isSaving)}
+          onClick={() => {
+            if (!showRejectTemplate) {
+              setShowRejectTemplate(true);
+            }
+            submitReview("rejected");
+          }}
+        >
           {isSaving === "rejected" ? <Skeleton className="size-4 rounded" /> : <CircleSlash2 className="size-4 stroke-[1.5]" />}
           驳回
         </Button>

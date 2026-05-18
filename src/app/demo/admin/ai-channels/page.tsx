@@ -2,6 +2,7 @@ import { AppShell, AppShellHero, AppShellSection, AdminSecondaryNav } from "@/co
 import { DemoModeChip } from "@/components/demo/demo-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/demo/demo-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getDemoAIChannelsData } from "@/lib/demo-data";
 
@@ -56,12 +57,12 @@ export default function DemoAIChannelsPage() {
                   <TableCell>{channel.last_success_at?.slice(0, 16).replace("T", " ") ?? "--"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button type="button" size="sm" variant="outline" disabled>
+                      <DemoButton type="button" size="sm" variant="outline" actionName="测试渠道">
                         测试
-                      </Button>
-                      <Button type="button" size="sm" disabled>
+                      </DemoButton>
+                      <DemoButton type="button" size="sm" actionName="编辑渠道">
                         编辑
-                      </Button>
+                      </DemoButton>
                     </div>
                   </TableCell>
                 </TableRow>

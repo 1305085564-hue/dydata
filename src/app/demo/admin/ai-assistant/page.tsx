@@ -2,6 +2,7 @@ import { AppShell, AppShellHero, AppShellSection } from "@/components/app-shell"
 import { DemoModeChip } from "@/components/demo/demo-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DemoButton } from "@/components/demo/demo-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { getDemoAIAssistantData } from "@/lib/demo-data";
@@ -50,12 +51,12 @@ export default function DemoAIAssistantPage() {
                 <div className="mb-3 text-sm font-semibold text-[var(--color-text-primary)]">输入区预览</div>
                 <Textarea disabled value="把张三改成管理员" className="min-h-28 resize-none" />
                 <div className="mt-3 flex gap-3">
-                  <Button type="button" disabled>
+                  <DemoButton type="button" actionName="发送指令">
                     发送指令
-                  </Button>
-                  <Button type="button" variant="outline" disabled>
+                  </DemoButton>
+                  <DemoButton type="button" variant="outline" actionName="等待确认">
                     等待确认
-                  </Button>
+                  </DemoButton>
                 </div>
               </div>
             </CardContent>
