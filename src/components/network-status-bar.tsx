@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type NetworkState = "online" | "offline" | "recovered";
@@ -12,28 +12,34 @@ export function NetworkStatusBar() {
   const [visible, setVisible] = useState(
     typeof navigator !== "undefined" && !navigator.onLine,
   );
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    const clearTimer = () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+
     const handleOffline = () => {
+      clearTimer();
       setState("offline");
       setVisible(true);
     };
 
     const handleOnline = () => {
+      clearTimer();
       setState("recovered");
-      // 保持显示 2 秒后自动消失
-      const timer = setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         setVisible(false);
-        // 动画结束后重置状态
-        setTimeout(() => setState("online"), 300);
+        timerRef.current = setTimeout(() => setState("online"), 300);
       }, 2000);
-      return () => clearTimeout(timer);
     };
 
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
 
-    // 首次加载时如果已离线，立即显示
     if (!navigator.onLine) {
       setState("offline");
       setVisible(true);
@@ -42,6 +48,7 @@ export function NetworkStatusBar() {
     return () => {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
+      clearTimer();
     };
   }, []);
 

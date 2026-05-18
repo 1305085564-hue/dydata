@@ -121,7 +121,7 @@ function StatusBar({ summary }: { summary: CockpitSummary | null }) {
   const exemptions = summary?.pending_exemptions ?? 0;
 
   return (
-    <div className="grid grid-cols-2 gap-x-12 gap-y-3 border-y border-zinc-100 py-3 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-x-12 gap-y-3 border-y border-zinc-100 py-3 sm:grid-cols-2 lg:grid-cols-4">
       <StatCell label="待筛视频" value={videos} tone="warning" />
       <StatCell label="待审违规" value={violations} tone="danger" />
       <StatCell label="待催交成员" value={submissions} tone="neutral" />
@@ -133,7 +133,7 @@ function StatusBar({ summary }: { summary: CockpitSummary | null }) {
 function OverdueBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-semibold text-white shadow-sm">
+    <span className="ml-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-semibold text-white shadow-sm">
       {count > 99 ? "99+" : count}
     </span>
   );

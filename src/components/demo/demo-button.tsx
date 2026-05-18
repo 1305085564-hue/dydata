@@ -16,6 +16,7 @@ export function DemoButton({
   children,
   variant = "default",
   size = "default",
+  type = "button",
   ...props
 }: DemoButtonProps) {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -27,7 +28,7 @@ export function DemoButton({
 
   return (
     <button
-      type="button"
+      type={type}
       onClick={handleClick}
       className={cn(buttonVariants({ variant, size }), "opacity-50", className)}
       {...props}

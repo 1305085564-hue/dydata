@@ -14,15 +14,12 @@ function DetailToast({
   message,
   description,
   details,
-  type,
 }: {
   message: string;
   description?: string;
   details?: string;
-  type: "success" | "error" | "warning" | "loading";
 }) {
   const [expanded, setExpanded] = useState(false);
-
   const hasDetails = details && details.trim().length > 0;
 
   return (
@@ -83,10 +80,10 @@ function buildToastContent(
     }
   }
 
-  const hasRichContent =
-    finalDetails || (description && description.length > 0);
+  const hasDetails = finalDetails && finalDetails.trim().length > 0;
 
-  if (hasRichContent) {
+  // 只有存在 details 时，才用 DetailToast 包装；否则保持原有行为
+  if (hasDetails) {
     return {
       ...rest,
       description: (
@@ -94,7 +91,6 @@ function buildToastContent(
           message={message}
           description={description}
           details={finalDetails}
-          type={type}
         />
       ),
     };
