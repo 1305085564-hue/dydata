@@ -63,15 +63,22 @@ export function useFormDraft<T>(
       const raw = localStorage.getItem(key);
       if (raw) {
         const entry = JSON.parse(raw) as DraftEntry<T>;
-        if (entry.data && entry.savedAt) {
+        if (entry?.data && entry.savedAt && !isDraftEmpty(entry.data)) {
           setHasDraft(true);
           setLastSavedAt(new Date(entry.savedAt));
+        } else {
+          // 旧脏数据（空草稿/缺字段）一律清理，避免反复跳 banner
+          localStorage.removeItem(key);
+          setHasDraft(false);
+          setLastSavedAt(null);
         }
+      } else {
+        setHasDraft(false);
+        setLastSavedAt(null);
       }
     } catch {
       // Invalid draft data, ignore
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   // Auto-save every 30 seconds
