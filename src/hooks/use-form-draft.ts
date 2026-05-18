@@ -57,28 +57,44 @@ export function useFormDraft<T>(
   const lastSavedRef = useRef<T | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Check for existing draft on mount
+  // Check for existing draft on mount + 跨 Tab 同步
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const entry = JSON.parse(raw) as DraftEntry<T>;
-        if (entry?.data && entry.savedAt && !isDraftEmpty(entry.data)) {
-          setHasDraft(true);
-          setLastSavedAt(new Date(entry.savedAt));
-        } else {
-          // 旧脏数据（空草稿/缺字段）一律清理，避免反复跳 banner
-          localStorage.removeItem(key);
-          setHasDraft(false);
-          setLastSavedAt(null);
+    function refreshFromStorage() {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const entry = JSON.parse(raw) as DraftEntry<T>;
+          if (entry?.data && entry.savedAt && !isDraftEmpty(entry.data)) {
+            setHasDraft(true);
+            setLastSavedAt(new Date(entry.savedAt));
+            return;
+          }
         }
-      } else {
+        // 旧脏数据 / 空草稿 / 不存在 → 一律视为无草稿，并清掉脏 key
+        localStorage.removeItem(key);
+        setHasDraft(false);
+        setLastSavedAt(null);
+      } catch {
+        // JSON 解析失败 → 清掉坏 key，避免长期卡住
+        try {
+          localStorage.removeItem(key);
+        } catch {
+          // ignore
+        }
         setHasDraft(false);
         setLastSavedAt(null);
       }
-    } catch {
-      // Invalid draft data, ignore
     }
+
+    refreshFromStorage();
+
+    // 多 Tab 同步：另一个 Tab 丢弃/恢复后，本 Tab 实时更新
+    function onStorage(e: StorageEvent) {
+      if (e.key !== key) return;
+      refreshFromStorage();
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, [key]);
 
   // Auto-save every 30 seconds

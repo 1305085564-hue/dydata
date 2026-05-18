@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { BusinessRole } from "@/lib/business-role";
-import type { UserRole } from "@/types";
+import { resolveBusinessRole, type BusinessRole } from "@/lib/business-role";
+import type { Permissions, UserRole } from "@/types";
 
 type AdminClient = SupabaseClient;
 
@@ -44,35 +44,51 @@ export async function resolveRecipients(
 
     const { data: members } = await admin
       .from("profiles")
-      .select("id, role, permissions")
+      .select("id, role, team_id, group_id, permissions")
       .in("group_id", groupIds);
 
-    return filterByMinBusinessRole(members, filter.minBusinessRole);
+    return await filterByMinBusinessRole(admin, members, filter.minBusinessRole);
   }
 
   if (filter.scope === "team") {
     if (!profile.team_id) return [filter.userId];
     const { data: members } = await admin
       .from("profiles")
-      .select("id, role, permissions")
+      .select("id, role, team_id, group_id, permissions")
       .eq("team_id", profile.team_id);
 
-    return filterByMinBusinessRole(members, filter.minBusinessRole);
+    return await filterByMinBusinessRole(admin, members, filter.minBusinessRole);
   }
 
   // all
-  const { data: members } = await admin.from("profiles").select("id, role, permissions");
-  return filterByMinBusinessRole(members, filter.minBusinessRole);
+  const { data: members } = await admin
+    .from("profiles")
+    .select("id, role, team_id, group_id, permissions");
+  return await filterByMinBusinessRole(admin, members, filter.minBusinessRole);
 }
 
-type ProfileMinimal = { id: string | null; role: string | null; permissions: Record<string, unknown> | null };
+type ProfileFull = {
+  id: string | null;
+  role: string | null;
+  team_id: string | null;
+  group_id: string | null;
+  permissions: Permissions | null;
+};
 
-function filterByMinBusinessRole(
-  rows: ProfileMinimal[] | null | undefined,
+async function filterByMinBusinessRole(
+  admin: AdminClient,
+  rows: ProfileFull[] | null | undefined,
   minBusinessRole: BusinessRole | undefined,
-): string[] {
-  const list = (rows ?? []).filter((row): row is ProfileMinimal & { id: string } => Boolean(row?.id));
+): Promise<string[]> {
+  const list = (rows ?? []).filter((row): row is ProfileFull & { id: string } => Boolean(row?.id));
   if (!minBusinessRole) return list.map((row) => row.id);
+
+  // 按权威口径推断 businessRole 时需要 groups.leader_user_id
+  // 一次性把候选人涉及的所有 group_id 查齐，避免 N+1
+  const { data: groups } = await admin
+    .from("groups")
+    .select("id, team_id, leader_user_id");
+  const allGroups = groups ?? [];
 
   const rank: Record<BusinessRole, number> = {
     member: 0,
@@ -84,25 +100,17 @@ function filterByMinBusinessRole(
 
   return list
     .filter((row) => {
-      const role = (row.role ?? "member") as UserRole;
-      const permissions = (row.permissions ?? {}) as Record<string, unknown>;
-      const inferred = inferBusinessRoleSimple(role, permissions);
+      const inferred = resolveBusinessRole(
+        {
+          id: row.id,
+          role: (row.role ?? "member") as UserRole,
+          permissions: row.permissions,
+          team_id: row.team_id,
+          group_id: row.group_id,
+        },
+        allGroups,
+      );
       return rank[inferred] >= min;
     })
     .map((row) => row.id);
-}
-
-/**
- * 简化版 businessRole 推断（不查 groups 表，权限 + role 足够区分）
- * - owner: role === 'owner'
- * - team_admin: role === 'admin' 且 permissions.manage_members === true
- * - group_leader: role === 'admin' 且 permissions.manage_members !== true
- * - member: 其他
- */
-function inferBusinessRoleSimple(role: UserRole, permissions: Record<string, unknown>): BusinessRole {
-  if (role === "owner") return "owner";
-  if (role === "admin") {
-    return permissions.manage_members === true ? "team_admin" : "group_leader";
-  }
-  return "member";
 }

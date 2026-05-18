@@ -170,11 +170,16 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
     );
     setRemoteCounts((prev) => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
+      const res = await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
+      if (!res.ok) {
+        // 回滚到服务端实际状态
+        void fetchAll();
+      }
     } catch (err) {
       console.warn("[notifications] markRead failed", err);
+      void fetchAll();
     }
-  }, []);
+  }, [fetchAll]);
 
   const markAllRead = useCallback(async () => {
     setLocals((prev) => {
@@ -193,11 +198,13 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
     );
     setRemoteCounts((prev) => ({ ...prev, unread: 0 }));
     try {
-      await fetch(`/api/notifications/mark-all-read`, { method: "PATCH" });
+      const res = await fetch(`/api/notifications/mark-all-read`, { method: "PATCH" });
+      if (!res.ok) void fetchAll();
     } catch (err) {
       console.warn("[notifications] markAllRead failed", err);
+      void fetchAll();
     }
-  }, []);
+  }, [fetchAll]);
 
   const markDone = useCallback(
     async (id: string, reason: "done" | "ignored" = "done") => {
@@ -219,16 +226,18 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
         return next;
       });
       try {
-        await fetch(`/api/notifications/${id}/done`, {
+        const res = await fetch(`/api/notifications/${id}/done`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         });
+        if (!res.ok) void fetchAll();
       } catch (err) {
         console.warn("[notifications] markDone failed", err);
+        void fetchAll();
       }
     },
-    [remote],
+    [remote, fetchAll],
   );
 
   const value = useMemo<NotificationContextValue>(() => {

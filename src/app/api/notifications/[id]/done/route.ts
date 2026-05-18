@@ -14,10 +14,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   let reason: "done" | "ignored" = "done";
   try {
-    const body = (await request.json()) as { reason?: "done" | "ignored" };
-    if (body?.reason === "ignored") reason = "ignored";
+    const body = (await request.json()) as { reason?: unknown };
+    if (body && body.reason !== undefined) {
+      if (body.reason === "done" || body.reason === "ignored") {
+        reason = body.reason;
+      } else {
+        return NextResponse.json({ error: "reason 取值必须为 done/ignored" }, { status: 400 });
+      }
+    }
   } catch {
-    // body 为空也可
+    // body 为空也可，按默认 done
   }
 
   const ok = await markDone(id, user.id, reason);
