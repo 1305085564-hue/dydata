@@ -235,6 +235,7 @@
     display: grid;
     gap: 1rem;
     align-items: start;
+    container-type: inline-size;
   }
 
   .dashboard-form-column {
@@ -821,11 +822,6 @@
   }
 
   @media (min-width: 1280px) {
-    .dashboard-form-layout {
-      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-      gap: 1.25rem;
-    }
-
     .dashboard-action-strip {
       grid-template-columns: repeat(5, minmax(0, 1fr));
     }
@@ -836,6 +832,14 @@
 
     .dashboard-action-grid {
       grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  /* form-layout 改用容器查询：弹窗里容器只有 ~600px 时不应被强制双列 */
+  @container (min-width: 1100px) {
+    .dashboard-form-layout {
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+      gap: 1.25rem;
     }
   }
 }

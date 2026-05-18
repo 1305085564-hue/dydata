@@ -267,6 +267,24 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  // 同步往通知中心推条目（站内待办，源头去重 = target_date+user_id）
+  const { emit } = await import("@/lib/notifications/server");
+  for (const member of unsubmitted) {
+    if (!member.user_id) continue;
+    await emit({
+      recipients: [member.user_id],
+      type: "report.remind",
+      category: "todo",
+      severity: "warning",
+      title: `请尽快填写 ${today} 的日报`,
+      body: "你的日报尚未提交，请尽快补上以免影响排行榜与团队节奏。",
+      actionLabel: "去填报",
+      actionUrl: "/dashboard",
+      sourceType: "report.remind",
+      sourceId: `${today}:${member.user_id}`,
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     unsubmitted: unsubmitted.map((user) => user.name),

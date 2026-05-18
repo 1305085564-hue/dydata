@@ -7,6 +7,7 @@ import { Check, ChevronDown, LogOut, Settings, Zap } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { getNavItems } from "@/components/nav-bar-items";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { cn } from "@/lib/utils";
 import {
   initDashboardStore,
@@ -237,6 +238,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                 </ProfileEditDialog>
               </div>
             )}
+            <NotificationBell />
             <form action={signOut}>
               <Button
                 variant="outline"

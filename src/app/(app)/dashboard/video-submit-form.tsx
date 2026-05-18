@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChevronUp, Sparkles, Loader2, XCircle, AlertTriangle, CheckCircle, X } from "lucide-react";
+import { ChevronUp, Sparkles, Loader2, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 
@@ -56,6 +56,7 @@ import {
   toSlotUploadErrorMessage,
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
+import { useNotifications } from "@/components/notifications/notification-store";
 import {
   syncPublishedAtAndText,
   toManualFieldState,
@@ -533,14 +534,7 @@ export function VideoSubmitForm({
     [meta, fields, slots, scriptText, keywordInput]
   );
 
-  // Show draft banner when draft exists and form is not submitted
-  useEffect(() => {
-    if (hasDraft && !isSubmitted && !submittedViewActive && !initialSummary) {
-      setShowDraftBanner(true);
-    } else {
-      setShowDraftBanner(false);
-    }
-  }, [hasDraft, isSubmitted, submittedViewActive, initialSummary]);
+  const { setLocalNotification } = useNotifications();
 
   const handleRestoreDraft = useCallback(() => {
     const draft = restoreDraft();
@@ -563,6 +557,40 @@ export function VideoSubmitForm({
     clearDraft();
     setShowDraftBanner(false);
   }, [clearDraft]);
+
+  // 草稿状态 → 通知中心本地条目（不再占用主页空间）
+  useEffect(() => {
+    const shouldShow = hasDraft && !isSubmitted && !submittedViewActive && !initialSummary;
+    if (shouldShow) {
+      const time = lastSavedAt
+        ? lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })
+        : "";
+      setLocalNotification(`draft.video_submit.${userId}`, {
+        key: `draft.video_submit.${userId}`,
+        type: "draft.video_submit",
+        category: "todo",
+        severity: "warning",
+        title: "未提交的填报草稿",
+        body: time ? `最后保存于 ${time}，是否恢复继续填写？` : "是否恢复继续填写？",
+        primaryActionLabel: "恢复草稿",
+        primaryAction: handleRestoreDraft,
+        secondaryActionLabel: "丢弃",
+        secondaryAction: handleDiscardDraft,
+      });
+    } else {
+      setLocalNotification(`draft.video_submit.${userId}`, null);
+    }
+  }, [
+    hasDraft,
+    isSubmitted,
+    submittedViewActive,
+    initialSummary,
+    lastSavedAt,
+    userId,
+    handleRestoreDraft,
+    handleDiscardDraft,
+    setLocalNotification,
+  ]);
 
   // Track all created blob URLs to clean them up on unmount
   useEffect(() => {
@@ -1367,58 +1395,6 @@ export function VideoSubmitForm({
     );
   }
 
-  const draftBanner = showDraftBanner ? (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }}
-      className="mb-6 rounded-xl border border-[#D99E55]/40 bg-[#FDF9F3] px-4 py-3"
-    >
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 shrink-0">
-          <AlertTriangle className="size-4 text-[#D99E55]" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] text-zinc-800">
-            检测到未提交的草稿
-            {lastSavedAt ? (
-              <span className="text-zinc-500">
-                （最后保存于{" "}
-                {lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
-                ）
-              </span>
-            ) : null}
-            ，是否恢复？
-          </p>
-          <div className="mt-2 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleRestoreDraft}
-              className="inline-flex h-7 items-center rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442]"
-            >
-              恢复草稿
-            </button>
-            <button
-              type="button"
-              onClick={handleDiscardDraft}
-              className="inline-flex h-7 items-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
-            >
-              丢弃，重新填写
-            </button>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowDraftBanner(false)}
-          className="shrink-0 rounded-full p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-        >
-          <X className="size-3.5" />
-        </button>
-      </div>
-    </motion.div>
-  ) : null;
-
   return (
     <>
       {isSubmitted ? (
@@ -1591,8 +1567,6 @@ export function VideoSubmitForm({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {draftBanner}
 
       <motion.form
         id="video-submit-form"

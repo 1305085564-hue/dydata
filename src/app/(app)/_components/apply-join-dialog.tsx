@@ -20,11 +20,19 @@ import { submitJoinRequestAction } from "./join-actions";
 
 type Props = {
   teams: TeamOption[];
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function ApplyJoinDialog({ teams, trigger }: Props) {
-  const [open, setOpen] = useState(false);
+export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenChange }: Props) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (!isControlled) setInternalOpen(value);
+    onOpenChange?.(value);
+  };
   const [teamId, setTeamId] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -51,7 +59,7 @@ export function ApplyJoinDialog({ teams, trigger }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<span>{trigger}</span>} />
+      {trigger ? <DialogTrigger render={<span>{trigger}</span>} /> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">

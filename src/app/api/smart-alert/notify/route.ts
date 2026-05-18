@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { buildFeishuAlertCard, dedupeAlerts, generateSmartAlerts, type SmartAlert } from "@/lib/smart-alert";
+import { emit } from "@/lib/notifications/server";
 
 type AlertLogRow = {
   id: string;
@@ -173,6 +174,26 @@ export async function GET(request: NextRequest) {
       detail: JSON.stringify(alert),
     }))
   );
+
+  // 同步往通知中心推送：当事人可见（admin 在站内可见所有告警的方式由后续 admin 看板承接）
+  for (const alert of freshAlerts) {
+    if (!alert.userId) continue;
+    await emit({
+      recipients: [alert.userId],
+      type: `alert.${alert.type}`,
+      category: "feed",
+      severity: "warning",
+      title: alert.evidence ? `异常提醒：${alert.evidence}` : "数据异常提醒",
+      body: alert.suggestion ?? null,
+      sourceType: "smart_alert",
+      sourceId: alert.dedupeKey,
+      payload: {
+        accountId: alert.accountId,
+        accountName: alert.accountName,
+        tag: alert.tag,
+      },
+    });
+  }
 
   return NextResponse.json({
     ok: true,
