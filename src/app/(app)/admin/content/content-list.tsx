@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/table";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
-import { getSampleCredibility } from "@/lib/next-day-review";
 import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { ChevronDown } from "lucide-react";
 
@@ -242,6 +241,9 @@ export function ContentList({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [newBatchIds, setNewBatchIds] = useState<Set<string>>(new Set());
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollInnerRef = useRef<HTMLDivElement>(null);
+  const scrollSyncing = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const snapshotMap = useMemo(() => {
@@ -361,11 +363,43 @@ export function ContentList({
         }
       });
       setCurrentIndex(closest + (currentPageStart(visible)));
+
     };
 
     container.addEventListener("scroll", onScroll, { passive: true });
     return () => container.removeEventListener("scroll", onScroll);
   }, [visible]);
+
+  /* Sync top scrollbar width with table scroll width */
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    const tableScroller = container?.querySelector<HTMLElement>('[data-slot="table-container"]');
+    const top = topScrollRef.current;
+    const inner = topScrollInnerRef.current;
+    if (!tableScroller || !top || !inner) return;
+
+    const updateWidth = () => {
+      inner.style.width = `${tableScroller.scrollWidth}px`;
+      top.scrollLeft = tableScroller.scrollLeft;
+    };
+    const syncTopFromTable = () => {
+      if (scrollSyncing.current) return;
+      scrollSyncing.current = true;
+      top.scrollLeft = tableScroller.scrollLeft;
+      requestAnimationFrame(() => {
+        scrollSyncing.current = false;
+      });
+    };
+
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(tableScroller);
+    tableScroller.addEventListener("scroll", syncTopFromTable, { passive: true });
+    return () => {
+      ro.disconnect();
+      tableScroller.removeEventListener("scroll", syncTopFromTable);
+    };
+  }, []);
 
   function currentPageStart(visibleRows: VideoRow[]) {
     const firstId = visibleRows[0]?.id;
@@ -403,6 +437,22 @@ export function ContentList({
         {/* Table area */}
         <div className="flex-1 min-w-0">
           <div
+            ref={topScrollRef}
+            className="overflow-x-auto overflow-y-hidden h-4"
+            onScroll={() => {
+              const tableScroller = tableContainerRef.current?.querySelector<HTMLElement>('[data-slot="table-container"]');
+              if (!scrollSyncing.current && tableScroller && topScrollRef.current) {
+                scrollSyncing.current = true;
+                tableScroller.scrollLeft = topScrollRef.current.scrollLeft;
+                requestAnimationFrame(() => {
+                  scrollSyncing.current = false;
+                });
+              }
+            }}
+          >
+            <div ref={topScrollInnerRef} className="h-px" />
+          </div>
+          <div
             ref={tableContainerRef}
             className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
             style={{ maxHeight: "70vh" }}
@@ -412,29 +462,27 @@ export function ContentList({
                 <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
                   <TableHead className="h-9 w-16 text-[12px] font-medium text-zinc-500">排名</TableHead>
                   <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-zinc-500">标题</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">人员</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">播放</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">2s跳出</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">5s完播</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">样本状态</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">异常状态</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">复盘状态</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visible.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="py-12 text-center text-sm text-zinc-500">
+                    <TableCell colSpan={11} className="py-12 text-center text-sm text-zinc-500">
                       暂无内容
                     </TableCell>
                   </TableRow>
                 ) : (
                   visible.map((video, index) => {
                     const snap = snapshotMap.get(video.id);
-                    const sample = getSampleCredibility(snap?.play_count ?? null, video.anomaly_status);
                     const isReviewed = localReviewedIds.has(video.id);
                     const isNewBatch = newBatchIds.has(video.id);
                     return (
@@ -461,6 +509,16 @@ export function ContentList({
                             {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                           </div>
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+                            onClick={() => setSelectedVideoId(video.id)}
+                          >
+                            查看复盘
+                          </Button>
+                        </TableCell>
                         <TableCell className="text-sm text-zinc-500">
                           {video.profiles.name}
                         </TableCell>
@@ -480,11 +538,6 @@ export function ContentList({
                           {snap ? formatRate(snap.completion_rate_5s) : "-"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {sample.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
                           <Badge
                             variant="outline"
                             className={`text-xs ${statusClassName[video.anomaly_status]}`}
@@ -501,16 +554,6 @@ export function ContentList({
                             <span className="text-xs text-zinc-500">未复盘</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
-                            onClick={() => setSelectedVideoId(video.id)}
-                          >
-                            查看复盘
-                          </Button>
-                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -519,7 +562,7 @@ export function ContentList({
                 {/* Sentinel for auto-load */}
                 {hasMore && (
                   <TableRow>
-                    <TableCell colSpan={12} className="p-0">
+                    <TableCell colSpan={11} className="p-0">
                       <div ref={sentinelRef} className="h-4" />
                     </TableCell>
                   </TableRow>
