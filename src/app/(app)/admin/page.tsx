@@ -5,7 +5,6 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 
 import {
   AdminQueueSection,
-  AdminStatusSection,
 } from "./components/admin-cockpit";
 import { AiAlertPanel } from "./components/ai-alert-panel";
 import { loadAdminFirstScreenData } from "./components/admin-first-screen-loader";
@@ -27,20 +26,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <div className="space-y-8">
-      <AdminStatusSection date={queryDate} initialSummary={initialData.summary} />
       <AdminQueueSection
         date={queryDate}
+        initialSummary={initialData.summary}
         initialData={{
           pendingVideos: initialData.pendingVideos,
           pendingViolations: initialData.pendingViolations,
           pendingSubmissions: initialData.pendingSubmissions,
+          pendingExemptions: initialData.pendingExemptions,
         }}
       />
+      <JoinRequestReviewSection />
       <AiAlertPanel
         initialData={initialData.alerts}
         initialUpdatedAt={initialData.alertsUpdatedAt}
       />
-      <JoinRequestReviewSection />
     </div>
   );
 }

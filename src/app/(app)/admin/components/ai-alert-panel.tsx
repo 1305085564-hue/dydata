@@ -193,11 +193,10 @@ export function AiAlertPanel({
   useEffect(() => {
     if (alertGroups.length === 0) return;
     setOpenMap((prev) => {
-      const firstNonEmpty = alertGroups.find((g) => g.count > 0);
       const next = { ...prev };
       for (const g of alertGroups) {
         if (userToggledRef.current.has(g.groupKey)) continue;
-        next[g.groupKey] = g.groupKey === firstNonEmpty?.groupKey;
+        next[g.groupKey] = false;
       }
       return next;
     });
