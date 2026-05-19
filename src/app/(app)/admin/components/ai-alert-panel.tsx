@@ -364,7 +364,7 @@ export function AiAlertPanel({
           今日暂无待办，AI 没扫到需要处理的事情。
         </PanelMessage>
       ) : (
-        <div className="space-y-1.5">
+        <div className="grid gap-1.5 sm:grid-cols-2">
           {alertGroups.map((group) => (
             <section
               key={group.groupKey}

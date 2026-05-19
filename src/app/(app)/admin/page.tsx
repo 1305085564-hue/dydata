@@ -8,7 +8,6 @@ import {
 } from "./components/admin-cockpit";
 import { AiAlertPanel } from "./components/ai-alert-panel";
 import { loadAdminFirstScreenData } from "./components/admin-first-screen-loader";
-import { JoinRequestReviewSection } from "./join-request-review-section";
 
 interface AdminPageProps {
   searchParams: Promise<{ date?: string }>;
@@ -34,9 +33,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           pendingViolations: initialData.pendingViolations,
           pendingSubmissions: initialData.pendingSubmissions,
           pendingExemptions: initialData.pendingExemptions,
+          pendingJoinRequests: initialData.pendingJoinRequests,
         }}
       />
-      <JoinRequestReviewSection />
       <AiAlertPanel
         initialData={initialData.alerts}
         initialUpdatedAt={initialData.alertsUpdatedAt}

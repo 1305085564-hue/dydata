@@ -2,6 +2,7 @@ import { buildDashboardAlertsResponse } from "@/app/api/admin/dashboard-alerts/r
 import { requireAdminServiceClient, unwrapRpc } from "@/app/api/admin/cockpit/_shared";
 import type { AlertAggregationResult, AlertSource } from "@/lib/alert-sources/types";
 import type { ExemptionRequestRow } from "@/app/(app)/admin/豁免申请列表";
+import { listPendingRequestsForAdmin, type AdminRequestRow } from "@/lib/team-join/service";
 
 export type CockpitSummary = {
   pending_videos: number;
@@ -46,6 +47,7 @@ export type AdminFirstScreenData = {
   pendingViolations: PendingViolationRow[];
   pendingSubmissions: PendingSubmissionRow[];
   pendingExemptions: ExemptionRequestRow[];
+  pendingJoinRequests: AdminRequestRow[];
   alerts: DashboardAlertsData | null;
   alertsUpdatedAt: number | null;
 };
@@ -114,6 +116,7 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
       pendingViolations: [],
       pendingSubmissions: [],
       pendingExemptions: [],
+      pendingJoinRequests: [],
       alerts: null,
       alertsUpdatedAt: null,
     };
@@ -125,6 +128,7 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
     violationsResult,
     submissionsResult,
     exemptionsResult,
+    joinRequestsResult,
     alertsResult,
   ] = await Promise.all([
     auth.supabase.rpc("admin_cockpit_summary", { target_date: date }),
@@ -132,6 +136,7 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
     auth.supabase.rpc("admin_pending_violations", { limit_rows: 10 }),
     auth.supabase.rpc("admin_pending_submissions_today", { target_date: date }),
     loadPendingExemptionRows(auth.supabase),
+    listPendingRequestsForAdmin(),
     getDashboardAlerts(),
   ]);
 
@@ -139,6 +144,7 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
   const pendingVideos = unwrapRpc<PendingVideoRow[]>(videosResult).data;
   const pendingViolations = unwrapRpc<PendingViolationRow[]>(violationsResult).data;
   const pendingSubmissions = unwrapRpc<PendingSubmissionRow[]>(submissionsResult).data;
+  const pendingJoinRequests = joinRequestsResult.ok ? joinRequestsResult.data : [];
 
   return {
     summary: normalizeSummary(summary),
@@ -146,6 +152,7 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
     pendingViolations: pendingViolations ?? [],
     pendingSubmissions: pendingSubmissions ?? [],
     pendingExemptions: exemptionsResult,
+    pendingJoinRequests,
     alerts: alertsResult.data,
     alertsUpdatedAt: alertsResult.updatedAt,
   };
