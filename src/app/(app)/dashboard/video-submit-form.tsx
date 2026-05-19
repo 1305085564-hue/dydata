@@ -57,6 +57,7 @@ import {
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useNotifications } from "@/components/notifications/notification-store";
+import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import {
   syncPublishedAtAndText,
   toManualFieldState,
@@ -530,7 +531,8 @@ export function VideoSubmitForm({
   const { hasDraft, restoreDraft, clearDraft, lastSavedAt } = useFormDraft<DraftData>(
     draftKey,
     draftData,
-    [meta, fields, slots, scriptText, keywordInput]
+    [meta, fields, slots, scriptText, keywordInput],
+    { isEmpty: isVideoSubmitDraftEmpty }
   );
 
   const { setLocalNotification } = useNotifications();

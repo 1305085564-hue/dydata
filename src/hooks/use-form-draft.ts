@@ -47,15 +47,21 @@ export interface UseFormDraftReturn<T> {
   lastSavedAt: Date | null;
 }
 
+interface UseFormDraftOptions<T> {
+  isEmpty?: (data: T) => boolean;
+}
+
 export function useFormDraft<T>(
   key: string,
   formData: T,
-  deps: unknown[]
+  deps: unknown[],
+  options: UseFormDraftOptions<T> = {}
 ): UseFormDraftReturn<T> {
   const [hasDraft, setHasDraft] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const lastSavedRef = useRef<T | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isEmpty = options.isEmpty ?? isDraftEmpty;
 
   // Check for existing draft on mount + 跨 Tab 同步
   useEffect(() => {
@@ -64,7 +70,7 @@ export function useFormDraft<T>(
         const raw = localStorage.getItem(key);
         if (raw) {
           const entry = JSON.parse(raw) as DraftEntry<T>;
-          if (entry?.data && entry.savedAt && !isDraftEmpty(entry.data)) {
+          if (entry?.data && entry.savedAt && !isEmpty(entry.data)) {
             setHasDraft(true);
             setLastSavedAt(new Date(entry.savedAt));
             return;
@@ -95,7 +101,7 @@ export function useFormDraft<T>(
     }
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [key]);
+  }, [key, isEmpty]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -104,7 +110,7 @@ export function useFormDraft<T>(
     }
 
     intervalRef.current = setInterval(() => {
-      if (isDraftEmpty(formData)) return;
+      if (isEmpty(formData)) return;
       if (lastSavedRef.current && deepEqual(lastSavedRef.current, formData)) {
         return;
       }
@@ -129,7 +135,7 @@ export function useFormDraft<T>(
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, ...deps]);
+  }, [key, isEmpty, ...deps]);
 
   const restoreDraft = useCallback((): T | null => {
     try {
