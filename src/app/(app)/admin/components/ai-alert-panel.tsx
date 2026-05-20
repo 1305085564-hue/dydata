@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import type { Alert, AlertAggregationResult, AlertSeverity } from "@/lib/alert-sources/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { useAlertContextStore } from "@/components/ai-assistant/alert-context-store";
 
 import type { DashboardAlertsData } from "./admin-first-screen-loader";
 
@@ -125,6 +126,7 @@ export function AiAlertPanel({
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   const [selectedMap, setSelectedMap] = useState<Record<string, Set<string>>>({});
   const [executingGroup, setExecutingGroup] = useState<string | null>(null);
+  const { consultAlert } = useAlertContextStore();
 
   const runFetch = useCallback(async (manual: boolean) => {
     abortRef.current?.abort();
@@ -251,8 +253,9 @@ export function AiAlertPanel({
     }
 
     setExecutingGroup(group.groupKey);
-    let success = 0;
-    let fail = 0;
+    let successes = 0;
+    const needsConfirmAlerts: Alert[] = [];
+    let failures = 0;
 
     for (const alert of actionable) {
       const action = getPrimaryExecuteAction(alert);
@@ -270,25 +273,50 @@ export function AiAlertPanel({
             }),
           },
         );
-        if (res.ok) {
-          success++;
+        if (res.status === 409) {
+          needsConfirmAlerts.push(alert);
+        } else if (res.ok) {
+          const body = (await res.json()) as { success?: boolean };
+          if (body.success === true) {
+            successes++;
+          } else {
+            failures++;
+          }
         } else {
-          fail++;
+          failures++;
         }
       } catch {
-        fail++;
+        failures++;
       }
     }
 
     setExecutingGroup(null);
-    if (fail === 0) {
-      toast.success(`批量执行完成：${success} 条成功`);
-    } else {
-      toast.error(`批量执行：${success} 条成功 / ${fail} 条失败`);
+
+    if (successes > 0) {
+      toast.success(`批量执行完成：${successes} 条成功`);
+    }
+    if (failures > 0) {
+      toast.error(`批量执行：${failures} 条失败`);
+    }
+    if (needsConfirmAlerts.length > 0) {
+      toast.info(
+        `${needsConfirmAlerts.length} 条需要走 AI 确认（先处理第一条）`,
+        {
+          action: {
+            label: "打开 AI 助手",
+            onClick: () => {
+              const first = needsConfirmAlerts[0];
+              consultAlert({ alertId: first.id, preview: first.title });
+            },
+          },
+        },
+      );
     }
 
     setSelectedMap((prev) => ({ ...prev, [group.groupKey]: new Set() }));
-    window.dispatchEvent(new CustomEvent("dydata:alerts-refresh"));
+    if (successes > 0 || failures > 0) {
+      window.dispatchEvent(new CustomEvent("dydata:alerts-refresh"));
+    }
   };
 
   const totalAlerts = summary?.total ?? 0;
@@ -424,7 +452,24 @@ export function AiAlertPanel({
                       <button
                         type="button"
                         onClick={() => {
-                          toast.message("AI 助手功能即将上线");
+                          const selectedIds = selectedMap[group.groupKey];
+                          if (selectedIds && selectedIds.size > 0) {
+                            const firstId = Array.from(selectedIds)[0];
+                            const alert = group.alerts.find((a) => a.id === firstId);
+                            if (alert) {
+                              consultAlert({ alertId: alert.id, preview: alert.title });
+                              return;
+                            }
+                          }
+                          const firstCritical = group.alerts.find((a) => a.severity === "critical");
+                          if (firstCritical) {
+                            consultAlert({ alertId: firstCritical.id, preview: firstCritical.title });
+                            return;
+                          }
+                          const firstAny = group.alerts[0];
+                          if (firstAny) {
+                            consultAlert({ alertId: firstAny.id, preview: firstAny.title });
+                          }
                         }}
                         className="inline-flex h-6 items-center rounded-md bg-zinc-900 px-2.5 text-[11px] text-white transition hover:bg-zinc-800"
                       >
