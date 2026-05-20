@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { BarChart3, FileText, FileVideo, FolderOpen, Gauge, ShieldAlert, Target } from "lucide-react";
+import { BarChart3, FileText, FolderOpen, Gauge, ShieldAlert, Target } from "lucide-react";
 
 import type { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 export type AdminPanelKey =
   | "overview"
   | "analytics"
-  | "video-review"
   | "content"
   | "videos"
   | "conversion"
@@ -51,17 +50,6 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     tone: "success",
     group: "daily",
     match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
-    requiresAdmin: true,
-  },
-  {
-    href: "/admin/video-review",
-    panel: "video-review",
-    label: "视频复盘",
-    description: "AI 初诊、人工复核、下发反馈卡，完成复盘闭环。",
-    icon: FileVideo,
-    tone: "success",
-    group: "daily",
-    match: (pathname) => pathname === "/admin/video-review" || pathname.startsWith("/admin/video-review/"),
     requiresAdmin: true,
   },
   {

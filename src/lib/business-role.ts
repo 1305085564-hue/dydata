@@ -36,7 +36,6 @@ const GROUP_LEADER_DEFAULT_PERMISSIONS: Record<PermissionKey, boolean> = {
   view_conversion_hub: false,
   view_content_review: true,
   manage_video_assets: false,
-  review_diagnosis: true,
   use_ai_copywriting: true,
   use_ai_management: false,
 };

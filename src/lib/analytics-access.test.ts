@@ -50,7 +50,6 @@ test("组长能访问团队日常管理，不能访问系统设置", () => {
   assert.equal(canAccessAdminPath("/admin", "group_leader"), true);
   assert.equal(canAccessAdminPath("/admin/analytics", "group_leader"), true);
   assert.equal(canAccessAdminPath("/admin/content", "group_leader"), true);
-  assert.equal(canAccessAdminPath("/admin/video-review", "group_leader"), true);
   assert.equal(canAccessAdminPath("/admin/settings", "group_leader"), false);
   assert.equal(canAccessAdminPath("/admin/modules", "group_leader"), false);
   assert.equal(canAccessAdminPath("/admin/ai-channels", "group_leader"), false);

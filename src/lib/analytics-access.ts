@@ -93,9 +93,6 @@ function canAccessDailyManagementPath(pathname: string, role: UserRole | Busines
   if (pathname === "/admin/videos" || pathname.startsWith("/admin/videos/")) {
     return role === "owner" || hasPermission(role, permissions, "manage_video_assets") || hasPermission(role, permissions, "view_analytics");
   }
-  if (pathname === "/admin/video-review" || pathname.startsWith("/admin/video-review/")) {
-    return role === "owner" || hasPermission(role, permissions, "review_diagnosis") || hasPermission(role, permissions, "view_all_data");
-  }
   if (
     pathname === "/admin/analytics" ||
     pathname.startsWith("/admin/analytics/") ||

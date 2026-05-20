@@ -15,7 +15,6 @@ export const ADMIN_PERMISSION_KEYS = [
   "view_conversion_hub",
   "view_content_review",
   "manage_video_assets",
-  "review_diagnosis",
 ] as const;
 
 export const AI_PERMISSION_KEYS = [
@@ -44,7 +43,6 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   view_conversion_hub: "查看转化中心",
   view_content_review: "查看内容复盘",
   manage_video_assets: "管理视频素材",
-  review_diagnosis: "视频诊断复核",
   use_ai_copywriting: "AI 文案助手",
   use_ai_management: "AI 管理助手",
 };
