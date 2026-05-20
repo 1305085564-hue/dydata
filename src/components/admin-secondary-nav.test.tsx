@@ -6,20 +6,23 @@ import { AdminSecondaryNav, getAdminSecondaryNavItems } from "./admin-secondary-
 
 test("日常管理组为管理员输出完整入口", () => {
   assert.deepEqual(
-    getAdminSecondaryNavItems({ canManageAdmin: true, userRole: "admin", canManageViolations: true, canViewConversion: true, group: "daily" }).map((item) => item.label),
-    ["今日待办", "经营分析", "内容复盘", "视频素材", "转化中心", "违规复核"],
+    getAdminSecondaryNavItems({ canManageAdmin: true, canManageMembers: true, userRole: "admin", canManageViolations: true, canViewConversion: true, group: "daily" }).map((item) => item.label),
+    ["今日待办", "经营分析", "成员权限", "团队分组", "内容复盘", "视频素材", "转化中心", "违规复核"],
   );
 });
 
-test("团队管理二级导航不再输出系统设置类入口", () => {
+test("团队管理二级导航给负责人输出成员权限和团队分组，但不输出 AI 配置", () => {
   const ownerItems = getAdminSecondaryNavItems({ canManageAdmin: true, canManageMembers: true, userRole: "owner" }).map((item) => item.label);
   const adminItems = getAdminSecondaryNavItems({ canManageAdmin: true, canManageMembers: true, userRole: "admin" }).map((item) => item.label);
   const leaderItems = getAdminSecondaryNavItems({ canManageAdmin: true, canManageMembers: false, userRole: "admin" }).map((item) => item.label);
 
-  assert.equal(ownerItems.includes("成员权限"), false);
+  assert.equal(ownerItems.includes("成员权限"), true);
+  assert.equal(ownerItems.includes("团队分组"), true);
   assert.equal(ownerItems.includes("AI 配置"), false);
-  assert.equal(adminItems.includes("成员权限"), false);
+  assert.equal(adminItems.includes("成员权限"), true);
+  assert.equal(adminItems.includes("团队分组"), true);
   assert.equal(leaderItems.includes("成员权限"), false);
+  assert.equal(leaderItems.includes("团队分组"), false);
 });
 
 test("后台二级导航对 member 不输出后台入口", () => {

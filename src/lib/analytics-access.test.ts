@@ -55,7 +55,7 @@ test("组长能访问团队日常管理，不能访问系统设置", () => {
   assert.equal(canAccessAdminPath("/admin/ai-channels", "group_leader"), false);
 });
 
-test("负责人直接访问成员权限是历史兼容，系统设置和 AI 配置仍只给 owner", () => {
+test("负责人可访问成员权限和团队分组，系统设置和 AI 配置仍只给 owner", () => {
   assert.equal(canAccessAdminPath("/admin/modules", "team_admin"), true);
   assert.equal(canAccessAdminPath("/admin/settings", "team_admin"), false);
   assert.equal(canAccessAdminPath("/admin/ai-channels", "team_admin"), false);

@@ -97,6 +97,7 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
         teams={data.teams}
         teamManagement={data.teamManagement}
         defaultDate={data.queryDate}
+        defaultTab="members"
       />
     </div>
   );

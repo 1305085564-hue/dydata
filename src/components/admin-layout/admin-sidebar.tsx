@@ -10,6 +10,8 @@ import {
   Target,
   Video,
   FileText,
+  UserCog,
+  UsersRound,
   X,
 } from "lucide-react";
 
@@ -39,6 +41,8 @@ type SidebarBadges = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "今日待办", icon: Gauge, badgeKey: "cockpit" },
   { href: "/admin/analytics", label: "经营分析", icon: BarChart3 },
+  { href: "/admin/modules", label: "成员权限", icon: UserCog, requiresManageMembers: true },
+  { href: "/admin/modules?focus=teams", label: "团队分组", icon: UsersRound, requiresManageMembers: true },
   { href: "/admin/videos", label: "视频素材", icon: Video, badgeKey: "videos" },
   { href: "/admin/content", label: "内容复盘", icon: FileText, badgeKey: "content" },
   { href: "/admin/conversion-hub", label: "转化中心", icon: Target, badgeKey: "conversion_hub", requiresPermission: "view_conversion_hub" },

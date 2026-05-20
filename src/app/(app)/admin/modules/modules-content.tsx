@@ -48,6 +48,7 @@ interface AdminModulesContentProps {
   teams: Array<{ id: string; name: string }>;
   teamManagement: Parameters<typeof TeamGroupManager>[0];
   defaultDate: string;
+  defaultTab?: "members" | "teams";
 }
 
 function ManageTeamSheet({
@@ -213,6 +214,7 @@ export function AdminModulesContent({
   teams,
   teamManagement,
   defaultDate,
+  defaultTab: requestedDefaultTab,
 }: AdminModulesContentProps) {
   const [governanceOpen, setGovernanceOpen] = useState(false);
   const [manageTeamOpen, setManageTeamOpen] = useState(false);
@@ -239,7 +241,7 @@ export function AdminModulesContent({
     );
   }
 
-  const defaultTab = canManagePermissions ? "members" : "teams";
+  const defaultTab = requestedDefaultTab === "teams" && showTeams ? "teams" : canManagePermissions ? "members" : "teams";
 
   return (
     <div className="space-y-8">

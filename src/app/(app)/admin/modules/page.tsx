@@ -9,7 +9,11 @@ import { getUserPermissions } from "@/lib/permissions";
 import { AdminModulesContent } from "./modules-content";
 
 interface AdminModulesPageProps {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; focus?: string }>;
+}
+
+function normalizeFocus(value: string | undefined): "members" | "teams" {
+  return value === "teams" || value === "team" ? "teams" : "members";
 }
 
 export default async function AdminModulesPage({ searchParams }: AdminModulesPageProps) {
@@ -56,6 +60,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
         teams={data.teams}
         teamManagement={data.teamManagement}
         defaultDate={data.queryDate}
+        defaultTab={normalizeFocus(params.focus)}
       />
     </AdminWorkspaceLayout>
   );
