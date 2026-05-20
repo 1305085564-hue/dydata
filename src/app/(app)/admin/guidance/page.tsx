@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { canAccessAdminPath } from "@/lib/analytics-access";
+import { getUserPermissions } from "@/lib/permissions";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { loadGuidancePageData } from "@/lib/loaders/guidance-page";
 import { CultivationList } from "./cultivation-list";
@@ -15,13 +16,13 @@ export default async function GuidancePage() {
 
   const perm = await getUserPermissions();
   if (!perm) redirect("/login");
-  if (!hasPermission(perm.businessRole, perm.permissions, "view_analytics")) redirect("/dashboard");
+  if (!canAccessAdminPath("/admin/guidance", perm.businessRole, perm.permissions)) redirect("/dashboard");
 
   const data = await loadGuidancePageData({ supabase });
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="Conversion Guidance"
+      eyebrow="转化指导"
       title="转化指导"
       description="从账号表现里筛出需要推进的人、方向和动作。"
       indexItems={[]}

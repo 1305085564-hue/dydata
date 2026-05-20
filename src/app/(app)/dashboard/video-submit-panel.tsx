@@ -596,9 +596,9 @@ export function VideoSubmitPanel({
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                 <div className="min-w-0">
                   <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                    SOP Control Pipeline
+                    今日工作台
                   </div>
-                  <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">DYData 数据填报</h2>
+                  <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">今日提交</h2>
                   <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
                     以 5 个关键时间卡点推进今日内容生产，第一步先完成昨日数据上报。
                   </p>
@@ -609,7 +609,7 @@ export function VideoSubmitPanel({
                     <button
                       type="button"
                       onClick={() => setIsAccountMenuOpen((open) => !open)}
-                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200 bg-white px-3 py-2 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 active:translate-y-0"
+                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200 bg-white px-3 py-2 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 active:translate-y-0"
                       aria-expanded={isAccountMenuOpen}
                       aria-haspopup="listbox"
                     >
@@ -667,7 +667,7 @@ export function VideoSubmitPanel({
               <div className="rounded-2xl border border-zinc-200 bg-[var(--color-bg)] px-4 py-4">
                 <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
                   <div className="space-y-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400">Today</div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400">今天</div>
                     <button
                       type="button"
                       onClick={openDatePicker}
@@ -740,7 +740,7 @@ export function VideoSubmitPanel({
                   <button
                     type="button"
                     onClick={dismissPendingExemption}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                   >
                     <X className="size-3.5 stroke-[1.5]" />
                     关闭
@@ -940,7 +940,7 @@ export function VideoSubmitPanel({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
-                    Daily Detail
+                    每日详情
                   </p>
                   <h3 className="text-lg font-semibold tracking-[-0.02em] text-zinc-800">
                     {activeBizDate} 的提交情况

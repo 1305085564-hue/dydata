@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { canAccessAdminPath } from "@/lib/analytics-access";
+import { getUserPermissions } from "@/lib/permissions";
 import { loadAdminVideosPageData } from "@/lib/loaders/admin-videos-page";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { VideoList } from "./video-list";
@@ -19,7 +20,7 @@ function normalizeView(value: string | undefined): VideoView {
 export default async function AdminVideosPage({ searchParams }: Props) {
   const perm = await getUserPermissions();
   if (!perm) redirect("/login");
-  if (!hasPermission(perm.businessRole, perm.permissions, "view_analytics")) redirect("/dashboard");
+  if (!canAccessAdminPath("/admin/videos", perm.businessRole, perm.permissions)) redirect("/dashboard");
 
   const params = await searchParams;
   const view = normalizeView(params.view);
@@ -30,7 +31,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="Video Assets"
+      eyebrow="视频素材"
       title="视频资产"
       description="原始视频、24h 快照、标签与异常状态"
       indexItems={[]}

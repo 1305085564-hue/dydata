@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { canAccessAdminPath } from "@/lib/analytics-access";
+import { getUserPermissions } from "@/lib/permissions";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { loadAdminAdvicePageData } from "@/lib/loaders/admin-advice-page";
 export type { AdviceRow } from "@/lib/loaders/admin-advice-page";
@@ -13,7 +14,7 @@ export default async function AdminAdvicePage() {
     redirect("/login");
   }
 
-  if (!hasPermission(permission.businessRole, permission.permissions, "view_analytics")) {
+  if (!canAccessAdminPath("/admin/advice", permission.businessRole, permission.permissions)) {
     redirect("/dashboard");
   }
 
@@ -22,7 +23,7 @@ export default async function AdminAdvicePage() {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="Advice Queue"
+      eyebrow="建议队列"
       title="转化建议"
       description="按员工、账号、状态和来源筛选建议，统一复核和执行。"
       indexItems={[]}

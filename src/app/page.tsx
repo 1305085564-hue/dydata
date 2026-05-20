@@ -45,7 +45,7 @@ export default async function HomePage() {
                 抖音数据日报平台
               </h1>
               <p className="max-w-lg text-[15px] leading-[1.7] text-[#71717A] md:text-[18px]">
-                让团队数据填报、分析和成长复盘，像呼吸一样自然
+                让团队数据记录、分析和成长复盘，像呼吸一样自然
               </p>
             </div>
 

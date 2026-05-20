@@ -741,10 +741,10 @@ export function AdminQueueSection({
     <div className="space-y-5">
       <div className="flex items-baseline gap-3">
         <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
-          管理员中控台
+          团队管理
         </h1>
         <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
-          Operating Cockpit
+          今天该处理谁
         </span>
       </div>
 

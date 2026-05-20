@@ -88,7 +88,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
             ) : null}
           </div>
           <p className="mt-1 text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
-            Play Count
+            播放量
           </p>
         </div>
       </div>

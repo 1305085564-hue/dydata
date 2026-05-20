@@ -151,3 +151,12 @@ export function canAccessOwner(scope: DataAccessScope, ownerUserId: string | nul
   if (scope.kind === "all") return true;
   return typeof ownerUserId === "string" && scope.visibleUserIds.includes(ownerUserId);
 }
+
+export function filterRowsByDataScope<T>(
+  scope: DataAccessScope,
+  rows: T[],
+  getOwnerUserId: (row: T) => string | null | undefined,
+) {
+  if (scope.kind === "all") return rows;
+  return rows.filter((row) => canAccessOwner(scope, getOwnerUserId(row)));
+}

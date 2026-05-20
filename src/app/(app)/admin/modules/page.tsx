@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { loadAdminModulesData } from "@/lib/loaders/admin-modules";
+import { canAccessAdminPath } from "@/lib/analytics-access";
+import { getUserPermissions } from "@/lib/permissions";
 
 import { AdminModulesContent } from "./modules-content";
 
@@ -11,6 +13,10 @@ interface AdminModulesPageProps {
 }
 
 export default async function AdminModulesPage({ searchParams }: AdminModulesPageProps) {
+  const permission = await getUserPermissions();
+  if (!permission) redirect("/login");
+  if (!canAccessAdminPath("/admin/modules", permission.businessRole, permission.permissions)) redirect("/admin");
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,7 +38,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="Permission Modules"
+      eyebrow="成员与权限"
       title="团队与成员"
       description="成员权限管理、团队与分组维护"
       indexItems={[

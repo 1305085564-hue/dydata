@@ -73,7 +73,7 @@ export function ContentToolsClient({ accounts, summary }: ContentToolsClientProp
       </AppShellHero>
 
       <AppShellSection
-        eyebrow="Tool Workspace"
+        eyebrow="工具工作区"
         title={currentTab.label}
         description={currentTab.description}
         meta={<div className="glass-chip hidden md:inline-flex">账号数 {accounts.length}</div>}

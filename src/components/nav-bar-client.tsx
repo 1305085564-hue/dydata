@@ -29,19 +29,14 @@ interface NavBarClientProps {
   role: string;
   showAdmin: boolean;
   showAiCopywriting?: boolean;
+  showSystemSettings?: boolean;
   accounts?: Account[];
 }
 
-function roleLabel(role: string) {
-  if (role === "owner") return "OWNER";
-  if (role === "admin") return "ADMIN";
-  return "MEMBER";
-}
-
-export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, accounts = [] }: NavBarClientProps) {
+export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, showSystemSettings = false, accounts = [] }: NavBarClientProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const navItems = useMemo(() => getNavItems({ showAdmin, showAiCopywriting }), [showAdmin, showAiCopywriting]);
+  const navItems = useMemo(() => getNavItems({ showAdmin, showAiCopywriting, showSystemSettings }), [showAdmin, showAiCopywriting, showSystemSettings]);
   const initial = name?.trim()?.slice(0, 1)?.toUpperCase() || "?";
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
@@ -81,7 +76,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
       "inline-flex h-8 shrink-0 items-center rounded-xl border px-3 text-[12px] font-medium transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
       active
         ? "border-zinc-200/80 bg-white text-zinc-800"
-        : "border-transparent text-zinc-500 hover:-translate-y-[1px] hover:bg-white hover:text-zinc-800 active:translate-y-0",
+        : "border-transparent text-zinc-500 hover:bg-white hover:text-zinc-800 active:translate-y-0",
     );
 
   return (
@@ -91,7 +86,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
-              className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-px hover:bg-zinc-50"
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-white">
                 <Zap className="size-3.5 stroke-[1.5] fill-current" />
@@ -101,7 +96,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                   DYData <span className="font-normal text-zinc-400">CNSL</span>
                 </div>
                 <div className="text-[10px] font-medium uppercase leading-none tracking-[0.25em] text-zinc-400">
-                  Production OS
+                  短视频团队管理系统
                 </div>
               </div>
             </Link>
@@ -122,7 +117,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                 <button
                   type="button"
                   onClick={() => setIsAccountMenuOpen((open) => !open)}
-                  className="group flex items-center gap-2.5 rounded-2xl border border-transparent px-2 py-1.5 transition-colors hover:-translate-y-px hover:border-zinc-200 hover:bg-white"
+                  className="group flex items-center gap-2.5 rounded-2xl border border-transparent px-2 py-1.5 transition-colors hover:border-zinc-200 hover:bg-white"
                   aria-expanded={isAccountMenuOpen}
                   aria-haspopup="listbox"
                 >
@@ -213,7 +208,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
             ) : (
               <div className="flex items-center gap-2">
                 <ProfileEditDialog currentName={name} role={role} trigger="menu-item">
-                  <div className="group flex items-center gap-2 rounded-2xl border border-transparent px-2 py-1.5 transition-[background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-px hover:border-zinc-200 hover:bg-white">
+                  <div className="group flex items-center gap-2 rounded-2xl border border-transparent px-2 py-1.5 transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-200 hover:bg-white">
                     <div className="hidden items-center gap-2 sm:flex">
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white ">
                         {initial}

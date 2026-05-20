@@ -1,5 +1,5 @@
 export type AiFeatureGroup =
-  | "成长分析"
+  | "个人成长"
   | "内容工具"
   | "OCR/截图识别"
   | "后台 AI 助手"
@@ -16,7 +16,7 @@ export type AiFeatureMetadata = {
 };
 
 export const AI_FEATURE_GROUP_ORDER: AiFeatureGroup[] = [
-  "成长分析",
+  "个人成长",
   "内容工具",
   "OCR/截图识别",
   "后台 AI 助手",
@@ -35,8 +35,8 @@ const FALLBACK_METADATA: AiFeatureMetadata = {
 
 export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
   growth_insight: {
-    group: "成长分析",
-    title: "成长分析：问题证据与改写建议",
+    group: "个人成长",
+    title: "个人成长：问题证据与改写建议",
     location: "/growth > AI 洞察与行动建议 > 一句话结论 / 问题证据 / 改写建议",
     purpose: "给昨天那条视频下一个短结论，点出问题证据，补一句归因，再给可直接替换的改写。",
     inputSummary: "昨日单条视频核心指标、文案原文、流量曲线描述、留存曲线描述。",
@@ -44,8 +44,8 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
     recommendedWhen: "想看问题到底出在哪一段，先配它。",
   },
   growth_advice: {
-    group: "成长分析",
-    title: "成长分析：参考示例与下一步动作",
+    group: "个人成长",
+    title: "个人成长：参考示例与下一步动作",
     location: "/growth > AI 洞察与行动建议 > 参考示例 / 下一步动作",
     purpose: "基于近 7 天表现和标杆样本，告诉你该学谁、先改哪两三步。",
     inputSummary: "7 天汇总、五维诊断、最弱项、标杆数据、参考样本。",
@@ -53,8 +53,8 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
     recommendedWhen: "问题已经知道了，想拿到可执行动作时用它。",
   },
   content_segment: {
-    group: "成长分析",
-    title: "成长分析：文案拆解",
+    group: "个人成长",
+    title: "个人成长：文案拆解",
     location: "/growth > 文案拆解",
     purpose: "把原始文案切成开头、铺垫、核心观点、行动引导这些段落，方便定位哪一段拖后腿。",
     inputSummary: "视频原始文案文本。",

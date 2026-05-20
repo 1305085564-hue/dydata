@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 const demoNavItems = [
   {
     href: "/demo/dashboard",
-    label: "数据填报",
+    label: "今日工作台",
     match: (pathname: string) => pathname === "/demo/dashboard",
   },
   {
     href: "/demo/growth",
-    label: "成长分析",
+    label: "个人成长",
     match: (pathname: string) => pathname === "/demo/growth",
   },
 
@@ -24,12 +24,12 @@ const demoNavItems = [
   },
   {
     href: "/demo/admin/ai-assistant",
-    label: "AI助手",
+    label: "文案助手",
     match: (pathname: string) => pathname.startsWith("/demo/admin/ai-assistant"),
   },
   {
     href: "/demo/admin",
-    label: "后台管理",
+    label: "团队管理",
     match: (pathname: string) =>
       pathname === "/demo/admin" ||
       pathname.startsWith("/demo/admin/analytics") ||

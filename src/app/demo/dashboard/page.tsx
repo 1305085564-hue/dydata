@@ -17,7 +17,7 @@ export default function DemoDashboardPage() {
   return (
     <AppShell width="wide" className="pb-10">
       <AppShellHero
-        eyebrow="Demo Dashboard"
+        eyebrow="演示工作台"
         title="先看今天的提报体验，再看趋势和排行"
         description="这是演示环境，保留正式站的布局层次与主要模块，但所有提交、编辑和导出动作都锁定。"
         meta={<DemoModeChip />}

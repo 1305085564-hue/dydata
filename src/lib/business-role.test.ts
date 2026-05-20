@@ -50,6 +50,8 @@ test("组长默认拥有运营内容和数据能力，但不能管理权限", ()
   const permissions = normalizePermissionsForBusinessRole("group_leader", {});
 
   assert.equal(permissions.view_analytics, true);
+  assert.equal(permissions.view_content_review, true);
+  assert.equal(permissions.review_diagnosis, true);
   assert.equal(permissions.export_data, true);
   assert.equal(permissions.use_ai_copywriting, true);
   assert.equal(permissions.manage_members, false);

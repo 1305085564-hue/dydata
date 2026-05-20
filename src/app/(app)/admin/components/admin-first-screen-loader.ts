@@ -1,8 +1,9 @@
 import { buildDashboardAlertsResponse } from "@/app/api/admin/dashboard-alerts/route";
-import { requireAdminServiceClient, unwrapRpc } from "@/app/api/admin/cockpit/_shared";
+import { filterScopedRows, requireAdminServiceClient, unwrapRpc } from "@/app/api/admin/cockpit/_shared";
 import type { AlertAggregationResult, AlertSource } from "@/lib/alert-sources/types";
 import type { ExemptionRequestRow } from "@/app/(app)/admin/豁免申请列表";
 import { listPendingRequestsForAdmin, type AdminRequestRow } from "@/lib/team-join/service";
+import type { DataAccessScope } from "@/lib/data-access-scope";
 
 export type CockpitSummary = {
   pending_videos: number;
@@ -17,6 +18,7 @@ export type PendingVideoRow = {
   report_date: string;
   has_tags: boolean;
   anomaly_flag: boolean;
+  submitted_by: string | null;
   submitted_by_name: string | null;
 };
 
@@ -26,6 +28,7 @@ export type PendingViolationRow = {
   category: string | null;
   risk_level: string | null;
   created_at: string;
+  submitted_by?: string | null;
   submitted_by_name: string | null;
 };
 
@@ -58,6 +61,23 @@ function normalizeSummary(value: Record<string, number> | null | undefined): Coc
     pending_violations: Number(value?.pending_violations ?? 0),
     pending_submissions: Number(value?.pending_submissions ?? 0),
     pending_exemptions: Number(value?.pending_exemptions ?? 0),
+  };
+}
+
+function buildScopedSummary(
+  value: Record<string, number> | null | undefined,
+  rows: {
+    pendingVideos: PendingVideoRow[];
+    pendingViolations: PendingViolationRow[];
+    pendingSubmissions: PendingSubmissionRow[];
+  },
+): CockpitSummary {
+  const summary = normalizeSummary(value);
+  return {
+    ...summary,
+    pending_videos: rows.pendingVideos.length,
+    pending_violations: rows.pendingViolations.length,
+    pending_submissions: rows.pendingSubmissions.length,
   };
 }
 
@@ -133,7 +153,7 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
   ] = await Promise.all([
     auth.supabase.rpc("admin_cockpit_summary", { target_date: date }),
     auth.supabase.rpc("admin_pending_videos_today", { target_date: date, limit_rows: 10 }),
-    auth.supabase.rpc("admin_pending_violations", { limit_rows: 10 }),
+    loadPendingViolationRows(auth.supabase, auth.scope),
     auth.supabase.rpc("admin_pending_submissions_today", { target_date: date }),
     loadPendingExemptionRows(auth.supabase),
     listPendingRequestsForAdmin(),
@@ -141,16 +161,19 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
   ]);
 
   const summary = unwrapRpc<Record<string, number>>(summaryResult).data;
-  const pendingVideos = unwrapRpc<PendingVideoRow[]>(videosResult).data;
-  const pendingViolations = unwrapRpc<PendingViolationRow[]>(violationsResult).data;
-  const pendingSubmissions = unwrapRpc<PendingSubmissionRow[]>(submissionsResult).data;
+  const pendingVideos = filterScopedRows(auth.scope, unwrapRpc<PendingVideoRow[]>(videosResult).data, (row) => row.submitted_by);
+  const pendingSubmissions = filterScopedRows(auth.scope, unwrapRpc<PendingSubmissionRow[]>(submissionsResult).data, (row) => row.profile_id);
   const pendingJoinRequests = joinRequestsResult.ok ? joinRequestsResult.data : [];
 
   return {
-    summary: normalizeSummary(summary),
-    pendingVideos: pendingVideos ?? [],
-    pendingViolations: pendingViolations ?? [],
-    pendingSubmissions: pendingSubmissions ?? [],
+    summary: buildScopedSummary(summary, {
+      pendingVideos,
+      pendingViolations: violationsResult,
+      pendingSubmissions,
+    }),
+    pendingVideos,
+    pendingViolations: violationsResult,
+    pendingSubmissions,
     pendingExemptions: exemptionsResult,
     pendingJoinRequests,
     alerts: alertsResult.data,
@@ -163,6 +186,42 @@ type AdminSupabase = Awaited<ReturnType<typeof requireAdminServiceClient>> exten
     ? S
     : never
   : never;
+
+async function loadPendingViolationRows(
+  supabase: AdminSupabase,
+  scope: DataAccessScope,
+): Promise<PendingViolationRow[]> {
+  let query = supabase
+    .from("violation_cases")
+    .select("id, script_text, category, risk_level, created_at, submitted_by, profiles!submitted_by(name)")
+    .eq("status", "submitted")
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (scope.kind !== "all") {
+    query = query.in("submitted_by", scope.visibleUserIds);
+  }
+
+  const { data } = await query;
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    script_text:
+      typeof row.script_text === "string" && row.script_text.length > 80
+        ? row.script_text.slice(0, 80)
+        : (row.script_text as string),
+    category: (row.category as string | null) ?? null,
+    risk_level: (row.risk_level as string | null) ?? null,
+    created_at: row.created_at as string,
+    submitted_by: (row.submitted_by as string | null) ?? null,
+    submitted_by_name: (() => {
+      const profiles = row.profiles as { name?: string | null } | Array<{ name?: string | null }> | null;
+      const profile = Array.isArray(profiles) ? profiles[0] : profiles;
+      return profile?.name ?? "未命名成员";
+    })(),
+  }));
+}
 
 async function loadPendingExemptionRows(
   supabase: AdminSupabase,

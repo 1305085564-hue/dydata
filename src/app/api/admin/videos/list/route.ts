@@ -2,10 +2,11 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const VIDEO_SELECT =
-  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name), profiles!inner(name)";
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!inner(name)";
 
 function parseView(request: NextRequest) {
   const view = request.nextUrl.searchParams.get("view") ?? "pending";
@@ -24,6 +25,10 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
+  const scope = await buildDataAccessScope(supabase, auth.actor.userId);
+  if (!scope) {
+    return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
+  }
   const [{ data: videos, error: videosError }, { data: snapshots }, { data: videoTags }] = await Promise.all([
     supabase
       .from("videos")
@@ -39,7 +44,11 @@ export async function GET(request: NextRequest) {
   }
 
   const taggedVideoIds = new Set((videoTags ?? []).map((tag) => tag.video_id as string));
-  const allVideos = videos ?? [];
+  const allVideos = filterRowsByDataScope(scope, videos ?? [], (video) => {
+    const accounts = video.accounts as { profile_id?: string | null } | Array<{ profile_id?: string | null }> | null;
+    const account = Array.isArray(accounts) ? accounts[0] : accounts;
+    return account?.profile_id ?? (video.user_id as string | null);
+  });
   const filteredVideos = view === "pending"
     ? allVideos.filter((video) => {
         const hasTags = taggedVideoIds.has(video.id as string);

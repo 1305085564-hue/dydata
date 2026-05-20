@@ -190,7 +190,7 @@ export type AiFeatureGroupSection = {
 };
 
 const GROUP_DESCRIPTIONS: Record<AiFeatureGroup, string> = {
-  成长分析: "把 growth 页里的区块说明、AI 输出职责和专属提示词收成一套。",
+  个人成长: "把 growth 页里的区块说明、AI 输出职责和专属提示词收成一套。",
   内容工具: "服务内容策划和批量生产，不跟 growth 诊断混在一起。",
   "OCR/截图识别": "负责把截图先识别成结构化数据，给后面的分析接口当输入。",
   "后台 AI 助手": "服务管理员操作和诊断，不直接给前台用户看。",

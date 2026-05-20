@@ -2,10 +2,11 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const CONTENT_VIDEO_SELECT =
-  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name), profiles!inner(name)";
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!inner(name)";
 
 const CONTENT_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares";
@@ -27,6 +28,10 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
+  const scope = await buildDataAccessScope(supabase, auth.actor.userId);
+  if (!scope) {
+    return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
+  }
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const [{ data: reviewedResults }, { data: snapshots }, videosResult] = await Promise.all([
@@ -60,7 +65,11 @@ export async function GET(request: NextRequest) {
       .filter((id): id is string => id !== null),
   );
 
-  const allVideos = videosResult.data ?? [];
+  const allVideos = filterRowsByDataScope(scope, videosResult.data ?? [], (video) => {
+    const accounts = video.accounts as { profile_id?: string | null } | Array<{ profile_id?: string | null }> | null;
+    const account = Array.isArray(accounts) ? accounts[0] : accounts;
+    return account?.profile_id ?? (video.user_id as string | null);
+  });
   const videos = view === "pending"
     ? allVideos.filter((video) => {
         const uploadedAt = typeof video.uploaded_at === "string" ? video.uploaded_at : null;

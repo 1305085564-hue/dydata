@@ -360,7 +360,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                   </div>
                   <button
                     onClick={() => setSelected(s)}
-                    className="shrink-0 rounded-[10px] border border-zinc-200 bg-white px-4 py-2 text-[11px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="shrink-0 rounded-[10px] border border-zinc-200 bg-white px-4 py-2 text-[11px] font-medium text-zinc-700 transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                   >
                     审核
                   </button>
@@ -410,7 +410,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                       type="button"
                       disabled={isReviewingExemption}
                       onClick={() => handleExemptionReview(request, "rejected")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 disabled:pointer-events-none disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 disabled:pointer-events-none disabled:opacity-50"
                     >
                       <X size={12} className="stroke-[1.5]" />
                       拒绝
@@ -419,7 +419,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                       type="button"
                       disabled={isReviewingExemption}
                       onClick={() => handleExemptionReview(request, "approved")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[#6FAA7D] px-3 text-[11px] font-medium text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#5E986D] disabled:pointer-events-none disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[#6FAA7D] px-3 text-[11px] font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#5E986D] disabled:pointer-events-none disabled:opacity-50"
                     >
                       <Check size={12} className="stroke-[1.5]" />
                       {isReviewingThis ? "处理中" : "通过"}

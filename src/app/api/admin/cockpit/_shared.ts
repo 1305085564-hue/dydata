@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { buildDataAccessScope, canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RpcResult<T> = {
@@ -28,7 +29,22 @@ export async function requireAdminServiceClient() {
     return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
   }
 
-  return { supabase: createAdminClient(), actor: auth.actor };
+  const supabase = createAdminClient();
+  const scope = await buildDataAccessScope(supabase, auth.actor.userId);
+  if (!scope) {
+    return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
+  }
+
+  return { supabase, actor: auth.actor, scope };
+}
+
+export function filterScopedRows<T>(
+  scope: DataAccessScope,
+  rows: T[] | null | undefined,
+  getOwnerUserId: (row: T) => string | null | undefined,
+) {
+  if (scope.kind === "all") return rows ?? [];
+  return (rows ?? []).filter((row) => canAccessOwner(scope, getOwnerUserId(row)));
 }
 
 export function jsonBadRequest(message: string) {

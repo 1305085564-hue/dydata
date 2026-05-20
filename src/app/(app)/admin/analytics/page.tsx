@@ -37,7 +37,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">Business Analytics</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">经营分析</p>
         <h1 className="mt-1 text-[18px] font-medium tracking-tight text-zinc-800">经营分析</h1>
       </div>
       <AnalyticsPageHeader preset={data.range.preset} from={data.range.from} to={data.range.to} />

@@ -1,13 +1,6 @@
 import Link from "next/link";
 import type { ComponentType } from "react";
-import {
-  BarChart3,
-  Blocks,
-  Gauge,
-  Target,
-  ShieldAlert,
-  Sparkles,
-} from "lucide-react";
+import { BarChart3, FileText, FileVideo, FolderOpen, Gauge, ShieldAlert, Target } from "lucide-react";
 
 import type { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
@@ -15,10 +8,11 @@ import { cn } from "@/lib/utils";
 export type AdminPanelKey =
   | "overview"
   | "analytics"
-  | "ai-config"
-  | "modules"
-  | "violations"
-  | "conversion";
+  | "video-review"
+  | "content"
+  | "videos"
+  | "conversion"
+  | "violations";
 
 export interface AdminSecondaryNavItem {
   href: string;
@@ -27,9 +21,11 @@ export interface AdminSecondaryNavItem {
   description: string;
   icon: ComponentType<{ className?: string }>;
   tone: "primary" | "success" | "warning" | "neutral";
+  group?: "daily";
   match: (pathname: string) => boolean;
   requiresAdmin?: boolean;
   requiresOwner?: boolean;
+  requiresConversionPermission?: boolean;
   requiresViolationPermission?: boolean;
   hideWhenPrefixed?: boolean;
 }
@@ -38,10 +34,11 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
   {
     href: "/admin",
     panel: "overview",
-    label: "中控总览",
-    description: "查看团队日报状态、关键待办和今日整体节奏。",
+    label: "今日待办",
+    description: "谁没交、谁待复盘、谁需要反馈，今天该处理的一眼看清。",
     icon: Gauge,
     tone: "primary",
+    group: "daily",
     match: (pathname) => pathname === "/admin",
     requiresAdmin: true,
   },
@@ -52,23 +49,42 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     description: "查看经营数据、视频表现与趋势，快速定位重点信号。",
     icon: BarChart3,
     tone: "success",
+    group: "daily",
     match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
+    requiresAdmin: true,
   },
   {
-    href: "/admin/ai-channels",
-    panel: "ai-config",
-    label: "AI 配置中心",
-    description: "集中管理模型渠道、功能绑定、文案改写和执行路线。",
-    icon: Sparkles,
-    tone: "warning",
-    match: (pathname) =>
-      pathname === "/admin/ai-channels" ||
-      pathname.startsWith("/admin/ai-channels/") ||
-      pathname === "/admin/ai-rewrite" ||
-      pathname.startsWith("/admin/ai-rewrite/") ||
-      pathname === "/admin/ai-features" ||
-      pathname.startsWith("/admin/ai-features/"),
-    requiresOwner: true,
+    href: "/admin/video-review",
+    panel: "video-review",
+    label: "视频复盘",
+    description: "AI 初诊、人工复核、下发反馈卡，完成复盘闭环。",
+    icon: FileVideo,
+    tone: "success",
+    group: "daily",
+    match: (pathname) => pathname === "/admin/video-review" || pathname.startsWith("/admin/video-review/"),
+    requiresAdmin: true,
+  },
+  {
+    href: "/admin/content",
+    panel: "content",
+    label: "内容复盘",
+    description: "文案拆解、次日复盘、内容判断和下一步动作。",
+    icon: FileText,
+    tone: "success",
+    group: "daily",
+    match: (pathname) => pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
+    requiresAdmin: true,
+  },
+  {
+    href: "/admin/videos",
+    panel: "videos",
+    label: "视频素材",
+    description: "原始视频、24h 快照、标签与异常状态管理。",
+    icon: FolderOpen,
+    tone: "neutral",
+    group: "daily",
+    match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
+    requiresAdmin: true,
   },
   {
     href: "/admin/conversion-hub",
@@ -77,6 +93,7 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     description: "把转化话术、违规风险、每周筛选和复核结论串成闭环。",
     icon: Target,
     tone: "success",
+    group: "daily",
     match: (pathname) =>
       pathname === "/admin/conversion-hub" ||
       pathname.startsWith("/admin/conversion-hub/") ||
@@ -84,7 +101,7 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
       pathname.startsWith("/admin/advice/") ||
       pathname === "/admin/guidance" ||
       pathname.startsWith("/admin/guidance/"),
-    requiresAdmin: true,
+    requiresConversionPermission: true,
   },
   {
     href: "/admin/violations",
@@ -93,34 +110,28 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     description: "审核员工提交的违规/非违规案例。",
     icon: ShieldAlert,
     tone: "warning",
+    group: "daily",
     match: (pathname) => pathname === "/admin/violations" || pathname.startsWith("/admin/violations/"),
     requiresViolationPermission: true,
-  },
-  {
-    href: "/admin/modules",
-    panel: "modules",
-    label: "权限模块",
-    description: "集中处理成员、角色、权限、团队、分组和邀请码。",
-    icon: Blocks,
-    tone: "warning",
-    match: (pathname) => pathname === "/admin/modules" || pathname.startsWith("/admin/modules/"),
-    requiresAdmin: true,
   },
 ];
 
 export function getAdminSecondaryNavItems(options: {
   canManageAdmin: boolean;
+  canManageMembers?: boolean;
+  canViewConversion?: boolean;
   canManageViolations?: boolean;
   userRole?: UserRole | null;
+  group?: "daily";
 }) {
   return ADMIN_SECONDARY_NAV_ITEMS.filter((item) => {
-    if (item.requiresOwner) {
-      return options.userRole === "owner";
-    }
+    if (options.group && item.group !== options.group) return false;
     if (item.requiresViolationPermission) {
       return options.userRole === "owner" || options.canManageViolations === true;
     }
-
+    if (item.requiresConversionPermission) {
+      return options.userRole === "owner" || options.canViewConversion === true || options.canManageViolations === true;
+    }
     return !item.requiresAdmin || options.canManageAdmin;
   });
 }
@@ -128,6 +139,8 @@ export function getAdminSecondaryNavItems(options: {
 interface AdminSecondaryNavProps {
   pathname: string;
   canManageAdmin: boolean;
+  canManageMembers?: boolean;
+  canViewConversion?: boolean;
   canManageViolations?: boolean;
   className?: string;
   hrefPrefix?: string;
@@ -135,13 +148,14 @@ interface AdminSecondaryNavProps {
   userRole?: UserRole | null;
   renderMode?: "link" | "button";
   activePanel?: AdminPanelKey | null;
+  groupFilter?: "daily";
   onItemSelect?: (item: AdminSecondaryNavItem) => void;
   onItemPreload?: (item: AdminSecondaryNavItem) => void;
 }
 
 function getCardClassName(active: boolean) {
   return cn(
-    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-[#D97757]/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5 sm:min-w-[240px] xl:min-w-[200px]",
+    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition duration-200 ease-out hover:border-[#D97757]/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5 sm:min-w-[240px] xl:min-w-[200px]",
     active && "admin-subnav-link-active border-[#D97757]/50 bg-[#D97757]/5 shadow-md",
   );
 }
@@ -149,6 +163,8 @@ function getCardClassName(active: boolean) {
 export function AdminSecondaryNav({
   pathname,
   canManageAdmin,
+  canManageMembers,
+  canViewConversion,
   canManageViolations,
   className,
   hrefPrefix = "",
@@ -156,10 +172,11 @@ export function AdminSecondaryNav({
   userRole,
   renderMode = "link",
   activePanel,
+  groupFilter,
   onItemSelect,
   onItemPreload,
 }: AdminSecondaryNavProps) {
-  const items = getAdminSecondaryNavItems({ canManageAdmin, canManageViolations, userRole }).filter(
+  const items = getAdminSecondaryNavItems({ canManageAdmin, canManageMembers, canViewConversion, canManageViolations, userRole, group: groupFilter }).filter(
     (item) => !(hrefPrefix && item.hideWhenPrefixed),
   );
 

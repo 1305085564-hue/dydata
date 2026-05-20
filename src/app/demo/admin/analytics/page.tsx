@@ -62,7 +62,7 @@ export default function DemoAdminAnalyticsPage() {
   return (
     <AppShell width="wide" className="pb-10">
       <AppShellHero
-        eyebrow="Demo Admin Analytics"
+        eyebrow="演示经营分析"
         title="经营分析完整开放，只读展示"
         description="演示版保留后台经营分析的全部核心区块，外部访客能完整评估信息组织方式。"
         meta={<DemoModeChip />}

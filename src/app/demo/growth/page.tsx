@@ -16,8 +16,8 @@ export default function DemoGrowthPage() {
   return (
     <AppShell width="wide" className="pb-10">
       <AppShellHero
-        eyebrow="Demo Growth"
-        title="成长分析保留诊断、对标和文案拆解"
+        eyebrow="演示 · 个人成长"
+        title="个人成长保留诊断、对标和文案拆解"
         description="这一页重点让外部访客看到：数据结论如何被组织成问题、标杆、PK 和文案建议。"
         meta={<DemoModeChip />}
       >
@@ -25,7 +25,7 @@ export default function DemoGrowthPage() {
       </AppShellHero>
 
       <AppShellSection
-        eyebrow="Capability"
+        eyebrow="能力面板"
         title="六维能力面板"
         description="演示数据按 30 天样本生成，让评分分布和强弱提示更像真实环境。"
       >
@@ -33,9 +33,9 @@ export default function DemoGrowthPage() {
       </AppShellSection>
 
       <AppShellSection
-        eyebrow="Performance"
+        eyebrow="表现分析"
         title="最近 7 天表现拆开看"
-        description="补上更具体的指标、样本和优先动作，让成长分析不只是抽象结论。"
+        description="补上更具体的指标、样本和优先动作，让个人成长不只是抽象结论。"
       >
         <DemoGrowthDeepDive
           overview={data.overview}
@@ -45,7 +45,7 @@ export default function DemoGrowthPage() {
       </AppShellSection>
 
       <AppShellSection
-        eyebrow="Benchmark"
+        eyebrow="弱项对标"
         title="弱项对标"
         description="保留“问题在哪里”到“该学谁”的过渡，让别人更容易给出产品层建议。"
       >
@@ -66,7 +66,7 @@ export default function DemoGrowthPage() {
       </div>
 
       <AppShellSection
-        eyebrow="Advice"
+        eyebrow="AI 建议"
         title="AI 建议输出格式"
         description="这里不调用真实模型，只展示正式站里的结论排版与信息节奏。"
       >

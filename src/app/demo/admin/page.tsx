@@ -15,7 +15,7 @@ export default function DemoAdminPage() {
   return (
     <AppShell width="wide" className="pb-10">
       <AppShellHero
-        eyebrow="Demo Admin"
+        eyebrow="演示团队管理"
         title="后台总览对外只开放只读体验"
         description="保留总览、成员状态、趋势、快捷动作和日志区，让访客能评价后台信息架构，但不能改任何真实配置。"
         meta={<DemoModeChip />}

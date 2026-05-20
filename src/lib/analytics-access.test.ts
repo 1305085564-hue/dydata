@@ -46,6 +46,24 @@ test("成员不能访问任何管理后台页面", () => {
   assert.equal(canAccessAdminPath("/admin/videos", "member"), false);
 });
 
+test("组长能访问团队日常管理，不能访问系统设置", () => {
+  assert.equal(canAccessAdminPath("/admin", "group_leader"), true);
+  assert.equal(canAccessAdminPath("/admin/analytics", "group_leader"), true);
+  assert.equal(canAccessAdminPath("/admin/content", "group_leader"), true);
+  assert.equal(canAccessAdminPath("/admin/video-review", "group_leader"), true);
+  assert.equal(canAccessAdminPath("/admin/settings", "group_leader"), false);
+  assert.equal(canAccessAdminPath("/admin/modules", "group_leader"), false);
+  assert.equal(canAccessAdminPath("/admin/ai-channels", "group_leader"), false);
+});
+
+test("负责人直接访问成员权限是历史兼容，系统设置和 AI 配置仍只给 owner", () => {
+  assert.equal(canAccessAdminPath("/admin/modules", "team_admin"), true);
+  assert.equal(canAccessAdminPath("/admin/settings", "team_admin"), false);
+  assert.equal(canAccessAdminPath("/admin/ai-channels", "team_admin"), false);
+  assert.equal(canAccessAdminPath("/admin/settings", "owner"), true);
+  assert.equal(canAccessAdminPath("/admin/ai-channels", "owner"), true);
+});
+
 test("导航权限区分成员与管理员入口", () => {
   assert.deepEqual(getNavigationAccess("member"), {
     showAnalytics: false,

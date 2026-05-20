@@ -21,29 +21,14 @@ import type { UserRole } from "@/types";
 
 const loadAnalyticsPanel = () =>
   import("./analytics/analytics-modal-panel").then((module) => module.AnalyticsModalPanel);
-const loadModulesPanel = () =>
-  import("./modules/modules-modal-panel").then((module) => module.ModulesModalPanel);
-const loadAiChannelsPanel = () =>
-  import("./ai-channels/ai-channels-client").then((module) => module.default);
 
 const AnalyticsPanel = dynamic(loadAnalyticsPanel, {
   ssr: false,
   loading: () => <PanelSkeleton />,
 });
-const ModulesPanel = dynamic(loadModulesPanel, {
-  ssr: false,
-  loading: () => <PanelSkeleton />,
-});
-const AiChannelsPanel = dynamic(loadAiChannelsPanel, {
-  ssr: false,
-  loading: () => <PanelSkeleton />,
-});
 
-const panelPreloaders: Record<Exclude<AdminPanelKey, "overview" | "conversion">, () => Promise<unknown>> = {
+const panelPreloaders: Partial<Record<Exclude<AdminPanelKey, "overview" | "conversion">, () => Promise<unknown>>> = {
   analytics: loadAnalyticsPanel,
-  modules: loadModulesPanel,
-  "ai-config": loadAiChannelsPanel,
-  violations: () => Promise.resolve(),
 };
 
 function PanelSkeleton() {
@@ -63,8 +48,9 @@ interface AdminPanelLauncherProps {
   initialPanel: AdminPanelKey | null;
   userRole: UserRole;
   canManageAdmin: boolean;
+  canManageMembers?: boolean;
+  canViewConversion?: boolean;
   canManageViolations?: boolean;
-  initialDate: string;
   overviewContent: ReactNode;
 }
 
@@ -80,27 +66,28 @@ export function AdminPanelLauncher({
   initialPanel,
   userRole,
   canManageAdmin,
+  canManageMembers,
+  canViewConversion,
   canManageViolations,
-  initialDate,
   overviewContent,
 }: AdminPanelLauncherProps) {
-  const items = useMemo(
-    () => getAdminSecondaryNavItems({ canManageAdmin, canManageViolations, userRole }),
-    [canManageAdmin, canManageViolations, userRole],
+  const allItems = useMemo(
+    () => getAdminSecondaryNavItems({ canManageAdmin, canManageMembers, canViewConversion, canManageViolations, userRole }),
+    [canManageAdmin, canManageMembers, canViewConversion, canManageViolations, userRole],
   );
   const [activePanel, setActivePanel] = useState<AdminPanelKey | null>(
-    sanitizePanel(initialPanel, items),
+    sanitizePanel(initialPanel, allItems),
   );
 
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      setActivePanel(sanitizePanel(params.get("panel"), items));
+      setActivePanel(sanitizePanel(params.get("panel"), allItems));
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [items]);
+  }, [allItems]);
 
   function updateUrl(nextPanel: AdminPanelKey | null, mode: "push" | "replace") {
     const url = new URL(window.location.href);
@@ -114,7 +101,7 @@ export function AdminPanelLauncher({
   }
 
   function openPanel(item: AdminSecondaryNavItem) {
-    if (item.panel === "violations" || item.panel === "conversion") {
+    if (item.panel === "conversion" || !(item.panel in panelPreloaders)) {
       window.location.href = item.href;
       return;
     }
@@ -129,23 +116,32 @@ export function AdminPanelLauncher({
 
   function preloadPanel(item: AdminSecondaryNavItem) {
     if (item.panel === "overview" || item.panel === "conversion") return;
-    void panelPreloaders[item.panel]();
+    const preloader = panelPreloaders[item.panel];
+    if (preloader) void preloader();
   }
 
-  const activeItem = items.find((item) => item.panel === activePanel) ?? null;
+  const activeItem = allItems.find((item) => item.panel === activePanel) ?? null;
 
   return (
     <>
-      <AdminSecondaryNav
-        pathname="/admin"
-        canManageAdmin={canManageAdmin}
-        canManageViolations={canManageViolations}
-        userRole={userRole}
-        renderMode="button"
-        activePanel={activePanel}
-        onItemSelect={openPanel}
-        onItemPreload={preloadPanel}
-      />
+      <div className="space-y-3">
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-[13px] font-medium tracking-tight text-zinc-600">日常管理</h2>
+        </div>
+        <AdminSecondaryNav
+          pathname="/admin"
+          canManageAdmin={canManageAdmin}
+          canManageMembers={canManageMembers}
+          canViewConversion={canViewConversion}
+          canManageViolations={canManageViolations}
+          userRole={userRole}
+          renderMode="button"
+          groupFilter="daily"
+          activePanel={activePanel}
+          onItemSelect={openPanel}
+          onItemPreload={preloadPanel}
+        />
+      </div>
 
       <Dialog open={Boolean(activePanel)} onOpenChange={(open) => (!open ? closePanel() : null)}>
         <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-[96dvh] sm:w-[calc(100vw-24px)] sm:max-w-none sm:rounded-2xl 2xl:w-[min(100vw-32px,1880px)]">
@@ -156,10 +152,10 @@ export function AdminPanelLauncher({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-2">
                       <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">
-                        管理员中控台
+                        团队管理
                       </DialogTitle>
                       <DialogDescription className="max-w-3xl text-[13px] leading-[1.7] text-zinc-500">
-                        在同一个工作台里切换模块，不跳页、不改顶部标题，直接处理当前后台任务。
+                        在同一个工作台里切换模块，不跳页、不改顶部标题，直接处理当前团队任务。
                       </DialogDescription>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -168,7 +164,7 @@ export function AdminPanelLauncher({
                       </span>
                       <Link
                         href={activeItem.href}
-                        className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0"
+                        className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0"
                       >
                         打开独立页面
                       </Link>
@@ -186,8 +182,6 @@ export function AdminPanelLauncher({
 
                   {activePanel === "overview" ? overviewContent : null}
                   {activePanel === "analytics" ? <AnalyticsPanel initialPreset="30d" /> : null}
-                  {activePanel === "modules" ? <ModulesPanel initialDate={initialDate} /> : null}
-                  {activePanel === "ai-config" ? <AiChannelsPanel /> : null}
                 </div>
               </div>
             </>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import { canAccessAdminPath } from "@/lib/analytics-access";
+import { getUserPermissions } from "@/lib/permissions";
 import { AppShell, AppShellHero, AppShellMetricStrip, AppShellSection } from "@/components/app-shell";
 import { loadAdminMarketPageData } from "@/lib/loaders/admin-market-page";
 import { MarketForm } from "./market-form";
@@ -13,7 +14,7 @@ export default async function MarketPage() {
     redirect("/login");
   }
 
-  if (!hasPermission(permission.businessRole, permission.permissions, "view_analytics")) {
+  if (!canAccessAdminPath("/admin/market", permission.businessRole, permission.permissions)) {
     redirect("/dashboard");
   }
 
@@ -23,9 +24,9 @@ export default async function MarketPage() {
   return (
     <AppShell width="wide" className="pb-8">
       <AppShellHero
-        eyebrow="Market Console"
+        eyebrow="市场控制台"
         title="市场环境管理"
-        description="维护近 30 天市场环境，用于成长分析和策略判断。"
+        description="维护近 30 天市场环境，用于个人成长和策略判断。"
       >
         <AppShellMetricStrip
           columns={4}
@@ -38,11 +39,11 @@ export default async function MarketPage() {
         />
       </AppShellHero>
 
-      <AppShellSection eyebrow="Market Editor" title="新增或更新市场环境" description="先维护当日市场环境，再查看最近 30 天记录。">
+      <AppShellSection eyebrow="市场编辑" title="新增或更新市场环境" description="先维护当日市场环境，再查看最近 30 天记录。">
         <MarketForm />
       </AppShellSection>
 
-      <AppShellSection eyebrow="Market History" title="最近 30 天记录" description="支持直接回看和编辑已有市场环境。">
+      <AppShellSection eyebrow="历史记录" title="最近 30 天记录" description="支持直接回看和编辑已有市场环境。">
         <MarketList initialData={data.rows} />
       </AppShellSection>
     </AppShell>

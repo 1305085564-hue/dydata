@@ -51,7 +51,7 @@ function shiftDays(date: Date, days: number) {
   return next;
 }
 
-function canAccessAdminShell(role: UserRole | BusinessRole, permissions: Permissions = {}) {
+export function canAccessTeamManagement(role: UserRole | BusinessRole, permissions: Permissions = {}) {
   if (role === "owner" || role === "admin" || role === "team_admin" || role === "group_leader") return true;
   return (
     hasPermission(role, permissions, "view_all_data") ||
@@ -65,6 +65,50 @@ function canAccessAdminShell(role: UserRole | BusinessRole, permissions: Permiss
     hasPermission(role, permissions, "manage_video_assets") ||
     hasPermission(role, permissions, "use_ai_management")
   );
+}
+
+export function canAccessSystemSettings(role: UserRole | BusinessRole) {
+  return role === "owner";
+}
+
+function canAccessMembersSettings(role: UserRole | BusinessRole, permissions: Permissions = {}) {
+  return role === "owner" || role === "team_admin" || hasPermission(role, permissions, "manage_members");
+}
+
+function canAccessAiSettings(role: UserRole | BusinessRole) {
+  return role === "owner";
+}
+
+function canAccessDailyManagementPath(pathname: string, role: UserRole | BusinessRole, permissions: Permissions = {}) {
+  if (!canAccessTeamManagement(role, permissions)) return false;
+  if (pathname === "/admin/violations" || pathname.startsWith("/admin/violations/")) {
+    return role === "owner" || hasPermission(role, permissions, "manage_violations");
+  }
+  if (pathname === "/admin/conversion-hub" || pathname.startsWith("/admin/conversion-hub/")) {
+    return role === "owner" || hasPermission(role, permissions, "view_conversion_hub") || hasPermission(role, permissions, "manage_violations");
+  }
+  if (pathname === "/admin/content" || pathname.startsWith("/admin/content/")) {
+    return role === "owner" || hasPermission(role, permissions, "view_content_review") || hasPermission(role, permissions, "view_analytics");
+  }
+  if (pathname === "/admin/videos" || pathname.startsWith("/admin/videos/")) {
+    return role === "owner" || hasPermission(role, permissions, "manage_video_assets") || hasPermission(role, permissions, "view_analytics");
+  }
+  if (pathname === "/admin/video-review" || pathname.startsWith("/admin/video-review/")) {
+    return role === "owner" || hasPermission(role, permissions, "review_diagnosis") || hasPermission(role, permissions, "view_all_data");
+  }
+  if (
+    pathname === "/admin/analytics" ||
+    pathname.startsWith("/admin/analytics/") ||
+    pathname === "/admin/advice" ||
+    pathname.startsWith("/admin/advice/") ||
+    pathname === "/admin/guidance" ||
+    pathname.startsWith("/admin/guidance/") ||
+    pathname === "/admin/market" ||
+    pathname.startsWith("/admin/market/")
+  ) {
+    return role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data");
+  }
+  return pathname === "/admin";
 }
 
 export function buildAnalyticsAccessContext({ userId, role, permissions = {}, teamId, demoTeamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
@@ -81,13 +125,29 @@ export function buildAnalyticsAccessContext({ userId, role, permissions = {}, te
 }
 
 export function canAccessAdminPath(pathname: string, role: UserRole | BusinessRole, permissions: Permissions = {}) {
-  return canAccessAdminShell(role, permissions);
+  if (pathname === "/admin/settings" || pathname.startsWith("/admin/settings/")) {
+    return canAccessSystemSettings(role);
+  }
+  if (pathname === "/admin/modules" || pathname.startsWith("/admin/modules/")) {
+    return canAccessMembersSettings(role, permissions);
+  }
+  if (
+    pathname === "/admin/ai-channels" ||
+    pathname.startsWith("/admin/ai-channels/") ||
+    pathname === "/admin/ai-rewrite" ||
+    pathname.startsWith("/admin/ai-rewrite/") ||
+    pathname === "/admin/ai-features" ||
+    pathname.startsWith("/admin/ai-features/")
+  ) {
+    return canAccessAiSettings(role);
+  }
+  return canAccessDailyManagementPath(pathname, role, permissions);
 }
 
 export function getNavigationAccess(role: UserRole | BusinessRole, permissions: Permissions = {}): NavigationAccess {
   return {
     showAnalytics: role === "admin" || role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data"),
-    showAdmin: canAccessAdminShell(role, permissions),
+    showAdmin: canAccessTeamManagement(role, permissions),
   };
 }
 

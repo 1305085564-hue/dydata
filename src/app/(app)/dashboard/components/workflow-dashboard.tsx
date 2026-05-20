@@ -212,7 +212,7 @@ export function WorkflowDashboard({
                 <button
                   onClick={() => submitCheckpoint(activeCheckpoint)}
                   disabled={isSubmitting || isPending}
-                  className="flex items-center justify-center gap-2 rounded-[10px] bg-zinc-900 px-10 py-3 text-[12px] font-medium uppercase tracking-[0.1em] text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                  className="flex items-center justify-center gap-2 rounded-[10px] bg-zinc-900 px-10 py-3 text-[12px] font-medium uppercase tracking-[0.1em] text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                 >
                   确认提交 <ArrowUpRight size={14} className="stroke-[1.5]" />
                 </button>
@@ -223,7 +223,7 @@ export function WorkflowDashboard({
           <div className="col-span-12 lg:col-span-4">
             <div className="h-full rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
               <h4 className="mb-8 border-b border-zinc-100 pb-4 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                Notifications
+                状态通知
               </h4>
               <div className="space-y-5">
                 {PRODUCTION_CHECKPOINTS.map((checkpoint) => {

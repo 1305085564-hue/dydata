@@ -56,7 +56,7 @@ export function GrowthClientShell({
     <AppShell width="wide" className="pb-12">
       {/* 顶层数据仪 — 合并 Hero + Performance Snapshot */}
       <AppShellHero
-        title="成长分析总览"
+        title="个人成长总览"
         description="按“看弱点、找对标、拆文案、定动作”的顺序走，先定位最该补的一环。"
         meta={
           <div className="flex flex-col items-end gap-1.5">

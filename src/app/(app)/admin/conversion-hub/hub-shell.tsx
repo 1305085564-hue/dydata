@@ -108,7 +108,7 @@ export function ConversionHubShell(props: HubShellProps) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="Conversion Hub"
+      eyebrow="转化中心"
       title="转化中心"
       description="话术 → 违规 → 周报 → 分析 → 建议，五步都在这里"
       indexItems={[]}

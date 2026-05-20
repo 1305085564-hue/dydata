@@ -147,9 +147,9 @@ export default async function ViolationsPage({
     error = loadError instanceof Error ? loadError.message : "加载失败";
   }
 
-  const headingLabel = perspective === "conversion" ? "转化话术库" : "违规话术库";
+  const headingLabel = perspective === "conversion" ? "转化话术库" : "话术案例库";
   const headingEyebrow =
-    perspective === "conversion" ? "Conversion Library" : "Violation Library";
+    perspective === "conversion" ? "转化话术库" : "话术案例库";
   const headingDesc =
     perspective === "conversion"
       ? "按转化表现汇总的导粉话术，优先沿用高转化模板。"
@@ -204,7 +204,7 @@ export default async function ViolationsPage({
         ) : (
           <EmptyState
             title="没有找到匹配的违规话术"
-            hint="试试清除筛选，或去 dashboard 的“收录违规”补一条。"
+            hint="试试清除筛选，或去 今日工作台 的“收录违规”补一条。"
           />
         )
       ) : conversionData.cases.length ? (

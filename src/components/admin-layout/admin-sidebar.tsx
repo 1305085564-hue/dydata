@@ -5,10 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  Blocks,
   Gauge,
   Menu,
-  Sparkles,
   Target,
   Video,
   FileText,
@@ -16,6 +14,8 @@ import {
 } from "lucide-react";
 
 import type { Permissions, UserRole } from "@/types";
+import type { BusinessRole } from "@/lib/business-role";
+import { hasPermission } from "@/lib/permission-utils";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -24,6 +24,8 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   requiresOwner?: boolean;
   badgeKey?: keyof SidebarBadges;
+  requiresManageMembers?: boolean;
+  requiresPermission?: keyof Permissions;
 }
 
 type SidebarBadges = {
@@ -35,18 +37,26 @@ type SidebarBadges = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "中控台", icon: Gauge, badgeKey: "cockpit" },
+  { href: "/admin", label: "今日待办", icon: Gauge, badgeKey: "cockpit" },
   { href: "/admin/analytics", label: "经营分析", icon: BarChart3 },
-  { href: "/admin/videos", label: "视频资产", icon: Video, badgeKey: "videos" },
+  { href: "/admin/videos", label: "视频复盘台", icon: Video, badgeKey: "videos" },
   { href: "/admin/content", label: "内容复盘", icon: FileText, badgeKey: "content" },
-  { href: "/admin/conversion-hub", label: "转化中心", icon: Target, badgeKey: "conversion_hub" },
-  { href: "/admin/modules", label: "权限模块", icon: Blocks },
-  { href: "/admin/ai-channels", label: "AI 配置", icon: Sparkles, requiresOwner: true },
+  { href: "/admin/conversion-hub", label: "转化中心", icon: Target, badgeKey: "conversion_hub", requiresPermission: "view_conversion_hub" },
 ];
 
-function getVisibleNavItems(userRole: UserRole | null | undefined): NavItem[] {
+function getVisibleNavItems(input: {
+  userRole: UserRole | null | undefined;
+  businessRole: BusinessRole | null | undefined;
+  permissions: Permissions;
+}): NavItem[] {
   return NAV_ITEMS.filter((item) => {
-    if (item.requiresOwner) return userRole === "owner";
+    if (item.requiresOwner) return input.businessRole === "owner" || input.userRole === "owner";
+    if (item.requiresManageMembers) {
+      return input.businessRole === "owner" || input.businessRole === "team_admin" || hasPermission(input.businessRole ?? "member", input.permissions, "manage_members");
+    }
+    if (item.requiresPermission) {
+      return hasPermission(input.businessRole ?? "member", input.permissions, item.requiresPermission);
+    }
     return true;
   });
 }
@@ -90,15 +100,16 @@ const AI_CHANNELS_CHANGED_EVENT = "ai-channels:changed";
 
 interface AdminSidebarProps {
   userRole: UserRole | null | undefined;
+  businessRole?: BusinessRole | null;
   permissions?: Permissions | null;
   userName: string;
 }
 
-export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
+export function AdminSidebar({ userRole, businessRole, permissions, userName }: AdminSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const badges = useSidebarBadges();
-  const items = getVisibleNavItems(userRole);
+  const items = getVisibleNavItems({ userRole, businessRole, permissions: permissions ?? {} });
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -135,7 +146,7 @@ export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
         {/* Header */}
         <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4">
           <span className="text-[10px] font-medium tracking-[0.25em] uppercase text-zinc-400">
-            ADMIN
+            团队管理
           </span>
           <button
             type="button"
@@ -192,26 +203,6 @@ export function AdminSidebar({ userRole, userName }: AdminSidebarProps) {
                       </span>
                     )}
                   </Link>
-                  {item.href === "/admin/modules" && active && (
-                    <ul className="mt-0.5 ml-6 space-y-0.5 border-l border-zinc-200 py-1">
-                      <li>
-                        <a
-                          href="#members"
-                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
-                        >
-                          成员权限
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          href="#teams"
-                          className="block py-1.5 pl-3 text-[12px] text-zinc-500 transition-[color] duration-150 hover:text-zinc-800"
-                        >
-                          团队与分组
-                        </a>
-                      </li>
-                    </ul>
-                  )}
                 </li>
               );
             })}

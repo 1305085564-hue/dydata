@@ -36,7 +36,7 @@ function makeFeature(overrides: Partial<AiFeatureItem> = {}): AiFeatureItem {
   return normalizeFeatureItem({
     id: "feature-1",
     feature_key: "growth_insight",
-    label: "成长分析",
+    label: "个人成长",
     channel_id: "channel-1",
     channel_name: "渠道 A",
     model: "gpt-5.4-mini",

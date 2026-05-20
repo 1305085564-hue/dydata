@@ -1,12 +1,16 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { jsonBadRequest, parseDateParam, requireAdminServiceClient, unwrapRpc } from "../cockpit/_shared";
+import { filterScopedRows, jsonBadRequest, parseDateParam, requireAdminServiceClient, unwrapRpc } from "../cockpit/_shared";
 
 type CockpitSummary = {
   pending_videos?: number;
-  pending_violations?: number;
   pending_submissions?: number;
+};
+
+type PendingViolationBadgeRow = {
+  id: string;
+  submitted_by: string | null;
 };
 
 export async function GET(request: NextRequest) {
@@ -23,10 +27,9 @@ export async function GET(request: NextRequest) {
 
   const summary = summaryUnwrapped.data ?? {};
   const pendingVideos = Number(summary.pending_videos ?? 0);
-  const pendingViolations = Number(summary.pending_violations ?? 0);
   const pendingSubmissions = Number(summary.pending_submissions ?? 0);
 
-  const [{ data: reviewedResults }, { count: conversionHubCount }] = await Promise.all([
+  const [{ data: reviewedResults }, { data: pendingViolationRows }, { data: conversionHubRows }] = await Promise.all([
     supabase
       .from("ai_insight_result")
       .select("result_json")
@@ -34,7 +37,12 @@ export async function GET(request: NextRequest) {
       .eq("result_status", "success"),
     supabase
       .from("violation_cases")
-      .select("id", { count: "exact", head: true })
+      .select("id, submitted_by")
+      .eq("status", "submitted")
+      .eq("is_deleted", false),
+    supabase
+      .from("violation_cases")
+      .select("id, submitted_by")
       .eq("status", "submitted")
       .eq("is_deleted", false),
   ]);
@@ -48,18 +56,50 @@ export async function GET(request: NextRequest) {
       .filter((id): id is string => id !== null),
   );
 
-  const { data: videos } = await supabase
+  let videosQuery = supabase
     .from("videos")
-    .select("id")
+    .select("id, user_id, accounts(profile_id)")
     .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+  if (auth.scope.kind !== "all") {
+    videosQuery = videosQuery.in("user_id", auth.scope.visibleUserIds);
+  }
+  const { data: videos } = await videosQuery;
 
-  const contentCount = (videos ?? []).filter((video) => !reviewedVideoIds.has(video.id as string)).length;
+  const scopedVideos = filterScopedRows(auth.scope, videos, (video) => {
+    const accounts = video.accounts as { profile_id?: string | null } | Array<{ profile_id?: string | null }> | null;
+    const account = Array.isArray(accounts) ? accounts[0] : accounts;
+    return account?.profile_id ?? (video.user_id as string | null);
+  });
+  const contentCount = scopedVideos.filter((video) => !reviewedVideoIds.has(video.id as string)).length;
+  const visiblePendingViolations = filterScopedRows(
+    auth.scope,
+    (pendingViolationRows ?? []) as PendingViolationBadgeRow[],
+    (row) => row.submitted_by,
+  ).length;
+  const visibleConversionHubCount = filterScopedRows(
+    auth.scope,
+    (conversionHubRows ?? []) as PendingViolationBadgeRow[],
+    (row) => row.submitted_by,
+  ).length;
+
+  const visiblePendingSubmissions =
+    auth.scope.kind === "all"
+      ? pendingSubmissions
+      : await supabase
+          .rpc("admin_pending_submissions_today", { target_date: date })
+          .then((result) => filterScopedRows(auth.scope, result.data as unknown[] | null, (row) => (row as { profile_id?: string | null }).profile_id).length, () => 0);
+  const visiblePendingVideos =
+    auth.scope.kind === "all"
+      ? pendingVideos
+      : await supabase
+          .rpc("admin_pending_videos_today", { target_date: date, limit_rows: 100 })
+          .then((result) => filterScopedRows(auth.scope, result.data as unknown[] | null, (row) => (row as { submitted_by?: string | null }).submitted_by).length, () => 0);
 
   return NextResponse.json({
-    cockpit: pendingVideos + pendingViolations + pendingSubmissions,
-    videos: pendingVideos,
+    cockpit: visiblePendingVideos + visiblePendingViolations + visiblePendingSubmissions,
+    videos: visiblePendingVideos,
     content: contentCount,
-    conversion_hub: conversionHubCount ?? pendingViolations,
+    conversion_hub: visibleConversionHubCount,
     ai_channels: 0,
   });
 }

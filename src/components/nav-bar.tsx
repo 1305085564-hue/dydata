@@ -25,6 +25,7 @@ export async function NavBar() {
   const permissions = permissionInfo?.permissions ?? {};
   const navigation = getNavigationAccess(businessRole, permissions);
   const showAiCopywriting = canUseAiCopywriting(businessRole, permissions);
+  const showSystemSettings = businessRole === "owner";
 
   const { data: accounts } = await supabase
     .from("accounts")
@@ -51,6 +52,7 @@ export async function NavBar() {
       role={role}
       showAdmin={navigation.showAdmin}
       showAiCopywriting={showAiCopywriting}
+      showSystemSettings={showSystemSettings}
       accounts={displayAccounts}
     />
   );

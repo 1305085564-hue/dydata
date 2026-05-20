@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   canAccessOwner,
+  filterRowsByDataScope,
   getScopeKind,
   inferAccessLevel,
   inferBusinessAccessLevel,
@@ -47,4 +48,32 @@ test("canAccessOwner only allows visible owners unless scope is all", () => {
   assert.equal(canAccessOwner(scope, "u2"), true);
   assert.equal(canAccessOwner(scope, "u3"), false);
   assert.equal(canAccessOwner({ ...scope, kind: "all", accessLevel: 4 }, "u3"), true);
+});
+
+test("filterRowsByDataScope keeps only visible owners for scoped roles", () => {
+  const scope: DataAccessScope = {
+    userId: "leader-1",
+    role: "admin",
+    businessRole: "group_leader",
+    permissions: {},
+    accessLevel: 2,
+    teamId: "team-1",
+    groupId: "group-1",
+    kind: "group",
+    visibleUserIds: ["leader-1", "member-1"],
+  };
+  const rows = [
+    { id: "a", user_id: "leader-1" },
+    { id: "b", user_id: "member-1" },
+    { id: "c", user_id: "member-2" },
+  ];
+
+  assert.deepEqual(
+    filterRowsByDataScope(scope, rows, (row) => row.user_id).map((row) => row.id),
+    ["a", "b"],
+  );
+  assert.deepEqual(
+    filterRowsByDataScope({ ...scope, kind: "all", accessLevel: 4 }, rows, (row) => row.user_id).map((row) => row.id),
+    ["a", "b", "c"],
+  );
 });

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
+import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
-import { hasPermission } from "@/lib/permission-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -347,7 +347,7 @@ async function loadAnalyticsTab(sort: SortBy, format: FormatFilter) {
 export default async function ConversionHubPage({ searchParams }: HubPageProps) {
   const perm = await getUserPermissions();
   if (!perm) redirect("/login");
-  if (!hasPermission(perm.businessRole, perm.permissions, "manage_violations")) redirect("/dashboard");
+  if (!canAccessAdminPath("/admin/conversion-hub", perm.businessRole, perm.permissions)) redirect("/dashboard");
 
   const params = await searchParams;
   const activeTab = normalizeTab(params.tab);

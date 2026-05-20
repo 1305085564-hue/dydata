@@ -60,7 +60,7 @@ export function FocusHeroCard({
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#D97757]">
-              Daily Focus
+              今日聚焦
             </p>
             <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
               {today}
@@ -88,7 +88,7 @@ export function FocusHeroCard({
             ) : null}
           </div>
           <p className="mt-2 text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
-            Play Count
+            播放量
           </p>
         </div>
       </div>

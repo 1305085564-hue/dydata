@@ -13,14 +13,14 @@ export default function DemoAIAssistantPage() {
   return (
     <AppShell width="wide" className="pb-8">
       <AppShellHero
-        eyebrow="Demo AI Assistant"
+        eyebrow="演示文案助手"
         title="后台 AI 助手完整展示"
         description="左侧问答区、右侧历史区都保留，访客能看见整个操作形态，但不会触发任何真实工具。"
         meta={<DemoModeChip />}
       />
 
       <AppShellSection
-        eyebrow="Assistant Workspace"
+        eyebrow="助手工作区"
         title="对话工作区"
         description="这里展示消息气泡、确认节点和历史记录布局，帮助你收集外部反馈。"
       >

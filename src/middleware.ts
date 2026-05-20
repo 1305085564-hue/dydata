@@ -85,8 +85,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-next-pathname", pathname);
+
   return NextResponse.next({
-    request,
+    request: {
+      headers: requestHeaders,
+    },
   });
 }
 

@@ -104,11 +104,11 @@ export function DashboardWorkspaceHeader({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            <Activity size={14} className="text-zinc-800" /> Live Workflow
+            <Activity size={14} className="text-zinc-800" /> 今日工作台
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
-              今日生产流程
+              今日提交
             </h2>
             {/* 5 弱按钮入口：纯文字 + 小图标，hover 才有底色 */}
             <nav
@@ -146,7 +146,7 @@ export function DashboardWorkspaceHeader({
 
         <div className="flex shrink-0 flex-col items-start lg:items-end">
           <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            Today
+            今天
           </span>
           <button
             type="button"

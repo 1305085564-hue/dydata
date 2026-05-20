@@ -186,7 +186,7 @@ export function AdminHub({ userRole }: AdminHubProps) {
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-[24px] font-semibold tracking-tight text-[#27272A]">
-          后台管理
+          团队管理
         </h1>
         <p className="text-[13px] leading-[1.7] text-[#71717A]">
           选择你要处理的事务

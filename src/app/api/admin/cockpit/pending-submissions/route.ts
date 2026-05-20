@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { jsonBadRequest, parseDateParam, requireAdminServiceClient, unwrapRpc } from "../_shared";
+import { filterScopedRows, jsonBadRequest, parseDateParam, requireAdminServiceClient, unwrapRpc } from "../_shared";
 
 export async function GET(request: NextRequest) {
   const date = parseDateParam(request);
@@ -14,5 +14,10 @@ export async function GET(request: NextRequest) {
   const unwrapped = unwrapRpc<unknown[]>(result, "获取待催交成员失败");
   if ("response" in unwrapped) return unwrapped.response;
 
-  return NextResponse.json({ data: unwrapped.data ?? [] });
+  return NextResponse.json({
+    data: filterScopedRows(auth.scope, unwrapped.data, (row) => {
+      const item = row as { profile_id?: string | null };
+      return item.profile_id;
+    }),
+  });
 }
