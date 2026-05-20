@@ -67,8 +67,8 @@ export function canAccessTeamManagement(role: UserRole | BusinessRole, permissio
   );
 }
 
-export function canAccessSystemSettings(role: UserRole | BusinessRole) {
-  return role === "owner";
+export function canAccessSystemSettings(role: UserRole | BusinessRole, permissions: Permissions = {}) {
+  return role === "owner" || role === "team_admin" || hasPermission(role, permissions, "manage_members");
 }
 
 function canAccessMembersSettings(role: UserRole | BusinessRole, permissions: Permissions = {}) {
@@ -123,7 +123,7 @@ export function buildAnalyticsAccessContext({ userId, role, permissions = {}, te
 
 export function canAccessAdminPath(pathname: string, role: UserRole | BusinessRole, permissions: Permissions = {}) {
   if (pathname === "/admin/settings" || pathname.startsWith("/admin/settings/")) {
-    return canAccessSystemSettings(role);
+    return canAccessSystemSettings(role, permissions);
   }
   if (pathname === "/admin/modules" || pathname.startsWith("/admin/modules/")) {
     return canAccessMembersSettings(role, permissions);

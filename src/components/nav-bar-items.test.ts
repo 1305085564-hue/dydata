@@ -37,7 +37,7 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
   );
 });
 
-test("owner 才显示系统设置", () => {
+test("负责人和 owner 显示系统设置", () => {
   const withSettings = getNavItems({ showAdmin: true, showSystemSettings: true });
   const withoutSettings = getNavItems({ showAdmin: true, showSystemSettings: false });
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { BarChart3, FileText, FolderOpen, Gauge, ShieldAlert, Target, UserCog, UsersRound } from "lucide-react";
+import { BarChart3, FileText, FolderOpen, Gauge, ShieldAlert, Target } from "lucide-react";
 
 import type { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
@@ -8,8 +8,6 @@ import { cn } from "@/lib/utils";
 export type AdminPanelKey =
   | "overview"
   | "analytics"
-  | "members"
-  | "groups"
   | "content"
   | "videos"
   | "conversion"
@@ -54,28 +52,6 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     group: "daily",
     match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
     requiresAdmin: true,
-  },
-  {
-    href: "/admin/modules",
-    panel: "members",
-    label: "成员权限",
-    description: "成员审批、角色分配、权限开关和邀请码管理。",
-    icon: UserCog,
-    tone: "neutral",
-    group: "daily",
-    match: (pathname) => pathname === "/admin/modules" && !pathname.includes("focus=teams"),
-    requiresManageMembers: true,
-  },
-  {
-    href: "/admin/modules?focus=teams",
-    panel: "groups",
-    label: "团队分组",
-    description: "团队结构、分组维护和成员归属调整。",
-    icon: UsersRound,
-    tone: "neutral",
-    group: "daily",
-    match: (pathname) => pathname === "/admin/modules" || pathname.startsWith("/admin/modules?focus=teams"),
-    requiresManageMembers: true,
   },
   {
     href: "/admin/content",

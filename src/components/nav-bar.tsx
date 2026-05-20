@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getNavigationAccess } from "@/lib/analytics-access";
+import { canAccessSystemSettings, getNavigationAccess } from "@/lib/analytics-access";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
 import { getUserPermissions } from "@/lib/permissions";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
@@ -25,7 +25,7 @@ export async function NavBar() {
   const permissions = permissionInfo?.permissions ?? {};
   const navigation = getNavigationAccess(businessRole, permissions);
   const showAiCopywriting = canUseAiCopywriting(businessRole, permissions);
-  const showSystemSettings = businessRole === "owner";
+  const showSystemSettings = canAccessSystemSettings(businessRole, permissions);
 
   const { data: accounts } = await supabase
     .from("accounts")
