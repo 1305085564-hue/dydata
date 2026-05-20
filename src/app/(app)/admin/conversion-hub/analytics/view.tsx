@@ -27,6 +27,8 @@ interface Props {
   trend: TrendDay[];
   sort: SortBy;
   format: FormatFilter;
+  basePath?: string;
+  extraQueryParams?: Record<string, string>;
 }
 
 function formatNumber(value: number) {
@@ -65,12 +67,18 @@ const FORMAT_OPTIONS: Array<{ value: FormatFilter; label: string }> = [
   { value: "mixed", label: "混合" },
 ];
 
-function buildHref(sort: SortBy, format: FormatFilter) {
+function buildHref(
+  basePath: string,
+  extra: Record<string, string>,
+  sort: SortBy,
+  format: FormatFilter,
+) {
   const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(extra)) params.set(k, v);
   params.set("tab", "analytics");
   if (sort !== "rate") params.set("sort", sort);
   if (format !== "all") params.set("format", format);
-  return `/admin/conversion-hub?${params.toString()}`;
+  return `${basePath}?${params.toString()}`;
 }
 
 function formatDayShort(iso: string) {
@@ -78,8 +86,16 @@ function formatDayShort(iso: string) {
   return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
 }
 
-export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
+export function ConversionAnalyticsView({
+  rows,
+  trend,
+  sort,
+  format,
+  basePath = "/admin/conversion-hub",
+  extraQueryParams,
+}: Props) {
   const maxCount = Math.max(1, ...trend.map((t) => t.count));
+  const extra = extraQueryParams ?? {};
 
   return (
     <div className="space-y-6">
@@ -103,7 +119,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
               return (
                 <Link
                   key={opt.value}
-                  href={buildHref(opt.value, format)}
+                  href={buildHref(basePath, extra, opt.value, format)}
                   scroll={false}
                   className={`relative rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
                     active ? "text-zinc-800" : "text-zinc-600 hover:text-zinc-800"
@@ -128,7 +144,7 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
               return (
                 <Link
                   key={opt.value}
-                  href={buildHref(sort, opt.value)}
+                  href={buildHref(basePath, extra, sort, opt.value)}
                   scroll={false}
                   className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
                     active
@@ -223,8 +239,8 @@ export function ConversionAnalyticsView({ rows, trend, sort, format }: Props) {
         className="rounded-2xl border border-zinc-200 bg-white p-6"
       >
         <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[24px] font-semibold text-zinc-800">近 7 日违规事件趋势</h2>
-          <span className="ml-3 text-[11px] text-zinc-500">数字化展示每日违规事件数量</span>
+          <h2 className="text-[24px] font-semibold text-zinc-800">近 7 日风险事件趋势</h2>
+          <span className="ml-3 text-[11px] text-zinc-500">数字化展示每日风险事件数量</span>
         </div>
 
         <div className="mt-4 grid grid-cols-7 gap-2">

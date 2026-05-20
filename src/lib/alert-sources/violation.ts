@@ -70,7 +70,7 @@ export async function detectViolationAlerts({ supabase, scope, now = new Date() 
       detail: `当前有 ${pendingCount} 条违规待复核`,
       affectedEntities: [],
       suggestedActions: [
-        { label: "打开违规复核", type: "navigate", href: "/admin/conversion-hub?tab=violations&status=submitted" },
+        { label: "打开合规审核", type: "navigate", href: "/violations?perspective=review&status=submitted" },
       ],
       createdAt: now.toISOString(),
     });
@@ -95,7 +95,7 @@ export async function detectViolationAlerts({ supabase, scope, now = new Date() 
       detail: `本周违规率 ${(currentRate * 100).toFixed(0)}% ，上周 ${(previousRate * 100).toFixed(0)}%`,
       affectedEntities: [],
       suggestedActions: [
-        { label: "打开违规复核", type: "navigate", href: "/admin/conversion-hub?tab=violations" },
+        { label: "打开合规审核", type: "navigate", href: "/violations?perspective=review" },
       ],
       createdAt: now.toISOString(),
     });

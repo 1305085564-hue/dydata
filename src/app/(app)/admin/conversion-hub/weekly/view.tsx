@@ -26,6 +26,8 @@ interface Props {
   buckets: DecisionBucket[] | null;
   confirmedAt: string | null;
   generatedBy: "ai" | "manual" | null;
+  basePath?: string;
+  extraQueryParams?: Record<string, string>;
 }
 
 const TONE_STYLES: Record<DecisionBucket["tone"], { border: string; badge: string; title: string }> = {
@@ -51,12 +53,25 @@ const TONE_STYLES: Record<DecisionBucket["tone"], { border: string; badge: strin
   },
 };
 
-export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedBy }: Props) {
+export function WeeklyDecisionView({
+  weekStart,
+  buckets,
+  confirmedAt,
+  generatedBy,
+  basePath = "/admin/conversion-hub",
+  extraQueryParams,
+}: Props) {
   const [confirming, setConfirming] = useState(false);
   const [localConfirmedAt, setLocalConfirmedAt] = useState(confirmedAt);
+  const buildHref = (tab: "scripts" | "analytics" | "violations") => {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(extraQueryParams ?? {})) sp.set(k, v);
+    sp.set("tab", tab);
+    return `${basePath}?${sp.toString()}`;
+  };
 
   const handleGenerate = () => {
-    feedbackToast.warning("AI 每周草稿接口待后端实现，先从转化分析和违规复核整理候选");
+    feedbackToast.warning("AI 每周草稿接口待后端实现，先从转化分析和案例复核整理候选");
   };
 
   const handleConfirm = async () => {
@@ -98,7 +113,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
       </div>
 
       {buckets === null ? (
-        <EmptyState weekStart={weekStart} onGenerate={handleGenerate} />
+        <EmptyState weekStart={weekStart} onGenerate={handleGenerate} buildHref={buildHref} />
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2">
@@ -116,7 +131,7 @@ export function WeeklyDecisionView({ weekStart, buckets, confirmedAt, generatedB
             </div>
             <div className="flex items-center gap-2">
               <Link
-                href="/admin/conversion-hub?tab=scripts"
+                href={buildHref("scripts")}
                 className="h-9 rounded-xl border border-zinc-200 px-4 text-[13px] font-medium leading-9 text-zinc-700 transition hover:bg-zinc-50"
               >
                 返回概览
@@ -185,9 +200,11 @@ function BucketCard({ bucket, index }: { bucket: DecisionBucket; index: number }
 function EmptyState({
   weekStart,
   onGenerate,
+  buildHref,
 }: {
   weekStart: string;
   onGenerate: () => void;
+  buildHref: (tab: "scripts" | "analytics" | "violations") => string;
 }) {
   return (
     <motion.section
@@ -205,17 +222,17 @@ function EmptyState({
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Link
-          href="/admin/conversion-hub?tab=analytics"
+          href={buildHref("analytics")}
           className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 text-[13px] font-medium text-zinc-700 transition hover:bg-zinc-50"
         >
           去看转化分析
         </Link>
         <Link
-          href="/admin/conversion-hub?tab=violations"
+          href={buildHref("violations")}
           className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 text-[13px] font-medium text-zinc-700 transition hover:bg-zinc-50"
         >
           <AlertTriangle className="size-4" />
-          复核违规风险
+          复核合规风险
         </Link>
         <button
           type="button"

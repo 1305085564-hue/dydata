@@ -230,7 +230,7 @@ export function ViolationPreviewDialog({
       size="lg"
       open={open}
       onOpenChange={onOpenChange}
-      title="违规话术复核"
+      title="案例复核"
       subtitle={
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span>
@@ -245,7 +245,7 @@ export function ViolationPreviewDialog({
           ) : null}
         </span>
       }
-      fullViewHref={`/admin/conversion-hub?tab=violations&focus=${row.id}`}
+      fullViewHref={`/violations?perspective=review&focus=${row.id}`}
       fullViewLabel="完整复核"
       primaryAction={{
         label: "通过",

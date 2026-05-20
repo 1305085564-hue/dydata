@@ -36,21 +36,40 @@ export interface HubShellProps {
   analyticsSort: "rate" | "usage" | "views";
   analyticsFormat: "all" | "oral" | "visual" | "mixed";
   scripts: ScriptsTabData | null;
+  basePath?: string;
+  extraQueryParams?: Record<string, string>;
+  hideViolationsTab?: boolean;
+  pendingViolationsHref?: string;
+  layoutVariant?: "page" | "embedded";
+  eyebrow?: string;
+  title?: string;
+  description?: string;
 }
 
 const TABS: Array<{ key: HubTabKey; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { key: "scripts", label: "话术", icon: FileText },
-  { key: "violations", label: "违规", icon: MessageSquareWarning },
+  { key: "violations", label: "复核", icon: MessageSquareWarning },
   { key: "weekly", label: "周报", icon: CalendarCheck },
   { key: "analytics", label: "分析", icon: TrendingUp },
   { key: "advice", label: "建议", icon: ShieldCheck },
 ];
 
-function TabNav({ active }: { active: HubTabKey }) {
+function TabNav({
+  active,
+  basePath,
+  extraQueryParams,
+  hideViolationsTab,
+}: {
+  active: HubTabKey;
+  basePath: string;
+  extraQueryParams: Record<string, string>;
+  hideViolationsTab: boolean;
+}) {
   const searchParams = useSearchParams();
   const buildHref = useCallback(
     (tab: HubTabKey) => {
       const params = new URLSearchParams();
+      for (const [k, v] of Object.entries(extraQueryParams)) params.set(k, v);
       params.set("tab", tab);
       const preserved = ["q", "status", "category", "sort", "format"];
       if (active === tab) {
@@ -59,14 +78,16 @@ function TabNav({ active }: { active: HubTabKey }) {
           if (val) params.set(key, val);
         }
       }
-      return `/admin/conversion-hub?${params.toString()}`;
+      return `${basePath}?${params.toString()}`;
     },
-    [active, searchParams],
+    [active, basePath, extraQueryParams, searchParams],
   );
+
+  const visibleTabs = hideViolationsTab ? TABS.filter((t) => t.key !== "violations") : TABS;
 
   return (
     <nav className="flex flex-wrap gap-6 border-b border-zinc-200" aria-label="转化中心分区">
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = active === tab.key;
         const Icon = tab.icon;
         return (
@@ -101,16 +122,89 @@ function formatWeekRange(weekStart: string) {
 export function ConversionHubShell(props: HubShellProps) {
   const router = useRouter();
   const tab = props.activeTab;
+  const basePath = props.basePath ?? "/admin/conversion-hub";
+  const extraQueryParams = props.extraQueryParams ?? {};
+  const hideViolationsTab = props.hideViolationsTab ?? false;
+  const layoutVariant = props.layoutVariant ?? "page";
 
   const weekRange = useMemo(() => formatWeekRange(props.weekStart), [props.weekStart]);
   const pendingViolationsCount = tab === "violations" ? (props.violations?.pendingCount ?? 0) : props.pendingViolationsCount;
-  const hasPendingViolations = pendingViolationsCount > 0 && tab !== "violations";
+  const hasPendingViolations =
+    pendingViolationsCount > 0 && tab !== "violations" && !hideViolationsTab;
+
+  const violationsHref = useMemo(() => {
+    if (props.pendingViolationsHref) return props.pendingViolationsHref;
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(extraQueryParams)) params.set(k, v);
+    params.set("tab", "violations");
+    params.set("status", "submitted");
+    return `${basePath}?${params.toString()}`;
+  }, [basePath, extraQueryParams, props.pendingViolationsHref]);
+
+  const content = (
+    <section className="space-y-4">
+      <TabNav
+        active={tab}
+        basePath={basePath}
+        extraQueryParams={extraQueryParams}
+        hideViolationsTab={hideViolationsTab}
+      />
+
+      <div>
+        {tab === "scripts" && props.scripts ? <ScriptsTab data={props.scripts} basePath={basePath} extraQueryParams={extraQueryParams} /> : null}
+        {tab === "violations" && props.violations && !hideViolationsTab ? (
+          <ViolationsReviewTab data={props.violations} basePath={basePath} extraQueryParams={extraQueryParams} />
+        ) : null}
+        {tab === "weekly" && (
+          <WeeklyDecisionView
+            weekStart={props.weekStart}
+            buckets={props.weeklyBuckets}
+            confirmedAt={props.weeklyConfirmedAt}
+            generatedBy={props.weeklyGeneratedBy}
+            basePath={basePath}
+            extraQueryParams={extraQueryParams}
+          />
+        )}
+        {tab === "analytics" && (
+          <ConversionAnalyticsView
+            rows={props.analyticsRows}
+            trend={props.analyticsTrend}
+            sort={props.analyticsSort}
+            format={props.analyticsFormat}
+            basePath={basePath}
+            extraQueryParams={extraQueryParams}
+          />
+        )}
+        {tab === "advice" && <AdviceTab />}
+      </div>
+
+      {hasPendingViolations && (
+        <button
+          type="button"
+          onClick={() => router.push(violationsHref)}
+          className="flex w-full items-center justify-between gap-2 border-l-2 border-[#C9604D] bg-[#C9604D]/5 px-4 py-2 text-left transition-[background-color] duration-150 hover:bg-[#C9604D]/10"
+        >
+          <div className="flex items-center gap-2">
+            <MessageSquareWarning className="size-4 stroke-[1.5] text-[#C9604D]" />
+            <p className="text-[13px] tracking-tight text-zinc-700">
+              有 <span className="font-semibold text-[#C9604D]">{pendingViolationsCount}</span> 条案例待复核
+            </p>
+          </div>
+          <ArrowRight className="size-4 stroke-[1.5] text-zinc-400" />
+        </button>
+      )}
+    </section>
+  );
+
+  if (layoutVariant === "embedded") {
+    return content;
+  }
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="转化中心"
-      title="转化中心"
-      description="话术 → 违规 → 周报 → 分析 → 建议，五步都在这里"
+      eyebrow={props.eyebrow ?? "转化中心"}
+      title={props.title ?? "转化中心"}
+      description={props.description ?? "话术 → 复核 → 周报 → 分析 → 建议，五步都在这里"}
       indexItems={[]}
       actions={
         <span className="text-[12px] text-zinc-500">
@@ -118,47 +212,7 @@ export function ConversionHubShell(props: HubShellProps) {
         </span>
       }
     >
-      <section className="space-y-4">
-        <TabNav active={tab} />
-
-        <div>
-          {tab === "scripts" && props.scripts ? <ScriptsTab data={props.scripts} /> : null}
-          {tab === "violations" && props.violations ? <ViolationsReviewTab data={props.violations} /> : null}
-          {tab === "weekly" && (
-            <WeeklyDecisionView
-              weekStart={props.weekStart}
-              buckets={props.weeklyBuckets}
-              confirmedAt={props.weeklyConfirmedAt}
-              generatedBy={props.weeklyGeneratedBy}
-            />
-          )}
-          {tab === "analytics" && (
-            <ConversionAnalyticsView
-              rows={props.analyticsRows}
-              trend={props.analyticsTrend}
-              sort={props.analyticsSort}
-              format={props.analyticsFormat}
-            />
-          )}
-          {tab === "advice" && <AdviceTab />}
-        </div>
-
-        {hasPendingViolations && (
-          <button
-            type="button"
-            onClick={() => router.push("/admin/conversion-hub?tab=violations&status=submitted")}
-            className="flex w-full items-center justify-between gap-2 border-l-2 border-[#C9604D] bg-[#C9604D]/5 px-4 py-2 text-left transition-[background-color] duration-150 hover:bg-[#C9604D]/10"
-          >
-            <div className="flex items-center gap-2">
-              <MessageSquareWarning className="size-4 stroke-[1.5] text-[#C9604D]" />
-              <p className="text-[13px] tracking-tight text-zinc-700">
-                有 <span className="font-semibold text-[#C9604D]">{pendingViolationsCount}</span> 条违规案例待复核
-              </p>
-            </div>
-            <ArrowRight className="size-4 stroke-[1.5] text-zinc-400" />
-          </button>
-        )}
-      </section>
+      {content}
     </AdminWorkspaceLayout>
   );
 }

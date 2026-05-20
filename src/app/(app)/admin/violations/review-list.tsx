@@ -239,7 +239,7 @@ function ReviewCard({ item }: { item: ViolationReviewCase }) {
               {STATUS_LABELS[status]}
             </span>
             <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600">
-              {item.isViolation ? "员工判断：违规" : "员工判断：可用"}
+              {item.isViolation ? "员工判断：风险" : "员工判断：合规"}
             </span>
             <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-500">
               {item.category}
@@ -399,7 +399,7 @@ export function ViolationsReviewList({ cases }: { cases: ViolationReviewCase[] }
     return (
       <section className="rounded-2xl border border-zinc-200 bg-white p-10 text-center shadow-sm">
         <p className="text-[14px] font-medium text-zinc-800">暂无需要显示的案例</p>
-        <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">切换到全部状态，或等待员工提交新的违规话术案例。</p>
+        <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">切换到全部状态，或等待员工提交新的话术案例。</p>
       </section>
     );
   }

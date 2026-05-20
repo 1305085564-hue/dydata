@@ -42,11 +42,11 @@ git config user.name "1305085564-1671"
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://mkkvnogkqcupvxmnoefy.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_HgnAruedys9pFYZaAchc1Q__MP8bUTs
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_wmKE_0m2j6YEsLIEL1057w_-0j22MbT
-FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/9bd6cf6a-922b-4f60-8913-ce3223135890
-CRON_SECRET=dydata-remind-2026
-REMIND_SECRET=dydata-remind-2026
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<从 Supabase 控制台 settings → API 复制 anon public key>
+SUPABASE_SERVICE_ROLE_KEY=<从 Supabase 控制台 settings → API 复制 service_role key，不要提交到 git>
+FEISHU_WEBHOOK_URL=<飞书自定义机器人 webhook 地址>
+CRON_SECRET=<自定义随机字符串>
+REMIND_SECRET=<自定义随机字符串>
 ```
 
 ### 第四步：安装依赖并验证

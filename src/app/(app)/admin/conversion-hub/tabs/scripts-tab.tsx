@@ -34,7 +34,22 @@ function formatRate(rate: number | null | undefined) {
   return `${(Number(rate) * 100).toFixed(2)}%`;
 }
 
-export function ScriptsTab({ data }: { data: ScriptsTabData }) {
+export function ScriptsTab({
+  data,
+  basePath = "/admin/conversion-hub",
+  extraQueryParams,
+}: {
+  data: ScriptsTabData;
+  basePath?: string;
+  extraQueryParams?: Record<string, string>;
+}) {
+  const analyticsHref = (() => {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(extraQueryParams ?? {})) sp.set(k, v);
+    sp.set("tab", "analytics");
+    return `${basePath}?${sp.toString()}`;
+  })();
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -60,7 +75,7 @@ export function ScriptsTab({ data }: { data: ScriptsTabData }) {
             <span className="ml-3 text-[11px] text-zinc-500">加权转化率，使用 ≥3 且展示 ≥1k</span>
           </div>
           <Link
-            href="/admin/conversion-hub?tab=analytics"
+            href={analyticsHref}
             className="text-[12px] font-medium text-[#D97757] transition-[color] duration-150 hover:text-[#C46A49]"
           >
             查看全部 →

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { BarChart3, FileText, FolderOpen, Gauge, ShieldAlert, Target } from "lucide-react";
+import { BarChart3, FileText, FolderOpen, Gauge } from "lucide-react";
 
 import type { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
@@ -9,9 +9,7 @@ export type AdminPanelKey =
   | "overview"
   | "analytics"
   | "content"
-  | "videos"
-  | "conversion"
-  | "violations";
+  | "videos";
 
 export interface AdminSecondaryNavItem {
   href: string;
@@ -25,8 +23,6 @@ export interface AdminSecondaryNavItem {
   requiresAdmin?: boolean;
   requiresManageMembers?: boolean;
   requiresOwner?: boolean;
-  requiresConversionPermission?: boolean;
-  requiresViolationPermission?: boolean;
   hideWhenPrefixed?: boolean;
 }
 
@@ -75,52 +71,17 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
     requiresAdmin: true,
   },
-  {
-    href: "/admin/conversion-hub",
-    panel: "conversion",
-    label: "转化中心",
-    description: "把转化话术、违规风险、每周筛选和复核结论串成闭环。",
-    icon: Target,
-    tone: "success",
-    group: "daily",
-    match: (pathname) =>
-      pathname === "/admin/conversion-hub" ||
-      pathname.startsWith("/admin/conversion-hub/") ||
-      pathname === "/admin/advice" ||
-      pathname.startsWith("/admin/advice/") ||
-      pathname === "/admin/guidance" ||
-      pathname.startsWith("/admin/guidance/"),
-    requiresConversionPermission: true,
-  },
-  {
-    href: "/admin/violations",
-    panel: "violations",
-    label: "违规复核",
-    description: "审核员工提交的违规/非违规案例。",
-    icon: ShieldAlert,
-    tone: "warning",
-    group: "daily",
-    match: (pathname) => pathname === "/admin/violations" || pathname.startsWith("/admin/violations/"),
-    requiresViolationPermission: true,
-  },
 ];
+// Note: 转化中心、合规审核 已迁至 /violations 话术案例库下 perspective tabs。
 
 export function getAdminSecondaryNavItems(options: {
   canManageAdmin: boolean;
   canManageMembers?: boolean;
-  canViewConversion?: boolean;
-  canManageViolations?: boolean;
   userRole?: UserRole | null;
   group?: "daily";
 }) {
   return ADMIN_SECONDARY_NAV_ITEMS.filter((item) => {
     if (options.group && item.group !== options.group) return false;
-    if (item.requiresViolationPermission) {
-      return options.userRole === "owner" || options.canManageViolations === true;
-    }
-    if (item.requiresConversionPermission) {
-      return options.userRole === "owner" || options.canViewConversion === true || options.canManageViolations === true;
-    }
     if (item.requiresManageMembers) {
       return options.userRole === "owner" || options.canManageMembers === true;
     }
@@ -132,8 +93,6 @@ interface AdminSecondaryNavProps {
   pathname: string;
   canManageAdmin: boolean;
   canManageMembers?: boolean;
-  canViewConversion?: boolean;
-  canManageViolations?: boolean;
   className?: string;
   hrefPrefix?: string;
   panelBasePath?: string;
@@ -156,8 +115,6 @@ export function AdminSecondaryNav({
   pathname,
   canManageAdmin,
   canManageMembers,
-  canViewConversion,
-  canManageViolations,
   className,
   hrefPrefix = "",
   panelBasePath,
@@ -168,7 +125,7 @@ export function AdminSecondaryNav({
   onItemSelect,
   onItemPreload,
 }: AdminSecondaryNavProps) {
-  const items = getAdminSecondaryNavItems({ canManageAdmin, canManageMembers, canViewConversion, canManageViolations, userRole, group: groupFilter }).filter(
+  const items = getAdminSecondaryNavItems({ canManageAdmin, canManageMembers, userRole, group: groupFilter }).filter(
     (item) => !(hrefPrefix && item.hideWhenPrefixed),
   );
 

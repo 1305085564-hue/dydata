@@ -27,7 +27,7 @@ const AnalyticsPanel = dynamic(loadAnalyticsPanel, {
   loading: () => <PanelSkeleton />,
 });
 
-const panelPreloaders: Partial<Record<Exclude<AdminPanelKey, "overview" | "conversion">, () => Promise<unknown>>> = {
+const panelPreloaders: Partial<Record<Exclude<AdminPanelKey, "overview">, () => Promise<unknown>>> = {
   analytics: loadAnalyticsPanel,
 };
 
@@ -49,8 +49,6 @@ interface AdminPanelLauncherProps {
   userRole: UserRole;
   canManageAdmin: boolean;
   canManageMembers?: boolean;
-  canViewConversion?: boolean;
-  canManageViolations?: boolean;
   overviewContent: ReactNode;
 }
 
@@ -67,13 +65,11 @@ export function AdminPanelLauncher({
   userRole,
   canManageAdmin,
   canManageMembers,
-  canViewConversion,
-  canManageViolations,
   overviewContent,
 }: AdminPanelLauncherProps) {
   const allItems = useMemo(
-    () => getAdminSecondaryNavItems({ canManageAdmin, canManageMembers, canViewConversion, canManageViolations, userRole }),
-    [canManageAdmin, canManageMembers, canViewConversion, canManageViolations, userRole],
+    () => getAdminSecondaryNavItems({ canManageAdmin, canManageMembers, userRole }),
+    [canManageAdmin, canManageMembers, userRole],
   );
   const [activePanel, setActivePanel] = useState<AdminPanelKey | null>(
     sanitizePanel(initialPanel, allItems),
@@ -101,7 +97,7 @@ export function AdminPanelLauncher({
   }
 
   function openPanel(item: AdminSecondaryNavItem) {
-    if (item.panel === "conversion" || !(item.panel in panelPreloaders)) {
+    if (!(item.panel in panelPreloaders)) {
       window.location.href = item.href;
       return;
     }
@@ -115,7 +111,7 @@ export function AdminPanelLauncher({
   }
 
   function preloadPanel(item: AdminSecondaryNavItem) {
-    if (item.panel === "overview" || item.panel === "conversion") return;
+    if (item.panel === "overview") return;
     const preloader = panelPreloaders[item.panel];
     if (preloader) void preloader();
   }
@@ -132,8 +128,6 @@ export function AdminPanelLauncher({
           pathname="/admin"
           canManageAdmin={canManageAdmin}
           canManageMembers={canManageMembers}
-          canViewConversion={canViewConversion}
-          canManageViolations={canManageViolations}
           userRole={userRole}
           renderMode="button"
           groupFilter="daily"

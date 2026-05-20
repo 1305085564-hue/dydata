@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useCallback, useMemo, useTransition } from "react";
 import { ShieldAlert, TrendingUp } from "lucide-react";
 
-export type PerspectiveKey = "violation" | "conversion";
+export type PerspectiveKey = "violation" | "conversion" | "review";
 
 const TABS: Array<{
   key: PerspectiveKey;
@@ -13,11 +13,12 @@ const TABS: Array<{
   hint: string;
   icon: typeof ShieldAlert;
 }> = [
-  { key: "violation", label: "违规话术", hint: "高危 · 红线", icon: ShieldAlert },
-  { key: "conversion", label: "转化话术", hint: "导粉 · 复用", icon: TrendingUp },
+  { key: "violation", label: "话术案例", hint: "风险 · 积累", icon: ShieldAlert },
+  { key: "conversion", label: "转化中心", hint: "导粉 · 复用", icon: TrendingUp },
+  { key: "review", label: "合规审核", hint: "审核 · 确认", icon: TrendingUp },
 ];
 
-export function PerspectiveTabs({ active }: { active: PerspectiveKey }) {
+export function PerspectiveTabs({ active, canManageViolations }: { active: PerspectiveKey; canManageViolations?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -28,7 +29,7 @@ export function PerspectiveTabs({ active }: { active: PerspectiveKey }) {
       const next = new URLSearchParams(searchParams?.toString() ?? "");
       next.set("perspective", key);
       // 切换视角时重置上下文无关的筛选项，避免状态错位
-      for (const k of ["status", "category", "q", "format", "minUsage"]) {
+      for (const k of ["status", "category", "q", "format", "minUsage", "tab", "sort"]) {
         next.delete(k);
       }
       startTransition(() => {
@@ -38,7 +39,12 @@ export function PerspectiveTabs({ active }: { active: PerspectiveKey }) {
     [active, router, searchParams],
   );
 
-  const tabs = useMemo(() => TABS, []);
+  const tabs = useMemo(() => {
+    if (!canManageViolations) {
+      return TABS.filter((t) => t.key !== "review");
+    }
+    return TABS;
+  }, [canManageViolations]);
 
   return (
     <div className="relative flex w-full items-end gap-1 border-b border-zinc-200">

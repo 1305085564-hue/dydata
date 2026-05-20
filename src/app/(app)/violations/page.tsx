@@ -4,21 +4,30 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
 import { getApiErrorMessage } from "@/lib/violations/errors";
+import { ConversionHubShell } from "@/app/(app)/admin/conversion-hub/hub-shell";
+import {
+  getWeekStartDate,
+  loadConversionHubData,
+  normalizeFormat,
+  normalizeSort,
+  normalizeStatus,
+  normalizeTab,
+} from "@/app/(app)/admin/conversion-hub/data";
+import type { HubTabKey } from "@/app/(app)/admin/conversion-hub/hub-shell";
 import { CaseCard } from "./components/case-card";
 import { CaseFilters } from "./components/case-filters";
-import { ConversionCaseCard } from "./components/conversion-case-card";
-import { PerspectiveTabs, type PerspectiveKey } from "./components/perspective-tabs";
-import { TopScriptsBanner } from "./components/top-scripts-banner";
+import { PerspectiveTabs } from "./components/perspective-tabs";
 import type {
-  ConversionCase,
-  TopScriptEntry,
   ViolationCase,
   ViolationListResponse,
 } from "./components/types";
 
 type SearchParamsShape = Record<string, string | string[] | undefined>;
+
+type LocalPerspectiveKey = "violation" | "conversion" | "review";
 
 function readParam(
   params: SearchParamsShape,
@@ -54,62 +63,7 @@ async function loadViolationCases(searchParams: SearchParamsShape): Promise<Viol
   return (listPayload.cases ?? listPayload.items ?? listPayload.data ?? []) as ViolationCase[];
 }
 
-type ConversionData = {
-  cases: ConversionCase[];
-  topScripts: TopScriptEntry[];
-};
-
-async function loadConversionData(
-  searchParams: SearchParamsShape,
-): Promise<ConversionData> {
-  const admin = createAdminClient();
-  const format = readParam(searchParams, "format", "all");
-  const query = readParam(searchParams, "q", "");
-  const minUsage = Number(readParam(searchParams, "minUsage", "3"));
-
-  let listQuery = admin
-    .from("violation_cases")
-    .select(
-      "id, script_text, script_format, total_views, total_follows, usage_count, weighted_conversion_rate, created_at",
-    )
-    .eq("is_deleted", false)
-    .eq("purpose", "conversion")
-    .gte("usage_count", Number.isFinite(minUsage) ? minUsage : 3)
-    .order("weighted_conversion_rate", { ascending: false, nullsFirst: false })
-    .order("total_views", { ascending: false })
-    .limit(60);
-
-  if (format !== "all") {
-    listQuery = listQuery.eq("script_format", format);
-  }
-  if (query) {
-    listQuery = listQuery.ilike("script_text", `%${query}%`);
-  }
-
-  const topQuery = admin
-    .from("violation_cases")
-    .select(
-      "id, script_text, total_views, total_follows, usage_count, weighted_conversion_rate",
-    )
-    .eq("is_deleted", false)
-    .eq("purpose", "conversion")
-    .gte("usage_count", 3)
-    .gte("total_views", 1000)
-    .order("weighted_conversion_rate", { ascending: false, nullsFirst: false })
-    .order("total_views", { ascending: false })
-    .limit(3);
-
-  const [listResult, topResult] = await Promise.all([listQuery, topQuery]);
-
-  if (listResult.error) {
-    throw new Error(listResult.error.message || "加载转化话术失败");
-  }
-
-  return {
-    cases: (listResult.data ?? []) as ConversionCase[],
-    topScripts: (topResult.data ?? []) as TopScriptEntry[],
-  };
-}
+const VALID_HUB_TABS_FOR_CONVERSION: HubTabKey[] = ["scripts", "weekly", "analytics", "advice"];
 
 export default async function ViolationsPage({
   searchParams,
@@ -124,36 +78,125 @@ export default async function ViolationsPage({
 
   const resolved = await searchParams;
   const perspectiveRaw = readParam(resolved, "perspective", "violation");
-  const perspective: PerspectiveKey =
-    perspectiveRaw === "conversion" ? "conversion" : "violation";
+  const validPerspectives: LocalPerspectiveKey[] = ["violation", "conversion", "review"];
+  const perspective: LocalPerspectiveKey =
+    validPerspectives.includes(perspectiveRaw as LocalPerspectiveKey)
+      ? (perspectiveRaw as LocalPerspectiveKey)
+      : "violation";
 
+  const permInfo = await getUserPermissions();
+  if (!permInfo) redirect("/login");
+  const { businessRole, permissions, role } = permInfo;
+  const isOwner = role === "owner";
+  const canManageViolations = isOwner || hasPermission(businessRole, permissions, "manage_violations");
+
+  if (perspective === "review" && !canManageViolations) {
+    redirect("/violations");
+  }
+
+  const headingLabel =
+    perspective === "conversion"
+      ? "转化中心"
+      : perspective === "review"
+        ? "合规审核"
+        : "话术案例库";
+  const headingEyebrow = headingLabel;
+  const headingDesc =
+    perspective === "conversion"
+      ? "原转化中心：话术 → 周报 → 分析 → 建议，沉淀高转化模板与每周决策。"
+      : perspective === "review"
+        ? "原审核工作台：审核成员提交的话术，确认或驳回风险案例。"
+        : "查看公司已沉淀的话术案例，优先按管理员确认结果使用。";
+
+  if (perspective === "conversion" || perspective === "review") {
+    const tabRaw = readParam(resolved, "tab", perspective === "review" ? "violations" : "scripts");
+    const activeTab: HubTabKey =
+      perspective === "review"
+        ? "violations"
+        : VALID_HUB_TABS_FOR_CONVERSION.includes(normalizeTab(tabRaw))
+          ? normalizeTab(tabRaw)
+          : "scripts";
+
+    const status = normalizeStatus(readParam(resolved, "status", "submitted"));
+    const category = readParam(resolved, "category", "全部");
+    const keyword = readParam(resolved, "q", "").trim();
+    const sort = normalizeSort(readParam(resolved, "sort", "rate"));
+    const format = normalizeFormat(readParam(resolved, "format", "all"));
+    const weekStart = getWeekStartDate();
+
+    const { violations, pendingViolationsCount, scripts, weekly, analytics } = await loadConversionHubData({
+      activeTab,
+      status,
+      category,
+      keyword,
+      sort,
+      format,
+      weekStart,
+      includeViolations: perspective === "review",
+    });
+
+    const extraQueryParams = { perspective };
+    const reviewHref = canManageViolations
+      ? `/violations?perspective=review&tab=violations&status=submitted`
+      : undefined;
+
+    return (
+      <div className="mx-auto max-w-6xl space-y-6 py-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-400">
+              {headingEyebrow}
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
+              {headingLabel}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">{headingDesc}</p>
+          </div>
+          <Link href="/violations/submit">
+            <Button className="h-11 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800 shadow-none">
+              <Plus className="size-4" />
+              提交新案例
+            </Button>
+          </Link>
+        </div>
+
+        <PerspectiveTabs active={perspective} canManageViolations={canManageViolations} />
+
+        <ConversionHubShell
+          weekStart={weekStart}
+          activeTab={activeTab}
+          violations={violations}
+          pendingViolationsCount={pendingViolationsCount}
+          weeklyBuckets={weekly?.buckets ?? null}
+          weeklyConfirmedAt={weekly?.confirmedAt ?? null}
+          weeklyGeneratedBy={weekly?.generatedBy ?? null}
+          analyticsRows={analytics?.rows ?? []}
+          analyticsTrend={analytics?.trend ?? []}
+          analyticsSort={sort}
+          analyticsFormat={format}
+          scripts={scripts}
+          basePath="/violations"
+          extraQueryParams={extraQueryParams}
+          hideViolationsTab={perspective === "conversion"}
+          pendingViolationsHref={reviewHref}
+          layoutVariant="embedded"
+        />
+      </div>
+    );
+  }
+
+  // perspective === "violation": 普通话术案例库
   const status = readParam(resolved, "status", "all");
   const category = readParam(resolved, "category", "all");
   const query = readParam(resolved, "q", "");
-  const format = readParam(resolved, "format", "all");
-  const minUsage = readParam(resolved, "minUsage", "3");
 
   let violationCases: ViolationCase[] = [];
-  let conversionData: ConversionData = { cases: [], topScripts: [] };
   let error: string | null = null;
-
   try {
-    if (perspective === "violation") {
-      violationCases = await loadViolationCases(resolved);
-    } else {
-      conversionData = await loadConversionData(resolved);
-    }
+    violationCases = await loadViolationCases(resolved);
   } catch (loadError) {
     error = loadError instanceof Error ? loadError.message : "加载失败";
   }
-
-  const headingLabel = perspective === "conversion" ? "转化话术库" : "话术案例库";
-  const headingEyebrow =
-    perspective === "conversion" ? "转化话术库" : "话术案例库";
-  const headingDesc =
-    perspective === "conversion"
-      ? "按转化表现汇总的导粉话术，优先沿用高转化模板。"
-      : "查看公司已沉淀的违规与可用话术案例，优先按管理员确认结果使用。";
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 py-8">
@@ -175,48 +218,29 @@ export default async function ViolationsPage({
         </Link>
       </div>
 
-      <PerspectiveTabs active={perspective} />
-
-      {perspective === "conversion" ? (
-        <TopScriptsBanner items={conversionData.topScripts} />
-      ) : null}
+      <PerspectiveTabs active={perspective} canManageViolations={canManageViolations} />
 
       <CaseFilters
         perspective={perspective}
         status={status}
         category={category}
         query={query}
-        format={format}
-        minUsage={minUsage}
       />
 
       {error ? (
         <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
           {error}
         </div>
-      ) : perspective === "violation" ? (
-        violationCases.length ? (
-          <div className="space-y-3">
-            {violationCases.map((caseItem) => (
-              <CaseCard key={caseItem.id} caseItem={caseItem} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="没有找到匹配的违规话术"
-            hint="试试清除筛选，或去 今日工作台 的“收录违规”补一条。"
-          />
-        )
-      ) : conversionData.cases.length ? (
-        <div className="grid gap-3 md:grid-cols-2">
-          {conversionData.cases.map((caseItem) => (
-            <ConversionCaseCard key={caseItem.id} caseItem={caseItem} />
+      ) : violationCases.length ? (
+        <div className="space-y-3">
+          {violationCases.map((caseItem) => (
+            <CaseCard key={caseItem.id} caseItem={caseItem} />
           ))}
         </div>
       ) : (
         <EmptyState
-          title="还没有转化话术数据"
-          hint="使用量达到筛选阈值后，转化榜和列表会自动填充。"
+          title="没有找到匹配的话术案例"
+          hint="试试清除筛选，或去「提交新案例」补一条。"
         />
       )}
     </div>

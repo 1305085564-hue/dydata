@@ -313,7 +313,7 @@ function PendingViolationsCard({
       });
       if (!res.ok) throw new Error("操作失败");
       setRemoved((prev) => new Set(prev).add(row.id));
-      feedbackToast.success(status === "verified" ? "已确认违规" : "已驳回");
+      feedbackToast.success(status === "verified" ? "已确认风险" : "已驳回");
       setActiveRow(null);
     } catch (e) {
       feedbackToast.error(e instanceof Error ? e.message : "操作失败");
@@ -325,14 +325,14 @@ function PendingViolationsCard({
   return (
     <>
       <CardShell
-        title="待审违规"
+        title="待复核"
         icon={<ShieldAlert className="size-4 stroke-[1.5]" />}
         total={total}
         totalTone="danger"
-        empty="当前没有需要复核的违规案例"
+        empty="当前没有需要复核的案例"
         hasContent={visible.length > 0}
         overdueCount={overdueCount}
-        headerRight={<ViewAllLink href="/admin/conversion-hub?tab=violations" />}
+        headerRight={<ViewAllLink href="/violations?perspective=review" />}
       >
         <ul className="space-y-0.5">
           {visible.slice(0, 5).map((row) => {
