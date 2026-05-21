@@ -213,6 +213,7 @@ export function GrowthActionPlanPanel({ advice, noData = false }: { advice: Advi
 
   useEffect(() => {
     if (noData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInsightState({ status: "no_data" });
       return;
     }

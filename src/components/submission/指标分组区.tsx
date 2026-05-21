@@ -99,8 +99,6 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
     }
   }, [focusNext, focusPrev]);
 
-  const allItems = [...CORE_ITEMS, ...INTERACTION_ITEMS, ...RETENTION_ITEMS];
-
   return (
     <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -133,7 +131,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 animationDelay={index * 150}
-                inputRef={{ current: inputRefs.current[item.key] } as React.RefObject<HTMLInputElement>}
+                inputRef={setRef(item.key)}
                 onKeyDown={handleKeyDown(item.key)}
               />
             ))}
@@ -157,7 +155,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 animationDelay={(CORE_ITEMS.length + index) * 150}
-                inputRef={{ current: inputRefs.current[item.key] } as React.RefObject<HTMLInputElement>}
+                inputRef={setRef(item.key)}
                 onKeyDown={handleKeyDown(item.key)}
               />
             ))}
@@ -186,7 +184,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
                 animationDelay={index * 150}
-                inputRef={{ current: inputRefs.current[item.key] } as React.RefObject<HTMLInputElement>}
+                inputRef={setRef(item.key)}
                 onKeyDown={handleKeyDown(item.key)}
               />
             ))}

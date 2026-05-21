@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContentToolAccount } from "@/app/(app)/content-tools/types";
 
-type LoaderSupabase = SupabaseClient<any, "public", any>;
+type LoaderSupabase = Pick<SupabaseClient, "from">;
 
 export interface ContentToolsPageData {
   accounts: ContentToolAccount[];

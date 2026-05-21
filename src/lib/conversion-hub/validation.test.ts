@@ -44,6 +44,7 @@ test("使用记录校验会规范化字段并提供默认值", () => {
     views: "1000",
     follows: "12",
     note: "  首测  ",
+    result_flag: "pass",
   });
 
   assert.equal(result.ok, true);
@@ -55,6 +56,22 @@ test("使用记录校验会规范化字段并提供默认值", () => {
   assert.equal(result.data.follows, 12);
   assert.equal(result.data.source, "manual");
   assert.equal(result.data.note, "首测");
+  assert.equal(result.data.result_flag, "pass");
+});
+
+test("使用记录校验会阻止非法 result_flag", () => {
+  const result = validateCreateUsageRecordPayload({
+    script_text: "测试话术",
+    used_at: "2026-05-08",
+    views: 10,
+    follows: 1,
+    result_flag: "passed",
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    message: "result_flag 不合法",
+  });
 });
 
 test("违规事件校验会规范化截图和申诉状态", () => {

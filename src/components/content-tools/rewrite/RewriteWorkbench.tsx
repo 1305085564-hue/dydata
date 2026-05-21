@@ -84,10 +84,15 @@ export function RewriteWorkbench() {
   useEffect(() => {
     const historyDefault = getStoredDefault(STORAGE_KEY_HISTORY, false);
     const configDefault = getStoredDefault(STORAGE_KEY_CONFIG, false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistoryOpen(historyDefault);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfigOpen(configDefault);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistoryPinned(historyDefault);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfigPinned(configDefault);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

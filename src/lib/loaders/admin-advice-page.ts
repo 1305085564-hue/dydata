@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdviceAction, Profile, Video } from "@/types";
 
-type LoaderSupabase = SupabaseClient<any, "public", any>;
+type LoaderSupabase = Pick<SupabaseClient, "from">;
 
 export type AdviceRow = AdviceAction & {
   target_profile: Pick<Profile, "id" | "name"> | Pick<Profile, "id" | "name">[] | null;

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AccountTargetMode } from "@/types";
 import { shiftDateOnly } from "./shared";
 
-type LoaderSupabase = SupabaseClient<any, "public", any>;
+type LoaderSupabase = Pick<SupabaseClient, "from">;
 
 export interface GuidancePageData {
   accounts: Array<{

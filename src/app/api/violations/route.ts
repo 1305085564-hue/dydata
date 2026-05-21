@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasPermission as hasUnifiedPermission } from "@/lib/permission-utils";
+import { isCaseLibraryView } from "@/lib/case-library/shared";
 
 import {
   getAuthenticatedContext,
@@ -7,15 +9,55 @@ import {
   isViolationCategory,
   isViolationStatus,
   jsonBadRequest,
+  jsonForbidden,
   jsonServerError,
   jsonUnauthorized,
   jsonValidationError,
   parsePageParams,
 } from "@/lib/violations/api";
 import { validateCreateViolationPayload } from "@/lib/violations/validation";
+import type { Permissions } from "@/types";
 
-export async function GET(request: NextRequest) {
-  const { supabase, user } = await getAuthenticatedContext();
+type MinimalViolationsQuery = {
+  eq: (column: string, value: unknown) => MinimalViolationsQuery;
+  in: (column: string, values: string[]) => MinimalViolationsQuery;
+  ilike: (column: string, value: string) => MinimalViolationsQuery;
+  order: (column: string, options: { ascending: boolean; nullsFirst?: boolean }) => MinimalViolationsQuery;
+  range: (from: number, to: number) => Promise<{ data: unknown[] | null; error: unknown; count: number | null }>;
+};
+
+type MinimalViolationsSupabase = {
+  from: (table: string) => {
+    select: (query: string, options: { count: "exact" }) => MinimalViolationsQuery;
+  };
+};
+
+type MinimalViolationProfile = {
+  businessRole: "owner" | "team_admin" | "group_leader" | "member";
+  permissions: Permissions;
+};
+
+type ViolationsRouteDeps = {
+  getAuthenticatedContext: () => Promise<{
+    supabase: MinimalViolationsSupabase;
+    user: { id: string } | null;
+  }>;
+  getUserProfile: (
+    supabase: MinimalViolationsSupabase,
+    userId: string,
+  ) => Promise<MinimalViolationProfile | null>;
+};
+
+const defaultDeps: ViolationsRouteDeps = {
+  getAuthenticatedContext: getAuthenticatedContext as unknown as ViolationsRouteDeps["getAuthenticatedContext"],
+  getUserProfile: getUserProfile as unknown as ViolationsRouteDeps["getUserProfile"],
+};
+
+export async function buildViolationsListResponse(
+  request: NextRequest,
+  deps: ViolationsRouteDeps = defaultDeps,
+) {
+  const { supabase, user } = await deps.getAuthenticatedContext();
 
   if (!user) {
     return jsonUnauthorized();
@@ -27,6 +69,27 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category");
   const teamId = searchParams.get("team_id");
   const search = searchParams.get("q")?.trim();
+  const requestedView = searchParams.get("view")?.trim() ?? null;
+
+  if (requestedView && !isCaseLibraryView(requestedView)) {
+    return jsonBadRequest("view 不合法");
+  }
+
+  const profile = await deps.getUserProfile(supabase, user.id);
+  if (!profile) {
+    return jsonServerError("用户资料不存在");
+  }
+
+  const canManageViolations = hasUnifiedPermission(
+    profile.businessRole,
+    profile.permissions as Permissions,
+    "manage_violations",
+  );
+  const effectiveView = requestedView ?? (canManageViolations ? "admin" : "staff");
+
+  if (effectiveView === "admin" && !canManageViolations) {
+    return jsonForbidden("仅具备违规话术复核权限的用户可查看 admin 视角");
+  }
 
   let query = supabase
     .from("violation_cases")
@@ -64,6 +127,12 @@ export async function GET(request: NextRequest) {
     query = query.ilike("script_text", `%${search}%`);
   }
 
+  if (effectiveView === "staff") {
+    query = query
+      .eq("status", "verified")
+      .in("usage_state", ["available", "testing"]);
+  }
+
   const { data, error, count } = await query
     .order("status", { ascending: true })
     .order("reviewed_at", { ascending: false, nullsFirst: false })
@@ -76,6 +145,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     data: data ?? [],
+    view: effectiveView,
     pagination: {
       page,
       pageSize,
@@ -83,6 +153,10 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil((count ?? 0) / pageSize),
     },
   });
+}
+
+export async function GET(request: NextRequest) {
+  return buildViolationsListResponse(request);
 }
 
 export async function POST(request: NextRequest) {

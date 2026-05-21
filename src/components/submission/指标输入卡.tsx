@@ -17,7 +17,7 @@ interface MetricInputCardProps {
   size?: "primary" | "secondary";
   optional?: boolean;
   animationDelay?: number;
-  inputRef?: React.RefObject<HTMLInputElement | null>;
+  inputRef?: React.Ref<HTMLInputElement>;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
@@ -83,7 +83,7 @@ export function MetricInputCard({
   const [displayValue, setDisplayValue] = useState(field.value);
   const [showTooltip, setShowTooltip] = useState(false);
   const localRef = useRef<HTMLInputElement>(null);
-  const inputEl = inputRef || localRef;
+  const inputEl = inputRef ?? localRef;
 
   useEffect(() => {
     if (field.source === "ocr") {

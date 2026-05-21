@@ -407,9 +407,11 @@ function ReviewBatchCard({
   const submissions = submissionData?.data ?? [];
 
   const [exemptions, setExemptions] = useState(initialExemptions);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setExemptions(initialExemptions), [initialExemptions]);
 
   const [joins, setJoins] = useState(initialJoins);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setJoins(initialJoins), [initialJoins]);
 
   const [, startTransition] = useTransition();

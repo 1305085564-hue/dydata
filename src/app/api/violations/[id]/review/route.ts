@@ -9,18 +9,48 @@ import {
   requireViolationAdmin,
 } from "@/lib/violations/api";
 import { validateReviewViolationPayload } from "@/lib/violations/validation";
+type MinimalReviewMutation = {
+  eq: (column: string, value: unknown) => MinimalReviewMutation;
+  select: (query: string) => { single: () => Promise<{ data: unknown; error: unknown }> };
+};
 
-export async function PATCH(
+type MinimalReviewSupabase = {
+  from: (table: string) => {
+    update: (payload: Record<string, unknown>) => MinimalReviewMutation;
+  };
+};
+
+type ReviewViolationRouteDeps = {
+  getAuthenticatedContext: () => Promise<{
+    supabase: MinimalReviewSupabase;
+    user: { id: string } | null;
+  }>;
+  requireViolationAdmin: (
+    supabase: MinimalReviewSupabase,
+    user: { id: string },
+  ) => Promise<
+    | { ok: false; response: Response }
+    | { ok: true; profile: unknown }
+  >;
+};
+
+const defaultDeps: ReviewViolationRouteDeps = {
+  getAuthenticatedContext: getAuthenticatedContext as unknown as ReviewViolationRouteDeps["getAuthenticatedContext"],
+  requireViolationAdmin: requireViolationAdmin as unknown as ReviewViolationRouteDeps["requireViolationAdmin"],
+};
+
+export async function buildReviewViolationResponse(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
+  deps: ReviewViolationRouteDeps = defaultDeps,
 ) {
-  const { supabase, user } = await getAuthenticatedContext();
+  const { supabase, user } = await deps.getAuthenticatedContext();
 
   if (!user) {
     return jsonUnauthorized();
   }
 
-  const admin = await requireViolationAdmin(supabase, user);
+  const admin = await deps.requireViolationAdmin(supabase, user);
   if (!admin.ok) {
     return admin.response;
   }
@@ -39,7 +69,7 @@ export async function PATCH(
 
   const validation = validateReviewViolationPayload(body);
   if (!validation.ok) {
-    return jsonValidationError(validation.message, validation.details);
+    return jsonBadRequest(validation.message, validation.details);
   }
 
   const { data, error } = await supabase
@@ -47,6 +77,8 @@ export async function PATCH(
     .update({
       status: validation.data.status,
       risk_level: validation.data.risk_level,
+      ...(validation.data.usage_state ? { usage_state: validation.data.usage_state } : {}),
+      ...(validation.data.promotion_level ? { promotion_level: validation.data.promotion_level } : {}),
       admin_conclusion: validation.data.admin_conclusion,
       suggested_action: validation.data.suggested_action,
       reviewed_by: user.id,
@@ -63,4 +95,11 @@ export async function PATCH(
   }
 
   return NextResponse.json({ data });
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  return buildReviewViolationResponse(request, context);
 }

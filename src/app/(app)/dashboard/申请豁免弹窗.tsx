@@ -57,6 +57,7 @@ function ExemptionModal({
   // 弹窗打开时加载催交次数
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRemindCount(null);
       return;
     }

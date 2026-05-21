@@ -15,17 +15,57 @@ import {
   jsonValidationError,
   parsePageParams,
 } from "@/lib/violations/api";
+import type { CreateUsageRecordPayload } from "@/lib/conversion-hub/validation";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+type UsageRecordsListQuery = PromiseLike<{
+  data: unknown[] | null;
+  error: unknown;
+  count: number | null;
+}> & {
+  order: (column: string, options: { ascending: boolean }) => UsageRecordsListQuery;
+  eq: (column: string, value: unknown) => UsageRecordsListQuery;
+  range: (from: number, to: number) => UsageRecordsListQuery;
+};
+
+type UsageRecordsRouteDeps = {
+  getAuthenticatedContext: () => Promise<{
+    user: { id: string } | null;
+  }>;
+  createAdminClient: () => unknown;
+  createUsageRecordForUser: (
+    supabase: unknown,
+    userId: string,
+    payload: CreateUsageRecordPayload,
+  ) => Promise<
+    | { ok: true; data: unknown }
+    | { ok: false; status: number; code: "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "VALIDATION_ERROR" | "SERVER_ERROR"; message: string }
+  >;
+  canSeeAllUsageRecords: (supabase: unknown, userId: string) => Promise<boolean>;
+};
+
+const defaultDeps: UsageRecordsRouteDeps = {
+  getAuthenticatedContext: getAuthenticatedContext as unknown as UsageRecordsRouteDeps["getAuthenticatedContext"],
+  createAdminClient: createAdminClient as unknown as UsageRecordsRouteDeps["createAdminClient"],
+  createUsageRecordForUser: createUsageRecordForUser as unknown as UsageRecordsRouteDeps["createUsageRecordForUser"],
+  canSeeAllUsageRecords: canSeeAllUsageRecords as unknown as UsageRecordsRouteDeps["canSeeAllUsageRecords"],
+};
+
 export async function GET(request: NextRequest) {
-  const { user } = await getAuthenticatedContext();
+  const { user } = await defaultDeps.getAuthenticatedContext();
 
   if (!user) {
     return jsonUnauthorized();
   }
 
-  const adminSupabase = createAdminClient();
+  const adminSupabase = defaultDeps.createAdminClient() as {
+    from: (
+      table: string,
+    ) => {
+      select: (query: string, options: { count: "exact" }) => UsageRecordsListQuery;
+    };
+  };
   const { searchParams } = new URL(request.url);
   const caseId = searchParams.get("case_id")?.trim() ?? null;
 
@@ -34,7 +74,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { page, pageSize, from, to } = parsePageParams(searchParams);
-  const canSeeAll = await canSeeAllUsageRecords(adminSupabase, user.id);
+  const canSeeAll = await defaultDeps.canSeeAllUsageRecords(adminSupabase, user.id);
 
   let query = adminSupabase
     .from("script_usage_records")
@@ -76,8 +116,11 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function POST(request: NextRequest) {
-  const { user } = await getAuthenticatedContext();
+export async function buildCreateUsageRecordResponse(
+  request: NextRequest,
+  deps: UsageRecordsRouteDeps = defaultDeps,
+) {
+  const { user } = await deps.getAuthenticatedContext();
 
   if (!user) {
     return jsonUnauthorized();
@@ -95,12 +138,16 @@ export async function POST(request: NextRequest) {
     return jsonValidationError(validation.message, validation.details);
   }
 
-  const adminSupabase = createAdminClient();
-  const result = await createUsageRecordForUser(adminSupabase, user.id, validation.data);
+  const adminSupabase = deps.createAdminClient();
+  const result = await deps.createUsageRecordForUser(adminSupabase, user.id, validation.data);
 
   if (!result.ok) {
     return jsonError(result.code, result.message, result.status);
   }
 
   return NextResponse.json({ data: result.data }, { status: 201 });
+}
+
+export async function POST(request: NextRequest) {
+  return buildCreateUsageRecordResponse(request);
 }
