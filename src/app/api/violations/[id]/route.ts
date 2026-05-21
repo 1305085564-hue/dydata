@@ -36,7 +36,6 @@ export async function GET(
     )
     .eq("id", id)
     .eq("is_deleted", false)
-    .eq("purpose", "violation")
     .single();
 
   if (error || !data) {

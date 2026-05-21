@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShieldAlert, TrendingUp, Upload, X } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,18 +18,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getApiErrorMessage } from "@/lib/violations/errors";
-import {
-  APPEAL_STATUSES,
-  VIOLATION_EVENT_TYPES,
-  type AppealStatus,
-  type ScriptFormat,
-  type ViolationEventType,
-} from "@/lib/conversion-hub/types";
+import { VIOLATION_EVENT_TYPES, type ViolationEventType } from "@/lib/conversion-hub/types";
 import { cn } from "@/lib/utils";
 import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
-import { VIOLATION_CATEGORIES } from "./format";
+import {
+  PLATFORMS,
+  calcConversionRate,
+  resolveConfidence,
+  type Platform,
+} from "@/lib/case-library/confidence";
 import type { ViolationAccount } from "./types";
-import { useReasonTags } from "./use-reason-tags";
+import { renderAccountLabel } from "./format";
 
 type UploadedScreenshot = {
   path: string;
@@ -36,6 +36,9 @@ type UploadedScreenshot = {
 };
 
 type SubmissionPath = "violation" | "conversion";
+type AppealStatusInput = "未申诉" | "申诉成功" | "申诉失败";
+
+const APPEAL_OPTIONS: AppealStatusInput[] = ["未申诉", "申诉成功", "申诉失败"];
 
 const PATH_OPTIONS: Array<{
   key: SubmissionPath;
@@ -46,38 +49,21 @@ const PATH_OPTIONS: Array<{
   {
     key: "violation",
     title: "提交违规话术",
-    description: "记录风险点、违规场景、危险原因、测试结果和复核建议。",
+    description: "记录处罚事实和证据，由管理员判断违规点和应对建议。",
     icon: ShieldAlert,
   },
   {
     key: "conversion",
     title: "提交转化话术",
-    description: "记录有效场景、转化结果、使用数据和沉淀理由。",
+    description: "把跑出效果的话术交给团队验证，效果数据后续在详情页记录。",
     icon: TrendingUp,
   },
-];
-
-const SCRIPT_FORMAT_OPTIONS: Array<{ value: ScriptFormat; label: string }> = [
-  { value: "oral", label: "口播" },
-  { value: "visual", label: "画面" },
-  { value: "mixed", label: "混合" },
 ];
 
 function formatLocalNow() {
   const now = new Date();
   const pad = (value: number) => String(value).padStart(2, "0");
-  const yyyy = now.getFullYear();
-  const mm = pad(now.getMonth() + 1);
-  const dd = pad(now.getDate());
-  const hh = pad(now.getHours());
-  const mi = pad(now.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-function formatLocalDate() {
-  const now = new Date();
-  const pad = (value: number) => String(value).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
 function localToIso(value: string) {
@@ -96,38 +82,51 @@ export function SubmitForm({
 }) {
   const router = useRouter();
   const validInitialAccountId = useMemo(
-    () => accounts.some((account) => account.id === initialAccountId) ? initialAccountId ?? "none" : "none",
+    () => (accounts.some((account) => account.id === initialAccountId) ? initialAccountId ?? "none" : "none"),
     [accounts, initialAccountId],
   );
   const [accountId, setAccountId] = useState(validInitialAccountId);
   const [submissionPath, setSubmissionPath] = useState<SubmissionPath>("violation");
-  const [category, setCategory] = useState<(typeof VIOLATION_CATEGORIES)[number]>("下粉");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [screenshots, setScreenshots] = useState<UploadedScreenshot[]>([]);
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
-  // 处罚信息
   const [eventType, setEventType] = useState<ViolationEventType>("限流");
   const [occurredAt, setOccurredAt] = useState<string>(() => formatLocalNow());
   const [platformNotice, setPlatformNotice] = useState("");
-  const [appealStatus, setAppealStatus] = useState<AppealStatus>("未申诉");
-  const [appealResult, setAppealResult] = useState("");
-  const [recoveredAt, setRecoveredAt] = useState("");
+  const [appealStatus, setAppealStatus] = useState<AppealStatusInput>("未申诉");
+  const [appealText, setAppealText] = useState("");
 
-  // 转化使用数据
-  const [scriptFormat, setScriptFormat] = useState<ScriptFormat>("oral");
-  const [usedAt, setUsedAt] = useState(() => formatLocalDate());
-  const [views, setViews] = useState("");
-  const [follows, setFollows] = useState("");
+  const [platforms, setPlatforms] = useState<Platform[]>(["抖音"]);
+  const [viewsInput, setViewsInput] = useState("");
+  const [followsInput, setFollowsInput] = useState("");
 
-  // 原因标签
-  const { tags: reasonTags, isLoading: isLoadingTags, error: reasonTagsError } = useReasonTags();
-  const [reasonTagIds, setReasonTagIds] = useState<string[]>([]);
+  const showAppealText = appealStatus !== "未申诉";
 
-  const reasonTagMissing = hasAttemptedSubmit && reasonTagIds.length === 0 && !isLoadingTags && reasonTags.length > 0;
-  const showAppealResult = appealStatus !== "未申诉";
-  const showRecoveredAt = appealStatus === "申诉成功";
+  const viewsNumber = useMemo(() => {
+    const n = Number(viewsInput);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  }, [viewsInput]);
+  const followsNumber = useMemo(() => {
+    const n = Number(followsInput);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  }, [followsInput]);
+  const conversionRate = useMemo(
+    () => calcConversionRate(viewsNumber, followsNumber),
+    [viewsNumber, followsNumber],
+  );
+  const confidence = useMemo(() => resolveConfidence(viewsNumber), [viewsNumber]);
+  const followsExceedsViews = followsNumber > viewsNumber && viewsNumber > 0;
+
+  function togglePlatform(platform: Platform) {
+    setPlatforms((current) => {
+      if (current.includes(platform)) {
+        if (current.length === 1) return current;
+        return current.filter((p) => p !== platform);
+      }
+      return [...current, platform];
+    });
+  }
 
   async function uploadScreenshots(files: FileList | null) {
     if (!files?.length) return;
@@ -137,12 +136,11 @@ export function SubmitForm({
       return;
     }
 
-    // 客户端大小预校验：超限的文件跳过并提示
     const validFiles: File[] = [];
     for (const file of nextFiles) {
       if (file.size > UPLOAD_LIMITS.violationScreenshot) {
         feedbackToast.error(
-          `${file.name} 超过 ${formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)} 限制，请压缩后重试`
+          `${file.name} 超过 ${formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)} 限制，请压缩后重试`,
         );
       } else {
         validFiles.push(file);
@@ -177,15 +175,8 @@ export function SubmitForm({
     }
   }
 
-  function toggleReasonTag(id: string) {
-    setReasonTagIds((current) =>
-      current.includes(id) ? current.filter((tagId) => tagId !== id) : [...current, id],
-    );
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setHasAttemptedSubmit(true);
     const form = new FormData(event.currentTarget);
     const scriptText = String(form.get("script_text") ?? "").trim();
     if (!scriptText) {
@@ -193,79 +184,94 @@ export function SubmitForm({
       return;
     }
 
-    if (submissionPath === "violation" && reasonTags.length > 0 && reasonTagIds.length === 0) {
-      feedbackToast.error("请至少选择一个原因标签");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const screenshotPaths = screenshots.map((item) => item.path);
-      const sceneDescription = String(form.get("scene_description") ?? "").trim();
-      const resultText = String(form.get("result") ?? "").trim();
-      const reasonText = String(form.get("reason") ?? "").trim();
-      const reviewSuggestion = String(form.get("review_suggestion") ?? "").trim();
 
       if (submissionPath === "conversion") {
-        const parsedViews = Number.parseInt(views || "0", 10);
-        const parsedFollows = Number.parseInt(follows || "0", 10);
-
-        if (!usedAt) {
-          feedbackToast.error("请填写使用日期");
+        if (platforms.length === 0) {
+          feedbackToast.error("请至少选 1 个平台");
           return;
         }
-        if (!Number.isFinite(parsedViews) || parsedViews < 0) {
-          feedbackToast.error("展示量不能为负数");
+        if (viewsInput.trim() === "" || viewsNumber <= 0) {
+          feedbackToast.error("请填流量（播放/曝光数）");
           return;
         }
-        if (!Number.isFinite(parsedFollows) || parsedFollows < 0) {
-          feedbackToast.error("涨粉数不能为负数");
+        if (followsInput.trim() === "") {
+          feedbackToast.error("请填导粉数（× 涨粉填 0）");
           return;
         }
-        if (parsedFollows > parsedViews) {
-          feedbackToast.error("涨粉数不能大于展示量");
+        if (followsNumber > viewsNumber) {
+          feedbackToast.error("导粉数 × 大于流量");
           return;
         }
 
-        const noteParts = [
-          sceneDescription ? `有效场景：${sceneDescription}` : null,
-          resultText ? `转化结果：${resultText}` : null,
-          reasonText ? `沉淀理由：${reasonText}` : null,
-          reviewSuggestion ? `下一步建议：${reviewSuggestion}` : null,
-        ].filter(Boolean);
-
-        const response = await fetch("/api/conversion-hub/usage-records", {
+        const response = await fetch("/api/violations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             script_text: scriptText,
-            script_format: scriptFormat,
+            is_violation: false,
+            category: "短视频",
             account_id: accountId === "none" ? null : accountId,
-            used_at: usedAt,
-            views: parsedViews,
-            follows: parsedFollows,
-            source: "manual",
-            note: noteParts.join("\n") || null,
+            scene_description: null,
+            screenshot_paths: screenshotPaths,
+            result: null,
+            tags: [],
+            platforms,
           }),
         });
         const payload: unknown = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(getApiErrorMessage(payload, "提交失败"));
 
-        const caseId = getUsageCaseId(payload);
-        feedbackToast.success("已提交转化话术并记录使用数据");
+        const caseId = getCreatedCaseId(payload);
+
+        if (caseId) {
+          const today = new Date();
+          const usedAt = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+          try {
+            await fetch("/api/conversion-hub/usage-records", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                case_id: caseId,
+                script_text: null,
+                script_format: "oral",
+                account_id: accountId === "none" ? null : accountId,
+                used_at: usedAt,
+                views: viewsNumber,
+                follows: followsNumber,
+                source: "manual",
+                daily_report_id: null,
+                note: null,
+              }),
+            });
+          } catch {
+            feedbackToast.warning("初始效果数据未保存，可在详情页用「记录使用效果」补登");
+          }
+        }
+
+        feedbackToast.success("已提交，待审核通过后才会出现在团队话术库");
         router.push(caseId ? `/violations/${caseId}` : "/violations");
         return;
       }
 
+      // violation 向校验
+      if (accountId === "none") {
+        feedbackToast.error("请选择被处罚的账号");
+        return;
+      }
       const occurredIso = localToIso(occurredAt);
       if (!occurredIso) {
         feedbackToast.error("请填写处罚发生时间");
         return;
       }
-
-      const recoveredIso = showRecoveredAt && recoveredAt ? localToIso(recoveredAt) : null;
-      if (showRecoveredAt && recoveredAt && !recoveredIso) {
-        feedbackToast.error("恢复时间格式不正确");
+      if (!platformNotice.trim()) {
+        feedbackToast.error("请粘贴平台通知文本，是判违规的最硬证据");
+        return;
+      }
+      if (showAppealText && !appealText.trim()) {
+        feedbackToast.error("请填写申诉话术（你提交申诉时写的内容）");
         return;
       }
 
@@ -275,21 +281,21 @@ export function SubmitForm({
         body: JSON.stringify({
           script_text: scriptText,
           is_violation: true,
-          category,
-          account_id: accountId === "none" ? null : accountId,
-          scene_description: sceneDescription || null,
-          result: [resultText, reasonText ? `危险原因：${reasonText}` : null, reviewSuggestion ? `复核建议：${reviewSuggestion}` : null].filter(Boolean).join("\n") || null,
+          category: "短视频",
+          account_id: accountId,
+          scene_description: null,
+          result: null,
           screenshot_paths: screenshotPaths,
-          reason_tag_ids: reasonTagIds,
+          tags: [],
         }),
       });
       const payload: unknown = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(getApiErrorMessage(payload, "提交失败"));
 
       const caseId = getCreatedCaseId(payload);
-      feedbackToast.success("已提交，等待管理员确认");
+      feedbackToast.success("已提交，待审核通过后才会出现在团队话术库");
 
-      if (caseId && accountId !== "none") {
+      if (caseId) {
         try {
           const eventResponse = await fetch("/api/conversion-hub/events", {
             method: "POST",
@@ -299,12 +305,12 @@ export function SubmitForm({
               account_id: accountId,
               event_type: eventType,
               occurred_at: occurredIso,
-              platform_notice: platformNotice.trim() || null,
+              platform_notice: platformNotice.trim(),
               screenshot_paths: screenshotPaths,
               suspected_reason: null,
               appeal_status: appealStatus,
-              appeal_result: showAppealResult && appealResult.trim() ? appealResult.trim() : null,
-              recovered_at: recoveredIso,
+              appeal_result: showAppealText && appealText.trim() ? appealText.trim() : null,
+              recovered_at: null,
               note: null,
             }),
           });
@@ -314,8 +320,6 @@ export function SubmitForm({
         } catch {
           feedbackToast.warning("处罚信息未保存，稍后可在详情页补录");
         }
-      } else if (caseId && accountId === "none") {
-        feedbackToast.warning("未选择账号，处罚信息未记录");
       }
 
       router.push(caseId ? `/violations/${caseId}` : "/violations");
@@ -328,461 +332,434 @@ export function SubmitForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid gap-3 md:grid-cols-2">
-        {PATH_OPTIONS.map(({ key, title, description, icon: Icon }) => {
+      <div
+        role="tablist"
+        aria-label="提交类型"
+        className="inline-flex w-full rounded-2xl bg-zinc-100 p-1 sm:w-auto"
+      >
+        {PATH_OPTIONS.map(({ key, title, icon: Icon }) => {
           const active = submissionPath === key;
           return (
             <button
               key={key}
               type="button"
+              role="tab"
+              aria-selected={active}
               onClick={() => setSubmissionPath(key)}
-              aria-pressed={active}
               className={cn(
-                "group flex items-start gap-3 rounded-2xl border bg-white p-5 text-left transition-[border-color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-sm",
-                active ? "border-[#D97757]/50 bg-[#D97757]/5" : "border-zinc-200 hover:border-zinc-300",
+                "inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-5 py-2 text-[13px] font-medium transition-colors active:translate-y-0 sm:flex-none",
+                active
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700",
               )}
             >
-              <span
-                className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
-                  active ? "border-[#D97757]/30 bg-white text-[#D97757]" : "border-zinc-200 bg-zinc-50 text-zinc-500",
-                )}
-              >
-                <Icon className="size-5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-zinc-800">{title}</span>
-                <span className="mt-1 block text-xs leading-5 text-zinc-500">{description}</span>
-              </span>
+              <Icon className="size-4 stroke-[1.5]" />
+              {title.replace("提交", "")}
             </button>
           );
         })}
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-        <Label htmlFor="script_text" className="text-sm font-semibold text-zinc-800">
-          话术原文 <span className="text-[#C9604D]">*</span>
-        </Label>
-        <Textarea
-          id="script_text"
-          name="script_text"
-          required
-          rows={7}
-          placeholder="原封不动粘贴话术内容"
-          className="mt-2 rounded-2xl border-zinc-200 bg-zinc-50 text-[14px] leading-7"
-        />
-      </div>
-
-      <div className="grid gap-4 rounded-2xl border border-zinc-200 bg-white p-5 md:grid-cols-3">
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-800">
-            {submissionPath === "violation" ? "违规分类" : "话术形式"}
-          </Label>
-          {submissionPath === "violation" ? (
-            <Select value={category} onValueChange={(value) => setCategory(value as typeof category)}>
-              <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-                <SelectValue placeholder="选择分类" />
-              </SelectTrigger>
-              <SelectContent>
-                {VIOLATION_CATEGORIES.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Select value={scriptFormat} onValueChange={(value) => setScriptFormat(value as ScriptFormat)}>
-              <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-                <SelectValue placeholder="选择形式" />
-              </SelectTrigger>
-              <SelectContent>
-                {SCRIPT_FORMAT_OPTIONS.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-        {submissionPath === "conversion" ? (
-          <div className="space-y-2">
-            <Label htmlFor="used_at" className="text-sm font-semibold text-zinc-800">使用日期</Label>
-            <Input
-              id="used_at"
-              type="date"
-              value={usedAt}
-              onChange={(event) => setUsedAt(event.currentTarget.value)}
-              className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
-            />
-          </div>
-        ) : null}
-        <div className="space-y-2">
-          <Label className="text-sm font-semibold text-zinc-800">账号</Label>
-          <Select value={accountId} onValueChange={(value) => value && setAccountId(value)}>
-            <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-              <SelectValue placeholder="可不选" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">不确定哪个号</SelectItem>
-              {accounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.display_name || account.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5">
-          <div className="space-y-2">
-            <Label htmlFor="scene_description" className="text-sm font-semibold text-zinc-800">
-              {submissionPath === "violation" ? "违规场景 / 风险点" : "有效场景"}
+      <div className="grid gap-4 lg:grid-cols-[55fr_45fr] lg:items-stretch">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-[3] flex-col rounded-2xl border border-zinc-200 bg-white p-5">
+            <Label htmlFor="script_text" className="text-[13px] font-medium text-zinc-800">
+              话术原文 <span className="text-[#C9604D]">*</span>
             </Label>
             <Textarea
-              id="scene_description"
-              name="scene_description"
-              rows={5}
-              placeholder={submissionPath === "violation" ? "描述画面、导粉方式或出现问题的上下文" : "描述这句话在什么内容、账号或人群里有效"}
-              className="rounded-2xl border-zinc-200 bg-zinc-50"
+              id="script_text"
+              name="script_text"
+              required
+              placeholder="原封不动粘贴话术内容"
+              className="mt-2 min-h-[170px] flex-1 resize-none rounded-2xl border-transparent bg-zinc-100/70 text-[14px] leading-7 focus:border-zinc-200 focus:bg-white"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="result" className="text-sm font-semibold text-zinc-800">
-              {submissionPath === "violation" ? "测试结果" : "转化结果"}
-            </Label>
-            <Input
-              id="result"
-              name="result"
-              placeholder={submissionPath === "violation" ? "如:限流 3 天、正常过审" : "如:评论区导粉更顺、私信咨询增加"}
-              className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
-            />
-            <div className="space-y-2">
-              <Label htmlFor="reason" className="text-sm font-semibold text-zinc-800">
-                {submissionPath === "violation" ? "为什么危险" : "适合推广 / 测试 / 沉淀的理由"}
+
+          <div className="flex flex-[2] flex-col rounded-2xl border border-zinc-200 bg-white p-5">
+            <div className="flex items-center justify-between">
+              <Label className="text-[13px] font-medium text-zinc-800">
+                截图
+                <span className="ml-2 text-[11px] font-normal text-zinc-400">
+                  {submissionPath === "violation" ? "建议" : "可选"} · 最多 5 张
+                </span>
               </Label>
-              <Textarea
-                id="reason"
-                name="reason"
-                rows={3}
-                placeholder={submissionPath === "violation" ? "说明容易触发平台风险的原因" : "说明为什么值得继续推广、测试或沉淀成模板"}
-                className="rounded-2xl border-zinc-200 bg-zinc-50 text-sm leading-6"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="review_suggestion" className="text-sm font-semibold text-zinc-800">
-                {submissionPath === "violation" ? "复核建议" : "下一步动作"}
-              </Label>
-              <Input
-                id="review_suggestion"
-                name="review_suggestion"
-                placeholder={submissionPath === "violation" ? "如:建议禁用、建议改写后复测" : "如:本周推广、继续 A/B 测试、沉淀模板"}
-                className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
-              />
-            </div>
-            {submissionPath === "violation" ? (
-            <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-4">
-              <Label htmlFor="screenshots" className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-zinc-700">
-                <Upload className="size-4" />
-                上传截图，最多 5 张
-              </Label>
-              <Input
-                id="screenshots"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                multiple
-                disabled={isUploading || screenshots.length >= 5}
-                onChange={(event) => {
-                  uploadScreenshots(event.currentTarget.files);
-                  event.currentTarget.value = "";
-                }}
-                className="mt-3 h-11 rounded-2xl bg-white"
-              />
-              <p className="mt-1.5 text-[11px] text-zinc-400">
-                支持 JPG/PNG/WEBP，单张最大 {formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)}
-              </p>
               {screenshots.length ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {screenshots.map((item) => (
-                    <span key={item.path} className="inline-flex max-w-full items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200">
-                      <span className="truncate">{item.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => setScreenshots((current) => current.filter((screenshot) => screenshot.path !== item.path))}
-                        className="text-zinc-400 hover:text-zinc-800"
-                        aria-label="移除截图"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
+                <span className="text-[11px] tabular-nums text-zinc-400">
+                  {screenshots.length} / 5
+                </span>
               ) : null}
             </div>
+
+            <label
+              htmlFor="screenshots"
+              onDragOver={(event) => {
+                event.preventDefault();
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                if (isUploading || screenshots.length >= 5) return;
+                uploadScreenshots(event.dataTransfer.files);
+              }}
+              className={cn(
+                "mt-3 flex min-h-[110px] flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed px-5 py-8 text-center transition-colors",
+                isUploading || screenshots.length >= 5
+                  ? "cursor-not-allowed border-zinc-200 bg-zinc-50/40 opacity-70"
+                  : "border-zinc-300 bg-zinc-50/70 hover:border-[#D97757]/40 hover:bg-zinc-50",
+              )}
+            >
+              <Upload className="size-5 stroke-[1.5] text-zinc-400" />
+              <span className="text-[13px] font-medium text-zinc-700">
+                {isUploading ? "上传中..." : "点击上传或拖拽截图到此"}
+              </span>
+              <span className="text-[11px] text-zinc-400">
+                JPG / PNG / WEBP · 单张最大 {formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)}
+              </span>
+            </label>
+            <input
+              id="screenshots"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              className="sr-only"
+              disabled={isUploading || screenshots.length >= 5}
+              onChange={(event) => {
+                uploadScreenshots(event.currentTarget.files);
+                event.currentTarget.value = "";
+              }}
+            />
+
+            {screenshots.length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {screenshots.map((item) => (
+                  <span
+                    key={item.path}
+                    className="inline-flex max-w-full items-center gap-2 rounded-full bg-white px-3 py-1 text-[12px] font-medium text-zinc-600 ring-1 ring-zinc-200"
+                  >
+                    <span className="truncate">{item.name}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setScreenshots((current) =>
+                          current.filter((screenshot) => screenshot.path !== item.path),
+                        )
+                      }
+                      className="text-zinc-400 hover:text-zinc-800"
+                      aria-label="移除截图"
+                    >
+                      <X className="size-3 stroke-[1.5]" />
+                    </button>
+                  </span>
+                ))}
+              </div>
             ) : null}
           </div>
         </div>
 
-        {submissionPath === "violation" ? (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-          <div className="relative pl-5">
-            <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#D97757]" />
-            <div className="mb-4 flex items-center gap-2">
-              <h3 className="text-sm font-medium text-zinc-800">处罚信息</h3>
-              <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">punishment</span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-zinc-600">处罚类型</Label>
-                <div className="flex flex-wrap gap-2">
-                  {VIOLATION_EVENT_TYPES.map((type) => {
-                    const active = eventType === type;
-                    return (
-                      <motion.button
-                        key={type}
-                        type="button"
-                        layout
-                        transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                        onClick={() => setEventType(type)}
-                        className={cn(
-                          "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
-                          active
-                            ? "border-transparent bg-[#D97757] text-white"
-                            : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
-                        )}
-                      >
-                        {type}
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="occurred_at" className="text-xs font-semibold text-zinc-600">
-                    发生时间
-                  </Label>
-                  <Input
-                    id="occurred_at"
-                    type="datetime-local"
-                    value={occurredAt}
-                    onChange={(event) => setOccurredAt(event.currentTarget.value)}
-                    className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-zinc-600">申诉状态</Label>
-                  <Select value={appealStatus} onValueChange={(value) => value && setAppealStatus(value as AppealStatus)}>
-                    <SelectTrigger className="h-11 w-full rounded-2xl border-zinc-200 bg-zinc-50">
-                      <SelectValue>{appealStatus}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {APPEAL_STATUSES.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="platform_notice" className="text-xs font-semibold text-zinc-600">
-                  平台通知文本 <span className="font-normal text-zinc-400">可选</span>
-                </Label>
-                <Textarea
-                  id="platform_notice"
-                  rows={3}
-                  value={platformNotice}
-                  onChange={(event) => setPlatformNotice(event.currentTarget.value)}
-                  placeholder="粘贴平台发来的原文通知"
-                  className="rounded-2xl border-zinc-200 bg-zinc-50 text-sm leading-6"
-                />
-              </div>
-
-              <AnimatePresence initial={false}>
-                {showAppealResult && (
-                  <motion.div
-                    key="appeal_result"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="space-y-2 pt-1">
-                      <Label htmlFor="appeal_result" className="text-xs font-semibold text-zinc-600">
-                        申诉结果
-                      </Label>
-                      <Textarea
-                        id="appeal_result"
-                        rows={3}
-                        value={appealResult}
-                        onChange={(event) => setAppealResult(event.currentTarget.value)}
-                        placeholder="填写申诉过程/平台回复"
-                        className="rounded-2xl border-zinc-200 bg-zinc-50 text-sm leading-6"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <AnimatePresence initial={false}>
-                {showRecoveredAt && (
-                  <motion.div
-                    key="recovered_at"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="space-y-2 pt-1">
-                      <Label htmlFor="recovered_at" className="text-xs font-semibold text-zinc-600">
-                        恢复时间
-                      </Label>
-                      <Input
-                        id="recovered_at"
-                        type="datetime-local"
-                        value={recoveredAt}
-                        onChange={(event) => setRecoveredAt(event.currentTarget.value)}
-                        className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-        ) : (
+        <div className="flex flex-col gap-4">
           <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-            <div className="relative pl-5">
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-[#6FAA7D]" />
-              <div className="mb-4 flex items-center gap-2">
-                <h3 className="text-sm font-medium text-zinc-800">使用数据</h3>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">conversion</span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="views" className="text-xs font-semibold text-zinc-600">展示量</Label>
-                  <Input
-                    id="views"
-                    value={views}
-                    onChange={(event) => setViews(event.currentTarget.value)}
-                    inputMode="numeric"
-                    placeholder="如: 1200"
-                    className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="follows" className="text-xs font-semibold text-zinc-600">涨粉数</Label>
-                  <Input
-                    id="follows"
-                    value={follows}
-                    onChange={(event) => setFollows(event.currentTarget.value)}
-                    inputMode="numeric"
-                    placeholder="如: 18"
-                    className="h-11 rounded-2xl border-zinc-200 bg-zinc-50"
-                  />
-                </div>
-              </div>
-              <p className="mt-4 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-3 text-xs leading-5 text-zinc-500">
-                转化路径会写入“转化话术”和“使用记录”；风险复核仍从违规路径或后续详情页补录，不在这里混成一个下拉。
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {submissionPath === "violation" ? (
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-        <div className="relative pl-5">
-          <div
-            className={cn(
-              "absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full",
-              reasonTagMissing ? "bg-[#C9604D]" : "bg-[#D97757]",
-            )}
-          />
-          <div className="mb-4 flex items-center gap-2">
-            <h3 className="text-sm font-medium text-zinc-800">原因标签</h3>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">required</span>
-            {reasonTagIds.length > 0 && (
-              <span className="text-[11px] font-medium text-zinc-500">已选 {reasonTagIds.length}</span>
-            )}
+            <Label className="text-[13px] font-medium text-zinc-800">
+              {submissionPath === "violation" ? "被处罚的账号" : "跑出效果的账号"}{" "}
+              {submissionPath === "violation" ? <span className="text-[#C9604D]">*</span> : null}
+            </Label>
+            <Select value={accountId} onValueChange={(value) => value && setAccountId(value)}>
+              <SelectTrigger className="mt-2 h-11 w-full rounded-2xl border-transparent bg-zinc-100/70 focus:border-zinc-200 focus:bg-white">
+                <SelectValue placeholder="选择账号">
+                  {accountId === "none"
+                    ? "不确定哪个号"
+                    : (() => {
+                        const idx = accounts.findIndex((account) => account.id === accountId);
+                        return idx >= 0
+                          ? renderAccountLabel(accounts[idx], idx, accounts.length)
+                          : "选择账号";
+                      })()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {submissionPath === "conversion" ? (
+                  <SelectItem value="none">不确定哪个号</SelectItem>
+                ) : null}
+                {accounts.map((account, index) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {renderAccountLabel(account, index, accounts.length)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-2 text-[11px] text-zinc-400">
+              {submissionPath === "violation"
+                ? "只能从你绑定的账号里选，方便管理员核对处罚记录。"
+                : "可不选，留给管理员归类。"}
+            </p>
           </div>
 
-          {isLoadingTags ? (
-            <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-8 w-20 animate-pulse rounded-full bg-zinc-100"
-                />
-              ))}
+          {submissionPath === "violation" ? (
+            <div className="flex min-h-[440px] flex-1 flex-col rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-6">
+              <div className="mb-5 flex items-center gap-2">
+                <h3 className="text-[14px] font-medium text-zinc-800">处罚事实</h3>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">punishment</span>
+              </div>
+
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-medium text-zinc-600">
+                    处罚类型 <span className="text-[#C9604D]">*</span>
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {VIOLATION_EVENT_TYPES.map((type) => {
+                      const active = eventType === type;
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setEventType(type)}
+                          className={cn(
+                            "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors active:translate-y-0",
+                            active
+                              ? "border-[#D97757]/40 text-[#D97757]"
+                              : "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700",
+                          )}
+                        >
+                          {type}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="occurred_at" className="text-[12px] font-medium text-zinc-600">
+                      发生时间 <span className="text-[#C9604D]">*</span>
+                    </Label>
+                    <Input
+                      id="occurred_at"
+                      type="datetime-local"
+                      value={occurredAt}
+                      onChange={(event) => setOccurredAt(event.currentTarget.value)}
+                      className="h-11 rounded-2xl border-transparent bg-zinc-100/70 focus:border-zinc-200 focus:bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[12px] font-medium text-zinc-600">
+                      申诉状态 <span className="text-[#C9604D]">*</span>
+                    </Label>
+                    <Select
+                      value={appealStatus}
+                      onValueChange={(value) => value && setAppealStatus(value as AppealStatusInput)}
+                    >
+                      <SelectTrigger className="h-11 w-full rounded-2xl border-transparent bg-zinc-100/70 focus:border-zinc-200 focus:bg-white">
+                        <SelectValue>{appealStatus}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {APPEAL_OPTIONS.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <AnimatePresence initial={false}>
+                  {showAppealText && (
+                    <motion.div
+                      key="appeal_text"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-2 pt-1">
+                        <Label htmlFor="appeal_text" className="text-[12px] font-medium text-zinc-600">
+                          申诉话术 <span className="text-[#C9604D]">*</span>
+                        </Label>
+                        <Textarea
+                          id="appeal_text"
+                          rows={3}
+                          value={appealText}
+                          onChange={(event) => setAppealText(event.currentTarget.value)}
+                          placeholder="把你提交申诉时写的内容原封不动贴进来"
+                          className="rounded-2xl border-transparent bg-zinc-100/70 text-[13px] leading-6 focus:border-zinc-200 focus:bg-white"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="space-y-2">
+                  <Label htmlFor="platform_notice" className="text-[12px] font-medium text-zinc-600">
+                    平台通知文本 <span className="text-[#C9604D]">*</span>
+                  </Label>
+                  <Textarea
+                    id="platform_notice"
+                    rows={4}
+                    value={platformNotice}
+                    onChange={(event) => setPlatformNotice(event.currentTarget.value)}
+                    placeholder={
+                      showAppealText
+                        ? "粘贴平台对你申诉的最终回复（成功/失败的原文）"
+                        : "粘贴平台发来的处罚原文通知"
+                    }
+                    className="rounded-2xl border-transparent bg-zinc-100/70 text-[13px] leading-6 focus:border-zinc-200 focus:bg-white"
+                  />
+                  <p className="text-[11px] text-zinc-400">
+                    这是判违规的最硬证据，没有通知文本审核会被驳回。
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : reasonTagsError ? (
-            <p className="text-xs font-medium text-[#C9604D]">{reasonTagsError}</p>
-          ) : reasonTags.length === 0 ? (
-            <p className="text-xs text-zinc-500">暂无可用原因标签，请联系管理员配置</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {reasonTags.map((tag) => {
-                const active = reasonTagIds.includes(tag.id);
-                return (
-                  <motion.button
-                    key={tag.id}
-                    type="button"
-                    layout
-                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                    onClick={() => toggleReasonTag(tag.id)}
-                    className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
-                      active
-                        ? "border-transparent bg-[#D97757] text-white"
-                        : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400",
-                    )}
-                  >
-                    {tag.name}
-                  </motion.button>
-                );
-              })}
-            </div>
-          )}
+            <div className="flex min-h-[440px] flex-1 flex-col rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white p-6">
+              <div className="mb-5 flex items-center gap-2">
+                <h3 className="text-[14px] font-medium text-zinc-800">效果数据</h3>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">performance</span>
+              </div>
 
-          {reasonTagMissing && (
-            <motion.p
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-3 text-xs font-medium text-[#C9604D]"
-            >
-              至少选择一个原因标签
-            </motion.p>
+              <div className="space-y-6">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="conv_views" className="text-[12px] font-medium text-zinc-600">
+                      流量 <span className="text-[#C9604D]">*</span>
+                      <span className="ml-1 text-[11px] font-normal text-zinc-400">播放/曝光</span>
+                    </Label>
+                    <Input
+                      id="conv_views"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={viewsInput}
+                      onChange={(event) => setViewsInput(event.currentTarget.value)}
+                      placeholder="例如 30000"
+                      className="h-14 rounded-2xl border-transparent bg-zinc-100/70 text-[18px] font-semibold tabular-nums text-zinc-800 placeholder:text-[14px] placeholder:font-normal focus:border-zinc-200 focus:bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="conv_follows" className="text-[12px] font-medium text-zinc-600">
+                      导粉 <span className="text-[#C9604D]">*</span>
+                      <span className="ml-1 text-[11px] font-normal text-zinc-400">没涨粉填 0</span>
+                    </Label>
+                    <Input
+                      id="conv_follows"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={followsInput}
+                      onChange={(event) => setFollowsInput(event.currentTarget.value)}
+                      placeholder="例如 180"
+                      className={cn(
+                        "h-14 rounded-2xl border-transparent bg-zinc-100/70 text-[18px] font-semibold tabular-nums text-zinc-800 placeholder:text-[14px] placeholder:font-normal focus:border-zinc-200 focus:bg-white",
+                        followsExceedsViews && "border-[#C9604D]/40 bg-white",
+                      )}
+                    />
+                    {followsExceedsViews ? (
+                      <p className="text-[11px] text-[#C9604D]">导粉数不能大于流量</p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-10">
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                      转化率
+                    </p>
+                    <p className="mt-2 flex items-baseline gap-1 leading-none tabular-nums">
+                      <span className="text-[32px] font-semibold text-zinc-800">
+                        {conversionRate === null ? "—" : (conversionRate * 100).toFixed(2)}
+                      </span>
+                      {conversionRate === null ? null : (
+                        <span className="text-[14px] font-medium text-zinc-400">%</span>
+                      )}
+                    </p>
+                    <p className="mt-1.5 text-[11px] text-zinc-400">导粉 ÷ 流量</p>
+                  </div>
+                  <div className="sm:flex-1">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                      置信度
+                    </p>
+                    <div className="mt-2 inline-flex items-center gap-2">
+                      <span
+                        className="size-2 rounded-full"
+                        style={{ backgroundColor: confidence.toneHex }}
+                        aria-hidden
+                      />
+                      <span
+                        className="text-[14px] font-medium tabular-nums"
+                        style={{ color: confidence.toneHex }}
+                      >
+                        {confidence.label}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-zinc-400">{confidence.hint}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[12px] font-medium text-zinc-600">
+                    平台 <span className="text-[#C9604D]">*</span>
+                    <span className="ml-2 text-[11px] font-normal text-zinc-400">可多选 · 默认抖音</span>
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {PLATFORMS.map((platform) => {
+                      const active = platforms.includes(platform);
+                      return (
+                        <button
+                          key={platform}
+                          type="button"
+                          onClick={() => togglePlatform(platform)}
+                          aria-pressed={active}
+                          className={cn(
+                            "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors active:translate-y-0",
+                            active
+                              ? "border-[#D97757]/40 text-[#D97757]"
+                              : "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700",
+                          )}
+                        >
+                          {platform}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-zinc-400">
+                  高置信 ≥ 5 万 / 中置信 ≥ 2.5 万 / 低置信 ≥ 1.5 万 / 1.5 万以下样本不足
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </div>
-      ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" className="h-11 rounded-2xl" onClick={() => router.push("/violations")}>
-          返回列表
-        </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting || isUploading}
-          className={cn(
-            "h-11 rounded-2xl bg-zinc-900 px-6 text-white hover:bg-zinc-800",
-            isSubmitting && "opacity-70",
-          )}
-        >
-          {isSubmitting ? "提交中..." : submissionPath === "violation" ? "提交违规案例" : "提交转化话术"}
-        </Button>
+      <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[11px] leading-5 text-zinc-400 sm:max-w-md">
+          {submissionPath === "violation"
+            ? "提交后进入待审核，管理员判违规点和风险等级后入库，结论可在「我的提交」查看。"
+            : "提交后进入待审核，通过后入团队知识库可复用；后续效果数据在详情页用「记录使用效果」追加。"}
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-2xl"
+            onClick={() => router.push("/violations")}
+          >
+            返回列表
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || isUploading}
+            className={cn(
+              "h-11 rounded-2xl bg-[#D97757] px-6 text-white shadow-sm transition-colors hover:bg-[#C96442] active:translate-y-0",
+              isSubmitting && "opacity-70",
+            )}
+          >
+            {isSubmitting ? "提交中..." : submissionPath === "violation" ? "提交违规案例" : "提交转化话术"}
+          </Button>
+        </div>
       </div>
     </form>
   );
@@ -796,13 +773,6 @@ function getCreatedCaseId(payload: unknown) {
     id?: unknown;
   };
   const id = record.case?.id ?? record.data?.id ?? record.id;
-  return typeof id === "string" ? id : null;
-}
-
-function getUsageCaseId(payload: unknown) {
-  if (!payload || typeof payload !== "object") return null;
-  const data = (payload as { data?: { case_id?: unknown }; case_id?: unknown }).data;
-  const id = data?.case_id ?? (payload as { case_id?: unknown }).case_id;
   return typeof id === "string" ? id : null;
 }
 

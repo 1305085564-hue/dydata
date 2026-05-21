@@ -80,7 +80,7 @@ export function RewriteOutput({
                 key={shortcut.label}
                 type="button"
                 onClick={() => onSendOverride(shortcut.text)}
-                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 active:translate-y-0"
+                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-100 active:translate-y-0"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

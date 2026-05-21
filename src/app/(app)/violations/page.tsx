@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import {
   ArrowRight,
   ClipboardCheck,
-  ListChecks,
   Search as SearchIcon,
   Sparkles,
   TestTube2,
@@ -99,19 +98,12 @@ export default async function ViolationsPage({
           {canManageViolations ? (
             <Link
               href="/admin/conversion-hub"
-              className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
+              className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
             >
               <ClipboardCheck className="size-4 stroke-[1.5]" />
               管理工作台
             </Link>
           ) : null}
-          <Link
-            href="/violations/submit"
-            className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
-          >
-            <ListChecks className="size-4 stroke-[1.5]" />
-            提交新案例
-          </Link>
         </div>
       </header>
 

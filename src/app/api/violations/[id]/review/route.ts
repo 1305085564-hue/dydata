@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getAuthenticatedContext,
   jsonBadRequest,
@@ -92,6 +93,20 @@ export async function buildReviewViolationResponse(
 
   if (error || !data) {
     return jsonNotFound("违规话术不存在或复核失败");
+  }
+
+  if (validation.data.reason_tag_ids) {
+    const adminSupabase = createAdminClient();
+    await adminSupabase.from("violation_case_reason_tags").delete().eq("case_id", id);
+    if (validation.data.reason_tag_ids.length > 0) {
+      const rows = validation.data.reason_tag_ids.map((tagId) => ({ case_id: id, tag_id: tagId }));
+      const { error: insertError } = await adminSupabase
+        .from("violation_case_reason_tags")
+        .insert(rows);
+      if (insertError) {
+        return jsonValidationError("保存踩雷点标签失败", insertError);
+      }
+    }
   }
 
   return NextResponse.json({ data });

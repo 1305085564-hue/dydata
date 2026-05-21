@@ -145,3 +145,77 @@ test("复核校验在未传 usage_state 和 promotion_level 时不会强制回�
   assert.equal("usage_state" in result.data, false);
   assert.equal("promotion_level" in result.data, false);
 });
+
+test("提交案例的 platforms 默认抖音并支持去重", () => {
+  const noPlatforms = validateCreateViolationPayload({
+    script_text: "话术",
+    is_violation: false,
+    category: "短视频",
+  });
+  assert.equal(noPlatforms.ok, true);
+  if (!noPlatforms.ok) return;
+  assert.deepEqual(noPlatforms.data.platforms, ["抖音"]);
+
+  const dedup = validateCreateViolationPayload({
+    script_text: "话术",
+    is_violation: false,
+    category: "短视频",
+    platforms: ["抖音", "视频号", "抖音"],
+  });
+  assert.equal(dedup.ok, true);
+  if (!dedup.ok) return;
+  assert.deepEqual(dedup.data.platforms, ["抖音", "视频号"]);
+});
+
+test("提交案例拒绝未知平台和空 platforms", () => {
+  assert.deepEqual(
+    validateCreateViolationPayload({
+      script_text: "话术",
+      is_violation: false,
+      category: "短视频",
+      platforms: ["B 站"],
+    }),
+    { ok: false, message: "platforms 包含未知平台" },
+  );
+
+  assert.deepEqual(
+    validateCreateViolationPayload({
+      script_text: "话术",
+      is_violation: false,
+      category: "短视频",
+      platforms: [],
+    }),
+    { ok: false, message: "platforms 至少选 1 个" },
+  );
+});
+
+test("复核校验接受合法的踩雷点标签数组并去重", () => {
+  const tagId = "11111111-2222-4333-8444-555555555555";
+  const result = validateReviewViolationPayload({
+    status: "verified",
+    risk_level: "high",
+    reason_tag_ids: [` ${tagId} `, tagId],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.deepEqual(result.data.reason_tag_ids, [tagId]);
+});
+
+test("复核校验拒绝非数组或非 UUID 的踩雷点标签", () => {
+  assert.deepEqual(
+    validateReviewViolationPayload({
+      status: "verified",
+      reason_tag_ids: "not-an-array",
+    }),
+    { ok: false, message: "reason_tag_ids 不合法" },
+  );
+
+  assert.deepEqual(
+    validateReviewViolationPayload({
+      status: "verified",
+      reason_tag_ids: ["not-a-uuid"],
+    }),
+    { ok: false, message: "reason_tag_ids 包含非法 UUID" },
+  );
+});

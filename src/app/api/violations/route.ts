@@ -210,6 +210,8 @@ export async function POST(request: NextRequest) {
       result: validation.data.result,
       tags: validation.data.tags,
       status: "submitted",
+      purpose: validation.data.is_violation ? "violation" : "conversion",
+      platforms: validation.data.platforms,
     })
     .select("*")
     .single();

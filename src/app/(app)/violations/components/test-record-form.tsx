@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 import type { ViolationAccount } from "./types";
+import { renderAccountLabel } from "./format";
 
 function todayISODate() {
   const now = new Date();
@@ -113,13 +114,22 @@ export function TestRecordForm({
               <Label className="text-sm font-semibold">账号</Label>
               <Select value={accountId} onValueChange={(value) => value && setAccountId(value)}>
                 <SelectTrigger className="h-11 w-full rounded-2xl">
-                  <SelectValue placeholder="选择账号" />
+                  <SelectValue placeholder="选择账号">
+                    {accountId === "none"
+                      ? "不关联账号"
+                      : (() => {
+                          const idx = accounts.findIndex((account) => account.id === accountId);
+                          return idx >= 0
+                            ? renderAccountLabel(accounts[idx], idx, accounts.length)
+                            : "选择账号";
+                        })()}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">不关联账号</SelectItem>
-                  {accounts.map((account) => (
+                  {accounts.map((account, index) => (
                     <SelectItem key={account.id} value={account.id}>
-                      {account.display_name || account.name}
+                      {renderAccountLabel(account, index, accounts.length)}
                     </SelectItem>
                   ))}
                 </SelectContent>

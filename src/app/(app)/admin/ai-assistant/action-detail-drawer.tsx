@@ -49,6 +49,8 @@ type Props = {
   onClose: () => void;
 };
 
+const actionDetailCache = new Map<string, ActionDetail>();
+
 function formatJson(value: unknown) {
   if (value == null) return "null";
   if (typeof value === "string") return value;
@@ -133,14 +135,27 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
-    const loadDetail = async () => {
-      setLoading(true);
+
+    const cached = actionDetailCache.get(id);
+    if (cached) {
+      setDetail(cached);
+      setLoading(false);
       setError(null);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const loadDetail = async () => {
       try {
         const res = await fetch(`/api/admin/ai-assistant/history/${id}`);
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || "Failed to load");
-        if (!cancelled) setDetail(data.action);
+        if (!cancelled) {
+          setDetail(data.action);
+          actionDetailCache.set(id, data.action);
+        }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Load failed");
       } finally {
@@ -173,7 +188,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                 )}
               </div>
               <SheetTitle className="mt-2 text-[18px] font-semibold leading-tight tracking-tight">
-                {loading ? "加载中..." : detail?.description || "—"}
+                {detail?.description || (loading ? "加载中..." : "—")}
               </SheetTitle>
             </div>
             {detail?.result && (
@@ -194,19 +209,18 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
 
         <SheetBody>
         <div className="space-y-4 py-2">
-          {loading ? (
-            <div className="flex flex-col items-center gap-2 py-12">
-              <Skeleton className="h-4 w-24 rounded" />
-              <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
-                Syncing
-              </span>
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="rounded-xl border border-red-100 bg-[#FEF9F9] p-4 text-center">
               <div className="text-[12px] text-red-700">{error}</div>
             </div>
           ) : detail ? (
             <>
+              {loading && (
+                <div className="flex items-center justify-center gap-2 py-1">
+                  <div className="h-0.5 w-8 animate-pulse rounded-full bg-zinc-300" />
+                  <span className="text-[10px] text-zinc-400">刷新中</span>
+                </div>
+              )}
               {/* Meta grid */}
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-2xl border border-zinc-200 bg-white p-4 sm:grid-cols-4">
                 <Meta label="Operator" value={detail.adminName} />
@@ -298,6 +312,13 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
                 </div>
               )}
             </>
+          ) : loading ? (
+            <div className="flex flex-col items-center gap-2 py-12">
+              <Skeleton className="h-4 w-24 rounded" />
+              <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
+                Syncing
+              </span>
+            </div>
           ) : null}
         </div>
         </SheetBody>

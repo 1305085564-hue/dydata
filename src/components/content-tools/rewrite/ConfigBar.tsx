@@ -60,7 +60,7 @@ export function ConfigBar({
         {onClose && (
           <button
             onClick={onClose}
-            className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -86,8 +86,8 @@ export function ConfigBar({
                       'group relative w-full overflow-hidden rounded-xl border p-3 text-left transition-colors',
                       interactionControlsDisabled && 'cursor-not-allowed opacity-50',
                       active
-                        ? 'border-[#D97757] bg-zinc-50'
-                        : 'border-zinc-200 bg-white hover:border-zinc-300'
+                        ? 'border-[#D97757] bg-zinc-100'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-100'
                     )}
                   >
                     {active && (
@@ -149,7 +149,7 @@ export function ConfigBar({
                     'w-full rounded-lg border bg-white px-3 py-2 text-[13px] outline-none transition',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-100 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
+                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
                   )}
                 >
                   <option value="">默认真实模型</option>
@@ -171,7 +171,7 @@ export function ConfigBar({
                     'w-full rounded-lg border bg-white px-3 py-2 text-[13px] outline-none transition',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-100 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
+                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
                   )}
                 >
                   <option value="">无附加模式</option>
@@ -193,7 +193,7 @@ export function ConfigBar({
                     'w-full rounded-lg border bg-white px-3 py-2 text-[13px] outline-none transition',
                     customControlsLocked
                       ? 'cursor-not-allowed border-zinc-100 text-zinc-400'
-                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
+                      : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-950/5'
                   )}
                 >
                   {bootstrap.lengthPresets.map((item) => (

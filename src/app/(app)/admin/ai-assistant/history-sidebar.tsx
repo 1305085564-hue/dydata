@@ -141,12 +141,7 @@ function SidebarContent({
 
       {/* Records */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-[11px] text-zinc-400">
-            <Skeleton className="h-3.5 w-16 rounded" />
-            <span className="tracking-wide">同步中</span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
             <Search className="h-3.5 w-3.5 text-zinc-300" />
             <div className="text-[11px] text-zinc-500">{error}</div>
@@ -157,6 +152,11 @@ function SidebarContent({
               重新同步
             </button>
           </div>
+        ) : records.length === 0 && loading ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-[11px] text-zinc-400">
+            <Skeleton className="h-3.5 w-16 rounded" />
+            <span className="tracking-wide">同步中</span>
+          </div>
         ) : records.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-10 text-center">
             <span className="inline-flex h-1 w-1 rounded-full bg-zinc-300" />
@@ -164,6 +164,12 @@ function SidebarContent({
           </div>
         ) : (
           <div className="space-y-px">
+            {loading && (
+              <div className="flex items-center justify-center gap-1.5 py-2">
+                <div className="h-0.5 w-8 animate-pulse rounded-full bg-zinc-300" />
+                <span className="text-[10px] text-zinc-400">刷新中</span>
+              </div>
+            )}
             {records.map((record) => {
               const selected = selectedId === record.id;
               return (
