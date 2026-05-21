@@ -47,6 +47,8 @@ export async function PATCH(
     .update({
       status: validation.data.status,
       risk_level: validation.data.risk_level,
+      ...(validation.data.usage_state ? { usage_state: validation.data.usage_state } : {}),
+      ...(validation.data.promotion_level ? { promotion_level: validation.data.promotion_level } : {}),
       admin_conclusion: validation.data.admin_conclusion,
       suggested_action: validation.data.suggested_action,
       reviewed_by: user.id,

@@ -1,70 +1,41 @@
 import { redirect } from "next/navigation";
 
 import { getUserPermissions } from "@/lib/permissions";
+import { createClient } from "@/lib/supabase/server";
 
 import { ConversionHubShell } from "./hub-shell";
 import {
   canAccessAdminPath,
   getWeekStartDate,
-  loadConversionHubData,
-  normalizeFormat,
-  normalizeSort,
-  normalizeStatus,
-  normalizeTab,
+  loadInboxData,
+  loadScriptsTab,
 } from "./data";
 
 export const dynamic = "force-dynamic";
 
-interface HubPageProps {
-  searchParams: Promise<{
-    tab?: string;
-    status?: string;
-    category?: string;
-    q?: string;
-    sort?: string;
-    format?: string;
-  }>;
-}
-
-export default async function ConversionHubPage({ searchParams }: HubPageProps) {
+export default async function ConversionHubPage() {
   const perm = await getUserPermissions();
   if (!perm) redirect("/login");
   if (!canAccessAdminPath("/admin/conversion-hub", perm.businessRole, perm.permissions)) redirect("/dashboard");
 
-  const params = await searchParams;
-  const activeTab = normalizeTab(params.tab);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   const weekStart = getWeekStartDate();
 
-  const status = normalizeStatus(params.status);
-  const category = typeof params.category === "string" ? params.category : "全部";
-  const keyword = params.q?.trim() ?? "";
-  const sort = normalizeSort(params.sort);
-  const format = normalizeFormat(params.format);
-
-  const { violations, pendingViolationsCount, scripts, weekly, analytics } = await loadConversionHubData({
-    activeTab,
-    status,
-    category,
-    keyword,
-    sort,
-    format,
-    weekStart,
-    includeViolations: true,
-  });
+  const [{ data: inbox, counts }, scripts] = await Promise.all([
+    loadInboxData(user.id),
+    loadScriptsTab(weekStart),
+  ]);
 
   return (
     <ConversionHubShell
       weekStart={weekStart}
-      activeTab={activeTab}
-      violations={violations}
-      pendingViolationsCount={pendingViolationsCount}
-      weeklyBuckets={weekly?.buckets ?? null}
-      weeklyConfirmedAt={weekly?.confirmedAt ?? null}
-      weeklyGeneratedBy={weekly?.generatedBy ?? null}
-      analyticsRows={analytics?.rows ?? []}
-      analyticsTrend={analytics?.trend ?? []}
-      analyticsSort={sort}
-      analyticsFormat={format}
+      inbox={inbox}
+      inboxCounts={counts}
       scripts={scripts}
     />
   );

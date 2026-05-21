@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasPermission as hasUnifiedPermission } from "@/lib/permission-utils";
+import { isCaseLibraryView } from "@/lib/case-library/shared";
 
 import {
   getAuthenticatedContext,
@@ -7,6 +9,7 @@ import {
   isViolationCategory,
   isViolationStatus,
   jsonBadRequest,
+  jsonForbidden,
   jsonServerError,
   jsonUnauthorized,
   jsonValidationError,
@@ -27,6 +30,27 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category");
   const teamId = searchParams.get("team_id");
   const search = searchParams.get("q")?.trim();
+  const requestedView = searchParams.get("view")?.trim() ?? null;
+
+  if (requestedView && !isCaseLibraryView(requestedView)) {
+    return jsonBadRequest("view 不合法");
+  }
+
+  const profile = await getUserProfile(supabase, user.id);
+  if (!profile) {
+    return jsonServerError("用户资料不存在");
+  }
+
+  const canManageViolations = hasUnifiedPermission(
+    profile.businessRole,
+    profile.permissions,
+    "manage_violations",
+  );
+  const effectiveView = requestedView ?? (canManageViolations ? "admin" : "staff");
+
+  if (effectiveView === "admin" && !canManageViolations) {
+    return jsonForbidden("仅具备违规话术复核权限的用户可查看 admin 视角");
+  }
 
   let query = supabase
     .from("violation_cases")
@@ -64,6 +88,12 @@ export async function GET(request: NextRequest) {
     query = query.ilike("script_text", `%${search}%`);
   }
 
+  if (effectiveView === "staff") {
+    query = query
+      .eq("status", "verified")
+      .in("usage_state", ["available", "testing"]);
+  }
+
   const { data, error, count } = await query
     .order("status", { ascending: true })
     .order("reviewed_at", { ascending: false, nullsFirst: false })
@@ -76,6 +106,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     data: data ?? [],
+    view: effectiveView,
     pagination: {
       page,
       pageSize,

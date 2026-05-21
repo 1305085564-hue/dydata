@@ -5,8 +5,15 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getApiErrorMessage } from "@/lib/violations/errors";
-import { StatusBadge } from "../components/status-badge";
+import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
 import { PassRateBadge } from "../components/pass-rate-badge";
+import {
+  PromotionLevelChip,
+  ReviewStatusChip,
+  RiskLevelChip,
+  UsageStateBadge,
+} from "../components/case-state-badge";
 import { ScreenshotGallery } from "../components/screenshot-gallery";
 import { TestRecordForm } from "../components/test-record-form";
 import {
@@ -25,6 +32,7 @@ import type {
 } from "../components/types";
 import { StatsCard, StatsGrid } from "./components/stats-card";
 import { DetailTabs } from "./components/detail-tabs";
+import { ReviewDecisionPanel } from "./components/review-decision-panel";
 import type { UsageRecordItem } from "./components/usage-timeline";
 import type { EventItem } from "./components/event-list";
 
@@ -46,6 +54,8 @@ type DetailRow = ViolationDetail & {
   total_follows?: number | null;
   usage_count?: number | null;
   weighted_conversion_rate?: number | null;
+  usage_state?: string | null;
+  promotion_level?: string | null;
 };
 
 async function loadCase(id: string): Promise<DetailRow | null> {
@@ -241,6 +251,14 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const permInfo = await getUserPermissions();
+  const isOwner = permInfo?.role === "owner";
+  const canManageViolations =
+    isOwner ||
+    (permInfo
+      ? hasPermission(permInfo.businessRole, permInfo.permissions, "manage_violations")
+      : false);
+
   const { id } = await params;
 
   let caseItem: DetailRow | null = null;
@@ -317,7 +335,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       <section className="rounded-xl border border-zinc-200 bg-white p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            {isConversion ? null : <StatusBadge caseItem={caseItem} />}
+            {isConversion ? null : <UsageStateBadge usageState={caseItem.usage_state} size="lg" />}
             {isConversion ? null : (
               <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} />
             )}
@@ -342,6 +360,14 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
         <p className="mt-6 whitespace-pre-wrap text-[18px] font-semibold leading-7 tracking-wide text-zinc-800">
           {caseItem.script_text}
         </p>
+
+        {isConversion ? null : (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <ReviewStatusChip status={caseItem.status} />
+            <RiskLevelChip riskLevel={caseItem.risk_level} />
+            <PromotionLevelChip promotionLevel={caseItem.promotion_level} />
+          </div>
+        )}
 
         <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500">
           <span>
@@ -426,6 +452,19 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           />
         </StatsGrid>
       )}
+
+      {!isConversion && canManageViolations ? (
+        <ReviewDecisionPanel
+          caseId={caseItem.id}
+          initialStatus={caseItem.status}
+          initialUsageState={caseItem.usage_state}
+          initialRiskLevel={caseItem.risk_level}
+          initialPromotionLevel={caseItem.promotion_level}
+          initialAdminConclusion={caseItem.admin_conclusion}
+          initialSuggestedAction={caseItem.suggested_action}
+          isOwner={isOwner}
+        />
+      ) : null}
 
       {caseItem.admin_conclusion || caseItem.suggested_action ? (
         <section className="grid gap-3 lg:grid-cols-2">

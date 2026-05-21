@@ -263,6 +263,7 @@ async function insertUsageRecord(
       source: payload.source,
       daily_report_id: payload.daily_report_id,
       note: payload.note,
+      result_flag: payload.result_flag,
     })
     .select("*")
     .single();
@@ -293,7 +294,7 @@ export async function replaceDailyReportUsageRecord(
 
   const previous = await supabase
     .from("script_usage_records")
-    .select("id, case_id, recorded_by, account_id, account_name_snapshot, team_id, used_at, views, follows, source, daily_report_id, note, created_at, updated_at")
+    .select("id, case_id, recorded_by, account_id, account_name_snapshot, team_id, used_at, views, follows, source, daily_report_id, note, result_flag, created_at, updated_at")
     .eq("daily_report_id", payload.daily_report_id);
 
   if (previous.error) {

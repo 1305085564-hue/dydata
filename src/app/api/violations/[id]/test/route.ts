@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
+  createUsageRecordForUser,
+} from "@/lib/conversion-hub/service";
+import {
   getAuthenticatedContext,
-  getOwnedAccount,
   jsonBadRequest,
   jsonError,
   jsonNotFound,
-  jsonServerError,
   jsonUnauthorized,
   jsonValidationError,
 } from "@/lib/violations/api";
 import { validateCreateTestRecordPayload } from "@/lib/violations/validation";
 
+/**
+ * @deprecated 90 天过渡期保留。前端已迁移到 POST /api/conversion-hub/usage-records。
+ */
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
@@ -55,48 +59,35 @@ export async function POST(
     return jsonError("CONFLICT", "已归档案例不能追加测试记录", 409);
   }
 
-  const accountResult = await getOwnedAccount(supabase, user.id, validation.data.account_id);
-  if (!accountResult.ok) {
-    return accountResult.response;
+  const result = await createUsageRecordForUser(supabase, user.id, {
+    case_id: id,
+    script_text: null,
+    script_format: "oral",
+    account_id: validation.data.account_id,
+    used_at: new Date().toISOString().slice(0, 10),
+    views: 0,
+    follows: 0,
+    source: "manual",
+    daily_report_id: null,
+    note: validation.data.note,
+    result_flag: validation.data.passed ? "pass" : "fail",
+  });
+
+  if (!result.ok) {
+    return jsonError(result.code, result.message, result.status);
   }
 
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  let duplicateQuery = supabase
-    .from("violation_test_records")
-    .select("id")
-    .eq("case_id", id)
-    .eq("tested_by", user.id)
-    .gte("tested_at", since)
-    .limit(1);
-
-  duplicateQuery = accountResult.account
-    ? duplicateQuery.eq("account_id", accountResult.account.id)
-    : duplicateQuery.is("account_id", null);
-
-  const { data: duplicated, error: duplicateError } = await duplicateQuery;
-  if (duplicateError) {
-    return jsonServerError("检查重复测试记录失败");
-  }
-
-  if (duplicated && duplicated.length > 0) {
-    return jsonError("CONFLICT", "同一案例同一账号 24 小时内不能重复提交测试记录", 409);
-  }
-
-  const { data, error } = await supabase
-    .from("violation_test_records")
-    .insert({
+  return NextResponse.json(
+    {
       case_id: id,
-      tested_by: user.id,
-      account_id: accountResult.account?.id ?? null,
-      passed: validation.data.passed,
-      note: validation.data.note,
-    })
-    .select("*")
-    .single();
-
-  if (error) {
-    return jsonServerError("提交测试记录失败");
-  }
-
-  return NextResponse.json({ data }, { status: 201 });
+      data: result.data,
+      migrated: true,
+    },
+    {
+      status: 201,
+      headers: {
+        "X-Deprecation": "use POST /api/conversion-hub/usage-records with result_flag",
+      },
+    },
+  );
 }

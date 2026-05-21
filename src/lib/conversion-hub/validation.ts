@@ -10,6 +10,7 @@ import {
   type ScriptUsageSource,
   type ViolationEventType,
 } from "./types";
+import { isScriptResultFlag, type ScriptResultFlag } from "@/lib/case-library/shared";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -25,6 +26,7 @@ export type CreateUsageRecordPayload = {
   source: ScriptUsageSource;
   daily_report_id: string | null;
   note: string | null;
+  result_flag?: ScriptResultFlag | null;
 };
 
 export type CreateViolationEventPayload = {
@@ -184,6 +186,14 @@ export function validateCreateUsageRecordPayload(
     return { ok: false, message: "follows 不能大于 views" };
   }
 
+  if (
+    body.result_flag !== undefined
+    && body.result_flag !== null
+    && !isScriptResultFlag(body.result_flag)
+  ) {
+    return { ok: false, message: "result_flag 不合法" };
+  }
+
   return {
     ok: true,
     data: {
@@ -197,6 +207,7 @@ export function validateCreateUsageRecordPayload(
       source: isUsageSource(body.source) ? body.source : "manual",
       daily_report_id: dailyReportId.data,
       note: normalizeOptionalText(body.note, 1000),
+      result_flag: isScriptResultFlag(body.result_flag) ? body.result_flag : null,
     },
   };
 }

@@ -90,6 +90,8 @@ test("复核只允许终态和合法风险等级", () => {
   const result = validateReviewViolationPayload({
     status: "verified",
     risk_level: "high",
+    usage_state: "banned",
+    promotion_level: "watching",
     admin_conclusion: " 禁用 ",
     suggested_action: " 换话术 ",
   });
@@ -100,7 +102,46 @@ test("复核只允许终态和合法风险等级", () => {
   assert.deepEqual(result.data, {
     status: "verified",
     risk_level: "high",
+    usage_state: "banned",
+    promotion_level: "watching",
     admin_conclusion: "禁用",
     suggested_action: "换话术",
   });
+});
+
+test("复核校验会阻止非法使用状态和推广等级", () => {
+  assert.deepEqual(
+    validateReviewViolationPayload({
+      status: "verified",
+      usage_state: "wrong",
+    }),
+    {
+      ok: false,
+      message: "usage_state 不合法",
+    },
+  );
+
+  assert.deepEqual(
+    validateReviewViolationPayload({
+      status: "verified",
+      promotion_level: "priority",
+    }),
+    {
+      ok: false,
+      message: "promotion_level 不合法",
+    },
+  );
+});
+
+test("复核校验在未传 usage_state 和 promotion_level 时不会强制回填 null", () => {
+  const result = validateReviewViolationPayload({
+    status: "rejected",
+    risk_level: null,
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal("usage_state" in result.data, false);
+  assert.equal("promotion_level" in result.data, false);
 });

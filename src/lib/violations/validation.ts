@@ -1,4 +1,10 @@
 import type { ViolationStatus } from "@/types";
+import {
+  isCaseLibraryPromotionLevel,
+  isCaseLibraryUsageState,
+  type CaseLibraryPromotionLevel,
+  type CaseLibraryUsageState,
+} from "@/lib/case-library/shared";
 
 import {
   isPlainObject,
@@ -103,6 +109,8 @@ export function validateCreateTestRecordPayload(body: unknown): CreateTestRecord
 export type ReviewViolationPayload = {
   status: Extract<ViolationStatus, "verified" | "rejected" | "archived">;
   risk_level: "high" | "medium" | "low" | null;
+  usage_state?: CaseLibraryUsageState;
+  promotion_level?: CaseLibraryPromotionLevel;
   admin_conclusion: string | null;
   suggested_action: string | null;
 };
@@ -131,11 +139,35 @@ export function validateReviewViolationPayload(body: unknown): ReviewViolationVa
     return { ok: false, message: "risk_level 不合法" };
   }
 
+  const usageState =
+    body.usage_state === undefined
+      ? undefined
+      : isCaseLibraryUsageState(body.usage_state)
+        ? body.usage_state
+        : null;
+
+  if (body.usage_state !== undefined && usageState === null) {
+    return { ok: false, message: "usage_state 不合法" };
+  }
+
+  const promotionLevel =
+    body.promotion_level === undefined
+      ? undefined
+      : isCaseLibraryPromotionLevel(body.promotion_level)
+        ? body.promotion_level
+        : null;
+
+  if (body.promotion_level !== undefined && promotionLevel === null) {
+    return { ok: false, message: "promotion_level 不合法" };
+  }
+
   return {
     ok: true,
     data: {
       status: body.status,
       risk_level: riskLevel,
+      ...(usageState ? { usage_state: usageState } : {}),
+      ...(promotionLevel ? { promotion_level: promotionLevel } : {}),
       admin_conclusion: normalizeOptionalText(body.admin_conclusion, 3000),
       suggested_action: normalizeOptionalText(body.suggested_action, 3000),
     },

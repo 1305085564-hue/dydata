@@ -1,43 +1,88 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { StatusBadge } from "./status-badge";
+import { ArrowRight, Sparkles, ShieldAlert, TestTube2 } from "lucide-react";
+
 import { PassRateBadge } from "./pass-rate-badge";
-import { formatDateTime, getAccountName, getSubmitterName, getTeamName } from "./format";
+import { formatDateTime } from "./format";
 import type { ViolationCase } from "./types";
 
+type StaffCaseExtras = {
+  usage_state?: string | null;
+  promotion_level?: string | null;
+};
+
+function resolveAccent(item: ViolationCase) {
+  const ext = item as ViolationCase & StaffCaseExtras;
+  if (ext.promotion_level === "promoted") {
+    return {
+      border: "border-l-[#6FAA7D]",
+      label: "推荐",
+      labelClass: "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+      icon: Sparkles,
+    };
+  }
+  if (ext.usage_state === "banned") {
+    return {
+      border: "border-l-[#C9604D]",
+      label: "禁用",
+      labelClass: "bg-[#C9604D]/10 text-[#C9604D]",
+      icon: ShieldAlert,
+    };
+  }
+  if (ext.usage_state === "testing") {
+    return {
+      border: "border-l-[#D97757]",
+      label: "待测试",
+      labelClass: "bg-[#D97757]/10 text-[#D97757]",
+      icon: TestTube2,
+    };
+  }
+  if (ext.usage_state === "not_recommended") {
+    return {
+      border: "border-l-zinc-400",
+      label: "× 推荐",
+      labelClass: "bg-zinc-100 text-zinc-500",
+      icon: ShieldAlert,
+    };
+  }
+  return {
+    border: "border-l-[#5C8AB8]",
+    label: "可用",
+    labelClass: "bg-[#5C8AB8]/10 text-[#3F668F]",
+    icon: null,
+  };
+}
+
 export function CaseCard({ caseItem }: { caseItem: ViolationCase }) {
+  const accent = resolveAccent(caseItem);
+  const Icon = accent.icon;
+
   return (
     <Link
       href={`/violations/${caseItem.id}`}
-      className="group block rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-5 transition-[colors,transform] hover:-translate-y-0.5 hover:border-zinc-300"
+      className={`group block rounded-2xl border border-zinc-200 border-l-[2px] ${accent.border} bg-white p-5 transition-colors hover:border-zinc-300`}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge caseItem={caseItem} />
-            <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} compact />
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${accent.labelClass}`}>
+              {Icon ? <Icon className="size-3 stroke-[1.75]" /> : null}
+              {accent.label}
+            </span>
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
               {caseItem.category || "其他"}
             </span>
+            <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} compact />
           </div>
           <p className="line-clamp-3 text-sm font-semibold leading-7 text-zinc-800">
             {caseItem.script_text}
           </p>
-          {caseItem.status === "verified" && caseItem.admin_conclusion ? (
-            <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 px-3 py-2 text-sm leading-6 text-[#D99E55]">
-              {caseItem.admin_conclusion}
-            </div>
+          {caseItem.admin_conclusion ? (
+            <p className="line-clamp-2 text-[12px] leading-6 text-zinc-500">{caseItem.admin_conclusion}</p>
           ) : null}
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-zinc-500">
-            <span>{getAccountName(caseItem)}</span>
-            <span>{getTeamName(caseItem)}</span>
-            <span>{getSubmitterName(caseItem)}</span>
-            <span>{formatDateTime(caseItem.reviewed_at ?? caseItem.created_at)}</span>
-          </div>
+          <p className="text-[11px] text-zinc-400">{formatDateTime(caseItem.reviewed_at ?? caseItem.created_at)}</p>
         </div>
-        <ArrowRight className="size-4 shrink-0 text-zinc-300 transition-transform group-hover:translate-x-1 group-hover:text-zinc-800" />
+        <ArrowRight className="size-4 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-800" />
       </div>
     </Link>
   );
 }
-
