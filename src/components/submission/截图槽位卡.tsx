@@ -87,6 +87,7 @@ export function SubmissionSlotCard({
 
   useEffect(() => {
     if (isProcessing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress((prev) => (prev === 100 ? 0 : prev));
       startTimeRef.current = performance.now();
       let frameId: number;
@@ -118,8 +119,10 @@ export function SubmissionSlotCard({
   useEffect(() => {
     if (!isProcessing) {
       if (status === "confirmed" || status === "failed" || status === "pending_confirm") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setProgress(100);
       } else if (status === "empty") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setProgress(0);
       }
     }

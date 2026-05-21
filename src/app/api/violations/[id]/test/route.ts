@@ -13,14 +13,58 @@ import {
 } from "@/lib/violations/api";
 import { validateCreateTestRecordPayload } from "@/lib/violations/validation";
 
+type MinimalViolationTestQuery = {
+  eq: (column: string, value: unknown) => MinimalViolationTestQuery;
+  single: () => Promise<{ data: { id: string; status: string; is_deleted: boolean } | null; error: unknown }>;
+};
+
+type MinimalViolationTestSupabase = {
+  from: (table: string) => {
+    select: (query: string) => MinimalViolationTestQuery;
+  };
+};
+
+type CreateViolationTestRouteDeps = {
+  getAuthenticatedContext: () => Promise<{
+    supabase: MinimalViolationTestSupabase;
+    user: { id: string } | null;
+  }>;
+  createUsageRecordForUser: (
+    supabase: MinimalViolationTestSupabase,
+    userId: string,
+    payload: {
+      case_id: string;
+      script_text: null;
+      script_format: "oral";
+      account_id: string | null;
+      used_at: string;
+      views: number;
+      follows: number;
+      source: "manual";
+      daily_report_id: null;
+      note: string | null;
+      result_flag: "pass" | "fail";
+    },
+  ) => Promise<
+    | { ok: true; data: unknown }
+    | { ok: false; status: number; code: "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "VALIDATION_ERROR" | "SERVER_ERROR"; message: string }
+  >;
+};
+
+const defaultDeps: CreateViolationTestRouteDeps = {
+  getAuthenticatedContext: getAuthenticatedContext as unknown as CreateViolationTestRouteDeps["getAuthenticatedContext"],
+  createUsageRecordForUser: createUsageRecordForUser as unknown as CreateViolationTestRouteDeps["createUsageRecordForUser"],
+};
+
 /**
  * @deprecated 90 天过渡期保留。前端已迁移到 POST /api/conversion-hub/usage-records。
  */
-export async function POST(
+export async function buildCreateViolationTestRecordResponse(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
+  deps: CreateViolationTestRouteDeps = defaultDeps,
 ) {
-  const { supabase, user } = await getAuthenticatedContext();
+  const { supabase, user } = await deps.getAuthenticatedContext();
 
   if (!user) {
     return jsonUnauthorized();
@@ -59,7 +103,7 @@ export async function POST(
     return jsonError("CONFLICT", "已归档案例不能追加测试记录", 409);
   }
 
-  const result = await createUsageRecordForUser(supabase, user.id, {
+  const result = await deps.createUsageRecordForUser(supabase, user.id, {
     case_id: id,
     script_text: null,
     script_format: "oral",
@@ -90,4 +134,11 @@ export async function POST(
       },
     },
   );
+}
+
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  return buildCreateViolationTestRecordResponse(request, context);
 }

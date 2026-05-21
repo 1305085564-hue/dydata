@@ -250,6 +250,7 @@ export function VideoSubmitPanel({
 
   useEffect(() => {
     if (!hasPendingExemption) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissedPendingExemption(false);
       try {
         window.localStorage.removeItem("dydata:dismissed-pending-exemption");

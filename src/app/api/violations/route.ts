@@ -16,9 +16,48 @@ import {
   parsePageParams,
 } from "@/lib/violations/api";
 import { validateCreateViolationPayload } from "@/lib/violations/validation";
+import type { Permissions } from "@/types";
 
-export async function GET(request: NextRequest) {
-  const { supabase, user } = await getAuthenticatedContext();
+type MinimalViolationsQuery = {
+  eq: (column: string, value: unknown) => MinimalViolationsQuery;
+  in: (column: string, values: string[]) => MinimalViolationsQuery;
+  ilike: (column: string, value: string) => MinimalViolationsQuery;
+  order: (column: string, options: { ascending: boolean; nullsFirst?: boolean }) => MinimalViolationsQuery;
+  range: (from: number, to: number) => Promise<{ data: unknown[] | null; error: unknown; count: number | null }>;
+};
+
+type MinimalViolationsSupabase = {
+  from: (table: string) => {
+    select: (query: string, options: { count: "exact" }) => MinimalViolationsQuery;
+  };
+};
+
+type MinimalViolationProfile = {
+  businessRole: "owner" | "team_admin" | "group_leader" | "member";
+  permissions: Permissions;
+};
+
+type ViolationsRouteDeps = {
+  getAuthenticatedContext: () => Promise<{
+    supabase: MinimalViolationsSupabase;
+    user: { id: string } | null;
+  }>;
+  getUserProfile: (
+    supabase: MinimalViolationsSupabase,
+    userId: string,
+  ) => Promise<MinimalViolationProfile | null>;
+};
+
+const defaultDeps: ViolationsRouteDeps = {
+  getAuthenticatedContext: getAuthenticatedContext as unknown as ViolationsRouteDeps["getAuthenticatedContext"],
+  getUserProfile: getUserProfile as unknown as ViolationsRouteDeps["getUserProfile"],
+};
+
+export async function buildViolationsListResponse(
+  request: NextRequest,
+  deps: ViolationsRouteDeps = defaultDeps,
+) {
+  const { supabase, user } = await deps.getAuthenticatedContext();
 
   if (!user) {
     return jsonUnauthorized();
@@ -36,14 +75,14 @@ export async function GET(request: NextRequest) {
     return jsonBadRequest("view 不合法");
   }
 
-  const profile = await getUserProfile(supabase, user.id);
+  const profile = await deps.getUserProfile(supabase, user.id);
   if (!profile) {
     return jsonServerError("用户资料不存在");
   }
 
   const canManageViolations = hasUnifiedPermission(
     profile.businessRole,
-    profile.permissions,
+    profile.permissions as Permissions,
     "manage_violations",
   );
   const effectiveView = requestedView ?? (canManageViolations ? "admin" : "staff");
@@ -114,6 +153,10 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil((count ?? 0) / pageSize),
     },
   });
+}
+
+export async function GET(request: NextRequest) {
+  return buildViolationsListResponse(request);
 }
 
 export async function POST(request: NextRequest) {

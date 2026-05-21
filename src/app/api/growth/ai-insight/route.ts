@@ -119,8 +119,8 @@ export async function POST(request: NextRequest) {
     .limit(1);
 
   let rawText: string | null = null;
-  let trafficCurveDesc: string | null = null;
-  let retentionCurveDesc: string | null = null;
+  const trafficCurveDesc: string | null = null;
+  const retentionCurveDesc: string | null = null;
 
   if (contentItems && contentItems.length > 0) {
     const contentItemId = contentItems[0].id;

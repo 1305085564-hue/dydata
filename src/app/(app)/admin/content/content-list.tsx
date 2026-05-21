@@ -314,6 +314,11 @@ export function ContentList({
   const timelineGroups = useMemo(() => buildTimeline(filtered), [filtered]);
 
   /* Intersection Observer for auto-load */
+  const currentPageStart = useCallback((visibleRows: VideoRow[]) => {
+    const firstId = visibleRows[0]?.id;
+    return filtered.findIndex((v) => v.id === firstId);
+  }, [filtered]);
+
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -400,11 +405,6 @@ export function ContentList({
       tableScroller.removeEventListener("scroll", syncTopFromTable);
     };
   }, []);
-
-  function currentPageStart(visibleRows: VideoRow[]) {
-    const firstId = visibleRows[0]?.id;
-    return filtered.findIndex((v) => v.id === firstId);
-  }
 
   const handleTimelineSeek = useCallback(
     (index: number) => {

@@ -9,14 +9,45 @@ type CaseLibraryInboxPayload = {
   promotion_candidates?: unknown[];
 };
 
-export async function GET() {
-  const auth = await requireCaseLibraryServiceClient();
+type CaseLibraryInboxRpcResult = {
+  data: CaseLibraryInboxPayload | null;
+  error: { message?: string } | null;
+};
+
+type CaseLibraryInboxDeps = {
+  requireCaseLibraryServiceClient: () => Promise<
+    | { response: Response }
+    | {
+      actor: { userId: string };
+      supabase: {
+        rpc: (
+          name: string,
+          params: { p_user_id: string },
+        ) => Promise<CaseLibraryInboxRpcResult>;
+      };
+    }
+  >;
+  unwrapCaseLibraryRpc: (
+    result: CaseLibraryInboxRpcResult,
+    fallbackMessage: string,
+  ) => { response: Response } | { data: CaseLibraryInboxPayload | null };
+};
+
+const defaultDeps: CaseLibraryInboxDeps = {
+  requireCaseLibraryServiceClient: requireCaseLibraryServiceClient as unknown as CaseLibraryInboxDeps["requireCaseLibraryServiceClient"],
+  unwrapCaseLibraryRpc: unwrapCaseLibraryRpc as unknown as CaseLibraryInboxDeps["unwrapCaseLibraryRpc"],
+};
+
+export async function buildCaseLibraryInboxResponse(
+  deps: CaseLibraryInboxDeps = defaultDeps,
+) {
+  const auth = await deps.requireCaseLibraryServiceClient();
   if ("response" in auth) return auth.response;
 
   const result = await auth.supabase.rpc("case_library_inbox", {
     p_user_id: auth.actor.userId,
   });
-  const unwrapped = unwrapCaseLibraryRpc<CaseLibraryInboxPayload>(
+  const unwrapped = deps.unwrapCaseLibraryRpc(
     result,
     "获取案例库待办失败",
   );
@@ -28,4 +59,8 @@ export async function GET() {
     high_risk_pending: [],
     promotion_candidates: [],
   });
+}
+
+export async function GET() {
+  return buildCaseLibraryInboxResponse();
 }

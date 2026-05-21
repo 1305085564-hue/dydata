@@ -195,6 +195,7 @@ export function useDashboardOrchestration({
       const raw = window.localStorage.getItem("dydata:dismissed-exemption-review-notices");
       const parsed = raw ? JSON.parse(raw) : [];
       if (Array.isArray(parsed)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDismissedReviewNoticeIds(
           new Set(parsed.filter((item): item is string => typeof item === "string")),
         );

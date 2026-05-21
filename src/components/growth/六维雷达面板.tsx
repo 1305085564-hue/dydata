@@ -71,7 +71,7 @@ interface 六维雷达面板Props {
   teamMembers?: TeamMember[];
 }
 
-export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMembers = [] }: 六维雷达面板Props) {
+export function SixRadarPanel({ capabilityCards, weakBenchmarkCards, teamMembers = [] }: 六维雷达面板Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [comparePersonId, setComparePersonId] = useState<string>("");
 
@@ -234,3 +234,5 @@ export function 六维雷达面板({ capabilityCards, weakBenchmarkCards, teamMe
     </div>
   );
 }
+
+export { SixRadarPanel as 六维雷达面板 };

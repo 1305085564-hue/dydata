@@ -8,6 +8,7 @@ import { PersonnelAnalysis } from "@/app/(app)/admin/analytics/personnel-analysi
 import { TimeAnalysis } from "@/app/(app)/admin/analytics/time-analysis";
 import { FollowerConvertTrend } from "@/app/(app)/admin/analytics/follower-convert-trend";
 import { 视频结论卡 } from "@/app/(app)/admin/analytics/视频结论卡";
+import type { AnalyticsVideoRow } from "@/app/(app)/admin/analytics/视频结论卡-类型";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDemoAnalyticsPageData } from "@/lib/demo-data";
@@ -82,7 +83,7 @@ export default function DemoAdminAnalyticsPage() {
         description="这里复用正式站内容，用虚拟样本保证首屏观感真实。"
       >
         <视频结论卡
-          videos={data.filteredVideos as any[]}
+          videos={data.filteredVideos as AnalyticsVideoRow[]}
           snapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
           videoTags={data.filteredVideoTags as VideoTag[]}
         />

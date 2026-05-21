@@ -203,7 +203,7 @@ export function VideoPreviewDialog({
       fullViewLabel="前往打标"
     >
       <p className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-[13px] leading-7 text-zinc-600">
-        打标和异常处理在视频详情页完成。点击下方"前往打标"打开完整工作台。
+        打标和异常处理在视频详情页完成。点击下方“前往打标”打开完整工作台。
       </p>
     </PreviewShell>
   );
@@ -323,7 +323,7 @@ export function SubmissionPreviewDialog({
           ].filter(Boolean) as { label: string; value: React.ReactNode }[]}
         />
         <p className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-[13px] leading-7 text-zinc-600">
-          系统每天 11:15 自动飞书催交。"催交历史"可看具体送达记录。
+          系统每天 11:15 自动飞书催交。 “催交历史” 可看具体送达记录。
         </p>
       </div>
     </PreviewShell>

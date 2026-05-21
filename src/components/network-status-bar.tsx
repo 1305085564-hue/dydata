@@ -41,7 +41,9 @@ export function NetworkStatusBar() {
     window.addEventListener("online", handleOnline);
 
     if (!navigator.onLine) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState("offline");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
     }
 
