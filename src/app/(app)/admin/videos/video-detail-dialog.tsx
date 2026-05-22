@@ -26,7 +26,7 @@ import {
   interactionRate,
 } from "@/lib/video-metrics";
 import { buildTagFilterState, getTagReviewStatus } from "@/lib/video-tags";
-import { TAG_ENUMS, VIDEO_TAG_REVIEW_DIMENSIONS, type Video, type VideoMetricsSnapshot, type VideoTag } from "@/types";
+import { TAG_ENUMS, VIDEO_TAG_REVIEW_DIMENSIONS, type Video, type VideoAssetLibraryRecord, type VideoAssetLevel, type VideoMetricsSnapshot, type VideoTag } from "@/types";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -39,7 +39,9 @@ interface VideoDetailDialogProps {
   video: VideoRow | null;
   snapshot: VideoMetricsSnapshot | null;
   tags: VideoTag[];
+  assetRecord: VideoAssetLibraryRecord | null;
   onTagsSaved: (tags: VideoTag[]) => void;
+  onAssetSaved: (videoId: string, record: VideoAssetLibraryRecord) => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -84,11 +86,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({ label, value, placeholder }: { label: string; value: string; placeholder?: boolean }) {
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4">
       <div className="text-[11px] text-zinc-400">{label}</div>
-      <div className="mt-1 text-[13px] text-zinc-700">{value}</div>
+      <div className={`mt-1 text-[13px] ${placeholder ? "text-zinc-400" : "text-zinc-700"}`}>{value}</div>
     </div>
   );
 }
@@ -118,14 +120,49 @@ function renderSnapshotFields(snapshot: VideoMetricsSnapshot) {
   return fields.map((field) => <MetricCard key={field.label} label={field.label} value={field.value} />);
 }
 
-export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, onTagsSaved }: VideoDetailDialogProps) {
+export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, assetRecord, onTagsSaved, onAssetSaved }: VideoDetailDialogProps) {
   const supabase = useMemo(() => createClient(), []);
   const [selection, setSelection] = useState(() => buildTagFilterState(tags));
   const [isSaving, setIsSaving] = useState(false);
+  const [isAssetSaving, setIsAssetSaving] = useState(false);
+  const [assetLevel, setAssetLevel] = useState<VideoAssetLevel | null>(assetRecord?.asset_level ?? null);
+  const [assetNote, setAssetNote] = useState(assetRecord?.asset_note ?? "");
 
   useEffect(() => {
     setSelection(buildTagFilterState(tags));
   }, [tags]);
+
+  useEffect(() => {
+    setAssetLevel(assetRecord?.asset_level ?? null);
+    setAssetNote(assetRecord?.asset_note ?? "");
+  }, [assetRecord?.asset_level, assetRecord?.asset_note]);
+
+  async function handleSaveAsset() {
+    if (!video) return;
+    setIsAssetSaving(true);
+    try {
+      const res = await fetch(`/api/admin/video-assets/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          asset_level: assetLevel,
+          asset_note: assetNote.trim() || null,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; asset?: VideoAssetLibraryRecord; error?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "保存失败");
+      }
+      if (data.asset) {
+        onAssetSaved(video.id, data.asset);
+        feedbackToast.success("素材资料已保存");
+      }
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "保存失败");
+    } finally {
+      setIsAssetSaving(false);
+    }
+  }
 
   async function handleSaveTags() {
     if (!video) return;
@@ -217,6 +254,48 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, o
                       <span className="text-zinc-500">-</span>
                     )}
                   </div>
+                </div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">素材等级</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Select
+                      value={assetLevel ?? "__null__"}
+                      onValueChange={(value) => setAssetLevel(value === "__null__" ? null : (value as VideoAssetLevel))}
+                    >
+                      <SelectTrigger className="h-8 w-24 rounded-lg text-[13px]">
+                        <SelectValue placeholder="未评级" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__null__">未评级</SelectItem>
+                        <SelectItem value="S">S</SelectItem>
+                        <SelectItem value="A">A</SelectItem>
+                        <SelectItem value="B">B</SelectItem>
+                        <SelectItem value="C">C</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[11px] text-zinc-400">人工备注</div>
+                  <textarea
+                    value={assetNote}
+                    onChange={(e) => setAssetNote(e.target.value)}
+                    className="mt-2 w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 p-2 text-[13px] leading-5 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    rows={2}
+                    placeholder="输入备注..."
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 rounded-xl text-[12px]"
+                    onClick={handleSaveAsset}
+                    disabled={isAssetSaving}
+                  >
+                    {isAssetSaving ? "保存中..." : "保存素材资料"}
+                  </Button>
                 </div>
               </div>
 

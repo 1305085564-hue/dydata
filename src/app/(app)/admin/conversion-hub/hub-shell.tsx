@@ -86,15 +86,16 @@ interface KpiTile {
 function KpiCard({ tile }: { tile: KpiTile }) {
   const accent =
     tile.tone === "danger"
-      ? { border: "border-l-[#C9604D]", iconBg: "bg-[#C9604D]/10 text-[#C9604D]", text: "text-[#9A4836]" }
+      ? { bar: "bg-[#C9604D]", iconBg: "bg-[#C9604D]/10 text-[#C9604D]", text: "text-[#9A4836]" }
       : tile.tone === "positive"
-        ? { border: "border-l-[#6FAA7D]", iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]", text: "text-[#3F6F4F]" }
+        ? { bar: "bg-[#6FAA7D]", iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]", text: "text-[#3F6F4F]" }
         : tile.tone === "warm"
-          ? { border: "border-l-[#D97757]", iconBg: "bg-[#D97757]/10 text-[#D97757]", text: "text-[#A85638]" }
-          : { border: "border-l-zinc-300", iconBg: "bg-zinc-100 text-zinc-500", text: "text-zinc-700" };
+          ? { bar: "bg-[#D97757]", iconBg: "bg-[#D97757]/10 text-[#D97757]", text: "text-[#A85638]" }
+          : { bar: "bg-zinc-300", iconBg: "bg-zinc-100 text-zinc-500", text: "text-zinc-700" };
   const Icon = tile.icon;
   return (
-    <div className={cn("flex items-center gap-3 rounded-2xl border border-zinc-200 border-l-[2px] bg-white px-4 py-3", accent.border)}>
+    <div className="relative flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3">
+      <span className={cn("absolute inset-y-0 left-0 w-[2px] rounded-r-full", accent.bar)} aria-hidden />
       <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", accent.iconBg)}>
         <Icon className="size-4 stroke-[1.5]" />
       </span>
@@ -160,17 +161,18 @@ function CollapsibleSection({
   const [expanded, setExpanded] = useState(false);
   const accent =
     tone === "danger"
-      ? { border: "border-l-[#C9604D]", iconBg: "bg-[#C9604D]/10 text-[#C9604D]" }
+      ? { bar: "bg-[#C9604D]", iconBg: "bg-[#C9604D]/10 text-[#C9604D]" }
       : tone === "positive"
-        ? { border: "border-l-[#6FAA7D]", iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]" }
+        ? { bar: "bg-[#6FAA7D]", iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]" }
         : tone === "warm"
-          ? { border: "border-l-[#D97757]", iconBg: "bg-[#D97757]/10 text-[#D97757]" }
-          : { border: "border-l-zinc-300", iconBg: "bg-zinc-100 text-zinc-500" };
+          ? { bar: "bg-[#D97757]", iconBg: "bg-[#D97757]/10 text-[#D97757]" }
+          : { bar: "bg-zinc-300", iconBg: "bg-zinc-100 text-zinc-500" };
   const visible = expanded ? entries : entries.slice(0, 5);
   const hasMore = entries.length > 5;
 
   return (
-    <section className={cn("rounded-2xl border border-zinc-200 border-l-[2px] bg-white", accent.border)}>
+    <section className="relative rounded-2xl border border-zinc-200 bg-white">
+      <span className={cn("absolute inset-y-0 left-0 w-[2px] rounded-r-full", accent.bar)} aria-hidden />
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

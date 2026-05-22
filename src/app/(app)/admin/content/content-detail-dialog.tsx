@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { getSampleCredibility } from "@/lib/next-day-review";
-import type { NextDayReviewResult, Video, VideoMetricsSnapshot } from "@/types";
+import type { ContentFeedbackCardDetail, ContentFeedbackCardView, NextDayReviewResult, Video, VideoMetricsSnapshot } from "@/types";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -24,8 +24,8 @@ interface ContentDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   video: VideoRow | null;
   snapshot: VideoMetricsSnapshot | null;
-  isReviewed: boolean;
-  onReviewed: (videoId: string) => void;
+  feedbackCard: ContentFeedbackCardView | null;
+  onFeedbackCardChanged: (videoId: string, view: ContentFeedbackCardView) => void;
 }
 
 type SegmentState = Array<{
@@ -113,8 +113,8 @@ export function ContentDetailDialog({
   onOpenChange,
   video,
   snapshot,
-  isReviewed,
-  onReviewed,
+  feedbackCard: feedbackCardProp,
+  onFeedbackCardChanged,
 }: ContentDetailDialogProps) {
   const [segments, setSegments] = useState<SegmentState | null>(null);
   const [reviewResult, setReviewResult] = useState<NextDayReviewResult | null>(null);
@@ -122,11 +122,48 @@ export function ContentDetailDialog({
   const [contentExpanded, setContentExpanded] = useState(false);
   const [isSegmenting, startSegment] = useTransition();
   const [isReviewing, startReview] = useTransition();
-  const [reviewed, setReviewed] = useState(isReviewed);
+  const [cardDetail, setCardDetail] = useState<ContentFeedbackCardDetail | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [mainIssues, setMainIssues] = useState("");
+  const [nextAction, setNextAction] = useState("");
+  const [managerNote, setManagerNote] = useState("");
 
+  // 打开时加载反馈卡详情
   useEffect(() => {
-    setReviewed(isReviewed);
-  }, [isReviewed, video?.id]);
+    if (!open || !video) {
+      setCardDetail(null);
+      return;
+    }
+    fetch(`/api/admin/content-feedback-cards/${video.id}`)
+      .then((res) => res.json())
+      .then((data: { feedback_card?: ContentFeedbackCardDetail; error?: string }) => {
+        if (data.feedback_card) {
+          setCardDetail(data.feedback_card);
+          const draft = data.feedback_card.draft;
+          if (draft) {
+            setMainIssues(draft.summary.problem_tags.join(" / ") || draft.summary.one_line || "");
+            setNextAction(draft.actions.instructions.slice(0, 2).join("；") || "");
+            setManagerNote(draft.actions.message_for_member || "");
+          }
+        } else if (feedbackCardProp) {
+          setCardDetail({ ...feedbackCardProp, draft: null, confirmed: null });
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, video?.id]);
+
+  // AI 初稿生成后，自动预填反馈卡并同步服务端返回的 feedback_card
+  useEffect(() => {
+    if (reviewResult) {
+      const instructions = reviewResult.actions.instructions;
+      const message = reviewResult.actions.message_for_member;
+      setMainIssues(reviewResult.summary.problem_tags.join(" / ") || reviewResult.summary.one_line || "");
+      setNextAction(instructions.slice(0, 2).join("；") || "");
+      setManagerNote(message || "");
+    }
+  }, [reviewResult]);
 
   const credibility = getSampleCredibility(snapshot?.play_count ?? null, video?.anomaly_status ?? null);
 
@@ -201,9 +238,14 @@ export function ContentDetailDialog({
         setReviewResult(data);
         const problemIdxs = new Set(data.segments.filter((s) => s.health === "problem").map((s) => s.segment_order));
         setExpandedSegments(problemIdxs);
-        setReviewed(true);
-        onReviewed(video.id);
         feedbackToast.success(data.cached ? "已加载缓存复盘结果" : "复盘完成");
+        // 复盘完成后刷新反馈卡详情
+        const cardRes = await fetch(`/api/admin/content-feedback-cards/${video.id}`);
+        const cardData = (await cardRes.json()) as { feedback_card?: ContentFeedbackCardDetail; error?: string };
+        if (cardData.feedback_card) {
+          setCardDetail(cardData.feedback_card);
+          onFeedbackCardChanged(video.id, cardData.feedback_card);
+        }
       } catch (e) {
         feedbackToast.error(e instanceof Error ? e.message : "复盘失败");
       }
@@ -216,6 +258,66 @@ export function ContentDetailDialog({
     navigator.clipboard.writeText(message).then(() => {
       feedbackToast.success("整改建议已复制");
     });
+  }
+
+  async function handleConfirm() {
+    if (!video || !cardDetail?.card_id) return;
+    setIsConfirming(true);
+    try {
+      const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "confirm",
+          manager_note: managerNote.trim() || null,
+          summary: {
+            one_line: mainIssues.trim() || null,
+          },
+          actions: {
+            instructions: nextAction.split("；").map((s) => s.trim()).filter(Boolean),
+            message_for_member: managerNote.trim() || null,
+          },
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "确认失败");
+      }
+      if (data.feedback_card) {
+        setCardDetail(data.feedback_card);
+        onFeedbackCardChanged(video.id, data.feedback_card);
+      }
+      feedbackToast.success("已确认，可下发给员工");
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "确认失败");
+    } finally {
+      setIsConfirming(false);
+    }
+  }
+
+  async function handleSend() {
+    if (!video || !cardDetail?.card_id) return;
+    setIsSending(true);
+    try {
+      const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send" }),
+      });
+      const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "下发失败");
+      }
+      if (data.feedback_card) {
+        setCardDetail(data.feedback_card);
+        onFeedbackCardChanged(video.id, data.feedback_card);
+      }
+      feedbackToast.success("已下发给员工");
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "下发失败");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   function toggleSegment(order: number) {
@@ -248,16 +350,11 @@ export function ContentDetailDialog({
         {video && (
           <div className="space-y-6">
             <section className="space-y-2">
-              <SectionTitle>基础信息</SectionTitle>
+              <SectionTitle>原始材料</SectionTitle>
               <div className="grid gap-2 sm:grid-cols-2">
                 <InfoCell label="负责人" value={video.profiles.name} />
                 <InfoCell label="账号" value={video.accounts.name} />
                 <InfoCell label="发布时间" value={formatDateTime(video.published_at)} />
-                <InfoCell label="异常状态">
-                  <Badge variant="outline" className={`text-[11px] ${statusClassName[video.anomaly_status]}`}>
-                    {video.anomaly_status}
-                  </Badge>
-                </InfoCell>
                 <InfoCell label="视频链接">
                   {video.video_url ? (
                     <a
@@ -314,8 +411,8 @@ export function ContentDetailDialog({
 
             <section className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <SectionTitle>次日复盘</SectionTitle>
-                {reviewed && (
+                <SectionTitle>AI 初稿</SectionTitle>
+                {cardDetail?.workflow_status !== "not_started" && (
                   <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[11px] text-zinc-600">
                     已复盘
                   </Badge>
@@ -494,6 +591,104 @@ export function ContentDetailDialog({
                     </div>
                   ))}
                 </div>
+              )}
+            </section>
+
+            {/* 反馈卡编辑区 */}
+            <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5">
+              <div className="flex items-center justify-between gap-2">
+                <SectionTitle>反馈卡编辑区</SectionTitle>
+                {cardDetail ? (
+                  <Badge
+                    variant="outline"
+                    className={`text-[11px] ${
+                      cardDetail.workflow_status === "draft"
+                        ? "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]"
+                        : cardDetail.workflow_status === "confirmed"
+                        ? "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]"
+                        : cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
+                        ? "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                        : "border-zinc-200 bg-zinc-100 text-zinc-500"
+                    }`}
+                  >
+                    {cardDetail.workflow_label}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[11px] text-zinc-500">
+                    未生成
+                  </Badge>
+                )}
+              </div>
+
+              {!cardDetail || cardDetail.workflow_status === "not_started" ? (
+                <div className="rounded-xl bg-zinc-50 p-4 text-[13px] text-zinc-500">
+                  请先生成 AI 初稿，确认后进入反馈卡编辑。
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[12px] font-medium text-zinc-700">主要问题</label>
+                      <textarea
+                        value={mainIssues}
+                        onChange={(e) => setMainIssues(e.target.value)}
+                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                        rows={2}
+                        placeholder="例如：开头留人弱 / 选题不清 / 文案承接差"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[12px] font-medium text-zinc-700">下一条动作</label>
+                      <textarea
+                        value={nextAction}
+                        onChange={(e) => setNextAction(e.target.value)}
+                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                        rows={2}
+                        placeholder="例如：开头先给结论，前 3 秒别铺垫"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[12px] font-medium text-zinc-700">管理者反馈</label>
+                      <textarea
+                        value={managerNote}
+                        onChange={(e) => setManagerNote(e.target.value)}
+                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                        rows={3}
+                        placeholder="写给员工的、一段能看懂的话"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-2">
+                    {cardDetail.workflow_status === "draft" && (
+                      <Button
+                        size="sm"
+                        className="h-9 rounded-xl bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
+                        onClick={handleConfirm}
+                        disabled={isConfirming}
+                      >
+                        {isConfirming ? "确认中..." : "确认"}
+                      </Button>
+                    )}
+                    {cardDetail.workflow_status === "confirmed" && (
+                      <Button
+                        size="sm"
+                        className="h-9 rounded-xl bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
+                        onClick={handleSend}
+                        disabled={isSending}
+                      >
+                        {isSending ? "下发中..." : "确认下发"}
+                      </Button>
+                    )}
+                    {(cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed") && (
+                      <Badge variant="outline" className="border-zinc-200 bg-[#6FAA7D]/10 text-[11px] text-[#6FAA7D]">
+                        已下发给员工
+                      </Badge>
+                    )}
+                  </div>
+                </>
               )}
             </section>
           </div>

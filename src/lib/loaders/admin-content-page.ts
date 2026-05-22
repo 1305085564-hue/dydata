@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
+import { buildContentFeedbackCardView, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserPermissions } from "@/lib/permissions";
-import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
+import type { ContentFeedbackCard, ContentFeedbackCardView, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
 
@@ -32,11 +33,20 @@ export interface AdminContentPageData {
   profiles: FilterOption[];
   accounts: AccountOption[];
   reviewedVideoIds: string[];
+  feedbackCards: Record<string, ContentFeedbackCardView>;
   summary: {
     totalVideos: number;
     reviewedCount: number;
     snapshotCount: number;
     pendingReviewCount: number;
+  };
+  workflowSummary: {
+    notStarted: number;
+    draft: number;
+    confirmed: number;
+    sent: number;
+    viewed: number;
+    pendingDelivery: number;
   };
 }
 
@@ -95,7 +105,16 @@ export async function loadAdminContentPageData({
   const videos = scope
     ? filterRowsByDataScope(scope, allVideos, (video) => video.accounts?.profile_id ?? video.user_id)
     : allVideos;
+  const scopedVideoIds = videos.map((video) => video.id);
+  const scopedVideoIdSet = new Set(scopedVideoIds);
   const visibleProfileIds = new Set(scope?.visibleUserIds ?? videos.map((video) => video.accounts?.profile_id ?? video.user_id));
+  const { data: feedbackCardRows } =
+    scopedVideoIds.length > 0
+      ? await serviceClient
+          .from("content_feedback_cards")
+          .select(CONTENT_FEEDBACK_CARD_SELECT)
+          .in("video_id", scopedVideoIds)
+      : { data: [] };
 
   const reviewedVideoIds = Array.from(
     new Set(
@@ -104,7 +123,7 @@ export async function loadAdminContentPageData({
           const json = result.result_json as Record<string, unknown> | null;
           return typeof json?.video_id === "string" ? json.video_id : null;
         })
-        .filter((id): id is string => id !== null),
+        .filter((id): id is string => id !== null && scopedVideoIdSet.has(id)),
     ),
   );
 
@@ -122,6 +141,14 @@ export async function loadAdminContentPageData({
           .order("captured_at", { ascending: false })
       : { data: [] };
   const snapshotCount = (snapshots ?? []).length;
+  const feedbackCardMap = new Map<string, ContentFeedbackCard>();
+  for (const row of (feedbackCardRows ?? []) as ContentFeedbackCard[]) {
+    feedbackCardMap.set(row.video_id, row);
+  }
+  const feedbackCards = Object.fromEntries(
+    videos.map((video) => [video.id, buildContentFeedbackCardView(video.id, feedbackCardMap.get(video.id) ?? null)]),
+  ) as Record<string, ContentFeedbackCardView>;
+  const workflowViews = Object.values(feedbackCards);
 
   return {
     videos: visibleVideos,
@@ -133,11 +160,22 @@ export async function loadAdminContentPageData({
       .filter((account) => visibleProfileIds.has(account.profile_id))
       .map((account) => ({ id: account.id, name: account.name ?? "未命名账号" })),
     reviewedVideoIds,
+    feedbackCards,
     summary: {
       totalVideos: videos.length,
       reviewedCount: reviewedVideoIds.length,
       snapshotCount,
       pendingReviewCount: pendingVideos.length,
+    },
+    workflowSummary: {
+      notStarted: workflowViews.filter((view) => view.workflow_status === "not_started").length,
+      draft: workflowViews.filter((view) => view.workflow_status === "draft").length,
+      confirmed: workflowViews.filter((view) => view.workflow_status === "confirmed").length,
+      sent: workflowViews.filter((view) => view.workflow_status === "sent").length,
+      viewed: workflowViews.filter((view) => view.workflow_status === "viewed").length,
+      pendingDelivery: workflowViews.filter(
+        (view) => view.workflow_status === "draft" || view.workflow_status === "confirmed",
+      ).length,
     },
   };
 }

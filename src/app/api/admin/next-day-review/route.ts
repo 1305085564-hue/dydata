@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { getUserPermissions, hasPermission } from "@/lib/permissions";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireScopedAdminVideo } from "@/lib/admin-scoped-video";
 import { callStructuredAi } from "@/lib/ai/shared";
+import {
+  buildContentFeedbackCardDetail,
+  CONTENT_FEEDBACK_CARD_SELECT,
+} from "@/lib/content-feedback-cards";
 import {
   buildAccountBaseline,
   buildNextDayReviewPrompt,
@@ -13,7 +16,7 @@ import {
   parseNextDayReviewResult,
   type ReviewSegmentInput,
 } from "@/lib/next-day-review";
-import type { NextDayReviewComparison, NextDayReviewMetrics, NextDayReviewResult } from "@/types";
+import type { ContentFeedbackCard, NextDayReviewComparison, NextDayReviewMetrics, NextDayReviewResult } from "@/types";
 
 const PROMPT_VERSION = "next-day-review-v1";
 
@@ -44,19 +47,83 @@ function errorResponse(message: string, code: string, status = 422) {
   return NextResponse.json({ error: message, code }, { status });
 }
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+async function loadFeedbackCard(supabase: Pick<SupabaseClient, "from">, videoId: string) {
+  const { data } = await supabase
+    .from("content_feedback_cards")
+    .select(CONTENT_FEEDBACK_CARD_SELECT)
+    .eq("video_id", videoId)
+    .maybeSingle();
 
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  return (data as ContentFeedbackCard | null) ?? null;
+}
 
-  const permission = await getUserPermissions();
-  if (!permission || !hasPermission(permission.businessRole, permission.permissions, "view_analytics")) {
-    return NextResponse.json({ error: "无权限" }, { status: 403 });
+async function syncDraftFeedbackCard(params: {
+  supabase: Pick<SupabaseClient, "from">;
+  videoId: string;
+  targetUserId: string;
+  targetAccountId: string | null;
+  sourceResultId: string;
+  draftPayload: NextDayReviewResult;
+  mode: "ensure" | "refresh";
+}) {
+  const { supabase, videoId, targetUserId, targetAccountId, sourceResultId, draftPayload, mode } = params;
+  const now = new Date().toISOString();
+  const existing = await loadFeedbackCard(supabase, videoId);
+
+  if (!existing) {
+    const { data } = await supabase
+      .from("content_feedback_cards")
+      .insert({
+        video_id: videoId,
+        target_user_id: targetUserId,
+        target_account_id: targetAccountId,
+        source_result_id: sourceResultId,
+        card_status: "draft",
+        draft_payload: draftPayload,
+        confirmed_payload: null,
+        draft_generated_at: now,
+      })
+      .select(CONTENT_FEEDBACK_CARD_SELECT)
+      .single();
+
+    return (data as ContentFeedbackCard | null) ?? null;
   }
 
+  if (mode === "ensure" && (existing.card_status === "confirmed" || existing.card_status === "sent" || existing.card_status === "viewed")) {
+    return existing;
+  }
+
+  const payload =
+    mode === "refresh"
+      ? {
+          source_result_id: sourceResultId,
+          card_status: "draft",
+          draft_payload: draftPayload,
+          confirmed_payload: null,
+          draft_generated_at: now,
+          confirmed_by: null,
+          confirmed_at: null,
+          sent_by: null,
+          sent_at: null,
+          viewed_at: null,
+        }
+      : {
+          source_result_id: sourceResultId,
+          draft_payload: draftPayload,
+          draft_generated_at: now,
+        };
+
+  const { data } = await supabase
+    .from("content_feedback_cards")
+    .update(payload)
+    .eq("id", existing.id)
+    .select(CONTENT_FEEDBACK_CARD_SELECT)
+    .single();
+
+  return (data as ContentFeedbackCard | null) ?? existing;
+}
+
+export async function POST(request: NextRequest) {
   let body: RequestBody;
   try {
     body = (await request.json()) as RequestBody;
@@ -68,36 +135,44 @@ export async function POST(request: NextRequest) {
   if (!videoId) return NextResponse.json({ error: "缺少 video_id" }, { status: 400 });
 
   const forceRefresh = body.force_refresh === true;
-
-  const serviceClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const access = await requireScopedAdminVideo({ videoId, pathname: "/admin/content" });
+  if ("error" in access) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
+  }
+  const serviceClient = access.supabase;
+  const video = access.video;
 
   if (!forceRefresh) {
     const { data: cached } = await serviceClient
       .from("ai_insight_result")
-      .select("result_json")
+      .select("id, result_json")
       .eq("insight_type", "next_day_review")
       .eq("result_status", "success")
       .contains("result_json", { video_id: videoId })
       .order("created_at", { ascending: false })
       .limit(1);
 
-    const cachedJson = cached?.[0]?.result_json;
+    const cachedRow = cached?.[0] ?? null;
+    const cachedJson = cachedRow?.result_json;
     if (isStructuredReview(cachedJson)) {
-      return NextResponse.json({ ...cachedJson, cached: true });
+      const feedbackCard = cachedRow?.id
+        ? await syncDraftFeedbackCard({
+            supabase: serviceClient,
+            videoId,
+            targetUserId: video.user_id,
+            targetAccountId: video.account_id,
+            sourceResultId: cachedRow.id,
+            draftPayload: { ...cachedJson, cached: true },
+            mode: "ensure",
+          })
+        : await loadFeedbackCard(serviceClient, videoId);
+
+      return NextResponse.json({
+        ...cachedJson,
+        cached: true,
+        feedback_card: buildContentFeedbackCardDetail(videoId, feedbackCard),
+      });
     }
-  }
-
-  const { data: video, error: videoError } = await serviceClient
-    .from("videos")
-    .select("id, content, anomaly_status, account_id")
-    .eq("id", videoId)
-    .single();
-
-  if (videoError || !video) {
-    return NextResponse.json({ error: "视频不存在" }, { status: 404 });
   }
 
   const { data: snapshots } = await serviceClient
@@ -248,7 +323,9 @@ export async function POST(request: NextRequest) {
       cached: false,
     });
 
-    await serviceClient.from("ai_insight_result").insert({
+    const { data: savedResult, error: savedResultError } = await serviceClient
+      .from("ai_insight_result")
+      .insert({
       input_bundle_id: inputBundleId,
       insight_type: "next_day_review",
       model_name: aiResult.model,
@@ -256,9 +333,32 @@ export async function POST(request: NextRequest) {
       result_status: "success",
       result_json: finalResult,
       rendered_text: finalResult.summary.one_line,
+    })
+      .select("id")
+      .single();
+
+    if (savedResultError || !savedResult) {
+      throw new Error("写入复盘结果失败");
+    }
+
+    const feedbackCard = await syncDraftFeedbackCard({
+      supabase: serviceClient,
+      videoId,
+      targetUserId: video.user_id,
+      targetAccountId: video.account_id,
+      sourceResultId: savedResult.id,
+      draftPayload: finalResult,
+      mode: "refresh",
     });
 
-    return NextResponse.json(finalResult);
+    if (!feedbackCard) {
+      throw new Error("同步反馈卡失败");
+    }
+
+    return NextResponse.json({
+      ...finalResult,
+      feedback_card: buildContentFeedbackCardDetail(videoId, feedbackCard),
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "AI 请求失败";
 

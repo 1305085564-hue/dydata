@@ -16,6 +16,13 @@ import {
   getLatestSubmission,
 } from "./status-theme";
 
+interface ReviewFeedback {
+  videoTitle: string;
+  mainIssues: string;
+  nextAction: string;
+  managerComment?: string;
+}
+
 interface WorkflowDashboardProps {
   mine: SopMemberStatus | null;
   today: string;
@@ -24,6 +31,7 @@ interface WorkflowDashboardProps {
   activeCheckpoint: SopCheckpoint;
   onSubmitted: (nextMine?: SopMemberStatus) => void;
   dataReport: React.ReactNode;
+  reviewFeedback?: ReviewFeedback | null;
 }
 
 /**
@@ -38,6 +46,7 @@ export function WorkflowDashboard({
   activeCheckpoint,
   onSubmitted,
   dataReport,
+  reviewFeedback,
 }: WorkflowDashboardProps) {
   const [topicText, setTopicText] = useState(
     () => getLatestSubmission(mine ?? emptyMember(today), "TOPIC")?.topic_text ?? "",
@@ -249,6 +258,42 @@ export function WorkflowDashboard({
                     </div>
                   );
                 })}
+              </div>
+
+              {/* 复盘反馈区 */}
+              <div className="mt-8 border-t border-zinc-100 pt-6">
+                <h4 className="mb-4 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                  复盘反馈
+                </h4>
+                {reviewFeedback ? (
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="text-[11px] text-zinc-400">上一条视频</div>
+                      <div className="mt-1 text-[13px] font-medium text-zinc-800 line-clamp-2">
+                        {reviewFeedback.videoTitle}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="text-[11px] text-zinc-400">主要问题</div>
+                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.mainIssues}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="text-[11px] text-zinc-400">下一条动作</div>
+                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.nextAction}</div>
+                    </div>
+                    {reviewFeedback.managerComment && (
+                      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                        <div className="text-[11px] text-zinc-400">管理者反馈</div>
+                        <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.managerComment}</div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-center">
+                    <p className="text-[13px] text-zinc-400">暂无复盘反馈</p>
+                    <p className="mt-1 text-[12px] text-zinc-400">完成视频发布后将收到改进建议</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -39,7 +39,7 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
       className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
     >
       <div className="flex items-center justify-between border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">复盘列表</h2>
+        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">批改台</h2>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -55,9 +55,9 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
                 : "text-zinc-500 hover:text-zinc-700",
             ].join(" ")}
           >
-            待复盘
-            <span className="ml-1.5 font-mono text-[11px] tabular-nums text-[#D97757]">
-              {data.summary.pendingReviewCount}
+            未开始
+            <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
+              {data.workflowSummary.notStarted}
             </span>
           </button>
           <button
@@ -82,9 +82,9 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
-          <span>已复盘 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.reviewedCount}</span></span>
-          <span>内容总量 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.totalVideos}</span></span>
-          <span>24h 样本 <span className="ml-0.5 font-mono tabular-nums text-zinc-700">{data.summary.snapshotCount}</span></span>
+          <span>AI初稿待确认 <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">{data.workflowSummary.draft}</span></span>
+          <span>已确认待下发 <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">{data.workflowSummary.confirmed}</span></span>
+          <span>已下发 <span className="ml-0.5 font-mono tabular-nums text-[#6FAA7D]">{data.workflowSummary.sent + data.workflowSummary.viewed}</span></span>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
         snapshots={data.snapshots}
         profiles={data.profiles}
         accounts={data.accounts}
-        reviewedVideoIds={data.reviewedVideoIds}
+        feedbackCards={data.feedbackCards}
       />
     </section>
   );

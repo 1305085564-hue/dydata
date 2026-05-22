@@ -39,7 +39,7 @@ export function VideoPageClient({ initialView, initialData }: VideoPageClientPro
       className="scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-4"
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">资产列表</h2>
+        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">资料库</h2>
 
         <div
           className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5"
@@ -84,21 +84,21 @@ export function VideoPageClient({ initialView, initialData }: VideoPageClientPro
 
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
           <span>
-            已打标
-            <span className="ml-0.5 font-mono tabular-nums text-zinc-700">
-              {data.summary.taggedVideos}
+            已入库
+            <span className="ml-0.5 font-mono tabular-nums text-[#6FAA7D]">
+              {data.assetSummary.readyCount}
             </span>
           </span>
           <span>
-            24h 快照
-            <span className="ml-0.5 font-mono tabular-nums text-zinc-700">
-              {data.summary.snapshotCount}
+            待整理
+            <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">
+              {data.assetSummary.pendingLibraryCount}
             </span>
           </span>
           <span>
-            异常
-            <span className="ml-0.5 font-mono tabular-nums text-[#C9604D]">
-              {data.summary.abnormalCount}
+            已评级
+            <span className="ml-0.5 font-mono tabular-nums text-zinc-700">
+              {data.assetSummary.gradedCount}
             </span>
           </span>
         </div>
@@ -110,6 +110,7 @@ export function VideoPageClient({ initialView, initialData }: VideoPageClientPro
         profiles={data.profiles}
         accounts={data.accounts}
         videoTags={data.videoTags}
+        assetLibrary={data.assetLibrary}
       />
     </section>
   );

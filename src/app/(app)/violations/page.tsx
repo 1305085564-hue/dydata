@@ -238,10 +238,11 @@ function HighlightStrip({
 }) {
   const accent =
     tone === "positive"
-      ? { border: "border-l-[#6FAA7D]", bg: "bg-[#6FAA7D]/5", text: "text-[#3F6F4F]", chip: "bg-[#6FAA7D]/10 text-[#6FAA7D]" }
-      : { border: "border-l-[#D97757]", bg: "bg-[#D97757]/5", text: "text-[#A85638]", chip: "bg-[#D97757]/10 text-[#D97757]" };
+      ? { bar: "bg-[#6FAA7D]", bg: "bg-[#6FAA7D]/5", text: "text-[#3F6F4F]", chip: "bg-[#6FAA7D]/10 text-[#6FAA7D]" }
+      : { bar: "bg-[#D97757]", bg: "bg-[#D97757]/5", text: "text-[#A85638]", chip: "bg-[#D97757]/10 text-[#D97757]" };
   return (
-    <div className={`flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 border-l-[2px] ${accent.border} ${accent.bg} px-4 py-3`}>
+    <div className={`relative flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 ${accent.bg} px-4 py-3`}>
+      <span className={`absolute inset-y-0 left-0 w-[2px] rounded-r-full ${accent.bar}`} aria-hidden />
       <div className="flex items-center gap-3">
         <span className={`flex size-9 items-center justify-center rounded-xl ${accent.chip}`}>
           <Icon className="size-4 stroke-[1.5]" />

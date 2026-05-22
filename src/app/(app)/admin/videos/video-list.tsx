@@ -18,7 +18,7 @@ import { Patch24hDialog } from "./patch-24h-dialog";
 import { interactionRate } from "@/lib/video-metrics";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
 import { getTagReviewStatus, isVideoMatchedByTagFilters } from "@/lib/video-tags";
-import type { Profile, Video, VideoMetricsSnapshot, VideoTag } from "@/types";
+import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -34,6 +34,7 @@ interface VideoListProps {
   profiles: FilterOption[];
   accounts: AccountOption[];
   videoTags: VideoTag[];
+  assetLibrary: Record<string, VideoAssetLibraryRecord>;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -43,6 +44,17 @@ const statusClassName: Record<Video["anomaly_status"], string> = {
   投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
   活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
   "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
+};
+
+const libraryStatusClass: Record<string, string> = {
+  ready: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  pending: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+};
+
+const completenessStatusClass: Record<string, string> = {
+  complete: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  partial: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  missing: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
 };
 
 const PAGE_SIZE = 50;
@@ -72,7 +84,7 @@ function formatPercent(value: number | null | undefined) {
   return `${(value * 100).toFixed(2)}%`;
 }
 
-export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: VideoListProps) {
+export function VideoList({ videos, snapshots, profiles, accounts, videoTags, assetLibrary }: VideoListProps) {
   const [filters, setFilters] = useState<VideoFilterValue>({
     profileId: "all",
     accountId: "all",
@@ -85,9 +97,14 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [patchingVideoId, setPatchingVideoId] = useState<string | null>(null);
-  const [videoRows, setVideoRows] = useState(videos);
+  const [videoRows, setVideoRows] = useState<VideoRow[]>(videos);
   const [snapshotRows, setSnapshotRows] = useState(snapshots);
   const [tagRows, setTagRows] = useState(videoTags);
+  const [assetLibraryState, setAssetLibraryState] = useState(assetLibrary);
+
+  useEffect(() => {
+    setAssetLibraryState(assetLibrary);
+  }, [assetLibrary]);
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -234,6 +251,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
               <TableHead className="h-9 text-[12px] font-medium text-zinc-500">互动率(%)</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-zinc-500">涨粉</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-zinc-500">状态</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">资料状态</TableHead>
               <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-zinc-500">操作</TableHead>
             </TableRow>
           </TableHeader>
@@ -269,6 +287,33 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
                         ) : null}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const record = assetLibraryState[video.id];
+                        if (!record) return <span className="text-[12px] text-zinc-400">-</span>;
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <Badge
+                              variant="outline"
+                              className={`w-fit text-[11px] ${libraryStatusClass[record.library_status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                            >
+                              {record.library_status_label}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className={`w-fit text-[11px] ${completenessStatusClass[record.completeness_status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                            >
+                              {record.completeness_label} ({Math.round(record.completion_ratio * 100)}%)
+                            </Badge>
+                            {record.missing_fields.length > 0 && (
+                              <span className="text-[10px] text-zinc-400">
+                                缺：{record.missing_fields.map((f) => ({ video_title: "标题", content: "文案", snapshot_24h: "24h快照", video_tags: "标签", content_segments: "切段" } as const)[f]).join("、")}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell className="px-4 text-right">
                       <div className="flex items-center justify-end gap-4">
                         {showPatchButton ? (
@@ -294,7 +339,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="px-4 py-16 text-center text-[13px] text-zinc-500">
+                <TableCell colSpan={10} className="px-4 py-16 text-center text-[13px] text-zinc-500">
                   当前筛选条件下暂无视频数据。
                 </TableCell>
               </TableRow>
@@ -303,7 +348,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
             {/* Sentinel for auto-load */}
             {hasMore && (
               <TableRow>
-                <TableCell colSpan={9} className="p-0">
+                <TableCell colSpan={10} className="p-0">
                   <div ref={sentinelRef} className="h-4" />
                 </TableCell>
               </TableRow>
@@ -363,11 +408,15 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags }: 
         video={selectedVideo}
         snapshot={selectedSnapshot}
         tags={selectedVideo ? tagMap.get(selectedVideo.id) ?? [] : []}
+        assetRecord={selectedVideo ? assetLibraryState[selectedVideo.id] ?? null : null}
         onTagsSaved={(tags) => {
           setTagRows((current) => {
             const rest = current.filter((tag) => tag.video_id !== selectedVideo?.id || !tags.some((saved) => saved.tag_dimension === tag.tag_dimension));
             return [...rest, ...tags];
           });
+        }}
+        onAssetSaved={(videoId, record) => {
+          setAssetLibraryState((current) => ({ ...current, [videoId]: record }));
         }}
       />
 
