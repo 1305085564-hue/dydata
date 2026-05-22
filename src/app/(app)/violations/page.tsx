@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import {
   ArrowRight,
-  ClipboardCheck,
   Search as SearchIcon,
   Sparkles,
   TestTube2,
@@ -17,6 +16,9 @@ import { getApiErrorMessage } from "@/lib/violations/errors";
 import { CaseCard } from "./components/case-card";
 import { StaffSearchHero } from "./components/staff-search-hero";
 import type { ViolationCase, ViolationListResponse } from "./components/types";
+
+import { ConversionHubShell } from "@/app/(app)/admin/conversion-hub/hub-shell";
+import { getWeekStartDate, loadInboxData, loadScriptsTab } from "@/app/(app)/admin/conversion-hub/data";
 
 type SearchParamsShape = Record<string, string | string[] | undefined>;
 
@@ -66,6 +68,8 @@ export default async function ViolationsPage({
 
   const resolved = await searchParams;
   const query = readParam(resolved, "q");
+  const view = readParam(resolved, "view") || "staff";
+  const isManageView = canManageViolations && view === "manage";
 
   let cases: ViolationCase[] = [];
   let error: string | null = null;
@@ -84,93 +88,137 @@ export default async function ViolationsPage({
     return usageState === "testing";
   });
 
+  let manageData: {
+    inbox: Awaited<ReturnType<typeof loadInboxData>>["data"];
+    inboxCounts: Awaited<ReturnType<typeof loadInboxData>>["counts"];
+    scripts: Awaited<ReturnType<typeof loadScriptsTab>> | null;
+  } | null = null;
+
+  if (isManageView) {
+    const weekStart = getWeekStartDate();
+    const [{ data: inbox, counts: inboxCounts }, scripts] = await Promise.all([
+      loadInboxData(user.id),
+      loadScriptsTab(weekStart),
+    ]);
+    manageData = { inbox, inboxCounts, scripts };
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-5 py-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-400">话术案例库</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">先找现成的话术</h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
+            {isManageView ? "管理工作台" : "先找现成的话术"}
+          </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
-            团队沉淀的可用话术与避坑案例。搜不到再交一条，让团队一起验证。
+            {isManageView
+              ? "审核员工提交，把有价值的话术沉淀进知识库；高风险先处理，再补缺数据，最后看推广候选。"
+              : "团队沉淀的可用话术与避坑案例。搜不到再交一条，让团队一起验证。"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {canManageViolations ? (
+        {canManageViolations ? (
+          <div className="inline-flex rounded-xl bg-zinc-100 p-1">
             <Link
-              href="/admin/conversion-hub"
-              className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+              href="/violations"
+              className={`rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                !isManageView
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700"
+              }`}
             >
-              <ClipboardCheck className="size-4 stroke-[1.5]" />
-              管理工作台
+              找话术
             </Link>
-          ) : null}
-        </div>
+            <Link
+              href="/violations?view=manage"
+              className={`rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                isManageView
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700"
+              }`}
+            >
+              管理闭环
+            </Link>
+          </div>
+        ) : null}
       </header>
 
-      <StaffSearchHero defaultQuery={query} totalCases={cases.length} />
+      {isManageView && manageData ? (
+        <ConversionHubShell
+          weekStart={getWeekStartDate()}
+          inbox={manageData.inbox}
+          inboxCounts={manageData.inboxCounts}
+          scripts={manageData.scripts}
+          layoutVariant="embedded"
+        />
+      ) : (
+        <>
+          <StaffSearchHero defaultQuery={query} totalCases={cases.length} />
 
-      {recommendedCases.length > 0 || testingCases.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {recommendedCases.length > 0 ? (
-            <HighlightStrip
-              tone="positive"
-              icon={Sparkles}
-              title="管理员推荐"
-              count={recommendedCases.length}
-              hint="经实测有效，优先复用"
-            />
+          {recommendedCases.length > 0 || testingCases.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {recommendedCases.length > 0 ? (
+                <HighlightStrip
+                  tone="positive"
+                  icon={Sparkles}
+                  title="管理员推荐"
+                  count={recommendedCases.length}
+                  hint="经实测有效，优先复用"
+                />
+              ) : null}
+              {testingCases.length > 0 ? (
+                <HighlightStrip
+                  tone="warm"
+                  icon={TestTube2}
+                  title="待测试"
+                  count={testingCases.length}
+                  hint="样本不足，谨慎试用并补记效果"
+                />
+              ) : null}
+            </div>
           ) : null}
-          {testingCases.length > 0 ? (
-            <HighlightStrip
-              tone="warm"
-              icon={TestTube2}
-              title="待测试"
-              count={testingCases.length}
-              hint="样本不足，谨慎试用并补记效果"
-            />
-          ) : null}
-        </div>
-      ) : null}
 
-      <section id="cases" className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[13px] font-semibold tracking-tight text-zinc-700">
-            {query ? `「${query}」的搜索结果` : "团队可用话术"}
-            <span className="ml-2 font-mono text-[12px] text-zinc-400">{cases.length}</span>
-          </h2>
-        </div>
+          <section id="cases" className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[13px] font-semibold tracking-tight text-zinc-700">
+                {query ? `「${query}」的搜索结果` : "团队可用话术"}
+                <span className="ml-2 font-mono text-[12px] text-zinc-400">{cases.length}</span>
+              </h2>
+            </div>
 
-        {error ? (
-          <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
-            {error}
-          </div>
-        ) : cases.length ? (
-          <div className="space-y-3">
-            {cases.map((caseItem) => (
-              <CaseCard key={caseItem.id} caseItem={caseItem} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={SearchIcon}
-            title={query ? "没找到匹配的话术" : "话术库还没有内容"}
-            hint={
-              query
-                ? "换个关键词试试，或先去交一条新案例。"
-                : "去交一条新案例，让团队一起沉淀经验。"
-            }
-            action={
-              <Link
-                href="/violations/submit"
-                className="inline-flex h-10 items-center gap-1.5 rounded-2xl bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-              >
-                提交新案例
-                <ArrowRight className="size-4 stroke-[1.5]" />
-              </Link>
-            }
-          />
-        )}
-      </section>
+            {error ? (
+              <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
+                {error}
+              </div>
+            ) : cases.length ? (
+              <div className="space-y-3">
+                {cases.map((caseItem) => (
+                  <CaseCard key={caseItem.id} caseItem={caseItem} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={SearchIcon}
+                title={query ? "没找到匹配的话术" : "话术库还没有内容"}
+                hint={
+                  query
+                    ? "换个关键词试试，或先去交一条新案例。"
+                    : "去交一条新案例，让团队一起沉淀经验。"
+                }
+                action={
+                  <Link
+                    href="/violations/submit"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-2xl bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+                  >
+                    提交新案例
+                    <ArrowRight className="size-4 stroke-[1.5]" />
+                  </Link>
+                }
+              />
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
