@@ -161,7 +161,7 @@ function CardShell({
           <h3 className="text-[12px] font-medium tracking-tight text-zinc-600">{title}</h3>
           <span
             className={cn(
-              "text-[26px] font-semibold leading-none tracking-tight tabular-nums",
+              "text-[18px] font-medium leading-none tabular-nums",
               totalToneClass,
             )}
           >
@@ -643,7 +643,7 @@ function ReviewBatchCard({
             </h3>
             <span
               className={cn(
-                "text-[26px] font-semibold leading-none tracking-tight tabular-nums",
+                "text-[18px] font-medium leading-none tabular-nums",
                 totalAll === 0 ? "text-zinc-300" : "text-zinc-800",
               )}
             >
