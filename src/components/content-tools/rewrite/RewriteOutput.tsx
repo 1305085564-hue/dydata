@@ -49,7 +49,7 @@ export function RewriteOutput({
             <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce [animation-delay:-0.15s]" />
             <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-bounce" />
           </div>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">加载中</span>
+          <span className="text-[12px] uppercase tracking-[0.25em] text-zinc-400">加载中</span>
         </div>
       </div>
     );
@@ -64,7 +64,7 @@ export function RewriteOutput({
             <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-sm">
               <PenLine className="h-4 w-4 text-zinc-500" />
             </div>
-            <h2 className="text-[20px] font-semibold leading-tight tracking-tight text-zinc-800">
+            <h2 className="text-[24px] font-semibold leading-tight tracking-tight text-zinc-800">
               {activeFixedMode ? `${activeFixedMode.name} 就位` : '今天改哪段？'}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-[13px] leading-[1.7] text-zinc-500">
@@ -80,7 +80,7 @@ export function RewriteOutput({
                 key={shortcut.label}
                 type="button"
                 onClick={() => onSendOverride(shortcut.text)}
-                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 active:translate-y-0"
+ className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-100 active:translate-y-0"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -90,7 +90,7 @@ export function RewriteOutput({
                         {shortcut.label}
                       </span>
                     </div>
-                    <p className="mt-1 text-[11px] leading-[1.7] text-zinc-500">
+                    <p className="mt-1 text-[12px] leading-[1.7] text-zinc-500">
                       {shortcut.hint}
                     </p>
                   </div>
@@ -150,11 +150,11 @@ export function RewriteOutput({
                     <span className="text-[12px] font-semibold tracking-tight text-zinc-800">
                       {responseMode === 'chat' ? '继续对话' : '改写结果'}
                     </span>
-                    <span className="rounded-md bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
+                    <span className="rounded-md bg-zinc-50 px-1.5 py-0.5 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
                       {displayMeta.badge}
                     </span>
                     {isStreaming && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-[#8A6A2F]">
+                      <span className="inline-flex items-center gap-1 text-[12px] text-[#8A6A2F]">
                         <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                         <span className="uppercase tracking-[0.25em]">生成中</span>
                       </span>
@@ -181,7 +181,7 @@ export function RewriteOutput({
                                 type="button"
                                 onClick={() => onCopy(copyKey, version.content)}
                                 className={cn(
-                                  'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                                  'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                                   copied
                                     ? 'bg-zinc-50 text-[#4F7F5E] ring-1 ring-zinc-200'
                                     : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-800'
@@ -205,7 +205,7 @@ export function RewriteOutput({
                         type="button"
                         onClick={() => onCopy(message.id, chatText || '')}
                         className={cn(
-                          'absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                          'absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-medium uppercase tracking-[0.25em] transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                           copiedKey === message.id
                             ? 'bg-zinc-50 text-[#4F7F5E] ring-1 ring-zinc-200'
                             : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-50 hover:text-zinc-800'
@@ -223,7 +223,7 @@ export function RewriteOutput({
                   {/* Notes */}
                   {responseMode === 'versions' && message.structuredResult?.final?.notes?.length ? (
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                      <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                         备注
                       </p>
                       <ul className="mt-1.5 space-y-0.5 text-[12.5px] leading-[1.7] text-zinc-500">
@@ -249,7 +249,7 @@ export function RewriteOutput({
                   key={`${suggestion}-${index}`}
                   type="button"
                   onClick={() => onSendOverride(suggestion)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+ className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[12px] font-medium text-zinc-500 shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
                 >
                   {suggestion}
                   <ArrowRight className="h-3 w-3 text-zinc-400" />

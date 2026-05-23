@@ -18,7 +18,7 @@ function SettingCard({ href, title, description, icon }: SettingCardProps) {
       href={href}
       className={cn(
         "group flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 transition duration-200 ease-out",
-        "hover:border-[#D97757]/40 hover:shadow-sm active:translate-y-0",
+        "hover:border-[#D97757]/40 active:translate-y-0",
       )}
     >
       <div className="flex items-start gap-3">
@@ -44,10 +44,10 @@ export default async function AdminSettingsPage() {
     <div className="min-w-0 space-y-8">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
             系统设置
           </p>
-          <h1 className="mt-2 text-[20px] font-semibold tracking-tight text-zinc-800">
+          <h1 className="mt-2 text-[24px] font-semibold tracking-tight text-zinc-800">
             系统维护
           </h1>
           <p className="mt-1 max-w-3xl text-[13px] leading-[1.7] text-zinc-500">

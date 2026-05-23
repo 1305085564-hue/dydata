@@ -344,12 +344,12 @@ function TagStack({
   return (
     <div className="flex flex-wrap gap-1.5">
       {contentDirection ? (
-        <Badge variant="outline" className="rounded-full bg-background/80">
+        <Badge variant="outline" className="rounded-lg bg-background/80">
           {contentDirection}
         </Badge>
       ) : null}
       {presentationFormat ? (
-        <Badge variant="outline" className="rounded-full bg-background/80 text-muted-foreground">
+        <Badge variant="outline" className="rounded-lg bg-background/80 text-muted-foreground">
           {presentationFormat}
         </Badge>
       ) : null}
@@ -389,8 +389,8 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium font-mono tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
-          : "bg-[#C9604D]/10 text-[#C9604D]"
+          ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+          : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
       )}
     >
       <TrendingUp className="size-3.5" />

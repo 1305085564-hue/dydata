@@ -317,11 +317,16 @@ export function TeamGroupManager({
             <Badge
               className={
                 access.canEditGroups
-                  ? "bg-[#D97757]/10 text-[#D97757] border border-[#D97757]/20 hover:bg-[#D97757]/10"
+                  ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
                   : "bg-zinc-50 text-zinc-600 border border-zinc-200 hover:bg-zinc-50"
               }
             >
-              {access.canEditGroups ? "可管理" : "只读"}
+              {access.canEditGroups ? (
+                <>
+                  <span className="size-1.5 rounded-full bg-[#D97757]" aria-hidden />
+                  可管理
+                </>
+              ) : "只读"}
             </Badge>
           </div>
 
@@ -413,7 +418,7 @@ export function TeamGroupManager({
               </div>
               <Button
                 type="button"
-                className="mt-auto h-10 bg-zinc-900 text-white rounded-[10px] hover:bg-zinc-800 hover:-translate-y-[1px] active:translate-y-0"
+                className="mt-auto h-10 bg-[#D97757] text-white rounded-lg hover:bg-[#C96442] active:translate-y-0"
                 onClick={handleCreateGroup}
                 disabled={isPending || !newGroupName.trim() || !newLeaderId}
               >
@@ -516,7 +521,7 @@ export function TeamGroupManager({
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="bg-white border-zinc-300 text-zinc-800 rounded-[10px] hover:bg-zinc-50 hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm"
+ className="bg-white border-zinc-300 text-zinc-800 rounded-[10px] hover:bg-zinc-50 active:translate-y-0 "
                         onClick={handleAssignMembers}
                         disabled={isPending || checkedMemberIds.length === 0}
                       >

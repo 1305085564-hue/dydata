@@ -9,21 +9,8 @@ interface RewriteHistoryProps {
   featureLabel: string;
   onNewConversation: () => void;
   onSelectConversation: (conversation: Conversation) => void;
+  onPrefetchConversation?: (conversation: Conversation) => void;
   getConversationTag: (conversation: Conversation) => string;
-}
-
-function timeLabel(iso: string) {
-  const date = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return '刚刚';
-  if (diffMin < 60) return `${diffMin}m`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return `${diffDay}d`;
-  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
 }
 
 function isToday(iso: string) {
@@ -36,64 +23,80 @@ function isToday(iso: string) {
   );
 }
 
-function isYesterday(iso: string) {
+function getDayDiff(iso: string) {
   const d = new Date(iso);
   const now = new Date();
-  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-  return (
-    d.getFullYear() === yesterday.getFullYear() &&
-    d.getMonth() === yesterday.getMonth() &&
-    d.getDate() === yesterday.getDate()
-  );
+  const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const targetDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.floor((currentDay - targetDay) / 86400000);
 }
 
 function groupConversations(conversations: Conversation[]) {
   const today: Conversation[] = [];
+  const lastThreeDays: Conversation[] = [];
+  const lastSevenDays: Conversation[] = [];
   const earlier: Conversation[] = [];
 
   for (const c of conversations) {
     if (isToday(c.updatedAt)) {
       today.push(c);
+      continue;
+    }
+
+    const diffDay = getDayDiff(c.updatedAt);
+    if (diffDay <= 3) {
+      lastThreeDays.push(c);
+      continue;
+    }
+
+    if (diffDay <= 7) {
+      lastSevenDays.push(c);
+      continue;
     } else {
       earlier.push(c);
     }
   }
 
-  return { today, earlier };
+  return { today, lastThreeDays, lastSevenDays, earlier };
 }
 
 function ConversationItem({
   conversation,
   active,
   onSelect,
+  onPrefetch,
   getConversationTag,
 }: {
   conversation: Conversation;
   active: boolean;
   onSelect: (c: Conversation) => void;
+  onPrefetch?: (c: Conversation) => void;
   getConversationTag: (c: Conversation) => string;
 }) {
+  const tag = getConversationTag(conversation);
+  const showTag = tag !== '普通自定义';
+
   return (
     <button
       type="button"
       onClick={() => onSelect(conversation)}
+      onMouseEnter={() => onPrefetch?.(conversation)}
       className={cn(
-        'group relative w-full rounded-lg px-3 py-2.5 text-left transition-colors',
-        active ? 'bg-white' : 'hover:bg-zinc-100'
+        'group relative w-full rounded-md border border-transparent px-3 py-2 text-left transition-colors',
+        active
+          ? 'bg-zinc-200/95'
+          : 'hover:bg-zinc-100'
       )}
     >
-      {active && (
-        <span className="absolute left-0 top-1/2 h-6 w-[2px] -translate-y-1/2 rounded-full bg-[#D97757]" />
-      )}
       <div className="flex items-center gap-2">
         <span
           className={cn(
-            'inline-flex h-1.5 w-1.5 shrink-0 rounded-full',
+            'inline-flex h-1.5 w-1.5 shrink-0 rounded-full border transition-colors',
             active
-              ? 'bg-[#D97757] ring-1 ring-white'
-              : isToday(conversation.updatedAt)
-                ? 'bg-[#D99E55] ring-1 ring-white'
-                : 'bg-zinc-300 group-hover:bg-zinc-400'
+              ? 'border-zinc-500 bg-transparent'
+            : isToday(conversation.updatedAt)
+                ? 'border-zinc-400 bg-transparent'
+                : 'border-zinc-300 bg-transparent group-hover:border-zinc-400'
           )}
         />
         <p
@@ -104,14 +107,11 @@ function ConversationItem({
         >
           {conversation.title || '新文案'}
         </p>
-      </div>
-      <div className="mt-1.5 flex items-center justify-between pl-3.5">
-        <span className="text-[10px] font-mono tabular-nums text-zinc-400">
-          {timeLabel(conversation.updatedAt)}
-        </span>
-        <span className="truncate text-[10px] text-zinc-400">
-          {getConversationTag(conversation)}
-        </span>
+        {showTag ? (
+          <span className="ml-auto shrink-0 text-[12px] text-zinc-400">
+            · {tag}
+          </span>
+        ) : null}
       </div>
     </button>
   );
@@ -123,9 +123,17 @@ export function RewriteHistory({
   featureLabel,
   onNewConversation,
   onSelectConversation,
+  onPrefetchConversation,
   getConversationTag,
 }: RewriteHistoryProps) {
-  const { today, earlier } = groupConversations(conversations);
+  const { today, lastThreeDays, lastSevenDays, earlier } = groupConversations(conversations);
+
+  const sections = [
+    { key: 'today', label: '今日', items: today },
+    { key: 'last-three-days', label: '最近三日', items: lastThreeDays },
+    { key: 'last-seven-days', label: '近七天', items: lastSevenDays },
+    { key: 'earlier', label: '更早', items: earlier },
+  ].filter((section) => section.items.length > 0);
 
   return (
     <div className="flex h-full flex-col">
@@ -140,7 +148,7 @@ export function RewriteHistory({
         </div>
         <button
           onClick={onNewConversation}
-          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
+          className="active:translate-y-0 mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
         >
           <Plus className="h-3 w-3" />
           <span className="tracking-wide">新文案</span>
@@ -158,59 +166,35 @@ export function RewriteHistory({
               <FileText className="h-3 w-3 text-zinc-300" />
             </span>
             <p className="text-[11px] font-medium text-zinc-500">暂无记录</p>
-            <p className="mt-0.5 text-[10px] leading-relaxed text-zinc-400">
+            <p className="mt-0.5 text-[12px] leading-relaxed text-zinc-400">
               改写的文案会保存在这里
             </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Today */}
-            {today.length > 0 && (
-              <div className="space-y-1">
+            {sections.map((section) => (
+              <div key={section.key} className="space-y-1">
                 <div className="flex items-center gap-2 px-1 py-1">
                   <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
-                    今天
+                    {section.label}
                   </span>
                   <div className="h-px flex-1 bg-zinc-200" />
-                  <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{today.length}</span>
+                  <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{section.items.length}</span>
                 </div>
                 <div className="space-y-1">
-                  {today.map((conversation) => (
+                  {section.items.map((conversation) => (
                     <ConversationItem
                       key={conversation.id}
                       conversation={conversation}
                       active={currentConversationId === conversation.id}
                       onSelect={onSelectConversation}
+                      onPrefetch={onPrefetchConversation}
                       getConversationTag={getConversationTag}
                     />
                   ))}
                 </div>
               </div>
-            )}
-
-            {/* Earlier */}
-            {earlier.length > 0 && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 px-1 py-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
-                    更早
-                  </span>
-                  <div className="h-px flex-1 bg-zinc-200" />
-                  <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{earlier.length}</span>
-                </div>
-                <div className="space-y-1">
-                  {earlier.map((conversation) => (
-                    <ConversationItem
-                      key={conversation.id}
-                      conversation={conversation}
-                      active={currentConversationId === conversation.id}
-                      onSelect={onSelectConversation}
-                      getConversationTag={getConversationTag}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            ))}
           </div>
         )}
       </div>

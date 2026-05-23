@@ -49,7 +49,7 @@ export function DemoGrowthDeepDive({ overview, recentSamples, priorityActions }:
               <div key={item.label} className="rounded-2xl border border-[var(--color-border)] bg-white/82 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-medium text-[var(--color-text-secondary)]">{item.label}</div>
-                  <Badge variant="outline" className={`rounded-full ${toneClassName[item.tone]}`}>
+                  <Badge variant="outline" className={`rounded-lg ${toneClassName[item.tone]}`}>
                     {item.tone === "success" ? "向上" : item.tone === "warning" ? "优先改" : "观察中"}
                   </Badge>
                 </div>

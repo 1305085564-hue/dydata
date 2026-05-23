@@ -103,11 +103,11 @@ export function DashboardWorkspaceHeader({
       {/* 首行：eyebrow + 标题 + 5 弱入口 + 日期 */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
             <Activity size={14} className="text-zinc-800" /> 今日工作台
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">
               今日提交
             </h2>
             {/* 5 弱按钮入口：纯文字 + 小图标，hover 才有底色 */}
@@ -145,13 +145,13 @@ export function DashboardWorkspaceHeader({
         </div>
 
         <div className="flex shrink-0 flex-col items-start lg:items-end">
-          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
             今天
           </span>
           <button
             type="button"
             onClick={openDatePicker}
-            className="group inline-flex items-center gap-1.5 rounded-[10px] py-1 text-[20px] font-semibold font-mono tabular-nums text-zinc-800 transition-[color,opacity] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="group inline-flex items-center gap-1.5 rounded-[10px] py-1 text-[18px] font-semibold font-mono tabular-nums text-zinc-800 transition-[color,opacity] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
             aria-label="选择填报日期"
           >
             <span>{activeBizDate}</span>
@@ -190,7 +190,7 @@ export function DashboardWorkspaceHeader({
           <button
             type="button"
             onClick={() => onTabChange("REVIEW")}
-            className="text-[11px] font-medium text-[#D97757] transition-colors hover:text-[#C9604D]"
+            className="text-[12px] font-medium text-[#D97757] transition-colors hover:text-[#C9604D]"
           >
             去审核 →
           </button>
@@ -231,7 +231,7 @@ export function DashboardWorkspaceHeader({
             >
               <span>{tab.label}</span>
               {tab.key === "REVIEW" && reviewBadgeCount > 0 && (
-                <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#C9604D]/10 px-1 text-[10px] font-semibold tabular-nums text-[#C9604D]">
+                <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#C9604D]/10 px-1 text-[12px] font-semibold tabular-nums text-[#C9604D]">
                   {reviewBadgeCount > 9 ? "9+" : reviewBadgeCount}
                 </span>
               )}

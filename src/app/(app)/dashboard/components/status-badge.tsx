@@ -20,7 +20,7 @@ export function StatusBadge({ status, minimal = false }: StatusBadgeProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[10px] font-medium tracking-tight",
+        "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[12px] font-medium tracking-tight",
         theme.color,
       )}
     >

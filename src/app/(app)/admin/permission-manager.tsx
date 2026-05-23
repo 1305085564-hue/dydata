@@ -173,11 +173,16 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
         className={cn(
           "inline-flex h-6 items-center justify-center rounded-xl px-2 text-[11px] font-medium tracking-tight",
           isAdmin
-            ? "bg-[#D97757]/10 text-[#D97757]"
+            ? "gap-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700"
             : "bg-zinc-100 text-zinc-600",
         )}
       >
-        {isAdmin ? "管理员" : "成员"}
+        {isAdmin ? (
+          <>
+            <span className="size-1.5 rounded-full bg-[#D97757]" aria-hidden />
+            管理员
+          </>
+        ) : "成员"}
       </span>
       <span className="text-right font-mono text-[12px] tabular-nums text-zinc-500">
         {totalCount > 0 ? `${enabledCount}/${totalCount}` : "—"}
@@ -811,11 +816,16 @@ export function PermissionManager({
                     className={cn(
                       "inline-flex h-5 items-center justify-center rounded-xl px-2 text-[11px] font-medium tracking-tight",
                       sheetMember.role === "admin"
-                        ? "bg-[#D97757]/10 text-[#D97757]"
+                        ? "gap-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700"
                         : "bg-zinc-100 text-zinc-600",
                     )}
                   >
-                    {sheetMember.role === "admin" ? "管理员" : "成员"}
+                    {sheetMember.role === "admin" ? (
+                      <>
+                        <span className="size-1.5 rounded-full bg-[#D97757]" aria-hidden />
+                        管理员
+                      </>
+                    ) : "成员"}
                   </span>
                   <Button
                     variant="outline"
@@ -825,10 +835,7 @@ export function PermissionManager({
                     className="h-8 rounded-xl border-zinc-200 px-3 text-[12px] text-zinc-700 hover:bg-zinc-50"
                   >
                     {aiSuggestion?.loading ? (
-                      <>
-                        <Loader2 className="mr-1 size-3.5 animate-spin" />
-                        思考中…
-                      </>
+                      <div className="space-y-2"><div className="h-10 rounded-lg bg-zinc-100" /><div className="h-10 rounded-lg bg-zinc-100" /><div className="h-10 rounded-lg bg-zinc-100" /></div>
                     ) : (
                       <>
                         <Sparkles className="mr-1 size-3.5" />
@@ -936,10 +943,7 @@ export function PermissionManager({
                                 className="h-8 shrink-0 rounded-xl border-zinc-200 px-3 text-[12px] text-zinc-700 hover:bg-zinc-50"
                               >
                                 {isBusy ? (
-                                  <>
-                                    <Loader2 className="mr-1 size-3.5 animate-spin" />
-                                    执行中…
-                                  </>
+                                  <div className="space-y-2"><div className="h-10 rounded-lg bg-zinc-100" /><div className="h-10 rounded-lg bg-zinc-100" /><div className="h-10 rounded-lg bg-zinc-100" /></div>
                                 ) : (
                                   "执行"
                                 )}
@@ -1144,7 +1148,7 @@ export function PermissionManager({
                     取消
                   </Button>
                   <Button
-                    className="h-9 rounded-xl bg-zinc-950 px-4 text-[12px] text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-[1px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0"
+                    className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
                     onClick={handleSaveSheet}
                     disabled={
                       !hasDraftChanges || !capabilities.canEditPermissions || actionDisabled
@@ -1229,7 +1233,7 @@ export function PermissionManager({
               取消
             </Button>
             <Button
-              className="rounded-xl bg-zinc-950 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-[1px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0"
+              className="rounded-lg bg-[#D97757] text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
               onClick={handleResetPassword}
               disabled={isResettingPassword}
             >

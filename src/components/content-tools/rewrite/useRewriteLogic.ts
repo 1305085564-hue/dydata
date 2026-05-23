@@ -152,6 +152,9 @@ export function useRewriteLogic() {
   const [messagesLoading, setMessagesLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const currentConversationIdRef = useRef<string | null>(null);
+  const messageCacheRef = useRef(new Map<string, Message[]>());
+  const pendingFetchRef = useRef(new Map<string, Promise<void>>());
   const hasAssistantMessages = messages.some(
     (item) => item.role === 'assistant' && !item.id.startsWith('stream-')
   );
@@ -188,6 +191,10 @@ export function useRewriteLogic() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, messagesLoading, isSending]);
+
+  useEffect(() => {
+    currentConversationIdRef.current = currentConversationId;
+  }, [currentConversationId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -235,7 +242,13 @@ export function useRewriteLogic() {
 
     void fetchData();
     void fetchConversations();
+    // fetchConversations 只在首屏初始化使用一次，这里保持稳定首屏行为。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function cacheConversationMessages(conversationId: string, nextMessages: Message[]) {
+    messageCacheRef.current.set(conversationId, nextMessages);
+  }
 
   async function fetchConversations() {
     try {
@@ -245,70 +258,127 @@ export function useRewriteLogic() {
       }
       const data = await res.json();
       if (data?.conversations) {
-        setConversations(sortConversations(data.conversations));
+        const nextConversations = sortConversations(data.conversations);
+        setConversations(nextConversations);
+        nextConversations.slice(0, 3).forEach((conversation) => {
+          void prefetchConversation(conversation.id);
+        });
       }
     } catch (error) {
       console.warn('⚠️ 获取会话列表失败', error);
     }
   }
 
-  async function fetchMessages(conversationId: string) {
-    setMessagesLoading(true);
-    try {
-      const res = await fetch(`/api/content-tools/rewrite/conversations/${conversationId}/messages`, {
-        cache: 'no-store',
-      });
-      if (!res.ok) {
-        const error = new Error(await readApiError(res, '消息加载失败'));
-        (error as Error & { status?: number }).status = res.status;
-        throw error;
-      }
-      const data = await res.json();
-      if (data?.conversation?.selected) {
-        applySelections(data.conversation.selected as Conversation['selected']);
-      }
-      if (data?.messages) {
-        setMessages(data.messages);
-      }
-    } catch (error) {
-      console.warn('⚠️ 获取消息失败', error);
-      const title =
-        error instanceof Error && 'status' in error && typeof error.status === 'number'
-          ? toStatusTitle(error.status)
-          : '消息加载失败';
-      setMessages([
-        {
-          id: 'error-msg',
-          conversationId,
-          role: 'system_note',
-          content: `⚠️ ${title}：${error instanceof Error ? error.message : '请尝试刷新页面或重新选择会话。'}`,
-          createdAt: new Date().toISOString(),
-          generationMode: null,
-          status: 'failed',
-          requestSnapshot: null,
-          errorMessage: error instanceof Error ? error.message : 'Network Error',
-          structuredResult: null,
-        },
-      ]);
-    } finally {
-      setMessagesLoading(false);
+  async function fetchMessages(
+    conversationId: string,
+    options?: { silent?: boolean; applyToView?: boolean }
+  ) {
+    const existing = pendingFetchRef.current.get(conversationId);
+    if (existing) {
+      await existing;
+      return;
     }
+
+    const task = (async () => {
+      if (!options?.silent) {
+        setMessagesLoading(true);
+      }
+      try {
+        const res = await fetch(`/api/content-tools/rewrite/conversations/${conversationId}/messages`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) {
+          const error = new Error(await readApiError(res, '消息加载失败'));
+          (error as Error & { status?: number }).status = res.status;
+          throw error;
+        }
+        const data = await res.json();
+        const nextConversation = data?.conversation as Conversation | undefined;
+        const nextMessages = (data?.messages ?? []) as Message[];
+
+        if (nextConversation) {
+          setConversations((prev) => upsertConversation(prev, nextConversation));
+        }
+
+        cacheConversationMessages(conversationId, nextMessages);
+
+        if (options?.applyToView && currentConversationIdRef.current === conversationId) {
+          if (nextConversation?.selected) {
+            applySelections(nextConversation.selected);
+          }
+          setMessages(nextMessages);
+        }
+      } catch (error) {
+        if (options?.silent) {
+          console.warn('⚠️ 预取消息失败', error);
+          return;
+        }
+
+        console.warn('⚠️ 获取消息失败', error);
+        const title =
+          error instanceof Error && 'status' in error && typeof error.status === 'number'
+            ? toStatusTitle(error.status)
+            : '消息加载失败';
+        setMessages([
+          {
+            id: 'error-msg',
+            conversationId,
+            role: 'system_note',
+            content: `⚠️ ${title}：${error instanceof Error ? error.message : '请尝试刷新页面或重新选择会话。'}`,
+            createdAt: new Date().toISOString(),
+            generationMode: null,
+            status: 'failed',
+            requestSnapshot: null,
+            errorMessage: error instanceof Error ? error.message : 'Network Error',
+            structuredResult: null,
+          },
+        ]);
+      } finally {
+        if (!options?.silent) {
+          setMessagesLoading(false);
+        }
+        pendingFetchRef.current.delete(conversationId);
+      }
+    })();
+
+    pendingFetchRef.current.set(conversationId, task);
+    await task;
   }
 
   function handleSelectConversation(conversation: Conversation) {
+    currentConversationIdRef.current = conversation.id;
     setCurrentConversationId(conversation.id);
-    setMessages([]);
     applySelections(conversation.selected);
-    void fetchMessages(conversation.id);
+    const cached = messageCacheRef.current.get(conversation.id);
+    if (cached) {
+      setMessages(cached);
+      setMessagesLoading(false);
+      void fetchMessages(conversation.id, { silent: true, applyToView: true });
+      return;
+    }
+
+    setMessages([]);
+    void fetchMessages(conversation.id, { applyToView: true });
   }
 
   function handleNewConversation() {
+    currentConversationIdRef.current = null;
     setCurrentConversationId(null);
     setMessages([]);
+    setMessagesLoading(false);
     setInputText('');
     if (bootstrap) {
       resetToBootstrapDefaults(bootstrap);
     }
+  }
+
+  async function prefetchConversation(conversationIdOrItem: string | Conversation) {
+    const conversationId =
+      typeof conversationIdOrItem === 'string' ? conversationIdOrItem : conversationIdOrItem.id;
+    if (messageCacheRef.current.has(conversationId) || pendingFetchRef.current.has(conversationId)) {
+      return;
+    }
+    await fetchMessages(conversationId, { silent: true, applyToView: false });
   }
 
   function handleToggleFixedMode(fixedModeId: string) {
@@ -390,10 +460,18 @@ export function useRewriteLogic() {
             ...tempUserMsg,
             conversationId: returnedConversationId || tempUserMsg.conversationId,
           };
-          return [...filtered, resolvedUserMsg, data.message as Message];
+          const nextMessages = [...filtered, resolvedUserMsg, data.message as Message];
+          if (returnedConversationId) {
+            cacheConversationMessages(returnedConversationId, nextMessages);
+          }
+          return nextMessages;
         }
 
-        return [...filtered, data.message as Message];
+        const nextMessages = [...filtered, data.message as Message];
+        if (returnedConversationId) {
+          cacheConversationMessages(returnedConversationId, nextMessages);
+        }
+        return nextMessages;
       });
     }
   }
@@ -590,6 +668,7 @@ export function useRewriteLogic() {
       handleToggleFixedMode,
       handleSend,
       handleCopy,
+      prefetchConversation,
     }
   };
 }

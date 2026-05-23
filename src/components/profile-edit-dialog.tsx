@@ -87,7 +87,7 @@ export function ProfileEditDialog({
           ) : trigger === "icon" ? (
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-lg p-1 text-zinc-400 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-px hover:bg-zinc-100 hover:text-zinc-600 active:translate-y-0"
+              className="inline-flex items-center justify-center rounded-lg p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-600 active:translate-y-0"
               aria-label="编辑资料"
             >
               <Pencil className="size-3.5 stroke-[1.5]" />
@@ -136,7 +136,7 @@ export function ProfileEditDialog({
             <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
               <div
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white",
+                  "flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white",
                 )}
               >
                 {currentName.trim().slice(0, 1).toUpperCase() || "?"}
@@ -151,7 +151,7 @@ export function ProfileEditDialog({
               </div>
               <span
                 className={cn(
-                  "shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                  "shrink-0 rounded-full border px-2.5 py-0.5 text-[12px] font-medium uppercase tracking-wider",
                   roleBadgeClass(role),
                 )}
               >

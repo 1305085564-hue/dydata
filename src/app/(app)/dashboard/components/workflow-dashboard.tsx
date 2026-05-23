@@ -16,6 +16,13 @@ import {
   getLatestSubmission,
 } from "./status-theme";
 
+interface ReviewFeedback {
+  videoTitle: string;
+  mainIssues: string;
+  nextAction: string;
+  managerComment?: string;
+}
+
 interface WorkflowDashboardProps {
   mine: SopMemberStatus | null;
   today: string;
@@ -24,6 +31,7 @@ interface WorkflowDashboardProps {
   activeCheckpoint: SopCheckpoint;
   onSubmitted: (nextMine?: SopMemberStatus) => void;
   dataReport: React.ReactNode;
+  reviewFeedback?: ReviewFeedback | null;
 }
 
 /**
@@ -38,6 +46,7 @@ export function WorkflowDashboard({
   activeCheckpoint,
   onSubmitted,
   dataReport,
+  reviewFeedback,
 }: WorkflowDashboardProps) {
   const [topicText, setTopicText] = useState(
     () => getLatestSubmission(mine ?? emptyMember(today), "TOPIC")?.topic_text ?? "",
@@ -135,7 +144,7 @@ export function WorkflowDashboard({
           <div className="flex justify-center">
             <StatusBadge status={statuses.MORNING_REVIEW} />
           </div>
-          <h3 className="mt-4 text-[20px] font-semibold tracking-tight text-zinc-800">
+          <h3 className="mt-4 text-[18px] font-semibold tracking-tight text-zinc-800">
             早会复盘
           </h3>
           <p className="mx-auto mt-2 max-w-xl text-[13px] leading-[1.7] text-zinc-500">
@@ -144,7 +153,7 @@ export function WorkflowDashboard({
           <button
             onClick={() => submitCheckpoint("MORNING_REVIEW")}
             disabled={isSubmitting || isPending}
-            className="mt-8 rounded-[10px] bg-zinc-900 px-10 py-3 text-[12px] font-medium uppercase tracking-[0.1em] text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="mt-8 rounded-lg bg-[#D97757] px-10 py-3 text-[12px] font-medium uppercase tracking-[0.1em] text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             确认早会完成
           </button>
@@ -156,11 +165,11 @@ export function WorkflowDashboard({
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <StatusBadge status={activeStatus} />
-                  <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">
+                  <h3 className="text-[18px] font-semibold tracking-tight text-zinc-800">
                     {stageTitle}
                   </h3>
                 </div>
-                <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                   #{scriptSubmission?.id.slice(0, 8) ?? "DY-SOP"}
                 </div>
               </div>
@@ -203,7 +212,7 @@ export function WorkflowDashboard({
                     <button
                       onClick={() => submitCheckpoint("TOPIC")}
                       disabled={isSubmitting || isPending}
-                      className="rounded-[10px] border border-zinc-200 bg-zinc-50 px-5 py-2.5 text-[11px] font-medium text-zinc-600 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                      className="rounded-[10px] border border-zinc-200 bg-zinc-50 px-5 py-2.5 text-[12px] font-medium text-zinc-600 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                     >
                       同步选题修改
                     </button>
@@ -212,7 +221,7 @@ export function WorkflowDashboard({
                 <button
                   onClick={() => submitCheckpoint(activeCheckpoint)}
                   disabled={isSubmitting || isPending}
-                  className="flex items-center justify-center gap-2 rounded-[10px] bg-zinc-900 px-10 py-3 text-[12px] font-medium uppercase tracking-[0.1em] text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-[#D97757] px-10 py-3 text-[12px] font-medium uppercase tracking-[0.1em] text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                 >
                   确认提交 <ArrowUpRight size={14} className="stroke-[1.5]" />
                 </button>
@@ -222,7 +231,7 @@ export function WorkflowDashboard({
 
           <div className="col-span-12 lg:col-span-4">
             <div className="h-full rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-              <h4 className="mb-8 border-b border-zinc-100 pb-4 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+              <h4 className="mb-8 border-b border-zinc-100 pb-4 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                 状态通知
               </h4>
               <div className="space-y-5">
@@ -237,7 +246,7 @@ export function WorkflowDashboard({
                       )}
                     >
                       <div className="mb-2 flex items-center justify-between">
-                        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                        <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                           {checkpoint.label}
                         </span>
                         <StatusBadge status={statuses[checkpoint.id]} minimal />
@@ -249,6 +258,42 @@ export function WorkflowDashboard({
                     </div>
                   );
                 })}
+              </div>
+
+              {/* 复盘反馈区 */}
+              <div className="mt-8 border-t border-zinc-100 pt-6">
+                <h4 className="mb-4 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                  复盘反馈
+                </h4>
+                {reviewFeedback ? (
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="text-[12px] text-zinc-400">上一条视频</div>
+                      <div className="mt-1 text-[13px] font-medium text-zinc-800 line-clamp-2">
+                        {reviewFeedback.videoTitle}
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="text-[12px] text-zinc-400">主要问题</div>
+                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.mainIssues}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="text-[12px] text-zinc-400">下一条动作</div>
+                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.nextAction}</div>
+                    </div>
+                    {reviewFeedback.managerComment && (
+                      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                        <div className="text-[12px] text-zinc-400">管理者反馈</div>
+                        <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.managerComment}</div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-center">
+                    <p className="text-[13px] text-zinc-400">暂无复盘反馈</p>
+                    <p className="mt-1 text-[12px] text-zinc-400">完成视频发布后将收到改进建议</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

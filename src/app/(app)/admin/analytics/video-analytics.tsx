@@ -299,23 +299,23 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                   return (
                     <div key={video.id} className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background/80 p-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">TOP {video.rank}</span>
-                        <Badge variant={getStatusVariant(video.anomaly_status)} className="text-[10px]">{getStatusLabel(video.anomaly_status)}</Badge>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[12px] font-medium text-muted-foreground">TOP {video.rank}</span>
+                        <Badge variant={getStatusVariant(video.anomaly_status)} className="text-[12px]">{getStatusLabel(video.anomaly_status)}</Badge>
                       </div>
                       <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-foreground">
                         {video.video_title || "未命名视频"}
                       </p>
                       <div className="grid grid-cols-2 gap-1.5">
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
-                          <p className="text-[10px] text-muted-foreground">24h播放</p>
+                          <p className="text-[12px] text-muted-foreground">24h播放</p>
                           <p className="text-[12px] font-medium font-mono tabular-nums">{formatCompactNumber(video.snapshot24h.play_count)}</p>
                         </div>
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
-                          <p className="text-[10px] text-muted-foreground">涨粉</p>
+                          <p className="text-[12px] text-muted-foreground">涨粉</p>
                           <p className="text-[12px] font-medium font-mono tabular-nums">{formatCompactNumber(video.snapshot24h.follower_gain)}</p>
                         </div>
                       </div>
-                      <p className="truncate text-[10px] text-muted-foreground">{video.accounts?.name} · {video.profiles?.name ?? "未知"}</p>
+                      <p className="truncate text-[12px] text-muted-foreground">{video.accounts?.name} · {video.profiles?.name ?? "未知"}</p>
                     </div>
                   );
                 })}

@@ -1,4 +1,26 @@
-import type { ViolationCase, ViolationStatus, ViolationSubmitter, ViolationTeam } from "./types";
+import type { ViolationAccount, ViolationCase, ViolationStatus, ViolationSubmitter, ViolationTeam } from "./types";
+
+const UUID_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function looksLikeAccountCode(value: string | null | undefined) {
+  if (!value) return true;
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  if (UUID_LIKE.test(trimmed)) return true;
+  if (/^[0-9a-f]{20,}$/i.test(trimmed)) return true;
+  return false;
+}
+
+export function renderAccountLabel(account: ViolationAccount, index: number, total: number) {
+  const candidates = [account.display_name, account.name];
+  for (const candidate of candidates) {
+    if (candidate && !looksLikeAccountCode(candidate)) return candidate;
+  }
+  const direction = account.content_direction?.trim();
+  if (direction) {
+    return total > 1 ? `抖音-${direction} ${index + 1}号` : `抖音-${direction}`;
+  }
+  return total > 1 ? `账号 ${index + 1}` : "我的账号";
+}
 
 export const VIOLATION_CATEGORIES = ["下粉", "直播", "短视频", "其他"] as const;
 

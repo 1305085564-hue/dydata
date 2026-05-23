@@ -25,6 +25,7 @@ export function AnalyticsSections({
   useEffect(() => {
     if (!focusSectionId) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExpandedSections((prev) => ({
       ...prev,
       [focusSectionId]: true,

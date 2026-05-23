@@ -32,33 +32,33 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
     <div className="space-y-12">
       <div className="flex flex-col justify-between gap-6 px-2 lg:flex-row lg:items-end">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
+          <div className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-[12px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
             <Activity size={12} className="stroke-[1.5]" /> Global Efficiency Index
           </div>
-          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
+          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">
             全域生产矩阵
           </h2>
         </div>
         <div className="flex items-center gap-5 rounded-2xl border border-zinc-200 bg-white px-8 py-3 shadow-sm">
           <div className="text-center">
-            <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+            <span className="mb-1 block text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
               产出率
             </span>
-            <span className="text-[20px] font-semibold font-mono tabular-nums text-zinc-800">
+            <span className="text-[18px] font-semibold font-mono tabular-nums text-zinc-800">
               {matrixRate(rows)}%
             </span>
           </div>
           <div className="mx-2 h-8 w-px bg-zinc-200" />
           <div className="text-center">
-            <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
+            <span className="mb-1 block text-[12px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
               风险节点
             </span>
-            <span className="text-[20px] font-semibold font-mono tabular-nums text-[#C9604D]">
+            <span className="text-[18px] font-semibold font-mono tabular-nums text-[#C9604D]">
               {String(riskCount).padStart(2, "0")}
             </span>
           </div>
-          <button className="ml-4 rounded-[10px] border border-zinc-200 bg-white p-2 text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5">
+ <button className="ml-4 rounded-[10px] border border-zinc-200 bg-white p-2 text-zinc-500 transition-[background-color, color, border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5">
             <Filter size={16} className="stroke-[1.5]" />
           </button>
         </div>
@@ -69,18 +69,18 @@ export function GlobalMatrix({ rows, onOpenTarget }: GlobalMatrixProps) {
           <table className="w-full min-w-[980px] border-collapse text-left">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500">
-                <th className="sticky left-0 z-20 border-r border-zinc-100 bg-zinc-50 p-8 text-[10px] font-medium uppercase tracking-[0.25em]">
+                <th className="sticky left-0 z-20 border-r border-zinc-100 bg-zinc-50 p-8 text-[12px] font-medium uppercase tracking-[0.25em]">
                   Influencer
                 </th>
                 {MATRIX_CHECKPOINTS.map((cp) => (
                   <th
                     key={cp.id}
-                    className="border-r border-zinc-100 p-8 text-center text-[10px] font-medium uppercase tracking-[0.25em]"
+                    className="border-r border-zinc-100 p-8 text-center text-[12px] font-medium uppercase tracking-[0.25em]"
                   >
                     {cp.label}
                   </th>
                 ))}
-                <th className="p-8 text-right text-[10px] font-medium uppercase tracking-[0.25em]">
+                <th className="p-8 text-right text-[12px] font-medium uppercase tracking-[0.25em]">
                   Metrics
                 </th>
               </tr>

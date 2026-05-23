@@ -29,7 +29,7 @@ export default function DemoAIAssistantPage() {
             <CardHeader className="border-b border-[var(--color-border)]">
               <CardTitle className="flex items-center justify-between gap-3 text-base">
                 <span>对话区</span>
-                <Badge variant="outline" className="rounded-full bg-zinc-50 text-[#D99E55]">
+                <Badge variant="outline" className="rounded-lg bg-zinc-50 text-[#D99E55]">
                   演示只读
                 </Badge>
               </CardTitle>

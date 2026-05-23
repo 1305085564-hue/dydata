@@ -250,6 +250,7 @@ export function VideoSubmitPanel({
 
   useEffect(() => {
     if (!hasPendingExemption) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissedPendingExemption(false);
       try {
         window.localStorage.removeItem("dydata:dismissed-pending-exemption");
@@ -595,7 +596,7 @@ export function VideoSubmitPanel({
             <div className="space-y-6 px-6 py-7 sm:px-8 sm:py-8">
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                 <div className="min-w-0">
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
                     今日工作台
                   </div>
                   <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">今日提交</h2>
@@ -618,7 +619,7 @@ export function VideoSubmitPanel({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13px] font-semibold leading-tight text-zinc-800">{userDisplayName}</span>
-                        <span className="mt-0.5 block truncate text-[11px] font-medium text-zinc-400">
+                        <span className="mt-0.5 block truncate text-[12px] font-medium text-zinc-400">
                           {selectedAccount?.display_name ?? "未选择账号"}
                         </span>
                       </span>
@@ -630,7 +631,7 @@ export function VideoSubmitPanel({
                         role="listbox"
                         className="absolute right-0 top-[calc(100%+8px)] z-40 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm"
                       >
-                        <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">切换账号</div>
+                        <div className="px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.2em] text-zinc-400">切换账号</div>
                         <div className="max-h-72 space-y-1 overflow-y-auto">
                           {accountCards.map(({ account }) => {
                             const isSelected = account.id === selectedAccountId;
@@ -649,7 +650,7 @@ export function VideoSubmitPanel({
                               >
                                 <span className="min-w-0">
                                   <span className="block truncate text-[13px] font-semibold">{account.display_name}</span>
-                                  <span className={cn("mt-0.5 block truncate text-[11px] font-medium", isSelected ? "text-white/70" : "text-zinc-400")}>
+                                  <span className={cn("mt-0.5 block truncate text-[12px] font-medium", isSelected ? "text-white/70" : "text-zinc-400")}>
                                     {account.content_direction ?? "未设置方向"}
                                   </span>
                                 </span>
@@ -667,17 +668,17 @@ export function VideoSubmitPanel({
               <div className="rounded-2xl border border-zinc-200 bg-[var(--color-bg)] px-4 py-4">
                 <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
                   <div className="space-y-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400">今天</div>
+                    <div className="text-[12px] font-semibold uppercase tracking-[0.22em] text-zinc-400">今天</div>
                     <button
                       type="button"
                       onClick={openDatePicker}
                       className="group inline-flex items-center gap-2 rounded-lg px-0 py-1 text-left transition-opacity duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80"
                       aria-label="选择填报日期"
                     >
-                      <span className="text-[26px] font-semibold font-mono tabular-nums tracking-tight text-[#D97757] sm:text-[30px]">
+                      <span className="text-[24px] font-semibold font-mono tabular-nums tracking-tight text-[#D97757] sm:text-[30px]">
                         {activeBizDate}
                       </span>
-                      <CalendarDays className="size-5 stroke-[1.5] text-[#D97757] transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:-translate-y-0.5" />
+                      <CalendarDays className="size-5 stroke-[1.5] text-[#D97757]" />
                     </button>
                     <input
                       ref={dateInputRef}
@@ -728,7 +729,7 @@ export function VideoSubmitPanel({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[11px] font-medium text-[#D99E55]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[12px] font-medium text-[#D99E55]">
                         <Clock className="size-3.5 stroke-[1.5]" />
                         申请审批中
                       </span>
@@ -740,7 +741,7 @@ export function VideoSubmitPanel({
                   <button
                     type="button"
                     onClick={dismissPendingExemption}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                   >
                     <X className="size-3.5 stroke-[1.5]" />
                     关闭
@@ -754,7 +755,7 @@ export function VideoSubmitPanel({
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[11px] font-medium text-[#6FAA7D]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
                         <FilePenLine className="size-3.5 stroke-[1.5]" />
                         今日数据已提交
                       </span>
@@ -771,11 +772,11 @@ export function VideoSubmitPanel({
                     </div>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">播放量</div>
+                        <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">播放量</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.playCount ?? "--"}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">互动总量</div>
+                        <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">互动总量</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">
                           {(primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
@@ -784,11 +785,11 @@ export function VideoSubmitPanel({
                         </div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">涨粉</div>
+                        <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">涨粉</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.followerGain ?? "--"}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">完播率</div>
+                        <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">完播率</div>
                         <div className="mt-1 text-[13px] font-semibold font-mono tabular-nums text-zinc-800">{primarySummary.completionRate ?? "--"}</div>
                       </div>
                     </div>
@@ -903,7 +904,7 @@ export function VideoSubmitPanel({
                 <h4 className="text-[18px] font-semibold uppercase tracking-tight text-zinc-800">
                   卡点 {activeCheckpointId} 记录模块
                 </h4>
-                <p className="mt-2 max-w-xs text-[10px] font-medium uppercase leading-relaxed tracking-widest text-zinc-400">
+                <p className="mt-2 max-w-xs text-[12px] font-medium uppercase leading-relaxed tracking-widest text-zinc-400">
                   目前暂为线下执行环节
                   <br />
                   <span className="text-zinc-700">Phase 2: 全量数据实时同步开发中</span>
@@ -939,7 +940,7 @@ export function VideoSubmitPanel({
             <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
                     每日详情
                   </p>
                   <h3 className="text-lg font-semibold tracking-[-0.02em] text-zinc-800">

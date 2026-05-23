@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 
 import { jsonBadRequest, parseBucket, parseWeekStart, requireAdminServiceClient, unwrapRpc } from "../_shared";
 
+/**
+ * @deprecated AI 生成逻辑未实现，前端已隐藏入口；保留接口供未来 AI 接通后复用。
+ */
 export async function GET(request: NextRequest) {
   const weekStart = parseWeekStart(request);
   if (!weekStart) return jsonBadRequest("week_start 必须是 YYYY-MM-DD");

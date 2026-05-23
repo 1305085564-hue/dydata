@@ -1,6 +1,13 @@
 import type { ViolationStatus } from "@/types";
+import {
+  isCaseLibraryPromotionLevel,
+  isCaseLibraryUsageState,
+  type CaseLibraryPromotionLevel,
+  type CaseLibraryUsageState,
+} from "@/lib/case-library/shared";
 
 import {
+  isCasePlatform,
   isPlainObject,
   isViolationCategory,
   isViolationRiskLevel,
@@ -9,6 +16,7 @@ import {
   normalizeOptionalText,
   normalizeStringArray,
 } from "./api";
+import type { CasePlatform } from "./api";
 
 export type CreateViolationPayload = {
   script_text: string;
@@ -19,6 +27,7 @@ export type CreateViolationPayload = {
   screenshot_paths: string[];
   result: string | null;
   tags: string[];
+  platforms: CasePlatform[];
 };
 
 export type CreateViolationValidationResult =
@@ -52,6 +61,24 @@ export function validateCreateViolationPayload(body: unknown): CreateViolationVa
     : null;
   const screenshotPaths = normalizeStringArray(body.screenshot_paths, MAX_SCREENSHOT_COUNT, 300);
 
+  let platforms: CasePlatform[] = ["抖音"];
+  if (body.platforms !== undefined) {
+    if (!Array.isArray(body.platforms)) {
+      return { ok: false, message: "platforms 不合法" };
+    }
+    const collected: CasePlatform[] = [];
+    for (const candidate of body.platforms) {
+      if (!isCasePlatform(candidate)) {
+        return { ok: false, message: "platforms 包含未知平台" };
+      }
+      if (!collected.includes(candidate)) collected.push(candidate);
+    }
+    if (collected.length === 0) {
+      return { ok: false, message: "platforms 至少选 1 个" };
+    }
+    platforms = collected;
+  }
+
   return {
     ok: true,
     data: {
@@ -63,6 +90,7 @@ export function validateCreateViolationPayload(body: unknown): CreateViolationVa
       screenshot_paths: screenshotPaths,
       result: normalizeOptionalText(body.result, 500),
       tags: normalizeStringArray(body.tags, 10, 30),
+      platforms,
     },
   };
 }
@@ -103,8 +131,11 @@ export function validateCreateTestRecordPayload(body: unknown): CreateTestRecord
 export type ReviewViolationPayload = {
   status: Extract<ViolationStatus, "verified" | "rejected" | "archived">;
   risk_level: "high" | "medium" | "low" | null;
+  usage_state?: CaseLibraryUsageState;
+  promotion_level?: CaseLibraryPromotionLevel;
   admin_conclusion: string | null;
   suggested_action: string | null;
+  reason_tag_ids?: string[];
 };
 
 export type ReviewViolationValidationResult =
@@ -131,13 +162,54 @@ export function validateReviewViolationPayload(body: unknown): ReviewViolationVa
     return { ok: false, message: "risk_level 不合法" };
   }
 
+  const usageState =
+    body.usage_state === undefined
+      ? undefined
+      : isCaseLibraryUsageState(body.usage_state)
+        ? body.usage_state
+        : null;
+
+  if (body.usage_state !== undefined && usageState === null) {
+    return { ok: false, message: "usage_state 不合法" };
+  }
+
+  const promotionLevel =
+    body.promotion_level === undefined
+      ? undefined
+      : isCaseLibraryPromotionLevel(body.promotion_level)
+        ? body.promotion_level
+        : null;
+
+  if (body.promotion_level !== undefined && promotionLevel === null) {
+    return { ok: false, message: "promotion_level 不合法" };
+  }
+
+  const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  let reasonTagIds: string[] | undefined;
+  if (body.reason_tag_ids !== undefined) {
+    if (!Array.isArray(body.reason_tag_ids)) {
+      return { ok: false, message: "reason_tag_ids 不合法" };
+    }
+    const collected: string[] = [];
+    for (const candidate of body.reason_tag_ids) {
+      if (typeof candidate !== "string" || !UUID_PATTERN.test(candidate.trim())) {
+        return { ok: false, message: "reason_tag_ids 包含非法 UUID" };
+      }
+      collected.push(candidate.trim());
+    }
+    reasonTagIds = Array.from(new Set(collected)).slice(0, 10);
+  }
+
   return {
     ok: true,
     data: {
       status: body.status,
       risk_level: riskLevel,
+      ...(usageState ? { usage_state: usageState } : {}),
+      ...(promotionLevel ? { promotion_level: promotionLevel } : {}),
       admin_conclusion: normalizeOptionalText(body.admin_conclusion, 3000),
       suggested_action: normalizeOptionalText(body.suggested_action, 3000),
+      ...(reasonTagIds ? { reason_tag_ids: reasonTagIds } : {}),
     },
   };
 }

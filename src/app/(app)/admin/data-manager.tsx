@@ -317,7 +317,7 @@ export function DataManager({
       return (
         <Badge
           variant="danger"
-          className="ml-1 cursor-help px-1 py-0 text-[10px]"
+          className="ml-1 cursor-help px-1 py-0 text-[12px]"
           title={tip}
         >
           暴涨
@@ -328,7 +328,7 @@ export function DataManager({
     return (
       <Badge
         variant="warning"
-        className="ml-1 cursor-help px-1 py-0 text-[10px]"
+        className="ml-1 cursor-help px-1 py-0 text-[12px]"
         title={tip}
       >
         暴跌
@@ -342,12 +342,12 @@ export function DataManager({
     return (
       <div className="flex flex-wrap gap-1">
         {report.account?.content_direction ? (
-          <Badge variant="outline" className="border-zinc-200 text-[10px] text-zinc-500">
+          <Badge variant="outline" className="border-zinc-200 text-[12px] text-zinc-500">
             {report.account.content_direction}
           </Badge>
         ) : null}
         {report.account?.presentation_format ? (
-          <Badge variant="outline" className="border-zinc-200 text-[10px] text-zinc-500">
+          <Badge variant="outline" className="border-zinc-200 text-[12px] text-zinc-500">
             {report.account.presentation_format}
           </Badge>
         ) : null}

@@ -79,16 +79,15 @@ export function RewriteWorkbench() {
   const [configOpen, setConfigOpen] = useState(false);
   const [historyPinned, setHistoryPinned] = useState(false);
   const [configPinned, setConfigPinned] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const historyDefault = getStoredDefault(STORAGE_KEY_HISTORY, false);
     const configDefault = getStoredDefault(STORAGE_KEY_CONFIG, false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistoryOpen(historyDefault);
     setConfigOpen(configDefault);
     setHistoryPinned(historyDefault);
     setConfigPinned(configDefault);
-    setMounted(true);
   }, []);
 
   const toggleHistory = useCallback(() => {
@@ -165,8 +164,8 @@ export function RewriteWorkbench() {
             className={cn(
               'hidden lg:inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
               historyOpen
-                ? 'bg-zinc-200 text-zinc-800'
-                : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800'
+                ? 'bg-zinc-300 text-zinc-900'
+                : 'text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900'
             )}
             title={historyOpen ? '收起历史栏' : '展开历史栏'}
           >
@@ -187,7 +186,7 @@ export function RewriteWorkbench() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={actions.handleNewConversation}
-            className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+ className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
             title="开启新对话"
           >
             <Plus className="h-3 w-3" />
@@ -201,7 +200,7 @@ export function RewriteWorkbench() {
               'inline-flex items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-[11px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0',
               configOpen
                 ? 'border-[#D97757] bg-[#D97757] text-white shadow-sm'
-                : 'border-zinc-200 bg-white text-zinc-500 shadow-sm hover:border-zinc-300 hover:text-zinc-800'
+                : 'border-zinc-200 bg-white text-zinc-500 shadow-sm hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900'
             )}
             title={configOpen ? '收起配置栏' : '展开配置栏'}
           >
@@ -212,7 +211,7 @@ export function RewriteWorkbench() {
           {/* Layout settings dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-700"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-200 hover:text-zinc-800"
               title="布局设置"
             >
               <Layout className="h-3.5 w-3.5" />
@@ -260,7 +259,7 @@ export function RewriteWorkbench() {
         <aside
           className={cn(
             'relative hidden shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 lg:flex',
-            historyOpen ? 'w-[240px]' : 'w-0 overflow-hidden'
+            historyOpen ? 'w-[260px]' : 'w-0 overflow-hidden'
           )}
           style={{
             transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -273,6 +272,7 @@ export function RewriteWorkbench() {
             featureLabel={state.bootstrap.feature.label}
             onNewConversation={actions.handleNewConversation}
             onSelectConversation={actions.handleSelectConversation}
+            onPrefetchConversation={actions.prefetchConversation}
             getConversationTag={getConversationTag}
           />
         </aside>
@@ -309,7 +309,7 @@ export function RewriteWorkbench() {
         <aside
           className={cn(
             'relative hidden shrink-0 flex-col border-l border-zinc-200 bg-white lg:flex',
-            configOpen ? 'w-[260px]' : 'w-0 overflow-hidden'
+            configOpen ? 'w-[280px]' : 'w-0 overflow-hidden'
           )}
           style={{
             transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',

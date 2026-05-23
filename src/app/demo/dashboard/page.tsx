@@ -40,7 +40,7 @@ export default function DemoDashboardPage() {
                 这里保留账号选择、截图导入、提交确认的完整位置关系，但在演示环境统一灰掉，避免产生真实数据。
               </p>
             </div>
-            <Badge variant="outline" className="rounded-full bg-zinc-50 text-[#D99E55]">
+            <Badge variant="outline" className="rounded-lg bg-zinc-50 text-[#D99E55]">
               只读
             </Badge>
           </CardHeader>

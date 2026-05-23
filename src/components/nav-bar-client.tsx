@@ -86,7 +86,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
-              className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
+              className="active:translate-y-0 inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-white">
                 <Zap className="size-3.5 stroke-[1.5] fill-current" />
@@ -122,14 +122,14 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                   aria-haspopup="listbox"
                 >
                   <div className="hidden items-center gap-2 sm:flex">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white ">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white ">
                       {initial}
                     </div>
                     <div className="min-w-0 flex items-center gap-1.5">
                       <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
                       {selectedAccount && (
                         <>
-                          <span className="text-[10px] text-zinc-300">|</span>
+                          <span className="text-[12px] text-zinc-300">|</span>
                           <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
                         </>
                       )}
@@ -138,7 +138,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                   <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">
                     {name}
                   </span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white sm:hidden">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white sm:hidden">
                     {initial}
                   </div>
                   <ChevronDown
@@ -155,7 +155,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                     role="listbox"
                     className="absolute right-0 top-[calc(100%+6px)] z-50 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-sm"
                   >
-                    <div className="px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+                    <div className="px-2.5 py-1.5 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-400">
                       切换账号
                     </div>
                     <div className="max-h-64 space-y-0.5 overflow-y-auto">
@@ -210,14 +210,14 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                 <ProfileEditDialog currentName={name} role={role} trigger="menu-item">
                   <div className="group flex items-center gap-2 rounded-2xl border border-transparent px-2 py-1.5 transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-200 hover:bg-white">
                     <div className="hidden items-center gap-2 sm:flex">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white ">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white ">
                         {initial}
                       </div>
                       <div className="min-w-0 flex items-center gap-1.5">
                         <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
                         {selectedAccount && (
                           <>
-                            <span className="text-[10px] text-zinc-300">|</span>
+                            <span className="text-[12px] text-zinc-300">|</span>
                             <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
                           </>
                         )}
@@ -226,7 +226,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                     <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">
                       {name}
                     </span>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[10px] font-medium text-white sm:hidden">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white sm:hidden">
                       {initial}
                     </div>
                   </div>

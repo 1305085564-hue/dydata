@@ -257,7 +257,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                   <h3 className="text-[13px] font-semibold text-zinc-800">{item.title}</h3>
                 </div>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-medium ${
                     isWeak
                       ? "bg-zinc-50 text-[#D99E55]"
                       : "bg-zinc-50 text-[#6FAA7D]"

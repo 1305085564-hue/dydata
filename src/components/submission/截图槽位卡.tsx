@@ -87,6 +87,7 @@ export function SubmissionSlotCard({
 
   useEffect(() => {
     if (isProcessing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress((prev) => (prev === 100 ? 0 : prev));
       startTimeRef.current = performance.now();
       let frameId: number;
@@ -118,8 +119,10 @@ export function SubmissionSlotCard({
   useEffect(() => {
     if (!isProcessing) {
       if (status === "confirmed" || status === "failed" || status === "pending_confirm") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setProgress(100);
       } else if (status === "empty") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setProgress(0);
       }
     }
@@ -134,9 +137,9 @@ export function SubmissionSlotCard({
       initial={isError ? "initial" : undefined}
       animate={isError ? "animate" : undefined}
       className={cn(
-        "group/card relative overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "group/card relative overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
         // 默认态
-        !highlightActive && !isError && !isWarning && !isSuccess && "border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-16px_rgba(15,23,42,0.15)]",
+        !highlightActive && !isError && !isWarning && !isSuccess && "border-zinc-200",
         // 高亮态（已填充）
         highlightActive && !isEmpty && "border-[#D97757] shadow-[0_12px_32px_-12px_rgba(217,119,87,0.35)] -translate-y-0.5",
         // 高亮态（空槽位）
@@ -193,22 +196,22 @@ export function SubmissionSlotCard({
             {/* 悬浮标签：标题、状态等 */}
             <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1.5">
               <div className="flex items-center gap-1">
-                <span className="rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-zinc-700 backdrop-blur-md ring-1 ring-inset ring-zinc-200/80 shadow-sm">
+                <span className="rounded-full bg-white/85 px-2 py-0.5 text-[12px] font-semibold text-zinc-700 backdrop-blur-md ring-1 ring-inset ring-zinc-200/80 shadow-sm">
                   {title}
                 </span>
                 {required ? (
-                  <span className="rounded-full bg-[#D97757]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#D97757] backdrop-blur-md ring-1 ring-inset ring-[#D97757]/20">
+                  <span className="rounded-full bg-[#D97757]/10 px-1.5 py-0.5 text-[12px] font-semibold text-[#D97757] backdrop-blur-md ring-1 ring-inset ring-[#D97757]/20">
                     必传
                   </span>
                 ) : (
-                  <span className="rounded-full bg-zinc-100/80 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 backdrop-blur-md ring-1 ring-inset ring-zinc-200/80">
+                  <span className="rounded-full bg-zinc-100/80 px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 backdrop-blur-md ring-1 ring-inset ring-zinc-200/80">
                     选传
                   </span>
                 )}
               </div>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-md ring-1 ring-inset shadow-sm",
+                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[12px] font-semibold backdrop-blur-md ring-1 ring-inset shadow-sm",
                   isSuccess && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#6FAA7D]",
                   isError && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#C9604D]",
                   isWarning && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55]",
@@ -237,7 +240,7 @@ export function SubmissionSlotCard({
                       <div className="w-full h-full cursor-zoom-in relative group/img">
                         <img src={assetUrl} alt="截图预览" className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105" />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/30">
-                          <span className="bg-black/60 text-white text-[10px] px-2 py-1 rounded-full font-medium flex items-center gap-1">
+                          <span className="bg-black/60 text-white text-[12px] px-2 py-1 rounded-full font-medium flex items-center gap-1">
                             放大
                           </span>
                         </div>
@@ -268,7 +271,7 @@ export function SubmissionSlotCard({
                         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
                       />
                     </div>
-                    <p className="text-[10px] font-medium text-[#D97757] bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full ring-1 ring-inset ring-[#D97757]/20 shadow-sm">
+                    <p className="text-[12px] font-medium text-[#D97757] bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full ring-1 ring-inset ring-[#D97757]/20 shadow-sm">
                       AI 解析中 {Math.floor(Math.min(99, progress))}%
                     </p>
                   </div>
@@ -277,7 +280,7 @@ export function SubmissionSlotCard({
                     <div className="flex size-11 items-center justify-center rounded-2xl bg-white border border-zinc-200 text-zinc-400 shadow-sm transition-[color,border-color,box-shadow,transform] duration-200 group-hover:text-[#D97757] group-hover:border-[#D97757]/30 group-hover:shadow-[0_6px_16px_-6px_rgba(217,119,87,0.35)] group-hover:-translate-y-0.5">
                       <UploadCloud className="size-5" />
                     </div>
-                    <p className="text-[10px] font-medium text-zinc-500 px-2 text-center leading-tight transition-colors group-hover:text-zinc-700">
+                    <p className="text-[12px] font-medium text-zinc-500 px-2 text-center leading-tight transition-colors group-hover:text-zinc-700">
                       点击或拖拽上传
                     </p>
                     <p className="text-[9px] text-zinc-400 px-2 text-center leading-tight">
@@ -316,7 +319,7 @@ export function SubmissionSlotCard({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0 rounded-full text-zinc-300 transition-[color,background-color,transform] duration-150 hover:bg-zinc-100 hover:text-zinc-600 hover:scale-110"
+                  className="h-7 w-7 p-0 rounded-full text-zinc-300 transition-[color,background-color] duration-150 hover:bg-zinc-100 hover:text-zinc-600"
                   onClick={onDelete}
                 >
                   <Trash2 className="size-3.5" />
@@ -344,7 +347,7 @@ export function SubmissionSlotCard({
                     <button
                       type="button"
                       onClick={onRetry}
-                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
+                      className="active:translate-y-0 inline-flex h-6 items-center rounded-full bg-white px-3 text-[12px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
                     >
                       重新识别
                     </button>
@@ -354,7 +357,7 @@ export function SubmissionSlotCard({
                       onClick={() => {
                         if (onRetry) onRetry();
                       }}
-                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
+                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[12px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
                     >
                       重新识别
                     </button>
@@ -363,7 +366,7 @@ export function SubmissionSlotCard({
                     <button
                       type="button"
                       onClick={onManualFill}
-                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[10px] font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-zinc-600 hover:text-white hover:ring-zinc-600"
+                      className="active:translate-y-0 inline-flex h-6 items-center rounded-full bg-white px-3 text-[12px] font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-zinc-600 hover:text-white hover:ring-zinc-600"
                     >
                       手动填写
                     </button>
@@ -395,7 +398,7 @@ export function SubmissionSlotCard({
                 </ul>
               </div>
             ) : !isProcessing && !isError ? (
-              <div className="flex-1 rounded-xl bg-zinc-50/70 ring-1 ring-inset ring-zinc-200 flex items-center justify-center text-[10px] text-zinc-400 min-h-[60px]">
+              <div className="flex-1 rounded-xl bg-zinc-50/70 ring-1 ring-inset ring-zinc-200 flex items-center justify-center text-[12px] text-zinc-400 min-h-[60px]">
                 暂无识别结果
               </div>
             ) : null}

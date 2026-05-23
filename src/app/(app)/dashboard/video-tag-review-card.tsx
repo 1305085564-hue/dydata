@@ -97,7 +97,7 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onConfirmFailed
     <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
       <CardContent className="space-y-5 px-6 py-6 sm:px-7">
         <div className="space-y-1">
-          <h3 className="text-[20px] font-semibold tracking-tight text-zinc-800">AI 推荐标签</h3>
+          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-800">AI 推荐标签</h3>
           <p className="text-[13px] leading-[1.7] text-zinc-500">提交成功后可立即确认或微调，低置信度标签会标记为待确认。</p>
         </div>
 

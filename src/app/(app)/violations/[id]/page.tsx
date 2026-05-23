@@ -2,11 +2,19 @@ import Link from "next/link";
 import { ArrowLeft, TrendingUp, Eye, UserPlus, Repeat2, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getApiErrorMessage } from "@/lib/violations/errors";
-import { StatusBadge } from "../components/status-badge";
+import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
 import { PassRateBadge } from "../components/pass-rate-badge";
+import {
+  PromotionLevelChip,
+  ReviewStatusChip,
+  RiskLevelChip,
+  UsageStateBadge,
+} from "../components/case-state-badge";
 import { ScreenshotGallery } from "../components/screenshot-gallery";
 import { TestRecordForm } from "../components/test-record-form";
 import {
@@ -17,6 +25,8 @@ import {
   getSubmitterName,
   getTeamName,
 } from "../components/format";
+import { resolveConfidence } from "@/lib/case-library/confidence";
+import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
 import type {
   ViolationAccount,
   ViolationDetail,
@@ -25,6 +35,7 @@ import type {
 } from "../components/types";
 import { StatsCard, StatsGrid } from "./components/stats-card";
 import { DetailTabs } from "./components/detail-tabs";
+import { ReviewDecisionPanel } from "./components/review-decision-panel";
 import type { UsageRecordItem } from "./components/usage-timeline";
 import type { EventItem } from "./components/event-list";
 
@@ -46,6 +57,9 @@ type DetailRow = ViolationDetail & {
   total_follows?: number | null;
   usage_count?: number | null;
   weighted_conversion_rate?: number | null;
+  usage_state?: string | null;
+  promotion_level?: string | null;
+  platforms?: string[] | null;
 };
 
 async function loadCase(id: string): Promise<DetailRow | null> {
@@ -124,6 +138,26 @@ async function loadEvents(id: string): Promise<EventItem[]> {
 
   if (error || !data) return [];
   return data as EventItem[];
+}
+
+type ReasonTagBrief = { id: string; name: string };
+
+async function loadReasonTags(id: string): Promise<ReasonTagBrief[]> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("violation_case_reason_tags")
+    .select("tag:violation_reason_tags(id, name, sort_order)")
+    .eq("case_id", id);
+  if (error || !data) return [];
+  type Row = { tag: { id: string; name: string; sort_order: number } | { id: string; name: string; sort_order: number }[] | null };
+  return (data as Row[])
+    .flatMap((row) => {
+      const tag = Array.isArray(row.tag) ? row.tag[0] : row.tag;
+      if (!tag) return [];
+      return [{ id: tag.id, name: tag.name, sort_order: tag.sort_order }];
+    })
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map(({ id: tagId, name }) => ({ id: tagId, name }));
 }
 
 function getRecordAccountName(record: ViolationTestRecord) {
@@ -234,144 +268,92 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
   );
 }
 
-export default async function ViolationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+async function TestRecordFormLoader({ caseId }: { caseId: string }) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) return null;
 
-  const { id } = await params;
-
-  let caseItem: DetailRow | null = null;
-  let error: string | null = null;
-  try {
-    caseItem = await loadCase(id);
-    if (!caseItem) {
-      caseItem = await loadConversionCase(id);
-    }
-  } catch (loadError) {
-    error = loadError instanceof Error ? loadError.message : "加载案例失败";
-  }
-  if (!caseItem && !error) notFound();
-
-  let usageRecords: UsageRecordItem[] = [];
-  let events: EventItem[] = [];
-  if (caseItem) {
-    [usageRecords, events] = await Promise.all([loadUsageRecords(caseItem.id), loadEvents(caseItem.id)]);
-  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+  const userDisplayName =
+    profile?.name?.trim() || user.email?.split("@")[0] || "我";
 
   const { data } = await supabase
     .from("accounts")
     .select("id, name, content_direction")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true });
-  const accounts = (
-    (data ?? []) as Array<{ id: string; name: string | null; content_direction: string | null }>
-  ).map((account) => ({
+  const rawAccounts = (data ?? []) as Array<{
+    id: string;
+    name: string | null;
+    content_direction: string | null;
+  }>;
+  const accounts = rawAccounts.map((account, index, list) => ({
     id: account.id,
     name: account.name ?? "未命名账号",
-    display_name: account.name ?? "未命名账号",
+    display_name: getSafeAccountDisplayName({
+      rawName: account.name,
+      userDisplayName,
+      contentDirection: account.content_direction,
+      index,
+      total: list.length,
+    }),
     content_direction: account.content_direction,
   })) satisfies ViolationAccount[];
 
-  if (error || !caseItem) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-5 py-8">
-        <Link
-          href="/violations"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-800"
-        >
-          <ArrowLeft className="size-4" />
-          话术库
-        </Link>
-        <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
-          {error ?? "案例不存在"}
-        </div>
-      </div>
-    );
-  }
+  return <TestRecordForm caseId={caseId} accounts={accounts} />;
+}
+
+async function CaseDetailBottom({
+  caseItem,
+  canManageViolations,
+  isOwner,
+}: {
+  caseItem: DetailRow;
+  canManageViolations: boolean;
+  isOwner: boolean;
+}) {
+  const [usageRecords, events, reasonTags] = await Promise.all([
+    loadUsageRecords(caseItem.id),
+    loadEvents(caseItem.id),
+    loadReasonTags(caseItem.id),
+  ]);
 
   const purpose = (caseItem.purpose ?? "violation") as string;
   const isConversion = purpose === "conversion";
-  const formatKey = (caseItem.script_format ?? "oral") as string;
-  const formatMeta = FORMAT_META[formatKey] ?? FORMAT_META.oral;
-  const purposeMeta = PURPOSE_META[purpose] ?? PURPOSE_META.violation;
   const testRecords = caseItem.test_records ?? caseItem.violation_test_records ?? [];
   const passCount = caseItem.pass_count ?? 0;
   const failCount = caseItem.fail_count ?? 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 py-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link
-          href="/violations"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-800"
-        >
-          <ArrowLeft className="size-4" />
-          话术库
-        </Link>
-        {isConversion ? null : <TestRecordForm caseId={caseItem.id} accounts={accounts} />}
-      </div>
-
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 sm:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {isConversion ? null : <StatusBadge caseItem={caseItem} />}
-            {isConversion ? null : (
-              <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} />
-            )}
-            <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
-              {caseItem.category || "其他"}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${formatMeta.className}`}
-            >
-              {formatMeta.label}
-            </span>
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${purposeMeta.className}`}
-            >
-              {purposeMeta.label}
-            </span>
+    <>
+      {isConversion && Array.isArray(caseItem.platforms) && caseItem.platforms.length > 0 ? (
+        <div className="flex items-center gap-2 text-[12px] text-zinc-500">
+          <span className="text-zinc-400">平台</span>
+          <div className="flex flex-wrap gap-1.5">
+            {caseItem.platforms.map((platform) => (
+              <span
+                key={platform}
+                className="rounded-full border border-zinc-200 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
+              >
+                {platform}
+              </span>
+            ))}
           </div>
         </div>
-
-        <p className="mt-6 whitespace-pre-wrap text-[18px] font-semibold leading-7 tracking-wide text-zinc-800">
-          {caseItem.script_text}
-        </p>
-
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500">
-          <span>
-            <span className="text-zinc-400">提交人 </span>
-            <span className="font-semibold text-zinc-800">{getSubmitterName(caseItem)}</span>
-          </span>
-          <span className="text-zinc-200">·</span>
-          <span>
-            <span className="text-zinc-400">提交时间 </span>
-            <span className="font-semibold text-zinc-800">{formatDateTime(caseItem.created_at)}</span>
-          </span>
-          <span className="text-zinc-200">·</span>
-          <span>
-            <span className="text-zinc-400">账号 </span>
-            <span className="font-semibold text-zinc-800">{getAccountName(caseItem)}</span>
-          </span>
-          <span className="text-zinc-200">·</span>
-          <span>
-            <span className="text-zinc-400">团队 </span>
-            <span className="font-semibold text-zinc-800">{getTeamName(caseItem)}</span>
-          </span>
-        </div>
-      </section>
+      ) : null}
 
       {isConversion ? (
         <StatsGrid>
           <StatsCard
             label="Conversion Rate"
             value={formatConversionRate(caseItem)}
-            hint="加权转化率"
+            hint={resolveConfidence(Number(caseItem.total_views ?? 0)).label}
             tone="positive"
             icon={<TrendingUp className="size-4" strokeWidth={2.25} />}
           />
@@ -426,6 +408,39 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           />
         </StatsGrid>
       )}
+
+      {canManageViolations ? (
+        <ReviewDecisionPanel
+          caseId={caseItem.id}
+          purpose={isConversion ? "conversion" : "violation"}
+          initialStatus={caseItem.status}
+          initialUsageState={caseItem.usage_state}
+          initialRiskLevel={caseItem.risk_level}
+          initialPromotionLevel={caseItem.promotion_level}
+          initialAdminConclusion={caseItem.admin_conclusion}
+          initialSuggestedAction={caseItem.suggested_action}
+          initialReasonTagIds={reasonTags.map((tag) => tag.id)}
+          isOwner={isOwner}
+        />
+      ) : null}
+
+      {!isConversion && reasonTags.length > 0 ? (
+        <section className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C9604D]">
+            踩雷点
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {reasonTags.map((tag) => (
+              <span
+                key={tag.id}
+                className="inline-flex items-center rounded-full border border-[#C9604D]/30 bg-[#C9604D]/5 px-2.5 py-0.5 text-[12px] font-medium text-[#C9604D]"
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {caseItem.admin_conclusion || caseItem.suggested_action ? (
         <section className="grid gap-3 lg:grid-cols-2">
@@ -486,6 +501,162 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
         events={events}
         testsSlot={<TestsSummary caseItem={caseItem} records={testRecords} />}
       />
+    </>
+  );
+}
+
+export default async function ViolationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const permInfo = await getUserPermissions();
+  const isOwner = permInfo?.role === "owner";
+  const canManageViolations =
+    isOwner ||
+    (permInfo
+      ? hasPermission(permInfo.businessRole, permInfo.permissions, "manage_violations")
+      : false);
+
+  const { id } = await params;
+
+  let caseItem: DetailRow | null = null;
+  let error: string | null = null;
+  try {
+    caseItem = await loadCase(id);
+    if (!caseItem) {
+      caseItem = await loadConversionCase(id);
+    }
+  } catch (loadError) {
+    error = loadError instanceof Error ? loadError.message : "加载案例失败";
+  }
+  if (!caseItem && !error) notFound();
+
+  if (error || !caseItem) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-5 py-8">
+        <Link
+          href="/violations"
+          className="active:translate-y-0 inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-800"
+        >
+          <ArrowLeft className="size-4" />
+          话术库
+        </Link>
+        <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
+          {error ?? "案例不存在"}
+        </div>
+      </div>
+    );
+  }
+
+  const isConversion = ((caseItem.purpose ?? "violation") as string) === "conversion";
+  const formatKey = (caseItem.script_format ?? "oral") as string;
+  const formatMeta = FORMAT_META[formatKey] ?? FORMAT_META.oral;
+  const purposeMeta = PURPOSE_META[(caseItem.purpose ?? "violation") as string] ?? PURPOSE_META.violation;
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-5 py-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Link
+          href="/violations"
+          className="active:translate-y-0 inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-800"
+        >
+          <ArrowLeft className="size-4" />
+          话术库
+        </Link>
+        {isConversion ? null : (
+          <Suspense fallback={<div className="h-11 w-28 rounded-2xl bg-zinc-100" />}>
+            <TestRecordFormLoader caseId={caseItem.id} />
+          </Suspense>
+        )}
+      </div>
+
+      <section className="rounded-xl border border-zinc-200 bg-white p-6 sm:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {isConversion ? null : <UsageStateBadge usageState={caseItem.usage_state} size="lg" />}
+            {isConversion ? null : (
+              <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} />
+            )}
+            <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+              {caseItem.category || "其他"}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${formatMeta.className}`}
+            >
+              {formatMeta.label}
+            </span>
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${purposeMeta.className}`}
+            >
+              {purposeMeta.label}
+            </span>
+          </div>
+        </div>
+
+        <p className="mt-6 whitespace-pre-wrap text-[18px] font-semibold leading-7 tracking-wide text-zinc-800">
+          {caseItem.script_text}
+        </p>
+
+        {isConversion ? null : (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <ReviewStatusChip status={caseItem.status} />
+            <RiskLevelChip riskLevel={caseItem.risk_level} />
+            <PromotionLevelChip promotionLevel={caseItem.promotion_level} />
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500">
+          <span>
+            <span className="text-zinc-400">提交人 </span>
+            <span className="font-semibold text-zinc-800">{getSubmitterName(caseItem)}</span>
+          </span>
+          <span className="text-zinc-200">·</span>
+          <span>
+            <span className="text-zinc-400">提交时间 </span>
+            <span className="font-semibold text-zinc-800">{formatDateTime(caseItem.created_at)}</span>
+          </span>
+          <span className="text-zinc-200">·</span>
+          <span>
+            <span className="text-zinc-400">账号 </span>
+            <span className="font-semibold text-zinc-800">{getAccountName(caseItem)}</span>
+          </span>
+          <span className="text-zinc-200">·</span>
+          <span>
+            <span className="text-zinc-400">团队 </span>
+            <span className="font-semibold text-zinc-800">{getTeamName(caseItem)}</span>
+          </span>
+        </div>
+      </section>
+
+      <Suspense
+        fallback={
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-zinc-200 bg-white p-5 space-y-2">
+                  <div className="h-4 w-20 rounded bg-zinc-100" />
+                  <div className="h-8 w-16 rounded bg-zinc-100" />
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-3">
+              <div className="h-5 w-32 rounded bg-zinc-100" />
+              <div className="h-24 rounded bg-zinc-100" />
+            </div>
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-3">
+              <div className="h-8 w-full rounded bg-zinc-100" />
+              <div className="h-32 rounded bg-zinc-100" />
+            </div>
+          </div>
+        }
+      >
+        <CaseDetailBottom caseItem={caseItem} canManageViolations={canManageViolations} isOwner={isOwner} />
+      </Suspense>
     </div>
   );
 }

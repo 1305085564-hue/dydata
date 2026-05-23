@@ -51,8 +51,8 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">Advice Flow</p>
-            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">诊断 / 参考 / 动作</h2>
+            <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">Advice Flow</p>
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">诊断 / 参考 / 动作</h2>
             <p className="text-[13px] leading-[1.7] text-zinc-500">暂无数据，以下为示范参考</p>
           </div>
           <div className="grid gap-3">
@@ -60,7 +60,7 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
               <div key={section.key} className={`rounded-xl border border-dashed p-4 ${sectionTone[section.key as keyof typeof sectionTone]}`}>
                 <div className="mb-2 flex items-center gap-2">
                   <span className="text-[13px] font-semibold text-zinc-800">{section.title}</span>
-                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] uppercase tracking-[0.25em] text-zinc-400">示范数据</span>
+                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] uppercase tracking-[0.25em] text-zinc-400">示范数据</span>
                 </div>
                 <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">{section.text}</p>
               </div>
@@ -76,8 +76,8 @@ export function AdvicePanel({ data, noData = false }: { data: AdviceSections; no
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-1.5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">Advice Flow</p>
-            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">诊断 / 参考 / 动作</h2>
+            <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">Advice Flow</p>
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">诊断 / 参考 / 动作</h2>
             <p className="text-[13px] leading-[1.7] text-zinc-500">
               {data.source === "ai" ? "已优先展示 AI 洞察结果。" : "当前无 AI 结果，已切换规则诊断。"}
             </p>

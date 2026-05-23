@@ -600,19 +600,19 @@ export function HitAnalyzer({
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 pt-1">
             <div>
-              <p className="text-[10px] font-medium text-zinc-400">播放量</p>
+              <p className="text-[12px] font-medium text-zinc-400">播放量</p>
               <p className={cn("text-[13px] font-medium", datum.isHit ? "text-[#C9604D]" : "text-zinc-700")}>{formatPlayCount(datum.play)}</p>
             </div>
             <div>
-              <p className="text-[10px] font-medium text-zinc-400">完播率</p>
+              <p className="text-[12px] font-medium text-zinc-400">完播率</p>
               <p className="text-[13px] font-medium text-zinc-800">{formatPercent(datum.cr)}</p>
             </div>
             <div>
-              <p className="text-[10px] font-medium text-zinc-400">总互动</p>
+              <p className="text-[12px] font-medium text-zinc-400">总互动</p>
               <p className="text-[13px] font-medium text-zinc-800">{datum.engagement.toLocaleString("zh-CN")}</p>
             </div>
             <div>
-              <p className="text-[10px] font-medium text-zinc-400">提交人</p>
+              <p className="text-[12px] font-medium text-zinc-400">提交人</p>
               <p className="text-[13px] font-medium text-zinc-800">{datum.submitter}</p>
             </div>
           </div>
@@ -813,7 +813,7 @@ export function HitAnalyzer({
                       type="button"
                       onClick={() => setSubmitterPage((current) => Math.max(0, current - 1))}
                       disabled={safeSubmitterPage === 0}
-                      className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+ className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                     >
                       上一页
                     </button>
@@ -825,7 +825,7 @@ export function HitAnalyzer({
                       type="button"
                       onClick={() => setSubmitterPage((current) => Math.min(submitterPageCount - 1, current + 1))}
                       disabled={safeSubmitterPage >= submitterPageCount - 1}
-                      className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+ className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                     >
                       下一页
                     </button>
@@ -855,8 +855,8 @@ export function HitAnalyzer({
                     className={cn(
                       "min-w-0 truncate rounded-full border px-2.5 py-1 text-xs font-medium transition-[background-color,color,border-color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
                       effectiveSelectedSubmitters.includes(name)
-                        ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] shadow-sm"
-                        : "border-zinc-200 bg-white text-zinc-600 hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 hover:shadow-sm",
+                        ? "bg-white text-zinc-700 shadow-sm"
+                        : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800",
                     )}
                   >
                     {name}
@@ -987,7 +987,7 @@ export function HitAnalyzer({
                 <span
                   className={cn(
                     "rounded-full px-3 py-1 text-[12px] font-medium",
-                    leadInsight.isHit ? "bg-[#C9604D]/10 text-[#C9604D]" : "bg-[#D97757]/10 text-[#D97757]",
+                    leadInsight.isHit ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
                   )}
                 >
                   {leadInsight.isHit ? "爆款样本" : "观察样本"}
@@ -1119,7 +1119,7 @@ export function HitAnalyzer({
                 {stats.contents.map((content, index) => (
                   <div
                     key={`${index}-${content.slice(0, 8)}`}
-                    className="rounded-xl border border-zinc-200 border-l-[2px] border-l-transparent bg-[#FAFAFB] px-3 py-3 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-l-[#D97757] hover:bg-white hover:shadow-sm"
+ className="rounded-xl border border-zinc-200 border-l-[2px] border-l-transparent bg-[#FAFAFB] px-3 py-3 transition-[background-color, border-color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-l-[#D97757] hover:bg-white "
                   >
                     <p className="max-h-[10rem] overflow-y-auto whitespace-pre-wrap pr-2 text-[13px] leading-[1.7] text-zinc-700">{content}</p>
                   </div>

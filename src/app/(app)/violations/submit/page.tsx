@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitForm } from "../components/submit-form";
 import type { ViolationAccount } from "../components/types";
+import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
 
 export default async function SubmitViolationPage({
   searchParams,
@@ -14,19 +15,36 @@ export default async function SubmitViolationPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", user.id)
+    .single();
+  const userDisplayName =
+    profile?.name?.trim() || user.email?.split("@")[0] || "我";
+
   const { data } = await supabase
     .from("accounts")
     .select("id, name, content_direction")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true });
-  const accounts = ((data ?? []) as Array<{ id: string; name: string | null; content_direction: string | null }>).map(
-    (account) => ({
-      id: account.id,
-      name: account.name ?? "未命名账号",
-      display_name: account.name ?? "未命名账号",
-      content_direction: account.content_direction,
+  const rawAccounts = (data ?? []) as Array<{
+    id: string;
+    name: string | null;
+    content_direction: string | null;
+  }>;
+  const accounts = rawAccounts.map((account, index, list) => ({
+    id: account.id,
+    name: account.name ?? "未命名账号",
+    display_name: getSafeAccountDisplayName({
+      rawName: account.name,
+      userDisplayName,
+      contentDirection: account.content_direction,
+      index,
+      total: list.length,
     }),
-  ) satisfies ViolationAccount[];
+    content_direction: account.content_direction,
+  })) satisfies ViolationAccount[];
   const resolvedSearchParams = await searchParams;
   const initialAccountId =
     typeof resolvedSearchParams.account_id === "string" ? resolvedSearchParams.account_id : null;

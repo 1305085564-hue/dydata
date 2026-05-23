@@ -60,11 +60,11 @@ export function GrowthClientShell({
         description="按“看弱点、找对标、拆文案、定动作”的顺序走，先定位最该补的一环。"
         meta={
           <div className="flex flex-col items-end gap-1.5">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[11px] text-zinc-500">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] text-zinc-500">
               <Sparkles className="size-3.5 stroke-[1.5]" />
               {reportCount >= 3 ? "已满足最小样本要求" : reportCount > 0 ? "虚拟数据预览中，再提交真实数据替换" : "虚拟数据预览中，提交数据后替换"}
             </div>
-            <div className="hidden sm:flex items-center gap-2 text-[11px] text-zinc-500">
+            <div className="hidden sm:flex items-center gap-2 text-[12px] text-zinc-500">
               <span>分析主体 · {profileName || "当前账号"}</span>
               <span className="text-zinc-300">·</span>
               <span>{accountCount} 个账号</span>
@@ -85,10 +85,10 @@ export function GrowthClientShell({
         <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-2">
             <div>
-              <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">能力分布</h2>
+              <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">能力分布</h2>
               <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">看清六维差距来自哪里。</p>
             </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[11px] text-zinc-500">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] text-zinc-500">
               <Target className="size-3.5 stroke-[1.5] text-[#D99E55]" />
               最弱：{summary.weakestDimension ?? "待积累"}
             </div>
@@ -99,7 +99,7 @@ export function GrowthClientShell({
         {/* 右栏：诊断建议 */}
         <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
           <div className="mb-4">
-            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">诊断与行动</h2>
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">诊断与行动</h2>
             <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">结合团队均值，先明确当前最该动的地方。</p>
           </div>
           <DiagnosisCard myReports={myReports} teamReports={teamReports} />

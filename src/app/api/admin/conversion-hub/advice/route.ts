@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 
 import { parseLimitParam, requireAdminServiceClient, unwrapRpc } from "../_shared";
 
+/**
+ * @deprecated AI 生成逻辑未实现，前端已隐藏入口；保留接口供未来 AI 接通后复用。
+ */
 export async function GET(request: NextRequest) {
   const auth = await requireAdminServiceClient();
   if ("response" in auth) return auth.response;

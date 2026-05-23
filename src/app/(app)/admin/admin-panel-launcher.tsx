@@ -145,7 +145,7 @@ export function AdminPanelLauncher({
                 <DialogHeader className="gap-3 pr-10">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-2">
-                      <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">
+                      <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">
                         团队管理
                       </DialogTitle>
                       <DialogDescription className="max-w-3xl text-[13px] leading-[1.7] text-zinc-500">

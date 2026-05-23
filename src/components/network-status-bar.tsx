@@ -41,7 +41,9 @@ export function NetworkStatusBar() {
     window.addEventListener("online", handleOnline);
 
     if (!navigator.onLine) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState("offline");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
     }
 
@@ -61,7 +63,7 @@ export function NetworkStatusBar() {
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center text-[13px] font-medium text-white transition-all duration-300",
+        "fixed inset-x-0 top-0 z-50 flex h-8 items-center justify-center text-[13px] font-medium text-white transition-[background-color,color,border-color,transform,box-shadow] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
         bgColor,
       )}
       role="status"

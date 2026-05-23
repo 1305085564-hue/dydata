@@ -101,7 +101,7 @@ function PreviewShell({
           {fullViewHref ? (
             <Link
               href={fullViewHref}
-              className="inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-colors hover:text-zinc-800"
+              className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-colors hover:text-zinc-800"
               onClick={() => onOpenChange(false)}
             >
               {fullViewLabel}
@@ -119,9 +119,12 @@ function PreviewShell({
                 className="inline-flex h-8 items-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {secondaryAction.loading ? (
-                  <Loader2 className="mr-1 size-3 animate-spin" />
-                ) : null}
-                {secondaryAction.label}
+                  <div className="space-y-2"><div className="h-12 rounded-lg bg-zinc-100" /><div className="h-12 rounded-lg bg-zinc-100" /></div>
+                ) : (
+                  <>
+                    {secondaryAction.label}
+                  </>
+                )}
               </button>
             ) : null}
             {primaryAction ? (
@@ -135,9 +138,12 @@ function PreviewShell({
                 )}
               >
                 {primaryAction.loading ? (
-                  <Loader2 className="mr-1 size-3 animate-spin" />
-                ) : null}
-                {primaryAction.label}
+                  <div className="space-y-2"><div className="h-12 rounded-lg bg-zinc-100" /><div className="h-12 rounded-lg bg-zinc-100" /></div>
+                ) : (
+                  <>
+                    {primaryAction.label}
+                  </>
+                )}
               </button>
             ) : null}
           </div>
@@ -203,7 +209,7 @@ export function VideoPreviewDialog({
       fullViewLabel="前往打标"
     >
       <p className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-[13px] leading-7 text-zinc-600">
-        打标和异常处理在视频详情页完成。点击下方"前往打标"打开完整工作台。
+        打标和异常处理在视频详情页完成。点击下方“前往打标”打开完整工作台。
       </p>
     </PreviewShell>
   );
@@ -323,7 +329,7 @@ export function SubmissionPreviewDialog({
           ].filter(Boolean) as { label: string; value: React.ReactNode }[]}
         />
         <p className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-[13px] leading-7 text-zinc-600">
-          系统每天 11:15 自动飞书催交。"催交历史"可看具体送达记录。
+          系统每天 11:15 自动飞书催交。 “催交历史” 可看具体送达记录。
         </p>
       </div>
     </PreviewShell>

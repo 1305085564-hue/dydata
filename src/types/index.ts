@@ -178,6 +178,17 @@ export type AdviceSource = "ai" | "manager";
 export type AdviceStatus = "待查看" | "已查看" | "待执行" | "已执行" | "已忽略" | "已复核";
 export type ReviewResult = "有效" | "无效" | "不确定";
 export type AccountTargetMode = "起号" | "稳号" | "导粉";
+export type VideoAssetLevel = "S" | "A" | "B" | "C";
+export type VideoAssetCompletenessStatus = "missing" | "partial" | "complete";
+export type VideoAssetLibraryStatus = "pending" | "ready";
+export type VideoAssetMissingField =
+  | "video_title"
+  | "content"
+  | "snapshot_24h"
+  | "video_tags"
+  | "content_segments";
+export type ContentFeedbackCardStatus = "draft" | "confirmed" | "sent" | "viewed";
+export type ContentFeedbackWorkflowStatus = "not_started" | ContentFeedbackCardStatus;
 
 export const TAG_ENUMS: Record<TagDimension, string[]> = {
   "题材": ["大盘复盘", "板块机会", "个股拆解", "情绪周期", "战法教学", "风险提醒", "热点追踪", "盘前预判"],
@@ -201,7 +212,25 @@ export interface Video {
   published_at: string | null;
   uploaded_at: string;
   anomaly_status: AnomalyStatus;
+  asset_level?: VideoAssetLevel | null;
+  asset_note?: string | null;
+  asset_reviewed_by?: string | null;
+  asset_reviewed_at?: string | null;
   created_at: string;
+}
+
+export interface VideoAssetLibraryRecord {
+  video_id: string;
+  completeness_status: VideoAssetCompletenessStatus;
+  completeness_label: string;
+  library_status: VideoAssetLibraryStatus;
+  library_status_label: string;
+  completion_ratio: number;
+  missing_fields: VideoAssetMissingField[];
+  asset_level: VideoAssetLevel | null;
+  asset_note: string | null;
+  asset_reviewed_at: string | null;
+  asset_reviewed_by: string | null;
 }
 
 export interface VideoMetricsSnapshot {
@@ -414,7 +443,7 @@ export type ScriptSegmentMappingStatus = "unmapped" | "estimated" | "confirmed";
 
 export type AiInsightScope = "single_video" | "member_week" | "member_month" | "team_week" | "team_month";
 export type AiDataQualityState = "sufficient" | "partial" | "insufficient";
-export type AiInsightType = "growth_edit" | "period_direction";
+export type AiInsightType = "growth_edit" | "period_direction" | "next_day_review";
 
 export type ExemptionRequestType = "yesterday" | "range" | "permanent" | "single" | "3days" | "4days" | "5days";
 export type ExemptionRequestStatus = "pending" | "approved" | "rejected";
@@ -491,6 +520,44 @@ export interface AiInsightResult {
   result_json: Record<string, unknown> | null;
   rendered_text: string | null;
   created_at: string;
+}
+
+export interface ContentFeedbackCard {
+  id: string;
+  video_id: string;
+  target_user_id: string;
+  target_account_id: string | null;
+  source_result_id: string | null;
+  card_status: ContentFeedbackCardStatus;
+  manager_note: string | null;
+  draft_payload: NextDayReviewResult | null;
+  confirmed_payload: NextDayReviewResult | null;
+  draft_generated_at: string | null;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  sent_by: string | null;
+  sent_at: string | null;
+  viewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ContentFeedbackCardView {
+  card_id: string | null;
+  video_id: string;
+  workflow_status: ContentFeedbackWorkflowStatus;
+  workflow_label: string;
+  has_ai_draft: boolean;
+  latest_draft_at: string | null;
+  confirmed_at: string | null;
+  sent_at: string | null;
+  viewed_at: string | null;
+  manager_note: string | null;
+}
+
+export interface ContentFeedbackCardDetail extends ContentFeedbackCardView {
+  draft: NextDayReviewResult | null;
+  confirmed: NextDayReviewResult | null;
 }
 
 export interface ExemptionRequest {

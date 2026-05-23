@@ -393,7 +393,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                           className={cn(
                             "group relative aspect-square min-h-5 rounded-lg border transition duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5",
                             getIntensityClass(cell.medianPlay, heatmapData.maxMedianPlay),
-                            cell.count > 0 ? "hover:-translate-y-[1px] active:translate-y-0 hover:shadow-sm" : "opacity-65 hover:opacity-80",
+                            cell.count > 0 ? "active:translate-y-0" : "opacity-65 hover:opacity-80",
                             isWindowCell && "ring-1 ring-[#D97757]/40",
                             isPreview && "scale-[1.03] shadow-md",
                             isPinned && "ring-2 ring-[#D97757] ring-offset-2 ring-offset-white",
@@ -461,7 +461,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   className={cn(
                     "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium",
                     activeIsRecommended
-                      ? "border border-zinc-200 bg-[#D97757]/10 text-[#D97757]"
+                      ? "border-zinc-200 bg-white text-zinc-700"
                       : "border border-zinc-200 bg-zinc-50 text-zinc-600",
                   )}
                 >

@@ -27,10 +27,10 @@ export default async function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D97757]">
               <Zap className="size-4 fill-white text-white" />
             </div>
-            <span className="text-[18px] font-bold tracking-tight text-[#27272A]">
+            <span className="text-[18px] font-semibold tracking-tight text-[#27272A]">
               DYData
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#A1A1AA]">
+            <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#A1A1AA]">
               CNSL
             </span>
           </Link>
@@ -41,10 +41,10 @@ export default async function HomePage() {
           {/* Left */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-[32px] font-semibold leading-tight tracking-tight text-[#27272A] md:text-[40px]">
+              <h1 className="text-[30px] font-semibold leading-tight tracking-tight text-[#27272A] md:text-[30px]">
                 抖音数据日报平台
               </h1>
-              <p className="max-w-lg text-[15px] leading-[1.7] text-[#71717A] md:text-[18px]">
+              <p className="max-w-lg text-[14px] leading-[1.7] text-[#71717A] md:text-[18px]">
                 让团队数据记录、分析和成长复盘，像呼吸一样自然
               </p>
             </div>
@@ -58,14 +58,14 @@ export default async function HomePage() {
               </Link>
               <Link
                 href="/demo"
-                className="inline-flex items-center justify-center rounded-[10px] border border-[#E4E4E7] bg-white px-6 py-2.5 text-[13px] font-medium text-[#27272A] transition-colors hover:bg-[#FAFAFB]"
+                className="active:translate-y-0 inline-flex items-center justify-center rounded-[10px] border border-[#E4E4E7] bg-white px-6 py-2.5 text-[13px] font-medium text-[#27272A] transition-colors hover:bg-[#FAFAFB]"
               >
                 先看演示站
               </Link>
             </div>
 
             <div className="inline-block border-t border-[#E4E4E7] pt-6">
-              <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#A1A1AA]">
+              <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#A1A1AA]">
                 TRUSTED BY TEAMS
               </p>
               <p className="mt-2 text-[12px] text-[#A1A1AA]">
@@ -130,7 +130,7 @@ export default async function HomePage() {
                 </div>
                 <div>
                   <p className="text-[12px] font-semibold text-[#27272A]">+240.5%</p>
-                  <p className="text-[10px] text-[#A1A1AA]">昨日播放增长率</p>
+                  <p className="text-[12px] text-[#A1A1AA]">昨日播放增长率</p>
                 </div>
               </div>
             </div>
@@ -148,33 +148,33 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:gap-8">
             {/* Card 1 */}
-            <div className="group rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.03)]">
+            <div className="group rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-8 transition-colors duration-150 hover:bg-white">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-[#E4E4E7] bg-white text-[#D97757]">
                 <FileText className="size-6 stroke-[1.5]" />
               </div>
-              <h3 className="text-[16px] font-semibold text-[#27272A]">日报填报</h3>
+              <h3 className="text-[18px] font-semibold text-[#27272A]">日报填报</h3>
               <p className="mt-3 text-[13px] leading-[1.7] text-[#71717A]">
                 每日数据一键提交，多账号统一管理，再也不漏报。支持自定义填报字段与自动提醒。
               </p>
             </div>
 
             {/* Card 2 */}
-            <div className="group rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.03)]">
+            <div className="group rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-8 transition-colors duration-150 hover:bg-white">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-[#E4E4E7] bg-white text-[#D97757]">
                 <PieChart className="size-6 stroke-[1.5]" />
               </div>
-              <h3 className="text-[16px] font-semibold text-[#27272A]">经营分析</h3>
+              <h3 className="text-[18px] font-semibold text-[#27272A]">经营分析</h3>
               <p className="mt-3 text-[13px] leading-[1.7] text-[#71717A]">
                 实时看板、趋势图、排行榜，数据驱动决策。多维度对比分析，一眼洞察核心增长点。
               </p>
             </div>
 
             {/* Card 3 */}
-            <div className="group rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_12px_rgba(0,0,0,0.03)]">
+            <div className="group rounded-2xl border border-[#E4E4E7] bg-[#FAFAFB] p-8 transition-colors duration-150 hover:bg-white">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-[#E4E4E7] bg-white text-[#D97757]">
                 <Clock className="size-6 stroke-[1.5]" />
               </div>
-              <h3 className="text-[16px] font-semibold text-[#27272A]">AI 助手</h3>
+              <h3 className="text-[18px] font-semibold text-[#27272A]">AI 助手</h3>
               <p className="mt-3 text-[13px] leading-[1.7] text-[#71717A]">
                 智能文案改写、违规检测、内容方向建议。基于行业大数据的 AI 指导，让创作更精准。
               </p>
@@ -190,7 +190,7 @@ export default async function HomePage() {
             </div>
             <p className="text-[13px] font-medium text-[#27272A]/80">
               DYData
-              <span className="ml-1 text-[11px] text-[#A1A1AA]">© 2025</span>
+              <span className="ml-1 text-[12px] text-[#A1A1AA]">© 2025</span>
             </p>
           </div>
           <a

@@ -199,19 +199,19 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
             {/* 下期重点 */}
             {insight.next_period_focus && (
-              <div className="md:col-span-2 rounded-2xl bg-zinc-900 p-6 relative overflow-hidden">
+              <div className="md:col-span-2 rounded-2xl border border-zinc-200 bg-white p-6 relative overflow-hidden">
                 <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757]">
                       <Target className="size-6 stroke-[1.5]" />
                     </div>
                     <div>
-                      <h4 className="text-[10px] uppercase tracking-[0.25em] font-medium text-white/60 mb-1">下期核心战役</h4>
-                      <p className="text-[16px] font-semibold text-white leading-[1.7]">{insight.next_period_focus}</p>
+                      <h4 className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400 mb-1">下期核心战役</h4>
+                      <p className="text-[18px] font-semibold text-zinc-800 leading-[1.7]">{insight.next_period_focus}</p>
                     </div>
                   </div>
 
-                  <Button className="shrink-0 rounded-[10px] bg-[#D97757] text-white hover:bg-[#C96442] px-6 py-5 shadow-sm group whitespace-nowrap">
+                  <Button className="shrink-0 rounded-lg bg-[#D97757] text-white hover:bg-[#C96442] px-6 py-5 group whitespace-nowrap active:translate-y-0">
                     将其设为下期目标
                     <ArrowRight className="size-4 ml-2 stroke-[1.5] transition-transform group-hover:translate-x-1" />
                   </Button>

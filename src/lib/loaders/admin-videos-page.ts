@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserPermissions } from "@/lib/permissions";
-import type { Profile, Video, VideoMetricsSnapshot, VideoTag } from "@/types";
+import { buildVideoAssetRecord } from "@/lib/video-asset-library";
+import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
 
@@ -20,12 +21,21 @@ export interface AdminVideosPageData {
   profiles: FilterOption[];
   accounts: AccountOption[];
   videoTags: VideoTag[];
+  assetLibrary: Record<string, VideoAssetLibraryRecord>;
   summary: {
     totalVideos: number;
     taggedVideos: number;
     snapshotCount: number;
     abnormalCount: number;
     pendingCount: number;
+  };
+  assetSummary: {
+    readyCount: number;
+    pendingLibraryCount: number;
+    completeCount: number;
+    partialCount: number;
+    missingCount: number;
+    gradedCount: number;
   };
 }
 
@@ -51,8 +61,14 @@ export async function loadAdminVideosPageData({
   const normalizedVideos = scope
     ? filterRowsByDataScope(scope, (videos ?? []) as VideoRow[], (video) => video.accounts?.profile_id ?? video.user_id)
     : ((videos ?? []) as VideoRow[]);
+  const scopedVideoIdSet = new Set(normalizedVideos.map((video) => video.id));
+  const scopedVideoIds = Array.from(scopedVideoIdSet);
   const visibleProfileIds = new Set(scope?.visibleUserIds ?? normalizedVideos.map((video) => video.accounts?.profile_id ?? video.user_id));
-  const taggedVideoIds = new Set((tagIds ?? []).map((tag) => tag.video_id as string));
+  const taggedVideoIds = new Set(
+    (tagIds ?? [])
+      .map((tag) => tag.video_id as string)
+      .filter((videoId) => scopedVideoIdSet.has(videoId)),
+  );
   const pendingVideos = normalizedVideos.filter(
     (video) => !taggedVideoIds.has(video.id) || video.anomaly_status !== "正常",
   );
@@ -61,6 +77,16 @@ export async function loadAdminVideosPageData({
       ? pendingVideos
       : normalizedVideos;
   const visibleVideoIds = visibleVideos.map((video) => video.id);
+  const [
+    { data: snapshotFlags },
+    { data: segmentRows },
+  ] =
+    scopedVideoIds.length > 0
+      ? await Promise.all([
+          supabase.from("video_metrics_snapshots").select("video_id").eq("snapshot_type", "24h").in("video_id", scopedVideoIds),
+          supabase.from("video_content_segments").select("video_id").in("video_id", scopedVideoIds),
+        ])
+      : [{ data: [] }, { data: [] }];
   const [{ data: snapshots }, { data: videoTags }] =
     visibleVideoIds.length > 0
       ? await Promise.all([
@@ -69,6 +95,45 @@ export async function loadAdminVideosPageData({
         ])
       : [{ data: [] }, { data: [] }];
   const normalizedTags = (videoTags ?? []) as VideoTag[];
+  const snapshot24hVideoIds = new Set((snapshotFlags ?? []).map((row) => row.video_id as string));
+  const segmentCountMap = new Map<string, number>();
+  for (const row of segmentRows ?? []) {
+    const videoId = row.video_id as string | null;
+    if (!videoId) continue;
+    segmentCountMap.set(videoId, (segmentCountMap.get(videoId) ?? 0) + 1);
+  }
+
+  const assetSummaryRecords = normalizedVideos.map((video) =>
+    buildVideoAssetRecord({
+      videoId: video.id,
+      videoTitle: video.video_title,
+      content: video.content,
+      hasSnapshot24h: snapshot24hVideoIds.has(video.id),
+      tagCount: taggedVideoIds.has(video.id) ? 1 : 0,
+      segmentCount: segmentCountMap.get(video.id) ?? 0,
+      assetLevel: video.asset_level ?? null,
+      assetNote: video.asset_note ?? null,
+      assetReviewedAt: video.asset_reviewed_at ?? null,
+      assetReviewedBy: video.asset_reviewed_by ?? null,
+    }),
+  );
+  const assetLibrary = Object.fromEntries(
+    visibleVideos.map((video) => [
+      video.id,
+      buildVideoAssetRecord({
+        videoId: video.id,
+        videoTitle: video.video_title,
+        content: video.content,
+        hasSnapshot24h: snapshot24hVideoIds.has(video.id),
+        tagCount: normalizedTags.filter((tag) => tag.video_id === video.id).length,
+        segmentCount: segmentCountMap.get(video.id) ?? 0,
+        assetLevel: video.asset_level ?? null,
+        assetNote: video.asset_note ?? null,
+        assetReviewedAt: video.asset_reviewed_at ?? null,
+        assetReviewedBy: video.asset_reviewed_by ?? null,
+      }),
+    ]),
+  ) as Record<string, VideoAssetLibraryRecord>;
 
   return {
     videos: visibleVideos,
@@ -80,12 +145,21 @@ export async function loadAdminVideosPageData({
       .filter((account) => visibleProfileIds.has(account.profile_id))
       .map((account) => ({ id: account.id, name: account.name ?? "未命名账号" })),
     videoTags: normalizedTags,
+    assetLibrary,
     summary: {
       totalVideos: normalizedVideos.length,
       taggedVideos: taggedVideoIds.size,
-      snapshotCount: (snapshots ?? []).filter((snapshot) => snapshot.snapshot_type === "24h").length,
+      snapshotCount: snapshot24hVideoIds.size,
       abnormalCount: normalizedVideos.filter((video) => video.anomaly_status !== "正常").length,
       pendingCount: pendingVideos.length,
+    },
+    assetSummary: {
+      readyCount: assetSummaryRecords.filter((record) => record.library_status === "ready").length,
+      pendingLibraryCount: assetSummaryRecords.filter((record) => record.library_status === "pending").length,
+      completeCount: assetSummaryRecords.filter((record) => record.completeness_status === "complete").length,
+      partialCount: assetSummaryRecords.filter((record) => record.completeness_status === "partial").length,
+      missingCount: assetSummaryRecords.filter((record) => record.completeness_status === "missing").length,
+      gradedCount: assetSummaryRecords.filter((record) => record.asset_level !== null).length,
     },
   };
 }

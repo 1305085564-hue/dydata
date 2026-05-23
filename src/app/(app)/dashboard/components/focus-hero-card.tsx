@@ -62,7 +62,7 @@ export function FocusHeroCard({
             <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#D97757]">
               今日聚焦
             </p>
-            <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+            <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-medium text-zinc-500">
               {today}
             </span>
           </div>
@@ -80,7 +80,7 @@ export function FocusHeroCard({
         </div>
         <div className="shrink-0 text-right">
           <div className="flex items-baseline justify-end gap-1.5">
-            <span className="text-[32px] font-semibold font-mono tabular-nums leading-none text-zinc-800">
+            <span className="text-[24px] font-semibold font-mono tabular-nums leading-none text-zinc-800">
               {num}
             </span>
             {unit ? (

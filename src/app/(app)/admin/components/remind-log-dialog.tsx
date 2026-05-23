@@ -94,7 +94,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 shadow-sm sm:max-w-3xl">
         <DialogHeader className="px-6 pb-2 pt-6">
-          <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">
+          <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">
             催交记录
           </DialogTitle>
           <p className="text-[13px] text-zinc-400">{date} 的催交历史</p>
@@ -117,9 +117,10 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
           </div>
 
           {loading && logs.length === 0 ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-zinc-400">
-              <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-500" />
-              加载中...
+            <div className="space-y-2">
+              <div className="h-12 rounded-lg bg-zinc-100" />
+              <div className="h-12 rounded-lg bg-zinc-100" />
+              <div className="h-12 rounded-lg bg-zinc-100" />
             </div>
           ) : error ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2 text-[13px] text-[#C9604D]">
@@ -159,10 +160,10 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                         <td className="px-4 py-2.5">
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium",
                               log.status === "success"
-                                ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
-                                : "bg-[#C9604D]/10 text-[#C9604D]",
+                                ? "bg-white text-zinc-700"
+                                : "bg-white text-zinc-700",
                             )}
                           >
                             {log.status === "success" ? (
@@ -175,7 +176,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                         </td>
                         <td className="px-4 py-2.5">
                           {log.is_exempted ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[11px] font-medium text-[#D99E55]">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
                               已豁免
                               {log.exempt_reason ? ` · ${log.exempt_reason}` : ""}
                             </span>

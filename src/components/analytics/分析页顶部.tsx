@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,7 @@ interface AnalyticsPageHeaderProps {
   preset: AnalyticsRangePreset;
   from: string;
   to: string;
+  onChange: (nextPreset: AnalyticsRangePreset, overrides?: { from?: string; to?: string }) => void;
 }
 
 const presetOptions: Array<{ label: string; value: AnalyticsRangePreset }> = [
@@ -21,26 +21,7 @@ const presetOptions: Array<{ label: string; value: AnalyticsRangePreset }> = [
   { label: "自定义", value: "custom" },
 ];
 
-export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  function updateRange(nextPreset: AnalyticsRangePreset, overrides?: { from?: string; to?: string }) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("preset", nextPreset);
-
-    if (nextPreset === "custom") {
-      params.set("from", overrides?.from ?? params.get("from") ?? from);
-      params.set("to", overrides?.to ?? params.get("to") ?? to);
-    } else {
-      params.delete("from");
-      params.delete("to");
-    }
-
-    router.push(`${pathname}?${params.toString()}`);
-  }
-
+export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPageHeaderProps) {
   function getExportHref() {
     const params = new URLSearchParams();
     params.set("from", from);
@@ -66,10 +47,10 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
                 className={cn(
                   "h-7 rounded-lg px-3 text-[12px]",
                   preset === option.value
-                    ? "border-transparent bg-zinc-950 text-white hover:bg-zinc-800"
+                    ? "border-transparent bg-[#D97757] text-white hover:bg-[#C96442]"
                     : "border-zinc-200 bg-white text-zinc-600",
                 )}
-                onClick={() => updateRange(option.value)}
+                onClick={() => onChange(option.value)}
               >
                 {option.label}
               </Button>
@@ -81,14 +62,14 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
               <Input
                 type="date"
                 value={from}
-                onChange={(event) => updateRange("custom", { from: event.target.value, to })}
+                onChange={(event) => onChange("custom", { from: event.target.value, to })}
                 className="h-8 w-[140px] border-zinc-200 bg-white text-[12px]"
               />
               <span className="text-[12px] text-zinc-400">→</span>
               <Input
                 type="date"
                 value={to}
-                onChange={(event) => updateRange("custom", { from, to: event.target.value })}
+                onChange={(event) => onChange("custom", { from, to: event.target.value })}
                 className="h-8 w-[140px] border-zinc-200 bg-white text-[12px]"
               />
             </div>
@@ -96,7 +77,7 @@ export function AnalyticsPageHeader({ preset, from, to }: AnalyticsPageHeaderPro
 
           <Link
             href={getExportHref()}
-            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-zinc-950 px-3 text-[12px] font-medium text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 hover:-translate-y-[1px] hover:bg-zinc-800 hover:shadow-lg active:translate-y-0"
+            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
           >
             <Download className="size-3.5 stroke-[1.5]" />
             导出

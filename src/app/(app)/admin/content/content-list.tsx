@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
-import type { Profile, Video, VideoMetricsSnapshot } from "@/types";
+import type { ContentFeedbackCardView, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { ChevronDown } from "lucide-react";
 
 type VideoRow = Video & {
@@ -29,7 +29,8 @@ interface ContentListProps {
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
   accounts: AccountOption[];
-  reviewedVideoIds: string[];
+  feedbackCards: Record<string, ContentFeedbackCardView>;
+  onFeedbackCardChanged?: (videoId: string, card: ContentFeedbackCardView) => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -216,12 +217,21 @@ function MiniTimeline({
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
+const workflowStatusClass: Record<string, string> = {
+  not_started: "border-zinc-200 bg-zinc-50 text-zinc-500",
+  draft: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  confirmed: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  sent: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  viewed: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+};
+
 export function ContentList({
   videos,
   snapshots,
   profiles,
   accounts,
-  reviewedVideoIds,
+  feedbackCards,
+  onFeedbackCardChanged,
 }: ContentListProps) {
   const [filters, setFilters] = useState<ContentFilterValue>({
     profileId: "all",
@@ -234,9 +244,6 @@ export function ContentList({
     rankScope: "all",
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
-  const [localReviewedIds, setLocalReviewedIds] = useState<Set<string>>(
-    () => new Set(reviewedVideoIds)
-  );
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [newBatchIds, setNewBatchIds] = useState<Set<string>>(new Set());
@@ -278,9 +285,10 @@ export function ContentList({
       const hasSnap = snapshotMap.has(video.id);
       if (filters.hasSnapshot === "yes" && !hasSnap) return false;
       if (filters.hasSnapshot === "no" && hasSnap) return false;
-      const isReviewed = localReviewedIds.has(video.id);
-      if (filters.reviewed === "yes" && !isReviewed) return false;
-      if (filters.reviewed === "no" && isReviewed) return false;
+      const card = feedbackCards[video.id];
+      const hasDraft = card?.workflow_status !== "not_started";
+      if (filters.reviewed === "yes" && !hasDraft) return false;
+      if (filters.reviewed === "no" && hasDraft) return false;
       return true;
     });
 
@@ -307,13 +315,18 @@ export function ContentList({
       if (playDiff !== 0) return playDiff;
       return getVideoDateKey(right).localeCompare(getVideoDateKey(left));
     });
-  }, [videos, filters, snapshotMap, localReviewedIds]);
+  }, [videos, filters, snapshotMap, feedbackCards]);
 
   const visible = useMemo(() => filtered.slice(0, loadedCount), [filtered, loadedCount]);
   const hasMore = loadedCount < filtered.length;
   const timelineGroups = useMemo(() => buildTimeline(filtered), [filtered]);
 
   /* Intersection Observer for auto-load */
+  const currentPageStart = useCallback((visibleRows: VideoRow[]) => {
+    const firstId = visibleRows[0]?.id;
+    return filtered.findIndex((v) => v.id === firstId);
+  }, [filtered]);
+
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -401,11 +414,6 @@ export function ContentList({
     };
   }, []);
 
-  function currentPageStart(visibleRows: VideoRow[]) {
-    const firstId = visibleRows[0]?.id;
-    return filtered.findIndex((v) => v.id === firstId);
-  }
-
   const handleTimelineSeek = useCallback(
     (index: number) => {
       const targetId = filtered[index]?.id;
@@ -462,9 +470,10 @@ export function ContentList({
                 <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
                   <TableHead className="h-9 w-16 text-[12px] font-medium text-zinc-500">排名</TableHead>
                   <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-zinc-500">标题</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">复盘</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">人员</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">播放</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">2s跳出</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">5s完播</TableHead>
@@ -475,14 +484,14 @@ export function ContentList({
               <TableBody>
                 {visible.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm text-zinc-500">
+                    <TableCell colSpan={11} className="py-12 text-center text-sm text-zinc-500">
                       暂无内容
                     </TableCell>
                   </TableRow>
                 ) : (
                   visible.map((video, index) => {
                     const snap = snapshotMap.get(video.id);
-                    const isReviewed = localReviewedIds.has(video.id);
+                    const card = feedbackCards[video.id];
                     const isNewBatch = newBatchIds.has(video.id);
                     return (
                       <TableRow
@@ -512,15 +521,10 @@ export function ContentList({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-auto rounded-xl px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+                            className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
                             onClick={() => setSelectedVideoId(video.id)}
                           >
-                            <span className="flex flex-col items-start leading-tight">
-                              <span>查看复盘</span>
-                              <span className="mt-0.5 text-[11px] text-zinc-400">
-                                {formatDateTime(video.published_at ?? video.created_at)}
-                              </span>
-                            </span>
+                            批改
                           </Button>
                         </TableCell>
                         <TableCell className="text-sm text-zinc-500">
@@ -528,6 +532,9 @@ export function ContentList({
                         </TableCell>
                         <TableCell className="text-sm text-zinc-500">
                           {video.accounts.name}
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-500">
+                          {formatDateTime(video.published_at ?? video.created_at)}
                         </TableCell>
                         <TableCell className="text-right text-sm">
                           {snap ? formatNumber(snap.play_count) : "-"}
@@ -547,12 +554,15 @@ export function ContentList({
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {isReviewed ? (
-                            <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-xs text-[#8AA8C7]">
-                              已复盘
+                          {card ? (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${workflowStatusClass[card.workflow_status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                            >
+                              {card.workflow_label}
                             </Badge>
                           ) : (
-                            <span className="text-xs text-zinc-500">未复盘</span>
+                            <span className="text-xs text-zinc-500">未生成</span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -563,7 +573,7 @@ export function ContentList({
                 {/* Sentinel for auto-load */}
                 {hasMore && (
                   <TableRow>
-                    <TableCell colSpan={10} className="p-0">
+                    <TableCell colSpan={11} className="p-0">
                       <div ref={sentinelRef} className="h-4" />
                     </TableCell>
                   </TableRow>
@@ -593,10 +603,7 @@ export function ContentList({
                 disabled={isLoadingMore}
               >
                 {isLoadingMore ? (
-                  <>
-                    <span className="size-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-                    加载中…
-                  </>
+                  <>加载中…</>
                 ) : (
                   <>
                     <ChevronDown className="size-3.5" />
@@ -644,9 +651,9 @@ export function ContentList({
         }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
-        isReviewed={selectedVideoId ? localReviewedIds.has(selectedVideoId) : false}
-        onReviewed={(videoId) => {
-          setLocalReviewedIds((prev) => new Set([...prev, videoId]));
+        feedbackCard={selectedVideoId ? feedbackCards[selectedVideoId] ?? null : null}
+        onFeedbackCardChanged={(videoId, card) => {
+          onFeedbackCardChanged?.(videoId, card);
         }}
       />
 

@@ -170,7 +170,7 @@ function ManageTeamSheet({
                     <span className="text-[13px] text-zinc-700">{team.name}</span>
                     <button
                       type="button"
-                      className="rounded-md p-1 text-zinc-300 transition-colors hover:text-[#C9604D]"
+                      className="active:translate-y-0 rounded-md p-1 text-zinc-300 transition-colors hover:text-[#C9604D]"
                       onClick={() => setDeleteTarget(team)}
                     >
                       <Trash2 className="size-3.5" />

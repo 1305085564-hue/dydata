@@ -9,7 +9,9 @@ import type { SopMemberStatus } from "@/types";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
+import { useEffect, useState } from "react";
 import { setDashboardDate } from "@/lib/dashboard-store";
+import type { ContentFeedbackCardDetail } from "@/types";
 
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
@@ -100,6 +102,40 @@ export function ProductionControlSystem({
     teamReviewRequests,
   });
 
+  const [feedbackCard, setFeedbackCard] = useState<ContentFeedbackCardDetail | null>(null);
+  const [feedbackVideoTitle, setFeedbackVideoTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const fetchCard = async () => {
+      try {
+        const res = await fetch("/api/dashboard/content-feedback-cards");
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          items?: Array<{
+            video?: { video_title?: string | null } | null;
+            feedback_card?: ContentFeedbackCardDetail;
+          }>;
+        };
+        const first = data.items?.[0];
+        if (active && first?.feedback_card) {
+          setFeedbackCard(first.feedback_card);
+          setFeedbackVideoTitle(first.video?.video_title ?? null);
+          // 如果是 sent 状态，自动标记为 viewed
+          if (first.feedback_card.workflow_status === "sent" && first.feedback_card.card_id) {
+            await fetch(`/api/dashboard/content-feedback-cards/${first.feedback_card.card_id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "viewed" }),
+            });
+          }
+        }
+      } catch {}
+    };
+    fetchCard();
+    return () => { active = false; };
+  }, []);
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 antialiased">
       <main className="p-4 lg:p-8">
@@ -153,6 +189,16 @@ export function ProductionControlSystem({
             isPending={isPending}
             activeCheckpoint={activeCheckpoint}
             onSubmitted={refreshSop}
+            reviewFeedback={
+              feedbackCard?.confirmed
+                ? {
+                    videoTitle: feedbackVideoTitle ?? "未命名视频",
+                    mainIssues: feedbackCard.confirmed.summary.one_line || feedbackCard.confirmed.summary.problem_tags.join(" / ") || "",
+                    nextAction: feedbackCard.confirmed.actions.instructions.slice(0, 2).join("；") || "",
+                    managerComment: feedbackCard.confirmed.actions.message_for_member || undefined,
+                  }
+                : null
+            }
             dataReport={
               <DataReportStage
                 key={`${selectedAccountId}-${activeBizDate}`}

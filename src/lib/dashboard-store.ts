@@ -9,7 +9,7 @@ interface DashboardStore {
   listeners: Set<() => void>;
 }
 
-let store: DashboardStore = {
+const store: DashboardStore = {
   accounts: [],
   selectedAccountId: "",
   activeBizDate: "",

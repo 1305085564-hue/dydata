@@ -30,6 +30,8 @@ export type ApiErrorCode =
 export const VIOLATION_CATEGORIES: ViolationCategory[] = ["下粉", "直播", "短视频", "其他"];
 export const VIOLATION_STATUSES: ViolationStatus[] = ["submitted", "verified", "rejected", "archived"];
 export const VIOLATION_RISK_LEVELS: ViolationRiskLevel[] = ["high", "medium", "low"];
+export const CASE_PLATFORMS = ["抖音", "视频号", "小红书", "其他"] as const;
+export type CasePlatform = (typeof CASE_PLATFORMS)[number];
 export const MAX_SCREENSHOT_COUNT = 5;
 export const VIOLATION_SCREENSHOT_BUCKET = "violation-screenshots";
 export const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024;
@@ -94,6 +96,10 @@ export function isViolationStatus(value: unknown): value is ViolationStatus {
 
 export function isViolationRiskLevel(value: unknown): value is ViolationRiskLevel {
   return typeof value === "string" && VIOLATION_RISK_LEVELS.includes(value as ViolationRiskLevel);
+}
+
+export function isCasePlatform(value: unknown): value is CasePlatform {
+  return typeof value === "string" && (CASE_PLATFORMS as readonly string[]).includes(value);
 }
 
 export function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey) {
