@@ -33,9 +33,9 @@ function getNumberClassName(value: number) {
 }
 
 function getSentimentVariant(sentiment: MarketContextDaily["market_sentiment"]) {
-  if (sentiment === "强") return "bg-[#6FAA7D]/10 text-[#6FAA7D] ring-zinc-200";
-  if (sentiment === "中") return "bg-[#D99E55]/10 text-[#D99E55] ring-zinc-200";
-  if (sentiment === "弱") return "bg-[#C9604D]/10 text-[#C9604D] ring-zinc-200";
+  if (sentiment === "强") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700 ring-zinc-200";
+  if (sentiment === "中") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700 ring-zinc-200";
+  if (sentiment === "弱") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700 ring-zinc-200";
   return "bg-muted text-muted-foreground ring-border";
 }
 
@@ -119,7 +119,7 @@ export function MarketList({ initialData }: MarketListProps) {
                           {formatSignedPercent(chinext)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={`rounded-full ring-1 ${getSentimentVariant(row.market_sentiment)}`}>
+                          <Badge variant="outline" className={`rounded-lg ring-1 ${getSentimentVariant(row.market_sentiment)}`}>
                             {row.market_sentiment ?? "—"}
                           </Badge>
                         </TableCell>

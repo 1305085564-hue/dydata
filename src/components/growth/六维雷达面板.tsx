@@ -78,7 +78,7 @@ export function SixRadarPanel({ capabilityCards, weakBenchmarkCards, teamMembers
   if (!capabilityCards.length) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">六维能力</h2>
+        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">六维能力</h2>
         <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">数据不足，先连续提交数据后再看能力分布。</p>
       </div>
     );
@@ -101,7 +101,7 @@ export function SixRadarPanel({ capabilityCards, weakBenchmarkCards, teamMembers
     <div className="space-y-4">
       {/* 图例 + 对比选择器 */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+        <div className="flex items-center gap-3 text-[12px] text-zinc-500">
           <span className="flex items-center gap-1">
             <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
             我
@@ -114,7 +114,7 @@ export function SixRadarPanel({ capabilityCards, weakBenchmarkCards, teamMembers
         <select
           value={comparePersonId}
           onChange={(e) => setComparePersonId(e.target.value)}
-          className="rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-800 outline-none hover:border-zinc-300 focus:border-zinc-900"
+          className="rounded-xl border border-zinc-200 bg-white px-2.5 py-1 text-[12px] text-zinc-800 outline-none hover:border-zinc-300 focus:border-zinc-900"
         >
           <option value="">团队 P80</option>
           {teamMembers.map((m) => (
@@ -220,12 +220,12 @@ export function SixRadarPanel({ capabilityCards, weakBenchmarkCards, teamMembers
 
       {/* 最强 / 最弱 — 极简标签 */}
       <div className="flex items-center justify-center gap-3">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px]">
           <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
           <span className="text-zinc-500">最强</span>
           <span className="font-semibold text-zinc-800 font-mono tabular-nums">{capabilityCards[strongIndex]?.name}</span>
         </div>
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[11px]">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px]">
           <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
           <span className="text-zinc-500">最弱</span>
           <span className="font-semibold text-zinc-800 font-mono tabular-nums">{capabilityCards[weakIndex]?.name}</span>

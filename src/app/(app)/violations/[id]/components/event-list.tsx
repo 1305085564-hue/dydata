@@ -25,14 +25,14 @@ export type EventItem = {
 const EVENT_TYPE_STYLE: Record<string, string> = {
   限流: "bg-[#FFB547]/15 text-[#8B5A00]",
   警告: "bg-[#F59E0B]/15 text-[#D99E55]",
-  删除视频: "bg-[#C9604D]/10 text-[#C9604D]",
+  删除视频: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
   封号: "bg-[#9F1239]/10 text-[#9F1239]",
   其他: "bg-zinc-100 text-zinc-600",
 };
 
 const APPEAL_STATUS_STYLE: Record<string, string> = {
-  申诉成功: "bg-[#6FAA7D]/10 text-[#6FAA7D]",
-  申诉失败: "bg-[#C9604D]/10 text-[#C9604D]",
+  申诉成功: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  申诉失败: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
   申诉中: "bg-[#8AA8C7]/10 text-[#8AA8C7]",
   未申诉: "bg-zinc-100 text-zinc-600",
 };
@@ -129,7 +129,7 @@ function ScreenshotThumbs({
           key={path}
           type="button"
           onClick={() => onOpen(path)}
-          className="group relative size-16 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-colors hover:-translate-y-0.5 hover:border-zinc-400"
+ className="group relative size-16 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-colors hover:border-zinc-400"
           aria-label="查看截图大图"
         >
           <Image
@@ -160,7 +160,7 @@ function Lightbox({ path, onClose }: { path: string; onClose: () => void }) {
       >
         <button
           type="button"
-          className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          className="active:translate-y-0 absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
           onClick={(e) => {
             e.stopPropagation();
             onClose();

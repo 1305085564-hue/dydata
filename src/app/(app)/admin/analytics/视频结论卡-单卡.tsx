@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
 import { 获取可信度文案 } from "./视频结论卡-计算";
 
 function signalTone(confidence: "low" | "medium" | "high") {
-  if (confidence === "high") return "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]";
-  if (confidence === "medium") return "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]";
-  return "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]";
+  if (confidence === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  if (confidence === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
 }
 
 const shellClassName =
-  "group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0";
+ "group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0";
 
 export function 视频结论卡单卡({
   card,
@@ -52,7 +52,7 @@ export function 视频结论卡单卡({
           <Badge
             variant="outline"
             className={cn(
-              "shrink-0 rounded-[10px] border px-2.5 py-0.5 text-[10px] font-medium",
+              "shrink-0 rounded-[10px] border px-2.5 py-0.5 text-[12px] font-medium",
               signalTone(card.confidence),
             )}
           >
@@ -159,7 +159,7 @@ export function 干预结论单卡({
           <Badge
             variant="outline"
             className={cn(
-              "shrink-0 rounded-[10px] border px-2.5 py-0.5 text-[10px] font-medium",
+              "shrink-0 rounded-[10px] border px-2.5 py-0.5 text-[12px] font-medium",
               signalTone(card.confidence),
             )}
           >
@@ -173,8 +173,8 @@ export function 干预结论单卡({
               className={cn(
                 "relative flex size-14 shrink-0 items-center justify-center rounded-xl",
                 needsIntervention
-                  ? "bg-[#C9604D]/10 text-[#C9604D]"
-                  : "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+                  ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+                  : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
               )}
             >
               {needsIntervention ? <ArrowUpRight className="size-6 stroke-[1.5]" /> : <AlertCircle className="size-6 stroke-[1.5]" />}

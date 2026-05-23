@@ -115,7 +115,7 @@ function SidebarContent({
           <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
             History
           </span>
-          <span className="text-[10px] font-mono tabular-nums text-zinc-400">{total}</span>
+          <span className="text-[12px] font-mono tabular-nums text-zinc-400">{total}</span>
         </div>
       </div>
 
@@ -127,7 +127,7 @@ function SidebarContent({
               key={item.value}
               onClick={() => onChangeFilter(item.value)}
               className={cn(
-                "rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                "rounded-md px-1.5 py-0.5 text-[12px] font-medium transition-colors",
                 filter === item.value
                   ? "bg-[#D97757] text-white"
                   : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
@@ -147,7 +147,7 @@ function SidebarContent({
             <div className="text-[11px] text-zinc-500">{error}</div>
             <button
               onClick={onRetry}
-              className="mt-1 rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
+              className="active:translate-y-0 mt-1 rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
             >
               重新同步
             </button>
@@ -167,7 +167,7 @@ function SidebarContent({
             {loading && (
               <div className="flex items-center justify-center gap-1.5 py-2">
                 <div className="h-0.5 w-8 animate-pulse rounded-full bg-zinc-300" />
-                <span className="text-[10px] text-zinc-400">刷新中</span>
+                <span className="text-[12px] text-zinc-400">刷新中</span>
               </div>
             )}
             {records.map((record) => {
@@ -205,7 +205,7 @@ function SidebarContent({
               <button
                 onClick={onLoadMore}
                 disabled={loadingMore}
-                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] text-zinc-400 transition-colors hover:bg-white hover:text-zinc-700 disabled:opacity-50"
+                className="active:translate-y-0 mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] text-zinc-400 transition-colors hover:bg-white hover:text-zinc-700 disabled:opacity-50"
               >
                 {loadingMore ? (
                   <Skeleton className="h-3 w-12 rounded" />

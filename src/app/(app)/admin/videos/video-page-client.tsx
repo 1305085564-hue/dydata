@@ -77,9 +77,7 @@ export function VideoPageClient({ initialView, initialData }: VideoPageClientPro
               {data.summary.totalVideos}
             </span>
           </button>
-          {isLoading && (
-            <span className="ml-2 inline-block size-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-          )}
+
         </div>
 
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">

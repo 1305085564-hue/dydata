@@ -151,7 +151,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
           </div>
           <button
             onClick={() => fetchBoard()}
-            className="mt-1 inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+ className="mt-1 inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-500 transition-[background-color, color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             <RefreshCw size={12} className="stroke-[1.5]" /> 重新加载
           </button>
@@ -200,12 +200,12 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
+        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">
           组长看板
         </h2>
         <button
           onClick={() => fetchBoard()}
-          className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+ className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-500 transition-[background-color, color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
         >
           <RefreshCw size={12} className="stroke-[1.5]" /> 刷新
         </button>
@@ -218,7 +218,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
               <div className="mb-3 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
                 <AlertCircle size={14} className="stroke-[1.5] text-[#C9604D]" />
-                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
+                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
                   超时未交
                 </span>
               </div>
@@ -236,7 +236,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
               <div className="mb-3 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                 <Activity size={14} className="stroke-[1.5] text-[#D99E55]" />
-                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#D99E55]">
+                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#D99E55]">
                   待审核
                 </span>
               </div>
@@ -257,7 +257,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
               <div className="mb-3 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
                 <Check size={14} className="stroke-[1.5] text-[#6FAA7D]" />
-                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
+                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
                   豁免待审批
                 </span>
               </div>
@@ -274,13 +274,13 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-zinc-500">
-                <th className="p-5 text-[10px] font-medium uppercase tracking-[0.25em]">
+                <th className="p-5 text-[12px] font-medium uppercase tracking-[0.25em]">
                   组员
                 </th>
                 {MATRIX_CHECKPOINTS.map((cp) => (
                   <th
                     key={cp.id}
-                    className="p-5 text-center text-[10px] font-medium uppercase tracking-[0.25em]"
+                    className="p-5 text-center text-[12px] font-medium uppercase tracking-[0.25em]"
                   >
                     {cp.label}
                   </th>
@@ -344,7 +344,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                       <span className="text-[13px] font-semibold text-zinc-800">
                         {member?.userName ?? "未知"}
                       </span>
-                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-medium text-zinc-500">
                         {checkpointLabel(s.checkpoint as SopCheckpoint)}
                       </span>
                     </div>
@@ -360,7 +360,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                   </div>
                   <button
                     onClick={() => setSelected(s)}
-                    className="shrink-0 rounded-[10px] border border-zinc-200 bg-white px-4 py-2 text-[11px] font-medium text-zinc-700 transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="shrink-0 rounded-[10px] border border-zinc-200 bg-white px-4 py-2 text-[12px] font-medium text-zinc-700 transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                   >
                     审核
                   </button>
@@ -394,10 +394,10 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                       <span className="text-[13px] font-semibold text-zinc-800">
                         {request.applicant_name}
                       </span>
-                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-medium text-zinc-500">
                         {categoryLabel}
                       </span>
-                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-medium text-zinc-500">
                         {dateRange}
                       </span>
                     </div>
@@ -410,7 +410,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                       type="button"
                       disabled={isReviewingExemption}
                       onClick={() => handleExemptionReview(request, "rejected")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-500 transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 disabled:pointer-events-none disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-500 transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 disabled:pointer-events-none disabled:opacity-50"
                     >
                       <X size={12} className="stroke-[1.5]" />
                       拒绝
@@ -419,7 +419,7 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
                       type="button"
                       disabled={isReviewingExemption}
                       onClick={() => handleExemptionReview(request, "approved")}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[#6FAA7D] px-3 text-[11px] font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#5E986D] disabled:pointer-events-none disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-[#6FAA7D] px-3 text-[12px] font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#5E986D] disabled:pointer-events-none disabled:opacity-50"
                     >
                       <Check size={12} className="stroke-[1.5]" />
                       {isReviewingThis ? "处理中" : "通过"}

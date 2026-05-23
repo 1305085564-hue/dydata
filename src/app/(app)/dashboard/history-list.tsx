@@ -157,8 +157,8 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] text-zinc-400 font-mono tabular-nums">{report.report_date?.slice(5)}</p>
-                <p className="mt-1 text-[11px] text-zinc-400">
+                <p className="text-[12px] text-zinc-400 font-mono tabular-nums">{report.report_date?.slice(5)}</p>
+                <p className="mt-1 text-[12px] text-zinc-400">
                   {accountDisplayNameMap[report.account_id] ?? "-"}
                 </p>
               </div>
@@ -180,7 +180,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
               </div>
             </div>
             <p className="truncate text-[13px] text-zinc-800">{report.title}</p>
-            <div className="grid grid-cols-4 gap-2 text-[11px]">
+            <div className="grid grid-cols-4 gap-2 text-[12px]">
               <div>
                 <p className="text-zinc-400">完播率</p>
                 <p className="font-mono tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</p>
@@ -213,7 +213,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">修改日报</DialogTitle>
+            <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">修改日报</DialogTitle>
           </DialogHeader>
           {editingReport && (
             <DashboardForm

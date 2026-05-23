@@ -539,7 +539,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       <div className="mx-auto max-w-6xl space-y-5 py-8">
         <Link
           href="/violations"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-800"
+          className="active:translate-y-0 inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-800"
         >
           <ArrowLeft className="size-4" />
           话术库
@@ -561,7 +561,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/violations"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-800"
+          className="active:translate-y-0 inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-800"
         >
           <ArrowLeft className="size-4" />
           话术库

@@ -104,7 +104,7 @@ function resultMeta(result?: string) {
 function CopyButton({ payload }: { payload: string }) {
   return (
     <button
-      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-zinc-800"
+      className="active:translate-y-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-zinc-800"
       onClick={() => {
         navigator.clipboard.writeText(payload);
         toast.success("已复制");
@@ -210,7 +210,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
         <SheetBody>
         <div className="space-y-4 py-2">
           {error ? (
-            <div className="rounded-xl border border-red-100 bg-[#FEF9F9] p-4 text-center">
+            <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-4 text-center">
               <div className="text-[12px] text-red-700">{error}</div>
             </div>
           ) : detail ? (
@@ -218,7 +218,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
               {loading && (
                 <div className="flex items-center justify-center gap-2 py-1">
                   <div className="h-0.5 w-8 animate-pulse rounded-full bg-zinc-300" />
-                  <span className="text-[10px] text-zinc-400">刷新中</span>
+                  <span className="text-[12px] text-zinc-400">刷新中</span>
                 </div>
               )}
               {/* Meta grid */}
@@ -231,7 +231,7 @@ export default function ActionDetailDrawer({ id, actorRole, onClose }: Props) {
 
               {/* Error message */}
               {detail.errorMessage && (
-                <div className="relative overflow-hidden rounded-2xl border border-red-100 bg-[#FEF9F9] p-4">
+                <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4">
                   <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
                   <div className="pl-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-red-700">

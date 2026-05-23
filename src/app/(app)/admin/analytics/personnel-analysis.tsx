@@ -264,7 +264,7 @@ function PersonRankCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-zinc-200 border-l-[2px] bg-[#FAFAFB] p-3 shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-white hover:shadow-sm active:translate-y-0",
+ "group relative overflow-hidden rounded-xl border border-zinc-200 border-l-[2px] bg-[#FAFAFB] p-3 shadow-sm transition-[background-color, border-color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white active:translate-y-0",
         person.suggestion.leftBorder,
         isActive && "ring-1 ring-[#D97757]/30 border-l-[#D97757]",
       )}
@@ -290,7 +290,7 @@ function PersonRankCard({
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-            <Badge variant="outline" className={cn("h-6 shrink-0 border-transparent px-2 text-[10px]", person.suggestion.bgColor, person.suggestion.color)}>
+            <Badge variant="outline" className={cn("h-6 shrink-0 border-transparent px-2 text-[12px]", person.suggestion.bgColor, person.suggestion.color)}>
               {person.suggestion.label}
             </Badge>
             <TrendBadge trend={person.trend} />
@@ -376,7 +376,7 @@ function TrendBadge({ trend }: { trend: number }) {
     );
 
   return (
-    <div className="flex h-6 items-center gap-1 rounded-[10px] bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600">
+    <div className="flex h-6 items-center gap-1 rounded-[10px] bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-600">
       {icon}
       <span>{formatSignedPercent(trend)}</span>
     </div>
@@ -400,7 +400,7 @@ function StackedBar({
 }) {
   return (
     <div className="space-y-1">
-      <div className={cn("flex items-center justify-between gap-2 text-[10px] font-medium", muted ? "text-zinc-400" : "text-zinc-500")}>
+      <div className={cn("flex items-center justify-between gap-2 text-[12px] font-medium", muted ? "text-zinc-400" : "text-zinc-500")}>
         <span>{label}</span>
         <span className={cn("text-zinc-700", muted && "text-zinc-500")}>{value}</span>
       </div>
@@ -437,7 +437,7 @@ function MetricBarCard({
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/90">
         <div className={cn("h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]", barClassName)} style={{ width: `${width}%` }} />
       </div>
-      <p className="mt-1 line-clamp-1 text-[10px] leading-4 text-zinc-500">{description}</p>
+      <p className="mt-1 line-clamp-1 text-[12px] leading-4 text-zinc-500">{description}</p>
     </div>
   );
 }

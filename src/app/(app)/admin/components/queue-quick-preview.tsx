@@ -101,7 +101,7 @@ function PreviewShell({
           {fullViewHref ? (
             <Link
               href={fullViewHref}
-              className="inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-colors hover:text-zinc-800"
+              className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-colors hover:text-zinc-800"
               onClick={() => onOpenChange(false)}
             >
               {fullViewLabel}
@@ -119,9 +119,12 @@ function PreviewShell({
                 className="inline-flex h-8 items-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {secondaryAction.loading ? (
-                  <Loader2 className="mr-1 size-3 animate-spin" />
-                ) : null}
-                {secondaryAction.label}
+                  <div className="space-y-2"><div className="h-12 rounded-lg bg-zinc-100" /><div className="h-12 rounded-lg bg-zinc-100" /></div>
+                ) : (
+                  <>
+                    {secondaryAction.label}
+                  </>
+                )}
               </button>
             ) : null}
             {primaryAction ? (
@@ -135,9 +138,12 @@ function PreviewShell({
                 )}
               >
                 {primaryAction.loading ? (
-                  <Loader2 className="mr-1 size-3 animate-spin" />
-                ) : null}
-                {primaryAction.label}
+                  <div className="space-y-2"><div className="h-12 rounded-lg bg-zinc-100" /><div className="h-12 rounded-lg bg-zinc-100" /></div>
+                ) : (
+                  <>
+                    {primaryAction.label}
+                  </>
+                )}
               </button>
             ) : null}
           </div>

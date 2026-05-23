@@ -16,7 +16,7 @@ function resolveAccent(item: ViolationCase) {
     return {
       border: "border-l-[#6FAA7D]",
       label: "推荐",
-      labelClass: "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+      labelClass: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
       icon: Sparkles,
     };
   }
@@ -24,7 +24,7 @@ function resolveAccent(item: ViolationCase) {
     return {
       border: "border-l-[#C9604D]",
       label: "禁用",
-      labelClass: "bg-[#C9604D]/10 text-[#C9604D]",
+      labelClass: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
       icon: ShieldAlert,
     };
   }
@@ -32,7 +32,7 @@ function resolveAccent(item: ViolationCase) {
     return {
       border: "border-l-[#D97757]",
       label: "待测试",
-      labelClass: "bg-[#D97757]/10 text-[#D97757]",
+      labelClass: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
       icon: TestTube2,
     };
   }

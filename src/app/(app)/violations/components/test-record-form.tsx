@@ -187,10 +187,10 @@ export function TestRecordForm({
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" className="rounded-2xl" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" className="rounded-lg" onClick={() => setOpen(false)}>
               取消
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800">
+            <Button type="submit" disabled={isSubmitting} className="rounded-lg bg-[#D97757] text-white hover:bg-[#C96442] active:translate-y-0">
               {isSubmitting ? "提交中..." : "保存记录"}
             </Button>
           </div>

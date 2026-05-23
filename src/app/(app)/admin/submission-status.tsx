@@ -212,12 +212,12 @@ export function SubmissionStatus({
     return (
       <div className="flex flex-wrap gap-1">
         {account.content_direction ? (
-          <Badge variant="outline" className="text-[11px]">
+          <Badge variant="outline" className="text-[12px]">
             {account.content_direction}
           </Badge>
         ) : null}
         {account.presentation_format ? (
-          <Badge variant="outline" className="text-[11px]">
+          <Badge variant="outline" className="text-[12px]">
             {account.presentation_format}
           </Badge>
         ) : null}
@@ -260,32 +260,32 @@ export function SubmissionStatus({
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">{summary.totalLabel}</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-zinc-400">{summary.totalLabel}</p>
+            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.totalActive} />
             </p>
           </CardContent>
         </Card>
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#6FAA7D]">已提交</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#6FAA7D]">已提交</p>
+            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.submittedCount} />
             </p>
           </CardContent>
         </Card>
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#D99E55]">待提交</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#D99E55]">待提交</p>
+            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.unsubmittedCount} />
             </p>
           </CardContent>
         </Card>
         <Card className="card-elevated bg-white border-zinc-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">提交率</p>
-            <p className="text-[20px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-zinc-400">提交率</p>
+            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
               <AnimatedNumber value={summary.submitRate} format={(n) => `${n}%`} />
             </p>
           </CardContent>
@@ -358,7 +358,7 @@ export function SubmissionStatus({
                                 <div key={account.id} className="flex items-center gap-2">
                                   <span>{account.name}</span>
                                   {submittedAccountSet.has(account.id) ? (
-                                    <Badge variant="success" className="text-[10px] px-1 py-0">
+                                    <Badge variant="success" className="text-[12px] px-1 py-0">
                                       已交
                                     </Badge>
                                   ) : null}
@@ -406,7 +406,7 @@ export function SubmissionStatus({
                                   {row.ownAccounts.map((account) => (
                                     <div key={account.id} className="flex items-center gap-2">
                                       <span>{account.name}</span>
-                                      {submittedAccountSet.has(account.id) ? <Badge variant="success" className="text-[10px] px-1 py-0">已交</Badge> : null}
+                                      {submittedAccountSet.has(account.id) ? <Badge variant="success" className="text-[12px] px-1 py-0">已交</Badge> : null}
                                     </div>
                                   ))}
                                 </div>
@@ -500,7 +500,8 @@ export function SubmissionStatus({
                           row.ownAccounts.map((account) => (
                             <div key={account.id} className="flex items-center justify-between gap-2">
                               <span>{account.name}</span>
-                              <Badge className={`text-[10px] px-1 py-0 ${submittedAccountSet.has(account.id) ? "bg-[#6FAA7D]/10 text-[#6FAA7D]" : "bg-[#D99E55]/10 text-[#D99E55]"}`}>
+                              <Badge className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 py-0 text-[12px] text-zinc-700">
+                                <span className={`size-1.5 rounded-full ${submittedAccountSet.has(account.id) ? "bg-[#6FAA7D]" : "bg-[#D99E55]"}`} aria-hidden />
                                 {submittedAccountSet.has(account.id) ? "已交" : "未交"}
                               </Badge>
                             </div>
@@ -516,7 +517,7 @@ export function SubmissionStatus({
                 {submittedProfileRowsList.length > 0 && (
                   <>
                     <button
-                      className="w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
+                      className="active:translate-y-0 w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
                       onClick={() => setProfileSubmittedExpanded((v) => !v)}
                     >
                       已提交 {submittedProfileRowsList.length} 人 {profileSubmittedExpanded ? "▲" : "▼"}
@@ -711,7 +712,7 @@ export function SubmissionStatus({
                 {submittedAccountRowsList.length > 0 && (
                   <>
                     <button
-                      className="w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
+                      className="active:translate-y-0 w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
                       onClick={() => setAccountSubmittedExpanded((v) => !v)}
                     >
                       已提交 {submittedAccountRowsList.length} 个账号 {accountSubmittedExpanded ? "▲" : "▼"}

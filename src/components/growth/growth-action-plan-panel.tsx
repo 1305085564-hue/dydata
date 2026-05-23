@@ -160,10 +160,10 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-zinc-200" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Action Plan</span>
+            <span className="text-[12px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Action Plan</span>
             <div className="h-px flex-1 bg-zinc-200" />
           </div>
-          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">下一轮先怎么改</h2>
+          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">下一轮先怎么改</h2>
           <p className="text-[13px] leading-[1.7] text-zinc-500">
             {noData
               ? "当前没有真实数据，先看一次完整示例，知道这里以后会给你什么。"
@@ -187,7 +187,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
                       {block.title}
                     </div>
                     {block.badge ? (
-                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
                         {block.badge}
                       </span>
                     ) : null}
@@ -200,7 +200,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
         ) : null}
 
         {insightState.status === "error" && !noData ? (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-500">
+          <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-[12px] text-zinc-500">
             单条视频复盘请求失败：{insightState.message}
           </div>
         ) : null}

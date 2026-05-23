@@ -30,7 +30,7 @@ function DashboardSubmitPanel({ accounts, today, todayReports }: Props) {
           暂无可用账号，请联系管理员
         </p>
         <section className="rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-4 sm:p-5">
-          <h2 className="mb-3 text-[20px] font-semibold tracking-tight text-zinc-800">提交日报</h2>
+          <h2 className="mb-3 text-[24px] font-semibold tracking-tight text-zinc-800">提交日报</h2>
           <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-[13px] leading-[1.7] text-zinc-500">
             当前账号尚未初始化，暂时无法提交日报。
           </div>
@@ -58,7 +58,7 @@ function DashboardSubmitPanel({ accounts, today, todayReports }: Props) {
       </p>
 
       <section className="rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-4 sm:p-5">
-        <h2 className="mb-3 text-[20px] font-semibold tracking-tight text-zinc-800">提交日报</h2>
+        <h2 className="mb-3 text-[24px] font-semibold tracking-tight text-zinc-800">提交日报</h2>
 
         {accounts.length > 1 ? (
           <div className="mb-4 space-y-2">

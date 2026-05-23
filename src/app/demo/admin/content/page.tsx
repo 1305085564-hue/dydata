@@ -47,7 +47,7 @@ export default function DemoAdminContentPage() {
                       {row.owner_name} / {row.account_name} / {row.published_at?.slice(0, 10) ?? "--"}
                     </div>
                   </div>
-                  <Badge variant={row.anomaly_status === "正常" ? "outline" : "secondary"} className="rounded-full">
+                  <Badge variant={row.anomaly_status === "正常" ? "outline" : "secondary"} className="rounded-lg">
                     {row.anomaly_status}
                   </Badge>
                 </div>

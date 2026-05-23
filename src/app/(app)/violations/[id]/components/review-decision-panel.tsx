@@ -48,7 +48,7 @@ const VIOLATION_USAGE_OPTIONS: Array<{
     value: "testing",
     label: "待测试",
     hint: "样本不足，需谨慎试用",
-    tone: "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757]",
+    tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
     icon: TestTube2,
   },
   {
@@ -62,7 +62,7 @@ const VIOLATION_USAGE_OPTIONS: Array<{
     value: "banned",
     label: "禁用",
     hint: "已确认违规，团队全员避开",
-    tone: "border-[#C9604D]/30 bg-[#C9604D]/10 text-[#C9604D]",
+    tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
     icon: ShieldAlert,
   },
 ];
@@ -85,7 +85,7 @@ const CONVERSION_USAGE_OPTIONS: Array<{
     value: "testing",
     label: "待测试",
     hint: "样本不足，先小范围跑",
-    tone: "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757]",
+    tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
     icon: TestTube2,
   },
   {
@@ -98,9 +98,9 @@ const CONVERSION_USAGE_OPTIONS: Array<{
 ];
 
 const RISK_OPTIONS: Array<{ value: RiskLevel; label: string; tone: string }> = [
-  { value: "high", label: "高风险", tone: "border-[#C9604D]/30 bg-[#C9604D]/10 text-[#C9604D]" },
-  { value: "medium", label: "中风险", tone: "border-[#D99E55]/30 bg-[#D99E55]/10 text-[#D99E55]" },
-  { value: "low", label: "低风险", tone: "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]" },
+  { value: "high", label: "高风险", tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" },
+  { value: "medium", label: "中风险", tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" },
+  { value: "low", label: "低风险", tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" },
 ];
 
 const VIOLATION_REJECT_TEMPLATES = [
@@ -279,8 +279,8 @@ export function ReviewDecisionPanel({
   return (
     <section className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-white p-5 sm:p-6">
       <header className="flex items-center gap-2">
-        <h2 className="text-[16px] font-semibold tracking-tight text-zinc-800">审核决策</h2>
-        <span className="text-[11px] text-zinc-500">
+        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-800">审核决策</h2>
+        <span className="text-[12px] text-zinc-500">
           {initialStatus === "submitted"
             ? "员工等你判断能否纳入知识库"
             : initialStatus === "verified"
@@ -336,7 +336,7 @@ export function ReviewDecisionPanel({
                     <Icon className="mt-0.5 size-4 shrink-0 stroke-[1.5]" />
                     <div className="leading-tight">
                       <p className="text-[13px] font-semibold">{option.label}</p>
-                      <p className="text-[11px] text-zinc-500">{option.hint}</p>
+                      <p className="text-[12px] text-zinc-500">{option.hint}</p>
                     </div>
                   </button>
                 );
@@ -377,7 +377,7 @@ export function ReviewDecisionPanel({
               />
               <Sparkles className="size-4 stroke-[1.5] text-[#6FAA7D]" />
               <span className="font-medium">同时置顶推荐</span>
-              <span className="text-[11px] text-zinc-500">仅 Owner 可推广，会出现在员工推荐 banner</span>
+              <span className="text-[12px] text-zinc-500">仅 Owner 可推广，会出现在员工推荐 banner</span>
             </label>
           ) : null}
         </div>
@@ -430,10 +430,10 @@ export function ReviewDecisionPanel({
           <div className="flex items-center gap-2">
             <p className="text-[12px] font-semibold text-zinc-600">踩雷点标签</p>
             {reasonTagIds.length > 0 ? (
-              <span className="text-[11px] text-zinc-500">已选 {reasonTagIds.length}</span>
+              <span className="text-[12px] text-zinc-500">已选 {reasonTagIds.length}</span>
             ) : null}
           </div>
-          <p className="mt-1 text-[11px] text-zinc-400">告诉员工是因为踩到哪些雷被处罚的。可多选。</p>
+          <p className="mt-1 text-[12px] text-zinc-400">告诉员工是因为踩到哪些雷被处罚的。可多选。</p>
           {isLoadingTags ? (
             <div className="mt-2 flex flex-wrap gap-2">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -502,7 +502,7 @@ export function ReviewDecisionPanel({
 
       {decision ? (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-[12px] text-zinc-400">
             {decision === "verify"
               ? "保存后员工立刻能在话术库看到"
               : "保存后此提交从员工列表移除，员工可重新提交"}
@@ -511,7 +511,7 @@ export function ReviewDecisionPanel({
             type="button"
             disabled={submitting || isLocked}
             onClick={submit}
-            className="rounded-2xl bg-zinc-900 px-5 text-white hover:bg-zinc-800 active:translate-y-0"
+            className="rounded-lg bg-[#D97757] px-5 text-white hover:bg-[#C96442] active:translate-y-0"
           >
             {submitting ? "保存中..." : decision === "verify" ? "保存并采纳" : "保存并驳回"}
           </Button>
@@ -547,7 +547,7 @@ function DecisionPill({
         ? "border-[#6FAA7D]/40 bg-[#6FAA7D]/10 text-[#3F6F4F]"
         : "border-zinc-200 bg-white text-zinc-500 hover:border-[#6FAA7D]/30 hover:text-[#3F6F4F]"
       : active
-        ? "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D]"
+        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
         : "border-zinc-200 bg-white text-zinc-500 hover:border-[#C9604D]/30 hover:text-[#C9604D]";
   return (
     <button

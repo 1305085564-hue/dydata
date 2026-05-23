@@ -28,7 +28,7 @@ export default function AssistantDetailSections({ details }: Props) {
                   key={`${section.title}-${item.label}`}
                   className="flex items-baseline gap-2 border-b border-dashed border-zinc-100 py-1.5"
                 >
-                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-zinc-400">
+                  <span className="shrink-0 text-[12px] uppercase tracking-wider text-zinc-400">
                     {item.label}
                   </span>
                   <span className="ml-auto truncate text-right text-[12.5px] font-medium font-mono tabular-nums text-zinc-800">

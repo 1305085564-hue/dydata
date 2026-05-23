@@ -55,7 +55,7 @@ export function AddAccountDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">添加新账号</DialogTitle>
+          <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">添加新账号</DialogTitle>
           <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">
             一个用户可以管理多个账号，这里填写你自己看得懂的账号备注名，方便切换提交
           </DialogDescription>

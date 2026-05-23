@@ -46,7 +46,7 @@ function DetailToast({
           </button>
           <div
             className={cn(
-              "overflow-hidden text-[12px] opacity-80 transition-all duration-200",
+              "overflow-hidden text-[12px] opacity-80 transition-[background-color,color,border-color,transform,box-shadow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
               expanded ? "mt-1.5 max-h-[300px]" : "max-h-0",
             )}
           >

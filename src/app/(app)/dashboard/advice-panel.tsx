@@ -260,7 +260,7 @@ export function AdvicePanel() {
                     <p className="text-[12px] leading-[1.7] text-zinc-500">来源依据：{advice.evidence}</p>
                   ) : null}
                 </div>
-                <span className="text-[11px] font-mono tabular-nums text-zinc-400">{advice.created_at.slice(5, 10)}</span>
+                <span className="text-[12px] font-mono tabular-nums text-zinc-400">{advice.created_at.slice(5, 10)}</span>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -315,7 +315,7 @@ export function AdvicePanel() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">关联已执行视频</DialogTitle>
+            <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">关联已执行视频</DialogTitle>
             <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">选择你已发布或已提交的视频，系统会把这条建议标记为已执行。</DialogDescription>
           </DialogHeader>
 

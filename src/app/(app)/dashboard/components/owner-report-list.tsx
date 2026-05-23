@@ -101,7 +101,7 @@ export function OwnerReportList({ today }: OwnerReportListProps) {
             <div className="flex items-center gap-3">
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium",
+                  "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-medium",
                   statusColor(g.status),
                 )}
               >

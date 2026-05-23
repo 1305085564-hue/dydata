@@ -60,7 +60,7 @@ export function ConfigBar({
         {onClose && (
           <button
             onClick={onClose}
-            className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
+            className="active:translate-y-0 inline-flex h-6 w-6 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-800"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -131,7 +131,7 @@ export function ConfigBar({
               </span>
               <div className="h-px flex-1 bg-zinc-200" />
               {customControlsLocked && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 ring-1 ring-zinc-200">
+                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-50 px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 ring-1 ring-zinc-200">
                   <Lock className="h-2.5 w-2.5" />
                   已锁定
                 </span>

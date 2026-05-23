@@ -34,11 +34,11 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
 }
 
 function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
-  if (tied) return <span className="text-[11px] text-zinc-400">持平</span>;
+  if (tied) return <span className="text-[12px] text-zinc-400">持平</span>;
   return leftLeads ? (
-    <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-800">领先</span>
+    <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[12px] font-medium text-zinc-800">领先</span>
   ) : (
-    <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-500">落后</span>
+    <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[12px] font-medium text-zinc-500">落后</span>
   );
 }
 
@@ -56,7 +56,7 @@ function Row({ row, leftName, rightName }: { row: GrowthPkRow; leftName: string;
         <WinBadge leftLeads={leftLeads} tied={tied} />
       </div>
       <GapBar leftRatio={leftRatio} rightRatio={rightRatio} leftLeads={leftLeads} />
-      <div className="mt-2 flex justify-between text-[11px] text-zinc-500">
+      <div className="mt-2 flex justify-between text-[12px] text-zinc-500">
         <span>
           <span className="font-medium text-zinc-800">{leftName}</span>{" "}
           <span className="font-mono tabular-nums">{row.leftText}</span>
@@ -80,10 +80,10 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
           <div className="space-y-1.5">
             <div className="flex items-center gap-3">
               <div className="h-px flex-1 bg-zinc-200" />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">PK Compare</span>
+              <span className="text-[12px] font-semibold uppercase tracking-[0.25em] text-zinc-400">PK Compare</span>
               <div className="h-px flex-1 bg-zinc-200" />
             </div>
-            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">PK 对比</h2>
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">PK 对比</h2>
             <p className="text-[13px] leading-[1.7] text-zinc-500">{leftName} vs {rightName}</p>
           </div>
           {total > 0 && (
@@ -91,7 +91,7 @@ export function GrowthPkPanel({ leftName, rightName, rows }: { leftName: string;
               <div className="text-[18px] font-medium font-mono tabular-nums text-zinc-800">
                 {winCount}/{total}
               </div>
-              <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">领先</div>
+              <div className="text-[12px] uppercase tracking-[0.25em] text-zinc-400">领先</div>
             </div>
           )}
         </div>

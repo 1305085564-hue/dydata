@@ -603,10 +603,7 @@ export function ContentList({
                 disabled={isLoadingMore}
               >
                 {isLoadingMore ? (
-                  <>
-                    <span className="size-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-                    加载中…
-                  </>
+                  <>加载中…</>
                 ) : (
                   <>
                     <ChevronDown className="size-3.5" />

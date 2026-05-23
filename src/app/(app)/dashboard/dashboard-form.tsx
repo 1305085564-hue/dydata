@@ -184,7 +184,7 @@ export function DashboardForm({
                     </DialogTrigger>
                     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
                       <DialogHeader>
-                        <DialogTitle className="text-[20px] font-semibold tracking-tight text-zinc-800">截图识别导入</DialogTitle>
+                        <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">截图识别导入</DialogTitle>
                         <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">
                           支持 jpg、png、webp。识别结果可以逐项修改，确认后才会写回主表单。
                         </DialogDescription>

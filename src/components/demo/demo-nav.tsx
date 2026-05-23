@@ -46,7 +46,7 @@ export function DemoNav() {
         <span>演示模式 — 所有数据为模拟数据，不可提交</span>
         <Link
           href="/login"
-          className="inline-flex items-center gap-1 rounded-full bg-[#27272A]/10 px-2.5 py-0.5 text-[12px] transition-[background-color] duration-150 hover:bg-[#27272A]/20"
+          className="active:translate-y-0 inline-flex items-center gap-1 rounded-full bg-[#27272A]/10 px-2.5 py-0.5 text-[12px] transition-[background-color] duration-150 hover:bg-[#27272A]/20"
         >
           <LogOut className="size-3" />
           退出演示
@@ -58,7 +58,7 @@ export function DemoNav() {
             <div className="flex w-full items-center justify-between gap-3">
               <Link
                 href="/demo/dashboard"
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-transparent px-1.5 py-1 transition-[background-color] duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:bg-background/70"
+                className="active:translate-y-0 inline-flex shrink-0 items-center gap-2 rounded-full border border-transparent px-1.5 py-1 transition-[background-color] duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:bg-background/70"
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-[calc(var(--radius-button)-2px)] border border-primary/25 bg-[linear-gradient(180deg,rgba(10,132,255,0.18),rgba(10,132,255,0.1))] text-[11px] font-semibold tracking-[0.12em] text-primary shadow-[var(--shadow-light)]">
                   DY
@@ -70,7 +70,7 @@ export function DemoNav() {
               </Link>
               <Link
                 href="/login?from=demo"
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-xs text-muted-foreground shadow-[var(--shadow-light)] transition-[background-color,color,border-color] duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:border-border hover:bg-background/80 hover:text-foreground"
+                className="active:translate-y-0 inline-flex shrink-0 items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-xs text-muted-foreground shadow-[var(--shadow-light)] transition-[background-color,color,border-color] duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:border-border hover:bg-background/80 hover:text-foreground"
               >
                 <div className="hidden items-center gap-2 lg:flex">
                   <Lock className="h-3.5 w-3.5 text-amber-600" />

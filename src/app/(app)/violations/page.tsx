@@ -208,7 +208,7 @@ export default async function ViolationsPage({
                 action={
                   <Link
                     href="/violations/submit"
-                    className="inline-flex h-10 items-center gap-1.5 rounded-2xl bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#D97757] px-4 text-sm font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
                   >
                     提交新案例
                     <ArrowRight className="size-4 stroke-[1.5]" />
@@ -238,8 +238,8 @@ function HighlightStrip({
 }) {
   const accent =
     tone === "positive"
-      ? { bar: "bg-[#6FAA7D]", bg: "bg-[#6FAA7D]/5", text: "text-[#3F6F4F]", chip: "bg-[#6FAA7D]/10 text-[#6FAA7D]" }
-      : { bar: "bg-[#D97757]", bg: "bg-[#D97757]/5", text: "text-[#A85638]", chip: "bg-[#D97757]/10 text-[#D97757]" };
+      ? { bar: "bg-[#6FAA7D]", bg: "bg-[#6FAA7D]/5", text: "text-[#3F6F4F]", chip: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" }
+      : { bar: "bg-[#D97757]", bg: "bg-[#D97757]/5", text: "text-[#A85638]", chip: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" };
   return (
     <div className={`relative flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 ${accent.bg} px-4 py-3`}>
       <span className={`absolute inset-y-0 left-0 w-[2px] rounded-r-full ${accent.bar}`} aria-hidden />

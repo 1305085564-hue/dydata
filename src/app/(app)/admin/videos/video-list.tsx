@@ -306,7 +306,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
                               {record.completeness_label} ({Math.round(record.completion_ratio * 100)}%)
                             </Badge>
                             {record.missing_fields.length > 0 && (
-                              <span className="text-[10px] text-zinc-400">
+                              <span className="text-[12px] text-zinc-400">
                                 缺：{record.missing_fields.map((f) => ({ video_title: "标题", content: "文案", snapshot_24h: "24h快照", video_tags: "标签", content_segments: "切段" } as const)[f]).join("、")}
                               </span>
                             )}
@@ -374,10 +374,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
             disabled={isLoadingMore}
           >
             {isLoadingMore ? (
-              <>
-                <span className="size-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-                加载中…
-              </>
+              <>加载中…</>
             ) : (
               <>
                 <ChevronDown className="size-3.5" />

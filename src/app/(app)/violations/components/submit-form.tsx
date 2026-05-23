@@ -667,7 +667,7 @@ export function SubmitForm({
                       转化率
                     </p>
                     <p className="mt-2 flex items-baseline gap-1 leading-none tabular-nums">
-                      <span className="text-[32px] font-semibold text-zinc-800">
+                      <span className="text-[24px] font-semibold text-zinc-800">
                         {conversionRate === null ? "—" : (conversionRate * 100).toFixed(2)}
                       </span>
                       {conversionRate === null ? null : (

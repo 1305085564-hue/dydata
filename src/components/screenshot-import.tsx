@@ -82,9 +82,9 @@ function getBadgeVariant(level: ConfidenceLevel): "default" | "secondary" | "des
 }
 
 function getBadgeClassName(level: ConfidenceLevel): string {
-  if (level === "high") return "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10";
-  if (level === "medium") return "bg-[#D99E55]/10 text-[#D99E55] hover:bg-[#D99E55]/10";
-  return "bg-[#C9604D]/10 text-[#C9604D] hover:bg-[#C9604D]/10";
+  if (level === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  if (level === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
 }
 
 interface ScreenshotImportProps {

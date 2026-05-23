@@ -215,7 +215,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
                     className={[
                       "rounded-lg border px-2.5 py-1 text-[11px] transition-colors",
                       active
-                        ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
+                        ? "bg-white text-zinc-700"
                         : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100",
                     ].join(" ")}
                   >

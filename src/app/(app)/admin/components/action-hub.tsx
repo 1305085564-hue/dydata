@@ -91,7 +91,7 @@ export function ActionHub({
                   render={
                     <button
                       type="button"
-                      className="group flex w-full items-start gap-3 border-b border-zinc-100 py-3 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 last:border-b-0"
+                      className="active:translate-y-0 group flex w-full items-start gap-3 border-b border-zinc-100 py-3 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 last:border-b-0"
                     />
                   }
                 >
@@ -110,7 +110,7 @@ export function ActionHub({
                         {exemptionReminder.title}
                       </p>
                       {exemptionReminder.badge ? (
-                        <Badge variant="default" className="h-5 px-2 text-[10px]">
+                        <Badge variant="default" className="h-5 px-2 text-[12px]">
                           {exemptionReminder.badge}
                         </Badge>
                       ) : null}
@@ -171,7 +171,7 @@ export function ActionHub({
                 <Link
                   key={item.label}
                   href={item.href!}
-                  className="flex items-center justify-between border-b border-zinc-100 py-2.5 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 last:border-b-0"
+                  className="active:translate-y-0 flex items-center justify-between border-b border-zinc-100 py-2.5 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 last:border-b-0"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="size-1.5 rounded-full bg-zinc-300" />

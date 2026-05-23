@@ -200,7 +200,7 @@ export function SubmissionCalendar({
               onClick={() => onDateSelect?.(cell.key, submittedDateSet.has(cell.key))}
               className={cn(
                 "flex aspect-square flex-col items-center justify-center rounded-[12px] border text-sm font-semibold shadow-[var(--shadow-light)] transition-colors sm:aspect-auto sm:min-h-[4rem]",
-                onDateSelect && "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-24px_rgba(15,23,42,0.45)]",
+                onDateSelect && "cursor-pointer",
                 cell.state === "submitted" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
                 cell.state === "waive" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
                 cell.state === "leave" && "border-[#D99E55]/30 bg-[#D99E55]/10 text-[#D99E55]",
@@ -215,7 +215,7 @@ export function SubmissionCalendar({
               )}
             >
               <span className="text-xs sm:text-sm">{cell.day}</span>
-              <span className="mt-0.5 text-[10px] font-medium leading-none sm:mt-1 sm:leading-tight">
+              <span className="mt-0.5 text-[12px] font-medium leading-none sm:mt-1 sm:leading-tight">
                 {getStateText(cell.state ?? "future")}
               </span>
             </button>

@@ -34,8 +34,8 @@ interface AdviceDetailDialogProps {
 const STATUS_STYLES = {
   待查看: "border-zinc-200 bg-zinc-100 text-zinc-700",
   已查看: "border-zinc-200 bg-zinc-100 text-zinc-600",
-  待执行: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
-  已执行: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  待执行: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  已执行: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
   已忽略: "border-zinc-200 bg-zinc-50 text-zinc-500",
   已复核: "border-zinc-200 bg-zinc-100 text-zinc-700",
 } as const;
@@ -190,7 +190,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                   <div className="text-[12px] font-medium text-zinc-700">下发</div>
                   <div className="text-[11px] text-zinc-500">记录当前管理员并将状态更新为待执行。</div>
                   <Button
-                    className="h-9 w-full rounded-xl bg-zinc-900 text-[13px] text-white hover:bg-zinc-800"
+                    className="h-9 w-full rounded-lg bg-[#D97757] text-[13px] text-white hover:bg-[#C96442] active:translate-y-0"
                     disabled={isPending}
                     onClick={() => submitAction({ action: "assign", actor: currentUserId })}
                   >

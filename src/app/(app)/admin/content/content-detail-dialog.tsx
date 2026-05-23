@@ -37,24 +37,24 @@ type SegmentState = Array<{
 }>;
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
-  删稿: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
-  限流: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
-  投流: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
-  活动干预: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
+  正常: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  删稿: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  限流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  投流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
   "未满24h": "border-zinc-200 bg-zinc-100 text-zinc-600",
 };
 
 const sampleLevelClass = {
-  insufficient: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
-  partial: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
-  full: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+  insufficient: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  partial: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  full: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
 };
 
 const healthClass = {
-  ok: "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]",
-  warning: "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]",
-  problem: "border-zinc-200 bg-[#C9604D]/10 text-[#C9604D]",
+  ok: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  warning: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  problem: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
 };
 
 function formatNumber(v: number | null | undefined) {
@@ -519,7 +519,7 @@ export function ContentDetailDialog({
                         <button
                           key={seg.segment_order}
                           type="button"
-                          className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50"
+                          className="active:translate-y-0 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50"
                           onClick={() => jumpToSegment(seg.segment_order)}
                         >
                           [{seg.segment_order + 1}] {seg.segment_type}
@@ -615,11 +615,11 @@ export function ContentDetailDialog({
                     variant="outline"
                     className={`text-[11px] ${
                       cardDetail.workflow_status === "draft"
-                        ? "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]"
+                        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
                         : cardDetail.workflow_status === "confirmed"
-                        ? "border-zinc-200 bg-[#D99E55]/10 text-[#D99E55]"
+                        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
                         : cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
-                        ? "border-zinc-200 bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
                         : "border-zinc-200 bg-zinc-100 text-zinc-500"
                     }`}
                   >

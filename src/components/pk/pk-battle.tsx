@@ -176,7 +176,7 @@ export function PKBattle({
           {total > 0 && (
             <div className="shrink-0 rounded-[10px] bg-[#8AA8C7]/10 px-3 py-1.5 text-center">
               <div className="text-base font-semibold font-mono tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
-              <div className="text-[10px] text-[#8AA8C7]/70">项领先</div>
+              <div className="text-[12px] text-[#8AA8C7]/70">项领先</div>
             </div>
           )}
         </div>

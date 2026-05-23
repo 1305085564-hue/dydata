@@ -121,7 +121,7 @@ export function AdminSidebar({ userRole, businessRole, permissions, userName }: 
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 active:translate-y-0 lg:hidden"
+ className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 active:translate-y-0 lg:hidden"
         aria-label="打开导航"
       >
         <Menu className="size-4 stroke-[1.5] text-zinc-800" />
@@ -191,9 +191,9 @@ export function AdminSidebar({ userRole, businessRole, permissions, userName }: 
                     {badgeValue > 0 && (
                       <span
                         className={cn(
-                          "min-w-[18px] rounded-full px-1 text-center text-[10px] font-semibold tabular-nums",
+                          "min-w-[18px] rounded-full px-1 text-center text-[12px] font-semibold tabular-nums",
                           active
-                            ? "bg-[#D97757]/10 text-[#D97757]"
+                            ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
                             : "bg-zinc-100 text-zinc-500 group-hover:bg-[#D97757]/10 group-hover:text-[#D97757]",
                         )}
                         aria-label={`${badgeValue} 条待办`}

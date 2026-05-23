@@ -169,7 +169,7 @@ export function ChannelDetailForm({
               ) : saveStatus === 'success' || channel ? (
                 <span className="text-[#6FAA7D] flex items-center gap-1"><CheckCircle2 className="size-3" />已保存</span>
               ) : (
-                <span className="text-muted-foreground text-[10px]">待填写</span>
+                <span className="text-muted-foreground text-[12px]">待填写</span>
               )}
             </span>
             <Button
@@ -230,7 +230,7 @@ export function ChannelDetailForm({
                 <div className="flex items-baseline justify-between gap-2">
                   <Label htmlFor="api_key" className="text-[11px] font-medium text-zinc-500">密钥</Label>
                   {channel && (
-                    <span className="truncate text-[10px] text-zinc-400">
+                    <span className="truncate text-[12px] text-zinc-400">
                       当前: <span className="font-mono">{formatMaskedFromApi(channel.api_key_masked)}</span>
                     </span>
                   )}

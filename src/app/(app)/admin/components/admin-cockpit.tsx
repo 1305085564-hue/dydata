@@ -114,7 +114,7 @@ function useSopOverdueCount(date: string) {
 function OverdueBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="ml-1 inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-medium tabular-nums text-white">
+    <span className="ml-1 inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[12px] font-medium tabular-nums text-white">
       {count > 99 ? "99+" : count}
     </span>
   );
@@ -164,7 +164,7 @@ function CardShell({
           <h3 className="text-[12px] font-medium tracking-tight text-zinc-600">{title}</h3>
           <span
             className={cn(
-              "text-[26px] font-semibold leading-none tracking-tight tabular-nums",
+              "text-[24px] font-semibold leading-none tracking-tight tabular-nums",
               totalToneClass,
             )}
           >
@@ -193,7 +193,7 @@ function ViewAllLink({ href, label = "查看全部" }: { href: string; label?: s
   return (
     <a
       href={href}
-      className="flex items-center gap-0.5 text-[11px] text-zinc-400 transition-colors hover:text-zinc-700"
+      className="flex items-center gap-0.5 text-[12px] text-zinc-400 transition-colors hover:text-zinc-700"
     >
       {label}
       <ChevronRight className="size-3 stroke-[1.5]" />
@@ -257,7 +257,7 @@ function PendingVideosCard({
                     <p className="truncate text-[13px] font-medium tracking-tight text-zinc-800">
                       {row.account_name}
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+                    <p className="mt-0.5 truncate text-[12px] text-zinc-400">
                       {row.submitted_by_name ?? "未知成员"} · {row.report_date} · {stateText}
                     </p>
                   </div>
@@ -351,7 +351,7 @@ function PendingViolationsCard({
                     <p className="line-clamp-2 text-[13px] leading-[1.55] tracking-tight text-zinc-700">
                       {row.script_text}
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+                    <p className="mt-0.5 truncate text-[12px] text-zinc-400">
                       {row.submitted_by_name ?? "未知成员"}
                       {row.category ? ` · ${row.category}` : ""}
                     </p>
@@ -498,7 +498,7 @@ function ReviewBatchCard({
         <button
           type="button"
           onClick={() => setRemindLogOpen(true)}
-          className="inline-flex items-center gap-0.5 text-[11px] text-zinc-400 transition-colors hover:text-zinc-700"
+          className="inline-flex items-center gap-0.5 text-[12px] text-zinc-400 transition-colors hover:text-zinc-700"
         >
           <Bell className="size-3 stroke-[1.5]" />
           催交历史
@@ -529,7 +529,7 @@ function ReviewBatchCard({
             </h3>
             <span
               className={cn(
-                "text-[26px] font-semibold leading-none tracking-tight tabular-nums",
+                "text-[24px] font-semibold leading-none tracking-tight tabular-nums",
                 totalAll === 0 ? "text-zinc-300" : "text-zinc-800",
               )}
             >
@@ -557,7 +557,7 @@ function ReviewBatchCard({
               {t.count > 0 ? (
                 <span
                   className={cn(
-                    "inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-medium tabular-nums",
+                    "inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[12px] font-medium tabular-nums",
                     activeTab === t.key
                       ? "bg-zinc-700 text-white"
                       : "bg-zinc-200 text-zinc-600",
@@ -584,11 +584,11 @@ function ReviewBatchCard({
                         onClick={() => setActiveSubmission(row)}
                         className="grid w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-zinc-50"
                       >
-                        <span className="truncate text-[11px] text-zinc-400">
+                        <span className="truncate text-[12px] text-zinc-400">
                           {row.team_name ?? "未分组"}
                         </span>
                         <span className="truncate text-[13px] text-zinc-700">{row.name}</span>
-                        <span className="shrink-0 text-[11px] tabular-nums text-zinc-400">
+                        <span className="shrink-0 text-[12px] tabular-nums text-zinc-400">
                           {row.last_report_date ?? "—"}
                         </span>
                       </button>
@@ -619,11 +619,11 @@ function ReviewBatchCard({
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-[13px] tracking-tight text-zinc-700">
                               {row.applicant_name}
-                              <span className="ml-1.5 text-[11px] text-zinc-400">
+                              <span className="ml-1.5 text-[12px] text-zinc-400">
                                 {typeLabel}
                               </span>
                             </p>
-                            <p className="mt-0.5 line-clamp-1 text-[11px] text-zinc-400">
+                            <p className="mt-0.5 line-clamp-1 text-[12px] text-zinc-400">
                               {row.reason ?? "未填写原因"}
                             </p>
                           </div>
@@ -653,7 +653,7 @@ function ReviewBatchCard({
                           <p className="truncate text-[13px] tracking-tight text-zinc-700">
                             {row.applicantName || "未命名"}
                           </p>
-                          <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+                          <p className="mt-0.5 truncate text-[12px] text-zinc-400">
                             <UserPlus className="mr-0.5 inline size-3 stroke-[1.5]" />
                             申请加入「{row.targetTeamName || "未知团队"}」
                           </p>
@@ -742,10 +742,10 @@ export function AdminQueueSection({
   return (
     <div className="space-y-5">
       <div className="flex items-baseline gap-3">
-        <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
+        <h1 className="text-[24px] font-semibold tracking-tight text-zinc-800">
           团队管理
         </h1>
-        <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
+        <span className="text-[12px] uppercase tracking-[0.25em] font-medium text-zinc-400">
           今天该处理谁
         </span>
       </div>

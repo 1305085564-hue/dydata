@@ -108,7 +108,7 @@ function ConversationItem({
           {conversation.title || '新文案'}
         </p>
         {showTag ? (
-          <span className="ml-auto shrink-0 text-[10px] text-zinc-400">
+          <span className="ml-auto shrink-0 text-[12px] text-zinc-400">
             · {tag}
           </span>
         ) : null}
@@ -148,7 +148,7 @@ export function RewriteHistory({
         </div>
         <button
           onClick={onNewConversation}
-          className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
+          className="active:translate-y-0 mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
         >
           <Plus className="h-3 w-3" />
           <span className="tracking-wide">新文案</span>
@@ -166,7 +166,7 @@ export function RewriteHistory({
               <FileText className="h-3 w-3 text-zinc-300" />
             </span>
             <p className="text-[11px] font-medium text-zinc-500">暂无记录</p>
-            <p className="mt-0.5 text-[10px] leading-relaxed text-zinc-400">
+            <p className="mt-0.5 text-[12px] leading-relaxed text-zinc-400">
               改写的文案会保存在这里
             </p>
           </div>

@@ -94,7 +94,7 @@ export function ReviewDetailModal({
           </h3>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="active:translate-y-0 rounded-md p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             <X size={18} className="stroke-[1.5]" />
           </button>
@@ -150,7 +150,7 @@ export function ReviewDetailModal({
                   href={submission.video_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-[10px] border border-zinc-200 bg-white px-5 py-3 text-[13px] font-medium text-zinc-700 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+ className="inline-flex items-center gap-2 rounded-[10px] border border-zinc-200 bg-white px-5 py-3 text-[13px] font-medium text-zinc-700 transition-[background-color, color, border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                 >
                   打开视频链接 <ArrowUpRight size={14} className="stroke-[1.5]" />
                 </a>
@@ -195,7 +195,7 @@ export function ReviewDetailModal({
                     CTA: s,
                   })
                 }
-                className="rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[10px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                className="rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
               >
                 一键 {s} 分
               </button>
@@ -213,14 +213,14 @@ export function ReviewDetailModal({
             <button
               onClick={() => submit(true)}
               disabled={isReviewing}
-              className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium uppercase text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-[#C9604D] active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+ className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium uppercase text-zinc-500 transition-[background-color, color, border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-[#C9604D] active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
             >
               打回
             </button>
             <button
               onClick={() => submit(false)}
               disabled={isReviewing}
-              className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium uppercase text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+              className="rounded-lg bg-[#D97757] px-8 py-2.5 text-[11px] font-medium uppercase text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
             >
               通过
             </button>

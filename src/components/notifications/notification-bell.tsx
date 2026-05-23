@@ -22,16 +22,16 @@ import {
   type AnyNotificationRow,
 } from "./notification-store";
 
-function severityClasses(severity: NotificationSeverity) {
+function severityDotClass(severity: NotificationSeverity) {
   switch (severity) {
     case "critical":
-      return "border-rose-200 bg-rose-50 text-rose-700";
+      return "bg-[#C9604D]";
     case "warning":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "bg-[#D99E55]";
     case "success":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "bg-[#6FAA7D]";
     default:
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "bg-zinc-300";
   }
 }
 
@@ -90,15 +90,14 @@ function NotificationCard({
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-medium",
-                severityClasses(row.severity),
-              )}
-            >
+            <span className="inline-flex h-5 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-700">
+              <span
+                className={cn("inline-block size-1.5 rounded-full", severityDotClass(row.severity))}
+                aria-hidden
+              />
               {row.category === "todo" ? "待办" : "动态"}
             </span>
-            <span className="text-[10px] text-zinc-400">{relativeTime(row.created_at)}</span>
+            <span className="text-[12px] text-zinc-400">{relativeTime(row.created_at)}</span>
           </div>
           <div
             className={cn(
@@ -117,7 +116,7 @@ function NotificationCard({
             {!isLocal && row.action_url ? (
               <Link
                 href={row.action_url}
-                className="inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+                className="active:translate-y-0 inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (isUnread) onRead(row.id);
@@ -208,7 +207,7 @@ export function NotificationBell() {
       >
         <Bell className="size-3.5 stroke-[1.5]" />
         {unread > 0 ? (
-          <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-medium leading-none text-white">
+          <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[12px] font-medium leading-none text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         ) : null}

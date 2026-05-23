@@ -59,7 +59,7 @@ export default function ConfirmCard({
             Authorization Required
           </span>
         </div>
-        <code className="rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
+        <code className="rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[12px] text-zinc-500">
           {data.toolName}
         </code>
       </div>
@@ -72,7 +72,7 @@ export default function ConfirmCard({
             {data.confirmationMessage || `系统将执行: ${data.toolName}`}
           </p>
           {data.confirmationReason && (
-            <div className="rounded-lg border border-zinc-200 bg-[#FBF6EC] px-3 py-2">
+            <div className="rounded-lg border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-white px-3 py-2">
               <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B88448]">
                 Reason
               </div>
@@ -106,7 +106,7 @@ export default function ConfirmCard({
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-zinc-400">
                     <span>Rollback SQL</span>
                     <button
-                      className="inline-flex items-center gap-1 normal-case text-zinc-400 transition-colors hover:text-zinc-800"
+                      className="active:translate-y-0 inline-flex items-center gap-1 normal-case text-zinc-400 transition-colors hover:text-zinc-800"
                       onClick={() => navigator.clipboard.writeText(debug.backupSql || "")}
                     >
                       <Copy className="h-3 w-3" /> 复制

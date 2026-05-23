@@ -60,7 +60,7 @@ export function RewriteInput({
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           <div>
-            <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">
               {isChatStage ? '继续对话' : '首条默认走结果模式'}
             </h2>
             <p className="mt-2 text-[13px] leading-[1.7] text-zinc-500">
@@ -71,7 +71,7 @@ export function RewriteInput({
           </div>
 
           <div className="space-y-3">
-            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">选择改写套餐</p>
+            <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">选择改写套餐</p>
             <div className="grid gap-3">
               {bootstrap.fixedModes.map((fixedMode) => {
                 const active = fixedMode.id === selectedFixedModeId;
@@ -95,7 +95,7 @@ export function RewriteInput({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[14px] font-semibold">{fixedMode.name}</span>
-                          <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-zinc-200', active ? 'bg-zinc-50 text-[#D97757]' : 'bg-white text-zinc-500')}>
+                          <span className={cn('rounded-full px-2 py-0.5 text-[12px] font-medium ring-1 ring-zinc-200', active ? 'bg-zinc-50 text-[#D97757]' : 'bg-white text-zinc-500')}>
                             固定套餐
                           </span>
                         </div>
@@ -132,7 +132,7 @@ export function RewriteInput({
 
             <div className="space-y-4">
               <label className="block space-y-1.5">
-                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">真实模型</span>
+                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">真实模型</span>
                 <select
                   value={selectedModelViewId}
                   onChange={(e) => onModelViewChange(e.target.value)}
@@ -154,7 +154,7 @@ export function RewriteInput({
               </label>
 
               <label className="block space-y-1.5">
-                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">普通模式</span>
+                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">普通模式</span>
                 <select
                   value={selectedModeId || ''}
                   onChange={(e) => onModeChange(e.target.value || null)}
@@ -176,7 +176,7 @@ export function RewriteInput({
               </label>
 
               <label className="block space-y-1.5">
-                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">字数</span>
+                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">字数</span>
                 <select
                   value={selectedLengthId}
                   onChange={(e) => onLengthChange(e.target.value)}
@@ -226,7 +226,7 @@ export function RewriteInput({
             )}
           />
           <div className="flex items-center justify-between px-3 pb-2 pt-1">
-            <span className="text-[11px] text-zinc-400">
+            <span className="text-[12px] text-zinc-400">
               Enter 发送，Shift+Enter 换行 • {inputText.length} 字
             </span>
             <button

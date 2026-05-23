@@ -66,7 +66,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
               Hit Spotlight
             </p>
             {scopeLabel ? (
-              <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+              <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-medium text-zinc-500">
                 {scopeLabel}
               </span>
             ) : null}

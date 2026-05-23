@@ -106,8 +106,8 @@ interface AdminSecondaryNavProps {
 
 function getCardClassName(active: boolean) {
   return cn(
-    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition duration-200 ease-out hover:border-[#D97757]/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5 sm:min-w-[240px] xl:min-w-[200px]",
-    active && "admin-subnav-link-active border-[#D97757]/50 bg-[#D97757]/5 shadow-md",
+    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-[background-color,border-color] duration-150 ease-out hover:border-[#D97757]/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5 sm:min-w-[240px] xl:min-w-[200px]",
+    active && "admin-subnav-link-active border-[#D97757]/50 bg-[#D97757]/5",
   );
 }
 

@@ -93,9 +93,7 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
               {data.summary.totalVideos}
             </span>
           </button>
-          {isLoading && (
-            <span className="ml-2 inline-block size-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-          )}
+
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">

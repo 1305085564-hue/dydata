@@ -441,10 +441,7 @@ export function AiAlertPanel({
                         className="inline-flex h-6 items-center rounded-md border border-zinc-200 px-2.5 text-[11px] text-zinc-700 transition hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {executingGroup === group.groupKey ? (
-                          <>
-                            <Loader2 className="mr-1 size-3 animate-spin" />
-                            执行中…
-                          </>
+                          <>执行中…</>
                         ) : (
                           "一键执行"
                         )}
@@ -471,7 +468,7 @@ export function AiAlertPanel({
                             consultAlert({ alertId: firstAny.id, preview: firstAny.title });
                           }
                         }}
-                        className="inline-flex h-6 items-center rounded-md bg-zinc-900 px-2.5 text-[11px] text-white transition hover:bg-zinc-800"
+                        className="inline-flex h-6 items-center rounded-md border border-[#D97757]/40 bg-white px-2.5 text-[11px] text-[#D97757] transition hover:bg-[#D97757]/5"
                       >
                         <Sparkles className="mr-1 size-3" strokeWidth={1.75} />
                         问问 AI
@@ -489,7 +486,7 @@ export function AiAlertPanel({
                           {navigate ? (
                             <Link
                               href={navigate.href!}
-                              className="group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60"
+                              className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60"
                             >
                               <div
                                 onClick={(e) => {

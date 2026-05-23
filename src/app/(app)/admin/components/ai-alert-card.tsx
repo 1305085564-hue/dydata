@@ -57,7 +57,7 @@ export function AiAlertRow({ alert, checked, onToggle }: AiAlertRowProps) {
     return (
       <Link
         href={navigate.href}
-        className="group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60"
+        className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60"
       >
         {content}
       </Link>

@@ -1181,7 +1181,7 @@ export function VideoSubmitForm({
               <span className="h-2 w-2 rounded-full bg-amber-500 ring-1 ring-white" />
               <span className="text-[13px] font-medium text-amber-700">待完善</span>
               {missingItems.length > 0 ? (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold leading-none text-white tabular-nums">
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[12px] font-semibold leading-none text-white tabular-nums">
                   {missingItems.length}
                 </span>
               ) : null}
@@ -1219,7 +1219,7 @@ export function VideoSubmitForm({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-full px-2.5 py-1 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
+              className="active:translate-y-0 rounded-full px-2.5 py-1 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
             >
               取消
             </button>
@@ -1298,7 +1298,7 @@ export function VideoSubmitForm({
                 <span className="h-2 w-2 rounded-full bg-amber-500 ring-1 ring-white" />
                 <span className="text-[13px] font-medium text-amber-700">待完善</span>
                 {missingItems.length > 0 ? (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold leading-none text-white tabular-nums">
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[12px] font-semibold leading-none text-white tabular-nums">
                     {missingItems.length}
                   </span>
                 ) : null}
@@ -1361,7 +1361,7 @@ export function VideoSubmitForm({
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-full px-3 py-1.5 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
+              className="active:translate-y-0 rounded-full px-3 py-1.5 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
             >
               取消
             </button>
@@ -1373,7 +1373,7 @@ export function VideoSubmitForm({
             className={cn(
               "rounded-full px-5 py-1.5 text-[13px] font-semibold transition-[transform,background-color,box-shadow] duration-150",
               canActuallySubmit
-                ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] hover:shadow-[0_4px_16px_-2px_rgba(217,119,87,0.6)] hover:-translate-y-px active:translate-y-0"
+                ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] active:translate-y-0"
                 : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
             )}
           >
@@ -1435,10 +1435,7 @@ export function VideoSubmitForm({
                 className="h-9 rounded-xl border-zinc-200 px-4 text-[12px] text-zinc-700 hover:bg-zinc-50"
               >
                 {qualityCheck.loading ? (
-                  <>
-                    <Loader2 className="mr-1 size-3.5 animate-spin" />
-                    AI 分析中…
-                  </>
+                  <>AI 分析中…</>
                 ) : (
                   <>
                     <Sparkles className="mr-1 size-3.5" />
@@ -1831,7 +1828,7 @@ export function VideoSubmitForm({
 
         <motion.div variants={itemVariants} className="hidden">
           {/* FAB 悬浮操作条 */}
-          <div className="rounded-full pointer-events-auto bg-white border border-zinc-200 shadow-sm py-4 px-6 min-h-[72px] flex items-center justify-between gap-8 transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] w-max">
+ <div className="rounded-full pointer-events-auto bg-white border border-zinc-200 shadow-sm py-4 px-6 min-h-[72px] flex items-center justify-between gap-8 transition-[background-color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] w-max">
             <div className="flex items-center gap-3">
                 {canActuallySubmit ? (
                   <div className="flex size-5 items-center justify-center rounded-full bg-white border border-[#6FAA7D] text-[#6FAA7D]">

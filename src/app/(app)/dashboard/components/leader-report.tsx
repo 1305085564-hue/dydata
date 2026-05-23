@@ -109,7 +109,7 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
         {saved && (
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium",
+              "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-medium",
               saved === "submitted" ? "text-[#6FAA7D]" : "text-[#D99E55]",
             )}
           >
@@ -130,7 +130,7 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
             <label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
               {f.label}
             </label>
-            <p className="mb-2 text-[10px] leading-[1.7] text-zinc-400">{f.desc}</p>
+            <p className="mb-2 text-[12px] leading-[1.7] text-zinc-400">{f.desc}</p>
             <textarea
               value={fields[f.key]}
               onChange={(e) => setFields((prev) => ({ ...prev, [f.key]: e.target.value }))}
@@ -144,14 +144,14 @@ export function LeaderReport({ today, userRole }: LeaderReportProps) {
           <button
             onClick={() => save(true)}
             disabled={saving}
-            className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+ className="rounded-[10px] border border-zinc-200 bg-white px-6 py-2.5 text-[11px] font-medium text-zinc-500 transition-[background-color, color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             保存草稿
           </button>
           <button
             onClick={() => save(false)}
             disabled={saving}
-            className="rounded-[10px] bg-zinc-900 px-8 py-2.5 text-[11px] font-medium text-white transition-[background-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-800 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="rounded-lg bg-[#D97757] px-8 py-2.5 text-[11px] font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
           >
             正式提交
           </button>

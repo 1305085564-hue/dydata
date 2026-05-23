@@ -87,7 +87,7 @@ export function AiAssistantFloatingWindow({ actorRole }: AiAssistantFloatingWind
         <section className="mb-3 flex h-[min(680px,calc(100dvh-96px))] w-[min(460px,calc(100vw-24px))] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-[#FAFAFB] shadow-[0_18px_60px_rgba(15,23,42,0.18)]">
           <div className="flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4">
             <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-white">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-zinc-800 text-white">
                 <Bot className="size-3.5" />
               </span>
               <div>
@@ -99,7 +99,7 @@ export function AiAssistantFloatingWindow({ actorRole }: AiAssistantFloatingWind
               <button
                 type="button"
                 onClick={handleNewSession}
-                className="rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800"
+                className="active:translate-y-0 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800"
               >
                 新对话
               </button>
@@ -123,7 +123,7 @@ export function AiAssistantFloatingWindow({ actorRole }: AiAssistantFloatingWind
               <button
                 type="button"
                 onClick={clearPendingContext}
-                className="flex size-5 shrink-0 items-center justify-center rounded text-[#36359C] transition hover:bg-white/60"
+                className="active:translate-y-0 flex size-5 shrink-0 items-center justify-center rounded text-[#36359C] transition hover:bg-white/60"
                 aria-label="取消上下文"
               >
                 <X className="size-3" />
@@ -149,15 +149,15 @@ export function AiAssistantFloatingWindow({ actorRole }: AiAssistantFloatingWind
         type="button"
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "relative flex size-8 items-center justify-center rounded-full border border-zinc-200 bg-zinc-900 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-800",
-          open && "bg-white text-zinc-800 hover:bg-zinc-50",
+          "relative flex size-8 items-center justify-center rounded-full bg-[#D97757] text-white transition hover:bg-[#C96442] active:translate-y-0",
+          open && "border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
         )}
         aria-pressed={open}
         aria-label={open ? "收起 AI 助手" : "打开 AI 助手"}
       >
         <Bot className="size-4" strokeWidth={1.75} />
         {pendingContext && !open ? (
-          <span className="absolute -right-0.5 -top-0.5 flex size-3 items-center justify-center rounded-full bg-[#444CE7] ring-2 ring-white">
+          <span className="absolute -right-0.5 -top-0.5 flex size-3 items-center justify-center rounded-full bg-[#D97757] ring-2 ring-white">
             <Sparkles className="size-2 text-white" strokeWidth={2.5} />
           </span>
         ) : null}
