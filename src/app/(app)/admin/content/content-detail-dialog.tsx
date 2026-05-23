@@ -82,6 +82,17 @@ function formatDateTime(v: string | null) {
   }).format(d);
 }
 
+function parseProblemTags(mainIssues: string): string[] {
+  const trimmed = mainIssues.trim();
+  if (!trimmed) return [];
+  const tags = trimmed
+    .split(/[/;；\n]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+  return tags.length > 0 ? tags : [trimmed];
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center border-l-2 border-[#D97757] pl-3">
@@ -140,11 +151,11 @@ export function ContentDetailDialog({
       .then((data: { feedback_card?: ContentFeedbackCardDetail; error?: string }) => {
         if (data.feedback_card) {
           setCardDetail(data.feedback_card);
-          const draft = data.feedback_card.draft;
-          if (draft) {
-            setMainIssues(draft.summary.problem_tags.join(" / ") || draft.summary.one_line || "");
-            setNextAction(draft.actions.instructions.slice(0, 2).join("；") || "");
-            setManagerNote(draft.actions.message_for_member || "");
+          const source = data.feedback_card.confirmed ?? data.feedback_card.draft;
+          if (source) {
+            setMainIssues(source.summary.one_line || source.summary.problem_tags.join(" / ") || "");
+            setNextAction(source.actions.instructions.slice(0, 2).join("；") || "");
+            setManagerNote(source.actions.message_for_member || "");
           }
         } else if (feedbackCardProp) {
           setCardDetail({ ...feedbackCardProp, draft: null, confirmed: null });
@@ -272,6 +283,7 @@ export function ContentDetailDialog({
           manager_note: managerNote.trim() || null,
           summary: {
             one_line: mainIssues.trim() || null,
+            problem_tags: parseProblemTags(mainIssues),
           },
           actions: {
             instructions: nextAction.split("；").map((s) => s.trim()).filter(Boolean),

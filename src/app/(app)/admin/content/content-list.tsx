@@ -30,6 +30,7 @@ interface ContentListProps {
   profiles: FilterOption[];
   accounts: AccountOption[];
   feedbackCards: Record<string, ContentFeedbackCardView>;
+  onFeedbackCardChanged?: (videoId: string, card: ContentFeedbackCardView) => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -230,6 +231,7 @@ export function ContentList({
   profiles,
   accounts,
   feedbackCards,
+  onFeedbackCardChanged,
 }: ContentListProps) {
   const [filters, setFilters] = useState<ContentFilterValue>({
     profileId: "all",
@@ -653,9 +655,8 @@ export function ContentList({
         video={selectedVideo}
         snapshot={selectedSnapshot}
         feedbackCard={selectedVideoId ? feedbackCards[selectedVideoId] ?? null : null}
-        onFeedbackCardChanged={() => {
-          // 不需要本地更新 state，因为 feedbackCards 是 prop
-          // 页面刷新后会获取最新状态
+        onFeedbackCardChanged={(videoId, card) => {
+          onFeedbackCardChanged?.(videoId, card);
         }}
       />
 

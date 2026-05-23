@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { ContentList } from "./content-list";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
+import type { ContentFeedbackCardView } from "@/types";
 
 type ContentView = "pending" | "all";
 
@@ -32,6 +33,22 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
       setIsLoading(false);
     }
   }, [view]);
+
+  const handleFeedbackCardChanged = useCallback((videoId: string, nextCard: ContentFeedbackCardView) => {
+    setData((prev) => {
+      const nextFeedbackCards = { ...prev.feedbackCards, [videoId]: nextCard };
+      const cards = Object.values(nextFeedbackCards);
+      const workflowSummary = {
+        notStarted: cards.filter((c) => c.workflow_status === "not_started").length,
+        draft: cards.filter((c) => c.workflow_status === "draft").length,
+        confirmed: cards.filter((c) => c.workflow_status === "confirmed").length,
+        sent: cards.filter((c) => c.workflow_status === "sent").length,
+        viewed: cards.filter((c) => c.workflow_status === "viewed").length,
+        pendingDelivery: cards.filter((c) => c.workflow_status === "draft" || c.workflow_status === "confirmed").length,
+      };
+      return { ...prev, feedbackCards: nextFeedbackCards, workflowSummary };
+    });
+  }, []);
 
   return (
     <section
@@ -94,6 +111,7 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
         profiles={data.profiles}
         accounts={data.accounts}
         feedbackCards={data.feedbackCards}
+        onFeedbackCardChanged={handleFeedbackCardChanged}
       />
     </section>
   );

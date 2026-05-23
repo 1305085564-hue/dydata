@@ -193,7 +193,7 @@ export function ProductionControlSystem({
               feedbackCard?.confirmed
                 ? {
                     videoTitle: feedbackVideoTitle ?? "未命名视频",
-                    mainIssues: feedbackCard.confirmed.summary.problem_tags.join(" / ") || feedbackCard.confirmed.summary.one_line || "",
+                    mainIssues: feedbackCard.confirmed.summary.one_line || feedbackCard.confirmed.summary.problem_tags.join(" / ") || "",
                     nextAction: feedbackCard.confirmed.actions.instructions.slice(0, 2).join("；") || "",
                     managerComment: feedbackCard.confirmed.actions.message_for_member || undefined,
                   }
