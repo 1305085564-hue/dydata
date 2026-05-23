@@ -462,10 +462,9 @@ export function ContentList({
                 <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
                   <TableHead className="h-9 w-16 text-[12px] font-medium text-zinc-500">排名</TableHead>
                   <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-zinc-500">标题</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">复盘</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">人员</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">播放</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">2s跳出</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">5s完播</TableHead>
@@ -476,7 +475,7 @@ export function ContentList({
               <TableBody>
                 {visible.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-sm text-zinc-500">
+                    <TableCell colSpan={10} className="py-12 text-center text-sm text-zinc-500">
                       暂无内容
                     </TableCell>
                   </TableRow>
@@ -513,10 +512,15 @@ export function ContentList({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+                            className="h-auto rounded-xl px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
                             onClick={() => setSelectedVideoId(video.id)}
                           >
-                            查看复盘
+                            <span className="flex flex-col items-start leading-tight">
+                              <span>查看复盘</span>
+                              <span className="mt-0.5 text-[11px] text-zinc-400">
+                                {formatDateTime(video.published_at ?? video.created_at)}
+                              </span>
+                            </span>
                           </Button>
                         </TableCell>
                         <TableCell className="text-sm text-zinc-500">
@@ -524,9 +528,6 @@ export function ContentList({
                         </TableCell>
                         <TableCell className="text-sm text-zinc-500">
                           {video.accounts.name}
-                        </TableCell>
-                        <TableCell className="text-sm text-zinc-500">
-                          {formatDateTime(video.published_at ?? video.created_at)}
                         </TableCell>
                         <TableCell className="text-right text-sm">
                           {snap ? formatNumber(snap.play_count) : "-"}
@@ -562,7 +563,7 @@ export function ContentList({
                 {/* Sentinel for auto-load */}
                 {hasMore && (
                   <TableRow>
-                    <TableCell colSpan={11} className="p-0">
+                    <TableCell colSpan={10} className="p-0">
                       <div ref={sentinelRef} className="h-4" />
                     </TableCell>
                   </TableRow>

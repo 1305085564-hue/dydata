@@ -9,6 +9,7 @@ import {
   UserPlus,
   Video,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
@@ -21,13 +22,6 @@ import {
   approveJoinRequestAction,
   rejectJoinRequestAction,
 } from "../join-request-actions";
-import {
-  ExemptionPreviewDialog,
-  JoinPreviewDialog,
-  SubmissionPreviewDialog,
-  ViolationPreviewDialog,
-  VideoPreviewDialog,
-} from "./queue-quick-preview";
 import type {
   CockpitSummary,
   PendingSubmissionRow,
@@ -35,6 +29,7 @@ import type {
   PendingViolationRow,
 } from "./admin-first-screen-loader";
 import { RemindLogDialog } from "./remind-log-dialog";
+import { VideoPreviewDialog } from "./queue-quick-preview";
 
 const SOP_CHECKPOINT_MAP: Record<string, SopCheckpoint[]> = {
   "待筛视频": ["VIDEO"],
@@ -129,6 +124,7 @@ interface CardShellProps {
   hasContent: boolean;
   overdueCount?: number;
   headerRight?: React.ReactNode;
+  totalNote?: React.ReactNode;
   className?: string;
   children: React.ReactNode;
 }
@@ -142,6 +138,7 @@ function CardShell({
   hasContent,
   overdueCount,
   headerRight,
+  totalNote,
   className,
   children,
 }: CardShellProps) {
@@ -170,6 +167,7 @@ function CardShell({
           >
             {total}
           </span>
+          {totalNote}
           <OverdueBadge count={overdueCount ?? 0} />
         </div>
         <div className="flex shrink-0 items-center gap-2">{headerRight}</div>
@@ -292,13 +290,33 @@ function PendingViolationsCard({
     { data: initialRows },
   );
   const rows = data?.data ?? [];
-  const [removed, setRemoved] = useState<Set<string>>(new Set());
-  const [activeRow, setActiveRow] = useState<PendingViolationRow | null>(null);
+  const [handledMap, setHandledMap] = useState<Record<string, "verified" | "rejected">>({});
   const [reviewing, setReviewing] = useState(false);
-  const visible = useMemo(() => rows.filter((r) => !removed.has(r.id)), [rows, removed]);
+
+  const handledCount = useMemo(
+    () => Object.keys(handledMap).length,
+    [handledMap],
+  );
 
   async function handleReview(row: PendingViolationRow, status: "verified" | "rejected") {
+    if (reviewing) return;
+    const resultLabel = status === "verified" ? "已批准" : "已拒绝";
+    setHandledMap((prev) => ({ ...prev, [row.id]: status }));
     setReviewing(true);
+
+    toast.success(resultLabel, {
+      action: {
+        label: "撤销",
+        onClick: () => {
+          setHandledMap((prev) => {
+            const next = { ...prev };
+            delete next[row.id];
+            return next;
+          });
+        },
+      },
+    });
+
     try {
       const res = await fetch(`/api/violations/${row.id}/review`, {
         method: "PATCH",
@@ -312,10 +330,12 @@ function PendingViolationsCard({
         credentials: "include",
       });
       if (!res.ok) throw new Error("操作失败");
-      setRemoved((prev) => new Set(prev).add(row.id));
-      feedbackToast.success(status === "verified" ? "已确认风险" : "已驳回");
-      setActiveRow(null);
     } catch (e) {
+      setHandledMap((prev) => {
+        const next = { ...prev };
+        delete next[row.id];
+        return next;
+      });
       feedbackToast.error(e instanceof Error ? e.message : "操作失败");
     } finally {
       setReviewing(false);
@@ -323,58 +343,139 @@ function PendingViolationsCard({
   }
 
   return (
-    <>
-      <CardShell
-        title="待复核"
-        icon={<ShieldAlert className="size-4 stroke-[1.5]" />}
-        total={total}
-        totalTone="danger"
-        empty="当前没有需要复核的案例"
-        hasContent={visible.length > 0}
-        overdueCount={overdueCount}
-        headerRight={<ViewAllLink href="/violations?perspective=review" />}
-      >
-        <ul className="space-y-0.5">
-          {visible.slice(0, 5).map((row) => {
-            const railClass = RISK_RAIL[row.risk_level ?? ""] ?? "border-l-zinc-200";
-            return (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  onClick={() => setActiveRow(row)}
-                  className={cn(
-                    "group flex w-full items-start gap-2 border-l-[2px] pl-3 pr-2 py-1.5 text-left transition-colors hover:bg-zinc-50",
-                    railClass,
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-[13px] leading-[1.55] tracking-tight text-zinc-700">
-                      {row.script_text}
-                    </p>
-                    <p className="mt-0.5 truncate text-[11px] text-zinc-400">
-                      {row.submitted_by_name ?? "未知成员"}
-                      {row.category ? ` · ${row.category}` : ""}
-                    </p>
-                  </div>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </CardShell>
-      <ViolationPreviewDialog
-        row={activeRow}
-        open={activeRow !== null}
-        onOpenChange={(o) => !o && setActiveRow(null)}
-        onReview={handleReview}
-        reviewing={reviewing}
-      />
-    </>
+    <CardShell
+      title="待复核"
+      icon={<ShieldAlert className="size-4 stroke-[1.5]" />}
+      total={total}
+      totalTone="danger"
+      empty="当前没有需要复核的案例"
+      hasContent={rows.length > 0}
+      overdueCount={overdueCount}
+      headerRight={<ViewAllLink href="/violations?perspective=review" />}
+      totalNote={
+        handledCount > 0 ? (
+          <span className="text-[11px] text-zinc-400">(已处理 {handledCount})</span>
+        ) : null
+      }
+    >
+      <ul className="space-y-0.5">
+        {rows.slice(0, 5).map((row) => {
+          const railClass = RISK_RAIL[row.risk_level ?? ""] ?? "border-l-zinc-200";
+          const handled = handledMap[row.id];
+          return (
+            <li
+              key={row.id}
+              className={cn(
+                "group relative",
+                handled && "opacity-40 pointer-events-none",
+              )}
+            >
+              <button
+                type="button"
+                className={cn(
+                  "flex w-full items-start gap-2 border-l-[2px] pl-3 pr-2 py-1.5 text-left transition-colors hover:bg-zinc-50",
+                  railClass,
+                )}
+              >
+                <div className="min-w-0 flex-1 pr-[100px]">
+                  <p className="line-clamp-2 text-[13px] leading-[1.55] tracking-tight text-zinc-700">
+                    {row.script_text}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+                    {row.submitted_by_name ?? "未知成员"}
+                    {row.category ? ` · ${row.category}` : ""}
+                  </p>
+                </div>
+              </button>
+              {handled ? (
+                <span className="absolute top-1 right-2 text-[10px] text-zinc-400">
+                  {handled === "verified" ? "已批准" : "已拒绝"}
+                </span>
+              ) : (
+                <div className="absolute right-2 top-1/2 flex -translate-y-1/2 translate-x-2 items-center gap-1.5 opacity-0 pointer-events-none transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-hover:pointer-events-auto">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleReview(row, "verified");
+                    }}
+                    className="inline-flex h-7 items-center rounded-lg bg-[#D97757] px-2.5 text-[12px] text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
+                  >
+                    批准
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleReview(row, "rejected");
+                    }}
+                    className="inline-flex h-7 items-center rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-700 transition-colors hover:border-zinc-300 active:translate-y-0"
+                  >
+                    拒绝
+                  </button>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </CardShell>
   );
 }
 
 /* ── 3. 待审批合并卡（催交 / 豁免 / 入团） ── */
 type ReviewTab = "submissions" | "exemptions" | "joins";
+
+function HoverActions({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "absolute right-2 top-1/2 flex -translate-y-1/2 translate-x-2 items-center gap-1 opacity-0 pointer-events-none transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-hover:pointer-events-auto",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function ApproveButton({ onClick, busy }: { onClick: () => void; busy?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      disabled={busy}
+      className="inline-flex h-7 items-center rounded-lg bg-[#D97757] px-2.5 text-[12px] text-white transition-colors hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50"
+    >
+      批准
+    </button>
+  );
+}
+
+function RejectButton({ onClick, busy }: { onClick: () => void; busy?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      disabled={busy}
+      className="inline-flex h-7 items-center rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-700 transition-colors hover:border-zinc-300 active:translate-y-0 disabled:opacity-50"
+    >
+      拒绝
+    </button>
+  );
+}
 
 function ReviewBatchCard({
   date,
@@ -415,34 +516,43 @@ function ReviewBatchCard({
   const [, startTransition] = useTransition();
   const [exemptionBusy, setExemptionBusy] = useState(false);
   const [joinBusy, setJoinBusy] = useState(false);
-  const [activeSubmission, setActiveSubmission] = useState<PendingSubmissionRow | null>(null);
-  const [activeExemption, setActiveExemption] = useState<ExemptionRequestRow | null>(null);
-  const [activeJoin, setActiveJoin] = useState<AdminRequestRow | null>(null);
   const [remindLogOpen, setRemindLogOpen] = useState(false);
+  const [handledMap, setHandledMap] = useState<Record<string, "approved" | "rejected">>({});
+
+  const handledCount = useMemo(
+    () => Object.keys(handledMap).length,
+    [handledMap],
+  );
 
   function handleExemptionDecision(
     row: ExemptionRequestRow,
     decision: "approved" | "rejected",
   ) {
+    const resultLabel = decision === "approved" ? "已批准" : "已驳回";
+    setHandledMap((prev) => ({ ...prev, [row.id]: decision }));
     setExemptionBusy(true);
-    setExemptions((prev) => prev.filter((r) => r.id !== row.id));
-    setActiveExemption(null);
-    feedbackToast.success(
-      decision === "approved"
-        ? `已同意 ${row.applicant_name} 的豁免申请`
-        : `已驳回 ${row.applicant_name} 的豁免申请`,
-    );
+
+    toast.success(`${resultLabel} ${row.applicant_name} 的豁免申请`, {
+      action: {
+        label: "撤销",
+        onClick: () => {
+          setHandledMap((prev) => {
+            const next = { ...prev };
+            delete next[row.id];
+            return next;
+          });
+        },
+      },
+    });
+
     startTransition(async () => {
       const result = await reviewExemptionRequest({ requestId: row.id, decision });
       if (result.error) {
-        setExemptions((prev) =>
-          prev.some((r) => r.id === row.id)
-            ? prev
-            : [...prev, row].sort(
-                (a, b) =>
-                  new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-              ),
-        );
+        setHandledMap((prev) => {
+          const next = { ...prev };
+          delete next[row.id];
+          return next;
+        });
         feedbackToast.error(result.error);
       }
       setExemptionBusy(false);
@@ -450,27 +560,33 @@ function ReviewBatchCard({
   }
 
   function handleJoinDecision(row: AdminRequestRow, decision: "approved" | "rejected") {
+    const resultLabel = decision === "approved" ? "已批准" : "已驳回";
+    setHandledMap((prev) => ({ ...prev, [row.id]: decision }));
     setJoinBusy(true);
-    setJoins((prev) => prev.filter((r) => r.id !== row.id));
-    setActiveJoin(null);
-    feedbackToast.success(
-      decision === "approved"
-        ? `已同意 ${row.applicantName || "未命名"} 的入团申请`
-        : `已驳回 ${row.applicantName || "未命名"} 的入团申请`,
-    );
+
+    toast.success(`${resultLabel} ${row.applicantName || "未命名"} 的入团申请`, {
+      action: {
+        label: "撤销",
+        onClick: () => {
+          setHandledMap((prev) => {
+            const next = { ...prev };
+            delete next[row.id];
+            return next;
+          });
+        },
+      },
+    });
+
     startTransition(async () => {
       const action =
         decision === "approved" ? approveJoinRequestAction : rejectJoinRequestAction;
       const result = await action(row.id, null);
       if (!result.ok) {
-        setJoins((prev) =>
-          prev.some((r) => r.id === row.id)
-            ? prev
-            : [...prev, row].sort(
-                (a, b) =>
-                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-              ),
-        );
+        setHandledMap((prev) => {
+          const next = { ...prev };
+          delete next[row.id];
+          return next;
+        });
         feedbackToast.error(result.error);
       }
       setJoinBusy(false);
@@ -533,6 +649,9 @@ function ReviewBatchCard({
             >
               {totalAll}
             </span>
+            {handledCount > 0 ? (
+              <span className="text-[11px] text-zinc-400">(已处理 {handledCount})</span>
+            ) : null}
             <OverdueBadge count={submissionsOverdue} />
           </div>
           <div className="flex shrink-0 items-center gap-2">{headerActions}</div>
@@ -575,23 +694,34 @@ function ReviewBatchCard({
             ) : (
               <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-track]:bg-transparent">
                 <ul className="space-y-0.5">
-                  {submissions.map((row) => (
-                    <li key={row.profile_id}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubmission(row)}
-                        className="grid w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-zinc-50"
+                  {submissions.map((row) => {
+                    const handled = handledMap[row.profile_id];
+                    return (
+                      <li
+                        key={row.profile_id}
+                        className={cn(
+                          "group relative rounded-lg",
+                          handled && "opacity-40 pointer-events-none",
+                          !handled && "hover:bg-zinc-50",
+                        )}
                       >
-                        <span className="truncate text-[11px] text-zinc-400">
-                          {row.team_name ?? "未分组"}
-                        </span>
-                        <span className="truncate text-[13px] text-zinc-700">{row.name}</span>
-                        <span className="shrink-0 text-[11px] tabular-nums text-zinc-400">
-                          {row.last_report_date ?? "—"}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
+                        <div className="grid w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-2 px-3 py-1.5">
+                          <span className="truncate text-[11px] text-zinc-400">
+                            {row.team_name ?? "未分组"}
+                          </span>
+                          <span className="truncate text-[13px] text-zinc-700">{row.name}</span>
+                          <span className="shrink-0 text-[11px] tabular-nums text-zinc-400">
+                            {row.last_report_date ?? "—"}
+                          </span>
+                        </div>
+                        {handled ? (
+                          <span className="absolute top-1 right-2 text-[10px] text-zinc-400">
+                            {handled === "approved" ? "已催" : "已忽略"}
+                          </span>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )
@@ -606,13 +736,17 @@ function ReviewBatchCard({
                   {exemptions.map((row) => {
                     const typeLabel =
                       EXEMPTION_TYPE_LABELS[row.exemption_type] ?? row.exemption_type;
+                    const handled = handledMap[row.id];
                     return (
-                      <li key={row.id}>
-                        <button
-                          type="button"
-                          onClick={() => setActiveExemption(row)}
-                          className="flex w-full items-start gap-2.5 rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-zinc-50"
-                        >
+                      <li
+                        key={row.id}
+                        className={cn(
+                          "group relative rounded-lg",
+                          handled && "opacity-40 pointer-events-none",
+                          !handled && "hover:bg-zinc-50",
+                        )}
+                      >
+                        <div className="flex w-full items-start gap-2.5 px-3 py-1.5 pr-[120px]">
                           <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#D99E55]" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-[13px] tracking-tight text-zinc-700">
@@ -625,7 +759,23 @@ function ReviewBatchCard({
                               {row.reason ?? "未填写原因"}
                             </p>
                           </div>
-                        </button>
+                        </div>
+                        {handled ? (
+                          <span className="absolute top-1 right-2 text-[10px] text-zinc-400">
+                            {handled === "approved" ? "已批准" : "已拒绝"}
+                          </span>
+                        ) : (
+                          <HoverActions>
+                            <RejectButton
+                              onClick={() => handleExemptionDecision(row, "rejected")}
+                              busy={exemptionBusy}
+                            />
+                            <ApproveButton
+                              onClick={() => handleExemptionDecision(row, "approved")}
+                              busy={exemptionBusy}
+                            />
+                          </HoverActions>
+                        )}
                       </li>
                     );
                   })}
@@ -640,25 +790,47 @@ function ReviewBatchCard({
             ) : (
               <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-track]:bg-transparent">
                 <ul className="space-y-0.5">
-                  {joins.map((row) => (
-                    <li key={row.id}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveJoin(row)}
-                        className="flex w-full items-start gap-2 rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-zinc-50"
+                  {joins.map((row) => {
+                    const handled = handledMap[row.id];
+                    return (
+                      <li
+                        key={row.id}
+                        className={cn(
+                          "group relative rounded-lg",
+                          handled && "opacity-40 pointer-events-none",
+                          !handled && "hover:bg-zinc-50",
+                        )}
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] tracking-tight text-zinc-700">
-                            {row.applicantName || "未命名"}
-                          </p>
-                          <p className="mt-0.5 truncate text-[11px] text-zinc-400">
-                            <UserPlus className="mr-0.5 inline size-3 stroke-[1.5]" />
-                            申请加入「{row.targetTeamName || "未知团队"}」
-                          </p>
+                        <div className="flex w-full items-start gap-2 px-3 py-1.5 pr-[120px]">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13px] tracking-tight text-zinc-700">
+                              {row.applicantName || "未命名"}
+                            </p>
+                            <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+                              <UserPlus className="mr-0.5 inline size-3 stroke-[1.5]" />
+                              申请加入「{row.targetTeamName || "未知团队"}」
+                            </p>
+                          </div>
                         </div>
-                      </button>
-                    </li>
-                  ))}
+                        {handled ? (
+                          <span className="absolute top-1 right-2 text-[10px] text-zinc-400">
+                            {handled === "approved" ? "已批准" : "已拒绝"}
+                          </span>
+                        ) : (
+                          <HoverActions>
+                            <RejectButton
+                              onClick={() => handleJoinDecision(row, "rejected")}
+                              busy={joinBusy}
+                            />
+                            <ApproveButton
+                              onClick={() => handleJoinDecision(row, "approved")}
+                              busy={joinBusy}
+                            />
+                          </HoverActions>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )
@@ -666,27 +838,6 @@ function ReviewBatchCard({
         </div>
       </section>
 
-      <SubmissionPreviewDialog
-        row={activeSubmission}
-        date={date}
-        open={activeSubmission !== null}
-        onOpenChange={(o) => !o && setActiveSubmission(null)}
-        onOpenRemindLog={() => setRemindLogOpen(true)}
-      />
-      <ExemptionPreviewDialog
-        row={activeExemption}
-        open={activeExemption !== null}
-        onOpenChange={(o) => !o && setActiveExemption(null)}
-        onDecision={handleExemptionDecision}
-        reviewing={exemptionBusy}
-      />
-      <JoinPreviewDialog
-        row={activeJoin}
-        open={activeJoin !== null}
-        onOpenChange={(o) => !o && setActiveJoin(null)}
-        onDecision={handleJoinDecision}
-        reviewing={joinBusy}
-      />
       <RemindLogDialog date={date} open={remindLogOpen} onOpenChange={setRemindLogOpen} />
     </>
   );
@@ -698,6 +849,14 @@ function EmptyState({ text }: { text: string }) {
       <p className="text-[12px] text-zinc-400">{text}</p>
     </div>
   );
+}
+
+function computeGapDays(lastReport: string | null, todayStr: string): number | null {
+  if (!lastReport) return null;
+  const a = new Date(lastReport);
+  const b = new Date(todayStr);
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return null;
+  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
 }
 
 export function AdminQueueSection({
@@ -748,7 +907,7 @@ export function AdminQueueSection({
         </span>
       </div>
 
-      <div className="grid items-stretch gap-1 lg:grid-cols-2 xl:grid-cols-[1fr_1fr_2fr]">
+      <div className="grid items-stretch gap-1 lg:grid-cols-2 xl:grid-cols-3">
         <PendingVideosCard
           date={date}
           initialRows={resolved.pendingVideos}
