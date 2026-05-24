@@ -3,12 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChevronUp, Sparkles, Loader2, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
+import { ChevronUp, Sparkles, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
-import { MotionCard } from "@/components/ui/motion-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -524,7 +523,6 @@ export function VideoSubmitForm({
       scriptText,
       keywordInput,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [meta, fields, slots, scriptText, keywordInput]
   );
 
@@ -980,13 +978,14 @@ export function VideoSubmitForm({
 
   const cancelTimeoutRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (cancelTimeoutRef.current !== null) {
-        window.clearTimeout(cancelTimeoutRef.current);
-      }
-    };
+  const clearCancelTimeout = useCallback(() => {
+    if (cancelTimeoutRef.current !== null) {
+      window.clearTimeout(cancelTimeoutRef.current);
+      cancelTimeoutRef.current = null;
+    }
   }, []);
+
+  useEffect(() => clearCancelTimeout, [clearCancelTimeout]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1156,7 +1155,7 @@ export function VideoSubmitForm({
   }, [meta.anomalyStatus]);
 
   const mobileSubmitBar = (
-    <div className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-3 pt-2 md:hidden pointer-events-none">
+    <div className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-2 pt-2 md:hidden pointer-events-none">
       <div className="mx-auto flex h-12 w-auto max-w-[calc(100vw-24px)] items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl pointer-events-auto">
         {/* Layer 1: Form status */}
         <div className="flex items-center shrink-0">
@@ -1270,7 +1269,7 @@ export function VideoSubmitForm({
   );
 
   const desktopSubmitBar = (
-    <div className="fixed inset-x-0 bottom-0 z-50 hidden md:flex justify-center px-6 pb-6 pointer-events-none">
+    <div className="fixed inset-x-0 bottom-0 z-50 hidden md:flex justify-center px-6 pb-4 pointer-events-none">
       <div
         className="relative flex h-[52px] w-auto items-center gap-4 rounded-full border border-zinc-200/80 bg-gradient-to-b from-white to-zinc-50/90 px-4 shadow-[0_1px_0_0_rgba(255,255,255,0.9)_inset,0_20px_48px_-20px_rgba(15,23,42,0.22),0_6px_16px_-10px_rgba(15,23,42,0.12)] backdrop-blur-2xl pointer-events-auto"
       >
@@ -1570,7 +1569,7 @@ export function VideoSubmitForm({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-10 pb-[120px] md:pb-[140px]"
+        className="space-y-10 pb-[84px] md:pb-[96px]"
       >
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)] lg:gap-0">
           {/* 左侧列：截图槽位区 + 视频信息 */}

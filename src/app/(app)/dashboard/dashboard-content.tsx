@@ -1,7 +1,7 @@
 "use client";
 
 import { ProductionControlSystem } from "./production-control-system";
-import type { SopMemberStatus, UserRole } from "@/types";
+import type { UserRole } from "@/types";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
@@ -12,8 +12,6 @@ type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
 };
 
 interface DashboardContentProps {
-  initialMine: SopMemberStatus | null;
-  initialMatrix: SopMemberStatus[];
   today: string;
   userDisplayName: string;
   userRole: UserRole;

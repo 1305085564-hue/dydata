@@ -49,6 +49,15 @@ test("上传或识别过截图后算可恢复草稿", () => {
   assert.equal(isVideoSubmitDraftEmpty(draft), false);
 });
 
+test("遗留空截图槽状态不算可恢复草稿", () => {
+  const draft = createDefaultDraft();
+  draft.slots.screenshot_1.status = "idle";
+  draft.slots.screenshot_2.status = "idle";
+  draft.slots.screenshot_3.status = "idle";
+
+  assert.equal(isVideoSubmitDraftEmpty(draft), true);
+});
+
 test("默认 0 指标不算草稿，非零指标算草稿", () => {
   const draft = createDefaultDraft();
   draft.fields.follower_convert.value = "0";

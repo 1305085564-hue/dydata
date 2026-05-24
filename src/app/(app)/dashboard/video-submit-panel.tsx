@@ -145,7 +145,6 @@ export function VideoSubmitPanel({
   hasPendingExemption = false,
   userExemptionProfile,
   userExemptionGrants,
-  teamReviewRequests = [],
   embeddedChrome = false,
   selectedAccountId: controlledSelectedAccountId,
   onSelectedAccountChange,
@@ -720,7 +719,12 @@ export function VideoSubmitPanel({
           </CardHeader>
           ) : null}
 
-          <CardContent className="min-h-[520px] space-y-7 px-5 py-6 sm:px-8 sm:py-8 bg-white">
+          <CardContent
+            className={cn(
+              "min-h-[520px] space-y-6 bg-white px-5",
+              embeddedChrome ? "pb-6 pt-4 sm:px-8 sm:pb-8 sm:pt-5" : "py-6 sm:px-8 sm:py-8",
+            )}
+          >
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
             {activeCheckpointId === 1 ? (
               <>

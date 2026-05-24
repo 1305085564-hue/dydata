@@ -2,28 +2,24 @@
 
 /**
  * 生产控制系统 · 主编排
- * 只负责组合子组件、传递数据；状态逻辑在 use-dashboard-orchestration.ts
+ * 只保留数据报表主工作台，组合头部、概览卡和填报面板。
  */
 
-import type { SopMemberStatus } from "@/types";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
-import { useEffect, useState } from "react";
-import { setDashboardDate } from "@/lib/dashboard-store";
-import type { ContentFeedbackCardDetail } from "@/types";
+import { useEffect, useMemo, useState } from "react";
+import {
+  initDashboardStore,
+  setDashboardAccount,
+  setDashboardDate,
+} from "@/lib/dashboard-store";
 
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
 import { FocusHeroCard } from "./components/focus-hero-card";
-import { GlobalMatrix } from "./components/global-matrix";
-import { LeaderDashboard } from "./components/leader-dashboard";
-import { WorkflowDashboard } from "./components/workflow-dashboard";
-import { useDashboardOrchestration } from "./components/use-dashboard-orchestration";
 
 interface ProductionControlSystemProps {
-  initialMine: SopMemberStatus | null;
-  initialMatrix: SopMemberStatus[];
   today: string;
   userDisplayName: string;
   userRole: "member" | "admin" | "owner";
@@ -45,15 +41,12 @@ interface ProductionControlSystemProps {
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
-  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
   teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
 export function ProductionControlSystem({
-  initialMine,
-  initialMatrix,
   today,
   userDisplayName,
   userRole,
@@ -66,79 +59,60 @@ export function ProductionControlSystem({
   ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption = false,
-  userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
   teamReviewRequests,
 }: ProductionControlSystemProps) {
-  const {
-    activeTab,
-    setActiveTab,
-    activeCheckpoint,
-    setActiveCheckpoint,
-    selectedAccountId,
-    setSelectedAccountId,
-    activeBizDate,
-    setActiveBizDate,
-    mine,
-    matrix,
-    isPending,
-    submittedDates,
-    alertGroups,
-    refreshSop,
-    openReviewTarget,
-    openDashboardTool,
-  } = useDashboardOrchestration({
-    initialMine,
-    initialMatrix,
-    today,
-    userDisplayName,
-    userRole,
-    accounts,
-    userId,
-    todayReports,
-    hasPendingExemption,
-    userExemptionReviewNotice,
-    teamReviewRequests,
-  });
-
-  const [feedbackCard, setFeedbackCard] = useState<ContentFeedbackCardDetail | null>(null);
-  const [feedbackVideoTitle, setFeedbackVideoTitle] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
+  const [activeBizDate, setActiveBizDate] = useState(today);
+  const submittedDates = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          todayReports
+            .map((report) => report.report_date)
+            .filter((date): date is string => Boolean(date)),
+        ),
+      ),
+    [todayReports],
+  );
 
   useEffect(() => {
-    let active = true;
-    const fetchCard = async () => {
-      try {
-        const res = await fetch("/api/dashboard/content-feedback-cards");
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          items?: Array<{
-            video?: { video_title?: string | null } | null;
-            feedback_card?: ContentFeedbackCardDetail;
-          }>;
-        };
-        const first = data.items?.[0];
-        if (active && first?.feedback_card) {
-          setFeedbackCard(first.feedback_card);
-          setFeedbackVideoTitle(first.video?.video_title ?? null);
-          // 如果是 sent 状态，自动标记为 viewed
-          if (first.feedback_card.workflow_status === "sent" && first.feedback_card.card_id) {
-            await fetch(`/api/dashboard/content-feedback-cards/${first.feedback_card.card_id}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "viewed" }),
-            });
-          }
-        }
-      } catch {}
-    };
-    fetchCard();
-    return () => { active = false; };
-  }, []);
+    initDashboardStore({
+      accounts,
+      selectedAccountId,
+      activeBizDate,
+    });
+
+    function handleExternalAction(event: Event) {
+      const detail = (
+        event as CustomEvent<{ key?: string; accountId?: string; date?: string }>
+      ).detail;
+      if (detail?.key === "set-account" && detail.accountId) {
+        setSelectedAccountId(detail.accountId);
+        setActiveBizDate(today);
+        setDashboardAccount(detail.accountId);
+      }
+      if (detail?.key === "set-date" && detail.date) {
+        setActiveBizDate(detail.date);
+        setDashboardDate(detail.date);
+      }
+    }
+
+    window.addEventListener("dydata-dashboard-action", handleExternalAction);
+    return () =>
+      window.removeEventListener("dydata-dashboard-action", handleExternalAction);
+  }, [accounts, selectedAccountId, activeBizDate, today]);
+
+  function openDashboardTool(key: string) {
+    window.dispatchEvent(
+      new CustomEvent("dydata-dashboard-action", { detail: { key } }),
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 antialiased">
-      <main className="p-4 lg:p-8">
+      <main className="px-4 py-3 lg:px-8 lg:py-5">
         <DashboardWorkspaceHeader
           today={today}
           activeBizDate={activeBizDate}
@@ -146,31 +120,13 @@ export function ProductionControlSystem({
             setActiveBizDate(date);
             setDashboardDate(date);
           }}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
           onDashboardAction={openDashboardTool}
           hasPendingExemption={hasPendingExemption}
           submittedDates={submittedDates}
-          userRole={userRole}
-          alertCount={alertGroups.length}
-          reviewRequestCount={teamReviewRequests.length}
-          activeCheckpoint={activeCheckpoint}
-          onCheckpointChange={setActiveCheckpoint}
-          checkpointStatuses={{
-            ...(mine?.statuses ?? {
-              DATA_REPORT: "IDLE",
-              MORNING_REVIEW: "IDLE",
-              TOPIC: "IDLE",
-              SCRIPT: "IDLE",
-              VIDEO: "IDLE",
-            }),
-            DATA_REPORT: todayReports.length > 0 ? "APPROVED" : (mine?.statuses.DATA_REPORT ?? "IDLE"),
-          }}
-          assistantSlot={undefined}
         />
 
-        {userRole === "member" && activeTab === "FLOW" && (
-          <div className="mx-auto mb-6 max-w-6xl">
+        {userRole === "member" && (
+          <div className="mx-auto mb-4 max-w-6xl">
             <FocusHeroCard
               todayReports={todayReports}
               totalAccounts={accounts.length}
@@ -181,57 +137,27 @@ export function ProductionControlSystem({
           </div>
         )}
 
-        {activeTab === "FLOW" && (
-          <WorkflowDashboard
-            mine={mine}
-            today={today}
-            hasTodayReport={todayReports.length > 0}
-            isPending={isPending}
-            activeCheckpoint={activeCheckpoint}
-            onSubmitted={refreshSop}
-            reviewFeedback={
-              feedbackCard?.confirmed
-                ? {
-                    videoTitle: feedbackVideoTitle ?? "未命名视频",
-                    mainIssues: feedbackCard.confirmed.summary.one_line || feedbackCard.confirmed.summary.problem_tags.join(" / ") || "",
-                    nextAction: feedbackCard.confirmed.actions.instructions.slice(0, 2).join("；") || "",
-                    managerComment: feedbackCard.confirmed.actions.message_for_member || undefined,
-                  }
-                : null
-            }
-            dataReport={
-              <DataReportStage
-                key={`${selectedAccountId}-${activeBizDate}`}
-                accounts={accounts}
-                selectedAccountId={selectedAccountId}
-                onSelectedAccountChange={setSelectedAccountId}
-                activeBizDate={activeBizDate}
-                onActiveBizDateChange={setActiveBizDate}
-                userId={userId}
-                userDisplayName={userDisplayName}
-                today={today}
-                todayReports={todayReports}
-                monthReports={monthReports}
-                history={history}
-                accountIds={accountIds}
-                ownContentDirections={ownContentDirections}
-                accountDisplayNameMap={accountDisplayNameMap}
-                hasPendingExemption={hasPendingExemption}
-                userExemptionProfile={userExemptionProfile}
-                userExemptionGrants={userExemptionGrants}
-                teamReviewRequests={teamReviewRequests}
-              />
-            }
-          />
-        )}
-        {activeTab === "REVIEW" &&
-          (userRole === "admin" || userRole === "owner" ? (
-            <LeaderDashboard today={today} userRole={userRole} teamReviewRequests={teamReviewRequests} />
-          ) : null)}
-        {activeTab === "MATRIX" &&
-          (userRole === "admin" || userRole === "owner") && (
-            <GlobalMatrix rows={matrix} onOpenTarget={openReviewTarget} />
-          )}
+        <DataReportStage
+          key={`${selectedAccountId}-${activeBizDate}`}
+          accounts={accounts}
+          selectedAccountId={selectedAccountId}
+          onSelectedAccountChange={setSelectedAccountId}
+          activeBizDate={activeBizDate}
+          onActiveBizDateChange={setActiveBizDate}
+          userId={userId}
+          userDisplayName={userDisplayName}
+          today={today}
+          todayReports={todayReports}
+          monthReports={monthReports}
+          history={history}
+          accountIds={accountIds}
+          ownContentDirections={ownContentDirections}
+          accountDisplayNameMap={accountDisplayNameMap}
+          hasPendingExemption={hasPendingExemption}
+          userExemptionProfile={userExemptionProfile}
+          userExemptionGrants={userExemptionGrants}
+          teamReviewRequests={teamReviewRequests}
+        />
       </main>
     </div>
   );

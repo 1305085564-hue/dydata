@@ -38,9 +38,17 @@ function hasNonZeroMetric(value: string | null | undefined) {
   return !Number.isFinite(numeric) || numeric !== 0;
 }
 
+const EDITED_SLOT_STATUSES = new Set([
+  "uploading",
+  "recognizing",
+  "pending_confirm",
+  "confirmed",
+  "failed",
+]);
+
 function hasEditedSlot(slot: DraftSlot | undefined) {
   if (!slot) return false;
-  if (slot.status && slot.status !== "empty") return true;
+  if (slot.status && EDITED_SLOT_STATUSES.has(slot.status)) return true;
   if (hasText(slot.fileName) || hasText(slot.assetUrl) || hasText(slot.previewUrl)) return true;
   if (slot.recognizedFields && Object.keys(slot.recognizedFields).length > 0) return true;
   if (slot.ocrSummary?.some(hasText)) return true;
@@ -49,6 +57,8 @@ function hasEditedSlot(slot: DraftSlot | undefined) {
 
 export function isVideoSubmitDraftEmpty(draft: VideoSubmitDraft) {
   const meta = draft.meta;
+  const anomalyStatus = meta?.anomalyStatus?.trim();
+  const topicTag = meta?.topicTag?.trim();
 
   if (
     hasText(meta?.videoUrl) ||
@@ -60,11 +70,11 @@ export function isVideoSubmitDraftEmpty(draft: VideoSubmitDraft) {
     return false;
   }
 
-  if (meta?.anomalyStatus && meta.anomalyStatus !== "正常") {
+  if (anomalyStatus && anomalyStatus !== "正常") {
     return false;
   }
 
-  if (meta?.topicTag && meta.topicTag !== "复盘") {
+  if (topicTag && topicTag !== "复盘") {
     return false;
   }
 
