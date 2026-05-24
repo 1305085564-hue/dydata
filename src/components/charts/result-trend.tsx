@@ -25,6 +25,7 @@ import {
 } from "@/lib/chart-palette";
 import { cn } from "@/lib/utils";
 import { ChartSkeleton } from "./chart-skeleton";
+import { ChartActiveDot } from "./chart-active-dot";
 
 export interface ResultTrendDatum {
   date: string;
@@ -139,7 +140,7 @@ function ResultTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-[16px] border border-zinc-200 bg-white px-3 py-2.5 shadow-[var(--shadow-toast)]"
+      className="min-w-40 rounded-lg border border-zinc-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]"
     >
       <p className="text-[11px] font-medium tracking-[0.01em] text-foreground/70">{label}</p>
       <div className="mt-2 space-y-1.5">
@@ -266,8 +267,8 @@ export function ResultTrend({
                 <ComposedChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0.3} />
-                      <stop offset="100%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0.03} />
+                      <stop offset="0%" stopColor="#D97757" stopOpacity={0.03} />
+                      <stop offset="100%" stopColor="#D97757" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid {...CHART_GRID_PROPS} />
@@ -308,10 +309,10 @@ export function ResultTrend({
                     type="monotone"
                     dataKey={personalLabel}
                     name={personalLabel}
-                    stroke={CHART_COLORS.primary}
-                    strokeWidth={2.5}
+                    stroke="#D97757"
+                    strokeWidth={2}
                     dot={false}
-                    activeDot={{ r: 5, fill: CHART_COLORS.primary, stroke: "white", strokeWidth: 2 }}
+                    activeDot={<ChartActiveDot />}
                     connectNulls
                     isAnimationActive={false}
                   />
@@ -319,11 +320,10 @@ export function ResultTrend({
                     type="monotone"
                     dataKey={teamAverageLabel}
                     name={teamAverageLabel}
-                    stroke={CHART_COLORS.secondary}
-                    strokeWidth={2.5}
+                    stroke="#D4D4D8"
+                    strokeWidth={1}
                     dot={false}
-                    strokeDasharray="4 5"
-                    activeDot={{ r: 4, fill: CHART_COLORS.secondary, stroke: "white", strokeWidth: 2 }}
+                    activeDot={false}
                     connectNulls
                     isAnimationActive={false}
                   />

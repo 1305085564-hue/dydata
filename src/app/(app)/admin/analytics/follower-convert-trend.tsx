@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   CHART_AXIS_TICK,
-  CHART_COLORS,
   CHART_GRID_PROPS,
 } from "@/lib/chart-palette";
+import { ChartActiveDot } from "@/components/charts/chart-active-dot";
 import { cn } from "@/lib/utils";
 
 interface Report {
@@ -48,7 +48,7 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 shadow-sm">
+    <div className="rounded-lg border border-zinc-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]">
       <p className="text-[12px] font-medium tracking-tight text-zinc-800">{label}</p>
       <p className="mt-1 text-[12px] font-mono tabular-nums text-[#D97757]">
         导粉：{payload[0].value.toLocaleString()}
@@ -136,10 +136,10 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
           <Line
             type="monotone"
             dataKey="导粉量"
-            stroke={CHART_COLORS.primary}
+            stroke="#D97757"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, fill: CHART_COLORS.primary, stroke: "white", strokeWidth: 2 }}
+            activeDot={<ChartActiveDot />}
           />
         </LineChart>
       </ResponsiveContainer>

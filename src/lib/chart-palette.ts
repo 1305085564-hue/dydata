@@ -43,9 +43,12 @@ export const CHART_AXIS_TICK = {
 
 /**
  * 网格统一样式（CartesianGrid 的 prop）
+ * 规范：0.5px zinc-200 虚线 50% 透明
  */
 export const CHART_GRID_PROPS = {
   strokeDasharray: "3 3",
   stroke: CHART_COLORS.grid,
+  strokeOpacity: 0.5,
+  strokeWidth: 0.5,
   vertical: false,
 } as const;
