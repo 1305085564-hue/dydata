@@ -64,6 +64,7 @@
   --animate-shimmer: shimmer 1.8s linear infinite;
   --animate-shake: shake 0.2s ease-in-out;
   --animate-pulse-soft: pulse-soft 2.4s var(--ease-out) infinite;
+  --animate-float-y: float-y 4s ease-in-out infinite;
 }
 
 @layer base {

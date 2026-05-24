@@ -89,6 +89,15 @@
   100% { width: 95%; }
 }
 
+@keyframes float-y {
+  0%, 100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(2px);
+  }
+}
+
 /* 无障碍：减弱动效偏好 */
 @media (prefers-reduced-motion: reduce) {
   .auth-glow-spot {
@@ -99,7 +108,8 @@
   .typewriter-cursor,
   .animate-shimmer,
   .animate-shake,
-  .animate-pulse-soft {
+  .animate-pulse-soft,
+  .animate-float-y {
     transition: none;
     animation: none !important;
   }

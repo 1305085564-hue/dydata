@@ -95,19 +95,26 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
 function 结果空状态({ text }: { text: string }) {
   return (
     <motion.div
-      className="flex h-full flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/70 bg-muted/[0.18] px-6 text-center"
+      className="flex h-full flex-col items-center justify-center gap-0 text-center"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: ANIMATION_TIMINGS.fast / 1000, ease: [0.16, 1, 0.3, 1] }}
     >
-      <svg aria-hidden="true" viewBox="0 0 220 120" className="h-28 w-full max-w-[220px] text-slate-300">
-        <path d="M18 96H202" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
-        <path d="M24 26V96" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
-        <path d="M34 79c16-12 23-18 36-12 10 4 18 18 28 15 13-3 20-28 34-28 12 0 19 13 28 12 12-1 17-14 26-19" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <path d="M34 69c14-11 25-16 36-10 12 6 17 22 28 22 12 0 16-17 29-17 10 0 15 8 24 8 8 0 16-7 24-11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.5" />
-        <path d="M34 59c12-8 22-11 30-8 10 3 18 15 30 12 10-2 18-15 28-15 8 0 14 6 20 6 8 0 14-5 20-9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.32" />
-      </svg>
-      <p className="text-sm text-muted-foreground">{text}</p>
+      <div className="relative flex h-[120px] w-[120px] items-center justify-center">
+        <svg className="absolute inset-0" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="24" fill="none" stroke="#D4D4D8" strokeWidth="0.5" strokeDasharray="3,3" />
+          <line x1="60" y1="36" x2="60" y2="84" stroke="#E4E4E7" strokeWidth="0.5" />
+          <line x1="36" y1="60" x2="84" y2="60" stroke="#E4E4E7" strokeWidth="0.5" />
+        </svg>
+        <div
+          className="relative h-2 w-2 rounded-full animate-float-y"
+          style={{
+            background: "radial-gradient(circle, #E28D71 0%, #D97757 100%)",
+            boxShadow: "0 2px 6px rgba(217,119,87,0.3)",
+          }}
+        />
+      </div>
+      <p className="text-[13px] font-medium text-zinc-500 mt-4">{text}</p>
     </motion.div>
   );
 }

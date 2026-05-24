@@ -695,10 +695,24 @@ export function HitAnalyzer({
           </ScatterChart>
         </ResponsiveContainer>
       ) : (
-        <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-white px-4 text-center">
-          <div className="space-y-1.5">
-            <p className="text-sm font-semibold text-zinc-700">暂无可绘制散点</p>
-            <p className="text-xs leading-5 text-zinc-500">需要同时存在播放量和完播率。</p>
+        <div className="flex h-full items-center justify-center px-4 text-center">
+          <div className="flex flex-col items-center justify-center gap-0">
+            <div className="relative flex h-[120px] w-[120px] items-center justify-center">
+              <svg className="absolute inset-0" viewBox="0 0 120 120" aria-hidden="true">
+                <circle cx="60" cy="60" r="24" fill="none" stroke="#D4D4D8" strokeWidth="0.5" strokeDasharray="3,3" />
+                <line x1="60" y1="36" x2="60" y2="84" stroke="#E4E4E7" strokeWidth="0.5" />
+                <line x1="36" y1="60" x2="84" y2="60" stroke="#E4E4E7" strokeWidth="0.5" />
+              </svg>
+              <div
+                className="relative h-2 w-2 rounded-full animate-float-y"
+                style={{
+                  background: "radial-gradient(circle, #E28D71 0%, #D97757 100%)",
+                  boxShadow: "0 2px 6px rgba(217,119,87,0.3)",
+                }}
+              />
+            </div>
+            <p className="text-[13px] font-medium text-zinc-500 mt-4">暂无可绘制散点</p>
+            <p className="text-[12px] text-zinc-400 mt-1">需要同时存在播放量和完播率。</p>
           </div>
         </div>
       )}
