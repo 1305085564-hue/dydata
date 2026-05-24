@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronLeft, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Alert, AlertAggregationResult, AlertSeverity } from "@/lib/alert-sources/types";
@@ -13,6 +13,7 @@ import { useAlertContextStore } from "@/components/ai-assistant/alert-context-st
 import type { DashboardAlertsData } from "./admin-first-screen-loader";
 
 const POLL_INTERVAL_MS = 30_000;
+const STORAGE_KEY = "dydata:cockpit:selected-alert-group";
 
 type SeverityKey = AlertSeverity;
 
@@ -122,11 +123,20 @@ export function AiAlertPanel({
   const [now, setNow] = useState(() => Date.now());
   const abortRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
-  const userToggledRef = useRef<Set<string>>(new Set());
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   const [selectedMap, setSelectedMap] = useState<Record<string, Set<string>>>({});
   const [executingGroup, setExecutingGroup] = useState<string | null>(null);
+  const [storedGroupKey, setStoredGroupKey] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const { consultAlert } = useAlertContextStore();
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (saved) setStoredGroupKey(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const runFetch = useCallback(async (manual: boolean) => {
     abortRef.current?.abort();
@@ -192,22 +202,27 @@ export function AiAlertPanel({
   );
   const summary = state.data?.summary;
 
-  useEffect(() => {
-    if (alertGroups.length === 0) return;
-    setOpenMap((prev) => {
-      const next = { ...prev };
-      for (const g of alertGroups) {
-        if (userToggledRef.current.has(g.groupKey)) continue;
-        next[g.groupKey] = false;
-      }
-      return next;
-    });
-  }, [alertGroups]);
+  const effectiveSelectedKey = useMemo(() => {
+    if (alertGroups.length === 0) return null;
+    if (storedGroupKey && alertGroups.some((g) => g.groupKey === storedGroupKey)) {
+      return storedGroupKey;
+    }
+    return alertGroups[0].groupKey;
+  }, [alertGroups, storedGroupKey]);
 
-  const handleToggle = (groupKey: string, open: boolean) => {
-    userToggledRef.current.add(groupKey);
-    setOpenMap((prev) => ({ ...prev, [groupKey]: open }));
-  };
+  const activeGroup = useMemo(
+    () => alertGroups.find((g) => g.groupKey === effectiveSelectedKey) ?? null,
+    [alertGroups, effectiveSelectedKey],
+  );
+
+  const selectGroup = useCallback((key: string) => {
+    setStoredGroupKey(key);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, key);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const isSelected = (groupKey: string, alertId: string) =>
     selectedMap[groupKey]?.has(alertId) ?? false;
@@ -326,8 +341,13 @@ export function AiAlertPanel({
   );
 
   return (
-    <section className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4">
-      <header className="flex items-center justify-between gap-3">
+    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <header
+        className={cn(
+          "flex items-center justify-between gap-3 px-4 py-3",
+          totalAlerts > 0 && "border-b border-zinc-200",
+        )}
+      >
         <div className="flex items-center gap-3">
           <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">
             今日待办
@@ -357,6 +377,25 @@ export function AiAlertPanel({
           {relative ? (
             <span className="text-[11px] text-zinc-400">{relative}</span>
           ) : null}
+          {totalAlerts > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                const firstCritical = alertGroups
+                  .flatMap((g) => g.alerts)
+                  .find((a) => a.severity === "critical");
+                const target =
+                  firstCritical ?? alertGroups[0]?.alerts[0] ?? null;
+                if (target) {
+                  consultAlert({ alertId: target.id, preview: target.title });
+                }
+              }}
+              className="inline-flex h-7 items-center rounded-lg border border-[#D97757]/40 bg-white px-2.5 text-[11px] text-[#D97757] transition hover:bg-[#D97757]/5"
+            >
+              <Sparkles className="mr-1 size-3" strokeWidth={1.75} />
+              问问 AI
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => void runFetch(true)}
@@ -374,188 +413,219 @@ export function AiAlertPanel({
       </header>
 
       {state.loading ? (
-        <PanelMessage tone="muted">正在加载今日待办…</PanelMessage>
+        <div className="p-4">
+          <PanelMessage tone="muted">正在加载今日待办…</PanelMessage>
+        </div>
       ) : state.error ? (
-        <PanelMessage tone="error">
-          告警服务暂时不可用（{state.error}）。
-          <button
-            type="button"
-            onClick={() => void runFetch(true)}
-            className="ml-2 rounded-lg border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-800"
-          >
-            重试
-          </button>
-        </PanelMessage>
-      ) : totalAlerts === 0 ? (
-        <PanelMessage tone="muted">
-          <Sparkles className="mr-1.5 inline size-3 text-zinc-400" strokeWidth={1.75} />
-          今日暂无待办，AI 没扫到需要处理的事情。
-        </PanelMessage>
-      ) : (
-        <div className="grid gap-1.5 sm:grid-cols-2">
-          {alertGroups.map((group) => (
-            <section
-              key={group.groupKey}
-              className="rounded-2xl border border-zinc-200 bg-white"
+        <div className="p-4">
+          <PanelMessage tone="error">
+            告警服务暂时不可用（{state.error}）。
+            <button
+              type="button"
+              onClick={() => void runFetch(true)}
+              className="ml-2 rounded-lg border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-800"
             >
-              <button
-                type="button"
-                onClick={() => handleToggle(group.groupKey, !openMap[group.groupKey])}
-                className="flex w-full items-center justify-between px-4 py-2 transition hover:bg-zinc-50"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className={cn("size-1.5 rounded-full", SEVERITY_DOT[group.severity])} />
-                  <span className="text-[13px] font-medium text-zinc-800">{group.label}</span>
-                  <span className="text-[12px] text-zinc-400">
-                    {group.count} {group.count > 1 ? "条" : "条"}
-                  </span>
+              重试
+            </button>
+          </PanelMessage>
+        </div>
+      ) : totalAlerts === 0 ? (
+        <div className="p-4">
+          <PanelMessage tone="muted">
+            <Sparkles className="mr-1.5 inline size-3 text-zinc-400" strokeWidth={1.75} />
+            今日暂无待办，AI 没扫到需要处理的事情。
+          </PanelMessage>
+        </div>
+      ) : (
+        <div className="flex md:h-[480px]">
+          <aside
+            className={cn(
+              "min-w-0 md:w-[32%] md:min-w-[260px] md:max-w-[340px] md:flex-shrink-0 md:overflow-y-auto md:border-r md:border-zinc-200",
+              mobileView === "detail" ? "hidden md:block" : "block w-full",
+            )}
+          >
+            <ul className="divide-y divide-zinc-100">
+              {alertGroups.map((group) => {
+                const active = group.groupKey === effectiveSelectedKey;
+                const firstAlert = group.alerts[0];
+                const previewName = firstAlert?.affectedEntities[0]?.name;
+                const previewDetail = firstAlert?.detail ?? firstAlert?.title;
+                return (
+                  <li key={group.groupKey}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        selectGroup(group.groupKey);
+                        setMobileView("detail");
+                      }}
+                      className={cn(
+                        "active:translate-y-0 flex w-full items-start gap-2 border-l-[2px] px-3.5 py-2.5 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        active ? "border-l-[#D97757] bg-zinc-200/95" : "border-l-transparent hover:bg-zinc-100",
+                      )}
+                      aria-current={active ? "true" : undefined}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={cn("size-2 shrink-0 rounded-full", SEVERITY_DOT[group.severity])} />
+                          <span className="truncate text-[13px] font-medium text-zinc-800">
+                            {group.label}
+                          </span>
+                          <span className="shrink-0 text-[11px] font-medium tabular-nums text-zinc-400">
+                            {group.count}
+                          </span>
+                        </div>
+                        {previewName || previewDetail ? (
+                          <p className="mt-0.5 truncate text-[12px] text-zinc-500">
+                            {previewName ?? ""}
+                            {previewName && previewDetail ? " · " : ""}
+                            {previewDetail ?? ""}
+                          </p>
+                        ) : null}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
+
+          <main
+            className={cn(
+              "min-w-0 flex-1 flex-col",
+              mobileView === "list" ? "hidden md:flex" : "flex",
+            )}
+          >
+            {!activeGroup ? (
+              <div className="flex flex-1 items-center justify-center p-6 text-[12px] text-zinc-400">
+                选择左侧分组查看详情
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 border-b border-zinc-100 px-3.5 py-2 md:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setMobileView("list")}
+                    className="active:translate-y-0 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[12px] text-zinc-500 transition-[color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800"
+                  >
+                    <ChevronLeft className="size-3.5" strokeWidth={1.75} />
+                    返回列表
+                  </button>
                 </div>
-                <ChevronDown
-                  className={cn(
-                    "size-3.5 text-zinc-400 transition duration-150",
-                    openMap[group.groupKey] && "rotate-180",
-                  )}
-                />
-              </button>
 
-              {openMap[group.groupKey] && (
-                <div className="max-h-[420px] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-track]:bg-transparent">
-                  {/* 批量动作条 */}
-                  <div className="sticky top-0 z-10 flex items-center gap-2 border-y border-zinc-100 bg-zinc-50/90 px-4 py-1.5 backdrop-blur">
-                    <Checkbox
-                      checked={
-                        selectedCount(group.groupKey) === group.count && group.count > 0
+                <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-zinc-100 bg-zinc-50/90 px-3.5 py-1.5 backdrop-blur">
+                  <Checkbox
+                    checked={
+                      selectedCount(activeGroup.groupKey) === activeGroup.count &&
+                      activeGroup.count > 0
+                    }
+                    onCheckedChange={() =>
+                      toggleSelectAll(activeGroup.groupKey, activeGroup.alerts)
+                    }
+                  />
+                  <span className="text-[11px] text-zinc-500">
+                    {selectedCount(activeGroup.groupKey) === 0
+                      ? "全选"
+                      : `已选 ${selectedCount(activeGroup.groupKey)}`}
+                  </span>
+                  <div className="ml-auto flex gap-1.5">
+                    <button
+                      type="button"
+                      disabled={
+                        executingGroup === activeGroup.groupKey ||
+                        selectedCount(activeGroup.groupKey) === 0
                       }
-                      onCheckedChange={() => toggleSelectAll(group.groupKey, group.alerts)}
-                    />
-                    <span className="text-[11px] text-zinc-500">
-                      已选 {selectedCount(group.groupKey)} / {group.count}
-                    </span>
-                    <div className="ml-auto flex gap-1.5">
-                      <button
-                        type="button"
-                        disabled={
-                          executingGroup === group.groupKey || selectedCount(group.groupKey) === 0
-                        }
-                        onClick={() => void handleBatchExecute(group)}
-                        className="inline-flex h-6 items-center rounded-md border border-zinc-200 px-2.5 text-[11px] text-zinc-700 transition hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {executingGroup === group.groupKey ? (
-                          <>执行中…</>
-                        ) : (
-                          "一键执行"
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const selectedIds = selectedMap[group.groupKey];
-                          if (selectedIds && selectedIds.size > 0) {
-                            const firstId = Array.from(selectedIds)[0];
-                            const alert = group.alerts.find((a) => a.id === firstId);
-                            if (alert) {
-                              consultAlert({ alertId: alert.id, preview: alert.title });
-                              return;
-                            }
-                          }
-                          const firstCritical = group.alerts.find((a) => a.severity === "critical");
-                          if (firstCritical) {
-                            consultAlert({ alertId: firstCritical.id, preview: firstCritical.title });
-                            return;
-                          }
-                          const firstAny = group.alerts[0];
-                          if (firstAny) {
-                            consultAlert({ alertId: firstAny.id, preview: firstAny.title });
-                          }
-                        }}
-                        className="inline-flex h-6 items-center rounded-md border border-[#D97757]/40 bg-white px-2.5 text-[11px] text-[#D97757] transition hover:bg-[#D97757]/5"
-                      >
-                        <Sparkles className="mr-1 size-3" strokeWidth={1.75} />
-                        问问 AI
-                      </button>
-                    </div>
+                      onClick={() => void handleBatchExecute(activeGroup)}
+                      className="inline-flex h-6 items-center rounded-md border border-zinc-200 px-2.5 text-[11px] text-zinc-700 transition hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {executingGroup === activeGroup.groupKey ? <>执行中…</> : "一键执行"}
+                    </button>
                   </div>
+                </div>
 
-                  {/* 密集行 */}
-                  <ul className="divide-y divide-zinc-100">
-                    {group.alerts.map((alert) => {
-                      const navigate = getPrimaryNavigate(alert);
-                      const primaryEntity = alert.affectedEntities[0];
-                      return (
-                        <li key={alert.id}>
-                          {navigate ? (
-                            <Link
-                              href={navigate.href!}
-                              className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60"
-                            >
-                              <div
-                                onClick={(e) => {
+                <ul className="flex-1 divide-y divide-zinc-100 md:overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-track]:bg-transparent">
+                  {activeGroup.alerts.map((alert) => {
+                    const navigate = getPrimaryNavigate(alert);
+                    const primaryEntity = alert.affectedEntities[0];
+                    return (
+                      <li key={alert.id}>
+                        {navigate ? (
+                          <Link
+                            href={navigate.href!}
+                            className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50/60"
+                          >
+                            <div
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleSelect(activeGroup.groupKey, alert.id);
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  toggleSelect(group.groupKey, alert.id);
-                                }}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    toggleSelect(group.groupKey, alert.id);
-                                  }
-                                }}
-                                className="flex items-center"
-                              >
-                                <Checkbox
-                                  checked={isSelected(group.groupKey, alert.id)}
-                                  onCheckedChange={() => toggleSelect(group.groupKey, alert.id)}
-                                />
-                              </div>
-                              <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-800">
-                                {primaryEntity?.name ?? "—"}
-                              </span>
-                              <span className="flex-1 truncate text-[12px] text-zinc-500">
-                                {alert.detail ?? alert.title}
-                              </span>
-                              <ArrowRight className="size-3.5 text-zinc-400 opacity-0 transition duration-150 group-hover:opacity-100" />
-                            </Link>
-                          ) : (
-                            <div className="group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60">
-                              <div
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleSelect(group.groupKey, alert.id);
-                                }}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    toggleSelect(group.groupKey, alert.id);
-                                  }
-                                }}
-                                className="flex items-center"
-                              >
-                                <Checkbox
-                                  checked={isSelected(group.groupKey, alert.id)}
-                                  onCheckedChange={() => toggleSelect(group.groupKey, alert.id)}
-                                />
-                              </div>
-                              <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-800">
-                                {primaryEntity?.name ?? "—"}
-                              </span>
-                              <span className="flex-1 truncate text-[12px] text-zinc-500">
-                                {alert.detail ?? alert.title}
-                              </span>
+                                  toggleSelect(activeGroup.groupKey, alert.id);
+                                }
+                              }}
+                              className="flex items-center"
+                            >
+                              <Checkbox
+                                checked={isSelected(activeGroup.groupKey, alert.id)}
+                                onCheckedChange={() =>
+                                  toggleSelect(activeGroup.groupKey, alert.id)
+                                }
+                              />
                             </div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </section>
-          ))}
+                            <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-800">
+                              {primaryEntity?.name ?? "—"}
+                            </span>
+                            <span className="flex-1 truncate text-[12px] text-zinc-500">
+                              {alert.detail ?? alert.title}
+                            </span>
+                            <ArrowRight className="size-3.5 text-zinc-400 opacity-0 transition duration-150 group-hover:opacity-100" />
+                          </Link>
+                        ) : (
+                          <div
+                            className="group flex h-9 items-center gap-3 px-4 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50/60"
+                          >
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelect(activeGroup.groupKey, alert.id);
+                              }}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  toggleSelect(activeGroup.groupKey, alert.id);
+                                }
+                              }}
+                              className="flex items-center"
+                            >
+                              <Checkbox
+                                checked={isSelected(activeGroup.groupKey, alert.id)}
+                                onCheckedChange={() =>
+                                  toggleSelect(activeGroup.groupKey, alert.id)
+                                }
+                              />
+                            </div>
+                            <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-800">
+                              {primaryEntity?.name ?? "—"}
+                            </span>
+                            <span className="flex-1 truncate text-[12px] text-zinc-500">
+                              {alert.detail ?? alert.title}
+                            </span>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </main>
         </div>
       )}
     </section>

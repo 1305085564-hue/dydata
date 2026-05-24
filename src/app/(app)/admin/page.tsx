@@ -24,7 +24,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const initialData = await loadAdminFirstScreenData(queryDate);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <AdminQueueSection
         date={queryDate}
         initialSummary={initialData.summary}
