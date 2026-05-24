@@ -86,16 +86,15 @@ interface KpiTile {
 function KpiCard({ tile }: { tile: KpiTile }) {
   const accent =
     tile.tone === "danger"
-      ? { bar: "bg-[#C9604D]", iconBg: "bg-[#C9604D]/10 text-[#C9604D]", text: "text-[#9A4836]" }
+      ? { iconBg: "bg-[#C9604D]/10 text-[#C9604D]", text: "text-[#9A4836]" }
       : tile.tone === "positive"
-        ? { bar: "bg-[#6FAA7D]", iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]", text: "text-[#3F6F4F]" }
+        ? { iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]", text: "text-[#3F6F4F]" }
         : tile.tone === "warm"
-          ? { bar: "bg-[#D97757]", iconBg: "bg-[#D97757]/10 text-[#D97757]", text: "text-[#A85638]" }
-          : { bar: "bg-zinc-300", iconBg: "bg-zinc-100 text-zinc-500", text: "text-zinc-700" };
+          ? { iconBg: "bg-[#D97757]/10 text-[#D97757]", text: "text-[#A85638]" }
+          : { iconBg: "bg-zinc-100 text-zinc-500", text: "text-zinc-700" };
   const Icon = tile.icon;
   return (
-    <div className="relative flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3">
-      <span className={cn("absolute inset-y-0 left-0 w-[2px] rounded-r-full", accent.bar)} aria-hidden />
+    <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3">
       <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", accent.iconBg)}>
         <Icon className="size-4 stroke-[1.5]" />
       </span>
@@ -161,18 +160,17 @@ function CollapsibleSection({
   const [expanded, setExpanded] = useState(false);
   const accent =
     tone === "danger"
-      ? { bar: "bg-[#C9604D]", iconBg: "bg-[#C9604D]/10 text-[#C9604D]" }
+      ? { iconBg: "bg-[#C9604D]/10 text-[#C9604D]" }
       : tone === "positive"
-        ? { bar: "bg-[#6FAA7D]", iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]" }
+        ? { iconBg: "bg-[#6FAA7D]/10 text-[#6FAA7D]" }
         : tone === "warm"
-          ? { bar: "bg-[#D97757]", iconBg: "bg-[#D97757]/10 text-[#D97757]" }
-          : { bar: "bg-zinc-300", iconBg: "bg-zinc-100 text-zinc-500" };
+          ? { iconBg: "bg-[#D97757]/10 text-[#D97757]" }
+          : { iconBg: "bg-zinc-100 text-zinc-500" };
   const visible = expanded ? entries : entries.slice(0, 5);
   const hasMore = entries.length > 5;
 
   return (
-    <section className="relative rounded-2xl border border-zinc-200 bg-white">
-      <span className={cn("absolute inset-y-0 left-0 w-[2px] rounded-r-full", accent.bar)} aria-hidden />
+    <section className="rounded-2xl border border-zinc-200 bg-white">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -223,7 +221,7 @@ function ScriptsAssetSummary({ scripts }: { scripts: ScriptsTabData }) {
   return (
     <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 border-l-2 border-[#D97757] pl-3">
+        <div className="flex items-center gap-2">
           <h2 className="text-[18px] font-semibold tracking-tight text-zinc-800">话术资产</h2>
           <span className="text-[12px] text-zinc-500">展示/涨粉/转化由员工填报后自动汇总</span>
         </div>
