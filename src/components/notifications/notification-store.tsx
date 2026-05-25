@@ -58,7 +58,7 @@ interface NotificationContextValue {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-const POLL_INTERVAL_MS = 60_000;
+const POLL_INTERVAL_MS = 180_000;
 
 function buildLocal(input: LocalNotificationInput): LocalNotificationRow {
   const now = input.createdAt ?? new Date().toISOString();
@@ -102,6 +102,7 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
 
   const fetchAll = useCallback(async () => {
     if (!enabled) return;
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     setLoading(true);

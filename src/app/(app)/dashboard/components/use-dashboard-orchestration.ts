@@ -174,6 +174,7 @@ export function useDashboardOrchestration({
   useEffect(() => {
     let active = true;
     const fetchAlerts = async () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       try {
         const res = await fetch(`/api/sop/alerts?statusDate=${today}`);
         if (!res.ok) return;
@@ -182,7 +183,7 @@ export function useDashboardOrchestration({
       } catch {}
     };
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60_000);
+    const interval = setInterval(fetchAlerts, 180_000);
     return () => {
       active = false;
       clearInterval(interval);

@@ -13,11 +13,18 @@ type PendingViolationBadgeRow = {
   submitted_by: string | null;
 };
 
-export async function GET(request: NextRequest) {
+type SidebarBadgesDeps = {
+  requireAdminServiceClient: typeof requireAdminServiceClient;
+};
+
+export async function buildSidebarBadgesResponse(
+  request: NextRequest,
+  deps: SidebarBadgesDeps = { requireAdminServiceClient },
+) {
   const date = parseDateParam(request);
   if (!date) return jsonBadRequest("date 必须是 YYYY-MM-DD");
 
-  const auth = await requireAdminServiceClient();
+  const auth = await deps.requireAdminServiceClient();
   if ("response" in auth) return auth.response;
 
   const supabase = auth.supabase;
@@ -29,17 +36,12 @@ export async function GET(request: NextRequest) {
   const pendingVideos = Number(summary.pending_videos ?? 0);
   const pendingSubmissions = Number(summary.pending_submissions ?? 0);
 
-  const [{ data: reviewedResults }, { data: pendingViolationRows }, { data: conversionHubRows }] = await Promise.all([
+  const [{ data: reviewedResults }, { data: pendingRows }] = await Promise.all([
     supabase
       .from("ai_insight_result")
       .select("result_json")
       .eq("insight_type", "next_day_review")
       .eq("result_status", "success"),
-    supabase
-      .from("violation_cases")
-      .select("id, submitted_by")
-      .eq("status", "submitted")
-      .eq("is_deleted", false),
     supabase
       .from("violation_cases")
       .select("id, submitted_by")
@@ -73,12 +75,12 @@ export async function GET(request: NextRequest) {
   const contentCount = scopedVideos.filter((video) => !reviewedVideoIds.has(video.id as string)).length;
   const visiblePendingViolations = filterScopedRows(
     auth.scope,
-    (pendingViolationRows ?? []) as PendingViolationBadgeRow[],
+    (pendingRows ?? []) as PendingViolationBadgeRow[],
     (row) => row.submitted_by,
   ).length;
   const visibleConversionHubCount = filterScopedRows(
     auth.scope,
-    (conversionHubRows ?? []) as PendingViolationBadgeRow[],
+    (pendingRows ?? []) as PendingViolationBadgeRow[],
     (row) => row.submitted_by,
   ).length;
 
@@ -102,4 +104,8 @@ export async function GET(request: NextRequest) {
     conversion_hub: visibleConversionHubCount,
     ai_channels: 0,
   });
+}
+
+export async function GET(request: NextRequest) {
+  return buildSidebarBadgesResponse(request);
 }

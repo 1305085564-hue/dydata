@@ -12,7 +12,7 @@ import { useAlertContextStore } from "@/components/ai-assistant/alert-context-st
 
 import type { DashboardAlertsData } from "./admin-first-screen-loader";
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 180_000;
 const STORAGE_KEY = "dydata:cockpit:selected-alert-group";
 
 type SeverityKey = AlertSeverity;
@@ -148,6 +148,10 @@ export function AiAlertPanel({
     }
 
     try {
+      if (!manual && typeof document !== "undefined" && document.visibilityState !== "visible") {
+        setState((s) => ({ ...s, refreshing: false }));
+        return;
+      }
       const res = await fetch("/api/admin/dashboard-alerts", {
         credentials: "include",
         signal: controller.signal,

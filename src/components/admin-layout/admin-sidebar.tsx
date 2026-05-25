@@ -7,7 +7,6 @@ import {
   BarChart3,
   Gauge,
   Menu,
-  Target,
   Video,
   FileText,
   X,
@@ -71,12 +70,15 @@ function getRoleLabel(role: UserRole | null | undefined): string {
   }
 }
 
-function useSidebarBadges(intervalMs = 30_000): SidebarBadges | null {
+const SIDEBAR_BADGES_POLL_MS = 120_000;
+
+function useSidebarBadges(intervalMs = SIDEBAR_BADGES_POLL_MS): SidebarBadges | null {
   const [data, setData] = useState<SidebarBadges | null>(null);
 
   useEffect(() => {
     let active = true;
     const load = async () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       try {
         const res = await fetch("/api/admin/sidebar-badges", { credentials: "include" });
         if (!res.ok) return;

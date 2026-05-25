@@ -58,6 +58,7 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null
   const [error, setError] = useState<string | null>(null);
 
   const run = useCallback(async () => {
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
     try {
       const res = await fetchWithTimeout(url, { credentials: "include" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -213,7 +214,7 @@ function PendingVideosCard({
 }) {
   const { data } = useSafeFetch<{ data: PendingVideoRow[] }>(
     `/api/admin/cockpit/pending-videos?date=${date}&limit=10`,
-    30_000,
+    180_000,
     { data: initialRows },
   );
   const rows = data?.data ?? [];
@@ -286,7 +287,7 @@ function PendingViolationsCard({
 }) {
   const { data } = useSafeFetch<{ data: PendingViolationRow[] }>(
     `/api/admin/cockpit/pending-violations?limit=10`,
-    30_000,
+    180_000,
     { data: initialRows },
   );
   const rows = data?.data ?? [];
@@ -502,16 +503,22 @@ function ReviewBatchCard({
 
   const { data: submissionData } = useSafeFetch<{ data: PendingSubmissionRow[] }>(
     `/api/admin/cockpit/pending-submissions?date=${date}`,
-    60_000,
+    300_000,
     { data: initialSubmissions },
   );
   const submissions = submissionData?.data ?? [];
 
   const [exemptions, setExemptions] = useState(initialExemptions);
-  useEffect(() => setExemptions(initialExemptions), [initialExemptions]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+    setExemptions(initialExemptions);
+  }, [initialExemptions]);
 
   const [joins, setJoins] = useState(initialJoins);
-  useEffect(() => setJoins(initialJoins), [initialJoins]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+    setJoins(initialJoins);
+  }, [initialJoins]);
 
   const [, startTransition] = useTransition();
   const [exemptionBusy, setExemptionBusy] = useState(false);
@@ -884,7 +891,7 @@ export function AdminQueueSection({
 
   const { data: summary } = useSafeFetch<CockpitSummary>(
     `/api/admin/cockpit/summary?date=${date}`,
-    30_000,
+    180_000,
     initialSummary,
   );
   const { counts } = useSopOverdueCount(date);
