@@ -145,9 +145,9 @@ export function SubmissionSlotCard({
         // 高亮态（空槽位）
         highlightActive && isEmpty && "border-dashed border-[#D97757] bg-[#FDF9F7]",
         // 状态色覆盖（优先级高于高亮）
-        isWarning && "border-zinc-200 border-l-[2px] border-l-[#D99E55]",
-        isError && "border-zinc-200 border-l-[2px] border-l-[#C9604D]",
-        isSuccess && "border-zinc-200 border-l-[2px] border-l-[#6FAA7D]"
+        isWarning && "border-zinc-200",
+        isError && "border-zinc-200",
+        isSuccess && "border-zinc-200"
       )}
     >
       <div className="flex flex-col sm:flex-row items-stretch">
@@ -212,9 +212,9 @@ export function SubmissionSlotCard({
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[12px] font-semibold backdrop-blur-md ring-1 ring-inset shadow-sm",
-                  isSuccess && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#6FAA7D]",
-                  isError && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#C9604D]",
-                  isWarning && "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55]",
+                  isSuccess && "bg-zinc-50 text-zinc-700 border border-zinc-200",
+                  isError && "bg-zinc-50 text-zinc-700 border border-zinc-200",
+                  isWarning && "bg-zinc-50 text-zinc-700 border border-zinc-200",
                   !isSuccess && !isError && !isWarning && "bg-white/85 text-zinc-600 ring-zinc-200/80"
                 )}
               >
@@ -330,14 +330,14 @@ export function SubmissionSlotCard({
 
           <div className="flex flex-col gap-2 flex-1 relative">
             {isWarning ? (
-              <div className="flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] font-medium text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55]">
+              <div className="flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] font-medium text-zinc-700 border border-zinc-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
                 请确认识别结果
               </div>
             ) : null}
 
             {isError ? (
-              <div className="space-y-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] text-zinc-700 leading-snug border border-zinc-200 border-l-[2px] border-l-[#C9604D]">
+              <div className="space-y-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] text-zinc-700 leading-snug border border-zinc-200">
                 <div className="flex items-start gap-1.5 font-medium">
                   <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0 mt-1" />
                   <span>{errorCode ? resolveOcrErrorMessage(errorCode) : error || OCR_FAIL_MESSAGE}</span>

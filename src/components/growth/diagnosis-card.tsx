@@ -279,7 +279,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
 
               {/* 下一步动作 — 底部按钮 */}
               <div className="mt-auto pt-3">
-                <div className={`flex items-start gap-2 rounded-xl border border-zinc-200 border-l-[2px] p-3 ${isWeak ? "border-l-[#D97757] bg-zinc-50" : "border-l-[#6FAA7D] bg-zinc-50"}`}>
+                <div className={`flex items-start gap-2 rounded-xl border border-zinc-200 border-l-[1.5px] p-3 ${isWeak ? "border-l-[#D97757]" : "border-l-[#6FAA7D]"}`}>
                   <ArrowRight className="mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-zinc-500" />
                   <p className="text-[13px] leading-[1.7] text-zinc-800">{item.action}</p>
                 </div>

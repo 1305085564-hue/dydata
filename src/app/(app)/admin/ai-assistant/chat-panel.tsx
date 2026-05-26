@@ -446,16 +446,28 @@ export default function ChatPanel({
                     {/* Content bubble (Claude+DYData 轻卡片) */}
                     <div
                       className={cn(
-                        "rounded-2xl border px-5 py-4 transition-colors",
+                        "relative rounded-2xl border px-5 py-4 transition-colors",
                         msg.type === "result"
-                          ? "border-zinc-200 bg-white border-l-[2px] border-l-[#6FAA7D]"
+                          ? "border-zinc-200 bg-white"
                           : msg.type === "error"
                             ? "border-zinc-200 bg-white border-l-[2px] border-l-[#C9604D]"
                             : msg.type === "confirmation"
-                              ? "border-zinc-200 bg-white border-l-[2px] border-l-[#D99E55]"
+                              ? "border-zinc-200 bg-white"
                               : "border-zinc-100 bg-[#FAFAFB]"
                       )}
                     >
+                      {msg.type === "result" && (
+                        <div className="absolute top-3.5 right-4 flex items-center gap-1.5">
+                          <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">已执行</span>
+                        </div>
+                      )}
+                      {msg.type === "confirmation" && (
+                        <div className="absolute top-3.5 right-4 flex items-center gap-1.5">
+                          <span className="size-1.5 rounded-full bg-[#D99E55]" />
+                          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#D99E55]">待确认</span>
+                        </div>
+                      )}
                       {msg.content && <MarkdownContent content={msg.content} />}
 
                       {msg.details && (

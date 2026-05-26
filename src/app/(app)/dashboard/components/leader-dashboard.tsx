@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Activity, AlertCircle, Check, RefreshCw, X } from "lucide-react";
+import { AlertCircle, Check, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { reviewExemptionRequest } from "@/app/(app)/admin/actions";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
@@ -214,15 +214,14 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
       {(overdueMembers.length > 0 || pendingSubmissions.length > 0 || exemptionRequestCount > 0) && (
         <div className="grid gap-4 sm:grid-cols-2">
           {overdueMembers.length > 0 && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#C9604D] shadow-sm">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
-                <AlertCircle size={14} className="stroke-[1.5] text-[#C9604D]" />
-                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
+            <div className="relative rounded-2xl bg-zinc-50 p-5">
+              <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-[#C9604D]" />
+                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
                   超时未交
                 </span>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 pt-5">
                 {overdueMembers.map((m) => (
                   <div key={m.userId} className="text-[13px] font-medium text-zinc-800">
                     {m.userName}
@@ -232,15 +231,14 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
             </div>
           )}
           {pendingSubmissions.length > 0 && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#D99E55] shadow-sm">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
-                <Activity size={14} className="stroke-[1.5] text-[#D99E55]" />
-                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#D99E55]">
+            <div className="relative rounded-2xl bg-white p-5">
+              <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-[#D99E55]" />
+                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#D99E55]">
                   待审核
                 </span>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 pt-5">
                 {pendingSubmissions.slice(0, 5).map((s) => {
                   const member = board.members.find((m) => m.userId === s.user_id);
                   return (
@@ -253,15 +251,14 @@ export function LeaderDashboard({ today, userRole, teamReviewRequests = [] }: Le
             </div>
           )}
           {exemptionRequestCount > 0 && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 border-l-[2px] border-l-[#6FAA7D] shadow-sm">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
-                <Check size={14} className="stroke-[1.5] text-[#6FAA7D]" />
-                <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
+            <div className="relative rounded-2xl bg-white p-5">
+              <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#6FAA7D]">
                   豁免待审批
                 </span>
               </div>
-              <div className="text-[13px] font-medium text-zinc-800">
+              <div className="pt-5 text-[13px] font-medium text-zinc-800">
                 {exemptionRequestCount} 条申请等待处理
               </div>
             </div>

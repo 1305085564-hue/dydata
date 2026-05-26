@@ -52,19 +52,19 @@ const 卡片配置 = [
     key: "diagnosis",
     title: "诊断",
     toneClassName:
-      "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#D99E55]",
+      "border-zinc-200 border-l-[1.5px] border-l-[#D99E55]",
   },
   {
     key: "reference",
     title: "参考",
     toneClassName:
-      "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#8AA8C7]",
+      "border-zinc-200 border-l-[1.5px] border-l-[#8AA8C7]",
   },
   {
     key: "action",
     title: "动作",
     toneClassName:
-      "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#6FAA7D]",
+      "border-zinc-200 border-l-[1.5px] border-l-[#6FAA7D]",
   },
 ] as const satisfies ReadonlyArray<{
   key: keyof GrowthAdviceData
@@ -190,7 +190,7 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
             return (
               <Card
                 key={section.key}
-                className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
+                className="overflow-hidden rounded-2xl bg-white"
               >
                 <CardHeader className="border-b border-zinc-200 pb-4">
                   <CardTitle className="text-[13px] font-semibold text-zinc-800">

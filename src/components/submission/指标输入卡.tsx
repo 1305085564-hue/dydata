@@ -48,20 +48,20 @@ function getStatusBadge(field: SubmissionFieldState) {
   if (score >= 0.95) {
     return {
       label: "AI 已识别",
-      className: "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#6FAA7D]",
+      className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
       dotClass: "bg-emerald-500",
     };
   }
   if (score >= 0.80) {
     return {
       label: "待确认",
-      className: "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#D99E55]",
+      className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
       dotClass: "bg-amber-500",
     };
   }
   return {
     label: "请核对",
-    className: "bg-zinc-50 text-zinc-700 border border-zinc-200 border-l-[2px] border-l-[#C9604D]",
+    className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
     dotClass: "bg-rose-500",
   };
 }

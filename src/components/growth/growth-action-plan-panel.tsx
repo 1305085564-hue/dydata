@@ -46,7 +46,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "conclusion",
         title: "一句话结论",
         content: DEMO_CONTENT.conclusion,
-        toneClass: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#D99E55]",
+        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D99E55]",
         badge: "示例内容",
         icon: Lightbulb,
       },
@@ -54,7 +54,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "evidence",
         title: "问题证据",
         content: DEMO_CONTENT.evidence,
-        toneClass: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#C9604D]",
+        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#C9604D]",
         badge: "示范数据",
         icon: Eye,
       },
@@ -62,7 +62,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "reference",
         title: "参考示例",
         content: DEMO_CONTENT.reference,
-        toneClass: "border-zinc-200 bg-zinc-50",
+        toneClass: "border-zinc-200",
         badge: "示例内容",
         icon: ClipboardList,
       },
@@ -70,7 +70,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "rewrite",
         title: "改写建议",
         content: DEMO_CONTENT.rewrite,
-        toneClass: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#6FAA7D]",
+        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#6FAA7D]",
         badge: "示例内容",
         icon: PencilLine,
       },
@@ -78,7 +78,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "action",
         title: "下一步动作",
         content: DEMO_CONTENT.action,
-        toneClass: "border-zinc-200 bg-white",
+        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D97757] rounded-l-none",
         badge: "示例内容",
         icon: CheckCircle2,
       },
@@ -100,14 +100,14 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "conclusion",
       title: "一句话结论",
       content: conclusion,
-      toneClass: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#D99E55]",
+      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D99E55]",
       icon: Lightbulb,
     },
     {
       key: "evidence",
       title: "问题证据",
       content: evidence,
-      toneClass: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#C9604D]",
+      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#C9604D]",
       badge: insight ? undefined : "规则判断",
       icon: Eye,
     },
@@ -115,7 +115,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "reference",
       title: "参考示例",
       content: reference,
-      toneClass: "border-zinc-200 bg-zinc-50",
+      toneClass: "border-zinc-200",
       badge: advice.source === "error" ? "示例内容" : undefined,
       icon: ClipboardList,
     },
@@ -123,7 +123,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "rewrite",
       title: "改写建议",
       content: rewrite,
-      toneClass: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#6FAA7D]",
+      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#6FAA7D]",
       badge: insight ? undefined : "示例内容",
       icon: PencilLine,
     },
@@ -131,7 +131,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "action",
       title: "下一步动作",
       content: action,
-      toneClass: "border-zinc-200 bg-white",
+      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D97757] rounded-l-none",
       badge: advice.source === "error" ? "示例内容" : undefined,
       icon: CheckCircle2,
     },
@@ -180,7 +180,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
             {blocks.map((block) => {
               const Icon = block.icon;
               return (
-                <div key={block.key} className={`rounded-xl border p-4 ${block.toneClass} ${block.key === "action" ? "border-l-[2px] border-l-[#D97757] rounded-l-none" : ""}`}>
+                <div key={block.key} className={`rounded-xl border p-4 ${block.toneClass}`}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
                       <Icon className="size-4 stroke-[1.5]" />

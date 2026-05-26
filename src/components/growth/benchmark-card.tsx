@@ -64,7 +64,7 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
   const 标杆占比 = Math.max((item.标杆值 / 最大值) * 100, 8)
 
   return (
-    <div className="space-y-2.5 rounded-xl border border-zinc-200 bg-white p-3">
+    <div className="space-y-2.5 rounded-xl bg-white p-3">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[13px] font-medium text-zinc-800">{item.指标名}</span>
         <span className="text-[11px] font-mono tabular-nums text-zinc-500">
@@ -124,7 +124,7 @@ export function BenchmarkCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-zinc-200 bg-white",
+        "relative overflow-hidden rounded-2xl bg-white transition-all hover:shadow-[0_4px_16px_-8px_rgba(15,23,42,0.06)] hover:-translate-y-[1px]",
         className
       )}
     >

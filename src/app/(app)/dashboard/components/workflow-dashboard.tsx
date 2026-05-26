@@ -240,10 +240,7 @@ export function WorkflowDashboard({
                   return (
                     <div
                       key={checkpoint.id}
-                      className={cn(
-                        "rounded-xl border border-zinc-200 bg-zinc-50 p-5 border-l-[2px]",
-                        theme.cellBar,
-                      )}
+                      className="rounded-xl bg-white p-5"
                     >
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">

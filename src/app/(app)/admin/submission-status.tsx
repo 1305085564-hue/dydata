@@ -332,7 +332,7 @@ export function SubmissionStatus({
                   </TableHeader>
                   <TableBody>
                     {visibleUnsubmittedProfileRows.map((row) => (
-                      <TableRow key={row.id} className="border-l-[2px] border-l-[#D99E55] hover:bg-zinc-50">
+                      <TableRow key={row.id} className="bg-zinc-50/50 hover:bg-zinc-50">
                         <TableCell className="font-medium text-zinc-800">{row.name}</TableCell>
                         <TableCell>
                           <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">
@@ -393,7 +393,7 @@ export function SubmissionStatus({
                           </TableCell>
                         </TableRow>
                         {profileSubmittedExpanded && submittedProfileRowsList.map((row) => (
-                          <TableRow key={row.id} className="border-l-[2px] border-l-[#6FAA7D] hover:bg-zinc-50">
+                          <TableRow key={row.id} className="hover:bg-zinc-50">
                             <TableCell>{row.name}</TableCell>
                             <TableCell>
                               <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">{renderRole(row.role)}</Badge>
@@ -474,7 +474,6 @@ export function SubmissionStatus({
                     key={row.id}
                     className="rounded-lg border border-zinc-200 bg-white overflow-hidden"
                   >
-                    <div className="h-[2px] bg-[#D99E55]" />
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
@@ -524,7 +523,6 @@ export function SubmissionStatus({
                     </button>
                     {profileSubmittedExpanded && submittedProfileRowsList.map((row) => (
                       <div key={row.id} className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
-                        <div className="h-[2px] bg-[#6FAA7D]" />
                         <div className="p-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
@@ -587,7 +585,7 @@ export function SubmissionStatus({
                   </TableHeader>
                   <TableBody>
                     {visibleUnsubmittedAccountRows.map((row) => (
-                      <TableRow key={row.id} className="border-l-[2px] border-l-[#D99E55] hover:bg-zinc-50">
+                      <TableRow key={row.id} className="bg-zinc-50/50 hover:bg-zinc-50">
                         <TableCell className="font-medium text-zinc-800">{row.name}</TableCell>
                         <TableCell>
                           <div className="space-y-1">
@@ -625,7 +623,7 @@ export function SubmissionStatus({
                           </TableCell>
                         </TableRow>
                         {accountSubmittedExpanded && submittedAccountRowsList.map((row) => (
-                          <TableRow key={row.id} className="border-l-[2px] border-l-[#6FAA7D] hover:bg-zinc-50">
+                          <TableRow key={row.id} className="hover:bg-zinc-50">
                             <TableCell>{row.name}</TableCell>
                             <TableCell>
                               <div className="space-y-1"><p>{row.profile_name}</p><p className="text-xs text-muted-foreground">{renderRole(row.profile.role)}</p></div>
@@ -683,7 +681,6 @@ export function SubmissionStatus({
                     key={row.id}
                     className="rounded-lg border border-zinc-200 bg-white overflow-hidden"
                   >
-                    <div className="h-[2px] bg-[#D99E55]" />
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
@@ -719,7 +716,6 @@ export function SubmissionStatus({
                     </button>
                     {accountSubmittedExpanded && submittedAccountRowsList.map((row) => (
                       <div key={row.id} className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
-                        <div className="h-[2px] bg-[#6FAA7D]" />
                         <div className="p-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">

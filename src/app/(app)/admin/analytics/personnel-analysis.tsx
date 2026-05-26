@@ -264,9 +264,8 @@ function PersonRankCard({
   return (
     <div
       className={cn(
- "group relative overflow-hidden rounded-xl border border-zinc-200 border-l-[2px] bg-[#FAFAFB] p-3 shadow-sm transition-[background-color, border-color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white active:translate-y-0",
-        person.suggestion.leftBorder,
-        isActive && "ring-1 ring-[#D97757]/30 border-l-[#D97757]",
+ "group relative overflow-hidden rounded-xl bg-[#FAFAFB] p-3 transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white active:translate-y-0",
+        isActive && "ring-1 ring-[#D97757]/30",
       )}
     >
       <div className="pointer-events-none absolute -right-2 -top-4 text-[58px] font-semibold leading-none text-zinc-50 transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">

@@ -16,9 +16,9 @@ function TypeLine({ text }: { text: string }) {
 }
 
 const sectionTone = {
-  diagnosis: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#D99E55]",
-  reference: "border-zinc-200 bg-zinc-50",
-  action: "border-zinc-200 bg-zinc-50 border-l-[2px] border-l-[#6FAA7D]",
+  diagnosis: "border-zinc-200 border-l-[1.5px] border-l-[#D99E55]",
+  reference: "border-zinc-200",
+  action: "border-zinc-200 border-l-[1.5px] border-l-[#6FAA7D]",
 } as const;
 
 const DEMO_SECTIONS = [

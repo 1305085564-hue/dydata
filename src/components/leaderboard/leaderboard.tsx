@@ -254,7 +254,7 @@ export function Leaderboard({
                     key={item.accountId}
                     className={cn(
                       "border-b border-zinc-200 bg-white transition-colors hover:bg-zinc-50",
-                      item.isOwn && "border-l-4 border-l-[#D97757] bg-[#D97757]/5 hover:bg-zinc-50"
+                      item.isOwn && "bg-[#D97757]/5 hover:bg-zinc-50"
                     )}
                   >
                     <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur">
