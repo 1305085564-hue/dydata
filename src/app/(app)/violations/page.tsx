@@ -14,6 +14,7 @@ import { hasPermission } from "@/lib/permission-utils";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 
 import { CaseCard } from "./components/case-card";
+import { RiskSummaryStrip } from "./components/risk-summary-strip";
 import { StaffSearchHero } from "./components/staff-search-hero";
 import type { ViolationCase, ViolationListResponse } from "./components/types";
 
@@ -153,6 +154,7 @@ export default async function ViolationsPage({
         />
       ) : (
         <>
+          <RiskSummaryStrip />
           <StaffSearchHero defaultQuery={query} totalCases={cases.length} />
 
           {recommendedCases.length > 0 || testingCases.length > 0 ? (
