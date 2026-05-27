@@ -105,13 +105,8 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
               aria-label="主导航"
             >
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={linkClass(item.href, item.match(pathname))}
-                  title={item.label}
-                >
-                  {item.icon ? <item.icon className="size-3.5 stroke-[1.5]" /> : item.label}
+                <Link key={item.href} href={item.href} className={linkClass(item.href, item.match(pathname))}>
+                  {item.label}
                 </Link>
               ))}
             </div>
@@ -239,6 +234,20 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
               </div>
             )}
             <NotificationBell />
+            {showSystemSettings && (
+              <Link
+                href="/admin/settings"
+                className={cn(
+                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  pathname.startsWith("/admin/settings")
+                    ? "border-zinc-200/80 bg-white text-zinc-800"
+                    : "border-transparent text-zinc-500 hover:bg-white hover:text-zinc-800",
+                )}
+                title="系统设置"
+              >
+                <Settings className="size-3.5 stroke-[1.5]" />
+              </Link>
+            )}
             <form action={signOut}>
               <Button
                 variant="outline"
