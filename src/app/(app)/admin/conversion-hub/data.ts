@@ -55,6 +55,33 @@ export interface InboxCounts {
   promotion_candidates: number;
 }
 
+export interface ProcessedEntry {
+  id: string;
+  script_text: string;
+  purpose: string | null;
+  screenshot_paths: string[] | null;
+  submitted_by_name: string;
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by_name: string | null;
+  status: string;
+  admin_conclusion: string | null;
+  risk_level: "high" | "medium" | "low" | null;
+}
+
+export interface ProcessedData {
+  processed: ProcessedEntry[];
+}
+
+export const PROCESSED_RPC_READY = true;
+
+export async function loadProcessedData(userId: string): Promise<ProcessedData> {
+  const supabase = createAdminClient();
+  const { data } = await supabase.rpc("case_library_processed", { p_user_id: userId });
+  const payload = data as { processed?: ProcessedEntry[] } | null;
+  return { processed: Array.isArray(payload?.processed) ? payload.processed : [] };
+}
+
 export function getWeekStartDate(now = new Date()) {
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const day = date.getUTCDay() || 7;
