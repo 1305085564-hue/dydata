@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Check, ChevronDown, Clock, FilePenLine, History, Lock, PencilLine, ShieldAlert, X } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,10 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ResultTrend } from "@/components/charts/result-trend";
-import { InteractionTrend } from "@/components/charts/interaction-trend";
-import { Leaderboard } from "@/components/leaderboard/leaderboard";
-import type { Video, VideoTagReviewDimension } from "@/types";
+import type { AccountLeaderboardRow, Video, VideoTagReviewDimension } from "@/types";
 import {
   getExemptionDatesForMonth,
   getExemptionStateForDate,
@@ -45,6 +43,21 @@ import { CheckpointTracker, type CheckpointStatus } from "./checkpoint-tracker";
 import type { ResultTrendDatum } from "@/components/charts/result-trend";
 import type { InteractionTrendDatum } from "@/components/charts/interaction-trend";
 
+const ResultTrend = dynamic(
+  () => import("@/components/charts/result-trend").then((module) => module.ResultTrend),
+  { ssr: false, loading: () => <ChartDialogSkeleton /> },
+);
+
+const InteractionTrend = dynamic(
+  () => import("@/components/charts/interaction-trend").then((module) => module.InteractionTrend),
+  { ssr: false, loading: () => <ChartDialogSkeleton /> },
+);
+
+const Leaderboard = dynamic(
+  () => import("@/components/leaderboard/leaderboard").then((module) => module.Leaderboard),
+  { ssr: false, loading: () => <PanelDialogSkeleton /> },
+);
+
 type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;
   account_id: string;
@@ -60,6 +73,19 @@ type AsyncActivityData = {
   monthReports: MonthReport[];
   history: MonthReport[];
 };
+
+function ChartDialogSkeleton() {
+  return <div className="h-[320px] w-full animate-pulse rounded-2xl bg-zinc-100" />;
+}
+
+function PanelDialogSkeleton() {
+  return (
+    <div className="space-y-3">
+      <div className="h-10 w-56 animate-pulse rounded-xl bg-zinc-100" />
+      <div className="h-[420px] w-full animate-pulse rounded-2xl bg-zinc-100" />
+    </div>
+  );
+}
 
 interface VideoSubmitPanelProps {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
@@ -175,7 +201,7 @@ export function VideoSubmitPanel({
   const [pendingBackfillDate, setPendingBackfillDate] = useState<string | null>(null);
   const [pendingFocusDate, setPendingFocusDate] = useState<string | null>(null);
   const [trendData, setTrendData] = useState<AsyncTrendData | null>(null);
-  const [leaderboardData, setLeaderboardData] = useState<Parameters<typeof Leaderboard>[0]["data"] | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<AccountLeaderboardRow[] | null>(null);
   const [asyncAccountIds, setAsyncAccountIds] = useState<string[]>(accountIds);
   const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>(ownContentDirections);
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);

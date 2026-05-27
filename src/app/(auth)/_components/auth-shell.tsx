@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
 interface AuthShellProps {
@@ -13,22 +12,13 @@ interface AuthShellProps {
 export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: AuthShellProps) {
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative w-full max-w-[440px] overflow-hidden rounded-2xl bg-white px-8 py-10"
-      >
-        <motion.div
-          className="absolute right-6 top-6"
-          animate={{ opacity: [0.7, 1, 0.7] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        >
+      <div className="relative w-full max-w-[440px] overflow-hidden rounded-2xl bg-white px-8 py-10">
+        <div className="absolute right-6 top-6 opacity-80">
           <div
-            className="h-[6px] w-[6px] rounded-full bg-[#D97757]"
+            className="h-[6px] w-[6px] rounded-full bg-[#D97757] motion-safe:animate-pulse"
             style={{ boxShadow: "0 0 16px 3px rgba(217, 119, 87, 0.55)" }}
           />
-        </motion.div>
+        </div>
 
         <div className="mb-10 space-y-3 text-center">
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
@@ -41,7 +31,7 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         </div>
 
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
-import { VideoSubmitPanel } from "../video-submit-panel";
 import type { TodaySubmissionReportLike } from "../video-submit-panel-state";
+
+const VideoSubmitPanel = dynamic(
+  () => import("../video-submit-panel").then((module) => module.VideoSubmitPanel),
+  {
+    loading: () => <DataReportStageSkeleton />,
+  },
+);
 
 interface DataReportStageProps {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
@@ -30,9 +37,27 @@ interface DataReportStageProps {
   teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
+function DataReportStageSkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="border-b border-zinc-200 bg-[var(--color-bg)] px-6 py-7 sm:px-8 sm:py-8">
+        <div className="space-y-4">
+          <div className="h-5 w-24 animate-pulse rounded-full bg-zinc-200" />
+          <div className="h-9 w-48 animate-pulse rounded-xl bg-zinc-200" />
+          <div className="h-24 animate-pulse rounded-2xl bg-zinc-100" />
+        </div>
+      </div>
+      <div className="space-y-5 px-5 py-6 sm:px-8 sm:py-8">
+        <div className="h-12 w-40 animate-pulse rounded-xl bg-zinc-100" />
+        <div className="h-[420px] animate-pulse rounded-2xl bg-zinc-100" />
+      </div>
+    </div>
+  );
+}
+
 /**
  * 数据报表阶段
- * 直接承载 VideoSubmitPanel，样式由面板内部管控
+ * 直接承载 VideoSubmitPanel，延后加载重表单与弹层逻辑，先让 dashboard 首屏更轻
  */
 export function DataReportStage({
   accounts,

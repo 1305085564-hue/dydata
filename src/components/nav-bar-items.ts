@@ -1,6 +1,9 @@
+import { Settings, type LucideIcon } from "lucide-react";
+
 export type NavItem = {
   href: string;
   label: string;
+  icon?: LucideIcon;
   match: (pathname: string) => boolean;
 };
 
@@ -43,6 +46,7 @@ export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boo
     items.push({
       href: "/admin/settings",
       label: "系统设置",
+      icon: Settings,
       match: (pathname) => pathname === "/admin/settings" || pathname.startsWith("/admin/settings/"),
     });
   }

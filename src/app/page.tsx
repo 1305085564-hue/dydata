@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import {
   Zap,
   FileText,
@@ -8,15 +8,17 @@ import {
   Clock,
   TrendingUp,
 } from "lucide-react";
+import { hasSupabaseAuthCookie } from "@/lib/supabase-auth-cookie";
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const hasAuthCookie = hasSupabaseAuthCookie(
+    cookieStore.getAll(),
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+  );
 
-  // 已登录用户直接进工作台
-  if (user) redirect("/dashboard");
+  // 首页不再为了判断登录状态去请求 Supabase，避免每次首屏都卡在鉴权回源。
+  if (hasAuthCookie) redirect("/dashboard");
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">

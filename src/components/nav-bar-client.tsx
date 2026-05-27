@@ -105,8 +105,13 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
               aria-label="主导航"
             >
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className={linkClass(item.href, item.match(pathname))}>
-                  {item.label}
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={linkClass(item.href, item.match(pathname))}
+                  title={item.label}
+                >
+                  {item.icon ? <item.icon className="size-3.5 stroke-[1.5]" /> : item.label}
                 </Link>
               ))}
             </div>
