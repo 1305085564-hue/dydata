@@ -135,7 +135,6 @@ export function ContentDetailDialog({
   const [isReviewing, startReview] = useTransition();
   const [cardDetail, setCardDetail] = useState<ContentFeedbackCardDetail | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const [mainIssues, setMainIssues] = useState("");
   const [nextAction, setNextAction] = useState("");
   const [managerNote, setManagerNote] = useState("");
@@ -271,51 +270,18 @@ export function ContentDetailDialog({
     });
   }
 
-  async function handleConfirm() {
-    if (!video || !cardDetail?.card_id) return;
-    setIsConfirming(true);
-    try {
-      const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "confirm",
-          manager_note: managerNote.trim() || null,
-          summary: {
-            one_line: mainIssues.trim() || null,
-            problem_tags: parseProblemTags(mainIssues),
-          },
-          actions: {
-            instructions: nextAction.split("；").map((s) => s.trim()).filter(Boolean),
-            message_for_member: managerNote.trim() || null,
-          },
-        }),
-      });
-      const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "确认失败");
-      }
-      if (data.feedback_card) {
-        setCardDetail(data.feedback_card);
-        onFeedbackCardChanged(video.id, data.feedback_card);
-      }
-      feedbackToast.success("已确认，可下发给员工");
-    } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "确认失败");
-    } finally {
-      setIsConfirming(false);
-    }
-  }
-
-  async function handleCreateAndConfirm() {
+  async function handleConfirmAndSend() {
     if (!video) return;
     setIsConfirming(true);
     try {
+      const action = (!cardDetail || cardDetail.workflow_status === "not_started")
+        ? "create_confirm_send"
+        : "confirm_and_send";
       const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "create_and_confirm",
+          action,
           manager_note: managerNote.trim() || null,
           summary: {
             one_line: mainIssues.trim() || null,
@@ -329,42 +295,17 @@ export function ContentDetailDialog({
       });
       const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "保存失败");
+        throw new Error(data.error ?? "确认下发失败");
       }
       if (data.feedback_card) {
         setCardDetail(data.feedback_card);
         onFeedbackCardChanged(video.id, data.feedback_card);
       }
-      feedbackToast.success("已保存并确认，可下发给员工");
+      feedbackToast.success("已确认并下发给员工");
     } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "保存失败");
+      feedbackToast.error(e instanceof Error ? e.message : "确认下发失败");
     } finally {
       setIsConfirming(false);
-    }
-  }
-
-  async function handleSend() {
-    if (!video || !cardDetail?.card_id) return;
-    setIsSending(true);
-    try {
-      const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send" }),
-      });
-      const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "下发失败");
-      }
-      if (data.feedback_card) {
-        setCardDetail(data.feedback_card);
-        onFeedbackCardChanged(video.id, data.feedback_card);
-      }
-      feedbackToast.success("已下发给员工");
-    } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "下发失败");
-    } finally {
-      setIsSending(false);
     }
   }
 
@@ -714,34 +655,14 @@ export function ContentDetailDialog({
               </div>
 
               <div className="flex items-center gap-3 pt-2">
-                {(!cardDetail || cardDetail.workflow_status === "not_started") && (
+                {(!cardDetail || cardDetail.workflow_status === "not_started" || cardDetail.workflow_status === "draft" || cardDetail.workflow_status === "confirmed") && (
                   <Button
                     size="sm"
                     className="h-9 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
-                    onClick={handleCreateAndConfirm}
+                    onClick={handleConfirmAndSend}
                     disabled={isConfirming || (!mainIssues.trim() && !nextAction.trim() && !managerNote.trim())}
                   >
-                    {isConfirming ? "保存中..." : "保存并确认"}
-                  </Button>
-                )}
-                {cardDetail?.workflow_status === "draft" && (
-                  <Button
-                    size="sm"
-                    className="h-9 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
-                    onClick={handleConfirm}
-                    disabled={isConfirming}
-                  >
-                    {isConfirming ? "确认中..." : "确认"}
-                  </Button>
-                )}
-                {cardDetail?.workflow_status === "confirmed" && (
-                  <Button
-                    size="sm"
-                    className="h-9 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
-                    onClick={handleSend}
-                    disabled={isSending}
-                  >
-                    {isSending ? "下发中..." : "确认下发"}
+                    {isConfirming ? "下发中..." : "确认并下发"}
                   </Button>
                 )}
                 {(cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed") && (

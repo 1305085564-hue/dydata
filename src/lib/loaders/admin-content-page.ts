@@ -3,9 +3,10 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { buildContentFeedbackCardView, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
+import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserPermissions } from "@/lib/permissions";
-import type { ContentFeedbackCard, ContentFeedbackCardView, Profile, Video, VideoMetricsSnapshot } from "@/types";
+import type { ContentFeedbackCard, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
 
@@ -35,6 +36,7 @@ export interface AdminContentPageData {
   accounts: AccountOption[];
   reviewedVideoIds: string[];
   feedbackCards: Record<string, ContentFeedbackCardView>;
+  reviewReadiness: Record<string, ContentReviewReadiness>;
   summary: {
     totalVideos: number;
     reviewedCount: number;
@@ -148,6 +150,12 @@ export async function loadAdminContentPageData({
           .order("captured_at", { ascending: false })
       : { data: [] };
   const snapshotCount = (snapshots ?? []).length;
+  const snapshotVideoIds = new Set((snapshots ?? []).map((snapshot) => snapshot.video_id as string));
+  const { data: segmentRows } =
+    visibleVideoIds.length > 0
+      ? await supabase.from("video_content_segments").select("video_id").in("video_id", visibleVideoIds)
+      : { data: [] };
+  const segmentedVideoIds = new Set((segmentRows ?? []).map((row) => row.video_id as string));
   const feedbackCardMap = new Map<string, ContentFeedbackCard>();
   for (const row of (feedbackCardRows ?? []) as ContentFeedbackCard[]) {
     feedbackCardMap.set(row.video_id, row);
@@ -155,6 +163,17 @@ export async function loadAdminContentPageData({
   const feedbackCards = Object.fromEntries(
     videos.map((video) => [video.id, buildContentFeedbackCardView(video.id, feedbackCardMap.get(video.id) ?? null)]),
   ) as Record<string, ContentFeedbackCardView>;
+  const reviewReadiness = Object.fromEntries(
+    visibleVideos.map((video) => [
+      video.id,
+      buildContentReviewReadiness({
+        video,
+        feedbackCard: feedbackCards[video.id],
+        hasSnapshot24h: snapshotVideoIds.has(video.id),
+        hasSegments: segmentedVideoIds.has(video.id),
+      }),
+    ]),
+  ) as Record<string, ContentReviewReadiness>;
   const workflowViews = Object.values(feedbackCards);
 
   return {
@@ -168,6 +187,7 @@ export async function loadAdminContentPageData({
       .map((account) => ({ id: account.id, name: account.name ?? "未命名账号" })),
     reviewedVideoIds,
     feedbackCards,
+    reviewReadiness,
     summary: {
       totalVideos: videos.length,
       reviewedCount: reviewedVideoIds.length,

@@ -26,6 +26,7 @@ export interface ContentFilterValue {
   reviewed: "all" | "yes" | "no";
   feedbackStatus: "all" | "no_feedback" | "confirmed" | "sent" | "viewed";
   rankScope: "all" | "day" | "month";
+  sortMode: "latest" | "play";
 }
 
 interface ContentFiltersProps {
@@ -44,6 +45,7 @@ const INITIAL_FILTERS: ContentFilterValue = {
   reviewed: "all",
   feedbackStatus: "all",
   rankScope: "all",
+  sortMode: "latest",
 };
 
 const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [
@@ -152,6 +154,16 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
             <SelectItem value="all">全部播放排名</SelectItem>
             <SelectItem value="day">日播放排名</SelectItem>
             <SelectItem value="month">月播放排名</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.sortMode} onValueChange={(v) => updateFilter("sortMode", v as "latest" | "play")}>
+          <SelectTrigger className="h-9 w-32 rounded-xl bg-white text-[13px]">
+            <SelectValue>{getContentFilterLabel({ type: "sortMode", value: filters.sortMode })}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">最新优先</SelectItem>
+            <SelectItem value="play">播放优先</SelectItem>
           </SelectContent>
         </Select>
 

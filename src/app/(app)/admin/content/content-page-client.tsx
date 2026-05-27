@@ -6,6 +6,7 @@ import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContentList } from "./content-list";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
+import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import type { ContentFeedbackCardView } from "@/types";
 
 type ContentView = "pending" | "all";
@@ -84,6 +85,17 @@ export function ContentPageClient({
   const handleFeedbackCardChanged = useCallback((videoId: string, nextCard: ContentFeedbackCardView) => {
     setData((prev) => {
       const nextFeedbackCards = { ...prev.feedbackCards, [videoId]: nextCard };
+      const nextReadiness = { ...prev.reviewReadiness };
+      const video = prev.videos.find((item) => item.id === videoId);
+      const currentReadiness = prev.reviewReadiness[videoId];
+      if (video && currentReadiness) {
+        nextReadiness[videoId] = buildContentReviewReadiness({
+          video,
+          feedbackCard: nextCard,
+          hasSnapshot24h: currentReadiness.has_snapshot_24h,
+          hasSegments: true,
+        });
+      }
       const cards = Object.values(nextFeedbackCards);
       const workflowSummary = {
         notStarted: cards.filter((c) => c.workflow_status === "not_started").length,
@@ -93,7 +105,35 @@ export function ContentPageClient({
         viewed: cards.filter((c) => c.workflow_status === "viewed").length,
         pendingDelivery: cards.filter((c) => c.workflow_status === "draft" || c.workflow_status === "confirmed").length,
       };
-      return { ...prev, feedbackCards: nextFeedbackCards, workflowSummary };
+      return { ...prev, feedbackCards: nextFeedbackCards, reviewReadiness: nextReadiness, workflowSummary };
+    });
+  }, []);
+
+  const handleFeedbackCardsChanged = useCallback((nextCards: Record<string, ContentFeedbackCardView>) => {
+    setData((prev) => {
+      const nextFeedbackCards = { ...prev.feedbackCards, ...nextCards };
+      const nextReadiness = { ...prev.reviewReadiness };
+      for (const [videoId, nextCard] of Object.entries(nextCards)) {
+        const video = prev.videos.find((item) => item.id === videoId);
+        const currentReadiness = prev.reviewReadiness[videoId];
+        if (!video || !currentReadiness) continue;
+        nextReadiness[videoId] = buildContentReviewReadiness({
+          video,
+          feedbackCard: nextCard,
+          hasSnapshot24h: currentReadiness.has_snapshot_24h,
+          hasSegments: true,
+        });
+      }
+      const cards = Object.values(nextFeedbackCards);
+      const workflowSummary = {
+        notStarted: cards.filter((c) => c.workflow_status === "not_started").length,
+        draft: cards.filter((c) => c.workflow_status === "draft").length,
+        confirmed: cards.filter((c) => c.workflow_status === "confirmed").length,
+        sent: cards.filter((c) => c.workflow_status === "sent").length,
+        viewed: cards.filter((c) => c.workflow_status === "viewed").length,
+        pendingDelivery: cards.filter((c) => c.workflow_status === "draft" || c.workflow_status === "confirmed").length,
+      };
+      return { ...prev, feedbackCards: nextFeedbackCards, reviewReadiness: nextReadiness, workflowSummary };
     });
   }, []);
 
@@ -207,7 +247,9 @@ export function ContentPageClient({
         profiles={data.profiles}
         accounts={data.accounts}
         feedbackCards={data.feedbackCards}
+        reviewReadiness={data.reviewReadiness}
         onFeedbackCardChanged={handleFeedbackCardChanged}
+        onFeedbackCardsChanged={handleFeedbackCardsChanged}
       />
     </section>
   );

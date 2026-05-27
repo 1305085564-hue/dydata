@@ -11,10 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
-import type { ContentFeedbackCardView, Profile, Video, VideoMetricsSnapshot } from "@/types";
-import { ChevronDown } from "lucide-react";
+import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
+import { ChevronDown, Sparkles } from "lucide-react";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -30,7 +31,9 @@ interface ContentListProps {
   profiles: FilterOption[];
   accounts: AccountOption[];
   feedbackCards: Record<string, ContentFeedbackCardView>;
+  reviewReadiness: Record<string, ContentReviewReadiness>;
   onFeedbackCardChanged?: (videoId: string, card: ContentFeedbackCardView) => void;
+  onFeedbackCardsChanged?: (cards: Record<string, ContentFeedbackCardView>) => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -225,13 +228,22 @@ const workflowStatusClass: Record<string, string> = {
   viewed: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
 };
 
+const readinessClass: Record<string, string> = {
+  missing_snapshot: "border-zinc-200 bg-zinc-50 text-zinc-500",
+  missing_content: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  missing_segments: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  ready: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+};
+
 export function ContentList({
   videos,
   snapshots,
   profiles,
   accounts,
   feedbackCards,
+  reviewReadiness,
   onFeedbackCardChanged,
+  onFeedbackCardsChanged,
 }: ContentListProps) {
   const [filters, setFilters] = useState<ContentFilterValue>({
     profileId: "all",
@@ -243,10 +255,12 @@ export function ContentList({
     reviewed: "all",
     feedbackStatus: "all",
     rankScope: "all",
+    sortMode: "latest",
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isBatchGenerating, setIsBatchGenerating] = useState(false);
   const [newBatchIds, setNewBatchIds] = useState<Set<string>>(new Set());
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -319,9 +333,11 @@ export function ContentList({
     }
 
     return [...scopedRows].sort((left, right) => {
-      const playDiff = getSnapshotPlay(snapshotMap.get(right.id)) - getSnapshotPlay(snapshotMap.get(left.id));
-      if (playDiff !== 0) return playDiff;
-      return getVideoDateKey(right).localeCompare(getVideoDateKey(left));
+      if (filters.sortMode === "play") {
+        const playDiff = getSnapshotPlay(snapshotMap.get(right.id)) - getSnapshotPlay(snapshotMap.get(left.id));
+        if (playDiff !== 0) return playDiff;
+      }
+      return getVideoTimestamp(right) - getVideoTimestamp(left);
     });
   }, [videos, filters, snapshotMap, feedbackCards]);
 
@@ -389,7 +405,7 @@ export function ContentList({
 
     container.addEventListener("scroll", onScroll, { passive: true });
     return () => container.removeEventListener("scroll", onScroll);
-  }, [visible]);
+  }, [currentPageStart, visible]);
 
   /* Sync top scrollbar width with table scroll width */
   useEffect(() => {
@@ -444,10 +460,84 @@ export function ContentList({
 
   const selectedVideo = selectedVideoId ? (videos.find((v) => v.id === selectedVideoId) ?? null) : null;
   const selectedSnapshot = selectedVideoId ? (snapshotMap.get(selectedVideoId) ?? null) : null;
+  const batchCandidates = useMemo(
+    () => filtered.filter((video) => reviewReadiness[video.id]?.can_generate).slice(0, 20),
+    [filtered, reviewReadiness],
+  );
+
+  const handleBatchGenerate = useCallback(async () => {
+    if (!batchCandidates.length) return;
+    setIsBatchGenerating(true);
+    try {
+      const res = await fetch("/api/admin/next-day-review/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ video_ids: batchCandidates.map((video) => video.id) }),
+      });
+      const data = (await res.json()) as {
+        success_count?: number;
+        failed_count?: number;
+        results?: Array<{ ok: boolean; video_id: string; feedback_card?: ContentFeedbackCardDetail; error?: string }>;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(data.error ?? "批量生成失败");
+
+      const changedCards = Object.fromEntries(
+        (data.results ?? [])
+          .filter((item): item is { ok: true; video_id: string; feedback_card: ContentFeedbackCardDetail } => item.ok && Boolean(item.feedback_card))
+          .map((item) => [item.video_id, item.feedback_card]),
+      );
+      if (Object.keys(changedCards).length) {
+        onFeedbackCardsChanged?.(changedCards);
+      }
+
+      const failedText = data.failed_count ? `，失败 ${data.failed_count} 条` : "";
+      feedbackToast.success(`已生成 ${data.success_count ?? 0} 条草稿${failedText}`);
+    } catch (error) {
+      feedbackToast.error(error instanceof Error ? error.message : "批量生成失败");
+    } finally {
+      setIsBatchGenerating(false);
+    }
+  }, [batchCandidates, onFeedbackCardsChanged]);
 
   return (
     <div className="space-y-4">
       <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+        <div className="text-[12px] text-zinc-500">
+          当前筛选下可生成草稿 <span className="font-mono text-[#6FAA7D]">{batchCandidates.length}</span> 条，单次最多处理 20 条
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 rounded-xl bg-white text-[12px]"
+          onClick={handleBatchGenerate}
+          disabled={isBatchGenerating || batchCandidates.length === 0}
+        >
+          <Sparkles className="size-3.5" />
+          {isBatchGenerating ? "生成中..." : "批量生成草稿"}
+        </Button>
+      </div>
+
+      {/* 下发状态摘要 */}
+      {(() => {
+        const cards = Object.values(feedbackCards);
+        const sent = cards.filter((c) => c.workflow_status === "sent").length;
+        const viewed = cards.filter((c) => c.workflow_status === "viewed").length;
+        const confirmed = cards.filter((c) => c.workflow_status === "confirmed").length;
+        const draft = cards.filter((c) => c.workflow_status === "draft").length;
+        if (sent + viewed + confirmed + draft === 0) return null;
+        return (
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-[12px]">
+            <span className="text-zinc-400">下发进度</span>
+            {draft > 0 && <span className="text-zinc-500">待确认 <span className="font-mono text-[#D99E55]">{draft}</span></span>}
+            {confirmed > 0 && <span className="text-zinc-500">已确认未发 <span className="font-mono text-[#D97757]">{confirmed}</span></span>}
+            {sent > 0 && <span className="text-zinc-500">已下发 <span className="font-mono text-[#D97757]">{sent}</span></span>}
+            {viewed > 0 && <span className="text-zinc-500">员工已读 <span className="font-mono text-[#6FAA7D]">{viewed}</span></span>}
+          </div>
+        );
+      })()}
 
       <div className="flex gap-4">
         {/* Table area */}
@@ -500,6 +590,7 @@ export function ContentList({
                   visible.map((video, index) => {
                     const snap = snapshotMap.get(video.id);
                     const card = feedbackCards[video.id];
+                    const readiness = reviewReadiness[video.id];
                     const isNewBatch = newBatchIds.has(video.id);
                     return (
                       <TableRow
@@ -562,12 +653,19 @@ export function ContentList({
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {card ? (
+                          {card?.workflow_status !== "not_started" ? (
                             <Badge
                               variant="outline"
                               className={`text-xs ${workflowStatusClass[card.workflow_status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
                             >
                               {card.workflow_label}
+                            </Badge>
+                          ) : readiness ? (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${readinessClass[readiness.status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                            >
+                              {readiness.label}
                             </Badge>
                           ) : (
                             <span className="text-xs text-zinc-500">未生成</span>

@@ -2,7 +2,7 @@ type NamedOption = { id: string; name: string };
 
 type ContentFilterLabelInput =
   | { type: "profile" | "account"; value: string; options: NamedOption[] }
-  | { type: "status" | "hasSnapshot" | "reviewed" | "rankScope" | "feedbackStatus"; value: string; options?: NamedOption[] };
+  | { type: "status" | "hasSnapshot" | "reviewed" | "rankScope" | "feedbackStatus" | "sortMode"; value: string; options?: NamedOption[] };
 
 const FALLBACK_LABELS = {
   profile: "全部人员",
@@ -12,6 +12,7 @@ const FALLBACK_LABELS = {
   reviewed: "全部",
   rankScope: "全部播放排名",
   feedbackStatus: "全部反馈",
+  sortMode: "最新优先",
 } as const;
 
 const STATIC_LABELS = {
@@ -35,6 +36,10 @@ const STATIC_LABELS = {
     sent: "已下发",
     viewed: "员工已读",
   },
+  sortMode: {
+    latest: "最新优先",
+    play: "播放优先",
+  },
 } as const;
 
 export function getContentFilterLabel(input: ContentFilterLabelInput) {
@@ -56,6 +61,10 @@ export function getContentFilterLabel(input: ContentFilterLabelInput) {
 
   if (input.type === "feedbackStatus") {
     return STATIC_LABELS.feedbackStatus[input.value as keyof typeof STATIC_LABELS.feedbackStatus] ?? FALLBACK_LABELS.feedbackStatus;
+  }
+
+  if (input.type === "sortMode") {
+    return STATIC_LABELS.sortMode[input.value as "latest" | "play"] ?? FALLBACK_LABELS.sortMode;
   }
 
   return STATIC_LABELS[input.type][input.value as "yes" | "no"] ?? FALLBACK_LABELS[input.type];

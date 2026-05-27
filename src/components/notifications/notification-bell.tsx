@@ -133,7 +133,6 @@ function NotificationCard({
                 onClick={(e) => {
                   e.stopPropagation();
                   row.primaryAction?.();
-                  onDone(row.id, "done");
                   onClose();
                 }}
                 className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442]"

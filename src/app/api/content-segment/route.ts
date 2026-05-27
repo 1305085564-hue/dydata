@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import {
-  classifyContentSegmentsWithAi,
-  splitContentIntoBusinessParagraphs,
-} from "@/lib/content-segmentation";
+  buildSegmentsFromContent,
+  saveContentSegments,
+} from "@/lib/content-segment-service";
 import { createClient } from "@/lib/supabase/server";
-import { estimateSegmentTimeline } from "@/lib/timeline-alignment";
 
 type RequestBody = {
   video_id?: string;
@@ -63,44 +62,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "文案为空，无法切段" }, { status: 400 });
   }
 
-  const paragraphs = splitContentIntoBusinessParagraphs(content);
-  if (!paragraphs.length) {
-    return NextResponse.json({ error: "文案为空，无法切段" }, { status: 400 });
+  let built;
+  try {
+    built = await buildSegmentsFromContent(content, durationSec);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "AI 未返回有效切段结果" },
+      { status: 502 },
+    );
   }
-
-  const segments = await classifyContentSegmentsWithAi(paragraphs);
-  if (!segments.length) {
-    return NextResponse.json({ error: "AI 未返回有效切段结果" }, { status: 502 });
-  }
-
-  const estimatedDuration = durationSec ?? Math.max(content.replace(/\s+/g, "").length / 3.5, 8);
-  const alignedSegments = estimateSegmentTimeline(segments, estimatedDuration);
 
   if (videoId) {
-    const { error: deleteError } = await supabase.from("video_content_segments").delete().eq("video_id", videoId);
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message || "旧切段删除失败" }, { status: 500 });
-    }
-
-    const insertPayload = alignedSegments.map((segment, index) => ({
-      video_id: videoId,
-      segment_type: segment.type,
-      segment_text: segment.text,
-      segment_order: index,
-      estimated_start_sec: segment.estimatedStartSec,
-      estimated_end_sec: segment.estimatedEndSec,
-    }));
-
-    const { error: insertError } = await supabase.from("video_content_segments").insert(insertPayload);
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message || "切段保存失败" }, { status: 500 });
+    try {
+      await saveContentSegments(supabase, videoId, built.segments);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "切段保存失败" },
+        { status: 500 },
+      );
     }
   }
 
   return NextResponse.json({
     ok: true,
     video_id: videoId,
-    duration_sec: estimatedDuration,
-    segments: alignedSegments,
+    duration_sec: built.duration_sec,
+    segments: built.segments.map((segment) => ({
+      type: segment.segment_type,
+      text: segment.segment_text,
+      estimatedStartSec: segment.estimated_start_sec,
+      estimatedEndSec: segment.estimated_end_sec,
+      segment_order: segment.segment_order,
+      segment_type: segment.segment_type,
+      segment_text: segment.segment_text,
+      estimated_start_sec: segment.estimated_start_sec,
+      estimated_end_sec: segment.estimated_end_sec,
+    })),
   });
 }
