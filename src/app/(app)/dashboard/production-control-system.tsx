@@ -133,6 +133,7 @@ export function ProductionControlSystem({
               userDisplayName={userDisplayName}
               userRole={userRole}
               today={today}
+              accounts={accounts}
             />
           </div>
         )}

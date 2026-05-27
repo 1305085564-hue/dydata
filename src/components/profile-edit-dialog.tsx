@@ -14,12 +14,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { updateProfile } from "@/app/(app)/dashboard/actions";
+import { updateProfile, updateAccountName } from "@/app/(app)/dashboard/actions";
 import { cn } from "@/lib/utils";
+
+interface Account {
+  id: string;
+  name: string;
+}
 
 interface ProfileEditDialogProps {
   currentName: string;
   role: string;
+  accounts?: Account[];
   trigger?: "icon" | "menu-item";
   children?: React.ReactNode;
 }
@@ -41,12 +47,15 @@ function roleBadgeClass(role: string) {
 export function ProfileEditDialog({
   currentName,
   role,
+  accounts = [],
   trigger = "icon",
   children,
 }: ProfileEditDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(currentName);
   const [isPending, startTransition] = useTransition();
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+  const [editingAccountName, setEditingAccountName] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,6 +81,44 @@ export function ProfileEditDialog({
       } else {
         feedbackToast.success("资料已更新");
         setOpen(false);
+      }
+    });
+  }
+
+  function handleEditAccount(account: Account) {
+    setEditingAccountId(account.id);
+    setEditingAccountName(account.name);
+  }
+
+  function handleCancelEditAccount() {
+    setEditingAccountId(null);
+    setEditingAccountName("");
+  }
+
+  function handleSaveAccountName(accountId: string) {
+    const trimmed = editingAccountName.trim();
+    if (!trimmed) {
+      feedbackToast.error("账号名称不能为空");
+      return;
+    }
+    if (trimmed.length > 30) {
+      feedbackToast.error("账号名称最多 30 个字符");
+      return;
+    }
+
+    const originalAccount = accounts.find((a) => a.id === accountId);
+    if (originalAccount && trimmed === originalAccount.name) {
+      setEditingAccountId(null);
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await updateAccountName(accountId, trimmed);
+      if (result?.error) {
+        feedbackToast.error(result.error);
+      } else {
+        feedbackToast.success("账号名称已更新");
+        setEditingAccountId(null);
       }
     });
   }
@@ -159,6 +206,79 @@ export function ProfileEditDialog({
               </span>
             </div>
           </div>
+
+          {accounts.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-[13px] font-medium text-zinc-800">
+                抖音账号名
+              </Label>
+              <div className="space-y-2">
+                {accounts.map((account) => (
+                  <div
+                    key={account.id}
+                    className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3"
+                  >
+                    {editingAccountId === account.id ? (
+                      <>
+                        <Input
+                          value={editingAccountName}
+                          onChange={(e) => setEditingAccountName(e.target.value)}
+                          placeholder="请输入账号名称"
+                          maxLength={30}
+                          disabled={isPending}
+                          autoFocus
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleSaveAccountName(account.id)}
+                          disabled={isPending}
+                        >
+                          {isPending ? "保存中..." : "保存"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelEditAccount}
+                          disabled={isPending}
+                        >
+                          取消
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D97757] text-[12px] font-medium text-white">
+                          {account.name.trim().slice(0, 1).toUpperCase() || "?"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-medium text-zinc-800">
+                            {account.name}
+                          </p>
+                          <p className="text-[12px] text-zinc-400">
+                            抖音账号
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center rounded-lg p-1 text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-600 active:translate-y-0"
+                          onClick={() => handleEditAccount(account)}
+                          disabled={isPending}
+                          aria-label={`编辑 ${account.name}`}
+                        >
+                          <Pencil className="size-3.5 stroke-[1.5]" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[12px] text-zinc-400">
+                修改后将同步更新所有相关数据
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
             <Button

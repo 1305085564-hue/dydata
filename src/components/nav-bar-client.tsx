@@ -117,7 +117,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                 <button
                   type="button"
                   onClick={() => setIsAccountMenuOpen((open) => !open)}
-                  className="group flex items-center gap-2.5 rounded-2xl border border-transparent px-2 py-1.5 transition-colors hover:border-zinc-200 hover:bg-white"
+                  className="group flex items-center gap-2.5 rounded-2xl border border-zinc-200/80 px-2 py-1.5 transition-colors hover:border-zinc-200 hover:bg-white"
                   aria-expanded={isAccountMenuOpen}
                   aria-haspopup="listbox"
                 >
@@ -195,7 +195,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                       })}
                     </div>
                     <div className="mt-1 border-t border-zinc-100 pt-1">
-                      <ProfileEditDialog currentName={name} role={role} trigger="menu-item">
+                      <ProfileEditDialog currentName={name} role={role} accounts={accounts} trigger="menu-item">
                         <div className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800">
                           <Settings className="size-3.5 stroke-[1.5] shrink-0" />
                           <span>编辑资料</span>
@@ -207,8 +207,8 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <ProfileEditDialog currentName={name} role={role} trigger="menu-item">
-                  <div className="group flex items-center gap-2 rounded-2xl border border-transparent px-2 py-1.5 transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-200 hover:bg-white">
+                <ProfileEditDialog currentName={name} role={role} accounts={accounts} trigger="menu-item">
+                  <div className="group flex items-center gap-2 rounded-2xl border border-zinc-200/80 px-2 py-1.5 transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-200 hover:bg-white">
                     <div className="hidden items-center gap-2 sm:flex">
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white ">
                         {initial}
@@ -241,7 +241,7 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
                   "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   pathname.startsWith("/admin/settings")
                     ? "border-zinc-200/80 bg-white text-zinc-800"
-                    : "border-transparent text-zinc-500 hover:bg-white hover:text-zinc-800",
+                    : "border-zinc-200/80 text-zinc-500 hover:bg-white hover:text-zinc-800",
                 )}
                 title="系统设置"
               >

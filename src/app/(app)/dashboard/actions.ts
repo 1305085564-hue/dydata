@@ -237,6 +237,33 @@ export async function createAccount(name: string, contentDirection?: string) {
   return { success: true };
 }
 
+export async function updateAccountName(accountId: string, newName: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "请先登录" };
+
+  const trimmed = newName?.trim();
+  if (!trimmed) return { error: "账号名称不能为空" };
+  if (trimmed.length > 30) return { error: "账号名称最多 30 个字符" };
+  if (isUuidLike(trimmed)) return { error: "账号备注名不能是一串系统编号，请填写主账号、矩阵号、出镜号这类名字" };
+
+  const { error } = await supabase
+    .from("accounts")
+    .update({ name: trimmed })
+    .eq("id", accountId)
+    .eq("profile_id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/growth");
+  revalidatePath("/analytics");
+  revalidatePath("/admin");
+  return { success: true };
+}
+
 async function notifyFeishu(submitter: string, title: string, playCount: number) {
   const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
   if (!webhookUrl) return;
