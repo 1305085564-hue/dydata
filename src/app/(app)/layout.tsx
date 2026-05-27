@@ -5,6 +5,7 @@ import { canUseAiManagement } from "@/lib/permission-utils";
 import { AiAssistantFloatingWindow } from "@/components/ai-assistant/ai-assistant-floating-window";
 import { AlertContextProvider } from "@/components/ai-assistant/alert-context-store";
 import { NotificationProvider } from "@/components/notifications/notification-store";
+import { FeedbackNotificationBridge } from "@/components/notifications/feedback-notification-bridge";
 import type { UserRole } from "@/types";
 
 import { JoinBanner } from "./_components/join-banner";
@@ -28,6 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <NavBar />
           {/* JoinBanner 现在只往通知中心注册条目，无视觉占位 */}
           <JoinBanner />
+          <FeedbackNotificationBridge />
           <main className="app-main min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+1.25rem)] sm:px-6">
             {children}
           </main>
