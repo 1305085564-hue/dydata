@@ -121,6 +121,17 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
         </SelectContent>
       </Select>
 
+      <Select value={filters.reviewed} onValueChange={(v) => updateFilter("reviewed", v as "all" | "yes" | "no")}>
+        <SelectTrigger className="h-8 w-24 rounded-lg bg-white text-[12px]">
+          <SelectValue>{filters.reviewed === "all" ? "全部" : filters.reviewed === "yes" ? "已复盘" : "未复盘"}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">全部</SelectItem>
+          <SelectItem value="yes">已复盘</SelectItem>
+          <SelectItem value="no">未复盘</SelectItem>
+        </SelectContent>
+      </Select>
+
       <Select value={filters.feedbackStatus} onValueChange={(v) => updateFilter("feedbackStatus", v as "all" | "no_feedback" | "confirmed" | "sent" | "viewed")}>
         <SelectTrigger className="h-8 w-24 rounded-lg bg-white text-[12px]">
           <SelectValue>{getContentFilterLabel({ type: "feedbackStatus", value: filters.feedbackStatus })}</SelectValue>

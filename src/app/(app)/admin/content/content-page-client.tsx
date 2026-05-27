@@ -140,9 +140,11 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
+      className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-800">批改台</h2>
+
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
             <button
@@ -212,7 +214,7 @@ export function ContentPageClient({
 
               {perspective === "team" && teams.length > 0 ? (
                 <Select value={teamId ?? teams[0]?.id} onValueChange={switchTeam}>
-                  <SelectTrigger className="h-9 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700">
+                  <SelectTrigger className="h-8 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700">
                     <SelectValue placeholder="选择团队">
                       {selectedTeamName ?? undefined}
                     </SelectValue>

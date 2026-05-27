@@ -54,7 +54,6 @@ export default async function AdminContentPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      title="批改台"
       indexItems={[]}
     >
       <ContentPageClient

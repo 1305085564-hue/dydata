@@ -54,7 +54,6 @@ export default async function AdminVideosPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      title="资料库"
       indexItems={[]}
     >
       <VideoPageClient
