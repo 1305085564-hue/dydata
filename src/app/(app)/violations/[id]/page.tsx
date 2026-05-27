@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 import { getUserPermissions } from "@/lib/permissions";
 import { hasPermission } from "@/lib/permission-utils";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { PassRateBadge } from "../components/pass-rate-badge";
 import {
   PromotionLevelChip,
@@ -16,6 +17,7 @@ import {
   UsageStateBadge,
 } from "../components/case-state-badge";
 import { ScreenshotGallery } from "../components/screenshot-gallery";
+import { ConclusionCard } from "../components/conclusion-card";
 import { TestRecordForm } from "../components/test-record-form";
 import {
   formatDateTime,
@@ -39,15 +41,15 @@ import { ReviewDecisionPanel } from "./components/review-decision-panel";
 import type { UsageRecordItem } from "./components/usage-timeline";
 import type { EventItem } from "./components/event-list";
 
-const FORMAT_META: Record<string, { label: string; className: string }> = {
-  oral: { label: "口播", className: "bg-zinc-100 text-[#8AA8C7]" },
-  visual: { label: "画面", className: "bg-zinc-100 text-[#D97757]" },
-  mixed: { label: "混合", className: "bg-zinc-100 text-[#6FAA7D]" },
+const FORMAT_META: Record<string, { label: string; dotColor: string }> = {
+  oral: { label: "口播", dotColor: "#8AA8C7" },
+  visual: { label: "画面", dotColor: "#D97757" },
+  mixed: { label: "混合", dotColor: "#6FAA7D" },
 };
 
-const PURPOSE_META: Record<string, { label: string; className: string }> = {
-  violation: { label: "违规话术", className: "bg-zinc-100 text-[#C9604D]" },
-  conversion: { label: "转化话术", className: "bg-zinc-100 text-[#6FAA7D]" },
+const PURPOSE_META: Record<string, { label: string; dotColor: string }> = {
+  violation: { label: "违规话术", dotColor: "#C9604D" },
+  conversion: { label: "转化话术", dotColor: "#6FAA7D" },
 };
 
 type DetailRow = ViolationDetail & {
@@ -203,14 +205,14 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+            <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
               通过率
             </div>
-            <div className="mt-2 text-3xl font-semibold text-zinc-800">
-              {rate === null ? "--" : `${rate}%`}
+            <div className="mt-2 text-[24px] font-semibold tabular-nums text-zinc-800">
+              {rate === null ? "—" : `${rate}%`}
             </div>
           </div>
-          <div className="text-xs font-semibold text-zinc-500">{getConfidenceLabel(total)}</div>
+          <div className="text-[12px] font-medium text-zinc-500">{getConfidenceLabel(total)}</div>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100">
           <div
@@ -218,38 +220,33 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
             style={{ width: `${rate ?? 0}%` }}
           />
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <div className="rounded-lg bg-zinc-50 px-3 py-2 font-semibold text-[#6FAA7D]">
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-lg bg-zinc-50 px-3 py-2 text-[13px] font-medium text-[#6FAA7D]">
             通过 {passCount}
           </div>
-          <div className="rounded-lg bg-zinc-50 px-3 py-2 font-semibold text-[#C9604D]">
+          <div className="rounded-lg bg-zinc-50 px-3 py-2 text-[13px] font-medium text-[#C9604D]">
             未通过 {failCount}
           </div>
         </div>
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-zinc-800">同事追加测试</h3>
+        <h3 className="text-[13px] font-medium text-zinc-800">同事追加测试</h3>
         <div className="mt-3 space-y-2">
           {records.length ? (
             records.map((record) => (
               <div
                 key={record.id}
-                className="rounded-xl border border-zinc-200 bg-white p-3 text-sm transition-colors hover:border-zinc-300"
+                className="rounded-xl border border-zinc-200 bg-white p-3 text-[13px] transition-colors hover:border-zinc-300"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-zinc-800">{getRecordAccountName(record)}</span>
-                  <span
-                    className={
-                      record.passed
-                        ? "inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-[#6FAA7D]"
-                        : "inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-[#C9604D]"
-                    }
-                  >
+                  <span className="font-medium text-zinc-800">{getRecordAccountName(record)}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+                    <span className={`size-1.5 rounded-full ${record.passed ? "bg-[#6FAA7D]" : "bg-[#C9604D]"}`} />
                     {record.passed ? "通过" : "未通过"}
                   </span>
                 </div>
-                <div className="mt-1 text-xs text-zinc-500">
+                <div className="mt-1 text-[12px] text-zinc-500">
                   {getRecordTesterName(record)} · {formatDateTime(record.tested_at)}
                 </div>
                 {record.note ? (
@@ -258,7 +255,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
               </div>
             ))
           ) : (
-            <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 p-6 text-center text-sm text-zinc-500">
+            <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 p-6 text-center text-[13px] text-zinc-500">
               暂无同事追加测试
             </div>
           )}
@@ -339,7 +336,7 @@ async function CaseDetailBottom({
             {caseItem.platforms.map((platform) => (
               <span
                 key={platform}
-                className="rounded-full border border-zinc-200 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
+                className="rounded-lg border border-zinc-200 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
               >
                 {platform}
               </span>
@@ -355,26 +352,26 @@ async function CaseDetailBottom({
             value={formatConversionRate(caseItem)}
             hint={resolveConfidence(Number(caseItem.total_views ?? 0)).label}
             tone="positive"
-            icon={<TrendingUp className="size-4" strokeWidth={2.25} />}
+            icon={<TrendingUp className="size-4" strokeWidth={1.5} />}
           />
           <StatsCard
             label="Total Views"
             value={formatCount(caseItem.total_views)}
             hint="累计展示"
-            icon={<Eye className="size-4" strokeWidth={2.25} />}
+            icon={<Eye className="size-4" strokeWidth={1.5} />}
           />
           <StatsCard
             label="Total Follows"
             value={formatCount(caseItem.total_follows)}
             hint="累计涨粉"
             tone="accent"
-            icon={<UserPlus className="size-4" strokeWidth={2.25} />}
+            icon={<UserPlus className="size-4" strokeWidth={1.5} />}
           />
           <StatsCard
             label="Usage Count"
             value={formatCount(caseItem.usage_count)}
             hint="复用次数"
-            icon={<Repeat2 className="size-4" strokeWidth={2.25} />}
+            icon={<Repeat2 className="size-4" strokeWidth={1.5} />}
           />
         </StatsGrid>
       ) : (
@@ -383,7 +380,7 @@ async function CaseDetailBottom({
             label="Pass Rate"
             value={(() => {
               const rate = getPassRate(caseItem);
-              return rate === null ? "--" : `${rate}%`;
+              return rate === null ? "—" : `${rate}%`;
             })()}
             hint={getConfidenceLabel(passCount + failCount)}
             tone={
@@ -395,7 +392,7 @@ async function CaseDetailBottom({
                     ? "accent"
                     : "negative"
             }
-            icon={<CheckCircle2 className="size-4" strokeWidth={2.25} />}
+            icon={<CheckCircle2 className="size-4" strokeWidth={1.5} />}
           />
           <StatsCard label="通过" value={formatCount(passCount)} hint="累计通过" tone="positive" />
           <StatsCard label="未通过" value={formatCount(failCount)} hint="累计失败" tone="negative" />
@@ -404,7 +401,7 @@ async function CaseDetailBottom({
             value={formatCount(events.length)}
             hint="平台处罚次数"
             tone={events.length > 0 ? "negative" : "default"}
-            icon={<ShieldAlert className="size-4" strokeWidth={2.25} />}
+            icon={<ShieldAlert className="size-4" strokeWidth={1.5} />}
           />
         </StatsGrid>
       )}
@@ -424,70 +421,33 @@ async function CaseDetailBottom({
         />
       ) : null}
 
-      {!isConversion && reasonTags.length > 0 ? (
-        <section className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C9604D]">
-            踩雷点
-          </h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {reasonTags.map((tag) => (
-              <span
-                key={tag.id}
-                className="inline-flex items-center rounded-full border border-[#C9604D]/30 bg-[#C9604D]/5 px-2.5 py-0.5 text-[12px] font-medium text-[#C9604D]"
-              >
-                {tag.name}
-              </span>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {caseItem.admin_conclusion || caseItem.suggested_action ? (
-        <section className="grid gap-3 lg:grid-cols-2">
-          {caseItem.admin_conclusion ? (
-            <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D99E55]">
-                管理员结论
-              </h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[#D99E55]">
-                {caseItem.admin_conclusion}
-              </p>
-            </div>
-          ) : null}
-          {caseItem.suggested_action ? (
-            <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-zinc-50 p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6FAA7D]">
-                建议动作
-              </h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[#6FAA7D]">
-                {caseItem.suggested_action}
-              </p>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
+      <ConclusionCard
+        reasonTags={reasonTags}
+        adminConclusion={caseItem.admin_conclusion}
+        suggestedAction={caseItem.suggested_action}
+      />
 
       {!isConversion && ((caseItem.screenshot_paths?.length ?? 0) > 0 || caseItem.scene_description || caseItem.result) ? (
         <section className="grid gap-4 lg:grid-cols-2">
           {(caseItem.screenshot_paths?.length ?? 0) > 0 ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
                 截图
               </h2>
               <div className="mt-4">
-                <ScreenshotGallery paths={caseItem.screenshot_paths ?? []} />
+                <ScreenshotGallery paths={caseItem.screenshot_paths ?? []} compact />
               </div>
             </div>
           ) : null}
           {caseItem.scene_description || caseItem.result ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-5">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
                 上下文
               </h2>
-              <div className="mt-3 space-y-3 text-sm leading-7 text-zinc-600">
+              <div className="mt-3 space-y-3 text-[13px] leading-[1.7] text-zinc-600">
                 <p>{caseItem.scene_description || "暂无配套画面/导粉方式描述"}</p>
                 {caseItem.result ? (
-                  <p className="font-semibold text-zinc-800">结果：{caseItem.result}</p>
+                  <p className="font-medium text-zinc-800">结果：{caseItem.result}</p>
                 ) : null}
               </div>
             </div>
@@ -537,14 +497,13 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
   if (error || !caseItem) {
     return (
       <div className="mx-auto max-w-6xl space-y-5 py-8">
-        <Link
-          href="/violations"
-          className="active:translate-y-0 inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-800"
-        >
-          <ArrowLeft className="size-4" />
-          话术库
-        </Link>
-        <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-5 text-sm leading-6 text-[#D99E55]">
+        <Breadcrumb
+          items={[
+            { label: "话术案例库", href: "/violations" },
+            { label: "案例详情" },
+          ]}
+        />
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-[13px] leading-[1.7] text-[#D99E55]">
           {error ?? "案例不存在"}
         </div>
       </div>
@@ -558,16 +517,23 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 py-8">
+      <Breadcrumb
+        items={[
+          { label: "话术案例库", href: "/violations" },
+          { label: "案例详情" },
+        ]}
+      />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/violations"
-          className="active:translate-y-0 inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-800"
+          className="inline-flex items-center gap-2 text-[12px] font-medium text-zinc-500 transition-colors hover:text-zinc-800 active:translate-y-0"
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-4 stroke-[1.5]" />
           话术库
         </Link>
         {isConversion ? null : (
-          <Suspense fallback={<div className="h-11 w-28 rounded-2xl bg-zinc-100" />}>
+          <Suspense fallback={<div className="h-11 w-28 rounded-xl bg-zinc-100" />}>
             <TestRecordFormLoader caseId={caseItem.id} />
           </Suspense>
         )}
@@ -580,25 +546,23 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
             {isConversion ? null : (
               <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} />
             )}
-            <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+            <span className="inline-flex items-center rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
               {caseItem.category || "其他"}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${formatMeta.className}`}
-            >
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+              <span className="size-1.5 rounded-full" style={{ backgroundColor: formatMeta.dotColor }} />
               {formatMeta.label}
             </span>
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${purposeMeta.className}`}
-            >
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+              <span className="size-1.5 rounded-full" style={{ backgroundColor: purposeMeta.dotColor }} />
               {purposeMeta.label}
             </span>
           </div>
         </div>
 
-        <p className="mt-6 whitespace-pre-wrap text-[18px] font-semibold leading-7 tracking-wide text-zinc-800">
+        <p className="mt-6 whitespace-pre-wrap text-[18px] font-medium leading-[1.44] tracking-wide text-zinc-800">
           {caseItem.script_text}
         </p>
 
@@ -610,25 +574,25 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
           </div>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-500">
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-zinc-500">
           <span>
             <span className="text-zinc-400">提交人 </span>
-            <span className="font-semibold text-zinc-800">{getSubmitterName(caseItem)}</span>
+            <span className="font-medium text-zinc-800">{getSubmitterName(caseItem)}</span>
           </span>
           <span className="text-zinc-200">·</span>
           <span>
             <span className="text-zinc-400">提交时间 </span>
-            <span className="font-semibold text-zinc-800">{formatDateTime(caseItem.created_at)}</span>
+            <span className="font-medium text-zinc-800">{formatDateTime(caseItem.created_at)}</span>
           </span>
           <span className="text-zinc-200">·</span>
           <span>
             <span className="text-zinc-400">账号 </span>
-            <span className="font-semibold text-zinc-800">{getAccountName(caseItem)}</span>
+            <span className="font-medium text-zinc-800">{getAccountName(caseItem)}</span>
           </span>
           <span className="text-zinc-200">·</span>
           <span>
             <span className="text-zinc-400">团队 </span>
-            <span className="font-semibold text-zinc-800">{getTeamName(caseItem)}</span>
+            <span className="font-medium text-zinc-800">{getTeamName(caseItem)}</span>
           </span>
         </div>
       </section>

@@ -103,12 +103,28 @@ test("sidebar-badges 复用同一份 violation 查询结果，不再重复查表
   const response = await buildSidebarBadgesResponse(request as never, {
     requireAdminServiceClient: async () => ({
       supabase: supabase as never,
+      actor: {
+        userId: "owner-1",
+        role: "owner",
+        businessRole: "owner",
+        permissions: {},
+        name: "Owner",
+      },
       scope: {
+        userId: "owner-1",
+        role: "owner",
+        businessRole: "owner",
+        permissions: {},
+        accessLevel: 3,
+        teamId: "team-1",
+        groupId: null,
         kind: "team",
         visibleUserIds: ["u-1", "u-2"],
       },
     }),
   });
+
+  if (!response) throw new Error("sidebar-badges response missing");
 
   assert.equal(response.status, 200);
   const payload = await response.json();

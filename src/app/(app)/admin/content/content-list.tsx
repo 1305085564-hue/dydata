@@ -241,6 +241,7 @@ export function ContentList({
     status: "all",
     hasSnapshot: "all",
     reviewed: "all",
+    feedbackStatus: "all",
     rankScope: "all",
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -289,6 +290,13 @@ export function ContentList({
       const hasDraft = card?.workflow_status !== "not_started";
       if (filters.reviewed === "yes" && !hasDraft) return false;
       if (filters.reviewed === "no" && hasDraft) return false;
+      if (filters.feedbackStatus !== "all") {
+        const cardStatus = card?.workflow_status ?? "not_started";
+        if (filters.feedbackStatus === "no_feedback" && cardStatus !== "not_started" && cardStatus !== "draft") return false;
+        if (filters.feedbackStatus === "confirmed" && cardStatus !== "confirmed") return false;
+        if (filters.feedbackStatus === "sent" && cardStatus !== "sent") return false;
+        if (filters.feedbackStatus === "viewed" && cardStatus !== "viewed") return false;
+      }
       return true;
     });
 

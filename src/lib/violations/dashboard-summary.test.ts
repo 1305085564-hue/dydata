@@ -5,6 +5,7 @@ import {
   calculatePassRate,
   getUtcWeekStartIso,
   mapRecentViolations,
+  selectConversionTop3,
   selectDangerousTop3,
   selectSafeTop3,
 } from "./dashboard-summary";
@@ -93,6 +94,50 @@ test("dashboard summary 最近违规列表兼容 submitter join 的对象和数�
       created_at: "2026-05-26T11:00:00.000Z",
       risk_level: null,
       submitter_name: "未知",
+    },
+  ]);
+});
+
+test("dashboard summary 会格式化转化 Top3，并过滤低样本案例", () => {
+  const result = selectConversionTop3([
+    {
+      id: "a",
+      script_text: "  高转化脚本  ",
+      total_views: 1000,
+      total_follows: 60,
+      usage_count: 6,
+      weighted_conversion_rate: 0.06,
+    },
+    {
+      id: "b",
+      script_text: "样本不足",
+      total_views: 100,
+      total_follows: 10,
+      usage_count: 2,
+      weighted_conversion_rate: 0.1,
+    },
+    {
+      id: "c",
+      script_text: "第二名",
+      total_views: 800,
+      total_follows: 32,
+      usage_count: 5,
+      weighted_conversion_rate: 0.04,
+    },
+  ]);
+
+  assert.deepEqual(result, [
+    {
+      id: "a",
+      script_text: "高转化脚本",
+      conversion_rate: "6.00%",
+      usage_count: 6,
+    },
+    {
+      id: "c",
+      script_text: "第二名",
+      conversion_rate: "4.00%",
+      usage_count: 5,
     },
   ]);
 });

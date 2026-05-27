@@ -307,6 +307,42 @@ export function ContentDetailDialog({
     }
   }
 
+  async function handleCreateAndConfirm() {
+    if (!video) return;
+    setIsConfirming(true);
+    try {
+      const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create_and_confirm",
+          manager_note: managerNote.trim() || null,
+          summary: {
+            one_line: mainIssues.trim() || null,
+            problem_tags: parseProblemTags(mainIssues),
+          },
+          actions: {
+            instructions: nextAction.split("；").map((s) => s.trim()).filter(Boolean),
+            message_for_member: managerNote.trim() || null,
+          },
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "保存失败");
+      }
+      if (data.feedback_card) {
+        setCardDetail(data.feedback_card);
+        onFeedbackCardChanged(video.id, data.feedback_card);
+      }
+      feedbackToast.success("已保存并确认，可下发给员工");
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "保存失败");
+    } finally {
+      setIsConfirming(false);
+    }
+  }
+
   async function handleSend() {
     if (!video || !cardDetail?.card_id) return;
     setIsSending(true);
@@ -610,98 +646,110 @@ export function ContentDetailDialog({
             <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5">
               <div className="flex items-center justify-between gap-2">
                 <SectionTitle>反馈卡编辑区</SectionTitle>
-                {cardDetail ? (
-                  <Badge
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
                     variant="outline"
-                    className={`text-[11px] ${
-                      cardDetail.workflow_status === "draft"
-                        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-                        : cardDetail.workflow_status === "confirmed"
-                        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-                        : cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
-                        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-                        : "border-zinc-200 bg-zinc-100 text-zinc-500"
-                    }`}
+                    className="h-7 rounded-lg border-zinc-200 px-2.5 text-[11px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+                    onClick={() => handleReview(false)}
+                    disabled={isReviewing || !snapshot}
                   >
-                    {cardDetail.workflow_label}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[11px] text-zinc-500">
-                    未生成
+                    {isReviewing ? "生成中…" : "AI 辅助"}
+                  </Button>
+                  {cardDetail && cardDetail.workflow_status !== "not_started" && (
+                    <Badge
+                      variant="outline"
+                      className={`text-[11px] ${
+                        cardDetail.workflow_status === "draft"
+                          ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+                          : cardDetail.workflow_status === "confirmed"
+                          ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+                          : cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
+                          ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+                          : "border-zinc-200 bg-zinc-100 text-zinc-500"
+                      }`}
+                    >
+                      {cardDetail.workflow_label}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[12px] font-medium text-zinc-700">主要问题</label>
+                  <textarea
+                    value={mainIssues}
+                    onChange={(e) => setMainIssues(e.target.value)}
+                    className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    rows={2}
+                    placeholder="例如：开头留人弱 / 选题不清 / 文案承接差"
+                    disabled={cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed"}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[12px] font-medium text-zinc-700">下一条动作</label>
+                  <textarea
+                    value={nextAction}
+                    onChange={(e) => setNextAction(e.target.value)}
+                    className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    rows={2}
+                    placeholder="例如：开头先给结论，前 3 秒别铺垫"
+                    disabled={cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed"}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[12px] font-medium text-zinc-700">管理者反馈</label>
+                  <textarea
+                    value={managerNote}
+                    onChange={(e) => setManagerNote(e.target.value)}
+                    className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    rows={3}
+                    placeholder="写给员工的、一段能看懂的话"
+                    disabled={cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed"}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                {(!cardDetail || cardDetail.workflow_status === "not_started") && (
+                  <Button
+                    size="sm"
+                    className="h-9 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
+                    onClick={handleCreateAndConfirm}
+                    disabled={isConfirming || (!mainIssues.trim() && !nextAction.trim() && !managerNote.trim())}
+                  >
+                    {isConfirming ? "保存中..." : "保存并确认"}
+                  </Button>
+                )}
+                {cardDetail?.workflow_status === "draft" && (
+                  <Button
+                    size="sm"
+                    className="h-9 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
+                    onClick={handleConfirm}
+                    disabled={isConfirming}
+                  >
+                    {isConfirming ? "确认中..." : "确认"}
+                  </Button>
+                )}
+                {cardDetail?.workflow_status === "confirmed" && (
+                  <Button
+                    size="sm"
+                    className="h-9 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
+                    onClick={handleSend}
+                    disabled={isSending}
+                  >
+                    {isSending ? "下发中..." : "确认下发"}
+                  </Button>
+                )}
+                {(cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed") && (
+                  <Badge variant="outline" className="border-zinc-200 bg-[#6FAA7D]/5 text-[11px] text-[#6FAA7D]">
+                    已下发给员工
                   </Badge>
                 )}
               </div>
-
-              {!cardDetail || cardDetail.workflow_status === "not_started" ? (
-                <div className="rounded-xl bg-zinc-50 p-4 text-[13px] text-zinc-500">
-                  请先生成 AI 初稿，确认后进入反馈卡编辑。
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-[12px] font-medium text-zinc-700">主要问题</label>
-                      <textarea
-                        value={mainIssues}
-                        onChange={(e) => setMainIssues(e.target.value)}
-                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
-                        rows={2}
-                        placeholder="例如：开头留人弱 / 选题不清 / 文案承接差"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[12px] font-medium text-zinc-700">下一条动作</label>
-                      <textarea
-                        value={nextAction}
-                        onChange={(e) => setNextAction(e.target.value)}
-                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
-                        rows={2}
-                        placeholder="例如：开头先给结论，前 3 秒别铺垫"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[12px] font-medium text-zinc-700">管理者反馈</label>
-                      <textarea
-                        value={managerNote}
-                        onChange={(e) => setManagerNote(e.target.value)}
-                        className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
-                        rows={3}
-                        placeholder="写给员工的、一段能看懂的话"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-2">
-                    {cardDetail.workflow_status === "draft" && (
-                      <Button
-                        size="sm"
-                        className="h-9 rounded-xl bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
-                        onClick={handleConfirm}
-                        disabled={isConfirming}
-                      >
-                        {isConfirming ? "确认中..." : "确认"}
-                      </Button>
-                    )}
-                    {cardDetail.workflow_status === "confirmed" && (
-                      <Button
-                        size="sm"
-                        className="h-9 rounded-xl bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
-                        onClick={handleSend}
-                        disabled={isSending}
-                      >
-                        {isSending ? "下发中..." : "确认下发"}
-                      </Button>
-                    )}
-                    {(cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed") && (
-                      <Badge variant="outline" className="border-zinc-200 bg-[#6FAA7D]/10 text-[11px] text-[#6FAA7D]">
-                        已下发给员工
-                      </Badge>
-                    )}
-                  </div>
-                </>
-              )}
             </section>
           </div>
         )}

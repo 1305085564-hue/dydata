@@ -45,16 +45,16 @@ export function StatsCard({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
           {label}
         </span>
         {icon ? <span className="text-zinc-400">{icon}</span> : null}
       </div>
-      <div className={cn("mt-3 text-[24px] font-semibold leading-none tracking-tight", toneClass.value)}>
+      <div className={cn("mt-3 text-[24px] font-semibold leading-none tracking-tight tabular-nums", toneClass.value)}>
         {value}
       </div>
       {hint ? (
-        <div className={cn("mt-2 text-xs font-medium", toneClass.hint)}>{hint}</div>
+        <div className={cn("mt-2 text-[12px] font-medium", toneClass.hint)}>{hint}</div>
       ) : null}
     </div>
   );

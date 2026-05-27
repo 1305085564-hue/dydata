@@ -75,7 +75,8 @@ export function ContentPageClient({
     await loadData(view, nextPerspective, nextTeamId);
   }, [loadData, perspective, teamId, teams, view]);
 
-  const switchTeam = useCallback(async (nextTeamId: string) => {
+  const switchTeam = useCallback(async (nextTeamId: string | null) => {
+    if (!nextTeamId) return;
     if (nextTeamId === teamId) return;
     await loadData(view, "team", nextTeamId);
   }, [loadData, teamId, view]);

@@ -17,6 +17,7 @@ import {
 
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
+import { FeedbackCardSection } from "./feedback-card-section";
 import { FocusHeroCard } from "./components/focus-hero-card";
 
 interface ProductionControlSystemProps {
@@ -136,6 +137,10 @@ export function ProductionControlSystem({
             />
           </div>
         )}
+
+        <div className="mx-auto mb-4 max-w-6xl">
+          <FeedbackCardSection />
+        </div>
 
         <DataReportStage
           key={`${selectedAccountId}-${activeBizDate}`}

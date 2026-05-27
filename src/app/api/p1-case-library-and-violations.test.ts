@@ -55,6 +55,9 @@ type CaseRow = {
   script_text: string;
   created_at: string;
   reviewed_at?: string | null;
+  guidance_method?: "oral" | "visual" | "profile" | "comment" | "other" | null;
+  pass_count?: number | null;
+  fail_count?: number | null;
   total_views?: number;
   total_follows?: number;
   usage_count?: number;
@@ -62,6 +65,11 @@ type CaseRow = {
   admin_conclusion?: string | null;
   suggested_action?: string | null;
   reviewed_by?: string | null;
+};
+
+type VisualTagLink = {
+  case_id: string;
+  tag_id: string;
 };
 
 type UsageRecord = {
@@ -158,11 +166,48 @@ function buildInboxCounts(payload: InboxPayload) {
   };
 }
 
-function createViolationsListSupabase(rows: CaseRow[]) {
+function compareOrderValues(
+  left: string | number | boolean | null | undefined,
+  right: string | number | boolean | null | undefined,
+  ascending: boolean,
+  nullsFirst?: boolean,
+) {
+  if (left == null && right == null) return 0;
+  if (left == null) return nullsFirst ? -1 : 1;
+  if (right == null) return nullsFirst ? 1 : -1;
+  if (left < right) return ascending ? -1 : 1;
+  if (left > right) return ascending ? 1 : -1;
+  return 0;
+}
+
+function createViolationsListSupabase(rows: CaseRow[], tagLinks: VisualTagLink[] = []) {
   let filtered = rows.slice();
+  const orderings: Array<{
+    column: string;
+    ascending: boolean;
+    nullsFirst?: boolean;
+  }> = [];
 
   return {
     from(table: string) {
+      if (table === "violation_case_visual_tags") {
+        return {
+          select() {
+            return {
+              async in(column: string, values: string[]) {
+                assert.equal(column, "tag_id");
+                return {
+                  data: tagLinks
+                    .filter((row) => values.includes(row.tag_id))
+                    .map((row) => ({ case_id: row.case_id })),
+                  error: null,
+                };
+              },
+            };
+          },
+        };
+      }
+
       assert.equal(table, "violation_cases");
 
       return {
@@ -185,14 +230,27 @@ function createViolationsListSupabase(rows: CaseRow[]) {
           filtered = filtered.filter((row) => String(row[column as keyof CaseRow] ?? "").toLowerCase().includes(needle));
           return this;
         },
-        order() {
+        order(column: string, options: { ascending: boolean; nullsFirst?: boolean }) {
+          orderings.push({ column, ...options });
           return this;
         },
         async range(from: number, to: number) {
+          const ordered = filtered.slice();
+
+          for (const ordering of [...orderings].reverse()) {
+            ordered.sort((left, right) =>
+              compareOrderValues(
+                left[ordering.column as keyof CaseRow] as string | number | boolean | null | undefined,
+                right[ordering.column as keyof CaseRow] as string | number | boolean | null | undefined,
+                ordering.ascending,
+                ordering.nullsFirst,
+              ));
+          }
+
           return {
-            data: filtered.slice(from, to + 1),
+            data: ordered.slice(from, to + 1),
             error: null,
-            count: filtered.length,
+            count: ordered.length,
           };
         },
       };
@@ -738,7 +796,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
   );
   const adminJson = await adminResponse.json();
   assert.equal(adminJson.view, "admin");
-  assert.deepEqual(adminJson.data.map((item: CaseRow) => item.id), ["case-1", "case-2", "case-3"]);
+  assert.deepEqual(adminJson.data.map((item: CaseRow) => item.id), ["case-3", "case-1", "case-2"]);
 
   const inferredResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations"),
@@ -755,6 +813,110 @@ test("violations list staff/admin/default view 分流正确", async () => {
   );
   const inferredJson = await inferredResponse.json();
   assert.equal(inferredJson.view, "admin");
+});
+
+test("violations list 支持排序和多种筛选参数", async () => {
+  const rows: CaseRow[] = [
+    {
+      id: "case-a",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "verified",
+      risk_level: "low",
+      purpose: "violation",
+      is_deleted: false,
+      usage_state: "available",
+      script_text: "A",
+      created_at: "2026-05-21T09:00:00.000Z",
+      guidance_method: "oral",
+      pass_count: 9,
+      fail_count: 1,
+      usage_count: 5,
+      weighted_conversion_rate: 0.11,
+    },
+    {
+      id: "case-b",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "verified",
+      risk_level: "medium",
+      purpose: "violation",
+      is_deleted: false,
+      usage_state: "available",
+      script_text: "B",
+      created_at: "2026-05-21T10:00:00.000Z",
+      guidance_method: "visual",
+      pass_count: 1,
+      fail_count: 4,
+      usage_count: 9,
+      weighted_conversion_rate: 0.31,
+    },
+    {
+      id: "case-c",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "verified",
+      risk_level: "high",
+      purpose: "violation",
+      is_deleted: false,
+      usage_state: "available",
+      script_text: "C",
+      created_at: "2026-05-21T11:00:00.000Z",
+      guidance_method: "oral",
+      pass_count: 3,
+      fail_count: 3,
+      usage_count: 3,
+      weighted_conversion_rate: 0.21,
+    },
+  ];
+  const tagLinks: VisualTagLink[] = [
+    { case_id: "case-b", tag_id: "tag-1" },
+    { case_id: "case-c", tag_id: "tag-2" },
+  ];
+
+  const deps = {
+    getAuthenticatedContext: async () => ({
+      supabase: createViolationsListSupabase(rows, tagLinks),
+      user: { id: "owner-1" },
+    }),
+    getUserProfile: async (): Promise<Profile> => ({
+      businessRole: "owner",
+      permissions: {},
+    }),
+  };
+
+  const conversionSortResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?sort=conversion_rate&order=desc"),
+    deps,
+  );
+  const conversionSortJson = await conversionSortResponse.json();
+  assert.equal(conversionSortJson.sort, "conversion_rate");
+  assert.equal(conversionSortJson.order, "desc");
+  assert.deepEqual(conversionSortJson.data.map((item: CaseRow) => item.id), ["case-b", "case-c", "case-a"]);
+
+  const passRateResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?sort=pass_rate&order=desc"),
+    deps,
+  );
+  const passRateJson = await passRateResponse.json();
+  assert.deepEqual(passRateJson.data.map((item: CaseRow) => item.id), ["case-a", "case-c", "case-b"]);
+
+  const guidanceMethodResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?guidance_method=oral"),
+    deps,
+  );
+  const guidanceMethodJson = await guidanceMethodResponse.json();
+  assert.deepEqual(guidanceMethodJson.data.map((item: CaseRow) => item.id), ["case-c", "case-a"]);
+
+  const visualTagsResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?visual_tag_ids=tag-2"),
+    deps,
+  );
+  const visualTagsJson = await visualTagsResponse.json();
+  assert.deepEqual(visualTagsJson.data.map((item: CaseRow) => item.id), ["case-c"]);
 });
 
 test("conversion-hub usage-records 支持 pass/fail/null 三态，并继续汇总到案例", async () => {

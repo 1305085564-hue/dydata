@@ -5,6 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Calendar, ChevronDown, ChevronUp, RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export type EventItem = {
   id: string;
@@ -22,19 +23,19 @@ export type EventItem = {
   reporter?: { id?: string | null; name?: string | null } | { id?: string | null; name?: string | null }[] | null;
 };
 
-const EVENT_TYPE_STYLE: Record<string, string> = {
-  限流: "bg-[#FFB547]/15 text-[#8B5A00]",
-  警告: "bg-[#F59E0B]/15 text-[#D99E55]",
-  删除视频: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  封号: "bg-[#9F1239]/10 text-[#9F1239]",
-  其他: "bg-zinc-100 text-zinc-600",
+const EVENT_TYPE_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
+  限流: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
+  警告: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
+  删除视频: { borderColor: "border-zinc-200", textColor: "text-zinc-600", dotColor: "#a1a1aa" },
+  封号: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
+  其他: { borderColor: "border-zinc-200", textColor: "text-zinc-600", dotColor: "#a1a1aa" },
 };
 
-const APPEAL_STATUS_STYLE: Record<string, string> = {
-  申诉成功: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  申诉失败: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  申诉中: "bg-[#8AA8C7]/10 text-[#8AA8C7]",
-  未申诉: "bg-zinc-100 text-zinc-600",
+const APPEAL_STATUS_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
+  申诉成功: { borderColor: "border-[#6FAA7D]/30", textColor: "text-[#6FAA7D]", dotColor: "#6FAA7D" },
+  申诉失败: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
+  申诉中: { borderColor: "border-[#8AA8C7]/30", textColor: "text-[#8AA8C7]", dotColor: "#8AA8C7" },
+  未申诉: { borderColor: "border-zinc-200", textColor: "text-zinc-500", dotColor: "#a1a1aa" },
 };
 
 function firstOf<T>(value: T | T[] | null | undefined): T | null {
@@ -57,22 +58,11 @@ function formatDateTime(value: string | null | undefined): string {
 
 function EmptyEvents() {
   return (
-    <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 p-10 text-center">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="mx-auto size-8 text-zinc-400"
-        aria-hidden="true"
-      >
-        <path d="M20 6 9 17l-5-5" />
-      </svg>
-      <p className="mt-3 text-sm font-medium text-zinc-700">暂无违规事件</p>
-      <p className="mt-1 text-xs text-zinc-500">这条话术目前没有被平台判违规</p>
+    <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 py-8">
+      <EmptyState
+        title="暂无违规事件"
+        description="这条话术目前没有被平台判违规"
+      />
     </div>
   );
 }
@@ -85,14 +75,14 @@ function PlatformNoticeBlock({ text }: { text: string }) {
   return (
     <div className="rounded-lg bg-zinc-50 p-3">
       <div className="flex items-start gap-2">
-        <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-zinc-400" strokeWidth={2.25} />
+        <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-zinc-400" strokeWidth={1.5} />
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+          <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
             平台通知
           </div>
           <p
             className={cn(
-              "mt-1 whitespace-pre-wrap text-sm leading-6 text-zinc-700",
+              "mt-1 whitespace-pre-wrap text-[13px] leading-[1.7] text-zinc-700",
               needsClamp && !expanded && "line-clamp-2",
             )}
           >
@@ -102,7 +92,7 @@ function PlatformNoticeBlock({ text }: { text: string }) {
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 hover:text-zinc-800"
+              className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-zinc-800 active:translate-y-0"
             >
               {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
               {expanded ? "收起" : "展开全文"}
@@ -129,7 +119,7 @@ function ScreenshotThumbs({
           key={path}
           type="button"
           onClick={() => onOpen(path)}
- className="group relative size-16 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-colors hover:border-zinc-400"
+          className="group relative size-16 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-colors hover:border-zinc-400 active:translate-y-0"
           aria-label="查看截图大图"
         >
           <Image
@@ -160,7 +150,7 @@ function Lightbox({ path, onClose }: { path: string; onClose: () => void }) {
       >
         <button
           type="button"
-          className="active:translate-y-0 absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 active:translate-y-0"
           onClick={(e) => {
             e.stopPropagation();
             onClose();
@@ -216,10 +206,8 @@ export function EventList({ events }: { events: EventItem[] }) {
           const accountName =
             event.account_name_snapshot?.trim() || account?.name?.trim() || "未关联账号";
           const reporterName = reporter?.name?.trim();
-          const eventStyle =
-            EVENT_TYPE_STYLE[event.event_type] ?? EVENT_TYPE_STYLE["其他"];
-          const appealStyle =
-            APPEAL_STATUS_STYLE[event.appeal_status] ?? APPEAL_STATUS_STYLE["未申诉"];
+          const eventStyle = EVENT_TYPE_STYLE[event.event_type] ?? EVENT_TYPE_STYLE["其他"];
+          const appealStyle = APPEAL_STATUS_STYLE[event.appeal_status] ?? APPEAL_STATUS_STYLE["未申诉"];
           const screenshots = event.screenshot_paths ?? [];
 
           return (
@@ -229,31 +217,35 @@ export function EventList({ events }: { events: EventItem[] }) {
                 hidden: { opacity: 0, y: 6 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } },
               }}
-              className="rounded-xl border border-zinc-200 bg-white p-4 transition-[colors,transform] hover:border-zinc-300"
+              className="rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                      eventStyle,
+                      "inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-medium",
+                      eventStyle.borderColor,
+                      eventStyle.textColor,
                     )}
                   >
+                    <span className="size-1.5 rounded-full" style={{ backgroundColor: eventStyle.dotColor }} />
                     {event.event_type}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
-                    <Calendar className="size-3.5 text-zinc-400" strokeWidth={2.25} />
+                  <span className="inline-flex items-center gap-1 text-[12px] text-zinc-500">
+                    <Calendar className="size-3.5 text-zinc-400" strokeWidth={1.5} />
                     {formatDateTime(event.occurred_at)}
                   </span>
                   <span className="text-zinc-300">·</span>
-                  <span className="text-xs font-semibold text-zinc-700">{accountName}</span>
+                  <span className="text-[12px] font-medium text-zinc-700">{accountName}</span>
                 </div>
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                    appealStyle,
+                    "inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-medium",
+                    appealStyle.borderColor,
+                    appealStyle.textColor,
                   )}
                 >
+                  <span className="size-1.5 rounded-full" style={{ backgroundColor: appealStyle.dotColor }} />
                   {event.appeal_status}
                 </span>
               </div>
@@ -265,22 +257,22 @@ export function EventList({ events }: { events: EventItem[] }) {
               ) : null}
 
               {event.suspected_reason ? (
-                <p className="mt-3 text-xs leading-6 text-zinc-600">
-                  <span className="font-semibold text-zinc-500">疑似原因：</span>
+                <p className="mt-3 text-[12px] leading-6 text-zinc-600">
+                  <span className="font-medium text-zinc-500">疑似原因：</span>
                   {event.suspected_reason}
                 </p>
               ) : null}
 
               {event.appeal_result ? (
-                <p className="mt-2 text-xs leading-6 text-zinc-600">
-                  <span className="font-semibold text-zinc-500">申诉结果：</span>
+                <p className="mt-2 text-[12px] leading-6 text-zinc-600">
+                  <span className="font-medium text-zinc-500">申诉结果：</span>
                   {event.appeal_result}
                 </p>
               ) : null}
 
               {event.recovered_at ? (
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[11px] font-semibold text-[#6FAA7D]">
-                  <RefreshCw className="size-3" strokeWidth={2.25} />
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#6FAA7D]/30 px-2 py-0.5 text-[11px] font-medium text-[#6FAA7D]">
+                  <RefreshCw className="size-3" strokeWidth={1.5} />
                   恢复于 {formatDateTime(event.recovered_at)}
                 </div>
               ) : null}
@@ -288,7 +280,7 @@ export function EventList({ events }: { events: EventItem[] }) {
               <ScreenshotThumbs paths={screenshots} onOpen={setLightboxPath} />
 
               {event.note ? (
-                <p className="mt-3 whitespace-pre-wrap pt-3 text-xs leading-6 text-zinc-600">
+                <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-zinc-600">
                   {event.note}
                 </p>
               ) : null}

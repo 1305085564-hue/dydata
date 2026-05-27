@@ -34,35 +34,35 @@ const VIOLATION_USAGE_OPTIONS: Array<{
   value: UsageState;
   label: string;
   hint: string;
-  tone: string;
+  dotColor: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   {
     value: "available",
     label: "可用",
     hint: "团队可放心使用",
-    tone: "border-[#5C8AB8]/30 bg-[#5C8AB8]/10 text-[#3F668F]",
+    dotColor: "#6FAA7D",
     icon: CheckCircle2,
   },
   {
     value: "testing",
     label: "待测试",
     hint: "样本不足，需谨慎试用",
-    tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+    dotColor: "#D99E55",
     icon: TestTube2,
   },
   {
     value: "not_recommended",
     label: "× 推荐",
     hint: "效果差，× 优先用",
-    tone: "border-zinc-300 bg-zinc-100 text-zinc-600",
+    dotColor: "#a1a1aa",
     icon: CircleDashed,
   },
   {
     value: "banned",
     label: "禁用",
     hint: "已确认违规，团队全员避开",
-    tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+    dotColor: "#C9604D",
     icon: ShieldAlert,
   },
 ];
@@ -71,36 +71,36 @@ const CONVERSION_USAGE_OPTIONS: Array<{
   value: UsageState;
   label: string;
   hint: string;
-  tone: string;
+  dotColor: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   {
     value: "available",
     label: "可用",
     hint: "效果稳，团队可放心复用",
-    tone: "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#3F6F4F]",
+    dotColor: "#6FAA7D",
     icon: CheckCircle2,
   },
   {
     value: "testing",
     label: "待测试",
     hint: "样本不足，先小范围跑",
-    tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+    dotColor: "#D99E55",
     icon: TestTube2,
   },
   {
     value: "not_recommended",
     label: "× 推荐",
     hint: "效果差，× 优先用",
-    tone: "border-zinc-300 bg-zinc-100 text-zinc-600",
+    dotColor: "#a1a1aa",
     icon: CircleDashed,
   },
 ];
 
-const RISK_OPTIONS: Array<{ value: RiskLevel; label: string; tone: string }> = [
-  { value: "high", label: "高风险", tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" },
-  { value: "medium", label: "中风险", tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" },
-  { value: "low", label: "低风险", tone: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700" },
+const RISK_OPTIONS: Array<{ value: RiskLevel; label: string; dotColor: string }> = [
+  { value: "high", label: "高风险", dotColor: "#C9604D" },
+  { value: "medium", label: "中风险", dotColor: "#D99E55" },
+  { value: "low", label: "低风险", dotColor: "#6FAA7D" },
 ];
 
 const VIOLATION_REJECT_TEMPLATES = [
@@ -277,9 +277,10 @@ export function ReviewDecisionPanel({
   const showReasonTags = decision !== null;
 
   return (
-    <section className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-white p-5 sm:p-6">
+    <section className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
       <header className="flex items-center gap-2">
-        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-800">审核决策</h2>
+        <span className="size-1.5 rounded-full bg-[#D97757]" />
+        <h2 className="text-[18px] font-semibold leading-[1.44] tracking-tight text-zinc-800">审核决策</h2>
         <span className="text-[12px] text-zinc-500">
           {initialStatus === "submitted"
             ? "员工等你判断能否纳入知识库"
@@ -311,7 +312,7 @@ export function ReviewDecisionPanel({
       {decision === "verify" ? (
         <div className="mt-5 space-y-4">
           <div>
-            <p className="text-[12px] font-semibold text-zinc-600">使用状态</p>
+            <p className="text-[12px] font-medium text-zinc-600">使用状态</p>
             <div
               className={cn(
                 "mt-2 grid grid-cols-2 gap-2",
@@ -329,13 +330,13 @@ export function ReviewDecisionPanel({
                     className={cn(
                       "flex items-start gap-2 rounded-xl border px-3 py-2.5 text-left transition-colors active:translate-y-0",
                       active
-                        ? option.tone
+                        ? "border-zinc-300 bg-zinc-50 text-zinc-800"
                         : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-800",
                     )}
                   >
                     <Icon className="mt-0.5 size-4 shrink-0 stroke-[1.5]" />
                     <div className="leading-tight">
-                      <p className="text-[13px] font-semibold">{option.label}</p>
+                      <p className="text-[13px] font-medium">{option.label}</p>
                       <p className="text-[12px] text-zinc-500">{option.hint}</p>
                     </div>
                   </button>
@@ -346,7 +347,7 @@ export function ReviewDecisionPanel({
 
           {isViolation ? (
             <div>
-              <p className="text-[12px] font-semibold text-zinc-600">风险等级</p>
+              <p className="text-[12px] font-medium text-zinc-600">风险等级</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {RISK_OPTIONS.map((option) => (
                   <button
@@ -354,12 +355,13 @@ export function ReviewDecisionPanel({
                     type="button"
                     onClick={() => setRiskLevel(option.value)}
                     className={cn(
-                      "rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
                       riskLevel === option.value
-                        ? option.tone
+                        ? "border-zinc-300 bg-zinc-50 text-zinc-800"
                         : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-800",
                     )}
                   >
+                    <span className="size-1.5 rounded-full" style={{ backgroundColor: option.dotColor }} />
                     {option.label}
                   </button>
                 ))}
@@ -386,7 +388,7 @@ export function ReviewDecisionPanel({
       {decision === "reject" ? (
         <div className="mt-5 space-y-4">
           <div>
-            <p className="text-[12px] font-semibold text-zinc-600">驳回原因模板</p>
+            <p className="text-[12px] font-medium text-zinc-600">驳回原因模板</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {rejectTemplates.map((tpl) => (
                 <button
@@ -402,7 +404,7 @@ export function ReviewDecisionPanel({
           </div>
           {isViolation ? (
             <div>
-              <p className="text-[12px] font-semibold text-zinc-600">风险等级</p>
+              <p className="text-[12px] font-medium text-zinc-600">风险等级</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {RISK_OPTIONS.map((option) => (
                   <button
@@ -410,12 +412,13 @@ export function ReviewDecisionPanel({
                     type="button"
                     onClick={() => setRiskLevel(option.value)}
                     className={cn(
-                      "rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
                       riskLevel === option.value
-                        ? option.tone
+                        ? "border-zinc-300 bg-zinc-50 text-zinc-800"
                         : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-800",
                     )}
                   >
+                    <span className="size-1.5 rounded-full" style={{ backgroundColor: option.dotColor }} />
                     {option.label}
                   </button>
                 ))}
@@ -428,7 +431,7 @@ export function ReviewDecisionPanel({
       {showReasonTags && isViolation ? (
         <div className="mt-5">
           <div className="flex items-center gap-2">
-            <p className="text-[12px] font-semibold text-zinc-600">踩雷点标签</p>
+            <p className="text-[12px] font-medium text-zinc-600">踩雷点标签</p>
             {reasonTagIds.length > 0 ? (
               <span className="text-[12px] text-zinc-500">已选 {reasonTagIds.length}</span>
             ) : null}
@@ -470,7 +473,7 @@ export function ReviewDecisionPanel({
       {decision ? (
         <div className="mt-5 space-y-3">
           <label className="block">
-            <span className="text-[12px] font-semibold text-zinc-600">
+            <span className="text-[12px] font-medium text-zinc-600">
               {decision === "verify" ? "管理员结论" : "驳回原因"}
               <span className="ml-1 text-[#C9604D]">*</span>
             </span>
@@ -482,18 +485,18 @@ export function ReviewDecisionPanel({
                   ? "例如：经实测在多个账号有效，纳入团队可用话术"
                   : "例如：截图 × 清晰，请补充原始素材"
               }
-              className="mt-1.5 min-h-[80px] rounded-2xl bg-zinc-50/60"
+              className="mt-1.5 min-h-[80px] rounded-xl bg-zinc-50/60"
             />
           </label>
 
           {decision === "verify" ? (
             <label className="block">
-              <span className="text-[12px] font-semibold text-zinc-600">建议动作（选填）</span>
+              <span className="text-[12px] font-medium text-zinc-600">建议动作（选填）</span>
               <Textarea
                 value={action}
                 onChange={(event) => setAction(event.target.value)}
                 placeholder="例如：发布前提醒队员把敏感词替换为评论区引导"
-                className="mt-1.5 min-h-[60px] rounded-2xl bg-zinc-50/60"
+                className="mt-1.5 min-h-[60px] rounded-xl bg-zinc-50/60"
               />
             </label>
           ) : null}
@@ -541,23 +544,19 @@ function DecisionPill({
   label: string;
   tone: "positive" | "danger";
 }) {
-  const accent =
-    tone === "positive"
-      ? active
-        ? "border-[#6FAA7D]/40 bg-[#6FAA7D]/10 text-[#3F6F4F]"
-        : "border-zinc-200 bg-white text-zinc-500 hover:border-[#6FAA7D]/30 hover:text-[#3F6F4F]"
-      : active
-        ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-        : "border-zinc-200 bg-white text-zinc-500 hover:border-[#C9604D]/30 hover:text-[#C9604D]";
+  const dotColor = tone === "positive" ? "#6FAA7D" : "#C9604D";
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-2xl border px-4 text-[13px] font-semibold transition-colors active:translate-y-0",
-        accent,
+        "inline-flex h-9 items-center gap-1.5 rounded-xl border px-4 text-[13px] font-medium transition-colors active:translate-y-0",
+        active
+          ? "border-zinc-300 bg-zinc-50 text-zinc-800"
+          : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-800",
       )}
     >
+      <span className="size-1.5 rounded-full" style={{ backgroundColor: active ? dotColor : "transparent" }} />
       <Icon className="size-4 stroke-[1.5]" />
       {label}
     </button>

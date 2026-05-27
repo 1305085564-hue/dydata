@@ -93,6 +93,44 @@ export function buildConfirmedFeedbackPayload(
   };
 }
 
+type ManualPayloadInput = {
+  summary: { one_line: string; problem_tags: string[] };
+  actions: { instructions: string[]; message_for_member: string };
+};
+
+export function buildManualConfirmedPayload(input: ManualPayloadInput): NextDayReviewResult {
+  return {
+    metrics: {
+      play_count: null,
+      bounce_rate_2s: null,
+      completion_rate_5s: null,
+      completion_rate: null,
+      avg_play_duration: null,
+      likes: null,
+      comments: null,
+      shares: null,
+      follower_gain: null,
+    },
+    summary: {
+      grade: "manual",
+      one_line: input.summary.one_line,
+      problem_tags: input.summary.problem_tags.slice(0, 5),
+    },
+    comparison: {
+      account_baseline: { sample_count: 0, play_count: null, bounce_rate_2s: null, completion_rate_5s: null, completion_rate: null, avg_play_duration: null },
+      peer_baseline: { available: false, sample_count: 0, summary: null },
+    },
+    segments: [],
+    actions: {
+      diagnosis: "",
+      instructions: input.actions.instructions.slice(0, 5),
+      message_for_member: input.actions.message_for_member,
+    },
+    anomaly_notice: null,
+    cached: false,
+  } as unknown as NextDayReviewResult;
+}
+
 export function isFeedbackCardDelivered(status: ContentFeedbackCardView["workflow_status"]) {
   return status === "sent" || status === "viewed";
 }

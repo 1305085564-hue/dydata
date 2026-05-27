@@ -49,7 +49,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
               aria-selected={isActive}
               onClick={() => setActive(tab.key)}
               className={cn(
-                "relative inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors",
+                "relative inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors active:translate-y-0",
                 isActive
                   ? "bg-white text-zinc-800"
                   : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
@@ -59,7 +59,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
               {typeof tab.count === "number" ? (
                 <span
                   className={cn(
-                    "rounded-full px-1.5 text-[11px] font-semibold",
+                    "rounded-full px-1.5 text-[11px] font-medium tabular-nums",
                     isActive ? "bg-zinc-100 text-zinc-600" : "bg-zinc-100 text-zinc-500",
                   )}
                 >

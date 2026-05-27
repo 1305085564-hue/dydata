@@ -5,6 +5,15 @@ export type DashboardCaseRow = {
   fail_count: number | null;
 };
 
+export type DashboardConversionRow = {
+  id: string;
+  script_text: string | null;
+  total_views: number | null;
+  total_follows: number | null;
+  usage_count: number | null;
+  weighted_conversion_rate: number | null;
+};
+
 export type DashboardCaseSummary = {
   id: string;
   script_text: string;
@@ -19,6 +28,13 @@ export type DashboardRecentRow = {
   created_at: string;
   risk_level: string | null;
   submitter: { name: string | null } | Array<{ name: string | null }> | null;
+};
+
+export type DashboardConversionSummary = {
+  id: string;
+  script_text: string;
+  conversion_rate: string;
+  usage_count: number;
 };
 
 export function calculatePassRate(passCount: number | null, failCount: number | null) {
@@ -44,10 +60,15 @@ export function getUtcWeekStartIso(now = new Date()) {
   ).toISOString();
 }
 
-function normalizeScriptText(scriptText: string | null, maxLength = 80) {
+export function normalizeScriptText(scriptText: string | null, maxLength = 80) {
   const trimmed = (scriptText ?? "").trim();
   if (!trimmed) return "";
   return trimmed.length <= maxLength ? trimmed : `${trimmed.slice(0, maxLength)}...`;
+}
+
+export function formatConversionRate(rate: number | null) {
+  if (rate == null) return "0.00%";
+  return `${(rate * 100).toFixed(2)}%`;
 }
 
 function toDashboardCaseSummary(row: DashboardCaseRow): DashboardCaseSummary {
@@ -91,6 +112,27 @@ export function selectSafeTop3(rows: DashboardCaseRow[]) {
       return right.pass_count - left.pass_count;
     })
     .slice(0, 3);
+}
+
+export function selectConversionTop3(rows: DashboardConversionRow[]) {
+  return rows
+    .filter((row) => (row.usage_count ?? 0) >= 3)
+    .sort((left, right) => {
+      const leftRate = left.weighted_conversion_rate ?? -1;
+      const rightRate = right.weighted_conversion_rate ?? -1;
+      if (leftRate !== rightRate) return rightRate - leftRate;
+      if ((left.usage_count ?? 0) !== (right.usage_count ?? 0)) {
+        return (right.usage_count ?? 0) - (left.usage_count ?? 0);
+      }
+      return (right.total_follows ?? 0) - (left.total_follows ?? 0);
+    })
+    .slice(0, 3)
+    .map((row): DashboardConversionSummary => ({
+      id: row.id,
+      script_text: normalizeScriptText(row.script_text),
+      conversion_rate: formatConversionRate(row.weighted_conversion_rate),
+      usage_count: row.usage_count ?? 0,
+    }));
 }
 
 export function mapRecentViolations(rows: DashboardRecentRow[]) {

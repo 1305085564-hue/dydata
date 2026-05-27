@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { getConfidenceLabel, getPassRate } from "./format";
 
 export function PassRateBadge({
@@ -16,13 +15,20 @@ export function PassRateBadge({
   const rate = getPassRate({ pass_count: pass, fail_count: fail });
 
   if (rate === null) {
-    return <Badge variant="outline">暂无测试</Badge>;
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
+        <span className="size-1.5 rounded-full bg-zinc-300" />
+        暂无测试
+      </span>
+    );
   }
 
+  const dotColor = rate >= 80 ? "#6FAA7D" : rate >= 50 ? "#D99E55" : "#C9604D";
+
   return (
-    <Badge variant={rate >= 80 ? "success" : rate >= 50 ? "warning" : "danger"}>
+    <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+      <span className="size-1.5 rounded-full" style={{ backgroundColor: dotColor }} />
       {compact ? `${rate}%` : `通过率 ${rate}% · ${getConfidenceLabel(total)}`}
-    </Badge>
+    </span>
   );
 }
-

@@ -175,13 +175,5 @@ export function filterVisibleTeamManagementProfiles(
   if (access.level === "group_leader") {
     return profiles.filter((profile) => canAccessTeam(access, profile.team_id));
   }
-
-  const visibleGroupIds = new Set(access.groupIds);
-  const leaderUserIds = new Set(
-    groups.filter((group) => visibleGroupIds.has(group.id)).map((group) => group.leader_user_id).filter(Boolean),
-  );
-
-  return profiles.filter(
-    (profile) => visibleGroupIds.has(profile.group_id ?? "") || leaderUserIds.has(profile.id),
-  );
+  return [];
 }

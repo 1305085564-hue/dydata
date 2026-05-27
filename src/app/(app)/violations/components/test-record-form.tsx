@@ -99,7 +99,7 @@ export function TestRecordForm({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" className="h-11 rounded-2xl border-zinc-300 text-zinc-700 hover:bg-zinc-50" />}>
+      <DialogTrigger render={<Button variant="outline" className="h-11 rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50" />}>
         <Plus className="size-4" />
         记录效果
       </DialogTrigger>
@@ -111,9 +111,9 @@ export function TestRecordForm({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">账号</Label>
+              <Label className="text-[13px] font-medium">账号</Label>
               <Select value={accountId} onValueChange={(value) => value && setAccountId(value)}>
-                <SelectTrigger className="h-11 w-full rounded-2xl">
+                <SelectTrigger className="h-11 w-full rounded-xl">
                   <SelectValue placeholder="选择账号">
                     {accountId === "none"
                       ? "不关联账号"
@@ -136,21 +136,21 @@ export function TestRecordForm({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">使用日期</Label>
+              <Label className="text-[13px] font-medium">使用日期</Label>
               <Input
                 type="date"
                 value={usedAt}
                 onChange={(event) => setUsedAt(event.target.value)}
-                className="h-11 rounded-2xl"
+                className="h-11 rounded-xl"
               />
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">结果</Label>
+              <Label className="text-[13px] font-medium">结果</Label>
               <Select value={resultFlag} onValueChange={(value) => value && setResultFlag(value as "pass" | "fail")}>
-                <SelectTrigger className="h-11 w-full rounded-2xl">
+                <SelectTrigger className="h-11 w-full rounded-xl">
                   <SelectValue placeholder="测试结果" />
                 </SelectTrigger>
                 <SelectContent>
@@ -160,30 +160,30 @@ export function TestRecordForm({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">展示</Label>
+              <Label className="text-[13px] font-medium">展示</Label>
               <Input
                 type="number"
                 min={0}
                 value={views}
                 onChange={(event) => setViews(event.target.value)}
-                className="h-11 rounded-2xl"
+                className="h-11 rounded-xl"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">涨粉</Label>
+              <Label className="text-[13px] font-medium">涨粉</Label>
               <Input
                 type="number"
                 min={0}
                 value={follows}
                 onChange={(event) => setFollows(event.target.value)}
-                className="h-11 rounded-2xl"
+                className="h-11 rounded-xl"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="note" className="text-sm font-semibold">备注</Label>
-            <Textarea id="note" name="note" rows={3} placeholder="补充账号情况、发布时间或审核结果" className="rounded-2xl" />
+            <Label htmlFor="note" className="text-[13px] font-medium">备注</Label>
+            <Textarea id="note" name="note" rows={3} placeholder="补充账号情况、发布时间或审核结果" className="rounded-xl" />
           </div>
 
           <div className="flex justify-end gap-2">

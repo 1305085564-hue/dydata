@@ -24,6 +24,7 @@ export interface ContentFilterValue {
   status: AnomalyStatus | "all";
   hasSnapshot: "all" | "yes" | "no";
   reviewed: "all" | "yes" | "no";
+  feedbackStatus: "all" | "no_feedback" | "confirmed" | "sent" | "viewed";
   rankScope: "all" | "day" | "month";
 }
 
@@ -41,6 +42,7 @@ const INITIAL_FILTERS: ContentFilterValue = {
   status: "all",
   hasSnapshot: "all",
   reviewed: "all",
+  feedbackStatus: "all",
   rankScope: "all",
 };
 
@@ -126,6 +128,19 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
             <SelectItem value="all">全部</SelectItem>
             <SelectItem value="yes">已复盘</SelectItem>
             <SelectItem value="no">未复盘</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.feedbackStatus} onValueChange={(v) => updateFilter("feedbackStatus", v as "all" | "no_feedback" | "confirmed" | "sent" | "viewed")}>
+          <SelectTrigger className="h-9 w-36 rounded-xl bg-white text-[13px]">
+            <SelectValue>{getContentFilterLabel({ type: "feedbackStatus", value: filters.feedbackStatus })}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部反馈</SelectItem>
+            <SelectItem value="no_feedback">未写反馈</SelectItem>
+            <SelectItem value="confirmed">待下发</SelectItem>
+            <SelectItem value="sent">已下发</SelectItem>
+            <SelectItem value="viewed">员工已读</SelectItem>
           </SelectContent>
         </Select>
 
