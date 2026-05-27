@@ -22,6 +22,11 @@ export interface DataAccessScope {
   visibleUserIds: string[];
 }
 
+export interface BuildDataAccessScopeOptions {
+  perspective?: "company" | "team";
+  teamId?: string | null;
+}
+
 type ScopeSupabase = SupabaseClient;
 
 type ProfileRow = {
@@ -49,12 +54,10 @@ export function inferAccessLevel(role: UserRole, permissions: Permissions, expli
 }
 
 export function inferBusinessAccessLevel(businessRole: BusinessRole, explicitLevel?: unknown): AccessLevel {
-  const normalized = clampAccessLevel(explicitLevel);
-  if (normalized) return normalized;
   if (businessRole === "owner") return 4;
   if (businessRole === "team_admin") return 3;
-  if (businessRole === "group_leader") return 2;
-  return 1;
+  if (businessRole === "group_leader") return 3;
+  return clampAccessLevel(explicitLevel) ?? 1;
 }
 
 export function getScopeKind(accessLevel: AccessLevel): DataAccessScopeKind {
@@ -89,7 +92,11 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
   return (fallback.data as ProfileRow | null) ?? null;
 }
 
-export async function buildDataAccessScope(adminSupabase: ScopeSupabase, userId: string): Promise<DataAccessScope | null> {
+export async function buildDataAccessScope(
+  adminSupabase: ScopeSupabase,
+  userId: string,
+  options: BuildDataAccessScopeOptions = {},
+): Promise<DataAccessScope | null> {
   const profile = await loadProfile(adminSupabase, userId);
   if (!profile) return null;
 
@@ -110,7 +117,15 @@ export async function buildDataAccessScope(adminSupabase: ScopeSupabase, userId:
     ledGroups,
   );
   const permissions = normalizePermissionsForBusinessRole(businessRole, (profile.permissions ?? {}) as Permissions);
-  const accessLevel = inferBusinessAccessLevel(businessRole, profile.access_level);
+  const requestedPerspective = options.perspective === "team" ? "team" : "company";
+  const effectiveTeamId =
+    businessRole === "owner" && requestedPerspective === "team"
+      ? options.teamId ?? null
+      : profile.team_id;
+  const accessLevel =
+    businessRole === "owner" && requestedPerspective === "team"
+      ? 3
+      : inferBusinessAccessLevel(businessRole, profile.access_level);
   const kind = getScopeKind(accessLevel);
 
   let visibleUserIds: string[] = [userId];
@@ -118,8 +133,8 @@ export async function buildDataAccessScope(adminSupabase: ScopeSupabase, userId:
   if (kind === "all") {
     const { data } = await adminSupabase.from("profiles").select("id");
     visibleUserIds = (data ?? []).map((item) => item.id).filter(Boolean);
-  } else if (kind === "team" && profile.team_id) {
-    const { data } = await adminSupabase.from("profiles").select("id").eq("team_id", profile.team_id);
+  } else if (kind === "team" && effectiveTeamId) {
+    const { data } = await adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId);
     visibleUserIds = (data ?? []).map((item) => item.id).filter(Boolean);
   } else if (kind === "group") {
     const ledGroupIds = ledGroups.map((group) => group.id);
@@ -130,7 +145,10 @@ export async function buildDataAccessScope(adminSupabase: ScopeSupabase, userId:
     visibleUserIds = (data ?? []).map((item) => item.id).filter(Boolean);
   }
 
-  if (!visibleUserIds.includes(userId)) {
+  const shouldForceIncludeSelf =
+    kind !== "team" || effectiveTeamId === null || profile.team_id === effectiveTeamId;
+
+  if (shouldForceIncludeSelf && !visibleUserIds.includes(userId)) {
     visibleUserIds = [userId, ...visibleUserIds];
   }
 
@@ -140,7 +158,7 @@ export async function buildDataAccessScope(adminSupabase: ScopeSupabase, userId:
     businessRole,
     permissions,
     accessLevel,
-    teamId: profile.team_id,
+    teamId: effectiveTeamId,
     groupId: profile.group_id,
     kind,
     visibleUserIds: Array.from(new Set(visibleUserIds)),

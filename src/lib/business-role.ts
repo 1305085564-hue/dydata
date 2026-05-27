@@ -57,7 +57,7 @@ export function resolveBusinessRole(
 export function getBusinessScopeKind(businessRole: BusinessRole): BusinessScopeKind {
   if (businessRole === "owner") return "global";
   if (businessRole === "team_admin") return "team";
-  if (businessRole === "group_leader") return "group";
+  if (businessRole === "group_leader") return "team";
   return "self";
 }
 

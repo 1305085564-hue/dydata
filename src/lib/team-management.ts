@@ -91,7 +91,11 @@ export function resolveTeamManagementAccess(
   if (actor.role === "admin") {
     const leaderGroups = groups.filter((group) => group.leader_user_id === actor.id);
     const teamIds = Array.from(
-      new Set(leaderGroups.map((group) => group.team_id).filter((teamId): teamId is string => Boolean(teamId))),
+      new Set(
+        [...leaderGroups.map((group) => group.team_id), actor.team_id].filter(
+          (teamId): teamId is string => Boolean(teamId),
+        ),
+      ),
     );
 
     if (leaderGroups.length > 0) {
@@ -166,6 +170,9 @@ export function filterVisibleTeamManagementProfiles(
 ) {
   if (!access.canView) return [];
   if (access.level === "owner" || access.level === "team_admin") {
+    return profiles.filter((profile) => canAccessTeam(access, profile.team_id));
+  }
+  if (access.level === "group_leader") {
     return profiles.filter((profile) => canAccessTeam(access, profile.team_id));
   }
 

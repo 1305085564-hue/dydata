@@ -84,13 +84,23 @@ test("权限判断区分达人本人、组长小组、owner/admin 全局", () =>
   const member = {
     userId: "user-a",
     role: "member" as const,
+    businessRole: "member" as const,
     teamId: "team-1",
     groupId: "group-1",
+    ledGroupIds: [],
+  };
+  const teamAdmin = {
+    userId: "admin-a",
+    role: "admin" as const,
+    businessRole: "team_admin" as const,
+    teamId: "team-1",
+    groupId: null,
     ledGroupIds: [],
   };
   const leader = {
     userId: "leader-a",
     role: "admin" as const,
+    businessRole: "group_leader" as const,
     teamId: "team-1",
     groupId: "group-1",
     ledGroupIds: ["group-1"],
@@ -98,6 +108,7 @@ test("权限判断区分达人本人、组长小组、owner/admin 全局", () =>
   const memberListedAsLeader = {
     userId: "leader-b",
     role: "member" as const,
+    businessRole: "member" as const,
     teamId: "team-1",
     groupId: "group-1",
     ledGroupIds: ["group-1"],
@@ -105,6 +116,7 @@ test("权限判断区分达人本人、组长小组、owner/admin 全局", () =>
   const sameGroupMember = {
     userId: "user-c",
     role: "member" as const,
+    businessRole: "member" as const,
     teamId: "team-1",
     groupId: "group-1",
     ledGroupIds: [],
@@ -112,43 +124,53 @@ test("权限判断区分达人本人、组长小组、owner/admin 全局", () =>
   const owner = {
     userId: "owner-a",
     role: "owner" as const,
+    businessRole: "owner" as const,
     teamId: null,
     groupId: null,
     ledGroupIds: [],
   };
   const target = { userId: "user-a", teamId: "team-1", groupId: "group-1" };
   const otherTarget = { userId: "user-b", teamId: "team-1", groupId: "group-2" };
+  const otherTeamTarget = { userId: "user-d", teamId: "team-2", groupId: "group-3" };
 
   assert.deepEqual(canSubmitOwnCheckpoint(member, "user-a"), { allowed: true, scope: "self" });
   assert.equal(canSubmitOwnCheckpoint(member, "user-b").allowed, false);
 
   assert.deepEqual(canReadSopStatus(member, target), { allowed: true, scope: "self" });
+  assert.deepEqual(canReadSopStatus(teamAdmin, otherTarget), { allowed: true, scope: "team" });
+  assert.equal(canReadSopStatus(teamAdmin, otherTeamTarget).allowed, false);
   assert.deepEqual(canReadSopStatus(leader, target), { allowed: true, scope: "group" });
   assert.equal(canReadSopStatus(sameGroupMember, target).allowed, false);
   assert.equal(canReadSopStatus(memberListedAsLeader, target).allowed, false);
   assert.deepEqual(canReadSopStatus(owner, otherTarget), { allowed: true, scope: "global" });
 
+  assert.deepEqual(canReviewCheckpoint(teamAdmin, otherTarget), { allowed: true, scope: "team" });
+  assert.equal(canReviewCheckpoint(teamAdmin, otherTeamTarget).allowed, false);
   assert.deepEqual(canReviewCheckpoint(leader, target), { allowed: true, scope: "group" });
   assert.equal(canReviewCheckpoint(leader, otherTarget).allowed, false);
   assert.equal(canReviewCheckpoint(sameGroupMember, target).allowed, false);
   assert.equal(canReviewCheckpoint(memberListedAsLeader, target).allowed, false);
-  assert.deepEqual(canReadGroupSop(leader, "group-1"), { allowed: true, scope: "group" });
-  assert.equal(canReadGroupSop(sameGroupMember, "group-1").allowed, false);
-  assert.equal(canReadGroupSop(memberListedAsLeader, "group-1").allowed, false);
-  assert.equal(canReadGroupSop(leader, "group-2").allowed, false);
+  assert.deepEqual(canReadGroupSop(teamAdmin, "group-2", "team-1"), { allowed: true, scope: "team" });
+  assert.equal(canReadGroupSop(teamAdmin, "group-3", "team-2").allowed, false);
+  assert.deepEqual(canReadGroupSop(leader, "group-1", "team-1"), { allowed: true, scope: "group" });
+  assert.equal(canReadGroupSop(sameGroupMember, "group-1", "team-1").allowed, false);
+  assert.equal(canReadGroupSop(memberListedAsLeader, "group-1", "team-1").allowed, false);
+  assert.equal(canReadGroupSop(leader, "group-2", "team-1").allowed, false);
 });
 
 test("SOP 管理视图只允许 admin/owner 访问", () => {
   const member = {
     userId: "user-a",
     role: "member" as const,
+    businessRole: "member" as const,
     teamId: "team-1",
     groupId: "group-1",
     ledGroupIds: [],
   };
   const leaderByGroup = {
     userId: "leader-a",
-    role: "member" as const,
+    role: "admin" as const,
+    businessRole: "group_leader" as const,
     teamId: "team-1",
     groupId: "group-1",
     ledGroupIds: ["group-1"],
@@ -156,21 +178,23 @@ test("SOP 管理视图只允许 admin/owner 访问", () => {
   const admin = {
     userId: "admin-a",
     role: "admin" as const,
+    businessRole: "team_admin" as const,
     teamId: "team-1",
-    groupId: "group-1",
+    groupId: null,
     ledGroupIds: [],
   };
   const owner = {
     userId: "owner-a",
     role: "owner" as const,
+    businessRole: "owner" as const,
     teamId: null,
     groupId: null,
     ledGroupIds: [],
   };
 
   assert.deepEqual(canAccessSopManagementView(member), { allowed: false, scope: "denied" });
-  assert.deepEqual(canAccessSopManagementView(leaderByGroup), { allowed: false, scope: "denied" });
-  assert.deepEqual(canAccessSopManagementView(admin), { allowed: true, scope: "group" });
+  assert.deepEqual(canAccessSopManagementView(leaderByGroup), { allowed: true, scope: "group" });
+  assert.deepEqual(canAccessSopManagementView(admin), { allowed: true, scope: "team" });
   assert.deepEqual(canAccessSopManagementView(owner), { allowed: true, scope: "global" });
 });
 

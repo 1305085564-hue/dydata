@@ -6,8 +6,8 @@ import { __internal } from "./admin-content-page";
 test("内容管理首屏视频查询只选择页面需要的字段", () => {
   assert.equal(__internal.CONTENT_VIDEO_SELECT.includes("*"), false);
   assert.match(__internal.CONTENT_VIDEO_SELECT, /video_title/);
-  assert.match(__internal.CONTENT_VIDEO_SELECT, /accounts!inner\(name\)/);
-  assert.match(__internal.CONTENT_VIDEO_SELECT, /profiles!inner\(name\)/);
+  assert.match(__internal.CONTENT_VIDEO_SELECT, /accounts!inner\(name, profile_id\)/);
+  assert.match(__internal.CONTENT_VIDEO_SELECT, /profiles!videos_user_id_fkey!inner\(name\)/);
 });
 
 test("内容管理截图查询只选择列表和详情需要的指标字段", () => {

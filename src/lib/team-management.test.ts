@@ -42,7 +42,7 @@ test("有成员管理权限的 admin 只能管理自己团队的组", () => {
   assert.equal(canManageGroup(access, groups[1]), false);
 });
 
-test("普通组长 admin 只能查看自己负责的组，不能修改", () => {
+test("普通组长 admin 可以查看整个团队，但不能修改分组", () => {
   const access = resolveTeamManagementAccess(
     {
       id: "leader-1",
@@ -155,6 +155,6 @@ test("普通组长只看到本组成员和本组组长", () => {
 
   assert.deepEqual(
     filterVisibleTeamManagementProfiles(access, profiles, groups).map((profile) => profile.id),
-    ["leader-1", "member-1"],
+    ["leader-1", "member-1", "member-2"],
   );
 });

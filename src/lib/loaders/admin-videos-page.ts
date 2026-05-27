@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserPermissions } from "@/lib/permissions";
@@ -42,16 +43,22 @@ export interface AdminVideosPageData {
 export async function loadAdminVideosPageData({
   supabase,
   view = "pending",
+  perspective = "company",
+  teamId = null,
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
+  perspective?: AdminDataPerspective;
+  teamId?: string | null;
 }): Promise<AdminVideosPageData> {
   const perm = await getUserPermissions();
-  const scope = perm ? await buildDataAccessScope(createAdminClient(), perm.userId) : null;
+  const scope = perm
+    ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
+    : null;
   const [{ data: videos }, { data: profiles }, { data: accounts }, { data: tagIds }] = await Promise.all([
     supabase
       .from("videos")
-      .select("*, accounts!inner(name, profile_id), profiles!inner(name)")
+      .select("*, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)")
       .order("published_at", { ascending: false }),
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),

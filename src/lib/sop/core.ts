@@ -1,3 +1,4 @@
+import type { BusinessRole } from "@/lib/business-role";
 import type { SopCheckpoint, SopCheckpointStatus, SopReviewScores, UserRole } from "@/types";
 
 export const SOP_CHECKPOINTS: SopCheckpoint[] = [
@@ -40,6 +41,7 @@ export const SOP_PASS_SCORE = 6;
 export interface SopProfileAccess {
   userId: string;
   role: UserRole;
+  businessRole: BusinessRole;
   teamId: string | null;
   groupId: string | null;
   ledGroupIds: string[];
@@ -53,7 +55,7 @@ export interface SopTargetProfile {
 
 export interface SopAccessDecision {
   allowed: boolean;
-  scope: "self" | "group" | "global" | "denied";
+  scope: "self" | "group" | "team" | "global" | "denied";
 }
 
 export interface SopMatrixProfile {
@@ -152,6 +154,9 @@ export function canSubmitOwnCheckpoint(actor: SopProfileAccess, targetUserId: st
 
 export function canReviewCheckpoint(actor: SopProfileAccess, target: SopTargetProfile): SopAccessDecision {
   if (actor.role === "owner") return { allowed: true, scope: "global" };
+  if (actor.businessRole === "team_admin" && actor.teamId && target.teamId === actor.teamId) {
+    return { allowed: true, scope: "team" };
+  }
   if (actor.role === "admin" && target.groupId && actor.groupId === target.groupId) return { allowed: true, scope: "group" };
   if (actor.role === "admin" && target.groupId && actor.ledGroupIds.includes(target.groupId)) return { allowed: true, scope: "group" };
   return { allowed: false, scope: "denied" };
@@ -160,13 +165,19 @@ export function canReviewCheckpoint(actor: SopProfileAccess, target: SopTargetPr
 export function canReadSopStatus(actor: SopProfileAccess, target: SopTargetProfile): SopAccessDecision {
   if (actor.role === "owner") return { allowed: true, scope: "global" };
   if (actor.userId === target.userId) return { allowed: true, scope: "self" };
+  if (actor.businessRole === "team_admin" && actor.teamId && target.teamId === actor.teamId) {
+    return { allowed: true, scope: "team" };
+  }
   if (actor.role === "admin" && target.groupId && actor.groupId === target.groupId) return { allowed: true, scope: "group" };
   if (actor.role === "admin" && target.groupId && actor.ledGroupIds.includes(target.groupId)) return { allowed: true, scope: "group" };
   return { allowed: false, scope: "denied" };
 }
 
-export function canReadGroupSop(actor: SopProfileAccess, groupId: string): SopAccessDecision {
+export function canReadGroupSop(actor: SopProfileAccess, groupId: string, teamId?: string | null): SopAccessDecision {
   if (actor.role === "owner") return { allowed: true, scope: "global" };
+  if (actor.businessRole === "team_admin" && actor.teamId && teamId === actor.teamId) {
+    return { allowed: true, scope: "team" };
+  }
   if (actor.role === "admin" && actor.groupId === groupId) return { allowed: true, scope: "group" };
   if (actor.role === "admin" && actor.ledGroupIds.includes(groupId)) return { allowed: true, scope: "group" };
   return { allowed: false, scope: "denied" };
@@ -174,6 +185,7 @@ export function canReadGroupSop(actor: SopProfileAccess, groupId: string): SopAc
 
 export function canAccessSopManagementView(actor: SopProfileAccess): SopAccessDecision {
   if (actor.role === "owner") return { allowed: true, scope: "global" };
+  if (actor.businessRole === "team_admin") return { allowed: true, scope: "team" };
   if (actor.role === "admin") return { allowed: true, scope: "group" };
   return { allowed: false, scope: "denied" };
 }

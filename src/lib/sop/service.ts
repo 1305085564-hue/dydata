@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { resolveBusinessRole, type BusinessGroup } from "@/lib/business-role";
 import { getShanghaiDateString, shiftDateString } from "@/lib/remind-submission";
 import {
   SOP_CHECKPOINT_DEADLINES,
@@ -31,6 +32,7 @@ interface ProfileRow {
   id: string;
   name: string;
   role: UserRole;
+  permissions?: Record<string, boolean> | null;
   status?: string | null;
   exempt_type?: "permanent" | "temporary" | null;
   exempt_start_date?: string | null;
@@ -44,6 +46,7 @@ interface ProfileRow {
 interface GroupRow {
   id: string;
   name: string;
+  team_id: string | null;
   leader_user_id: string | null;
 }
 
@@ -104,9 +107,9 @@ const DEFAULT_STATUSES: Record<SopCheckpoint, SopCheckpointStatus> = {
 
 const SUBMITTED_STATUSES = new Set<SopCheckpointStatus>(["SUBMITTED", "APPROVED"]);
 const PROFILE_SELECT =
-  "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, team_id, group_id";
+  "id, name, role, permissions, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, team_id, group_id";
 const LEGACY_PROFILE_SELECT =
-  "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
+  "id, name, role, permissions, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
 
 let profileTeamColumnsAvailable: boolean | null = null;
 
@@ -276,16 +279,27 @@ async function getProfile(service: SupabaseService, userId: string) {
 
 async function getActor(service: SupabaseService, userId: string): Promise<SopProfileAccess> {
   const profile = await getProfile(service, userId);
-  const { data, error } = await service.from("groups").select("id").eq("leader_user_id", userId);
+  const { data, error } = await service.from("groups").select("id, team_id, leader_user_id").eq("leader_user_id", userId);
 
   if (error) throw new Error(error.message);
+  const ledGroups = (data ?? []) as BusinessGroup[];
 
   return {
     userId: profile.id,
     role: profile.role,
+    businessRole: resolveBusinessRole(
+      {
+        id: profile.id,
+        role: profile.role,
+        permissions: profile.permissions ?? {},
+        team_id: profile.team_id,
+        group_id: profile.group_id,
+      },
+      ledGroups,
+    ),
     teamId: profile.team_id,
     groupId: profile.group_id,
-    ledGroupIds: ((data ?? []) as Array<{ id: string }>).map((row) => row.id),
+    ledGroupIds: ledGroups.map((row) => row.id),
   };
 }
 
@@ -336,12 +350,16 @@ async function getSubmissions(service: SupabaseService, userIds: string[], statu
   return (data ?? []) as SopCheckpointSubmission[];
 }
 
-async function listMemberProfiles(service: SupabaseService, groupIds?: string[] | null) {
+async function listMemberProfiles(
+  service: SupabaseService,
+  options: { groupIds?: string[] | null; teamId?: string | null } = {},
+) {
   const buildQuery = (select: string) => {
     let query = service.from("profiles").select(select).eq("role", "member").order("name", { ascending: true });
 
-    if (groupIds?.length === 1) query = query.eq("group_id", groupIds[0]);
-    if (groupIds && groupIds.length > 1) query = query.in("group_id", groupIds);
+    if (options.groupIds?.length === 1) query = query.eq("group_id", options.groupIds[0]);
+    if (options.groupIds && options.groupIds.length > 1) query = query.in("group_id", options.groupIds);
+    if ((!options.groupIds || options.groupIds.length === 0) && options.teamId) query = query.eq("team_id", options.teamId);
     return query;
   };
 
@@ -354,7 +372,7 @@ async function listMemberProfiles(service: SupabaseService, groupIds?: string[] 
   }
 
   profileTeamColumnsAvailable = false;
-  if (groupIds && groupIds.length > 0) return [];
+  if ((options.groupIds && options.groupIds.length > 0) || options.teamId) return [];
 
   const { data, error } = await buildQuery(LEGACY_PROFILE_SELECT);
   if (error) throw new Error(error.message);
@@ -362,7 +380,7 @@ async function listMemberProfiles(service: SupabaseService, groupIds?: string[] 
 }
 
 async function listGroups(service: SupabaseService, groupIds?: string[] | null) {
-  let query = service.from("groups").select("id, name, leader_user_id").order("name", { ascending: true });
+  let query = service.from("groups").select("id, name, team_id, leader_user_id").order("name", { ascending: true });
 
   if (groupIds?.length === 1) query = query.eq("id", groupIds[0]);
   if (groupIds && groupIds.length > 1) query = query.in("id", groupIds);
@@ -490,9 +508,12 @@ function resolveActorGroupIds(actor: SopProfileAccess) {
   return Array.from(new Set([...ownAdminGroup, ...actor.ledGroupIds]));
 }
 
-function requireReadableGroup(actor: SopProfileAccess, groupId: string) {
-  const access = canReadGroupSop(actor, groupId);
+async function requireReadableGroup(service: SupabaseService, actor: SopProfileAccess, groupId: string) {
+  const group = (await listGroups(service, [groupId]))[0];
+  if (!group) throw new Error("小组不存在");
+  const access = canReadGroupSop(actor, groupId, group.team_id);
   if (!access.allowed) throw new Error("无权限查看该小组");
+  return group;
 }
 
 function requireSopManagementView(actor: SopProfileAccess, message = "无权限查看审核中心") {
@@ -500,17 +521,26 @@ function requireSopManagementView(actor: SopProfileAccess, message = "无权限�
   if (!access.allowed) throw new Error(message);
 }
 
-function resolveVisibleGroupIds(actor: SopProfileAccess, requestedGroupId?: string | null) {
+async function resolveVisibleMemberFilter(
+  service: SupabaseService,
+  actor: SopProfileAccess,
+  requestedGroupId?: string | null,
+) {
   if (requestedGroupId) {
-    requireReadableGroup(actor, requestedGroupId);
-    return [requestedGroupId];
+    await requireReadableGroup(service, actor, requestedGroupId);
+    return { groupIds: [requestedGroupId], teamId: null as string | null };
   }
 
-  if (actor.role === "owner") return null;
+  if (actor.role === "owner") {
+    return { groupIds: null as string[] | null, teamId: null as string | null };
+  }
+
+  if (actor.businessRole === "team_admin" && actor.teamId) {
+    return { groupIds: null as string[] | null, teamId: actor.teamId };
+  }
 
   const groupIds = resolveActorGroupIds(actor);
-  if (groupIds.length === 0) return [];
-  return groupIds;
+  return { groupIds, teamId: null as string | null };
 }
 
 export async function loadMyTodaySopStatus(statusDate = todayIso()) {
@@ -579,19 +609,19 @@ export async function loadSopStatuses(input: { statusDate?: string; groupId?: st
     return loadStatusesForProfiles(service, [profile], statusDate);
   }
 
-  const groupIds = resolveVisibleGroupIds(actor, input.groupId);
-  if (groupIds && groupIds.length === 0) return [];
+  const filter = await resolveVisibleMemberFilter(service, actor, input.groupId);
+  if (filter.groupIds && filter.groupIds.length === 0) return [];
 
-  const profiles = await listMemberProfiles(service, groupIds);
+  const profiles = await listMemberProfiles(service, filter);
   return loadStatusesForProfiles(service, profiles, statusDate);
 }
 
 export async function loadGroupSopStatuses(groupId: string, statusDate = todayIso()) {
   const service = createAdminClient();
   const actor = await requireActor(service);
-  requireReadableGroup(actor, groupId);
+  await requireReadableGroup(service, actor, groupId);
 
-  const profiles = await listMemberProfiles(service, [groupId]);
+  const profiles = await listMemberProfiles(service, { groupIds: [groupId] });
   return loadStatusesForProfiles(service, profiles, statusDate);
 }
 
@@ -602,10 +632,10 @@ export async function loadMyReviewQueue(statusDate = todayIso()) {
 
   if (actor.role === "owner") return loadSopStatuses({ statusDate });
 
-  const groupIds = resolveActorGroupIds(actor);
-  if (groupIds.length === 0) return [];
+  const filter = await resolveVisibleMemberFilter(service, actor);
+  if (filter.groupIds && filter.groupIds.length === 0) return [];
 
-  const profiles = await listMemberProfiles(service, groupIds);
+  const profiles = await listMemberProfiles(service, filter);
   return loadStatusesForProfiles(service, profiles, statusDate);
 }
 
@@ -779,10 +809,10 @@ export async function loadSopMatrix(statusDate = todayIso()) {
 
   if (actor.role === "owner") return loadSopStatuses({ statusDate });
 
-  const groupIds = resolveActorGroupIds(actor);
-  if (groupIds.length === 0) throw new Error("无权限查看全员矩阵");
+  const filter = await resolveVisibleMemberFilter(service, actor);
+  if (filter.groupIds && filter.groupIds.length === 0) throw new Error("无权限查看全员矩阵");
 
-  const profiles = await listMemberProfiles(service, groupIds);
+  const profiles = await listMemberProfiles(service, filter);
   return loadStatusesForProfiles(service, profiles, statusDate);
 }
 
@@ -807,9 +837,9 @@ export async function loadLeaderBoard(input: { statusDate?: string; groupId?: st
   const service = createAdminClient();
   const actor = await requireActor(service);
   requireSopManagementView(actor, "无权限查看审核中心");
-  const groupIds = resolveVisibleGroupIds(actor, input.groupId);
+  const filter = await resolveVisibleMemberFilter(service, actor, input.groupId);
 
-  if (groupIds && groupIds.length === 0) {
+  if (filter.groupIds && filter.groupIds.length === 0) {
     return {
       statusDate,
       groupId: input.groupId ?? null,
@@ -819,7 +849,7 @@ export async function loadLeaderBoard(input: { statusDate?: string; groupId?: st
     };
   }
 
-  const profiles = await listMemberProfiles(service, groupIds);
+  const profiles = await listMemberProfiles(service, filter);
   const members = await loadStatusesForProfiles(service, profiles, statusDate);
   const submissions = members.flatMap((member) => member.submissions);
   const pendingReviews = submissions.filter(
@@ -831,7 +861,7 @@ export async function loadLeaderBoard(input: { statusDate?: string; groupId?: st
 
   return {
     statusDate,
-    groupId: input.groupId ?? (groupIds?.length === 1 ? groupIds[0] : null),
+    groupId: input.groupId ?? (filter.groupIds?.length === 1 ? filter.groupIds[0] : null),
     members,
     pendingReviews,
     summary: buildLeaderSummary(members, pendingReviews, reports),
@@ -892,7 +922,7 @@ export async function loadLeaderReports(input: { statusDate?: string; groupId?: 
   if (actor.role !== "owner") {
     let query = service.from("leader_daily_reports").select("*").eq("leader_user_id", actor.userId).eq("report_date", statusDate);
     if (input.groupId) {
-      requireReadableGroup(actor, input.groupId);
+      await requireReadableGroup(service, actor, input.groupId);
       query = query.eq("group_id", input.groupId);
     }
 
@@ -955,10 +985,7 @@ export async function saveLeaderReport(input: {
   const groupId = input.groupId ?? actor.groupId ?? actor.ledGroupIds[0] ?? null;
 
   if (!groupId || !isUuidLike(groupId)) throw new Error("缺少组别");
-  requireReadableGroup(actor, groupId);
-
-  const group = (await listGroups(service, [groupId]))[0];
-  if (!group) throw new Error("小组不存在");
+  await requireReadableGroup(service, actor, groupId);
 
   if (actor.role !== "owner" && actorGroupIds.length === 0) {
     throw new Error("只有组长可以提交日报");
@@ -1000,11 +1027,11 @@ export async function loadSopAlerts(input: { statusDate?: string; groupId?: stri
     return buildSopAlertsForProfiles([profile], members, reports, statusDate);
   }
 
-  const groupIds = resolveVisibleGroupIds(actor, input.groupId);
+  const filter = await resolveVisibleMemberFilter(service, actor, input.groupId);
 
-  if (groupIds && groupIds.length === 0) return [] as SopAlert[];
+  if (filter.groupIds && filter.groupIds.length === 0) return [] as SopAlert[];
 
-  const profiles = await listMemberProfiles(service, groupIds);
+  const profiles = await listMemberProfiles(service, filter);
   const members = await loadStatusesForProfiles(service, profiles, statusDate);
   const reports = await loadReportsForTrend(service, profiles.map((profile) => profile.id), statusDate);
   return buildSopAlertsForProfiles(profiles, members, reports, statusDate);

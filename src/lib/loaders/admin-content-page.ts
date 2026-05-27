@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { buildContentFeedbackCardView, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -22,7 +23,7 @@ type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string; profile_id?: string | null };
 
 const CONTENT_VIDEO_SELECT =
-  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!inner(name)";
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
 
 const CONTENT_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares";
@@ -66,16 +67,22 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
 export async function loadAdminContentPageData({
   supabase,
   view = "pending",
+  perspective = "company",
+  teamId = null,
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
+  perspective?: AdminDataPerspective;
+  teamId?: string | null;
 }): Promise<AdminContentPageData> {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
   const perm = await getUserPermissions();
-  const scope = perm ? await buildDataAccessScope(createAdminClient(), perm.userId) : null;
+  const scope = perm
+    ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
+    : null;
 
   const [
     { data: videosRaw },

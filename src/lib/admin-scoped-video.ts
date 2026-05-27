@@ -58,7 +58,7 @@ export async function requireScopedAdminVideo({
   const { data, error } = await supabase
     .from("videos")
     .select(
-      "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, created_at, accounts(name, profile_id), profiles(name)",
+      "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, created_at, accounts(name, profile_id), profiles!videos_user_id_fkey(name)",
     )
     .eq("id", videoId)
     .maybeSingle();

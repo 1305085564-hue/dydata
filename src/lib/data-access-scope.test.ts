@@ -28,7 +28,7 @@ test("getScopeKind maps company levels to data ranges", () => {
 test("business roles map to scoped data ranges", () => {
   assert.equal(inferBusinessAccessLevel("owner"), 4);
   assert.equal(inferBusinessAccessLevel("team_admin"), 3);
-  assert.equal(inferBusinessAccessLevel("group_leader"), 2);
+  assert.equal(inferBusinessAccessLevel("group_leader"), 3);
   assert.equal(inferBusinessAccessLevel("member"), 1);
 });
 
@@ -56,11 +56,11 @@ test("filterRowsByDataScope keeps only visible owners for scoped roles", () => {
     role: "admin",
     businessRole: "group_leader",
     permissions: {},
-    accessLevel: 2,
+    accessLevel: 3,
     teamId: "team-1",
     groupId: "group-1",
-    kind: "group",
-    visibleUserIds: ["leader-1", "member-1"],
+    kind: "team",
+    visibleUserIds: ["leader-1", "member-1", "member-2"],
   };
   const rows = [
     { id: "a", user_id: "leader-1" },
@@ -70,7 +70,7 @@ test("filterRowsByDataScope keeps only visible owners for scoped roles", () => {
 
   assert.deepEqual(
     filterRowsByDataScope(scope, rows, (row) => row.user_id).map((row) => row.id),
-    ["a", "b"],
+    ["a", "b", "c"],
   );
   assert.deepEqual(
     filterRowsByDataScope({ ...scope, kind: "all", accessLevel: 4 }, rows, (row) => row.user_id).map((row) => row.id),

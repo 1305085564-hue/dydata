@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
+import type { TeamOption } from "@/lib/teams";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContentList } from "./content-list";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import type { ContentFeedbackCardView } from "@/types";
@@ -10,29 +13,72 @@ type ContentView = "pending" | "all";
 interface ContentPageClientProps {
   initialView: ContentView;
   initialData: AdminContentPageData;
+  initialPerspective: AdminDataPerspective;
+  initialTeamId: string | null;
+  canSwitchPerspective: boolean;
+  teams: TeamOption[];
 }
 
-export function ContentPageClient({ initialView, initialData }: ContentPageClientProps) {
+function buildContentPageUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
+  const params = new URLSearchParams({ view, scope: perspective });
+  if (perspective === "team" && teamId) params.set("teamId", teamId);
+  return `/admin/content?${params.toString()}`;
+}
+
+function buildContentApiUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
+  const params = new URLSearchParams({ view, scope: perspective });
+  if (perspective === "team" && teamId) params.set("teamId", teamId);
+  return `/api/admin/content/list?${params.toString()}`;
+}
+
+export function ContentPageClient({
+  initialView,
+  initialData,
+  initialPerspective,
+  initialTeamId,
+  canSwitchPerspective,
+  teams,
+}: ContentPageClientProps) {
   const [view, setView] = useState<ContentView>(initialView);
   const [data, setData] = useState<AdminContentPageData>(initialData);
+  const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
+  const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
+  const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
-  const switchView = useCallback(async (nextView: ContentView) => {
-    if (nextView === view) return;
+  const loadData = useCallback(async (nextView: ContentView, nextPerspective: AdminDataPerspective, nextTeamId: string | null) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/admin/content/list?view=${nextView}`);
+      const res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId));
       if (!res.ok) throw new Error("加载失败");
       const nextData = (await res.json()) as AdminContentPageData;
       setData(nextData);
       setView(nextView);
-      window.history.replaceState({}, "", `/admin/content?view=${nextView}`);
+      setPerspective(nextPerspective);
+      setTeamId(nextTeamId);
+      window.history.replaceState({}, "", buildContentPageUrl(nextView, nextPerspective, nextTeamId));
     } catch {
       // 保持旧数据，静默失败
     } finally {
       setIsLoading(false);
     }
-  }, [view]);
+  }, []);
+
+  const switchView = useCallback(async (nextView: ContentView) => {
+    if (nextView === view) return;
+    await loadData(nextView, perspective, teamId);
+  }, [loadData, perspective, teamId, view]);
+
+  const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
+    if (nextPerspective === perspective) return;
+    const nextTeamId = nextPerspective === "team" ? teamId ?? teams[0]?.id ?? null : teamId;
+    await loadData(view, nextPerspective, nextTeamId);
+  }, [loadData, perspective, teamId, teams, view]);
+
+  const switchTeam = useCallback(async (nextTeamId: string) => {
+    if (nextTeamId === teamId) return;
+    await loadData(view, "team", nextTeamId);
+  }, [loadData, teamId, view]);
 
   const handleFeedbackCardChanged = useCallback((videoId: string, nextCard: ContentFeedbackCardView) => {
     setData((prev) => {
@@ -60,40 +106,91 @@ export function ContentPageClient({ initialView, initialData }: ContentPageClien
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
-          <button
-            type="button"
-            onClick={() => switchView("pending")}
-            disabled={isLoading}
-            className={[
-              "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
-              view === "pending"
-                ? "bg-white text-zinc-800 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700",
-            ].join(" ")}
-          >
-            未开始
-            <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
-              {data.workflowSummary.notStarted}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => switchView("all")}
-            disabled={isLoading}
-            className={[
-              "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
-              view === "all"
-                ? "bg-white text-zinc-800 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700",
-            ].join(" ")}
-          >
-            全部
-            <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
-              {data.summary.totalVideos}
-            </span>
-          </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+            <button
+              type="button"
+              onClick={() => switchView("pending")}
+              disabled={isLoading}
+              className={[
+                "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                view === "pending"
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700",
+              ].join(" ")}
+            >
+              未开始
+              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
+                {data.workflowSummary.notStarted}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => switchView("all")}
+              disabled={isLoading}
+              className={[
+                "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                view === "all"
+                  ? "bg-white text-zinc-800 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-700",
+              ].join(" ")}
+            >
+              全部
+              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
+                {data.summary.totalVideos}
+              </span>
+            </button>
+          </div>
 
+          {canSwitchPerspective ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => switchPerspective("company")}
+                  disabled={isLoading}
+                  className={[
+                    "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                    perspective === "company"
+                      ? "bg-white text-zinc-800 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-700",
+                  ].join(" ")}
+                >
+                  公司视角
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchPerspective("team")}
+                  disabled={isLoading}
+                  className={[
+                    "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
+                    perspective === "team"
+                      ? "bg-white text-zinc-800 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-700",
+                  ].join(" ")}
+                >
+                  团队视角
+                </button>
+              </div>
+
+              {perspective === "team" && teams.length > 0 ? (
+                <Select value={teamId ?? teams[0]?.id} onValueChange={switchTeam}>
+                  <SelectTrigger className="h-9 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700">
+                    <SelectValue placeholder="选择团队">
+                      {selectedTeamName ?? undefined}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">

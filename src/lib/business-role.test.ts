@@ -31,7 +31,7 @@ test("业务身份会从三级 role 派生为四级", () => {
 test("四级身份对应固定数据范围", () => {
   assert.equal(getBusinessScopeKind("owner"), "global");
   assert.equal(getBusinessScopeKind("team_admin"), "team");
-  assert.equal(getBusinessScopeKind("group_leader"), "group");
+  assert.equal(getBusinessScopeKind("group_leader"), "team");
   assert.equal(getBusinessScopeKind("member"), "self");
 });
 

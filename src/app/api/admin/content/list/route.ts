@@ -2,8 +2,10 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { loadAdminContentPageData } from "@/lib/loaders/admin-content-page";
+import { getTeamOptions } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function parseView(request: NextRequest) {
@@ -25,8 +27,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
+  const teams = auth.actor.businessRole === "owner" ? await getTeamOptions() : [];
+  const scope = resolveAdminDataPerspective({
+    requestedPerspective: request.nextUrl.searchParams.get("scope"),
+    requestedTeamId: request.nextUrl.searchParams.get("teamId"),
+    canUseCompanyPerspective: auth.actor.businessRole === "owner",
+    availableTeamIds: teams.map((team) => team.id),
+    fallbackTeamId: null,
+  });
   const supabase = createAdminClient();
-  const data = await loadAdminContentPageData({ supabase, view });
+  const data = await loadAdminContentPageData({
+    supabase,
+    view,
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+  });
 
   return NextResponse.json(data);
 }

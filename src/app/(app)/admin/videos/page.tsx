@@ -1,19 +1,37 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
+import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 import { loadAdminVideosPageData } from "@/lib/loaders/admin-videos-page";
+import { getTeamOptions, type TeamOption } from "@/lib/teams";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { VideoPageClient } from "./video-page-client";
 
 type VideoView = "pending" | "all";
 
 interface Props {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; scope?: string; teamId?: string }>;
 }
 
 function normalizeView(value: string | undefined): VideoView {
   return value === "all" ? "all" : "pending";
+}
+
+export async function loadAdminVideosInitialData(
+  view: VideoView,
+  scope: { perspective: AdminDataPerspective; teamId: string | null },
+  deps: {
+    createAdminClient: typeof createAdminClient;
+    loadAdminVideosPageData: typeof loadAdminVideosPageData;
+  } = {
+    createAdminClient,
+    loadAdminVideosPageData,
+  },
+) {
+  const supabase = deps.createAdminClient();
+  return deps.loadAdminVideosPageData({ supabase, view, perspective: scope.perspective, teamId: scope.teamId });
 }
 
 export default async function AdminVideosPage({ searchParams }: Props) {
@@ -23,9 +41,16 @@ export default async function AdminVideosPage({ searchParams }: Props) {
 
   const params = await searchParams;
   const view = normalizeView(params.view);
-
-  const supabase = await createClient();
-  const data = await loadAdminVideosPageData({ supabase, view });
+  const canSwitchPerspective = perm.businessRole === "owner";
+  const teams = canSwitchPerspective ? await getTeamOptions() : [];
+  const scope = resolveAdminDataPerspective({
+    requestedPerspective: params.scope,
+    requestedTeamId: params.teamId ?? null,
+    canUseCompanyPerspective: canSwitchPerspective,
+    availableTeamIds: teams.map((team) => team.id),
+    fallbackTeamId: perm.teamId,
+  });
+  const data = await loadAdminVideosInitialData(view, scope);
 
   return (
     <AdminWorkspaceLayout
@@ -34,7 +59,14 @@ export default async function AdminVideosPage({ searchParams }: Props) {
       description="原始视频、24h 快照、标签与异常状态"
       indexItems={[]}
     >
-      <VideoPageClient initialView={view} initialData={data} />
+      <VideoPageClient
+        initialView={view}
+        initialData={data}
+        initialPerspective={scope.perspective}
+        initialTeamId={scope.teamId}
+        canSwitchPerspective={canSwitchPerspective}
+        teams={teams as TeamOption[]}
+      />
     </AdminWorkspaceLayout>
   );
 }
