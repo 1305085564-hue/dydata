@@ -13,16 +13,18 @@ interface RankBoardProps {
   accentColor: string;
   emptyHint: string;
   viewAllHref?: string;
+  /** 提供后行内项点击触发该回调；不提供则仍按 Link 跳详情页 */
+  onItemClick?: (id: string) => void;
 }
 
 export function RankBoard({
   title,
   subtitle,
   items,
-  metricLabel,
   accentColor,
   emptyHint,
   viewAllHref,
+  onItemClick,
 }: RankBoardProps) {
   const hasItems = items.length > 0;
 
@@ -44,12 +46,9 @@ export function RankBoard({
       <div className="mt-3">
         {hasItems ? (
           <ul className="space-y-0.5">
-            {items.map((item, index) => (
-              <li key={item.id}>
-                <Link
-                  href={`/violations/${item.id}`}
-                  className="flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-zinc-100 active:translate-y-0"
-                >
+            {items.map((item, index) => {
+              const inner = (
+                <>
                   <span className="w-5 text-[12px] font-medium text-zinc-400 tabular-nums">
                     {index + 1}
                   </span>
@@ -63,9 +62,30 @@ export function RankBoard({
                   >
                     {item.metricValue}
                   </span>
-                </Link>
-              </li>
-            ))}
+                </>
+              );
+
+              return (
+                <li key={item.id}>
+                  {onItemClick ? (
+                    <button
+                      type="button"
+                      onClick={() => onItemClick(item.id)}
+                      className="flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-zinc-100 active:translate-y-0"
+                    >
+                      {inner}
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/violations/${item.id}`}
+                      className="flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-zinc-100 active:translate-y-0"
+                    >
+                      {inner}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <div className="py-6 text-center">

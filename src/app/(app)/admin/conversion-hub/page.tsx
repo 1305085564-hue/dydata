@@ -8,7 +8,8 @@ import {
   canAccessAdminPath,
   getWeekStartDate,
   loadInboxData,
-  loadScriptsTab,
+  loadProcessedData,
+  PROCESSED_RPC_READY,
 } from "./data";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +27,9 @@ export default async function ConversionHubPage() {
 
   const weekStart = getWeekStartDate();
 
-  const [{ data: inbox, counts }, scripts] = await Promise.all([
+  const [{ data: inbox, counts }, { processed }] = await Promise.all([
     loadInboxData(user.id),
-    loadScriptsTab(weekStart),
+    loadProcessedData(user.id),
   ]);
 
   return (
@@ -36,7 +37,8 @@ export default async function ConversionHubPage() {
       weekStart={weekStart}
       inbox={inbox}
       inboxCounts={counts}
-      scripts={scripts}
+      processed={processed}
+      processedPending={!PROCESSED_RPC_READY}
     />
   );
 }

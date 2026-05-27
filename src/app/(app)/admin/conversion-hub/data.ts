@@ -3,42 +3,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 import type { HubTabKey } from "./hub-shell";
 
-export type SortBy = "rate" | "usage" | "views";
-export type FormatFilter = "all" | "oral" | "visual" | "mixed";
-
-export interface ScriptsTopRow {
-  id: string;
-  script_text: string;
-  total_views: number;
-  total_follows: number;
-  usage_count: number;
-  weighted_conversion_rate: number | null;
-}
-
-export interface ScriptsTabData {
-  topScripts: ScriptsTopRow[];
-  totalCases: number;
-  conversionCases: number;
-  usageCount: number;
-  totalViews: number;
-  totalFollows: number;
-  averageConversionRate: number | null;
-  weeklyNewUsageRecords: number;
-}
-
-export const VALID_TABS: HubTabKey[] = ["scripts", "violations", "weekly", "analytics", "advice"];
-
 export interface InboxBucketEntry {
   id: string;
   script_text: string;
   submitted_by_name: string;
   created_at: string;
   risk_level: "high" | "medium" | "low" | null;
+  screenshot_paths?: string[] | null;
   missing_fields?: string[];
   total_views?: number | null;
   weighted_conversion_rate?: number | null;
   usage_count?: number | null;
   promotion_level?: string | null;
+  status?: string | null;
 }
 
 export interface InboxData {
@@ -75,12 +52,7 @@ export interface ProcessedData {
 
 export const PROCESSED_RPC_READY = true;
 
-export async function loadProcessedData(userId: string): Promise<ProcessedData> {
-  const supabase = createAdminClient();
-  const { data } = await supabase.rpc("case_library_processed", { p_user_id: userId });
-  const payload = data as { processed?: ProcessedEntry[] } | null;
-  return { processed: Array.isArray(payload?.processed) ? payload.processed : [] };
-}
+export const VALID_TABS: HubTabKey[] = ["scripts", "violations", "weekly", "analytics", "advice"];
 
 export function getWeekStartDate(now = new Date()) {
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -128,46 +100,11 @@ export async function loadInboxData(userId: string): Promise<{ data: InboxData; 
   };
 }
 
-export async function loadScriptsTab(weekStart: string): Promise<ScriptsTabData> {
+export async function loadProcessedData(userId: string): Promise<ProcessedData> {
   const supabase = createAdminClient();
-  const [totalCasesResult, conversionCasesResult, weeklyUsageResult, topCasesResult] = await Promise.all([
-    supabase.from("violation_cases").select("id", { count: "exact", head: true }).eq("is_deleted", false),
-    supabase
-      .from("violation_cases")
-      .select("total_views, total_follows, usage_count")
-      .eq("is_deleted", false)
-      .eq("purpose", "conversion"),
-    supabase
-      .from("script_usage_records")
-      .select("id", { count: "exact", head: true })
-      .gte("used_at", weekStart),
-    supabase
-      .from("violation_cases")
-      .select("id, script_text, total_views, total_follows, usage_count, weighted_conversion_rate")
-      .eq("is_deleted", false)
-      .eq("purpose", "conversion")
-      .gte("usage_count", 3)
-      .gte("total_views", 1000)
-      .order("weighted_conversion_rate", { ascending: false, nullsFirst: false })
-      .order("total_views", { ascending: false })
-      .limit(10),
-  ]);
-
-  const conversionCases = conversionCasesResult.data ?? [];
-  const totalViews = conversionCases.reduce((sum, item) => sum + Number(item.total_views ?? 0), 0);
-  const totalFollows = conversionCases.reduce((sum, item) => sum + Number(item.total_follows ?? 0), 0);
-  const usageCount = conversionCases.reduce((sum, item) => sum + Number(item.usage_count ?? 0), 0);
-
-  return {
-    topScripts: (topCasesResult.data ?? []) as ScriptsTopRow[],
-    totalCases: totalCasesResult.count ?? 0,
-    conversionCases: conversionCases.length,
-    usageCount,
-    totalViews,
-    totalFollows,
-    averageConversionRate: totalViews > 0 ? totalFollows / totalViews : null,
-    weeklyNewUsageRecords: weeklyUsageResult.count ?? 0,
-  };
+  const { data } = await supabase.rpc("case_library_processed", { p_user_id: userId });
+  const payload = data as { processed?: ProcessedEntry[] } | null;
+  return { processed: Array.isArray(payload?.processed) ? payload.processed : [] };
 }
 
 export { canAccessAdminPath };

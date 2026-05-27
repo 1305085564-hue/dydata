@@ -1,3 +1,7 @@
+-- ============================================================
+-- case_library_processed: 管理闭环已处理列表
+-- ============================================================
+
 CREATE OR REPLACE FUNCTION public.case_library_processed(p_user_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql

@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ClipboardList,
   FileX2,
-  Sparkles,
   X,
 } from "lucide-react";
 
@@ -86,19 +85,6 @@ function formatTime(value: string | null | undefined) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
-}
-
-function formatNumber(value: number | null | undefined) {
-  const n = Number(value ?? 0);
-  if (!Number.isFinite(n) || n <= 0) return "0";
-  if (n >= 10000) return `${(n / 10000).toFixed(1)}w`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
-}
-
-function formatRate(rate: number | null | undefined) {
-  if (rate == null) return "—";
-  return `${(Number(rate) * 100).toFixed(1)}%`;
 }
 
 /* ─── MissingBadge ─── */
@@ -488,43 +474,6 @@ export function TaskInbox({ inbox, counts }: TaskInboxProps) {
               ))}
             </>
           ) : null,
-      },
-      {
-        key: "promote",
-        title: "推广候选",
-        hint: "转化数据稳定，决定要不要置顶",
-        count: counts.promotion_candidates,
-        tone: "positive",
-        icon: Sparkles,
-        entries: inbox.promotion_candidates,
-        emptyHint: "暂无推广候选话术",
-        defaultOpen: false,
-        renderSuffix: (entry) => (
-          <>
-            <span className="text-zinc-300">·</span>
-            <span className="text-[12px] text-zinc-500">
-              {formatNumber(entry.total_views)} 展示
-            </span>
-            <span className="text-zinc-300">·</span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="text-[12px] text-zinc-500">转化</span>
-              <div className="h-1 w-10 rounded-full bg-zinc-100">
-                <div
-                  className="h-full rounded-full bg-[#6FAA7D]"
-                  style={{
-                    width: `${Math.min(
-                      (entry.weighted_conversion_rate ?? 0) * 100 * 5,
-                      100
-                    )}%`,
-                  }}
-                />
-              </div>
-              <span className="text-[12px] font-medium text-[#6FAA7D] tabular-nums">
-                {formatRate(entry.weighted_conversion_rate)}
-              </span>
-            </span>
-          </>
-        ),
       },
     ],
     [inbox, counts]

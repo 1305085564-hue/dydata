@@ -16,6 +16,7 @@ type InboxBucket = {
   submitted_by_name: string;
   created_at: string;
   risk_level?: string | null;
+  screenshot_paths?: string[] | null;
   missing_fields?: string[];
   total_views?: number;
   weighted_conversion_rate?: number;
@@ -112,6 +113,7 @@ function buildInboxPayload(rows: CaseRow[], visibleUserIds: string[]): InboxPayl
         submitted_by_name: row.submitted_by_name,
         created_at: row.created_at,
         risk_level: row.risk_level,
+        screenshot_paths: row.screenshot_paths ?? [],
       })),
     missing_data: visible
       .filter((row) => row.status === "submitted")
@@ -126,6 +128,7 @@ function buildInboxPayload(rows: CaseRow[], visibleUserIds: string[]): InboxPayl
         submitted_by_name: row.submitted_by_name,
         created_at: row.created_at,
         risk_level: row.risk_level,
+        screenshot_paths: row.screenshot_paths ?? [],
         missing_fields: [
           ...((!row.screenshot_paths || row.screenshot_paths.length === 0) ? ["screenshot"] : []),
           ...((!row.scene_description || row.scene_description.trim() === "") ? ["scene_description"] : []),
@@ -139,6 +142,7 @@ function buildInboxPayload(rows: CaseRow[], visibleUserIds: string[]): InboxPayl
         submitted_by_name: row.submitted_by_name,
         created_at: row.created_at,
         risk_level: row.risk_level,
+        screenshot_paths: row.screenshot_paths ?? [],
       })),
     promotion_candidates: visible
       .filter((row) => (row.usage_count ?? 0) >= 5)
@@ -153,6 +157,7 @@ function buildInboxPayload(rows: CaseRow[], visibleUserIds: string[]): InboxPayl
         weighted_conversion_rate: row.weighted_conversion_rate ?? 0,
         usage_count: row.usage_count ?? 0,
         promotion_level: row.promotion_level ?? "normal",
+        screenshot_paths: row.screenshot_paths ?? [],
       })),
   };
 }
@@ -503,6 +508,7 @@ test("case-library inbox owner 能拿到四类数据，counts 与列表一致", 
   const countsJson = await countsResponse.json();
 
   assert.equal(inboxJson.pending_review.length, 2);
+  assert.deepEqual(inboxJson.pending_review[0].screenshot_paths, ["owner-1/1.png"]);
   assert.equal(inboxJson.missing_data.length, 1);
   assert.equal(inboxJson.high_risk_pending.length, 1);
   assert.equal(inboxJson.promotion_candidates.length, 1);
@@ -917,6 +923,92 @@ test("violations list 支持排序和多种筛选参数", async () => {
   );
   const visualTagsJson = await visualTagsResponse.json();
   assert.deepEqual(visualTagsJson.data.map((item: CaseRow) => item.id), ["case-c"]);
+});
+
+test("violations list 支持话术库 pending/processed 状态分栏筛选", async () => {
+  const rows: CaseRow[] = [
+    {
+      id: "case-pending",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "submitted",
+      risk_level: "medium",
+      purpose: "violation",
+      is_deleted: false,
+      script_text: "待处理话术",
+      screenshot_paths: ["member-1/pending.png"],
+      created_at: "2026-05-21T09:00:00.000Z",
+    },
+    {
+      id: "case-verified",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "verified",
+      risk_level: "low",
+      purpose: "violation",
+      is_deleted: false,
+      script_text: "已通过话术",
+      screenshot_paths: ["member-1/verified.png"],
+      created_at: "2026-05-21T08:00:00.000Z",
+    },
+    {
+      id: "case-rejected",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "rejected",
+      risk_level: "high",
+      purpose: "violation",
+      is_deleted: false,
+      script_text: "已驳回话术",
+      screenshot_paths: ["member-1/rejected.png"],
+      created_at: "2026-05-21T07:00:00.000Z",
+    },
+    {
+      id: "case-archived",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "archived",
+      risk_level: "low",
+      purpose: "violation",
+      is_deleted: false,
+      script_text: "已归档话术",
+      screenshot_paths: ["member-1/archived.png"],
+      created_at: "2026-05-21T06:00:00.000Z",
+    },
+  ];
+
+  const deps = {
+    getAuthenticatedContext: async () => ({
+      supabase: createViolationsListSupabase(rows),
+      user: { id: "owner-1" },
+    }),
+    getUserProfile: async (): Promise<Profile> => ({
+      businessRole: "owner",
+      permissions: {},
+    }),
+  };
+
+  const pendingResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?status=pending"),
+    deps,
+  );
+  const pendingJson = await pendingResponse.json();
+  assert.deepEqual(pendingJson.data.map((item: CaseRow) => item.id), ["case-pending"]);
+  assert.deepEqual(pendingJson.data[0].screenshot_paths, ["member-1/pending.png"]);
+
+  const processedResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?status=processed&sort=created_at&order=desc"),
+    deps,
+  );
+  const processedJson = await processedResponse.json();
+  assert.deepEqual(
+    processedJson.data.map((item: CaseRow) => item.id),
+    ["case-verified", "case-rejected", "case-archived"],
+  );
 });
 
 test("conversion-hub usage-records 支持 pass/fail/null 三态，并继续汇总到案例", async () => {

@@ -71,6 +71,7 @@ type ViolationsRouteDeps = {
 
 type SortKey = "conversion_rate" | "pass_rate" | "usage_count" | "created_at";
 type SortDirection = "asc" | "desc";
+type StatusFilter = "pending" | "processed";
 type CaseListRow = {
   id?: string | null;
   pass_count?: number | null;
@@ -80,6 +81,8 @@ type CaseListRow = {
 
 const GUIDANCE_METHODS = ["oral", "visual", "profile", "comment", "other"] as const;
 const SORT_KEYS = new Set<SortKey>(["conversion_rate", "pass_rate", "usage_count", "created_at"]);
+const STATUS_FILTERS = new Set<StatusFilter>(["pending", "processed"]);
+const PROCESSED_STATUSES = ["verified", "rejected", "archived"];
 
 const defaultDeps: ViolationsRouteDeps = {
   getAuthenticatedContext: getAuthenticatedContext as unknown as ViolationsRouteDeps["getAuthenticatedContext"],
@@ -142,6 +145,20 @@ function comparePassRate(left: CaseListRow, right: CaseListRow, direction: SortD
   }
 
   return String(left.id ?? "").localeCompare(String(right.id ?? ""));
+}
+
+function applyStatusFilter(query: MinimalViolationsQuery, status: string) {
+  if (STATUS_FILTERS.has(status as StatusFilter)) {
+    return status === "pending"
+      ? query.eq("status", "submitted")
+      : query.in("status", PROCESSED_STATUSES);
+  }
+
+  if (!isViolationStatus(status)) {
+    return null;
+  }
+
+  return query.eq("status", status);
 }
 
 export async function buildViolationsListResponse(
@@ -239,10 +256,11 @@ export async function buildViolationsListResponse(
     .eq("purpose", "violation");
 
   if (status) {
-    if (!isViolationStatus(status)) {
+    const filteredQuery = applyStatusFilter(query, status);
+    if (!filteredQuery) {
       return jsonBadRequest("status 不合法");
     }
-    query = query.eq("status", status);
+    query = filteredQuery;
   }
 
   if (category) {

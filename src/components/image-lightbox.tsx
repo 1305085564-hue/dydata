@@ -1,0 +1,100 @@
+"use client";
+
+import { useCallback, useEffect } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+
+interface ImageLightboxProps {
+  paths: string[];
+  currentIndex: number;
+  onClose: () => void;
+  onNavigate: (index: number) => void;
+}
+
+export function ImageLightbox({
+  paths,
+  currentIndex,
+  onClose,
+  onNavigate,
+}: ImageLightboxProps) {
+  const total = paths.length;
+  const currentPath = paths[currentIndex];
+
+  const handlePrev = useCallback(() => {
+    onNavigate((currentIndex - 1 + total) % total);
+  }, [currentIndex, total, onNavigate]);
+
+  const handleNext = useCallback(() => {
+    onNavigate((currentIndex + 1) % total);
+  }, [currentIndex, total, onNavigate]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") handlePrev();
+      if (e.key === "ArrowRight") handleNext();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, handlePrev, handleNext]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  if (!currentPath) return null;
+
+  const src = `/api/violations/screenshot/${encodeURI(currentPath)}`;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/80">
+      {/* Close */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
+      >
+        <X className="size-5" />
+      </button>
+
+      {/* Prev */}
+      {total > 1 && (
+        <button
+          type="button"
+          onClick={handlePrev}
+          className="absolute left-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+      )}
+
+      {/* Image */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={`截图 ${currentIndex + 1}/${total}`}
+        className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
+      />
+
+      {/* Next */}
+      {total > 1 && (
+        <button
+          type="button"
+          onClick={handleNext}
+          className="absolute right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
+        >
+          <ChevronRight className="size-5" />
+        </button>
+      )}
+
+      {/* Counter */}
+      {total > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-zinc-800/60 px-3 py-1.5 text-[12px] tabular-nums text-white">
+          {currentIndex + 1} / {total}
+        </div>
+      )}
+    </div>
+  );
+}

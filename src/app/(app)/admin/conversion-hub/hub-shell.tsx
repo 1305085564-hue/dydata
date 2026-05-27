@@ -5,10 +5,8 @@ import { FilePlus2, TrendingUp } from "lucide-react";
 
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 
-import type { InboxCounts, InboxData, ScriptsTabData } from "./data";
-import { CommandBar } from "./components/command-bar";
-import { ScriptsPanel } from "./components/scripts-panel";
-import { TaskInbox } from "./components/task-inbox-v2";
+import type { InboxBucketEntry, InboxCounts, InboxData } from "./data";
+import { TaskInboxShell } from "./components/task-inbox-shell";
 
 /* ─── types (exported for data.ts) ─── */
 
@@ -18,7 +16,9 @@ export interface HubShellProps {
   weekStart: string;
   inbox: InboxData;
   inboxCounts: InboxCounts;
-  scripts: ScriptsTabData | null;
+  processed?: InboxBucketEntry[];
+  /** 后端 RPC 未上线时显示「即将上线」 */
+  processedPending?: boolean;
   basePath?: string;
   layoutVariant?: "page" | "embedded";
   eyebrow?: string;
@@ -26,60 +26,25 @@ export interface HubShellProps {
   description?: string;
 }
 
-/* ─── embedded layout (used inside /violations page) ─── */
-
-function EmbeddedShell({
-  inbox,
-  inboxCounts,
-  scripts,
-}: {
-  inbox: InboxData;
-  inboxCounts: InboxCounts;
-  scripts: ScriptsTabData | null;
-}) {
-  return (
-    <div className="space-y-5">
-      <CommandBar counts={inboxCounts} />
-      <TaskInbox inbox={inbox} counts={inboxCounts} />
-      {scripts ? <ScriptsPanel scripts={scripts} /> : null}
-    </div>
-  );
-}
-
-/* ─── page layout (full admin workspace) ─── */
-
-function PageShell({
-  inbox,
-  inboxCounts,
-  scripts,
-}: {
-  inbox: InboxData;
-  inboxCounts: InboxCounts;
-  scripts: ScriptsTabData | null;
-}) {
-  return (
-    <div className="space-y-5">
-      <CommandBar counts={inboxCounts} />
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_360px]">
-        <TaskInbox inbox={inbox} counts={inboxCounts} />
-        {scripts ? <ScriptsPanel scripts={scripts} /> : null}
-      </div>
-    </div>
-  );
-}
-
 /* ─── shell ─── */
 
 export function ConversionHubShell(props: HubShellProps) {
-  const { inbox, inboxCounts, scripts } = props;
-  const layoutVariant = props.layoutVariant ?? "page";
+  const {
+    inbox,
+    inboxCounts,
+    processed = [],
+    processedPending = false,
+    layoutVariant = "page",
+  } = props;
 
-  const content =
-    layoutVariant === "embedded" ? (
-      <EmbeddedShell inbox={inbox} inboxCounts={inboxCounts} scripts={scripts} />
-    ) : (
-      <PageShell inbox={inbox} inboxCounts={inboxCounts} scripts={scripts} />
-    );
+  const content = (
+    <TaskInboxShell
+      inbox={inbox}
+      counts={inboxCounts}
+      processed={processed}
+      processedPending={processedPending}
+    />
+  );
 
   if (layoutVariant === "embedded") {
     return content;
@@ -91,7 +56,7 @@ export function ConversionHubShell(props: HubShellProps) {
       title={props.title ?? "管理工作台"}
       description={
         props.description ??
-        "审核员工提交，把有价值的话术沉淀进知识库；高风险先处理，再补缺数据，最后看推广候选。"
+        "审核员工提交，把有价值的话术沉淀进知识库；高风险先处理，再补缺数据，已处理记录可在右侧查看。"
       }
       indexItems={[]}
       actions={

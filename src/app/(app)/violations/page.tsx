@@ -10,7 +10,7 @@ import { getApiErrorMessage } from "@/lib/violations/errors";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { RankBoard } from "./components/rank-board";
-import { CompactCaseRow } from "./components/compact-case-row";
+import { CaseList } from "./components/case-list";
 import { FilterBar } from "./components/filter-bar";
 import type {
   RankItem,
@@ -20,7 +20,12 @@ import type {
 } from "./components/types";
 
 import { ConversionHubShell } from "@/app/(app)/admin/conversion-hub/hub-shell";
-import { getWeekStartDate, loadInboxData, loadScriptsTab } from "@/app/(app)/admin/conversion-hub/data";
+import {
+  getWeekStartDate,
+  loadInboxData,
+  loadProcessedData,
+  PROCESSED_RPC_READY,
+} from "@/app/(app)/admin/conversion-hub/data";
 
 type SearchParamsShape = Record<string, string | string[] | undefined>;
 
@@ -226,16 +231,15 @@ export default async function ViolationsPage({
   let manageData: {
     inbox: Awaited<ReturnType<typeof loadInboxData>>["data"];
     inboxCounts: Awaited<ReturnType<typeof loadInboxData>>["counts"];
-    scripts: Awaited<ReturnType<typeof loadScriptsTab>> | null;
+    processed: Awaited<ReturnType<typeof loadProcessedData>>["processed"];
   } | null = null;
 
   if (isManageView) {
-    const weekStart = getWeekStartDate();
-    const [{ data: inbox, counts: inboxCounts }, scripts] = await Promise.all([
+    const [{ data: inbox, counts: inboxCounts }, { processed }] = await Promise.all([
       loadInboxData(user.id),
-      loadScriptsTab(weekStart),
+      loadProcessedData(user.id),
     ]);
-    manageData = { inbox, inboxCounts, scripts };
+    manageData = { inbox, inboxCounts, processed };
   }
 
   return (
@@ -322,62 +326,64 @@ export default async function ViolationsPage({
             weekStart={getWeekStartDate()}
             inbox={manageData.inbox}
             inboxCounts={manageData.inboxCounts}
-            scripts={manageData.scripts}
+            processed={manageData.processed}
+            processedPending={!PROCESSED_RPC_READY}
             layoutVariant="embedded"
           />
         ) : (
           <>
-            {/* Dual Rank Boards */}
-            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <RankBoard
-                title="转化率排行榜"
-                subtitle="样本≥3 条"
-                items={conversionRankItems}
-                metricLabel="转化率"
-                metricKey="conversion_rate"
-                accentColor="#6FAA7D"
-                emptyHint="样本不足，暂无排名"
-                viewAllHref="/violations?tab=safe&sort=conversion_rate&order=desc"
-              />
-              <RankBoard
-                title="违规率排行榜"
-                subtitle="样本≥3 条"
-                items={violationRankItems}
-                metricLabel="违规率"
-                metricKey="pass_rate"
-                accentColor="#C9604D"
-                emptyHint="样本不足，暂无排名"
-                viewAllHref="/violations?tab=risk&sort=pass_rate&order=asc"
-              />
-            </section>
-
             {/* Filter Bar */}
             <section>
               <FilterBar purpose={getTabPurpose(tab)} />
             </section>
 
-            {/* List */}
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[13px] font-medium text-zinc-700">
-                  {query ? `「${query}」的搜索结果` : "话术列表"}
-                  <span className="ml-2 font-mono text-[12px] text-zinc-400 tabular-nums">
-                    {totalCases}
-                  </span>
-                </h2>
-              </div>
+            {/* Header row above list */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-[13px] font-medium text-zinc-700">
+                {query ? `「${query}」的搜索结果` : "话术列表"}
+                <span className="ml-2 font-mono text-[12px] text-zinc-400 tabular-nums">
+                  {totalCases}
+                </span>
+              </h2>
+            </div>
 
-              {error ? (
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-[13px] leading-[1.7] text-[#D99E55]">
-                  {error}
-                </div>
-              ) : cases.length ? (
-                <div className="space-y-0.5">
-                  {cases.map((caseItem) => (
-                    <CompactCaseRow key={caseItem.id} caseItem={caseItem} />
-                  ))}
-                </div>
-              ) : (
+            {error ? (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-[13px] leading-[1.7] text-[#D99E55]">
+                {error}
+              </div>
+            ) : cases.length ? (
+              <CaseList
+                cases={cases}
+                conversionRankItems={conversionRankItems}
+                violationRankItems={violationRankItems}
+                canManageViolations={canManageViolations}
+                isOwner={isOwner}
+              />
+            ) : (
+              <>
+                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <RankBoard
+                    title="转化率排行榜"
+                    subtitle="样本≥3 条"
+                    items={conversionRankItems}
+                    metricLabel="转化率"
+                    metricKey="conversion_rate"
+                    accentColor="#6FAA7D"
+                    emptyHint="样本不足，暂无排名"
+                    viewAllHref="/violations?tab=safe&sort=conversion_rate&order=desc"
+                  />
+                  <RankBoard
+                    title="违规率排行榜"
+                    subtitle="样本≥3 条"
+                    items={violationRankItems}
+                    metricLabel="违规率"
+                    metricKey="pass_rate"
+                    accentColor="#C9604D"
+                    emptyHint="样本不足，暂无排名"
+                    viewAllHref="/violations?tab=risk&sort=pass_rate&order=asc"
+                  />
+                </section>
+
                 <div className="rounded-xl border border-dashed border-zinc-300 bg-white py-10">
                   <EmptyState
                     title={query ? "没找到匹配的话术" : "话术库还没有内容"}
@@ -397,8 +403,8 @@ export default async function ViolationsPage({
                     </Link>
                   </div>
                 </div>
-              )}
-            </section>
+              </>
+            )}
           </>
         )}
       </div>
