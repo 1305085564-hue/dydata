@@ -2,57 +2,30 @@ import { BootstrapPayload } from './types';
 
 export const mockBootstrapData: BootstrapPayload = {
   feature: {
-    id: "feature-rewrite-mock",
     key: "rewrite",
     label: "AI 文案改写",
     enabled: true
   },
-  runtime: {
-    outputTokenLimit: 3600,
-    outputApproxChars: 3000,
-    contextMessageLimit: 30,
-  },
   defaults: {
-    autoModeEnabled: false,
-    fixedModeId: null,
+    autoModeEnabled: true,
     modelViewId: "mv-gemini",
-    modeId: null,
-    lengthPresetId: "len-normal",
+    modeId: "mode-baokuan",
+    lengthPresetId: "len-short",
     workflowId: "wf-standard"
   },
-  fixedModes: [
-    {
-      id: "fixed-framework",
-      key: "strong_framework",
-      name: "强框架模式",
-      description: "优先调整结构、信息顺序和开头抓力",
-      isEnabled: true,
-      modelViewId: "mv-opus",
-      lengthPresetId: "len-normal"
-    },
-    {
-      id: "fixed-tone",
-      key: "strong_tone",
-      name: "强语感模式",
-      description: "优先提升口播顺滑度和真人表达感",
-      isEnabled: true,
-      modelViewId: "mv-gemini",
-      lengthPresetId: "len-normal"
-    }
-  ],
   modelViews: [
     {
       id: "mv-gemini",
       key: "gemini-family",
-      label: "Gemini",
-      description: "适合强语感改写",
+      label: "强语感系列 (默认)",
+      description: "适合情绪拉满的口语化表达",
       isDefault: true
     },
     {
       id: "mv-opus",
       key: "opus-family",
-      label: "Opus",
-      description: "适合结构化重组和起稿",
+      label: "强逻辑系列",
+      description: "适合结构化拆解和初步起稿",
       isDefault: false
     }
   ],

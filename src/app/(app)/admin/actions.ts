@@ -29,7 +29,7 @@ import {
   type GrantMode,
   type ReviewDecision,
 } from "@/lib/豁免流程";
-import type { Permissions, UserRole } from "@/types";
+import type { Permissions, UserRole, PermissionKey } from "@/types";
 import {
   buildMemberTeamTransferPatch,
   canChangeMemberRole,

@@ -17,8 +17,6 @@ import {
 type CreateConversationBody = {
   title?: string;
   autoModeEnabled?: boolean;
-  fixedModeId?: string | null;
-  fixedModeKey?: string | null;
   modelViewId?: string | null;
   modelViewKey?: string | null;
   modeId?: string | null;
@@ -57,8 +55,6 @@ export async function POST(request: NextRequest) {
     const body = await parseJsonBody<CreateConversationBody>(request);
     const { selections } = await resolveRewriteSelections(auth.serviceClient, {
       autoModeEnabled: body.autoModeEnabled,
-      fixedModeId: body.fixedModeId,
-      fixedModeKey: body.fixedModeKey,
       modelViewId: body.modelViewId,
       modelViewKey: body.modelViewKey,
       modeId: body.modeId,
@@ -71,7 +67,6 @@ export async function POST(request: NextRequest) {
       userId: auth.actor.userId,
       title: toNullableString(body.title),
       autoModeEnabled: selections.autoModeEnabled,
-      fixedModeId: selections.fixedMode?.id ?? null,
       modelViewId: selections.modelView.id,
       modeId: selections.mode?.id ?? null,
       lengthPresetId: selections.lengthPreset.id,

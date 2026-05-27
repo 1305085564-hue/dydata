@@ -2,23 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { handleRewriteChat, requireRewriteActor } from "@/lib/rewrite/shared";
 
-import {
-  parseJsonBody,
-  toApiErrorResponse,
-  toNullableString,
-  toOptionalNullableString,
-} from "../_shared";
-
-// 单步 AI 调用，留足余量
-export const maxDuration = 60;
+import { parseJsonBody, toApiErrorResponse, toNullableString } from "../_shared";
 
 type RewriteChatBody = {
   conversationId?: string | null;
   message?: string;
   autoModeEnabled?: boolean;
-  autoStep?: number | null;
-  fixedModeId?: string | null;
-  fixedModeKey?: string | null;
   modelViewId?: string | null;
   modelViewKey?: string | null;
   modeId?: string | null;
@@ -35,22 +24,18 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await parseJsonBody<RewriteChatBody>(request);
-    const autoStep = typeof body.autoStep === "number" ? body.autoStep : undefined;
     const payload = await handleRewriteChat({
       service: auth.serviceClient,
       actor: auth.actor,
       conversationId: toNullableString(body.conversationId),
       message: body.message ?? "",
       autoModeEnabled: body.autoModeEnabled,
-      autoStep,
-      fixedModeId: toOptionalNullableString(body.fixedModeId),
-      fixedModeKey: toOptionalNullableString(body.fixedModeKey),
-      modelViewId: toOptionalNullableString(body.modelViewId),
-      modelViewKey: toOptionalNullableString(body.modelViewKey),
-      modeId: toOptionalNullableString(body.modeId),
-      modeKey: toOptionalNullableString(body.modeKey),
-      lengthPresetId: toOptionalNullableString(body.lengthPresetId),
-      lengthPresetKey: toOptionalNullableString(body.lengthPresetKey),
+      modelViewId: toNullableString(body.modelViewId),
+      modelViewKey: toNullableString(body.modelViewKey),
+      modeId: body.modeId === null ? null : toNullableString(body.modeId),
+      modeKey: body.modeKey === null ? null : toNullableString(body.modeKey),
+      lengthPresetId: toNullableString(body.lengthPresetId),
+      lengthPresetKey: toNullableString(body.lengthPresetKey),
     });
 
     return NextResponse.json(payload);

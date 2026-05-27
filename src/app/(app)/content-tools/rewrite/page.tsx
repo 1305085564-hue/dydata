@@ -1,10 +1,8 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
-import { RewriteWorkbench } from "@/components/content-tools/rewrite";
+import RewriteWorkbench from "@/components/content-tools/RewriteWorkbench";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions } from "@/lib/permissions";
-import { canUseAiCopywriting } from "@/lib/permission-utils";
 
 export const metadata: Metadata = {
   title: 'AI 文案改写 | 抖音数据平台',
@@ -21,17 +19,9 @@ export default async function RewritePage() {
     redirect("/login");
   }
 
-  const permissionInfo = await getUserPermissions();
-
-  if (!permissionInfo || !canUseAiCopywriting(permissionInfo.businessRole, permissionInfo.permissions)) {
-    redirect("/content-tools");
-  }
-
   return (
-    <div className="-mx-4 -mt-[calc(var(--app-top-offset)+1.25rem)] sm:-mx-6 h-[100dvh] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] overflow-hidden">
-      <div className="h-full w-full pt-[var(--app-top-offset)]">
-        <RewriteWorkbench />
-      </div>
+    <div className="h-[calc(100vh-64px)] w-full">
+      <RewriteWorkbench />
     </div>
   )
 }

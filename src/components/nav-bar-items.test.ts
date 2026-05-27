@@ -12,7 +12,7 @@ test("管理员导航包含团队管理和系统设置入口", () => {
       { href: "/dashboard", label: "今日工作台" },
       { href: "/growth", label: "个人成长" },
       { href: "/violations", label: "话术案例库" },
-      { href: "/content-tools/rewrite", label: "文案助手" },
+      { href: "/content-tools/rewrite", label: "AI助手" },
       { href: "/admin", label: "团队管理" },
       { href: "/admin/settings", label: "系统设置" },
     ]
