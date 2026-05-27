@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-test("内容复盘首屏取数固定走管理员客户端", async () => {
+test("批改台首屏取数固定走管理员客户端", async () => {
   const mod = await import(new URL("./content/page.tsx", import.meta.url).href);
 
   const adminClient = { kind: "admin-content-client" };
@@ -24,7 +24,7 @@ test("内容复盘首屏取数固定走管理员客户端", async () => {
   assert.deepEqual(result, { ok: true, source: "content" });
 });
 
-test("视频素材首屏取数固定走管理员客户端", async () => {
+test("素材库首屏取数固定走管理员客户端", async () => {
   const mod = await import(new URL("./videos/page.tsx", import.meta.url).href);
 
   const adminClient = { kind: "admin-video-client" };

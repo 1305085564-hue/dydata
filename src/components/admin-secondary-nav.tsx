@@ -52,7 +52,7 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
   {
     href: "/admin/content",
     panel: "content",
-    label: "内容复盘",
+    label: "批改台",
     description: "文案拆解、次日复盘、内容判断和下一步动作。",
     icon: FileText,
     tone: "success",
@@ -63,7 +63,7 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
   {
     href: "/admin/videos",
     panel: "videos",
-    label: "视频素材",
+    label: "素材库",
     description: "原始视频、24h 快照、标签与异常状态管理。",
     icon: FolderOpen,
     tone: "neutral",

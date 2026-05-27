@@ -38,8 +38,8 @@ type SidebarBadges = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "今日待办", icon: Gauge, badgeKey: "cockpit" },
   { href: "/admin/analytics", label: "经营分析", icon: BarChart3 },
-  { href: "/admin/videos", label: "视频素材", icon: Video, badgeKey: "videos" },
-  { href: "/admin/content", label: "内容复盘", icon: FileText, badgeKey: "content" },
+  { href: "/admin/videos", label: "素材库", icon: Video, badgeKey: "videos" },
+  { href: "/admin/content", label: "批改台", icon: FileText, badgeKey: "content" },
 ];
 
 function getVisibleNavItems(input: {

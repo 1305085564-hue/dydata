@@ -195,7 +195,7 @@ export function VideoPageClient({
               {data.assetSummary.gradedCount}
             </span>
           </span>
-          <span className="pl-2 text-[15px] font-medium tracking-tight text-zinc-400">资料库</span>
+          <span className="pl-2 text-[15px] font-medium tracking-tight text-zinc-400">素材库</span>
         </div>
       </div>
 

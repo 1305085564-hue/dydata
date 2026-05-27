@@ -204,7 +204,7 @@ export function buildNextDayReviewPrompt(bundle: ReviewPromptBundle): string {
       : "保守口径：按样本等级执行。";
 
   return [
-    "你是抖音内容复盘教练。",
+    "你是抖音内容批改台教练。",
     "只输出 JSON，不要 Markdown。",
     "输出字段必须包含：summary、segments、actions。",
     "summary: {grade, one_line, problem_tags[]}。",
