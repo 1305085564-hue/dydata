@@ -142,10 +142,6 @@ export function ContentPageClient({
       id="content-review-list"
       className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
     >
-      <div className="flex items-center justify-between border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">批改台</h2>
-      </div>
-
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
@@ -232,12 +228,6 @@ export function ContentPageClient({
               ) : null}
             </div>
           ) : null}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
-          <span>AI初稿待确认 <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">{data.workflowSummary.draft}</span></span>
-          <span>已确认待下发 <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">{data.workflowSummary.confirmed}</span></span>
-          <span>已下发 <span className="ml-0.5 font-mono tabular-nums text-[#6FAA7D]">{data.workflowSummary.sent + data.workflowSummary.viewed}</span></span>
         </div>
       </div>
 

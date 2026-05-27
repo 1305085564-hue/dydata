@@ -54,9 +54,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="视频素材"
-      title="视频资产"
-      description="原始视频、24h 快照、标签与异常状态"
+      title="资料库"
       indexItems={[]}
     >
       <VideoPageClient

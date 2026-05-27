@@ -501,22 +501,20 @@ export function ContentList({
   }, [batchCandidates, onFeedbackCardsChanged]);
 
   return (
-    <div className="space-y-4">
-      <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
-
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-        <div className="text-[12px] text-zinc-500">
-          当前筛选下可生成草稿 <span className="font-mono text-[#6FAA7D]">{batchCandidates.length}</span> 条，单次最多处理 20 条
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
         </div>
         <Button
           size="sm"
           variant="outline"
-          className="h-8 gap-1.5 rounded-xl bg-white text-[12px]"
+          className="h-8 shrink-0 gap-1.5 rounded-xl bg-white text-[12px]"
           onClick={handleBatchGenerate}
           disabled={isBatchGenerating || batchCandidates.length === 0}
         >
           <Sparkles className="size-3.5" />
-          {isBatchGenerating ? "生成中..." : "批量生成草稿"}
+          {isBatchGenerating ? "生成中..." : `生成草稿${batchCandidates.length > 0 ? ` · ${batchCandidates.length}` : ""}`}
         </Button>
       </div>
 

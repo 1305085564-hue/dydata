@@ -17,7 +17,6 @@ import { VideoDetailDialog } from "./video-detail-dialog";
 import { Patch24hDialog } from "./patch-24h-dialog";
 import { interactionRate } from "@/lib/video-metrics";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
-import { getTagReviewStatus, isVideoMatchedByTagFilters } from "@/lib/video-tags";
 import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 type VideoRow = Video & {
@@ -44,17 +43,6 @@ const statusClassName: Record<Video["anomaly_status"], string> = {
   投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
   活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
   "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
-};
-
-const libraryStatusClass: Record<string, string> = {
-  ready: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
-  pending: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-};
-
-const completenessStatusClass: Record<string, string> = {
-  complete: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
-  partial: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  missing: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
 };
 
 const PAGE_SIZE = 50;
@@ -91,9 +79,6 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
     startDate: "",
     endDate: "",
     status: "all",
-    topicTags: [],
-    formatTags: [],
-    ctaTags: [],
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [patchingVideoId, setPatchingVideoId] = useState<string | null>(null);
@@ -105,6 +90,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
   useEffect(() => {
     setAssetLibraryState(assetLibrary);
   }, [assetLibrary]);
+
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -163,9 +149,9 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
         return false;
       }
 
-      return isVideoMatchedByTagFilters(tagMap.get(video.id) ?? [], filters);
+      return true;
     });
-  }, [filters, sortedVideos, tagMap]);
+  }, [filters, sortedVideos]);
 
   const visibleVideos = useMemo(() => filteredVideos.slice(0, loadedCount), [filteredVideos, loadedCount]);
   const hasMore = loadedCount < filteredVideos.length;
@@ -251,7 +237,6 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
               <TableHead className="h-9 text-[12px] font-medium text-zinc-500">互动率(%)</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-zinc-500">涨粉</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-zinc-500">状态</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">资料状态</TableHead>
               <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-zinc-500">操作</TableHead>
             </TableRow>
           </TableHeader>
@@ -259,7 +244,6 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
             {visibleVideos.length ? (
               visibleVideos.map((video) => {
                 const snapshot = snapshotMap.get(video.id) ?? null;
-                const tags = tagMap.get(video.id) ?? [];
                 const showPatchButton = shouldShowPatch24hButton(video, snapshot);
 
                 return (
@@ -276,43 +260,9 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
                     <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
                     <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
-                          {video.anomaly_status}
-                        </Badge>
-                        {tags.some((tag) => getTagReviewStatus(tag.confidence) === "待确认") ? (
-                          <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-[12px] text-[#D99E55]">
-                            标签待确认
-                          </Badge>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {(() => {
-                        const record = assetLibraryState[video.id];
-                        if (!record) return <span className="text-[12px] text-zinc-400">-</span>;
-                        return (
-                          <div className="flex flex-col gap-1">
-                            <Badge
-                              variant="outline"
-                              className={`w-fit text-[11px] ${libraryStatusClass[record.library_status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
-                            >
-                              {record.library_status_label}
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className={`w-fit text-[11px] ${completenessStatusClass[record.completeness_status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
-                            >
-                              {record.completeness_label} ({Math.round(record.completion_ratio * 100)}%)
-                            </Badge>
-                            {record.missing_fields.length > 0 && (
-                              <span className="text-[12px] text-zinc-400">
-                                缺：{record.missing_fields.map((f) => ({ video_title: "标题", content: "文案", snapshot_24h: "24h快照", video_tags: "标签", content_segments: "切段" } as const)[f]).join("、")}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })()}
+                      <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
+                        {video.anomaly_status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="px-4 text-right">
                       <div className="flex items-center justify-end gap-4">
@@ -339,7 +289,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={10} className="px-4 py-16 text-center text-[13px] text-zinc-500">
+                <TableCell colSpan={9} className="px-4 py-16 text-center text-[13px] text-zinc-500">
                   当前筛选条件下暂无视频数据。
                 </TableCell>
               </TableRow>
@@ -348,7 +298,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
             {/* Sentinel for auto-load */}
             {hasMore && (
               <TableRow>
-                <TableCell colSpan={10} className="p-0">
+                <TableCell colSpan={9} className="p-0">
                   <div ref={sentinelRef} className="h-4" />
                 </TableCell>
               </TableRow>
