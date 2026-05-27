@@ -26,9 +26,19 @@ const TEAM_ADMIN_DEFAULT_PERMISSIONS = Object.fromEntries(
   PERMISSION_KEYS.map((key) => [key, true]),
 ) as Record<PermissionKey, boolean>;
 
-const GROUP_LEADER_DEFAULT_PERMISSIONS = Object.fromEntries(
-  PERMISSION_KEYS.map((key) => [key, true]),
-) as Record<PermissionKey, boolean>;
+const GROUP_LEADER_DEFAULT_PERMISSIONS: Record<PermissionKey, boolean> = {
+  view_all_data: false,
+  edit_data: false,
+  export_data: true,
+  view_analytics: true,
+  manage_members: false,
+  manage_violations: false,
+  view_conversion_hub: false,
+  view_content_review: true,
+  manage_video_assets: false,
+  use_ai_copywriting: true,
+  use_ai_management: false,
+};
 
 const MEMBER_DEFAULT_PERMISSIONS: Record<PermissionKey, boolean> = Object.fromEntries(
   PERMISSION_KEYS.map((key) => [key, false]),
