@@ -145,6 +145,10 @@ export function ContentDetailDialog({
       setCardDetail(null);
       return;
     }
+    setMainIssues("");
+    setNextAction("");
+    setManagerNote("");
+    setCardDetail(null);
     fetch(`/api/admin/content-feedback-cards/${video.id}`)
       .then((res) => res.json())
       .then((data: { feedback_card?: ContentFeedbackCardDetail; error?: string }) => {
