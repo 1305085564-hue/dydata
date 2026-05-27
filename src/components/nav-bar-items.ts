@@ -26,7 +26,7 @@ export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boo
   if (input.showAiCopywriting !== false) {
     items.push({
       href: "/content-tools/rewrite",
-      label: "AI助手",
+      label: "文案助手",
       match: (pathname) => pathname === "/content-tools/rewrite",
     });
   }

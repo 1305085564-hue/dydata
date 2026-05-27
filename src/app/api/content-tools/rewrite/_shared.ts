@@ -5,12 +5,26 @@ import { toBoolean, toTrimmedString } from "@/lib/type-guards";
 export { toBoolean, toTrimmedString };
 
 function normalizeRewriteApiErrorMessage(message: string) {
-  if (
+  const missingRewriteTableOrColumn =
     message.includes("Could not find the table 'public.rewrite_") ||
     message.includes('relation "public.rewrite_') ||
-    (message.includes("Could not find the '") && message.includes("' column of 'rewrite_"))
+    (message.includes("Could not find the '") && message.includes("' column of 'rewrite_"));
+  const missing047Columns =
+    (message.includes("output_token_limit") || message.includes("context_message_limit")) &&
+    (message.includes("ai_feature_config") ||
+      message.includes("schema cache") ||
+      message.includes("does not exist") ||
+      message.includes("Could not find the '"));
+
+  if (
+    missingRewriteTableOrColumn ||
+    missing047Columns
   ) {
-    return "文案改写数据表未就绪，请先执行 044 / 045 migration";
+    return "文案改写数据表未就绪，请先执行 044 / 045 / 046 / 047 migration";
+  }
+
+  if (message.includes("invalid input syntax for type uuid")) {
+    return "会话 ID 格式不正确";
   }
 
   return message;
@@ -19,6 +33,12 @@ function normalizeRewriteApiErrorMessage(message: string) {
 export function toNullableString(value: unknown) {
   const text = toTrimmedString(value);
   return text || null;
+}
+
+export function toOptionalNullableString(value: unknown) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return toNullableString(value);
 }
 
 export async function parseJsonBody<T extends Record<string, unknown>>(request: NextRequest) {
