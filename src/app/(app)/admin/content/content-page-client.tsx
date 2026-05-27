@@ -143,8 +143,6 @@ export function ContentPageClient({
       className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5"
     >
       <div className="flex flex-wrap items-center gap-4">
-        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-800">批改台</h2>
-
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
             <button
@@ -231,6 +229,8 @@ export function ContentPageClient({
             </div>
           ) : null}
         </div>
+
+        <h2 className="ml-auto text-[15px] font-medium tracking-tight text-zinc-400">批改台</h2>
       </div>
 
       <ContentList
