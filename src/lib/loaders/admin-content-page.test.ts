@@ -84,6 +84,54 @@ test("素材库首屏默认只下发第一页视频", () => {
   assert.equal(fullRows.length, ADMIN_VIDEOS_INITIAL_LIMIT + 5);
 });
 
+test("素材库首屏视频和快照查询只选择需要字段", () => {
+  assert.equal(videosInternal.VIDEO_ASSET_SELECT.includes("*"), false);
+  assert.match(videosInternal.VIDEO_ASSET_SELECT, /asset_level/);
+  assert.match(videosInternal.VIDEO_ASSET_SELECT, /accounts!inner\(name, profile_id\)/);
+  assert.equal(videosInternal.VIDEO_SNAPSHOT_SELECT.includes("*"), false);
+  assert.match(videosInternal.VIDEO_SNAPSHOT_SELECT, /play_count/);
+  assert.match(videosInternal.VIDEO_SNAPSHOT_SELECT, /completion_rate_5s/);
+});
+
+test("素材库兼容 Supabase 关联对象或数组返回", () => {
+  const [objectRow, arrayRow] = videosInternal.normalizeVideoRows([
+    {
+      id: "video-1",
+      account_id: "account-1",
+      user_id: "user-1",
+      video_url: null,
+      video_title: "对象关联",
+      content: null,
+      published_at: null,
+      uploaded_at: "2026-04-30T00:00:00.000Z",
+      anomaly_status: "正常",
+      created_at: "2026-04-30T00:00:00.000Z",
+      accounts: { name: "账号A", profile_id: "profile-a" },
+      profiles: { name: "成员A" },
+    },
+    {
+      id: "video-2",
+      account_id: "account-2",
+      user_id: "user-2",
+      video_url: null,
+      video_title: "数组关联",
+      content: null,
+      published_at: null,
+      uploaded_at: "2026-04-30T00:00:00.000Z",
+      anomaly_status: "正常",
+      created_at: "2026-04-30T00:00:00.000Z",
+      accounts: [{ name: "账号B", profile_id: "profile-b" }],
+      profiles: [{ name: "成员B" }],
+    },
+  ]);
+
+  assert.equal(objectRow.accounts.name, "账号A");
+  assert.equal(objectRow.accounts.profile_id, "profile-a");
+  assert.equal(arrayRow.accounts.name, "账号B");
+  assert.equal(arrayRow.accounts.profile_id, "profile-b");
+  assert.equal(arrayRow.profiles.name, "成员B");
+});
+
 test("素材库首屏候选池大于最终下发数量", () => {
   assert.equal(
     videosInternal.ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT > ADMIN_VIDEOS_INITIAL_LIMIT,

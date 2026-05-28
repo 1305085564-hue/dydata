@@ -14,12 +14,21 @@ type VideoRow = Video & {
   profiles: { name: string };
 };
 
+type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
+  accounts: { name: string | null; profile_id?: string | null } | Array<{ name: string | null; profile_id?: string | null }> | null;
+  profiles: { name: string | null } | Array<{ name: string | null }> | null;
+};
+
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
 type LoadMode = "initial" | "full";
 
 export const ADMIN_VIDEOS_INITIAL_LIMIT = 30;
 const ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT = 200;
+const VIDEO_ASSET_SELECT =
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
+const VIDEO_SNAPSHOT_SELECT =
+  "id, video_id, snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, fan_play_ratio, homepage_visits, follower_convert, cover_click_rate, avg_play_duration, completion_rate, bounce_rate_2s, completion_rate_5s, avg_play_ratio";
 
 export interface AdminVideosPageData {
   videos: VideoRow[];
@@ -50,6 +59,27 @@ function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_VIDEOS_INITIAL_LIMIT) : rows;
 }
 
+function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"], fallback: string) {
+  const row = Array.isArray(value) ? value[0] : value;
+  return row?.name ?? fallback;
+}
+
+function readJoinedProfileId(value: RawVideoRow["accounts"]) {
+  const row = Array.isArray(value) ? value[0] : value;
+  return row?.profile_id ?? null;
+}
+
+function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
+  return rows.map((row) => ({
+    ...row,
+    accounts: {
+      name: readJoinedName(row.accounts, "未命名账号"),
+      profile_id: readJoinedProfileId(row.accounts),
+    },
+    profiles: { name: readJoinedName(row.profiles, "未命名成员") },
+  }));
+}
+
 export async function loadAdminVideosPageData({
   supabase,
   view = "pending",
@@ -71,7 +101,7 @@ export async function loadAdminVideosPageData({
     : null;
   let videosQuery = supabase
     .from("videos")
-    .select("*, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)")
+    .select(VIDEO_ASSET_SELECT)
     .order("published_at", { ascending: false });
   if (mode === "initial") {
     videosQuery = videosQuery.range(0, ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT - 1);
@@ -83,9 +113,10 @@ export async function loadAdminVideosPageData({
     supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),
   ]);
 
+  const normalizedRows = normalizeVideoRows((videos ?? []) as unknown as RawVideoRow[]);
   const normalizedVideos = scope
-    ? filterRowsByDataScope(scope, (videos ?? []) as VideoRow[], (video) => video.accounts?.profile_id ?? video.user_id)
-    : ((videos ?? []) as VideoRow[]);
+    ? filterRowsByDataScope(scope, normalizedRows, (video) => video.accounts?.profile_id ?? video.user_id)
+    : normalizedRows;
   const scopedVideoIdSet = new Set(normalizedVideos.map((video) => video.id));
   const scopedVideoIds = Array.from(scopedVideoIdSet);
   const { data: tagIds } = scopedVideoIds.length > 0
@@ -119,7 +150,7 @@ export async function loadAdminVideosPageData({
   const [{ data: snapshots }, { data: videoTags }] =
     visibleVideoIds.length > 0
       ? await Promise.all([
-          supabase.from("video_metrics_snapshots").select("*").in("video_id", visibleVideoIds),
+          supabase.from("video_metrics_snapshots").select(VIDEO_SNAPSHOT_SELECT).in("video_id", visibleVideoIds),
           supabase.from("video_tags").select("*").in("video_id", visibleVideoIds),
         ])
       : [{ data: [] }, { data: [] }];
@@ -197,5 +228,8 @@ export async function loadAdminVideosPageData({
 export const __internal = {
   ADMIN_VIDEOS_INITIAL_LIMIT,
   ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT,
+  VIDEO_ASSET_SELECT,
+  VIDEO_SNAPSHOT_SELECT,
   limitInitialVideos,
+  normalizeVideoRows,
 };
