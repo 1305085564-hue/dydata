@@ -10,6 +10,7 @@ import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { VideoPageClient } from "./video-page-client";
 
 type VideoView = "pending" | "all";
+type UserPermissionInfo = NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
 
 interface Props {
   searchParams: Promise<{ view?: string; scope?: string; teamId?: string }>;
@@ -29,9 +30,17 @@ export async function loadAdminVideosInitialData(
     createAdminClient,
     loadAdminVideosPageData,
   },
+  permissionInfo?: UserPermissionInfo,
 ) {
   const supabase = deps.createAdminClient();
-  return deps.loadAdminVideosPageData({ supabase, view, perspective: scope.perspective, teamId: scope.teamId, mode: "initial" });
+  return deps.loadAdminVideosPageData({
+    supabase,
+    view,
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+    mode: "initial",
+    permissionInfo,
+  });
 }
 
 export default async function AdminVideosPage({ searchParams }: Props) {
@@ -50,7 +59,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
     availableTeamIds: teams.map((team) => team.id),
     fallbackTeamId: perm.teamId,
   });
-  const data = await loadAdminVideosInitialData(view, scope);
+  const data = await loadAdminVideosInitialData(view, scope, undefined, perm);
 
   return (
     <AdminWorkspaceLayout

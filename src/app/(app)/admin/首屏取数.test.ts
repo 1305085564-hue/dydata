@@ -26,6 +26,7 @@ test("批改台首屏取数固定走管理员客户端", async () => {
     perspective: "team",
     teamId: "team-1",
     mode: "initial",
+    permissionInfo: undefined,
   });
   assert.deepEqual(result, { ok: true, source: "content" });
 });
@@ -55,6 +56,7 @@ test("素材库首屏取数固定走管理员客户端", async () => {
     perspective: "company",
     teamId: null,
     mode: "initial",
+    permissionInfo: undefined,
   });
   assert.deepEqual(result, { ok: true, source: "videos" });
 });

@@ -9,6 +9,7 @@ import { getUserPermissions } from "@/lib/permissions";
 import type { ContentFeedbackCard, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
+type UserPermissionInfo = NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
 
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -24,6 +25,8 @@ type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string; profile_id?: string | null };
 type LoadMode = "initial" | "full";
 type FeedbackCardStatusRow = Pick<ContentFeedbackCard, "video_id" | "card_status">;
+type SegmentRow = { video_id: string };
+type SnapshotVideoIdRow = { video_id: string };
 
 const CONTENT_VIDEO_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
@@ -31,7 +34,7 @@ const CONTENT_VIDEO_SELECT =
 const CONTENT_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares";
 
-export const ADMIN_CONTENT_INITIAL_LIMIT = 50;
+export const ADMIN_CONTENT_INITIAL_LIMIT = 30;
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -112,18 +115,20 @@ export async function loadAdminContentPageData({
   perspective = "company",
   teamId = null,
   mode = "full",
+  permissionInfo,
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   mode?: LoadMode;
+  permissionInfo?: UserPermissionInfo;
 }): Promise<AdminContentPageData> {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
-  const perm = await getUserPermissions();
+  const perm = permissionInfo ?? await getUserPermissions();
   const scope = perm
     ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
     : null;
@@ -176,12 +181,13 @@ export async function loadAdminContentPageData({
   const visibleVideos = view === "pending" ? pendingVideos : videos;
   const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
-  const feedbackCardVideoIds = mode === "initial" ? visibleVideoIds : scopedVideoIds;
+  const summaryVideoIds = mode === "initial" ? visibleVideoIds : scopedVideoIds;
   const [
     { data: snapshots },
     { data: segmentRows },
     { data: feedbackCardRows },
     { data: feedbackCardStatusRows },
+    { data: snapshotFlagRows },
   ] = await Promise.all([
     visibleVideoIds.length > 0
       ? supabase
@@ -194,22 +200,31 @@ export async function loadAdminContentPageData({
     visibleVideoIds.length > 0
       ? supabase.from("video_content_segments").select("video_id").in("video_id", visibleVideoIds)
       : Promise.resolve({ data: [] }),
-    feedbackCardVideoIds.length > 0
+    visibleVideoIds.length > 0
       ? serviceClient
           .from("content_feedback_cards")
           .select(CONTENT_FEEDBACK_CARD_SELECT)
-          .in("video_id", feedbackCardVideoIds)
+          .in("video_id", visibleVideoIds)
       : Promise.resolve({ data: [] }),
-    scopedVideoIds.length > 0
+    summaryVideoIds.length > 0
       ? serviceClient
           .from("content_feedback_cards")
           .select("video_id, card_status")
+          .in("video_id", summaryVideoIds)
+      : Promise.resolve({ data: [] }),
+    mode === "full" && scopedVideoIds.length > 0
+      ? supabase
+          .from("video_metrics_snapshots")
+          .select("video_id")
+          .eq("snapshot_type", "24h")
           .in("video_id", scopedVideoIds)
       : Promise.resolve({ data: [] }),
   ]);
-  const snapshotCount = (snapshots ?? []).length;
   const snapshotVideoIds = new Set((snapshots ?? []).map((snapshot) => snapshot.video_id as string));
-  const segmentedVideoIds = new Set((segmentRows ?? []).map((row) => row.video_id as string));
+  const snapshotSummaryVideoIds = mode === "initial"
+    ? snapshotVideoIds
+    : new Set((snapshotFlagRows ?? []).map((row) => (row as SnapshotVideoIdRow).video_id));
+  const segmentedVideoIds = new Set((segmentRows ?? []).map((row) => (row as SegmentRow).video_id));
   const feedbackCardMap = new Map<string, ContentFeedbackCard>();
   for (const row of (feedbackCardRows ?? []) as ContentFeedbackCard[]) {
     feedbackCardMap.set(row.video_id, row);
@@ -245,7 +260,7 @@ export async function loadAdminContentPageData({
     summary: {
       totalVideos: videos.length,
       reviewedCount: reviewedVideoIds.length,
-      snapshotCount,
+      snapshotCount: snapshotSummaryVideoIds.size,
       pendingReviewCount: pendingVideos.length,
     },
     workflowSummary,

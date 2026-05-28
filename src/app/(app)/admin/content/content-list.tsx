@@ -48,7 +48,7 @@ const statusClassName: Record<Video["anomaly_status"], string> = {
   "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
 };
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 function formatNumber(value: number | null | undefined) {
   if (value == null) return "-";

@@ -10,6 +10,7 @@ import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { ContentPageClient } from "./content-page-client";
 
 type ContentView = "pending" | "all";
+type UserPermissionInfo = NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
 
 interface Props {
   searchParams: Promise<{ view?: string; scope?: string; teamId?: string }>;
@@ -29,9 +30,17 @@ export async function loadAdminContentInitialData(
     createAdminClient,
     loadAdminContentPageData,
   },
+  permissionInfo?: UserPermissionInfo,
 ) {
   const supabase = deps.createAdminClient();
-  return deps.loadAdminContentPageData({ supabase, view, perspective: scope.perspective, teamId: scope.teamId, mode: "initial" });
+  return deps.loadAdminContentPageData({
+    supabase,
+    view,
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+    mode: "initial",
+    permissionInfo,
+  });
 }
 
 export default async function AdminContentPage({ searchParams }: Props) {
@@ -50,7 +59,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
     availableTeamIds: teams.map((team) => team.id),
     fallbackTeamId: perm.teamId,
   });
-  const data = await loadAdminContentInitialData(view, scope);
+  const data = await loadAdminContentInitialData(view, scope, undefined, perm);
 
   return (
     <AdminWorkspaceLayout

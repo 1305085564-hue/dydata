@@ -7,6 +7,7 @@ import { buildVideoAssetRecord } from "@/lib/video-asset-library";
 import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
+type UserPermissionInfo = NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
 
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -17,7 +18,7 @@ type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
 type LoadMode = "initial" | "full";
 
-export const ADMIN_VIDEOS_INITIAL_LIMIT = 50;
+export const ADMIN_VIDEOS_INITIAL_LIMIT = 30;
 
 export interface AdminVideosPageData {
   videos: VideoRow[];
@@ -54,14 +55,16 @@ export async function loadAdminVideosPageData({
   perspective = "company",
   teamId = null,
   mode = "full",
+  permissionInfo,
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   mode?: LoadMode;
+  permissionInfo?: UserPermissionInfo;
 }): Promise<AdminVideosPageData> {
-  const perm = await getUserPermissions();
+  const perm = permissionInfo ?? await getUserPermissions();
   const scope = perm
     ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
     : null;
