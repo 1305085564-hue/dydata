@@ -34,6 +34,7 @@ interface VideoListProps {
   accounts: AccountOption[];
   videoTags: VideoTag[];
   assetLibrary: Record<string, VideoAssetLibraryRecord>;
+  totalCount?: number;
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
@@ -82,6 +83,7 @@ export function VideoList({
   accounts,
   videoTags,
   assetLibrary,
+  totalCount,
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
@@ -99,6 +101,18 @@ export function VideoList({
   const [snapshotRows, setSnapshotRows] = useState(snapshots);
   const [tagRows, setTagRows] = useState(videoTags);
   const [assetLibraryState, setAssetLibraryState] = useState(assetLibrary);
+
+  useEffect(() => {
+    setVideoRows(videos);
+  }, [videos]);
+
+  useEffect(() => {
+    setSnapshotRows(snapshots);
+  }, [snapshots]);
+
+  useEffect(() => {
+    setTagRows(videoTags);
+  }, [videoTags]);
 
   useEffect(() => {
     setAssetLibraryState(assetLibrary);
@@ -367,7 +381,7 @@ export function VideoList({
                 <ChevronDown className="size-3.5" />
                 加载更多
                 <span className="ml-1 text-[11px] text-zinc-400">
-                  ({hasDeferredData ? "更多历史" : `${filteredVideos.length - loadedCount} 条剩余`})
+                  (已加载 {Math.min(loadedCount, filteredVideos.length)} / 共 {hasDeferredData ? totalCount ?? filteredVideos.length : filteredVideos.length} 条)
                 </span>
               </>
             )}

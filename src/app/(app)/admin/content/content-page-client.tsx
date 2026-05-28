@@ -298,6 +298,7 @@ export function ContentPageClient({
         accounts={data.accounts}
         feedbackCards={data.feedbackCards}
         reviewReadiness={data.reviewReadiness}
+        totalCount={data.summary.totalVideos}
         hasDeferredData={Boolean(data.isPartial)}
         isDeferredDataLoading={isDeferredLoading}
         onLoadDeferredData={loadDeferredData}

@@ -226,6 +226,7 @@ export function VideoPageClient({
         accounts={data.accounts}
         videoTags={data.videoTags}
         assetLibrary={data.assetLibrary}
+        totalCount={data.summary.totalVideos}
         hasDeferredData={Boolean(data.isPartial)}
         isDeferredDataLoading={isDeferredLoading}
         onLoadDeferredData={loadDeferredData}

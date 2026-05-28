@@ -32,6 +32,7 @@ interface ContentListProps {
   accounts: AccountOption[];
   feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
+  totalCount?: number;
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
@@ -264,6 +265,7 @@ export function ContentList({
   accounts,
   feedbackCards,
   reviewReadiness,
+  totalCount,
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
@@ -736,7 +738,7 @@ export function ContentList({
                     <ChevronDown className="size-3.5" />
                     加载更多
                     <span className="ml-1 text-[11px] text-zinc-400">
-                      ({hasDeferredData ? "更多历史" : `${filtered.length - loadedCount} 条剩余`})
+                      (已加载 {Math.min(loadedCount, filtered.length)} / 共 {hasDeferredData ? totalCount ?? filtered.length : filtered.length} 条)
                     </span>
                   </>
                 )}
