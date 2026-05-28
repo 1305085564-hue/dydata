@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StepWizard } from "./step-wizard";
 import { StepTypeSelect } from "./steps/step-type-select";
@@ -12,8 +12,6 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
 import type { ViolationAccount, WizardFormData } from "./types";
-import type { ViolationEventType } from "@/lib/conversion-hub/types";
-import type { Platform } from "@/lib/case-library/confidence";
 
 function formatLocalNow() {
   const now = new Date();
@@ -28,12 +26,21 @@ function localToIso(value: string) {
   return date.toISOString();
 }
 
-const STEPS = [
-  { key: "type", label: "选择类型" },
+/**
+ * step 语义：
+ *   0  type 起步（不进入主进度条，只占「起步」徽标）
+ *   1  core 核心内容
+ *   2  detail 详情补充
+ *   3  review 确认提交
+ *
+ * visibleSteps 只展示 1/2/3，对应 visibleStep = currentStep - 1。
+ */
+const VISIBLE_STEPS = [
   { key: "core", label: "核心内容" },
   { key: "detail", label: "详情补充" },
   { key: "review", label: "确认提交" },
 ];
+const TOTAL_STEPS = 4;
 
 export function SubmitForm({
   accounts,
@@ -52,11 +59,13 @@ export function SubmitForm({
   );
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState<WizardFormData>({
     submissionPath: "violation",
+    typePicked: false,
     script_text: "",
     screenshots: [],
     eventType: "限流",
@@ -70,11 +79,12 @@ export function SubmitForm({
     accountId: validInitialAccountId,
   });
 
-  const isLastStep = currentStep === STEPS.length - 1;
+  const isLastStep = currentStep === TOTAL_STEPS - 1;
+  const visibleStep = currentStep - 1; // -1 = 起步未完成
 
-  function updateForm(data: Partial<WizardFormData>) {
+  const updateForm = useCallback((data: Partial<WizardFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
-  }
+  }, []);
 
   /* ------------------------------------------------------------------ */
   /*  Validation                                                        */
@@ -83,7 +93,7 @@ export function SubmitForm({
   const canGoNext = useMemo(() => {
     switch (currentStep) {
       case 0:
-        return true; // Type selection always valid
+        return formData.typePicked;
       case 1:
         return formData.script_text.trim().length > 0;
       case 2: {
@@ -96,7 +106,6 @@ export function SubmitForm({
           if (showAppealText && !formData.appealText.trim()) return false;
           return true;
         }
-        // conversion
         const viewsNumber = Number(formData.viewsInput);
         const followsNumber = Number(formData.followsInput);
         if (formData.platforms.length === 0) return false;
@@ -106,74 +115,107 @@ export function SubmitForm({
         return true;
       }
       case 3:
-        return true; // Review step
+        return true;
       default:
         return false;
     }
   }, [currentStep, formData]);
 
   /* ------------------------------------------------------------------ */
+  /*  Step navigation                                                   */
+  /* ------------------------------------------------------------------ */
+
+  const goNext = useCallback(() => {
+    setDirection(1);
+    setCurrentStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
+  }, []);
+
+  const goPrev = useCallback(() => {
+    setDirection(-1);
+    setCurrentStep((s) => Math.max(0, s - 1));
+  }, []);
+
+  const handlePickType = useCallback(
+    (path: "violation" | "conversion") => {
+      setFormData((prev) => ({
+        ...prev,
+        submissionPath: path,
+        typePicked: true,
+      }));
+      // 短延迟让用户看到卡片选中态再推进，纯视觉
+      window.setTimeout(() => {
+        setDirection(1);
+        setCurrentStep(1);
+      }, 180);
+    },
+    [],
+  );
+
+  /* ------------------------------------------------------------------ */
   /*  Screenshot upload (preserved from original)                       */
   /* ------------------------------------------------------------------ */
 
-  async function uploadScreenshots(files: FileList | null) {
-    if (!files?.length) return;
-    let nextFiles = Array.from(files).slice(
-      0,
-      Math.max(5 - formData.screenshots.length, 0),
-    );
-    if (!nextFiles.length) {
-      feedbackToast.warning("最多上传 5 张截图");
-      return;
-    }
-
-    const validFiles: File[] = [];
-    for (const file of nextFiles) {
-      if (file.size > UPLOAD_LIMITS.violationScreenshot) {
-        feedbackToast.error(
-          `${file.name} 超过 ${formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)} 限制，请压缩后重试`,
-        );
-      } else {
-        validFiles.push(file);
+  const uploadScreenshots = useCallback(
+    async (files: FileList | null) => {
+      if (!files?.length) return;
+      let nextFiles = Array.from(files).slice(
+        0,
+        Math.max(5 - formData.screenshots.length, 0),
+      );
+      if (!nextFiles.length) {
+        feedbackToast.warning("最多上传 5 张截图");
+        return;
       }
-    }
-    if (!validFiles.length) return;
-    nextFiles = validFiles;
 
-    setIsUploading(true);
-    try {
-      const uploaded: { path: string; name: string }[] = [];
+      const validFiles: File[] = [];
       for (const file of nextFiles) {
-        const formDataUpload = new FormData();
-        formDataUpload.append("file", file);
-        const response = await fetch("/api/violations/upload", {
-          method: "POST",
-          body: formDataUpload,
-        });
-        const payload: unknown = await response.json().catch(() => ({}));
-        const uploadedPath = getUploadedPath(payload);
-        if (!response.ok || !uploadedPath) {
-          throw new Error(getApiErrorMessage(payload, `${file.name} 上传失败`));
+        if (file.size > UPLOAD_LIMITS.violationScreenshot) {
+          feedbackToast.error(
+            `${file.name} 超过 ${formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)} 限制，请压缩后重试`,
+          );
+        } else {
+          validFiles.push(file);
         }
-        uploaded.push({ path: uploadedPath, name: file.name });
       }
-      setFormData((prev) => ({
-        ...prev,
-        screenshots: [...prev.screenshots, ...uploaded].slice(0, 5),
-      }));
-      feedbackToast.success("截图已上传");
-    } catch (error) {
-      feedbackToast.error(error instanceof Error ? error.message : "截图上传失败");
-    } finally {
-      setIsUploading(false);
-    }
-  }
+      if (!validFiles.length) return;
+      nextFiles = validFiles;
+
+      setIsUploading(true);
+      try {
+        const uploaded: { path: string; name: string }[] = [];
+        for (const file of nextFiles) {
+          const formDataUpload = new FormData();
+          formDataUpload.append("file", file);
+          const response = await fetch("/api/violations/upload", {
+            method: "POST",
+            body: formDataUpload,
+          });
+          const payload: unknown = await response.json().catch(() => ({}));
+          const uploadedPath = getUploadedPath(payload);
+          if (!response.ok || !uploadedPath) {
+            throw new Error(getApiErrorMessage(payload, `${file.name} 上传失败`));
+          }
+          uploaded.push({ path: uploadedPath, name: file.name });
+        }
+        setFormData((prev) => ({
+          ...prev,
+          screenshots: [...prev.screenshots, ...uploaded].slice(0, 5),
+        }));
+        feedbackToast.success("截图已上传");
+      } catch (error) {
+        feedbackToast.error(error instanceof Error ? error.message : "截图上传失败");
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [formData.screenshots.length],
+  );
 
   /* ------------------------------------------------------------------ */
   /*  Submit (preserved from original)                                  */
   /* ------------------------------------------------------------------ */
 
-  async function handleSubmit() {
+  const handleSubmit = useCallback(async () => {
     const scriptText = formData.script_text.trim();
     if (!scriptText) {
       feedbackToast.error("请填写话术原文");
@@ -336,7 +378,53 @@ export function SubmitForm({
     } finally {
       setIsSubmitting(false);
     }
-  }
+  }, [formData, router]);
+
+  /* ------------------------------------------------------------------ */
+  /*  Keyboard shortcuts                                                */
+  /*    Esc           上一步                                             */
+  /*    Cmd/Ctrl+Enter 推进 / 提交                                        */
+  /* ------------------------------------------------------------------ */
+
+  const canGoNextRef = useRef(canGoNext);
+  const submittingRef = useRef(isSubmitting);
+  const stepRef = useRef(currentStep);
+  useEffect(() => {
+    canGoNextRef.current = canGoNext;
+  }, [canGoNext]);
+  useEffect(() => {
+    submittingRef.current = isSubmitting;
+  }, [isSubmitting]);
+  useEffect(() => {
+    stepRef.current = currentStep;
+  }, [currentStep]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (submittingRef.current) return;
+      const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+      const cmdEnter = e.key === "Enter" && (isMac ? e.metaKey : e.ctrlKey);
+      const isEsc = e.key === "Escape";
+
+      if (cmdEnter) {
+        if (!canGoNextRef.current) return;
+        e.preventDefault();
+        if (stepRef.current === TOTAL_STEPS - 1) {
+          handleSubmit();
+        } else {
+          goNext();
+        }
+        return;
+      }
+      if (isEsc) {
+        if (stepRef.current === 0) return;
+        e.preventDefault();
+        goPrev();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goNext, goPrev, handleSubmit]);
 
   /* ------------------------------------------------------------------ */
   /*  Render step content                                               */
@@ -347,8 +435,8 @@ export function SubmitForm({
       case 0:
         return (
           <StepTypeSelect
-            value={formData.submissionPath}
-            onChange={(submissionPath) => updateForm({ submissionPath })}
+            value={formData.typePicked ? formData.submissionPath : null}
+            onPick={handlePickType}
           />
         );
       case 1:
@@ -383,10 +471,13 @@ export function SubmitForm({
   return (
     <div className="mx-auto max-w-3xl py-8">
       <StepWizard
-        steps={STEPS}
-        currentStep={currentStep}
-        onPrev={() => setCurrentStep((s) => Math.max(0, s - 1))}
-        onNext={() => setCurrentStep((s) => Math.min(STEPS.length - 1, s + 1))}
+        visibleSteps={VISIBLE_STEPS}
+        visibleStep={visibleStep}
+        contentKey={currentStep}
+        direction={direction}
+        showActions={currentStep > 0}
+        onPrev={goPrev}
+        onNext={goNext}
         onSubmit={handleSubmit}
         canGoNext={canGoNext}
         isSubmitting={isSubmitting}
@@ -394,6 +485,9 @@ export function SubmitForm({
       >
         {renderStepContent()}
       </StepWizard>
+      <p className="mt-4 text-center text-[11px] text-zinc-400">
+        快捷键 · Esc 上一步 · Cmd/Ctrl + Enter 推进
+      </p>
     </div>
   );
 }

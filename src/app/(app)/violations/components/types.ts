@@ -179,6 +179,8 @@ export type WizardStep = {
 export type WizardFormData = {
   // Step 1
   submissionPath: "violation" | "conversion";
+  /** 用户是否已经在「起步」步骤选择过类型 */
+  typePicked: boolean;
   // Step 2
   script_text: string;
   screenshots: { path: string; name: string }[];

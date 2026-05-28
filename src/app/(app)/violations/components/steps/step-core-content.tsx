@@ -1,9 +1,12 @@
 "use client";
 
-import { useRef } from "react";
-import { Upload, X } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
+import { Upload, X, GripVertical } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageLightbox } from "@/components/image-lightbox";
 import { cn } from "@/lib/utils";
 import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
 import type { WizardFormData } from "../types";
@@ -22,9 +25,30 @@ export function StepCoreContent({
   onUpload,
 }: StepCoreContentProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragIndexRef = useRef<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const { script_text, screenshots, submissionPath } = data;
 
   const isViolation = submissionPath === "violation";
+
+  const removeAt = useCallback(
+    (path: string) => {
+      onChange({ screenshots: screenshots.filter((s) => s.path !== path) });
+    },
+    [onChange, screenshots],
+  );
+
+  const reorder = useCallback(
+    (from: number, to: number) => {
+      if (from === to) return;
+      const next = [...screenshots];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      onChange({ screenshots: next });
+    },
+    [onChange, screenshots],
+  );
 
   return (
     <div className="space-y-5">
@@ -38,6 +62,7 @@ export function StepCoreContent({
           value={script_text}
           onChange={(e) => onChange({ script_text: e.target.value })}
           placeholder="原封不动粘贴话术内容"
+          autoFocus
           className="min-h-[170px] resize-none rounded-xl border-transparent bg-zinc-100/70 text-[14px] leading-7 focus:border-zinc-200 focus:bg-white focus:ring-1 focus:ring-zinc-950/5"
         />
       </div>
@@ -64,7 +89,10 @@ export function StepCoreContent({
           onDrop={(e) => {
             e.preventDefault();
             if (isUploading || screenshots.length >= 5) return;
-            onUpload(e.dataTransfer.files);
+            // 缩略图重排时也会触发 drop，但 dataTransfer.files 为空
+            if (e.dataTransfer.files?.length) {
+              onUpload(e.dataTransfer.files);
+            }
           }}
           className={cn(
             "flex min-h-[110px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-5 py-8 text-center transition-colors",
@@ -96,30 +124,109 @@ export function StepCoreContent({
         />
 
         {screenshots.length ? (
-          <div className="flex flex-wrap gap-2">
-            {screenshots.map((item) => (
-              <span
-                key={item.path}
-                className="inline-flex max-w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[12px] font-medium text-zinc-600"
-              >
-                <span className="truncate">{item.name}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onChange({
-                      screenshots: screenshots.filter((s) => s.path !== item.path),
-                    })
-                  }
-                  className="text-zinc-400 hover:text-zinc-800 active:translate-y-0"
-                  aria-label="移除截图"
-                >
-                  <X className="size-3 stroke-[1.5]" />
-                </button>
-              </span>
-            ))}
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-zinc-400">
+              拖动卡片可重排，第一张默认作为封面。
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              <AnimatePresence initial={false}>
+                {screenshots.map((item, idx) => {
+                  const isOver = overIndex === idx;
+                  return (
+                    <motion.div
+                      key={item.path}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.85 }}
+                      transition={{ type: "spring", stiffness: 360, damping: 26 }}
+                      draggable
+                      onDragStart={(e) => {
+                        dragIndexRef.current = idx;
+                        // @ts-expect-error framer 转发的 e 没暴露 dataTransfer 类型，但运行时有
+                        e.dataTransfer?.setData("text/plain", String(idx));
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (overIndex !== idx) setOverIndex(idx);
+                      }}
+                      onDragLeave={() => {
+                        if (overIndex === idx) setOverIndex(null);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const from = dragIndexRef.current;
+                        if (from !== null && from !== idx) reorder(from, idx);
+                        dragIndexRef.current = null;
+                        setOverIndex(null);
+                      }}
+                      onDragEnd={() => {
+                        dragIndexRef.current = null;
+                        setOverIndex(null);
+                      }}
+                      className={cn(
+                        "group/thumb relative h-[88px] w-[68px] cursor-grab overflow-hidden rounded-lg border bg-zinc-100 transition-all active:cursor-grabbing",
+                        isOver
+                          ? "border-[#D97757] ring-2 ring-[#D97757]/40"
+                          : "border-zinc-200 hover:border-zinc-300",
+                        idx === 0 && "ring-1 ring-zinc-300",
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setLightboxIndex(idx)}
+                        className="block size-full"
+                        aria-label={`查看截图 ${idx + 1}`}
+                      >
+                        <Image
+                          src={`/api/violations/screenshot/${encodeURI(item.path)}`}
+                          alt={item.name}
+                          fill
+                          unoptimized
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      </button>
+
+                      {idx === 0 ? (
+                        <span className="absolute left-1 top-1 inline-flex items-center rounded bg-zinc-900/70 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+                          封面
+                        </span>
+                      ) : null}
+
+                      <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded bg-black/45 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover/thumb:opacity-100">
+                        <GripVertical className="size-2.5 stroke-[2]" />
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeAt(item.path);
+                        }}
+                        className="absolute bottom-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur-sm transition-all hover:bg-[#C9604D] group-hover/thumb:opacity-100"
+                        aria-label="删除截图"
+                      >
+                        <X className="size-3 stroke-[2]" />
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
           </div>
         ) : null}
       </div>
+
+      {lightboxIndex !== null ? (
+        <ImageLightbox
+          paths={screenshots.map((s) => s.path)}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={(i) => setLightboxIndex(i)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -10,9 +10,16 @@ interface WizardStepDef {
 }
 
 interface StepWizardProps {
-  steps: WizardStepDef[];
-  currentStep: number;
+  /** 进度条上展示的步骤（不含 type 起步） */
+  visibleSteps: WizardStepDef[];
+  /** 当前在 visibleSteps 中的位置：-1 表示「起步」尚未完成 */
+  visibleStep: number;
+  /** 内部用于 AnimatePresence 唯一 key */
+  contentKey: string | number;
+  /** 切换方向：1 前进，-1 后退 */
+  direction: 1 | -1;
   children: React.ReactNode;
+  showActions: boolean;
   onPrev: () => void;
   onNext: () => void;
   onSubmit: () => void;
@@ -22,9 +29,12 @@ interface StepWizardProps {
 }
 
 export function StepWizard({
-  steps,
-  currentStep,
+  visibleSteps,
+  visibleStep,
+  contentKey,
+  direction,
   children,
+  showActions,
   onPrev,
   onNext,
   onSubmit,
@@ -32,122 +42,189 @@ export function StepWizard({
   isSubmitting,
   isLastStep,
 }: StepWizardProps) {
-  const direction = 1; // 1 = forward, -1 = backward — managed by parent via key
-
   return (
     <div className="space-y-6">
       {/* Step indicator */}
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
-          const isCompleted = index < currentStep;
-          const isCurrent = index === currentStep;
-          const isUpcoming = index > currentStep;
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          {/* 起步徽标 */}
+          <motion.div
+            initial={false}
+            animate={{
+              opacity: visibleStep >= 0 ? 0.55 : 1,
+              scale: visibleStep >= 0 ? 0.95 : 1,
+            }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className="flex items-center gap-2"
+          >
+            <span
+              className={cn(
+                "flex size-6 items-center justify-center rounded-full border text-[11px] font-semibold transition-colors",
+                visibleStep >= 0
+                  ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                  : "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]",
+              )}
+            >
+              {visibleStep >= 0 ? <Check className="size-3 stroke-[2.5]" /> : "·"}
+            </span>
+            <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+              起步
+            </span>
+          </motion.div>
 
-          return (
-            <div key={step.key} className="flex flex-1 items-center">
-              {/* Step circle + label */}
-              <div className="flex flex-col items-center gap-1.5">
+          {/* 主进度条 */}
+          <div className="ml-4 flex flex-1 items-center">
+            {visibleSteps.map((step, index) => {
+              const isCompleted = index < visibleStep;
+              const isCurrent = index === visibleStep;
+              const isUpcoming = index > visibleStep;
+
+              return (
                 <div
-                  className={cn(
-                    "flex size-8 items-center justify-center rounded-full text-[13px] font-medium transition-colors",
-                    isCurrent && "bg-[#D97757] text-white",
-                    isCompleted && "bg-[#6FAA7D] text-white",
-                    isUpcoming && "bg-zinc-200 text-zinc-500",
-                  )}
+                  key={step.key}
+                  className="flex flex-1 items-center"
                 >
-                  {isCompleted ? (
-                    <Check className="size-4 stroke-[2.5]" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
+                  <motion.div
+                    layout
+                    className="flex flex-col items-center gap-1.5"
+                  >
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        scale: isCurrent ? 1.05 : 1,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 360,
+                        damping: 26,
+                      }}
+                      className={cn(
+                        "flex size-8 items-center justify-center rounded-full text-[13px] font-semibold transition-colors",
+                        isCurrent && "bg-[#D97757] text-white shadow-sm",
+                        isCompleted && "bg-[#6FAA7D] text-white",
+                        isUpcoming && "bg-zinc-200 text-zinc-500",
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="size-4 stroke-[2.5]" />
+                      ) : (
+                        <span>{index + 1}</span>
+                      )}
+                    </motion.div>
+                    <span
+                      className={cn(
+                        "text-[12px] transition-colors",
+                        isCurrent
+                          ? "font-medium text-zinc-800"
+                          : "text-zinc-500",
+                      )}
+                    >
+                      {step.label}
+                    </span>
+                  </motion.div>
+                  {index < visibleSteps.length - 1 ? (
+                    <div className="mx-2 flex-1">
+                      <div className="relative h-px overflow-hidden bg-zinc-200">
+                        <motion.div
+                          initial={false}
+                          animate={{
+                            scaleX: index < visibleStep ? 1 : 0,
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 240,
+                            damping: 30,
+                          }}
+                          style={{ transformOrigin: "left" }}
+                          className="absolute inset-0 bg-[#6FAA7D]"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-                <span
-                  className={cn(
-                    "text-[12px] transition-colors",
-                    isCurrent ? "text-zinc-800" : "text-zinc-500",
-                  )}
-                >
-                  {step.label}
-                </span>
-              </div>
-
-              {/* Connector line */}
-              {index < steps.length - 1 ? (
-                <div className="mx-2 flex-1">
-                  <div
-                    className={cn(
-                      "h-px transition-colors",
-                      index < currentStep ? "bg-[#6FAA7D]" : "bg-zinc-200",
-                    )}
-                  />
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Step content with animation */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-6">
+      {/* Step content with directional spring animation */}
+      <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={currentStep}
-            initial={{ x: 20, opacity: 0 }}
+            key={contentKey}
+            initial={{ x: direction * 32, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            exit={{ x: direction * -24, opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 320,
+              damping: 30,
+              mass: 0.55,
+            }}
           >
             {children}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Bottom action bar */}
-      <div className="flex items-center justify-between border-t border-zinc-100 pt-6">
-        <button
-          type="button"
-          onClick={onPrev}
-          disabled={currentStep === 0 || isSubmitting}
-          className={cn(
-            "h-11 rounded-lg border border-zinc-200 bg-white px-5 text-[13px] font-medium text-zinc-700 transition-colors active:translate-y-0",
-            currentStep === 0 || isSubmitting
-              ? "cursor-not-allowed opacity-50"
-              : "hover:bg-zinc-50",
-          )}
-        >
-          上一步
-        </button>
+      {/* Bottom action bar — 起步阶段隐藏，避免冗余按钮 */}
+      <AnimatePresence initial={false}>
+        {showActions ? (
+          <motion.div
+            key="actions"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className="flex items-center justify-between border-t border-zinc-100 pt-6"
+          >
+            <button
+              type="button"
+              onClick={onPrev}
+              disabled={isSubmitting}
+              className={cn(
+                "h-11 rounded-lg border border-zinc-200 bg-white px-5 text-[13px] font-medium text-zinc-700 transition-all active:translate-y-[1px]",
+                isSubmitting
+                  ? "cursor-not-allowed opacity-50"
+                  : "hover:bg-zinc-50",
+              )}
+            >
+              上一步
+            </button>
 
-        {isLastStep ? (
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={isSubmitting || !canGoNext}
-            className={cn(
-              "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white transition-colors active:translate-y-0",
-              isSubmitting || !canGoNext
-                ? "cursor-not-allowed opacity-70"
-                : "hover:bg-[#C96442]",
+            {isLastStep ? (
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={isSubmitting || !canGoNext}
+                className={cn(
+                  "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
+                  isSubmitting || !canGoNext
+                    ? "cursor-not-allowed opacity-70"
+                    : "hover:bg-[#C96442] hover:shadow-md",
+                )}
+              >
+                {isSubmitting ? "提交中..." : "确认提交"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onNext}
+                disabled={!canGoNext}
+                className={cn(
+                  "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
+                  !canGoNext
+                    ? "cursor-not-allowed opacity-70"
+                    : "hover:bg-[#C96442] hover:shadow-md",
+                )}
+              >
+                下一步
+              </button>
             )}
-          >
-            {isSubmitting ? "提交中..." : "确认提交"}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={!canGoNext}
-            className={cn(
-              "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white transition-colors active:translate-y-0",
-              !canGoNext
-                ? "cursor-not-allowed opacity-70"
-                : "hover:bg-[#C96442]",
-            )}
-          >
-            下一步
-          </button>
-        )}
-      </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

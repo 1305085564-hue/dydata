@@ -273,7 +273,44 @@ function createReviewSupabase(rows: CaseRow[]) {
     from(table: string) {
       assert.equal(table, "violation_cases");
 
+      const findTarget = () =>
+        rows.find((row) =>
+          row.id === pendingId
+          && row.is_deleted === pendingDeleted
+          && (pendingPurpose ? row.purpose === pendingPurpose : true),
+        );
+
       return {
+        select(query?: string) {
+          if (query) {
+            assert.match(query, /status/);
+          }
+          return {
+            eq(column: string, value: unknown) {
+              if (column === "id") pendingId = String(value);
+              if (column === "is_deleted") pendingDeleted = Boolean(value);
+              if (column === "purpose") pendingPurpose = String(value);
+              return this;
+            },
+            async single() {
+              const target = findTarget();
+              if (!target) {
+                return { data: null, error: { message: "not found" } };
+              }
+              return {
+                data: {
+                  id: target.id,
+                  status: target.status,
+                  usage_state: target.usage_state ?? null,
+                  risk_level: target.risk_level ?? null,
+                  admin_conclusion: target.admin_conclusion ?? null,
+                  suggested_action: target.suggested_action ?? null,
+                },
+                error: null,
+              };
+            },
+          };
+        },
         update(payload: Record<string, unknown>) {
           return {
             eq(column: string, value: unknown) {
@@ -285,12 +322,7 @@ function createReviewSupabase(rows: CaseRow[]) {
             select() {
               return {
                 async single() {
-                  const target = rows.find((row) =>
-                    row.id === pendingId
-                    && row.is_deleted === pendingDeleted
-                    && row.purpose === pendingPurpose,
-                  );
-
+                  const target = findTarget();
                   if (!target) {
                     return { data: null, error: { message: "not found" } };
                   }
@@ -725,6 +757,48 @@ test("violations review 非法枚举返回 400，普通 member 返回 403", asyn
     },
   );
   assert.equal(forbiddenResponse.status, 403);
+});
+
+test("violations review 支持 conversion 类型审批", async () => {
+  const rows: CaseRow[] = [
+    {
+      id: "case-conversion-1",
+      submitted_by: "member-1",
+      submitted_by_name: "张三",
+      team_id: "team-a",
+      status: "submitted",
+      risk_level: "medium",
+      purpose: "conversion",
+      is_deleted: false,
+      usage_state: "testing",
+      promotion_level: "normal",
+      script_text: "转化话术",
+      created_at: "2026-05-21T09:00:00.000Z",
+    },
+  ];
+  const supabase = createReviewSupabase(rows);
+
+  const response = await buildReviewViolationResponse(
+    createRequest("https://dydata.cc/api/violations/case-conversion-1/review", {
+      status: "verified",
+      risk_level: "low",
+      usage_state: "available",
+      admin_conclusion: "转化案例通过",
+      suggested_action: "继续测试",
+    }),
+    { params: Promise.resolve({ id: "case-conversion-1" }) },
+    {
+      getAuthenticatedContext: async () => ({
+        supabase,
+        user: { id: "owner-1" },
+      }),
+      requireViolationAdmin: async () => ({ ok: true, profile: { id: "owner-1" } }),
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(rows[0].status, "verified");
+  assert.equal(rows[0].usage_state, "available");
 });
 
 test("violations list staff/admin/default view 分流正确", async () => {

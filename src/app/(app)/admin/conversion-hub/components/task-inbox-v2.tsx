@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
@@ -9,12 +10,29 @@ import {
   ChevronDown,
   ClipboardList,
   FileX2,
+  Loader2,
+  Sparkles,
   X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { feedbackToast } from "@/components/ui/feedback-toast";
+import { CaseRejectDialog } from "@/components/case-reject-dialog";
 
 import type { InboxBucketEntry, InboxCounts } from "../data";
+
+/** 后端 batch-review / [id]/review response 里的旧状态快照 */
+type ReviewSnapshot = {
+  id: string;
+  status: string;
+  usage_state: string | null;
+  risk_level: string | null;
+  admin_conclusion: string | null;
+  suggested_action: string | null;
+};
+
+/** 撤销窗口 5s — 顶级 SaaS 操作反悔的标准时长 */
+const UNDO_WINDOW_MS = 5000;
 
 /* ─── types ─── */
 
@@ -101,18 +119,24 @@ function MissingBadge({ field }: { field: string }) {
 
 /* ─── TaskRow ─── */
 
+type RowAction = "approve" | "reject";
+
 function TaskRow({
   entry,
   tone,
   suffix,
   selected,
   onToggle,
+  onAction,
+  busyAction,
 }: {
   entry: InboxBucketEntry;
   tone: Tone;
   suffix?: React.ReactNode;
   selected: boolean;
   onToggle: () => void;
+  onAction: (entry: InboxBucketEntry, action: RowAction) => void;
+  busyAction: RowAction | null;
 }) {
   const style = TONE[tone];
 
@@ -184,18 +208,40 @@ function TaskRow({
       <div className="hidden shrink-0 items-center gap-1 sm:flex">
         <button
           type="button"
-          onClick={(e) => e.stopPropagation()}
-          className="rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-[#6FAA7D]"
+          disabled={busyAction !== null}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction(entry, "approve");
+          }}
+          className={cn(
+            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors",
+            "text-zinc-400 hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D]",
+            "disabled:cursor-wait disabled:opacity-60",
+          )}
           title="通过"
         >
+          {busyAction === "approve" ? (
+            <Loader2 className="size-3 animate-spin stroke-[2]" />
+          ) : null}
           通过
         </button>
         <button
           type="button"
-          onClick={(e) => e.stopPropagation()}
-          className="rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-[#C9604D]"
+          disabled={busyAction !== null}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction(entry, "reject");
+          }}
+          className={cn(
+            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors",
+            "text-zinc-400 hover:bg-[#C9604D]/10 hover:text-[#C9604D]",
+            "disabled:cursor-wait disabled:opacity-60",
+          )}
           title="驳回"
         >
+          {busyAction === "reject" ? (
+            <Loader2 className="size-3 animate-spin stroke-[2]" />
+          ) : null}
           驳回
         </button>
       </div>
@@ -225,18 +271,29 @@ const itemVariants = {
 function CollapsibleSection({
   section,
   selectedIds,
+  hiddenIds,
   onToggle,
+  onAction,
+  busyMap,
 }: {
   section: InboxSection;
   selectedIds: Set<string>;
+  hiddenIds: Set<string>;
   onToggle: (id: string) => void;
+  onAction: (entry: InboxBucketEntry, action: RowAction) => void;
+  busyMap: Map<string, RowAction>;
 }) {
   const [open, setOpen] = useState(section.defaultOpen ?? true);
   const [expanded, setExpanded] = useState(false);
   const style = TONE[section.tone];
   const Icon = section.icon;
-  const visible = expanded ? section.entries : section.entries.slice(0, 5);
-  const hasMore = section.entries.length > 5;
+  const visibleEntries = useMemo(
+    () => section.entries.filter((e) => !hiddenIds.has(e.id)),
+    [section.entries, hiddenIds],
+  );
+  const visible = expanded ? visibleEntries : visibleEntries.slice(0, 5);
+  const hasMore = visibleEntries.length > 5;
+  const visualCount = visibleEntries.length;
 
   return (
     <motion.section
@@ -265,14 +322,14 @@ function CollapsibleSection({
           <div className="min-w-0 leading-tight">
             <p className="text-[13px] font-semibold text-zinc-800">
               {section.title}
-              {section.count > 0 && (
+              {visualCount > 0 && (
                 <span
                   className={cn(
                     "ml-2 inline-flex h-5 items-center rounded-md border px-1.5 text-[11px] font-mono tabular-nums font-semibold",
                     style.badge
                   )}
                 >
-                  {section.count}
+                  {visualCount}
                 </span>
               )}
               {section.headerTag}
@@ -299,7 +356,7 @@ function CollapsibleSection({
             className="overflow-hidden"
           >
             <div className="border-t border-zinc-100 px-2 py-2">
-              {section.entries.length === 0 ? (
+              {visibleEntries.length === 0 ? (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -314,17 +371,31 @@ function CollapsibleSection({
                   animate="visible"
                   className="space-y-0.5"
                 >
-                  {visible.map((entry) => (
-                    <motion.div key={entry.id} variants={itemVariants}>
-                      <TaskRow
-                        entry={entry}
-                        tone={section.tone}
-                        suffix={section.renderSuffix?.(entry)}
-                        selected={selectedIds.has(entry.id)}
-                        onToggle={() => onToggle(entry.id)}
-                      />
-                    </motion.div>
-                  ))}
+                  <AnimatePresence initial={false}>
+                    {visible.map((entry) => (
+                      <motion.div
+                        key={entry.id}
+                        variants={itemVariants}
+                        layout
+                        exit={{ opacity: 0, height: 0, x: 12 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 320,
+                          damping: 28,
+                        }}
+                      >
+                        <TaskRow
+                          entry={entry}
+                          tone={section.tone}
+                          suffix={section.renderSuffix?.(entry)}
+                          selected={selectedIds.has(entry.id)}
+                          onToggle={() => onToggle(entry.id)}
+                          onAction={onAction}
+                          busyAction={busyMap.get(entry.id) ?? null}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                   {hasMore && (
                     <motion.div variants={itemVariants} className="pt-1">
                       <button
@@ -334,7 +405,7 @@ function CollapsibleSection({
                       >
                         {expanded
                           ? "收起"
-                          : `展开剩余 ${section.entries.length - 5} 条`}
+                          : `展开剩余 ${visibleEntries.length - 5} 条`}
                         <ChevronDown
                           className={cn(
                             "size-3 stroke-[1.5] transition-transform duration-200",
@@ -358,9 +429,15 @@ function CollapsibleSection({
 
 function BulkActionBar({
   count,
+  busy,
+  onApprove,
+  onReject,
   onClear,
 }: {
   count: number;
+  busy: "approve" | "reject" | null;
+  onApprove: () => void;
+  onReject: () => void;
   onClear: () => void;
 }) {
   if (count === 0) return null;
@@ -368,26 +445,37 @@ function BulkActionBar({
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-        className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-5 py-3 shadow-lg shadow-zinc-900/8"
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.96 }}
+        transition={{ type: "spring", stiffness: 320, damping: 28 }}
+        style={{
+          // 移动端避开底部 tab + safe-area；桌面端走 px 兜底
+          bottom:
+            "calc(env(safe-area-inset-bottom, 0px) + var(--bulk-bar-offset, 24px))",
+        }}
+        className="fixed left-1/2 z-50 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-lg shadow-zinc-900/8 sm:gap-3 sm:px-5 sm:py-3 [--bulk-bar-offset:24px] max-sm:[--bulk-bar-offset:96px]"
       >
-        <span className="text-[13px] font-medium text-zinc-800">
+        <span className="whitespace-nowrap text-[13px] font-medium text-zinc-800">
           已选择 <span className="tabular-nums text-[#D97757]">{count}</span> 项
         </span>
         <div className="h-4 w-px bg-zinc-200" />
         <button
           type="button"
-          className="rounded-lg px-3 py-1.5 text-[12px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100"
+          disabled={busy !== null}
+          onClick={onApprove}
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
+          {busy === "approve" ? <Loader2 className="size-3 animate-spin" /> : null}
           批量通过
         </button>
         <button
           type="button"
-          className="rounded-lg px-3 py-1.5 text-[12px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100"
+          disabled={busy !== null}
+          onClick={onReject}
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-[#C9604D]/10 hover:text-[#C9604D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
+          {busy === "reject" ? <Loader2 className="size-3 animate-spin" /> : null}
           批量驳回
         </button>
         <button
@@ -415,7 +503,29 @@ interface TaskInboxProps {
 }
 
 export function TaskInbox({ inbox, counts }: TaskInboxProps) {
+  const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [busyMap, setBusyMap] = useState<Map<string, RowAction>>(new Map());
+  const [bulkBusy, setBulkBusy] = useState<RowAction | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [rejectState, setRejectState] = useState<
+    | { mode: "single"; entry: InboxBucketEntry }
+    | { mode: "bulk"; ids: string[] }
+    | null
+  >(null);
+  const [rejectBusy, setRejectBusy] = useState(false);
+  const lastRefreshRef = useRef(0);
+  /** 撤销窗口期内挂起的 refresh 定时器，撤销时取消，提交时立即触发 */
+  const pendingRefreshTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  // 卸载时清掉所有挂起的 refresh
+  useEffect(() => {
+    const timers = pendingRefreshTimers.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
 
   const toggleId = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -427,6 +537,308 @@ export function TaskInbox({ inbox, counts }: TaskInboxProps) {
   }, []);
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const debouncedRefresh = useCallback(() => {
+    const now = Date.now();
+    if (now - lastRefreshRef.current < 500) return;
+    lastRefreshRef.current = now;
+    router.refresh();
+  }, [router]);
+
+  /** Optimistic 隐藏：成功就维持，失败/撤销就回滚 */
+  const optimisticHide = useCallback((ids: string[]) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }, []);
+  const restoreHidden = useCallback((ids: string[]) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  }, []);
+
+  /**
+   * 撤销 toast — 5s 内点撤销调 restore API 把 case 状态原样写回；
+   * 5s 后才正式 router.refresh，让审批"落地"。
+   */
+  const showUndoableToast = useCallback(
+    ({
+      label,
+      snapshots,
+      affectedIds,
+    }: {
+      label: string;
+      snapshots: ReviewSnapshot[];
+      affectedIds: string[];
+    }) => {
+      let undone = false;
+
+      // 5s 后正式 commit：刷列表
+      const commitTimer = setTimeout(() => {
+        pendingRefreshTimers.current.delete(commitTimer);
+        if (undone) return;
+        debouncedRefresh();
+      }, UNDO_WINDOW_MS);
+      pendingRefreshTimers.current.add(commitTimer);
+
+      const id = feedbackToast.success(label, {
+        duration: UNDO_WINDOW_MS,
+        action: snapshots.length > 0
+          ? {
+              label: "撤销",
+              onClick: async () => {
+                undone = true;
+                clearTimeout(commitTimer);
+                pendingRefreshTimers.current.delete(commitTimer);
+                // 视觉立刻把行恢复回来
+                restoreHidden(affectedIds);
+                try {
+                  const res = await fetch("/api/violations/review/restore", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ snapshots }),
+                  });
+                  if (!res.ok) throw new Error("撤销失败");
+                  feedbackToast.success("已撤销");
+                  // 撤销后也刷一次，让 reviewed_at 之类的辅助字段同步
+                  debouncedRefresh();
+                } catch (e) {
+                  feedbackToast.error(e instanceof Error ? e.message : "撤销失败");
+                  // 撤销失败 → 行还是隐藏的（数据库实际审批已写入），后端是源头
+                  optimisticHide(affectedIds);
+                  debouncedRefresh();
+                }
+              },
+            }
+          : undefined,
+      });
+      // 返回 id 便于将来需要 dismiss
+      return id;
+    },
+    [debouncedRefresh, restoreHidden, optimisticHide],
+  );
+
+  const handleSingleAction = useCallback(
+    async (entry: InboxBucketEntry, action: RowAction) => {
+      if (busyMap.has(entry.id)) return;
+
+      if (action === "reject") {
+        // 不在这里发请求，交给 Dialog 流程
+        setRejectState({ mode: "single", entry });
+        return;
+      }
+
+      // approve — optimistic
+      setBusyMap((prev) => {
+        const next = new Map(prev);
+        next.set(entry.id, action);
+        return next;
+      });
+      optimisticHide([entry.id]);
+      try {
+        const res = await fetch(`/api/violations/${entry.id}/review`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            status: "verified",
+            risk_level: entry.risk_level ?? null,
+            usage_state: "available",
+            admin_conclusion: null,
+            suggested_action: null,
+          }),
+        });
+        if (!res.ok) throw new Error("通过失败");
+        const payload: { snapshot?: ReviewSnapshot } = await res.json().catch(() => ({}));
+        const snapshot = payload?.snapshot;
+        showUndoableToast({
+          label: "已通过",
+          snapshots: snapshot ? [snapshot] : [],
+          affectedIds: [entry.id],
+        });
+      } catch (e) {
+        restoreHidden([entry.id]);
+        feedbackToast.error(e instanceof Error ? e.message : "通过失败");
+      } finally {
+        setBusyMap((prev) => {
+          const next = new Map(prev);
+          next.delete(entry.id);
+          return next;
+        });
+      }
+    },
+    [busyMap, optimisticHide, restoreHidden, showUndoableToast],
+  );
+
+  const handleBulk = useCallback(
+    (action: RowAction) => {
+      if (selectedIds.size === 0 || bulkBusy) return;
+      if (action === "reject") {
+        setRejectState({ mode: "bulk", ids: Array.from(selectedIds) });
+        return;
+      }
+      // approve bulk — optimistic
+      const ids = Array.from(selectedIds);
+      setBulkBusy(action);
+      optimisticHide(ids);
+      void (async () => {
+        try {
+          const res = await fetch("/api/violations/batch-review", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ids, action, conclusion: null }),
+          });
+          if (!res.ok) throw new Error("批量操作失败");
+          const data: {
+            success?: number;
+            failed?: number;
+            snapshots?: ReviewSnapshot[];
+          } = await res.json().catch(() => ({}));
+          const successCount = data?.success ?? ids.length;
+          const failedCount = data?.failed ?? 0;
+          const snapshots = data?.snapshots ?? [];
+          if (failedCount > 0) {
+            feedbackToast.warning(`成功 ${successCount} · 失败 ${failedCount}`);
+            debouncedRefresh();
+          } else if (successCount > 0) {
+            showUndoableToast({
+              label: `已批量通过 ${successCount} 条`,
+              snapshots,
+              affectedIds: snapshots.map((s) => s.id),
+            });
+          } else {
+            debouncedRefresh();
+          }
+          clearSelection();
+        } catch (e) {
+          restoreHidden(ids);
+          feedbackToast.error(e instanceof Error ? e.message : "批量操作失败");
+        } finally {
+          setBulkBusy(null);
+        }
+      })();
+    },
+    [
+      selectedIds,
+      bulkBusy,
+      optimisticHide,
+      restoreHidden,
+      clearSelection,
+      showUndoableToast,
+      debouncedRefresh,
+    ],
+  );
+
+  /** Dialog 提交：处理 single 或 bulk 驳回 */
+  const handleRejectConfirm = useCallback(
+    async (reason: string) => {
+      if (!rejectState) return;
+      setRejectBusy(true);
+      try {
+        if (rejectState.mode === "single") {
+          const entry = rejectState.entry;
+          setBusyMap((prev) => {
+            const next = new Map(prev);
+            next.set(entry.id, "reject");
+            return next;
+          });
+          optimisticHide([entry.id]);
+          try {
+            const res = await fetch(`/api/violations/${entry.id}/review`, {
+              method: "PATCH",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                status: "rejected",
+                risk_level: entry.risk_level ?? null,
+                usage_state: "banned",
+                admin_conclusion: reason,
+                suggested_action: null,
+              }),
+            });
+            if (!res.ok) throw new Error("驳回失败");
+            const payload: { snapshot?: ReviewSnapshot } = await res
+              .json()
+              .catch(() => ({}));
+            const snapshot = payload?.snapshot;
+            showUndoableToast({
+              label: "已驳回",
+              snapshots: snapshot ? [snapshot] : [],
+              affectedIds: [entry.id],
+            });
+          } catch (e) {
+            restoreHidden([entry.id]);
+            feedbackToast.error(e instanceof Error ? e.message : "驳回失败");
+            throw e;
+          } finally {
+            setBusyMap((prev) => {
+              const next = new Map(prev);
+              next.delete(entry.id);
+              return next;
+            });
+          }
+        } else {
+          const ids = rejectState.ids;
+          setBulkBusy("reject");
+          optimisticHide(ids);
+          try {
+            const res = await fetch("/api/violations/batch-review", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                ids,
+                action: "reject",
+                conclusion: reason,
+              }),
+            });
+            if (!res.ok) throw new Error("批量操作失败");
+            const data: {
+              success?: number;
+              failed?: number;
+              snapshots?: ReviewSnapshot[];
+            } = await res.json().catch(() => ({}));
+            const successCount = data?.success ?? ids.length;
+            const failedCount = data?.failed ?? 0;
+            const snapshots = data?.snapshots ?? [];
+            if (failedCount > 0) {
+              feedbackToast.warning(`成功 ${successCount} · 失败 ${failedCount}`);
+              debouncedRefresh();
+            } else if (successCount > 0) {
+              showUndoableToast({
+                label: `已批量驳回 ${successCount} 条`,
+                snapshots,
+                affectedIds: snapshots.map((s) => s.id),
+              });
+            } else {
+              debouncedRefresh();
+            }
+            clearSelection();
+          } catch (e) {
+            restoreHidden(ids);
+            feedbackToast.error(e instanceof Error ? e.message : "批量操作失败");
+            throw e;
+          } finally {
+            setBulkBusy(null);
+          }
+        }
+        setRejectState(null);
+      } catch {
+        // 错误时保持 Dialog 打开，让用户看到 toast
+      } finally {
+        setRejectBusy(false);
+      }
+    },
+    [
+      rejectState,
+      optimisticHide,
+      restoreHidden,
+      showUndoableToast,
+      debouncedRefresh,
+      clearSelection,
+    ],
+  );
 
   const sections: InboxSection[] = useMemo(
     () => [
@@ -479,6 +891,16 @@ export function TaskInbox({ inbox, counts }: TaskInboxProps) {
     [inbox, counts]
   );
 
+  // 三桶在乐观隐藏后的可见数 — 全 0 显示成就提示
+  const visibleTotal = useMemo(() => {
+    return sections.reduce(
+      (sum, s) => sum + s.entries.filter((e) => !hiddenIds.has(e.id)).length,
+      0,
+    );
+  }, [sections, hiddenIds]);
+  const allBucketsTotal =
+    counts.high_risk_pending + counts.pending_review + counts.missing_data;
+
   return (
     <>
       <div className="space-y-3">
@@ -487,11 +909,57 @@ export function TaskInbox({ inbox, counts }: TaskInboxProps) {
             key={section.key}
             section={section}
             selectedIds={selectedIds}
+            hiddenIds={hiddenIds}
             onToggle={toggleId}
+            onAction={handleSingleAction}
+            busyMap={busyMap}
           />
         ))}
+
+        <AnimatePresence>
+          {visibleTotal === 0 && allBucketsTotal > 0 ? (
+            <motion.div
+              key="empty-cheer"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ type: "spring", stiffness: 320, damping: 28 }}
+              className="rounded-2xl border border-[#6FAA7D]/25 bg-[#6FAA7D]/[0.04] px-6 py-7 text-center"
+            >
+              <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-white shadow-sm">
+                <Sparkles className="size-4 stroke-[1.75] text-[#6FAA7D]" />
+              </div>
+              <p className="mt-3 text-[14px] font-semibold text-zinc-800">
+                今天的审批已清空
+              </p>
+              <p className="mt-1 text-[12px] text-zinc-500">
+                辛苦了 · 5 秒内仍可在 toast 撤销
+              </p>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
-      <BulkActionBar count={selectedIds.size} onClear={clearSelection} />
+      <BulkActionBar
+        count={selectedIds.size}
+        busy={bulkBusy}
+        onApprove={() => handleBulk("approve")}
+        onReject={() => handleBulk("reject")}
+        onClear={clearSelection}
+      />
+      <CaseRejectDialog
+        open={rejectState !== null}
+        busy={rejectBusy}
+        count={rejectState?.mode === "bulk" ? rejectState.ids.length : 1}
+        subject={
+          rejectState?.mode === "single"
+            ? rejectState.entry.script_text
+            : undefined
+        }
+        onOpenChange={(o) => {
+          if (!o && !rejectBusy) setRejectState(null);
+        }}
+        onConfirm={handleRejectConfirm}
+      />
     </>
   );
 }

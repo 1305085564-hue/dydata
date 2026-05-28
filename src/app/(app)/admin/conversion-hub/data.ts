@@ -22,6 +22,7 @@ export interface InboxData {
   pending_review: InboxBucketEntry[];
   missing_data: InboxBucketEntry[];
   high_risk_pending: InboxBucketEntry[];
+  /** @deprecated RPC 兼容字段，前端应忽略该桶。 */
   promotion_candidates: InboxBucketEntry[];
 }
 
