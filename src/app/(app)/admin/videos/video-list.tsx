@@ -106,6 +106,7 @@ export function VideoList({
 
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasUserScrolledList, setHasUserScrolledList] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -173,7 +174,20 @@ export function VideoList({
   const handleFilter = useCallback((value: VideoFilterValue) => {
     setFilters(value);
     setLoadedCount(PAGE_SIZE);
+    setHasUserScrolledList(false);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const onScroll = () => {
+      if (container.scrollTop > 24) setHasUserScrolledList(true);
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
   }, []);
 
   /* Intersection Observer for auto-load */
@@ -186,6 +200,7 @@ export function VideoList({
         const entry = entries[0];
         if (entry.isIntersecting && hasMore && !isLoadingMore) {
           if (hasDeferredData && onLoadDeferredData) {
+            if (!hasUserScrolledList) return;
             void onLoadDeferredData();
             return;
           }
@@ -201,7 +216,7 @@ export function VideoList({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [filteredVideos.length, hasDeferredData, hasMore, isLoadingMore, onLoadDeferredData]);
+  }, [filteredVideos.length, hasDeferredData, hasMore, hasUserScrolledList, isLoadingMore, onLoadDeferredData]);
 
   const selectedVideo = useMemo(
     () => filteredVideos.find((video) => video.id === selectedVideoId) ?? null,

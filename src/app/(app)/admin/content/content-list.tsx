@@ -273,6 +273,7 @@ export function ContentList({
   const topScrollInnerRef = useRef<HTMLDivElement>(null);
   const scrollSyncing = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [hasUserScrolledList, setHasUserScrolledList] = useState(false);
 
   const snapshotMap = useMemo(() => {
     const map = new Map<string, VideoMetricsSnapshot>();
@@ -367,6 +368,7 @@ export function ContentList({
         const entry = entries[0];
         if (entry.isIntersecting && hasMore && !isLoadingMore) {
           if (hasDeferredData && onLoadDeferredData) {
+            if (!hasUserScrolledList) return;
             void onLoadDeferredData();
             return;
           }
@@ -386,7 +388,7 @@ export function ContentList({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [filtered, hasDeferredData, hasMore, isLoadingMore, loadedCount, onLoadDeferredData]);
+  }, [filtered, hasDeferredData, hasMore, hasUserScrolledList, isLoadingMore, loadedCount, onLoadDeferredData]);
 
   /* Current scroll index for timeline */
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -395,6 +397,7 @@ export function ContentList({
     if (!container) return;
 
     const onScroll = () => {
+      if (container.scrollTop > 24) setHasUserScrolledList(true);
       const rows = container.querySelectorAll("tbody tr[data-video-id]");
       if (!rows.length) return;
       const containerRect = container.getBoundingClientRect();
