@@ -77,18 +77,20 @@ export function buildConfirmedFeedbackPayload(
 ): NextDayReviewResult {
   const nextProblemTags = overrides.summary?.problem_tags?.map((item) => item.trim()).filter(Boolean);
   const nextInstructions = overrides.actions?.instructions?.map((item) => item.trim()).filter(Boolean);
+  const hasProblemTagsOverride = overrides.summary?.problem_tags !== undefined;
+  const hasInstructionsOverride = overrides.actions?.instructions !== undefined;
 
   return {
     ...draft,
     summary: {
       ...draft.summary,
       ...overrides.summary,
-      problem_tags: nextProblemTags?.length ? nextProblemTags.slice(0, 5) : draft.summary.problem_tags,
+      problem_tags: hasProblemTagsOverride ? (nextProblemTags ?? []).slice(0, 5) : draft.summary.problem_tags,
     },
     actions: {
       ...draft.actions,
       ...overrides.actions,
-      instructions: nextInstructions?.length ? nextInstructions.slice(0, 5) : draft.actions.instructions,
+      instructions: hasInstructionsOverride ? (nextInstructions ?? []).slice(0, 5) : draft.actions.instructions,
     },
   };
 }

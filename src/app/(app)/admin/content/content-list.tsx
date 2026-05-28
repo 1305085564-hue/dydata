@@ -63,18 +63,20 @@ function formatRate(value: number | string | null | undefined) {
   return n.toFixed(1) + "%";
 }
 
+// 配色按业务语义：surge 暴涨 = 琥珀（待关注，值得分析但非异常）/ halve 腰斩 = 矿物红（异常需干预）
+// 不要按股市红涨绿跌惯例改回，会误导优先级判断
 function PlayChangeBadge({ video }: { video: VideoRow }) {
   if (!video.play_change_signal || video.play_count_change_pct == null) return null;
   if (video.play_change_signal === "surge") {
     return (
-      <span className="text-[11px] font-medium tabular-nums text-[#C9604D]">
+      <span className="text-[11px] font-medium tabular-nums text-[#D99E55]">
         (+{formatRate(video.play_count_change_pct)})
       </span>
     );
   }
   if (video.play_change_signal === "halve") {
     return (
-      <span className="text-[11px] font-medium tabular-nums text-[#6FAA7D]">
+      <span className="text-[11px] font-medium tabular-nums text-[#C9604D]">
         (-{formatRate(Math.abs(video.play_count_change_pct))})
       </span>
     );
@@ -631,14 +633,45 @@ export function ContentList({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 rounded-xl px-3 text-xs text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
-                            onClick={() => setSelectedVideoId(video.id)}
-                          >
-                            批改
-                          </Button>
+                          {(() => {
+                            const hasSignal = Boolean(video.play_change_signal);
+                            const cardStatus = card?.workflow_status ?? "not_started";
+                            const sent = cardStatus === "sent" || cardStatus === "viewed";
+                            // 三档：异常未批改 → 暖橙实色推到眼前；已下发 → outline 灰；其他 → ghost 极淡
+                            if (hasSignal && !sent) {
+                              return (
+                                <Button
+                                  size="sm"
+                                  className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0"
+                                  onClick={() => setSelectedVideoId(video.id)}
+                                >
+                                  批改
+                                </Button>
+                              );
+                            }
+                            if (sent) {
+                              return (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800"
+                                  onClick={() => setSelectedVideoId(video.id)}
+                                >
+                                  查看
+                                </Button>
+                              );
+                            }
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+                                onClick={() => setSelectedVideoId(video.id)}
+                              >
+                                批改
+                              </Button>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-sm text-zinc-500">
                           {video.profiles.name}

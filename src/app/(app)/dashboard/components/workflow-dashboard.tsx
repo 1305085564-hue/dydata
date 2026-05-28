@@ -262,24 +262,25 @@ export function WorkflowDashboard({
                 </h4>
                 {reviewFeedback ? (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                      <div className="text-[12px] text-zinc-400">上一条视频</div>
-                      <div className="mt-1 text-[13px] font-medium text-zinc-800 line-clamp-2">
-                        {reviewFeedback.videoTitle}
+                    <div>
+                      <div className="text-[12px] text-zinc-500">「{reviewFeedback.videoTitle}」</div>
+                    </div>
+                    <div>
+                      <div className="text-[12px] text-zinc-500">主要问题</div>
+                      <div className="mt-1 text-[13px] leading-[1.7] text-zinc-700">
+                        {reviewFeedback.mainIssues}
                       </div>
                     </div>
-                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                      <div className="text-[12px] text-zinc-400">主要问题</div>
-                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.mainIssues}</div>
-                    </div>
-                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                      <div className="text-[12px] text-zinc-400">改进反馈</div>
-                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.improvementFeedback}</div>
+                    <div className="border-l-2 border-[#D97757] pl-3">
+                      <div className="text-[12px] text-zinc-500">建议下次</div>
+                      <div className="mt-1 text-[14px] font-medium leading-[1.7] text-zinc-800">
+                        {reviewFeedback.improvementFeedback}
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-center">
-                    <p className="text-[13px] text-zinc-400">暂无复盘反馈</p>
+                  <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-5 text-center">
+                    <p className="text-[13px] text-zinc-500">暂无复盘反馈</p>
                     <p className="mt-1 text-[12px] text-zinc-400">完成视频发布后将收到改进建议</p>
                   </div>
                 )}

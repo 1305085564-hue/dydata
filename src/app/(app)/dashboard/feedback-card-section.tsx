@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import type { ContentFeedbackCardView, NextDayReviewResult } from "@/types";
 
 type FeedbackCardItem = {
@@ -31,14 +35,22 @@ function formatDate(value: string | null) {
   }).format(d);
 }
 
-function Skeleton() {
+function FeedbackSkeleton() {
   return (
     <div className="space-y-3">
       {[1, 2].map((i) => (
-        <div key={i} className="animate-pulse rounded-xl border border-zinc-200 bg-white p-4">
-          <div className="h-3 w-2/3 rounded bg-zinc-100" />
-          <div className="mt-3 h-3 w-1/2 rounded bg-zinc-100" />
-          <div className="mt-2 h-3 w-3/4 rounded bg-zinc-100" />
+        <div key={i} className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div className="flex items-start gap-3">
+            <Skeleton className="mt-1 size-2 rounded-full" />
+            <div className="flex-1 space-y-2.5">
+              <Skeleton className="h-3 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+              <div className="flex gap-1.5">
+                <Skeleton className="h-4 w-12 rounded-md" />
+                <Skeleton className="h-4 w-16 rounded-md" />
+              </div>
+            </div>
+          </div>
         </div>
       ))}
     </div>
@@ -56,6 +68,7 @@ function CardRow({
   onToggle: () => void;
   onMarkViewed: () => void;
 }) {
+  const reduceMotion = useReducedMotion();
   const isUnread = item.feedback_card.workflow_status === "sent";
   const confirmed = item.feedback_card.confirmed;
 
@@ -66,29 +79,25 @@ function CardRow({
 
   return (
     <div
-      className={[
+      className={cn(
         "rounded-xl border border-zinc-200 bg-white transition-[box-shadow,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
         isUnread && "border-l-2 border-l-[#D97757]",
         expanded && "shadow-sm",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
     >
       <button
         type="button"
-        className="flex w-full items-start gap-3 p-4 text-left active:translate-y-0"
+        className="active:translate-y-0 flex w-full items-start gap-3 p-4 text-left"
         onClick={handleClick}
+        aria-expanded={expanded}
       >
-        {/* Status dot */}
         <span className="mt-1 shrink-0">
-          {isUnread ? (
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-[pulse_2s_ease-in-out_infinite] rounded-full bg-[#D99E55] opacity-40" />
-              <span className="relative inline-flex size-2 rounded-full bg-[#D99E55]" />
-            </span>
-          ) : (
-            <span className="inline-flex size-2 rounded-full bg-[#6FAA7D]" />
-          )}
+          <span
+            className={cn(
+              "inline-flex size-2 rounded-full",
+              isUnread ? "bg-[#D99E55]" : "bg-[#6FAA7D]",
+            )}
+          />
         </span>
 
         <div className="min-w-0 flex-1">
@@ -123,41 +132,63 @@ function CardRow({
           )}
         </div>
 
-        <span className="mt-0.5 shrink-0 text-[11px] text-zinc-400">
-          {expanded ? "▲" : "▼"}
-        </span>
+        <ChevronDownIcon
+          className={cn(
+            "mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            expanded && "rotate-180",
+          )}
+        />
       </button>
 
-      {expanded && confirmed && (
-        <div className="space-y-3 border-t border-zinc-100 px-4 pb-4 pt-3 transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
-          {(() => {
-            const mainProblem = confirmed.summary.one_line || (confirmed.summary.problem_tags?.length ? confirmed.summary.problem_tags.join(" / ") : "");
-            const improvement = confirmed.actions.message_for_member || "";
-            return (
-              <>
-                {mainProblem && (
-                  <div>
-                    <div className="text-[11px] font-medium text-zinc-400">主要问题</div>
-                    <p className="mt-1 text-[13px] leading-relaxed text-zinc-700">{mainProblem}</p>
+      <AnimatePresence initial={false}>
+        {expanded && confirmed && (
+          <motion.div
+            key="content"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-4 border-t border-zinc-100 px-4 pb-4 pt-3">
+              {(() => {
+                const mainProblem =
+                  confirmed.summary.one_line ||
+                  (confirmed.summary.problem_tags?.length
+                    ? confirmed.summary.problem_tags.join(" / ")
+                    : "");
+                const improvement = confirmed.actions.message_for_member || "";
+                return (
+                  <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
+                    {mainProblem && (
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                          主要问题
+                        </div>
+                        <p className="text-[13px] leading-[1.7] text-zinc-700">{mainProblem}</p>
+                      </div>
+                    )}
+                    {improvement && (
+                      <div className="border-l-2 border-[#D97757] pl-3">
+                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                          建议下次
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap text-[14px] font-medium leading-[1.7] text-zinc-800">
+                          {improvement}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-                {improvement && (
-                  <div>
-                    <div className="text-[11px] font-medium text-zinc-400">改进反馈</div>
-                    <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-zinc-700">{improvement}</p>
-                  </div>
-                )}
-              </>
-            );
-          })()}
+                );
+              })()}
 
-          {item.account?.name && (
-            <div className="text-[11px] text-zinc-400">
-              账号：{item.account.name}
+              {item.account?.name && (
+                <div className="text-[11px] text-zinc-400">账号：{item.account.name}</div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -223,14 +254,14 @@ export function FeedbackCardSection() {
           <div className="h-4 w-px bg-[#D97757]" />
           <h3 className="text-[14px] font-medium text-zinc-800">复盘反馈</h3>
         </div>
-        <Skeleton />
+        <FeedbackSkeleton />
       </section>
     );
   }
 
   if (!data || data.items.length === 0) return null;
 
-  const displayItems = data.items.slice(0, 5);
+  const displayItems = data.items.slice(0, 8);
 
   return (
     <section className="space-y-3">
@@ -244,9 +275,7 @@ export function FeedbackCardSection() {
             </span>
           )}
         </div>
-        <span className="text-[11px] text-zinc-400">
-          共 {data.summary.total} 条
-        </span>
+        <span className="text-[11px] text-zinc-400">共 {data.summary.total} 条</span>
       </div>
 
       <div className="space-y-2">

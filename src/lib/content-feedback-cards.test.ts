@@ -112,3 +112,13 @@ test("buildConfirmedFeedbackPayload 支持人工覆盖文案后确认", () => {
   assert.deepEqual(confirmed.actions.instructions, ["开头一句话先报答案", "删掉第二段铺垫", "CTA 放到倒数第二句"]);
   assert.equal(confirmed.actions.message_for_member, "按这三条先改，今晚前补一版。");
 });
+
+test("buildConfirmedFeedbackPayload 在明确传入空 instructions 时保留空数组", () => {
+  const confirmed = buildConfirmedFeedbackPayload(createDraftResult(), {
+    actions: {
+      instructions: [],
+    },
+  });
+
+  assert.deepEqual(confirmed.actions.instructions, []);
+});

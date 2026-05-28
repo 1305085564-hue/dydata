@@ -1,19 +1,54 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MoreHorizontalIcon,
+  SparklesIcon,
+  XIcon,
+} from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
   Sheet,
-  SheetContent,
-  SheetHeader,
   SheetBody,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { ContentFeedbackCardDetail, ContentFeedbackCardView, Video, VideoMetricsSnapshot } from "@/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import type {
+  ContentFeedbackCardDetail,
+  ContentFeedbackCardView,
+  Video,
+  VideoMetricsSnapshot,
+} from "@/types";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -36,7 +71,13 @@ type ObservationForm = {
   post_peak_trend: "smooth_decline" | "cliff_drop" | "multiple_peaks" | "unset";
   traffic_retention_quality: "good" | "average" | "poor" | "unset";
   drop_off_stage: "opening" | "middle" | "ending" | "not_obvious" | "unset";
-  suspected_problem_stage: "opening" | "middle_content" | "topic_mismatch" | "weak_interaction" | "weak_conversion" | "unset";
+  suspected_problem_stage:
+    | "opening"
+    | "middle_content"
+    | "topic_mismatch"
+    | "weak_interaction"
+    | "weak_conversion"
+    | "unset";
   note: string;
 };
 type ContentAnalysisResult = {
@@ -52,7 +93,13 @@ type ContentAnalysisResult = {
     improvement_feedback: string;
   };
 };
-type ExperienceType = "hot_case" | "fail_case" | "opening_issue" | "middle_issue" | "retention_issue" | "conversion_issue";
+type ExperienceType =
+  | "hot_case"
+  | "fail_case"
+  | "opening_issue"
+  | "middle_issue"
+  | "retention_issue"
+  | "conversion_issue";
 type ComparisonState = {
   loading: boolean;
   video: ComparisonVideo | null;
@@ -60,13 +107,13 @@ type ComparisonState = {
   error: string | null;
 };
 
-const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  删稿: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  限流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  投流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  "未满24h": "border-zinc-200 bg-zinc-100 text-zinc-600",
+const statusBadgeClass: Record<Video["anomaly_status"], string> = {
+  正常: "border-zinc-200 bg-white text-zinc-600",
+  删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+  限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+  投流: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
+  活动干预: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
+  未满24h: "border-zinc-200 bg-zinc-100 text-zinc-500",
 };
 
 function formatNumber(v: number | null | undefined) {
@@ -99,6 +146,15 @@ function formatDateTime(v: string | null) {
   }).format(d);
 }
 
+function formatRelative(date: Date | null): string {
+  if (!date) return "";
+  const diff = Date.now() - date.getTime();
+  if (diff < 5_000) return "刚刚已保存";
+  if (diff < 60_000) return `${Math.floor(diff / 1000)} 秒前已保存`;
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前已保存`;
+  return "已保存";
+}
+
 function parseProblemTags(mainIssues: string): string[] {
   const trimmed = mainIssues.trim();
   if (!trimmed) return [];
@@ -110,28 +166,35 @@ function parseProblemTags(mainIssues: string): string[] {
   return tags.length > 0 ? tags : [trimmed];
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
+function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-      <h3 className="text-[14px] font-medium tracking-tight text-zinc-800">{children}</h3>
+    <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+      {children}
     </div>
   );
 }
 
-function InfoCell({ label, value, children }: { label: string; value?: string; children?: ReactNode }) {
+function MetricBadge({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "amber" | "red";
+}) {
+  const labelTone =
+    tone === "red"
+      ? "text-[#C9604D]"
+      : tone === "amber"
+        ? "text-[#9c7437]"
+        : "text-zinc-400";
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4">
-      <div className="text-[11px] text-zinc-400">{label}</div>
-      <div className="mt-1 text-[13px] text-zinc-700">{children ?? value ?? "-"}</div>
-    </div>
-  );
-}
-
-function MetricCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4">
-      <div className="text-[11px] text-zinc-400">{label}</div>
-      <div className="mt-1 text-[14px] font-medium tabular-nums text-zinc-800">{value}</div>
+    <div className="flex flex-col gap-0.5 rounded-lg border border-zinc-200 bg-white px-3 py-2">
+      <span className={cn("text-[10px] font-medium uppercase tracking-[0.2em]", labelTone)}>
+        {label}
+      </span>
+      <span className="text-[14px] font-semibold tabular-nums text-zinc-800">{value}</span>
     </div>
   );
 }
@@ -143,6 +206,8 @@ function EmptyBlock({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+type MetricTone = "default" | "amber" | "red";
 
 function buildRuleHints(snapshot: VideoMetricsSnapshot | null): string[] {
   if (!snapshot) return ["暂无 24h 数据，建议复核后台截图后再批改。"];
@@ -180,31 +245,22 @@ function buildRuleHints(snapshot: VideoMetricsSnapshot | null): string[] {
   return hints.length ? hints : ["当前指标不足以直接判断，建议复核截图、文案和账号历史表现。"];
 }
 
-function buildComparisonText(video: VideoRow) {
-  if (video.play_change_signal === "surge" && video.play_count_change_pct != null) {
-    return `疑似高于同账号上一条 ${formatRate(video.play_count_change_pct)}，建议复核选题、发布时间和流量来源。`;
-  }
-  if (video.play_change_signal === "halve" && video.play_count_change_pct != null) {
-    return `疑似低于同账号上一条 ${formatRate(Math.abs(video.play_count_change_pct))}，建议复核开头留人和内容承接。`;
-  }
-  return "暂无同账号上一条对比信号，建议结合账号历史数据复核。";
-}
-
 const comparisonMetrics: Array<{
   label: string;
   read: (snapshot: VideoMetricsSnapshot) => number | null;
   format: (value: number | null | undefined) => string;
+  higherIsBetter: boolean;
 }> = [
-  { label: "播放量", read: (snapshot) => snapshot.play_count, format: formatNumber },
-  { label: "2s跳出率", read: (snapshot) => snapshot.bounce_rate_2s, format: formatRate },
-  { label: "5s完播率", read: (snapshot) => snapshot.completion_rate_5s, format: formatRate },
-  { label: "完播率", read: (snapshot) => snapshot.completion_rate, format: formatRate },
-  { label: "均播时长", read: (snapshot) => snapshot.avg_play_duration, format: formatSeconds },
-  { label: "点赞", read: (snapshot) => snapshot.likes, format: formatNumber },
-  { label: "评论", read: (snapshot) => snapshot.comments, format: formatNumber },
-  { label: "分享", read: (snapshot) => snapshot.shares, format: formatNumber },
-  { label: "收藏", read: (snapshot) => snapshot.favorites, format: formatNumber },
-  { label: "涨粉", read: (snapshot) => snapshot.follower_gain, format: formatNumber },
+  { label: "播放量", read: (s) => s.play_count, format: formatNumber, higherIsBetter: true },
+  { label: "2s跳出率", read: (s) => s.bounce_rate_2s, format: formatRate, higherIsBetter: false },
+  { label: "5s完播率", read: (s) => s.completion_rate_5s, format: formatRate, higherIsBetter: true },
+  { label: "完播率", read: (s) => s.completion_rate, format: formatRate, higherIsBetter: true },
+  { label: "均播时长", read: (s) => s.avg_play_duration, format: formatSeconds, higherIsBetter: true },
+  { label: "点赞", read: (s) => s.likes, format: formatNumber, higherIsBetter: true },
+  { label: "评论", read: (s) => s.comments, format: formatNumber, higherIsBetter: true },
+  { label: "分享", read: (s) => s.shares, format: formatNumber, higherIsBetter: true },
+  { label: "收藏", read: (s) => s.favorites, format: formatNumber, higherIsBetter: true },
+  { label: "涨粉", read: (s) => s.follower_gain, format: formatNumber, higherIsBetter: true },
 ];
 
 const defaultObservation: ObservationForm = {
@@ -216,7 +272,7 @@ const defaultObservation: ObservationForm = {
   note: "",
 };
 
-const observationOptions = {
+const observationSelectOptions = {
   traffic_peak_level: [
     ["unset", "未判断"],
     ["high", "高"],
@@ -235,22 +291,22 @@ const observationOptions = {
     ["average", "一般"],
     ["poor", "差"],
   ],
-  drop_off_stage: [
-    ["unset", "未判断"],
-    ["opening", "开头"],
-    ["middle", "中段"],
-    ["ending", "后段"],
-    ["not_obvious", "不明显"],
-  ],
-  suspected_problem_stage: [
-    ["unset", "未判断"],
-    ["opening", "开头问题"],
-    ["middle_content", "中段内容问题"],
-    ["topic_mismatch", "题材承接问题"],
-    ["weak_interaction", "互动弱"],
-    ["weak_conversion", "转化弱"],
-  ],
 } as const;
+
+const dropOffStageOptions = [
+  ["opening", "开头"],
+  ["middle", "中段"],
+  ["ending", "后段"],
+  ["not_obvious", "不明显"],
+] as const;
+
+const suspectedStageOptions = [
+  ["opening", "开头问题"],
+  ["middle_content", "中段内容"],
+  ["topic_mismatch", "题材承接"],
+  ["weak_interaction", "互动弱"],
+  ["weak_conversion", "转化弱"],
+] as const;
 
 const experienceOptions: Array<[ExperienceType, string]> = [
   ["hot_case", "爆款案例"],
@@ -261,32 +317,196 @@ const experienceOptions: Array<[ExperienceType, string]> = [
   ["conversion_issue", "转化问题"],
 ];
 
-function SelectField<T extends string>({
-  label,
+function SegmentedControl<T extends string>({
   value,
   options,
   onChange,
+  ariaLabel,
 }: {
-  label: string;
   value: T;
   options: readonly (readonly [T, string])[];
   onChange: (value: T) => void;
+  ariaLabel: string;
 }) {
   return (
-    <label className="space-y-1 text-[12px] text-zinc-600">
-      <span>{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value as T)}
-        className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 outline-none focus:border-[#D97757]"
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className={cn(
+        "grid gap-1 rounded-lg bg-zinc-100/70 p-1",
+        `grid-cols-${options.length}`,
+      )}
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map(([key, label]) => {
+        const active = value === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(key)}
+            className={cn(
+              "active:translate-y-0 rounded-md px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              active
+                ? "bg-white text-[#D97757] shadow-sm"
+                : "text-zinc-500 hover:text-zinc-800",
+            )}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PillGroup<T extends string>({
+  value,
+  options,
+  onChange,
+  ariaLabel,
+}: {
+  value: T;
+  options: readonly (readonly [T, string])[];
+  onChange: (value: T) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className="flex flex-wrap gap-1.5"
+    >
+      {options.map(([key, label]) => {
+        const active = value === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(key)}
+            className={cn(
+              "active:translate-y-0 rounded-full border px-3 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              active
+                ? "border-[#D97757] bg-[#D97757]/5 text-[#D97757]"
+                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-800",
+            )}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ScreenshotPreview({
+  items,
+  index,
+  onClose,
+  onPrev,
+  onNext,
+}: {
+  items: { label: string; url: string }[];
+  index: number;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const reduceMotion = useReducedMotion();
+  useEffect(() => {
+    function handler(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft") onPrev();
+      if (event.key === "ArrowRight") onNext();
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose, onPrev, onNext]);
+
+  const current = items[index];
+  if (!current) return null;
+  const total = items.length;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="screenshot-overlay"
+        className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-sm"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
       >
-        {options.map(([key, text]) => (
-          <option key={key} value={key}>
-            {text}
-          </option>
-        ))}
-      </select>
-    </label>
+        <button
+          type="button"
+          aria-label="关闭预览"
+          className="active:translate-y-0 absolute top-5 right-5 inline-flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
+          onClick={(event) => {
+            event.stopPropagation();
+            onClose();
+          }}
+        >
+          <XIcon className="size-4 stroke-[1.5]" />
+        </button>
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="上一张"
+              className="active:translate-y-0 absolute left-5 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
+              onClick={(event) => {
+                event.stopPropagation();
+                onPrev();
+              }}
+            >
+              <ChevronLeftIcon className="size-5 stroke-[1.5]" />
+            </button>
+            <button
+              type="button"
+              aria-label="下一张"
+              className="active:translate-y-0 absolute right-5 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
+              onClick={(event) => {
+                event.stopPropagation();
+                onNext();
+              }}
+            >
+              <ChevronRightIcon className="size-5 stroke-[1.5]" />
+            </button>
+          </>
+        )}
+        <motion.div
+          key={current.url}
+          className="relative max-h-[88vh] max-w-[88vw]"
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Image
+            src={current.url}
+            alt={current.label}
+            width={1600}
+            height={1200}
+            unoptimized
+            className="max-h-[88vh] max-w-[88vw] rounded-xl bg-white object-contain"
+          />
+        </motion.div>
+        <div className="mt-4 flex items-center gap-3 text-[12px] text-white/80">
+          <span>{current.label}</span>
+          {total > 1 && (
+            <span className="rounded-full bg-white/10 px-2 py-0.5 tabular-nums">
+              {index + 1} / {total}
+            </span>
+          )}
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -298,9 +518,10 @@ export function ContentDetailDialog({
   feedbackCard: feedbackCardProp,
   onFeedbackCardChanged,
 }: ContentDetailDialogProps) {
+  const reduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<DetailTab>("analysis");
   const [contentExpanded, setContentExpanded] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [comparison, setComparison] = useState<ComparisonState>({
     loading: false,
     video: null,
@@ -312,17 +533,25 @@ export function ContentDetailDialog({
   const [mainIssues, setMainIssues] = useState("");
   const [feedback, setFeedback] = useState("");
   const [observation, setObservation] = useState<ObservationForm>(defaultObservation);
-  const [isSavingObservation, setIsSavingObservation] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<ContentAnalysisResult | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [experienceType, setExperienceType] = useState<ExperienceType>("hot_case");
   const [experienceNote, setExperienceNote] = useState("");
   const [isMarkingExperience, setIsMarkingExperience] = useState(false);
+  const [experienceFormOpen, setExperienceFormOpen] = useState(false);
+  const [reusableOpen, setReusableOpen] = useState(false);
+
+  // 自动保存草稿状态
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [, setDraftTick] = useState(0);
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipNextSaveRef = useRef(true);
 
   useEffect(() => {
     if (!open || !video) {
       setCardDetail(null);
-      setPreviewImage(null);
+      setPreviewIndex(null);
       return;
     }
     setActiveTab("analysis");
@@ -334,7 +563,12 @@ export function ContentDetailDialog({
     setAnalysisResult(null);
     setExperienceType("hot_case");
     setExperienceNote("");
+    setExperienceFormOpen(false);
+    setReusableOpen(false);
     setCardDetail(null);
+    setDraftSavedAt(null);
+    skipNextSaveRef.current = true;
+
     fetch(`/api/admin/content-feedback-cards/${video.id}`)
       .then((res) => res.json())
       .then((data: { feedback_card?: ContentFeedbackCardDetail; error?: string }) => {
@@ -345,6 +579,9 @@ export function ContentDetailDialog({
             setMainIssues(source.summary.one_line || source.summary.problem_tags.join(" / ") || "");
             setFeedback(source.actions.message_for_member || "");
           }
+          if (data.feedback_card.latest_draft_at) {
+            setDraftSavedAt(new Date(data.feedback_card.latest_draft_at));
+          }
         } else if (feedbackCardProp) {
           setCardDetail({ ...feedbackCardProp, draft: null, confirmed: null });
         }
@@ -353,18 +590,24 @@ export function ContentDetailDialog({
 
     fetch(`/api/admin/content-comparison/${video.id}`)
       .then((res) => res.json())
-      .then((data: { previous_video?: ComparisonVideo | null; previous_snapshot?: VideoMetricsSnapshot | null; error?: string }) => {
-        if (data.error) {
-          setComparison({ loading: false, video: null, snapshot: null, error: data.error });
-          return;
-        }
-        setComparison({
-          loading: false,
-          video: data.previous_video ?? null,
-          snapshot: data.previous_snapshot ?? null,
-          error: null,
-        });
-      })
+      .then(
+        (data: {
+          previous_video?: ComparisonVideo | null;
+          previous_snapshot?: VideoMetricsSnapshot | null;
+          error?: string;
+        }) => {
+          if (data.error) {
+            setComparison({ loading: false, video: null, snapshot: null, error: data.error });
+            return;
+          }
+          setComparison({
+            loading: false,
+            video: data.previous_video ?? null,
+            snapshot: data.previous_snapshot ?? null,
+            error: null,
+          });
+        },
+      )
       .catch(() => {
         setComparison({ loading: false, video: null, snapshot: null, error: "上一条对比加载失败" });
       });
@@ -385,26 +628,204 @@ export function ContentDetailDialog({
         } as ObservationForm);
       })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, video?.id]);
+
+  // 已下发 / 已查看后禁用编辑
+  const isLocked =
+    cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed";
+  const isEditable = !isLocked;
+
+  // 自动保存：mainIssues / feedback 任一变更，防抖 1.5s 写 save_draft
+  useEffect(() => {
+    if (!video) return;
+    if (!isEditable) return;
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false;
+      return;
+    }
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(async () => {
+      setIsSavingDraft(true);
+      try {
+        const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "save_draft",
+            summary: {
+              one_line: mainIssues.trim() || null,
+              problem_tags: parseProblemTags(mainIssues),
+            },
+            actions: {
+              instructions: [],
+              message_for_member: feedback.trim() || null,
+            },
+          }),
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { feedback_card?: ContentFeedbackCardDetail };
+        if (data.feedback_card) {
+          setCardDetail(data.feedback_card);
+        }
+        setDraftSavedAt(new Date());
+      } catch {
+        // 自动保存静默失败，不打扰用户
+      } finally {
+        setIsSavingDraft(false);
+      }
+    }, 1500);
+    return () => {
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainIssues, feedback]);
+
+  // 相对时间 tick
+  useEffect(() => {
+    if (!draftSavedAt) return;
+    const id = setInterval(() => setDraftTick((v) => v + 1), 30_000);
+    return () => clearInterval(id);
+  }, [draftSavedAt]);
 
   const ruleHints = useMemo(() => buildRuleHints(snapshot), [snapshot]);
   const screenshotItems = useMemo(() => {
-    if (!snapshot) return [];
+    if (!snapshot) return [] as { label: string; url: string }[];
     return [
-      ...(snapshot.screenshot_urls ?? []).map((url, index) => ({ label: `数据截图 ${index + 1}`, url })),
-      ...(snapshot.curve_screenshot_url ? [{ label: "流量曲线截图", url: snapshot.curve_screenshot_url }] : []),
-      ...(snapshot.retention_screenshot_url ? [{ label: "留存截图", url: snapshot.retention_screenshot_url }] : []),
+      ...(snapshot.curve_screenshot_url
+        ? [{ label: "流量曲线截图", url: snapshot.curve_screenshot_url }]
+        : []),
+      ...(snapshot.retention_screenshot_url
+        ? [{ label: "留存截图", url: snapshot.retention_screenshot_url }]
+        : []),
+      ...(snapshot.screenshot_urls ?? []).map((url, index) => ({
+        label: `数据截图 ${index + 1}`,
+        url,
+      })),
     ];
   }, [snapshot]);
+
+  // 异常摘要带数据
+  const anomalyChips = useMemo(() => {
+    if (!video || !snapshot) return [] as { label: string; value: string; tone: MetricTone }[];
+    const chips: { label: string; value: string; tone: MetricTone }[] = [];
+    if (video.play_change_signal === "surge" && video.play_count_change_pct != null) {
+      chips.push({
+        label: "播放暴涨",
+        value: `+${formatRate(video.play_count_change_pct)}`,
+        tone: "amber",
+      });
+    } else if (video.play_change_signal === "halve" && video.play_count_change_pct != null) {
+      chips.push({
+        label: "播放腰斩",
+        value: `-${formatRate(Math.abs(video.play_count_change_pct))}`,
+        tone: "red",
+      });
+    }
+    if (snapshot.bounce_rate_2s != null && snapshot.bounce_rate_2s >= 45) {
+      chips.push({
+        label: "2s跳出",
+        value: formatRate(snapshot.bounce_rate_2s),
+        tone: "red",
+      });
+    }
+    if (snapshot.completion_rate_5s != null && snapshot.completion_rate_5s < 35) {
+      chips.push({
+        label: "5s完播",
+        value: formatRate(snapshot.completion_rate_5s),
+        tone: "red",
+      });
+    }
+    return chips;
+  }, [video, snapshot]);
+
+  const metricTones = useMemo(() => {
+    if (!snapshot) return {} as Record<string, MetricTone>;
+    const tones: Record<string, MetricTone> = {};
+    if (snapshot.bounce_rate_2s != null && snapshot.bounce_rate_2s >= 45) tones["2s跳出率"] = "red";
+    if (snapshot.completion_rate_5s != null && snapshot.completion_rate_5s < 35)
+      tones["5s完播率"] = "red";
+    if (snapshot.completion_rate != null && snapshot.completion_rate < 18)
+      tones["完播率"] = "red";
+    if (snapshot.follower_gain != null && snapshot.play_count > 0) {
+      const followRate = (snapshot.follower_gain / snapshot.play_count) * 100;
+      if (followRate < 0.05) tones["涨粉"] = "amber";
+    }
+    return tones;
+  }, [snapshot]);
+
+  // 对比表差值与最大差异行
+  const comparisonDiffs = useMemo(() => {
+    if (!snapshot || !comparison.snapshot) return [] as Array<{
+      label: string;
+      current: string;
+      previous: string;
+      diffPct: number | null;
+      tone: MetricTone;
+    }>;
+    return comparisonMetrics.map((metric) => {
+      const cur = metric.read(snapshot);
+      const prev = metric.read(comparison.snapshot!);
+      const curStr = metric.format(cur);
+      const prevStr = metric.format(prev);
+      let diffPct: number | null = null;
+      let tone: MetricTone = "default";
+      if (cur != null && prev != null && prev !== 0) {
+        diffPct = ((cur - prev) / Math.abs(prev)) * 100;
+        const better = metric.higherIsBetter ? diffPct > 0 : diffPct < 0;
+        if (Math.abs(diffPct) >= 5) {
+          tone = better ? "amber" : "red";
+        }
+      }
+      return { label: metric.label, current: curStr, previous: prevStr, diffPct, tone };
+    });
+  }, [snapshot, comparison.snapshot]);
+
+  const maxDiffIndex = useMemo(() => {
+    let max = 0;
+    let idx = -1;
+    comparisonDiffs.forEach((row, i) => {
+      const v = Math.abs(row.diffPct ?? 0);
+      if (v > max) {
+        max = v;
+        idx = i;
+      }
+    });
+    return max >= 10 ? idx : -1;
+  }, [comparisonDiffs]);
+
+  const feedbackEvidence = useMemo(() => {
+    const list: string[] = [];
+    if (snapshot?.completion_rate_5s != null && snapshot.completion_rate_5s < 35) {
+      list.push(`5s 完播 ${formatRate(snapshot.completion_rate_5s)}（低于阈值）`);
+    }
+    if (snapshot?.bounce_rate_2s != null && snapshot.bounce_rate_2s >= 45) {
+      list.push(`2s 跳出 ${formatRate(snapshot.bounce_rate_2s)}（高于阈值）`);
+    }
+    if (snapshot?.completion_rate != null && snapshot.completion_rate < 18) {
+      list.push(`完播 ${formatRate(snapshot.completion_rate)}（低于阈值）`);
+    }
+    if (maxDiffIndex >= 0) {
+      const row = comparisonDiffs[maxDiffIndex];
+      if (row && row.diffPct != null) {
+        const sign = row.diffPct > 0 ? "+" : "";
+        list.push(`${row.label} 较上一条 ${sign}${row.diffPct.toFixed(1)}%`);
+      }
+    }
+    if (analysisResult?.data_summary) {
+      list.push(`AI 判断：${analysisResult.data_summary}`);
+    }
+    return list;
+  }, [snapshot, maxDiffIndex, comparisonDiffs, analysisResult]);
 
   async function handleConfirmAndSend() {
     if (!video) return;
     setIsConfirming(true);
     try {
-      const action = (!cardDetail || cardDetail.workflow_status === "not_started")
-        ? "create_confirm_send"
-        : "confirm_and_send";
+      const action =
+        !cardDetail || cardDetail.workflow_status === "not_started"
+          ? "create_confirm_send"
+          : "confirm_and_send";
       const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -421,7 +842,11 @@ export function ContentDetailDialog({
           },
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        feedback_card?: ContentFeedbackCardDetail;
+        error?: string;
+      };
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "确认下发失败");
       }
@@ -437,9 +862,40 @@ export function ContentDetailDialog({
     }
   }
 
+  async function handleManualSaveDraft() {
+    if (!video || !isEditable) return;
+    try {
+      const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_draft",
+          summary: {
+            one_line: mainIssues.trim() || null,
+            problem_tags: parseProblemTags(mainIssues),
+          },
+          actions: {
+            instructions: [],
+            message_for_member: feedback.trim() || null,
+          },
+        }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        feedback_card?: ContentFeedbackCardDetail;
+        error?: string;
+      };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "保存失败");
+      if (data.feedback_card) setCardDetail(data.feedback_card);
+      setDraftSavedAt(new Date());
+      feedbackToast.success("已保存草稿");
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "保存失败");
+    }
+  }
+
   async function handleSaveObservation() {
     if (!video) return;
-    setIsSavingObservation(true);
     try {
       const res = await fetch("/api/admin/content-observations", {
         method: "POST",
@@ -451,8 +907,6 @@ export function ContentDetailDialog({
       feedbackToast.success("观察已保存");
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "保存观察失败");
-    } finally {
-      setIsSavingObservation(false);
     }
   }
 
@@ -465,7 +919,7 @@ export function ContentDetailDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ video_id: video.id }),
       });
-      const data = (await res.json()) as (ContentAnalysisResult & { error?: string });
+      const data = (await res.json()) as ContentAnalysisResult & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "生成辅助分析失败");
       setAnalysisResult(data);
       feedbackToast.success("辅助分析已生成");
@@ -484,7 +938,10 @@ export function ContentDetailDialog({
     feedbackToast.success("已引用到反馈，尚未保存或下发");
   }
 
-  async function handleMarkExperience(source: "analysis" | "feedback") {
+  async function handleMarkExperience(
+    source: "analysis" | "feedback",
+    presetType?: ExperienceType,
+  ) {
     if (!video) return;
     setIsMarkingExperience(true);
     try {
@@ -493,16 +950,18 @@ export function ContentDetailDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           videoId: video.id,
-          experienceType,
+          experienceType: presetType ?? experienceType,
           visibilityScope: "team",
           note: experienceNote,
-          aiInsightResultId: source === "analysis" ? analysisResult?.insight_result_id : undefined,
+          aiInsightResultId:
+            source === "analysis" ? analysisResult?.insight_result_id : undefined,
           feedbackCardId: source === "feedback" ? cardDetail?.card_id : undefined,
         }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "标记经验失败");
-      feedbackToast.success("已标记为经验");
+      feedbackToast.success(presetType === "hot_case" ? "已标记为爆款" : "已标记为经验");
+      setExperienceFormOpen(false);
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "标记经验失败");
     } finally {
@@ -510,82 +969,115 @@ export function ContentDetailDialog({
     }
   }
 
+  const handleClosePreview = useCallback(() => setPreviewIndex(null), []);
+  const handlePrevPreview = useCallback(() => {
+    setPreviewIndex((i) =>
+      i == null ? i : (i - 1 + screenshotItems.length) % screenshotItems.length,
+    );
+  }, [screenshotItems.length]);
+  const handleNextPreview = useCallback(() => {
+    setPreviewIndex((i) => (i == null ? i : (i + 1) % screenshotItems.length));
+  }, [screenshotItems.length]);
+
+  const canConfirm = (mainIssues.trim().length > 0 || feedback.trim().length > 0) && !isConfirming;
+  const submittedDraft = cardDetail?.workflow_status === "draft" || draftSavedAt != null;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full max-w-4xl">
-        <SheetHeader>
-          <div className="pr-8">
+      <SheetContent
+        side="right"
+        className="w-full max-w-4xl gap-0 sm:max-w-4xl"
+      >
+        <SheetHeader className="gap-3 px-6 pt-6 pb-4">
+          <div className="pr-10">
             <SheetTitle className="text-[18px] font-medium tracking-tight">
               {video?.video_title || "内容详情"}
             </SheetTitle>
             {video && (
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-zinc-500">
-                <span>{video.profiles.name}</span>
-                <span>·</span>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500">
+                <span className="text-zinc-700">{video.profiles.name}</span>
+                <span className="text-zinc-300">·</span>
                 <span>{video.accounts.name}</span>
-                <Badge variant="outline" className={`text-[11px] ${statusClassName[video.anomaly_status]}`}>
+                <span className="text-zinc-300">·</span>
+                <span>{formatDateTime(video.published_at)}</span>
+                {video.video_url && (
+                  <>
+                    <span className="text-zinc-300">·</span>
+                    <a
+                      href={video.video_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#D97757] underline-offset-4 hover:underline"
+                    >
+                      抖音原片
+                    </a>
+                  </>
+                )}
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "h-5 rounded-md border px-1.5 text-[11px] font-medium",
+                    statusBadgeClass[video.anomaly_status],
+                  )}
+                >
                   {video.anomaly_status}
                 </Badge>
               </div>
             )}
           </div>
-        </SheetHeader>
-        <SheetBody>
-          {video && (
-            <div className="space-y-4">
-              <div className="flex border-b border-zinc-200">
-                {([
-                  ["analysis", "分析"],
-                  ["feedback", "反馈"],
-                ] as const).map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={[
-                      "active:translate-y-0 -mb-px border-b-2 px-4 py-2 text-[13px] transition-colors",
-                      activeTab === key
-                        ? "border-[#D97757] text-zinc-800"
-                        : "border-transparent text-zinc-500 hover:text-zinc-800",
-                    ].join(" ")}
-                    onClick={() => setActiveTab(key)}
+
+          {anomalyChips.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-zinc-100/50 px-3 py-2">
+              <Eyebrow>异常摘要</Eyebrow>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {anomalyChips.map((chip) => (
+                  <span
+                    key={chip.label}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium tabular-nums",
+                      chip.tone === "red" &&
+                        "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+                      chip.tone === "amber" &&
+                        "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
+                    )}
                   >
-                    {label}
-                  </button>
+                    <span className="text-zinc-500">{chip.label}</span>
+                    <span>{chip.value}</span>
+                  </span>
                 ))}
               </div>
+            </div>
+          )}
+        </SheetHeader>
 
-              <div hidden={activeTab !== "analysis"} className="space-y-6">
-                <section className="space-y-2">
-                  <SectionTitle>基础信息</SectionTitle>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <InfoCell label="负责人" value={video.profiles.name} />
-                    <InfoCell label="账号" value={video.accounts.name} />
-                    <InfoCell label="发布时间" value={formatDateTime(video.published_at)} />
-                    <InfoCell label="视频链接">
-                      {video.video_url ? (
-                        <a
-                          href={video.video_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="break-all text-[#D97757] underline underline-offset-4"
-                        >
-                          {video.video_url}
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </InfoCell>
-                  </div>
+        <SheetBody className="px-6 py-4">
+          {video && (
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as DetailTab)}
+              className="gap-5"
+            >
+              <TabsList variant="line" className="w-full justify-start">
+                <TabsTrigger value="analysis" className="px-4">
+                  分析
+                </TabsTrigger>
+                <TabsTrigger value="feedback" className="px-4">
+                  反馈
+                </TabsTrigger>
+              </TabsList>
 
-                  {video.content ? (
-                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                      <div className="mb-1 text-[11px] text-zinc-400">文案原文</div>
-                      <div className="whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
+              <TabsContent value="analysis" className="space-y-6">
+                {/* 文案原文（仅在有内容时） */}
+                {video.content && (
+                  <section className="space-y-2">
+                    <Eyebrow>文案原文</Eyebrow>
+                    <div className="rounded-xl bg-zinc-100/50 p-4">
+                      <div className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-700">
                         {contentExpanded ? video.content : video.content.slice(0, 220)}
                         {video.content.length > 220 && (
                           <button
                             type="button"
-                            className="ml-1 text-[12px] text-[#D97757] underline underline-offset-4"
+                            className="ml-1 text-[12px] text-[#D97757] hover:underline underline-offset-4"
                             onClick={() => setContentExpanded((v) => !v)}
                           >
                             {contentExpanded ? "收起" : "展开全文"}
@@ -593,343 +1085,647 @@ export function ContentDetailDialog({
                         )}
                       </div>
                     </div>
-                  ) : (
-                    <EmptyBlock>暂无文案原文</EmptyBlock>
-                  )}
-                </section>
+                  </section>
+                )}
 
+                {/* 核心数据 紧凑档 */}
                 <section className="space-y-2">
-                  <SectionTitle>核心数据</SectionTitle>
+                  <Eyebrow>核心数据</Eyebrow>
                   {snapshot ? (
-                    <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                      <MetricCell label="播放量" value={formatNumber(snapshot.play_count)} />
-                      <MetricCell label="2s跳出率" value={formatRate(snapshot.bounce_rate_2s)} />
-                      <MetricCell label="5s完播率" value={formatRate(snapshot.completion_rate_5s)} />
-                      <MetricCell label="完播率" value={formatRate(snapshot.completion_rate)} />
-                      <MetricCell label="均播时长" value={formatSeconds(snapshot.avg_play_duration)} />
-                      <MetricCell label="点赞" value={formatNumber(snapshot.likes)} />
-                      <MetricCell label="评论" value={formatNumber(snapshot.comments)} />
-                      <MetricCell label="分享" value={formatNumber(snapshot.shares)} />
-                      <MetricCell label="收藏" value={formatNumber(snapshot.favorites)} />
-                      <MetricCell label="涨粉" value={formatNumber(snapshot.follower_gain)} />
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                      <MetricBadge label="播放量" value={formatNumber(snapshot.play_count)} />
+                      <MetricBadge
+                        label="2s跳出率"
+                        value={formatRate(snapshot.bounce_rate_2s)}
+                        tone={metricTones["2s跳出率"]}
+                      />
+                      <MetricBadge
+                        label="5s完播率"
+                        value={formatRate(snapshot.completion_rate_5s)}
+                        tone={metricTones["5s完播率"]}
+                      />
+                      <MetricBadge
+                        label="完播率"
+                        value={formatRate(snapshot.completion_rate)}
+                        tone={metricTones["完播率"]}
+                      />
+                      <MetricBadge
+                        label="均播时长"
+                        value={formatSeconds(snapshot.avg_play_duration)}
+                      />
+                      <MetricBadge label="点赞" value={formatNumber(snapshot.likes)} />
+                      <MetricBadge label="评论" value={formatNumber(snapshot.comments)} />
+                      <MetricBadge label="分享" value={formatNumber(snapshot.shares)} />
+                      <MetricBadge label="收藏" value={formatNumber(snapshot.favorites)} />
+                      <MetricBadge
+                        label="涨粉"
+                        value={formatNumber(snapshot.follower_gain)}
+                        tone={metricTones["涨粉"]}
+                      />
                     </div>
                   ) : (
                     <EmptyBlock>暂无 24h 快照数据</EmptyBlock>
                   )}
                 </section>
 
-                <section className="space-y-2">
-                  <SectionTitle>截图</SectionTitle>
-                  {screenshotItems.length > 0 ? (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {screenshotItems.map((item) => (
-                        <button
-                          key={`${item.label}-${item.url}`}
-                          type="button"
-                          className="overflow-hidden rounded-xl border border-zinc-200 bg-white text-left hover:bg-zinc-50"
-                          onClick={() => setPreviewImage(item.url)}
-                        >
-                          <Image
-                            src={item.url}
-                            alt={item.label}
-                            width={320}
-                            height={176}
-                            unoptimized
-                            className="h-44 w-full object-cover"
-                          />
-                          <div className="px-3 py-2 text-[12px] text-zinc-500">{item.label}</div>
-                        </button>
-                      ))}
+                {/* 截图主次分层 */}
+                {screenshotItems.length > 0 && (
+                  <section className="space-y-2">
+                    <Eyebrow>截图</Eyebrow>
+                    <div className="grid grid-cols-3 gap-3">
+                      {screenshotItems.map((item, index) => {
+                        const isHero = index < 2;
+                        return (
+                          <button
+                            key={`${item.label}-${item.url}`}
+                            type="button"
+                            className={cn(
+                              "active:translate-y-0 group overflow-hidden rounded-xl border border-zinc-200 bg-white text-left transition-[box-shadow,border-color] duration-150 hover:border-zinc-300 hover:shadow-sm",
+                              isHero ? "col-span-3 sm:col-span-2 sm:row-span-1" : "col-span-1",
+                            )}
+                            onClick={() => setPreviewIndex(index)}
+                          >
+                            <Image
+                              src={item.url}
+                              alt={item.label}
+                              width={isHero ? 720 : 320}
+                              height={isHero ? 360 : 160}
+                              unoptimized
+                              className={cn(
+                                "w-full object-cover transition-transform duration-200 group-hover:scale-[1.01]",
+                                isHero ? "h-56" : "h-32",
+                              )}
+                            />
+                            <div className="px-3 py-2 text-[11px] text-zinc-500">{item.label}</div>
+                          </button>
+                        );
+                      })}
                     </div>
-                  ) : (
-                    <EmptyBlock>暂无截图</EmptyBlock>
-                  )}
-                </section>
+                  </section>
+                )}
 
+                {/* 上一条对比 + 差值列 */}
                 <section className="space-y-2">
-                  <SectionTitle>同账号上一条对比</SectionTitle>
-                  <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
-                    <div className="text-[13px] leading-6 text-zinc-700">
-                      {buildComparisonText(video)}
-                    </div>
+                  <Eyebrow>同账号上一条对比</Eyebrow>
+                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
                     {comparison.loading ? (
-                      <div className="text-[12px] text-zinc-500">正在加载上一条作品...</div>
+                      <div className="space-y-2">
+                        <Skeleton className="h-3 w-1/3" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                      </div>
                     ) : comparison.error ? (
                       <div className="text-[12px] text-zinc-500">{comparison.error}</div>
                     ) : comparison.video ? (
-                      <>
-                        <div className="rounded-lg bg-zinc-50 p-3 text-[12px] text-zinc-600">
-                          <div className="font-medium text-zinc-800">
-                            {comparison.video.video_title || comparison.video.content?.slice(0, 40) || "上一条作品"}
-                          </div>
-                          <div className="mt-1">{formatDateTime(comparison.video.published_at)}</div>
+                      <div className="space-y-3">
+                        <div className="flex items-baseline gap-2 text-[12px] text-zinc-500">
+                          <span className="text-zinc-700 font-medium">
+                            {comparison.video.video_title ||
+                              comparison.video.content?.slice(0, 40) ||
+                              "上一条作品"}
+                          </span>
+                          <span className="text-zinc-300">·</span>
+                          <span>{formatDateTime(comparison.video.published_at)}</span>
                         </div>
                         {snapshot && comparison.snapshot ? (
                           <div className="overflow-x-auto">
-                            <table className="w-full min-w-[560px] text-left text-[12px]">
-                              <thead className="text-zinc-400">
-                                <tr className="border-b border-zinc-100">
-                                  <th className="py-2 font-medium">指标</th>
-                                  <th className="py-2 font-medium">当前作品</th>
-                                  <th className="py-2 font-medium">上一条</th>
+                            <table className="w-full min-w-[520px] text-left text-[12px]">
+                              <thead>
+                                <tr className="border-b border-zinc-100 text-zinc-400">
+                                  <th className="py-2 pl-2 font-medium uppercase tracking-[0.2em] text-[10px]">
+                                    指标
+                                  </th>
+                                  <th className="py-2 font-medium uppercase tracking-[0.2em] text-[10px]">
+                                    当前
+                                  </th>
+                                  <th className="py-2 font-medium uppercase tracking-[0.2em] text-[10px]">
+                                    上一条
+                                  </th>
+                                  <th className="py-2 pr-2 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
+                                    差值
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {comparisonMetrics.map((metric) => (
-                                  <tr key={metric.label} className="border-b border-zinc-50">
-                                    <td className="py-2 text-zinc-500">{metric.label}</td>
-                                    <td className="py-2 tabular-nums text-zinc-800">{metric.format(metric.read(snapshot))}</td>
-                                    <td className="py-2 tabular-nums text-zinc-600">{metric.format(metric.read(comparison.snapshot!))}</td>
-                                  </tr>
-                                ))}
+                                {comparisonDiffs.map((row, idx) => {
+                                  const diffStr =
+                                    row.diffPct == null
+                                      ? "-"
+                                      : `${row.diffPct > 0 ? "+" : ""}${row.diffPct.toFixed(1)}%`;
+                                  const diffColor =
+                                    row.tone === "red"
+                                      ? "text-[#C9604D]"
+                                      : row.tone === "amber"
+                                        ? "text-[#9c7437]"
+                                        : "text-zinc-400";
+                                  const isMax = idx === maxDiffIndex;
+                                  return (
+                                    <tr
+                                      key={row.label}
+                                      className={cn(
+                                        "border-b border-zinc-50",
+                                        isMax && "border-l-2 border-l-[#D97757]",
+                                      )}
+                                    >
+                                      <td
+                                        className={cn(
+                                          "py-2 pl-2 text-zinc-500",
+                                          isMax && "text-zinc-700 font-medium",
+                                        )}
+                                      >
+                                        {row.label}
+                                      </td>
+                                      <td className="py-2 tabular-nums text-zinc-800">
+                                        {row.current}
+                                      </td>
+                                      <td className="py-2 tabular-nums text-zinc-500">
+                                        {row.previous}
+                                      </td>
+                                      <td
+                                        className={cn(
+                                          "py-2 pr-2 text-right tabular-nums font-medium",
+                                          diffColor,
+                                        )}
+                                      >
+                                        {diffStr}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
                         ) : (
                           <div className="text-[12px] text-zinc-500">上一条作品暂无 24h 快照</div>
                         )}
-                      </>
+                      </div>
                     ) : (
                       <div className="text-[12px] text-zinc-500">暂无上一条可对比作品</div>
                     )}
                   </div>
                 </section>
 
+                {/* 规则提示 */}
                 <section className="space-y-2">
-                  <SectionTitle>前端规则指标提示</SectionTitle>
-                  <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                  <Eyebrow>规则指标提示</Eyebrow>
+                  <div className="space-y-1 rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-[1.7] text-zinc-700">
                     {ruleHints.map((hint) => (
-                      <div key={hint} className="text-[13px] leading-6 text-zinc-700">
-                        {hint}
-                      </div>
+                      <div key={hint}>{hint}</div>
                     ))}
                   </div>
                 </section>
 
-                <section className="space-y-2">
-                  <SectionTitle>曲线观察</SectionTitle>
-                  <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      <SelectField
-                        label="推流峰值"
-                        value={observation.traffic_peak_level}
-                        options={observationOptions.traffic_peak_level}
-                        onChange={(value) => setObservation((prev) => ({ ...prev, traffic_peak_level: value }))}
-                      />
-                      <SelectField
-                        label="峰值后走势"
-                        value={observation.post_peak_trend}
-                        options={observationOptions.post_peak_trend}
-                        onChange={(value) => setObservation((prev) => ({ ...prev, post_peak_trend: value }))}
-                      />
-                      <SelectField
-                        label="流量承接"
-                        value={observation.traffic_retention_quality}
-                        options={observationOptions.traffic_retention_quality}
-                        onChange={(value) => setObservation((prev) => ({ ...prev, traffic_retention_quality: value }))}
-                      />
-                      <SelectField
-                        label="跳出集中阶段"
-                        value={observation.drop_off_stage}
-                        options={observationOptions.drop_off_stage}
-                        onChange={(value) => setObservation((prev) => ({ ...prev, drop_off_stage: value }))}
-                      />
-                      <SelectField
-                        label="疑似问题阶段"
-                        value={observation.suspected_problem_stage}
-                        options={observationOptions.suspected_problem_stage}
-                        onChange={(value) => setObservation((prev) => ({ ...prev, suspected_problem_stage: value }))}
+                {/* 曲线观察 */}
+                <section className="space-y-3">
+                  <Eyebrow>曲线观察</Eyebrow>
+                  <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[12px] text-zinc-500">推流峰值</label>
+                        <Select
+                          value={observation.traffic_peak_level}
+                          onValueChange={(v) =>
+                            setObservation((prev) => ({
+                              ...prev,
+                              traffic_peak_level: v as ObservationForm["traffic_peak_level"],
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {observationSelectOptions.traffic_peak_level.map(([k, l]) => (
+                              <SelectItem key={k} value={k}>
+                                {l}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[12px] text-zinc-500">峰值后走势</label>
+                        <Select
+                          value={observation.post_peak_trend}
+                          onValueChange={(v) =>
+                            setObservation((prev) => ({
+                              ...prev,
+                              post_peak_trend: v as ObservationForm["post_peak_trend"],
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {observationSelectOptions.post_peak_trend.map(([k, l]) => (
+                              <SelectItem key={k} value={k}>
+                                {l}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[12px] text-zinc-500">流量承接</label>
+                        <Select
+                          value={observation.traffic_retention_quality}
+                          onValueChange={(v) =>
+                            setObservation((prev) => ({
+                              ...prev,
+                              traffic_retention_quality: v as ObservationForm["traffic_retention_quality"],
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {observationSelectOptions.traffic_retention_quality.map(([k, l]) => (
+                              <SelectItem key={k} value={k}>
+                                {l}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[12px] text-zinc-500">跳出集中阶段</label>
+                      <SegmentedControl
+                        value={
+                          observation.drop_off_stage === "unset"
+                            ? "not_obvious"
+                            : observation.drop_off_stage
+                        }
+                        options={dropOffStageOptions}
+                        onChange={(v) =>
+                          setObservation((prev) => ({ ...prev, drop_off_stage: v }))
+                        }
+                        ariaLabel="跳出集中阶段"
                       />
                     </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[12px] text-zinc-500">疑似问题阶段</label>
+                      <SegmentedControl
+                        value={
+                          observation.suspected_problem_stage === "unset"
+                            ? "opening"
+                            : observation.suspected_problem_stage
+                        }
+                        options={suspectedStageOptions}
+                        onChange={(v) =>
+                          setObservation((prev) => ({ ...prev, suspected_problem_stage: v }))
+                        }
+                        ariaLabel="疑似问题阶段"
+                      />
+                    </div>
+
                     <textarea
                       value={observation.note}
-                      onChange={(event) => setObservation((prev) => ({ ...prev, note: event.target.value }))}
-                      className="w-full resize-none rounded-xl border border-zinc-200 bg-white p-3 text-[13px] leading-6 text-zinc-800 outline-none focus:border-[#D97757]"
+                      onChange={(event) =>
+                        setObservation((prev) => ({ ...prev, note: event.target.value }))
+                      }
+                      className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
                       rows={3}
-                      placeholder="观察备注"
+                      placeholder="观察备注（自动保存到观察记录）"
                     />
-                    <div className="flex flex-wrap gap-2">
+
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 rounded-lg text-[12px]"
                         onClick={handleSaveObservation}
-                        disabled={isSavingObservation}
                       >
-                        {isSavingObservation ? "保存中..." : "保存观察"}
+                        保存观察
                       </Button>
                       <Button
                         size="sm"
-                        className="h-8 rounded-lg bg-zinc-900 text-[12px] text-white hover:bg-zinc-700"
+                        variant="outline"
+                        className="h-8 gap-1.5 rounded-lg border-[#D97757]/40 bg-[#D97757]/5 text-[12px] text-[#D97757] hover:bg-[#D97757]/10"
                         onClick={handleGenerateAnalysis}
                         disabled={isGeneratingAnalysis}
                       >
-                        {isGeneratingAnalysis ? "生成中..." : "生成辅助分析"}
+                        <SparklesIcon className="size-3.5 stroke-[1.5]" />
+                        {isGeneratingAnalysis ? "AI 分析中..." : "生成 AI 辅助分析"}
                       </Button>
                     </div>
                   </div>
                 </section>
 
-                {analysisResult && (
+                {/* AI 辅助分析（破格主角） */}
+                {(isGeneratingAnalysis || analysisResult) && (
                   <section className="space-y-2">
-                    <SectionTitle>辅助分析结果</SectionTitle>
-                    <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-6 text-zinc-700">
-                      <div>{analysisResult.data_summary}</div>
-                      <div>
-                        <span className="text-zinc-400">疑似阶段：</span>
-                        {analysisResult.suspected_stage.join(" / ") || "-"}
+                    <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-white p-5">
+                      <div className="flex items-center gap-1.5">
+                        <SparklesIcon className="size-3.5 stroke-[1.5] text-[#D97757]" />
+                        <Eyebrow>AI 辅助分析</Eyebrow>
                       </div>
-                      <div>
-                        <span className="text-zinc-400">指标证据：</span>
-                        {analysisResult.key_metric_evidence.join("；") || "-"}
-                      </div>
-                      <div>
-                        <span className="text-zinc-400">文案原因：</span>
-                        {analysisResult.copywriting_reason}
-                      </div>
-                      <div>
-                        <span className="text-zinc-400">可复用经验：</span>
-                        {analysisResult.reusable_experience}
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 rounded-lg text-[12px]"
-                          onClick={handleQuoteAnalysisToFeedback}
+
+                      {isGeneratingAnalysis && !analysisResult ? (
+                        <div className="mt-4 space-y-3">
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-5/6" />
+                          <div className="flex gap-2 pt-1">
+                            <Skeleton className="h-6 w-20 rounded-full" />
+                            <Skeleton className="h-6 w-24 rounded-full" />
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                          </div>
+                        </div>
+                      ) : analysisResult ? (
+                        <motion.div
+                          initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                          className="mt-3 space-y-4"
                         >
-                          引用到反馈
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 rounded-lg text-[12px]"
-                          onClick={() => handleMarkExperience("analysis")}
-                          disabled={isMarkingExperience}
-                        >
-                          标记为经验
-                        </Button>
-                      </div>
+                          <p className="text-[16px] font-semibold leading-[1.6] text-zinc-800">
+                            {analysisResult.data_summary}
+                          </p>
+
+                          <div className="flex flex-wrap gap-1.5">
+                            {analysisResult.suspected_stage.map((stage) => (
+                              <span
+                                key={stage}
+                                className="inline-flex items-center rounded-full bg-zinc-100/70 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
+                              >
+                                疑似 · {stage}
+                              </span>
+                            ))}
+                            {analysisResult.key_metric_evidence.slice(0, 3).map((ev) => (
+                              <span
+                                key={ev}
+                                className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600"
+                              >
+                                {ev}
+                              </span>
+                            ))}
+                          </div>
+
+                          {analysisResult.copywriting_reason && (
+                            <p className="text-[13px] leading-[1.7] text-zinc-600">
+                              <span className="text-zinc-400">文案：</span>
+                              {analysisResult.copywriting_reason}
+                            </p>
+                          )}
+
+                          {analysisResult.reusable_experience && (
+                            <Collapsible open={reusableOpen} onOpenChange={setReusableOpen}>
+                              <CollapsibleTrigger
+                                render={
+                                  <button
+                                    type="button"
+                                    className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800"
+                                  >
+                                    <ChevronRightIcon
+                                      className={cn(
+                                        "size-3.5 stroke-[1.5] transition-transform duration-150",
+                                        reusableOpen && "rotate-90",
+                                      )}
+                                    />
+                                    可复用经验
+                                  </button>
+                                }
+                              />
+                              <CollapsibleContent className="data-[ending-style]:fade-out-0 data-[starting-style]:fade-in-0">
+                                <div className="mt-2 rounded-lg bg-zinc-100/50 p-3 text-[13px] leading-[1.7] text-zinc-700">
+                                  {analysisResult.reusable_experience}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          )}
+
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            <Button
+                              size="sm"
+                              className="h-8 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
+                              onClick={handleQuoteAnalysisToFeedback}
+                            >
+                              引用到反馈
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 rounded-lg text-[12px]"
+                              onClick={() => handleMarkExperience("analysis", "hot_case")}
+                              disabled={isMarkingExperience}
+                            >
+                              一键标爆款
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ) : null}
                     </div>
                   </section>
                 )}
+              </TabsContent>
 
-                <section className="space-y-2">
-                  <SectionTitle>经验标记</SectionTitle>
-                  <div className="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 sm:grid-cols-[180px_1fr_auto]">
-                    <SelectField
-                      label="经验类型"
-                      value={experienceType}
-                      options={experienceOptions}
-                      onChange={setExperienceType}
-                    />
-                    <label className="space-y-1 text-[12px] text-zinc-600">
-                      <span>备注</span>
+              <TabsContent value="feedback" className="space-y-4">
+                {/* 复盘依据小卡 */}
+                {feedbackEvidence.length > 0 && (
+                  <div className="space-y-2 rounded-xl bg-zinc-100/50 p-3">
+                    <Eyebrow>复盘依据</Eyebrow>
+                    <ul className="space-y-1 text-[13px] leading-[1.7] text-zinc-700">
+                      {feedbackEvidence.map((line) => (
+                        <li key={line} className="flex gap-2">
+                          <span className="mt-2 size-1 shrink-0 rounded-full bg-zinc-400" />
+                          <span>{line}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <label className="text-[12px] font-medium text-zinc-700">主要问题</label>
+                  <textarea
+                    value={mainIssues}
+                    onChange={(e) => setMainIssues(e.target.value)}
+                    className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    rows={2}
+                    placeholder="例如：开头留人弱 / 选题不清 / 文案承接差"
+                    disabled={!isEditable}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[12px] font-medium text-zinc-700">改进反馈</label>
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    rows={5}
+                    placeholder="写给员工的具体改进建议"
+                    disabled={!isEditable}
+                  />
+                </div>
+
+                {/* 经验标记（折叠形态） */}
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  {experienceFormOpen ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Eyebrow>标记为经验</Eyebrow>
+                        <button
+                          type="button"
+                          className="text-[11px] text-zinc-400 hover:text-zinc-600"
+                          onClick={() => setExperienceFormOpen(false)}
+                        >
+                          收起
+                        </button>
+                      </div>
+                      <PillGroup
+                        value={experienceType}
+                        options={experienceOptions}
+                        onChange={setExperienceType}
+                        ariaLabel="经验类型"
+                      />
                       <input
                         value={experienceNote}
                         onChange={(event) => setExperienceNote(event.target.value)}
-                        className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-[12px] text-zinc-800 outline-none focus:border-[#D97757]"
-                        placeholder="多个经验点可写在这里"
+                        className="h-9 w-full rounded-lg border border-transparent bg-zinc-100/70 px-3 text-[12px] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                        placeholder="可补充经验点（可选）"
                       />
-                    </label>
-                    <div className="flex items-end">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="h-8 rounded-lg bg-zinc-800 text-[12px] text-white hover:bg-zinc-700"
+                          onClick={() => handleMarkExperience("feedback")}
+                          disabled={isMarkingExperience}
+                        >
+                          确认标记
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Eyebrow>经验标记</Eyebrow>
+                        <p className="mt-1 text-[12px] text-zinc-500">
+                          把这条作品沉淀到经验库，团队后续可参考
+                        </p>
+                      </div>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-9 rounded-lg text-[12px]"
-                        onClick={() => handleMarkExperience("analysis")}
-                        disabled={isMarkingExperience}
+                        className="h-8 rounded-lg text-[12px]"
+                        onClick={() => setExperienceFormOpen(true)}
                       >
                         标记为经验
                       </Button>
                     </div>
-                  </div>
-                </section>
-              </div>
-
-              <div hidden={activeTab !== "feedback"} className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5">
-                <div className="flex items-center justify-between gap-2">
-                  <SectionTitle>反馈</SectionTitle>
-                  {cardDetail && cardDetail.workflow_status !== "not_started" && (
-                    <Badge variant="outline" className="border-zinc-200 bg-white text-[11px] text-zinc-600">
-                      {cardDetail.workflow_label}
-                    </Badge>
                   )}
                 </div>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[12px] font-medium text-zinc-700">主要问题</label>
-                    <textarea
-                      value={mainIssues}
-                      onChange={(e) => setMainIssues(e.target.value)}
-                      className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
-                      rows={2}
-                      placeholder="例如：开头留人弱 / 选题不清 / 文案承接差"
-                      disabled={cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed"}
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[12px] font-medium text-zinc-700">改进反馈</label>
-                    <textarea
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                      className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
-                      rows={5}
-                      placeholder="写给员工的具体改进建议"
-                      disabled={cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed"}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  {(!cardDetail || cardDetail.workflow_status === "not_started" || cardDetail.workflow_status === "draft" || cardDetail.workflow_status === "confirmed") && (
-                    <Button
-                      size="sm"
-                      className="h-9 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
-                      onClick={handleConfirmAndSend}
-                      disabled={isConfirming || (!mainIssues.trim() && !feedback.trim())}
-                    >
-                      {isConfirming ? "下发中..." : "确认并下发"}
-                    </Button>
-                  )}
-                  {(cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed") && (
-                    <Badge variant="outline" className="border-zinc-200 bg-[#6FAA7D]/5 text-[11px] text-[#6FAA7D]">
-                      已下发给员工
-                    </Badge>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-9 rounded-lg text-[12px]"
-                    onClick={() => handleMarkExperience("feedback")}
-                    disabled={isMarkingExperience}
-                  >
-                    标记为经验
-                  </Button>
-                </div>
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           )}
         </SheetBody>
+
+        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-zinc-200 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-[12px] text-zinc-500">
+            {cardDetail && cardDetail.workflow_status !== "not_started" ? (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "h-6 gap-1.5 rounded-md border px-2 text-[11px] font-medium",
+                  cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
+                    ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/5 text-[#3f6f4d]"
+                    : "border-zinc-200 bg-white text-zinc-600",
+                )}
+              >
+                <span
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    cardDetail.workflow_status === "sent" ||
+                      cardDetail.workflow_status === "viewed"
+                      ? "bg-[#6FAA7D]"
+                      : cardDetail.workflow_status === "draft"
+                        ? "bg-[#D99E55]"
+                        : "bg-zinc-300",
+                  )}
+                />
+                {cardDetail.workflow_label}
+              </Badge>
+            ) : (
+              <span className="text-zinc-400">未开始</span>
+            )}
+            {!isLocked &&
+              (isSavingDraft ? (
+                <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                  <span className="size-1 rounded-full bg-[#D99E55]" />
+                  保存中
+                </span>
+              ) : submittedDraft && draftSavedAt ? (
+                <span className="text-zinc-400">{formatRelative(draftSavedAt)}</span>
+              ) : null)}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!isLocked && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 rounded-lg text-[12px]"
+                onClick={handleManualSaveDraft}
+              >
+                保存草稿
+              </Button>
+            )}
+            {!isLocked && (
+              <Button
+                size="sm"
+                className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
+                onClick={handleConfirmAndSend}
+                disabled={!canConfirm}
+              >
+                {isConfirming ? "下发中..." : "确认并下发"}
+              </Button>
+            )}
+            {isLocked && (
+              <span className="text-[12px] text-zinc-500">已下发，不可编辑</span>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="size-9"
+                    aria-label="更多操作"
+                  />
+                }
+              >
+                <MoreHorizontalIcon className="size-4 stroke-[1.5]" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={6}>
+                <DropdownMenuItem
+                  onClick={() => feedbackToast.warning("待后端补 action")}
+                >
+                  标记不需批改
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => feedbackToast.warning("待后端补 action")}
+                >
+                  稍后处理
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </SheetFooter>
       </SheetContent>
 
-      {previewImage && (
-        <button
-          type="button"
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/70 p-6"
-          onClick={() => setPreviewImage(null)}
-        >
-          <Image
-            src={previewImage}
-            alt="截图预览"
-            width={1200}
-            height={900}
-            unoptimized
-            className="max-h-full max-w-full rounded-xl bg-white object-contain"
-          />
-        </button>
+      {previewIndex !== null && screenshotItems[previewIndex] && (
+        <ScreenshotPreview
+          items={screenshotItems}
+          index={previewIndex}
+          onClose={handleClosePreview}
+          onPrev={handlePrevPreview}
+          onNext={handleNextPreview}
+        />
       )}
     </Sheet>
   );
