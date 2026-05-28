@@ -61,6 +61,7 @@ interface NotificationContextValue {
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 const POLL_INTERVAL_MS = 180_000;
+const CACHE_TTL_MS = 5 * 60_000;
 
 function buildLocal(input: LocalNotificationInput): LocalNotificationRow {
   const now = input.createdAt ?? new Date().toISOString();
@@ -102,12 +103,20 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
   const [loading, setLoading] = useState(false);
   const [activated, setActivated] = useState(false);
   const inFlightRef = useRef(false);
+  const lastFetchedAtRef = useRef(0);
 
-  const fetchAll = useCallback(async ({ force = false }: { force?: boolean } = {}) => {
+  const fetchAll = useCallback(async ({
+    force = false,
+    requireActivated = true,
+  }: {
+    force?: boolean;
+    requireActivated?: boolean;
+  } = {}) => {
     if (!enabled) return;
-    if (!force && !activated) return;
+    if (!force && requireActivated && !activated) return;
     if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
     if (inFlightRef.current) return;
+    if (!force && Date.now() - lastFetchedAtRef.current < CACHE_TTL_MS) return;
     inFlightRef.current = true;
     setLoading(true);
     try {
@@ -119,6 +128,7 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
       };
       setRemote(data.notifications ?? []);
       setRemoteCounts(data.counts ?? { unread: 0, todoOpen: 0 });
+      lastFetchedAtRef.current = Date.now();
     } catch (err) {
       console.warn("[notifications] fetch failed", err);
     } finally {
@@ -130,7 +140,7 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
   const activate = useCallback(async () => {
     if (!enabled) return;
     setActivated(true);
-    await fetchAll({ force: true });
+    await fetchAll({ requireActivated: false });
   }, [enabled, fetchAll]);
 
   useEffect(() => {
@@ -183,11 +193,11 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
       const res = await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
       if (!res.ok) {
         // 回滚到服务端实际状态
-        void fetchAll();
+        void fetchAll({ force: true });
       }
     } catch (err) {
       console.warn("[notifications] markRead failed", err);
-      void fetchAll();
+      void fetchAll({ force: true });
     }
   }, [fetchAll]);
 
@@ -209,10 +219,10 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
     setRemoteCounts((prev) => ({ ...prev, unread: 0 }));
     try {
       const res = await fetch(`/api/notifications/mark-all-read`, { method: "PATCH" });
-      if (!res.ok) void fetchAll();
+      if (!res.ok) void fetchAll({ force: true });
     } catch (err) {
       console.warn("[notifications] markAllRead failed", err);
-      void fetchAll();
+      void fetchAll({ force: true });
     }
   }, [fetchAll]);
 
@@ -241,10 +251,10 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         });
-        if (!res.ok) void fetchAll();
+        if (!res.ok) void fetchAll({ force: true });
       } catch (err) {
         console.warn("[notifications] markDone failed", err);
-        void fetchAll();
+        void fetchAll({ force: true });
       }
     },
     [remote, fetchAll],

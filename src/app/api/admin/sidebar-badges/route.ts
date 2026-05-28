@@ -18,6 +18,31 @@ type SidebarBadgesDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
 };
 
+type SidebarBadgesPayload = {
+  cockpit: number;
+  videos: number;
+  content: number;
+  conversion_hub: number;
+  ai_channels: number;
+};
+
+const SIDEBAR_BADGES_CACHE_TTL_MS = 60_000;
+const sidebarBadgesCache = new Map<string, { expiresAt: number; payload: SidebarBadgesPayload }>();
+
+function getCacheKey(input: {
+  date: string;
+  userId: string;
+  scopeKind: string;
+  visibleUserIds: string[];
+}) {
+  return [
+    input.date,
+    input.userId,
+    input.scopeKind,
+    [...input.visibleUserIds].sort().join(","),
+  ].join("|");
+}
+
 export async function buildSidebarBadgesResponse(
   request: NextRequest,
   deps: SidebarBadgesDeps = { requireAdminServiceClient },
@@ -29,6 +54,19 @@ export async function buildSidebarBadgesResponse(
   if ("response" in auth) return auth.response;
 
   const supabase = auth.supabase;
+  const cacheKey = getCacheKey({
+    date,
+    userId: auth.scope.userId,
+    scopeKind: auth.scope.kind,
+    visibleUserIds: auth.scope.visibleUserIds,
+  });
+  const cached = sidebarBadgesCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return NextResponse.json(cached.payload, {
+      headers: { "Cache-Control": "private, max-age=60" },
+    });
+  }
+
   const summaryResult = await supabase.rpc("admin_cockpit_summary", { target_date: date });
   const summaryUnwrapped = unwrapRpc<CockpitSummary>(summaryResult, "获取侧边栏徽标失败");
   if ("response" in summaryUnwrapped) return summaryUnwrapped.response;
@@ -103,12 +141,21 @@ export async function buildSidebarBadgesResponse(
           .rpc("admin_pending_videos_today", { target_date: date, limit_rows: 100 })
           .then((result) => filterScopedRows(auth.scope, result.data as unknown[] | null, (row) => (row as { submitted_by?: string | null }).submitted_by).length, () => 0);
 
-  return NextResponse.json({
+  const payload = {
     cockpit: visiblePendingVideos + visiblePendingViolations + visiblePendingSubmissions,
     videos: visiblePendingVideos,
     content: contentCount,
     conversion_hub: visibleConversionHubCount,
     ai_channels: 0,
+  };
+
+  sidebarBadgesCache.set(cacheKey, {
+    expiresAt: Date.now() + SIDEBAR_BADGES_CACHE_TTL_MS,
+    payload,
+  });
+
+  return NextResponse.json(payload, {
+    headers: { "Cache-Control": "private, max-age=60" },
   });
 }
 

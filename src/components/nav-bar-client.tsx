@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Check, ChevronDown, LogOut, Settings, Zap } from "lucide-react";
@@ -15,7 +16,6 @@ import {
   subscribeDashboardStore,
   setDashboardAccount,
 } from "@/lib/dashboard-store";
-import { ProfileEditDialog } from "./profile-edit-dialog";
 
 interface Account {
   id: string;
@@ -32,6 +32,11 @@ interface NavBarClientProps {
   showSystemSettings?: boolean;
   accounts?: Account[];
 }
+
+const ProfileEditDialog = dynamic(
+  () => import("./profile-edit-dialog").then((mod) => mod.ProfileEditDialog),
+  { ssr: false },
+);
 
 export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, showSystemSettings = false, accounts = [] }: NavBarClientProps) {
   const pathname = usePathname();

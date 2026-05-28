@@ -19,5 +19,8 @@ export async function GET() {
     ).length,
   };
 
-  return NextResponse.json({ notifications, counts });
+  return NextResponse.json(
+    { notifications, counts },
+    { headers: { "Cache-Control": "private, max-age=60" } },
+  );
 }

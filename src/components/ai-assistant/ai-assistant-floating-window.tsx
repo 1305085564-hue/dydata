@@ -1,9 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { Bot, Sparkles, X } from "lucide-react";
 
-import ChatPanel from "@/app/(app)/admin/ai-assistant/chat-panel";
 import {
   ASSISTANT_OPEN_EVENT,
   useAlertContextStore,
@@ -14,6 +14,18 @@ import type { UserRole } from "@/types";
 interface AiAssistantFloatingWindowProps {
   actorRole: UserRole;
 }
+
+const ChatPanel = dynamic(
+  () => import("@/app/(app)/admin/ai-assistant/chat-panel"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center text-[13px] text-zinc-400">
+        正在打开 AI 助手
+      </div>
+    ),
+  },
+);
 
 export function AiAssistantFloatingWindow({ actorRole }: AiAssistantFloatingWindowProps) {
   const [open, setOpen] = useState(false);
@@ -165,4 +177,3 @@ export function AiAssistantFloatingWindow({ actorRole }: AiAssistantFloatingWind
     </div>
   );
 }
-

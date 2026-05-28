@@ -1,8 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNotifications } from "./notification-store";
-import { FeedbackDetailDialog } from "./feedback-detail-dialog";
 import type { ContentFeedbackCardView, NextDayReviewResult } from "@/types";
 
 type FeedbackCardItem = {
@@ -22,13 +22,44 @@ type FeedbackResponse = {
   summary: { total: number; unread: number; viewed: number };
 };
 
+const FeedbackDetailDialog = dynamic(
+  () => import("./feedback-detail-dialog").then((mod) => mod.FeedbackDetailDialog),
+  { ssr: false },
+);
+
 export function FeedbackNotificationBridge() {
   const { activated, setLocalNotification } = useNotifications();
+  const sentinelRef = useRef<HTMLSpanElement | null>(null);
+  const [visible, setVisible] = useState(false);
   const fetchedRef = useRef(false);
   const [items, setItems] = useState<FeedbackCardItem[]>([]);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+
+    const Observer = window.IntersectionObserver;
+    if (!Observer) {
+      const id = globalThis.setTimeout(() => setVisible(true), 0);
+      return () => globalThis.clearTimeout(id);
+    }
+
+    const observer = new Observer(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setVisible(true);
+        observer.disconnect();
+      },
+      { rootMargin: "240px 0px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
     if (!activated) return;
     if (fetchedRef.current) return;
     fetchedRef.current = true;
@@ -40,7 +71,7 @@ export function FeedbackNotificationBridge() {
         setItems(json.items);
       })
       .catch(() => {});
-  }, [activated]);
+  }, [activated, visible]);
 
   const openDetail = useCallback((cardId: string) => {
     setActiveCardId(cardId);
@@ -94,11 +125,16 @@ export function FeedbackNotificationBridge() {
   );
 
   return (
-    <FeedbackDetailDialog
-      open={Boolean(activeItem)}
-      onOpenChange={(open) => { if (!open) setActiveCardId(null); }}
-      item={activeItem}
-      onConfirmed={handleConfirmed}
-    />
+    <>
+      <span ref={sentinelRef} aria-hidden className="pointer-events-none fixed right-0 top-1/2 h-px w-px opacity-0" />
+      {activeItem ? (
+        <FeedbackDetailDialog
+          open={Boolean(activeItem)}
+          onOpenChange={(open) => { if (!open) setActiveCardId(null); }}
+          item={activeItem}
+          onConfirmed={handleConfirmed}
+        />
+      ) : null}
+    </>
   );
 }
