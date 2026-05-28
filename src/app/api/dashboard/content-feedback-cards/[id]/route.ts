@@ -9,6 +9,97 @@ type PatchBody = {
   action?: "viewed";
 };
 
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
+  const authClient = await createClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
+
+  const supabase = createAdminClient();
+  const { data: card, error: cardError } = await supabase
+    .from("content_feedback_cards")
+    .select(CONTENT_FEEDBACK_CARD_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (cardError || !card) {
+    return NextResponse.json({ error: cardError?.message || "反馈卡不存在" }, { status: 404 });
+  }
+
+  const feedbackCard = card as ContentFeedbackCard;
+  if (feedbackCard.target_user_id !== user.id) {
+    return NextResponse.json({ error: "无权限查看这张反馈卡" }, { status: 403 });
+  }
+
+  const { data: videoRow, error: videoError } = await supabase
+    .from("videos")
+    .select("id, video_title, video_url, published_at, anomaly_status, account_id, accounts(id, name)")
+    .eq("id", feedbackCard.video_id)
+    .maybeSingle();
+
+  if (videoError || !videoRow) {
+    return NextResponse.json({ error: videoError?.message || "视频不存在" }, { status: 404 });
+  }
+
+  const { data: snapshotRow } = await supabase
+    .from("video_metrics_snapshots")
+    .select("play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, likes, comments")
+    .eq("video_id", feedbackCard.video_id)
+    .eq("snapshot_type", "24h")
+    .order("captured_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const accountRel = (videoRow as { accounts?: { id: string; name: string | null } | { id: string; name: string | null }[] | null }).accounts ?? null;
+  const account = Array.isArray(accountRel) ? accountRel[0] ?? null : accountRel;
+
+  const view = buildContentFeedbackCardView(feedbackCard.video_id, feedbackCard);
+
+  return NextResponse.json({
+    ok: true,
+    item: {
+      video: {
+        id: videoRow.id,
+        video_title: videoRow.video_title ?? null,
+        video_url: videoRow.video_url ?? null,
+        published_at: videoRow.published_at ?? null,
+        anomaly_status: videoRow.anomaly_status,
+        snapshot: snapshotRow
+          ? {
+              play_count: snapshotRow.play_count ?? null,
+              bounce_rate_2s: snapshotRow.bounce_rate_2s ?? null,
+              completion_rate_5s: snapshotRow.completion_rate_5s ?? null,
+              completion_rate: snapshotRow.completion_rate ?? null,
+              avg_play_duration: snapshotRow.avg_play_duration ?? null,
+              likes: snapshotRow.likes ?? null,
+              comments: snapshotRow.comments ?? null,
+            }
+          : null,
+      },
+      account: account
+        ? {
+            id: account.id,
+            name: account.name ?? null,
+          }
+        : null,
+      feedback_card: {
+        card_id: view.card_id,
+        workflow_status: view.workflow_status,
+        workflow_label: view.workflow_label,
+        confirmed: feedbackCard.confirmed_payload,
+      },
+    },
+  });
+}
+
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },

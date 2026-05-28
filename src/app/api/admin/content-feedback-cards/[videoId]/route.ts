@@ -11,7 +11,7 @@ import {
 import type { ContentFeedbackCard } from "@/types";
 
 type ConfirmBody = {
-  action?: "confirm" | "send" | "create_and_confirm" | "confirm_and_send" | "create_confirm_send";
+  action?: "confirm" | "send" | "create_and_confirm" | "confirm_and_send" | "create_confirm_send" | "save_draft";
   manager_note?: string | null;
   summary?: {
     grade?: string;
@@ -94,11 +94,94 @@ export async function PATCH(
   }
 
   const action = body.action;
-  if (action !== "confirm" && action !== "send" && action !== "create_and_confirm" && action !== "confirm_and_send" && action !== "create_confirm_send") {
-    return NextResponse.json({ error: "action 只能是 confirm / send / create_and_confirm / confirm_and_send / create_confirm_send" }, { status: 400 });
+  if (
+    action !== "confirm" &&
+    action !== "send" &&
+    action !== "create_and_confirm" &&
+    action !== "confirm_and_send" &&
+    action !== "create_confirm_send" &&
+    action !== "save_draft"
+  ) {
+    return NextResponse.json(
+      { error: "action 只能是 confirm / send / create_and_confirm / confirm_and_send / create_confirm_send / save_draft" },
+      { status: 400 },
+    );
   }
 
   const currentCard = await loadFeedbackCard(access.supabase, videoId);
+
+  if (action === "save_draft") {
+    if (currentCard && (currentCard.card_status === "sent" || currentCard.card_status === "viewed")) {
+      return NextResponse.json({ error: "反馈卡已下发，无法再保存草稿" }, { status: 409 });
+    }
+
+    const draftPayload = buildManualConfirmedPayload({
+      summary: {
+        one_line: trimmed(body.summary?.one_line) ?? "",
+        problem_tags: normalizedStringArray(body.summary?.problem_tags) ?? [],
+      },
+      actions: {
+        instructions: normalizedStringArray(body.actions?.instructions) ?? [],
+        message_for_member: trimmed(body.actions?.message_for_member) ?? "",
+      },
+    });
+
+    const managerNote = typeof body.manager_note === "string" ? body.manager_note.trim() || null : null;
+
+    if (currentCard) {
+      const { data, error } = await access.supabase
+        .from("content_feedback_cards")
+        .update({
+          card_status: "draft",
+          manager_note: typeof body.manager_note === "string" ? managerNote : currentCard.manager_note,
+          draft_payload: draftPayload,
+          draft_generated_at: new Date().toISOString(),
+          confirmed_payload: null,
+          confirmed_by: null,
+          confirmed_at: null,
+          sent_by: null,
+          sent_at: null,
+          viewed_at: null,
+        })
+        .eq("id", currentCard.id)
+        .select(CONTENT_FEEDBACK_CARD_SELECT)
+        .single();
+
+      if (error || !data) {
+        return NextResponse.json({ error: error?.message || "保存草稿失败" }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        ok: true,
+        video: buildVideoMeta(access),
+        feedback_card: buildContentFeedbackCardDetail(videoId, data as ContentFeedbackCard),
+      });
+    }
+
+    const { data, error } = await access.supabase
+      .from("content_feedback_cards")
+      .insert({
+        video_id: videoId,
+        target_user_id: access.video.user_id,
+        target_account_id: access.video.account_id,
+        card_status: "draft",
+        manager_note: managerNote,
+        draft_payload: draftPayload,
+        draft_generated_at: new Date().toISOString(),
+      })
+      .select(CONTENT_FEEDBACK_CARD_SELECT)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: error?.message || "创建草稿失败" }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      video: buildVideoMeta(access),
+      feedback_card: buildContentFeedbackCardDetail(videoId, data as ContentFeedbackCard),
+    });
+  }
 
   if (action === "create_and_confirm") {
     const confirmedPayload = buildManualConfirmedPayload({
