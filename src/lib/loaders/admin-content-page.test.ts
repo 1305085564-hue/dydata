@@ -83,3 +83,10 @@ test("素材库首屏默认只下发第一页视频", () => {
   assert.equal(initialRows.at(-1)?.id, `video-${ADMIN_VIDEOS_INITIAL_LIMIT - 1}`);
   assert.equal(fullRows.length, ADMIN_VIDEOS_INITIAL_LIMIT + 5);
 });
+
+test("素材库首屏候选池大于最终下发数量", () => {
+  assert.equal(
+    videosInternal.ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT > ADMIN_VIDEOS_INITIAL_LIMIT,
+    true,
+  );
+});

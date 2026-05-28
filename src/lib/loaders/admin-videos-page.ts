@@ -19,6 +19,7 @@ type AccountOption = { id: string; name: string };
 type LoadMode = "initial" | "full";
 
 export const ADMIN_VIDEOS_INITIAL_LIMIT = 30;
+const ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT = 200;
 
 export interface AdminVideosPageData {
   videos: VideoRow[];
@@ -73,7 +74,7 @@ export async function loadAdminVideosPageData({
     .select("*, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)")
     .order("published_at", { ascending: false });
   if (mode === "initial") {
-    videosQuery = videosQuery.range(0, ADMIN_VIDEOS_INITIAL_LIMIT - 1);
+    videosQuery = videosQuery.range(0, ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
   const [{ data: videos }, { data: profiles }, { data: accounts }] = await Promise.all([
@@ -195,5 +196,6 @@ export async function loadAdminVideosPageData({
 
 export const __internal = {
   ADMIN_VIDEOS_INITIAL_LIMIT,
+  ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT,
   limitInitialVideos,
 };
