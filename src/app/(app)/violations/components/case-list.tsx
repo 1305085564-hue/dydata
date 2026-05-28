@@ -7,6 +7,7 @@ import { CaseDetailDialog } from "@/components/case-detail-dialog";
 import { ImageLightbox } from "@/components/image-lightbox";
 
 import { CaseRow } from "./case-row";
+import { FilterBar } from "./filter-bar";
 import { RankBoard } from "./rank-board";
 import type { RankItem, ViolationCase } from "./types";
 
@@ -146,17 +147,18 @@ export function CaseList({
         />
       </section>
 
-      {/* List header */}
-      {showCount ? (
-        <div className="flex items-baseline justify-between">
+      {/* List header + Filter */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {showCount ? (
           <h2 className="text-[13px] font-medium text-zinc-700">
             {query ? `「${query}」的搜索结果` : "话术列表"}
             <span className="ml-2 font-mono text-[12px] text-zinc-400 tabular-nums">
               {totalCases}
             </span>
           </h2>
-        </div>
-      ) : null}
+        ) : <span />}
+        <FilterBar />
+      </div>
 
       {/* 大白卡列表（rounded-2xl border bg-white），内部行靠 border-b 分隔 */}
       {cases.length === 0 ? (
@@ -179,8 +181,6 @@ export function CaseList({
         open={dialogCaseId !== null}
         onOpenChange={handleCloseDialog}
         onOpenLightbox={handleOpenLightbox}
-        showReviewPanel={canManageViolations}
-        isOwner={isOwner}
       />
 
       {/* Lightbox */}

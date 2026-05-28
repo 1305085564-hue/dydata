@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, X } from "lucide-react";
 
 import {
   Dialog,
@@ -89,7 +89,6 @@ export function CaseDetailDialog({
     if (!open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setData(null);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCopied(false);
     }
   }, [open]);
@@ -128,14 +127,26 @@ export function CaseDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto p-0 sm:max-w-2xl">
+      <DialogContent className="max-h-[88vh] max-w-4xl overflow-y-auto p-0 sm:max-w-4xl" showCloseButton={false}>
         <DialogHeader className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-6 pt-6 pb-4 backdrop-blur-md">
-          <DialogTitle className="text-[16px] font-semibold leading-[1.5] text-zinc-800">
-            话术详情
-          </DialogTitle>
-          <p className="text-[12px] text-zinc-400">
-            {showReviewPanel ? "完整详情 + 审批面板" : "复制即用"}
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle className="text-[16px] font-semibold leading-[1.5] text-zinc-800">
+                话术详情
+              </DialogTitle>
+              <p className="mt-1 text-[12px] text-zinc-400">
+                {showReviewPanel ? "查看详情 · 底部审核" : "复制即用"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="flex size-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+              aria-label="关闭"
+            >
+              <X className="size-4 stroke-[1.75]" />
+            </button>
+          </div>
         </DialogHeader>
 
         <div className="px-6 pb-6">
@@ -150,6 +161,7 @@ export function CaseDetailDialog({
               <div className="h-20 rounded-xl bg-zinc-100" />
             </div>
           ) : data ? (
+            <>
             <div className="space-y-6 pt-5">
               {/* 标签行 */}
               <div className="flex flex-wrap items-center gap-2">
@@ -267,9 +279,9 @@ export function CaseDetailDialog({
                       查看大图
                     </button>
                   </div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    {screenshots.slice(0, 5).map((path, idx) => {
-                      const isLast = idx === 4 && screenshots.length > 5;
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    {screenshots.slice(0, 7).map((path, idx) => {
+                      const isLast = idx === 6 && screenshots.length > 7;
                       const isHero = idx === 0;
                       return (
                         <button
@@ -297,7 +309,7 @@ export function CaseDetailDialog({
                           ) : null}
                           {isLast ? (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[14px] font-semibold text-white">
-                              +{screenshots.length - 5}
+                              +{screenshots.length - 7}
                             </div>
                           ) : null}
                         </button>
@@ -313,8 +325,8 @@ export function CaseDetailDialog({
                   <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                     多号测试明细 · {testRecords.length} 条
                   </p>
-                  <ul className="mt-2 space-y-1.5">
-                    {testRecords.slice(0, 6).map((record) => (
+                  <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    {testRecords.slice(0, 8).map((record) => (
                       <li
                         key={record.id}
                         className="flex items-center justify-between gap-2 rounded-lg border border-zinc-100 bg-white px-3 py-2 text-[12px]"
@@ -346,15 +358,20 @@ export function CaseDetailDialog({
               ) : null}
 
               {/* 元数据 */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-zinc-100 pt-4 text-[12px]">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-zinc-100 pt-4 text-[12px] sm:grid-cols-4">
                 <MetaRow label="提交人" value={getSubmitterName(data)} />
                 <MetaRow label="时间" value={formatDateTime(data.created_at)} />
                 <MetaRow label="账号" value={getAccountName(data)} />
                 <MetaRow label="团队" value={getTeamName(data)} />
               </div>
+            </div>
 
-              {/* 审批面板（仅管理员） */}
-              {showReviewPanel ? (
+            {/* 审核决策 — 仅管理工作台，独立于详情内容 */}
+            {showReviewPanel ? (
+              <div className="-mx-6 mt-6 border-t border-zinc-200 bg-zinc-50/60 px-6 py-5">
+                <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                  审核决策
+                </p>
                 <ReviewDecisionPanel
                   caseId={data.id}
                   purpose={isConversion ? "conversion" : "violation"}
@@ -371,8 +388,9 @@ export function CaseDetailDialog({
                     onOpenChange(false);
                   }}
                 />
-              ) : null}
-            </div>
+              </div>
+            ) : null}
+            </>
           ) : (
             <div className="py-10 text-center text-[13px] text-zinc-400">
               加载失败或案例不存在

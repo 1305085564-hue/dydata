@@ -10,7 +10,6 @@ import { getApiErrorMessage } from "@/lib/violations/errors";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { CaseList } from "./components/case-list";
-import { FilterBar } from "./components/filter-bar";
 import type {
   RankItem,
   SortKey,
@@ -25,6 +24,7 @@ import {
   loadProcessedData,
   PROCESSED_RPC_READY,
 } from "@/app/(app)/admin/conversion-hub/data";
+import { BackButton } from "./components/back-button";
 
 type SearchParamsShape = Record<string, string | string[] | undefined>;
 
@@ -246,6 +246,7 @@ export default async function ViolationsPage({
             <div className="flex shrink-0 items-center gap-2">
               {isManageView ? (
                 <>
+                  <BackButton />
                   <Link
                     href="/violations"
                     className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
@@ -298,11 +299,6 @@ export default async function ViolationsPage({
           />
         ) : (
           <>
-            {/* Filter Bar — 滚动浏览长列表时常驻吸顶 */}
-            <section className="sticky top-0 z-20 -mx-4 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 [background:linear-gradient(to_bottom,rgba(240,240,241,0.92),rgba(240,240,241,0.78))]">
-              <FilterBar />
-            </section>
-
             {error ? (
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-[13px] leading-[1.7] text-[#D99E55]">
                 {error}
