@@ -40,6 +40,7 @@ const PREVIOUS_VIDEO_SELECT = "id, account_id, published_at";
 const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
 
 export const ADMIN_CONTENT_INITIAL_LIMIT = 30;
+const ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT = 200;
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -304,7 +305,7 @@ export async function loadAdminContentPageData({
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
   if (mode === "initial") {
-    videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_LIMIT - 1);
+    videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
   const [
