@@ -31,7 +31,7 @@ export async function loadAdminContentInitialData(
   },
 ) {
   const supabase = deps.createAdminClient();
-  return deps.loadAdminContentPageData({ supabase, view, perspective: scope.perspective, teamId: scope.teamId });
+  return deps.loadAdminContentPageData({ supabase, view, perspective: scope.perspective, teamId: scope.teamId, mode: "initial" });
 }
 
 export default async function AdminContentPage({ searchParams }: Props) {

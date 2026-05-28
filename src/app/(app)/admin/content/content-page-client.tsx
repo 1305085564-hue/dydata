@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState, startTransition } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,25 +45,70 @@ export function ContentPageClient({
   const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
   const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
+  const hasLoadedFullInitialData = useRef(false);
+  const requestSeq = useRef(0);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
-  const loadData = useCallback(async (nextView: ContentView, nextPerspective: AdminDataPerspective, nextTeamId: string | null) => {
-    setIsLoading(true);
+  const loadData = useCallback(async (
+    nextView: ContentView,
+    nextPerspective: AdminDataPerspective,
+    nextTeamId: string | null,
+    options: { background?: boolean } = {},
+  ) => {
+    const currentSeq = requestSeq.current + 1;
+    requestSeq.current = currentSeq;
+    if (!options.background) setIsLoading(true);
     try {
       const res = await fetch(buildContentApiUrl(nextView, nextPerspective, nextTeamId));
       if (!res.ok) throw new Error("加载失败");
       const nextData = (await res.json()) as AdminContentPageData;
-      setData(nextData);
-      setView(nextView);
-      setPerspective(nextPerspective);
-      setTeamId(nextTeamId);
-      window.history.replaceState({}, "", buildContentPageUrl(nextView, nextPerspective, nextTeamId));
+      if (currentSeq !== requestSeq.current) return;
+      startTransition(() => {
+        setData(nextData);
+        setView(nextView);
+        setPerspective(nextPerspective);
+        setTeamId(nextTeamId);
+      });
+      if (!options.background) {
+        window.history.replaceState({}, "", buildContentPageUrl(nextView, nextPerspective, nextTeamId));
+      }
     } catch {
       // 保持旧数据，静默失败
     } finally {
-      setIsLoading(false);
+      if (!options.background && currentSeq === requestSeq.current) setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!data.isPartial || hasLoadedFullInitialData.current) return;
+    let timeoutId: ReturnType<typeof window.setTimeout> | null = null;
+    let idleId: ReturnType<typeof window.requestIdleCallback> | null = null;
+
+    const loadFullData = () => {
+      hasLoadedFullInitialData.current = true;
+      void loadData(view, perspective, teamId, { background: true });
+    };
+    const scheduleLoad = () => {
+      const requestIdle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined;
+      if (requestIdle) {
+        idleId = requestIdle(loadFullData, { timeout: 2500 });
+      } else {
+        timeoutId = globalThis.setTimeout(loadFullData, 1200);
+      }
+    };
+
+    if (document.readyState === "complete") {
+      scheduleLoad();
+    } else {
+      window.addEventListener("load", scheduleLoad, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("load", scheduleLoad);
+      if (idleId !== null) window.cancelIdleCallback(idleId);
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [data.isPartial, loadData, perspective, teamId, view]);
 
   const switchView = useCallback(async (nextView: ContentView) => {
     if (nextView === view) return;

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { __internal } from "./admin-content-page";
+import { __internal, ADMIN_CONTENT_INITIAL_LIMIT } from "./admin-content-page";
 
 test("内容管理首屏视频查询只选择页面需要的字段", () => {
   assert.equal(__internal.CONTENT_VIDEO_SELECT.includes("*"), false);
@@ -53,4 +53,19 @@ test("内容管理兼容 Supabase 关联对象或数组返回", () => {
   assert.equal(objectRow.profiles.name, "成员A");
   assert.equal(arrayRow.accounts.name, "账号B");
   assert.equal(arrayRow.profiles.name, "成员B");
+});
+
+test("内容管理首屏默认只下发第一页视频", () => {
+  const rows = Array.from({ length: ADMIN_CONTENT_INITIAL_LIMIT + 5 }, (_, index) => ({
+    id: `video-${index}`,
+    created_at: `2026-05-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
+  }));
+
+  const initialRows = __internal.limitInitialVideos(rows, "initial");
+  const fullRows = __internal.limitInitialVideos(rows, "full");
+
+  assert.equal(initialRows.length, ADMIN_CONTENT_INITIAL_LIMIT);
+  assert.equal(initialRows[0]?.id, "video-0");
+  assert.equal(initialRows.at(-1)?.id, `video-${ADMIN_CONTENT_INITIAL_LIMIT - 1}`);
+  assert.equal(fullRows.length, ADMIN_CONTENT_INITIAL_LIMIT + 5);
 });

@@ -20,7 +20,13 @@ test("批改台首屏取数固定走管理员客户端", async () => {
   });
 
   assert.equal(adminCallCount, 1);
-  assert.deepEqual(receivedArgs, { supabase: adminClient, view: "pending", perspective: "team", teamId: "team-1" });
+  assert.deepEqual(receivedArgs, {
+    supabase: adminClient,
+    view: "pending",
+    perspective: "team",
+    teamId: "team-1",
+    mode: "initial",
+  });
   assert.deepEqual(result, { ok: true, source: "content" });
 });
 

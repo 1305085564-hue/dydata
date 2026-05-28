@@ -22,12 +22,16 @@ type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
 
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string; profile_id?: string | null };
+type LoadMode = "initial" | "full";
+type FeedbackCardStatusRow = Pick<ContentFeedbackCard, "video_id" | "card_status">;
 
 const CONTENT_VIDEO_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
 
 const CONTENT_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares";
+
+export const ADMIN_CONTENT_INITIAL_LIMIT = 50;
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -51,6 +55,7 @@ export interface AdminContentPageData {
     viewed: number;
     pendingDelivery: number;
   };
+  isPartial?: boolean;
 }
 
 function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"], fallback: string) {
@@ -66,16 +71,53 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
   }));
 }
 
+function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
+  return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
+}
+
+function buildWorkflowSummary(videos: VideoRow[], cardStatusRows: FeedbackCardStatusRow[]) {
+  const statusByVideoId = new Map(cardStatusRows.map((row) => [row.video_id, row.card_status]));
+  const counts = {
+    notStarted: 0,
+    draft: 0,
+    confirmed: 0,
+    sent: 0,
+    viewed: 0,
+    pendingDelivery: 0,
+  };
+
+  for (const video of videos) {
+    const status = statusByVideoId.get(video.id) ?? "not_started";
+    if (status === "draft") {
+      counts.draft += 1;
+      counts.pendingDelivery += 1;
+    } else if (status === "confirmed") {
+      counts.confirmed += 1;
+      counts.pendingDelivery += 1;
+    } else if (status === "sent") {
+      counts.sent += 1;
+    } else if (status === "viewed") {
+      counts.viewed += 1;
+    } else {
+      counts.notStarted += 1;
+    }
+  }
+
+  return counts;
+}
+
 export async function loadAdminContentPageData({
   supabase,
   view = "pending",
   perspective = "company",
   teamId = null,
+  mode = "full",
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
+  mode?: LoadMode;
 }): Promise<AdminContentPageData> {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -117,13 +159,6 @@ export async function loadAdminContentPageData({
   const scopedVideoIds = videos.map((video) => video.id);
   const scopedVideoIdSet = new Set(scopedVideoIds);
   const visibleProfileIds = new Set(scope?.visibleUserIds ?? videos.map((video) => video.accounts?.profile_id ?? video.user_id));
-  const { data: feedbackCardRows } =
-    scopedVideoIds.length > 0
-      ? await serviceClient
-          .from("content_feedback_cards")
-          .select(CONTENT_FEEDBACK_CARD_SELECT)
-          .in("video_id", scopedVideoIds)
-      : { data: [] };
 
   const reviewedVideoIds = Array.from(
     new Set(
@@ -139,32 +174,51 @@ export async function loadAdminContentPageData({
   const reviewedVideoIdSet = new Set(reviewedVideoIds);
   const pendingVideos = videos.filter((video) => !reviewedVideoIdSet.has(video.id));
   const visibleVideos = view === "pending" ? pendingVideos : videos;
-  const visibleVideoIds = visibleVideos.map((video) => video.id);
-  const { data: snapshots } =
+  const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
+  const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
+  const feedbackCardVideoIds = mode === "initial" ? visibleVideoIds : scopedVideoIds;
+  const [
+    { data: snapshots },
+    { data: segmentRows },
+    { data: feedbackCardRows },
+    { data: feedbackCardStatusRows },
+  ] = await Promise.all([
     visibleVideoIds.length > 0
-      ? await supabase
+      ? supabase
           .from("video_metrics_snapshots")
           .select(CONTENT_SNAPSHOT_SELECT)
           .eq("snapshot_type", "24h")
           .in("video_id", visibleVideoIds)
           .order("captured_at", { ascending: false })
-      : { data: [] };
+      : Promise.resolve({ data: [] }),
+    visibleVideoIds.length > 0
+      ? supabase.from("video_content_segments").select("video_id").in("video_id", visibleVideoIds)
+      : Promise.resolve({ data: [] }),
+    feedbackCardVideoIds.length > 0
+      ? serviceClient
+          .from("content_feedback_cards")
+          .select(CONTENT_FEEDBACK_CARD_SELECT)
+          .in("video_id", feedbackCardVideoIds)
+      : Promise.resolve({ data: [] }),
+    scopedVideoIds.length > 0
+      ? serviceClient
+          .from("content_feedback_cards")
+          .select("video_id, card_status")
+          .in("video_id", scopedVideoIds)
+      : Promise.resolve({ data: [] }),
+  ]);
   const snapshotCount = (snapshots ?? []).length;
   const snapshotVideoIds = new Set((snapshots ?? []).map((snapshot) => snapshot.video_id as string));
-  const { data: segmentRows } =
-    visibleVideoIds.length > 0
-      ? await supabase.from("video_content_segments").select("video_id").in("video_id", visibleVideoIds)
-      : { data: [] };
   const segmentedVideoIds = new Set((segmentRows ?? []).map((row) => row.video_id as string));
   const feedbackCardMap = new Map<string, ContentFeedbackCard>();
   for (const row of (feedbackCardRows ?? []) as ContentFeedbackCard[]) {
     feedbackCardMap.set(row.video_id, row);
   }
   const feedbackCards = Object.fromEntries(
-    videos.map((video) => [video.id, buildContentFeedbackCardView(video.id, feedbackCardMap.get(video.id) ?? null)]),
+    initialVisibleVideos.map((video) => [video.id, buildContentFeedbackCardView(video.id, feedbackCardMap.get(video.id) ?? null)]),
   ) as Record<string, ContentFeedbackCardView>;
   const reviewReadiness = Object.fromEntries(
-    visibleVideos.map((video) => [
+    initialVisibleVideos.map((video) => [
       video.id,
       buildContentReviewReadiness({
         video,
@@ -174,10 +228,10 @@ export async function loadAdminContentPageData({
       }),
     ]),
   ) as Record<string, ContentReviewReadiness>;
-  const workflowViews = Object.values(feedbackCards);
+  const workflowSummary = buildWorkflowSummary(videos, (feedbackCardStatusRows ?? []) as FeedbackCardStatusRow[]);
 
   return {
-    videos: visibleVideos,
+    videos: initialVisibleVideos,
     snapshots: (snapshots ?? []) as VideoMetricsSnapshot[],
     profiles: (profiles ?? [])
       .filter((profile) => visibleProfileIds.has(profile.id))
@@ -194,21 +248,15 @@ export async function loadAdminContentPageData({
       snapshotCount,
       pendingReviewCount: pendingVideos.length,
     },
-    workflowSummary: {
-      notStarted: workflowViews.filter((view) => view.workflow_status === "not_started").length,
-      draft: workflowViews.filter((view) => view.workflow_status === "draft").length,
-      confirmed: workflowViews.filter((view) => view.workflow_status === "confirmed").length,
-      sent: workflowViews.filter((view) => view.workflow_status === "sent").length,
-      viewed: workflowViews.filter((view) => view.workflow_status === "viewed").length,
-      pendingDelivery: workflowViews.filter(
-        (view) => view.workflow_status === "draft" || view.workflow_status === "confirmed",
-      ).length,
-    },
+    workflowSummary,
+    isPartial: mode === "initial" && visibleVideos.length > initialVisibleVideos.length,
   };
 }
 
 export const __internal = {
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
+  buildWorkflowSummary,
+  limitInitialVideos,
   normalizeVideoRows,
 };
