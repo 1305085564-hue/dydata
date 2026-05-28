@@ -1,0 +1,6 @@
+-- This migration version exists in the linked Supabase migration history,
+-- but the original local file is absent from the current repository history.
+-- Keep this placeholder so `supabase db push --linked` can compare histories
+-- without repairing remote migration metadata.
+--
+-- Do not add DDL here unless the original 20260526032453 SQL is recovered.

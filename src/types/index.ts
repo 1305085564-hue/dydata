@@ -452,7 +452,7 @@ export type ScriptSegmentMappingStatus = "unmapped" | "estimated" | "confirmed";
 
 export type AiInsightScope = "single_video" | "member_week" | "member_month" | "team_week" | "team_month";
 export type AiDataQualityState = "sufficient" | "partial" | "insufficient";
-export type AiInsightType = "growth_edit" | "period_direction" | "next_day_review";
+export type AiInsightType = "growth_edit" | "period_direction" | "next_day_review" | "content_analysis";
 
 export type ExemptionRequestType = "yesterday" | "range" | "permanent" | "single" | "3days" | "4days" | "5days";
 export type ExemptionRequestStatus = "pending" | "approved" | "rejected";

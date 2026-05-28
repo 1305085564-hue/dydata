@@ -31,6 +31,28 @@ interface ContentDetailDialogProps {
 
 type DetailTab = "analysis" | "feedback";
 type ComparisonVideo = Pick<Video, "id" | "video_title" | "published_at" | "video_url" | "content">;
+type ObservationForm = {
+  traffic_peak_level: "high" | "medium" | "low" | "unset";
+  post_peak_trend: "smooth_decline" | "cliff_drop" | "multiple_peaks" | "unset";
+  traffic_retention_quality: "good" | "average" | "poor" | "unset";
+  drop_off_stage: "opening" | "middle" | "ending" | "not_obvious" | "unset";
+  suspected_problem_stage: "opening" | "middle_content" | "topic_mismatch" | "weak_interaction" | "weak_conversion" | "unset";
+  note: string;
+};
+type ContentAnalysisResult = {
+  insight_result_id?: string;
+  data_summary: string;
+  suspected_stage: string[];
+  key_metric_evidence: string[];
+  copywriting_reason: string;
+  abnormal_points: string[];
+  reusable_experience: string;
+  feedback_draft: {
+    main_issues: string;
+    improvement_feedback: string;
+  };
+};
+type ExperienceType = "hot_case" | "fail_case" | "opening_issue" | "middle_issue" | "retention_issue" | "conversion_issue";
 type ComparisonState = {
   loading: boolean;
   video: ComparisonVideo | null;
@@ -185,6 +207,89 @@ const comparisonMetrics: Array<{
   { label: "涨粉", read: (snapshot) => snapshot.follower_gain, format: formatNumber },
 ];
 
+const defaultObservation: ObservationForm = {
+  traffic_peak_level: "unset",
+  post_peak_trend: "unset",
+  traffic_retention_quality: "unset",
+  drop_off_stage: "unset",
+  suspected_problem_stage: "unset",
+  note: "",
+};
+
+const observationOptions = {
+  traffic_peak_level: [
+    ["unset", "未判断"],
+    ["high", "高"],
+    ["medium", "中"],
+    ["low", "低"],
+  ],
+  post_peak_trend: [
+    ["unset", "未判断"],
+    ["smooth_decline", "平滑下降"],
+    ["cliff_drop", "断崖下跌"],
+    ["multiple_peaks", "多次推流"],
+  ],
+  traffic_retention_quality: [
+    ["unset", "未判断"],
+    ["good", "好"],
+    ["average", "一般"],
+    ["poor", "差"],
+  ],
+  drop_off_stage: [
+    ["unset", "未判断"],
+    ["opening", "开头"],
+    ["middle", "中段"],
+    ["ending", "后段"],
+    ["not_obvious", "不明显"],
+  ],
+  suspected_problem_stage: [
+    ["unset", "未判断"],
+    ["opening", "开头问题"],
+    ["middle_content", "中段内容问题"],
+    ["topic_mismatch", "题材承接问题"],
+    ["weak_interaction", "互动弱"],
+    ["weak_conversion", "转化弱"],
+  ],
+} as const;
+
+const experienceOptions: Array<[ExperienceType, string]> = [
+  ["hot_case", "爆款案例"],
+  ["fail_case", "失败案例"],
+  ["opening_issue", "开头问题"],
+  ["middle_issue", "中段问题"],
+  ["retention_issue", "承接问题"],
+  ["conversion_issue", "转化问题"],
+];
+
+function SelectField<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: readonly (readonly [T, string])[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <label className="space-y-1 text-[12px] text-zinc-600">
+      <span>{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value as T)}
+        className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 outline-none focus:border-[#D97757]"
+      >
+        {options.map(([key, text]) => (
+          <option key={key} value={key}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export function ContentDetailDialog({
   open,
   onOpenChange,
@@ -206,6 +311,13 @@ export function ContentDetailDialog({
   const [isConfirming, setIsConfirming] = useState(false);
   const [mainIssues, setMainIssues] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [observation, setObservation] = useState<ObservationForm>(defaultObservation);
+  const [isSavingObservation, setIsSavingObservation] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<ContentAnalysisResult | null>(null);
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
+  const [experienceType, setExperienceType] = useState<ExperienceType>("hot_case");
+  const [experienceNote, setExperienceNote] = useState("");
+  const [isMarkingExperience, setIsMarkingExperience] = useState(false);
 
   useEffect(() => {
     if (!open || !video) {
@@ -218,6 +330,10 @@ export function ContentDetailDialog({
     setComparison({ loading: true, video: null, snapshot: null, error: null });
     setMainIssues("");
     setFeedback("");
+    setObservation(defaultObservation);
+    setAnalysisResult(null);
+    setExperienceType("hot_case");
+    setExperienceNote("");
     setCardDetail(null);
     fetch(`/api/admin/content-feedback-cards/${video.id}`)
       .then((res) => res.json())
@@ -252,6 +368,23 @@ export function ContentDetailDialog({
       .catch(() => {
         setComparison({ loading: false, video: null, snapshot: null, error: "上一条对比加载失败" });
       });
+
+    fetch(`/api/admin/content-observations?videoId=${video.id}`)
+      .then((res) => res.json())
+      .then((data: { observation?: Partial<ObservationForm> | null }) => {
+        if (!data.observation) return;
+        setObservation({
+          ...defaultObservation,
+          ...data.observation,
+          traffic_peak_level: data.observation.traffic_peak_level ?? "unset",
+          post_peak_trend: data.observation.post_peak_trend ?? "unset",
+          traffic_retention_quality: data.observation.traffic_retention_quality ?? "unset",
+          drop_off_stage: data.observation.drop_off_stage ?? "unset",
+          suspected_problem_stage: data.observation.suspected_problem_stage ?? "unset",
+          note: data.observation.note ?? "",
+        } as ObservationForm);
+      })
+      .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, video?.id]);
 
@@ -301,6 +434,79 @@ export function ContentDetailDialog({
       feedbackToast.error(e instanceof Error ? e.message : "确认下发失败");
     } finally {
       setIsConfirming(false);
+    }
+  }
+
+  async function handleSaveObservation() {
+    if (!video) return;
+    setIsSavingObservation(true);
+    try {
+      const res = await fetch("/api/admin/content-observations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId: video.id, ...observation }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "保存观察失败");
+      feedbackToast.success("观察已保存");
+    } catch (error) {
+      feedbackToast.error(error instanceof Error ? error.message : "保存观察失败");
+    } finally {
+      setIsSavingObservation(false);
+    }
+  }
+
+  async function handleGenerateAnalysis() {
+    if (!video) return;
+    setIsGeneratingAnalysis(true);
+    try {
+      const res = await fetch("/api/admin/content-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ video_id: video.id }),
+      });
+      const data = (await res.json()) as (ContentAnalysisResult & { error?: string });
+      if (!res.ok) throw new Error(data.error ?? "生成辅助分析失败");
+      setAnalysisResult(data);
+      feedbackToast.success("辅助分析已生成");
+    } catch (error) {
+      feedbackToast.error(error instanceof Error ? error.message : "生成辅助分析失败");
+    } finally {
+      setIsGeneratingAnalysis(false);
+    }
+  }
+
+  function handleQuoteAnalysisToFeedback() {
+    if (!analysisResult) return;
+    setMainIssues(analysisResult.feedback_draft.main_issues);
+    setFeedback(analysisResult.feedback_draft.improvement_feedback);
+    setActiveTab("feedback");
+    feedbackToast.success("已引用到反馈，尚未保存或下发");
+  }
+
+  async function handleMarkExperience(source: "analysis" | "feedback") {
+    if (!video) return;
+    setIsMarkingExperience(true);
+    try {
+      const res = await fetch("/api/admin/content-experience-marks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId: video.id,
+          experienceType,
+          visibilityScope: "team",
+          note: experienceNote,
+          aiInsightResultId: source === "analysis" ? analysisResult?.insight_result_id : undefined,
+          feedbackCardId: source === "feedback" ? cardDetail?.card_id : undefined,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "标记经验失败");
+      feedbackToast.success("已标记为经验");
+    } catch (error) {
+      feedbackToast.error(error instanceof Error ? error.message : "标记经验失败");
+    } finally {
+      setIsMarkingExperience(false);
     }
   }
 
@@ -499,6 +705,146 @@ export function ContentDetailDialog({
                     ))}
                   </div>
                 </section>
+
+                <section className="space-y-2">
+                  <SectionTitle>曲线观察</SectionTitle>
+                  <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <SelectField
+                        label="推流峰值"
+                        value={observation.traffic_peak_level}
+                        options={observationOptions.traffic_peak_level}
+                        onChange={(value) => setObservation((prev) => ({ ...prev, traffic_peak_level: value }))}
+                      />
+                      <SelectField
+                        label="峰值后走势"
+                        value={observation.post_peak_trend}
+                        options={observationOptions.post_peak_trend}
+                        onChange={(value) => setObservation((prev) => ({ ...prev, post_peak_trend: value }))}
+                      />
+                      <SelectField
+                        label="流量承接"
+                        value={observation.traffic_retention_quality}
+                        options={observationOptions.traffic_retention_quality}
+                        onChange={(value) => setObservation((prev) => ({ ...prev, traffic_retention_quality: value }))}
+                      />
+                      <SelectField
+                        label="跳出集中阶段"
+                        value={observation.drop_off_stage}
+                        options={observationOptions.drop_off_stage}
+                        onChange={(value) => setObservation((prev) => ({ ...prev, drop_off_stage: value }))}
+                      />
+                      <SelectField
+                        label="疑似问题阶段"
+                        value={observation.suspected_problem_stage}
+                        options={observationOptions.suspected_problem_stage}
+                        onChange={(value) => setObservation((prev) => ({ ...prev, suspected_problem_stage: value }))}
+                      />
+                    </div>
+                    <textarea
+                      value={observation.note}
+                      onChange={(event) => setObservation((prev) => ({ ...prev, note: event.target.value }))}
+                      className="w-full resize-none rounded-xl border border-zinc-200 bg-white p-3 text-[13px] leading-6 text-zinc-800 outline-none focus:border-[#D97757]"
+                      rows={3}
+                      placeholder="观察备注"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 rounded-lg text-[12px]"
+                        onClick={handleSaveObservation}
+                        disabled={isSavingObservation}
+                      >
+                        {isSavingObservation ? "保存中..." : "保存观察"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-8 rounded-lg bg-zinc-900 text-[12px] text-white hover:bg-zinc-700"
+                        onClick={handleGenerateAnalysis}
+                        disabled={isGeneratingAnalysis}
+                      >
+                        {isGeneratingAnalysis ? "生成中..." : "生成辅助分析"}
+                      </Button>
+                    </div>
+                  </div>
+                </section>
+
+                {analysisResult && (
+                  <section className="space-y-2">
+                    <SectionTitle>辅助分析结果</SectionTitle>
+                    <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-6 text-zinc-700">
+                      <div>{analysisResult.data_summary}</div>
+                      <div>
+                        <span className="text-zinc-400">疑似阶段：</span>
+                        {analysisResult.suspected_stage.join(" / ") || "-"}
+                      </div>
+                      <div>
+                        <span className="text-zinc-400">指标证据：</span>
+                        {analysisResult.key_metric_evidence.join("；") || "-"}
+                      </div>
+                      <div>
+                        <span className="text-zinc-400">文案原因：</span>
+                        {analysisResult.copywriting_reason}
+                      </div>
+                      <div>
+                        <span className="text-zinc-400">可复用经验：</span>
+                        {analysisResult.reusable_experience}
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 rounded-lg text-[12px]"
+                          onClick={handleQuoteAnalysisToFeedback}
+                        >
+                          引用到反馈
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 rounded-lg text-[12px]"
+                          onClick={() => handleMarkExperience("analysis")}
+                          disabled={isMarkingExperience}
+                        >
+                          标记为经验
+                        </Button>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                <section className="space-y-2">
+                  <SectionTitle>经验标记</SectionTitle>
+                  <div className="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 sm:grid-cols-[180px_1fr_auto]">
+                    <SelectField
+                      label="经验类型"
+                      value={experienceType}
+                      options={experienceOptions}
+                      onChange={setExperienceType}
+                    />
+                    <label className="space-y-1 text-[12px] text-zinc-600">
+                      <span>备注</span>
+                      <input
+                        value={experienceNote}
+                        onChange={(event) => setExperienceNote(event.target.value)}
+                        className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-[12px] text-zinc-800 outline-none focus:border-[#D97757]"
+                        placeholder="多个经验点可写在这里"
+                      />
+                    </label>
+                    <div className="flex items-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 rounded-lg text-[12px]"
+                        onClick={() => handleMarkExperience("analysis")}
+                        disabled={isMarkingExperience}
+                      >
+                        标记为经验
+                      </Button>
+                    </div>
+                  </div>
+                </section>
               </div>
 
               <div hidden={activeTab !== "feedback"} className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5">
@@ -553,6 +899,15 @@ export function ContentDetailDialog({
                       已下发给员工
                     </Badge>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 rounded-lg text-[12px]"
+                    onClick={() => handleMarkExperience("feedback")}
+                    disabled={isMarkingExperience}
+                  >
+                    标记为经验
+                  </Button>
                 </div>
               </div>
             </div>

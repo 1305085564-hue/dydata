@@ -115,6 +115,15 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
     outputSummary: "次日复盘洞察结果，写入后台任务链路。",
     recommendedWhen: "运营要批量追踪昨天内容表现时用它。",
   },
+  content_analysis: {
+    group: "其他已有 AI 能力",
+    title: "内容内部分析",
+    location: "/admin/content > 分析",
+    purpose: "给管理者做内部复盘辅助，只沉淀分析结果，不创建反馈卡。",
+    inputSummary: "单条作品信息、核心指标、上一条对比、30天基线、曲线观察和截图 URL。",
+    outputSummary: "数据摘要、疑似阶段、指标证据、文案原因、异常点、可复用经验和反馈草稿。",
+    recommendedWhen: "管理者需要先判断异常原因，再决定是否引用到员工反馈时用它。",
+  },
   video_diagnose: {
     group: "其他已有 AI 能力",
     title: "视频诊断",
