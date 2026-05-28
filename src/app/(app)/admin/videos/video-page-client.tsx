@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, startTransition } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,25 +43,45 @@ export function VideoPageClient({
   const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
   const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeferredLoading, setIsDeferredLoading] = useState(false);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
-  const loadData = useCallback(async (nextView: VideoView, nextPerspective: AdminDataPerspective, nextTeamId: string | null) => {
-    setIsLoading(true);
+  const loadData = useCallback(async (
+    nextView: VideoView,
+    nextPerspective: AdminDataPerspective,
+    nextTeamId: string | null,
+    options: { background?: boolean } = {},
+  ) => {
+    if (!options.background) setIsLoading(true);
     try {
       const res = await fetch(buildVideoApiUrl(nextView, nextPerspective, nextTeamId));
       if (!res.ok) throw new Error("加载失败");
       const nextData = (await res.json()) as AdminVideosPageData;
-      setData(nextData);
-      setView(nextView);
-      setPerspective(nextPerspective);
-      setTeamId(nextTeamId);
-      window.history.replaceState({}, "", buildVideoPageUrl(nextView, nextPerspective, nextTeamId));
+      startTransition(() => {
+        setData(nextData);
+        setView(nextView);
+        setPerspective(nextPerspective);
+        setTeamId(nextTeamId);
+      });
+      if (!options.background) {
+        window.history.replaceState({}, "", buildVideoPageUrl(nextView, nextPerspective, nextTeamId));
+      }
     } catch {
       // 保持旧数据，静默失败
     } finally {
-      setIsLoading(false);
+      if (!options.background) setIsLoading(false);
     }
   }, []);
+
+  const loadDeferredData = useCallback(async () => {
+    if (!data.isPartial || isLoading || isDeferredLoading) return;
+    setIsDeferredLoading(true);
+    try {
+      await loadData(view, perspective, teamId, { background: true });
+    } finally {
+      setIsDeferredLoading(false);
+    }
+  }, [data.isPartial, isDeferredLoading, isLoading, loadData, perspective, teamId, view]);
 
   const switchView = useCallback(async (nextView: VideoView) => {
     if (nextView === view) return;
@@ -206,6 +226,9 @@ export function VideoPageClient({
         accounts={data.accounts}
         videoTags={data.videoTags}
         assetLibrary={data.assetLibrary}
+        hasDeferredData={Boolean(data.isPartial)}
+        isDeferredDataLoading={isDeferredLoading}
+        onLoadDeferredData={loadDeferredData}
       />
     </section>
   );

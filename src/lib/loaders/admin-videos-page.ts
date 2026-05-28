@@ -15,6 +15,9 @@ type VideoRow = Video & {
 
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
+type LoadMode = "initial" | "full";
+
+export const ADMIN_VIDEOS_INITIAL_LIMIT = 50;
 
 export interface AdminVideosPageData {
   videos: VideoRow[];
@@ -38,6 +41,11 @@ export interface AdminVideosPageData {
     missingCount: number;
     gradedCount: number;
   };
+  isPartial?: boolean;
+}
+
+function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
+  return mode === "initial" ? rows.slice(0, ADMIN_VIDEOS_INITIAL_LIMIT) : rows;
 }
 
 export async function loadAdminVideosPageData({
@@ -45,11 +53,13 @@ export async function loadAdminVideosPageData({
   view = "pending",
   perspective = "company",
   teamId = null,
+  mode = "full",
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
   perspective?: AdminDataPerspective;
   teamId?: string | null;
+  mode?: LoadMode;
 }): Promise<AdminVideosPageData> {
   const perm = await getUserPermissions();
   const scope = perm
@@ -83,7 +93,8 @@ export async function loadAdminVideosPageData({
     view === "pending"
       ? pendingVideos
       : normalizedVideos;
-  const visibleVideoIds = visibleVideos.map((video) => video.id);
+  const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
+  const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
   const [
     { data: snapshotFlags },
     { data: segmentRows },
@@ -125,7 +136,7 @@ export async function loadAdminVideosPageData({
     }),
   );
   const assetLibrary = Object.fromEntries(
-    visibleVideos.map((video) => [
+    initialVisibleVideos.map((video) => [
       video.id,
       buildVideoAssetRecord({
         videoId: video.id,
@@ -143,7 +154,7 @@ export async function loadAdminVideosPageData({
   ) as Record<string, VideoAssetLibraryRecord>;
 
   return {
-    videos: visibleVideos,
+    videos: initialVisibleVideos,
     snapshots: (snapshots ?? []) as VideoMetricsSnapshot[],
     profiles: (profiles ?? [])
       .filter((profile) => visibleProfileIds.has(profile.id))
@@ -168,5 +179,11 @@ export async function loadAdminVideosPageData({
       missingCount: assetSummaryRecords.filter((record) => record.completeness_status === "missing").length,
       gradedCount: assetSummaryRecords.filter((record) => record.asset_level !== null).length,
     },
+    isPartial: mode === "initial" && visibleVideos.length > initialVisibleVideos.length,
   };
 }
+
+export const __internal = {
+  ADMIN_VIDEOS_INITIAL_LIMIT,
+  limitInitialVideos,
+};

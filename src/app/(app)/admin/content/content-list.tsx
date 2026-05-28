@@ -32,6 +32,9 @@ interface ContentListProps {
   accounts: AccountOption[];
   feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
+  hasDeferredData?: boolean;
+  isDeferredDataLoading?: boolean;
+  onLoadDeferredData?: () => Promise<void>;
   onFeedbackCardChanged?: (videoId: string, card: ContentFeedbackCardView) => void;
   onFeedbackCardsChanged?: (cards: Record<string, ContentFeedbackCardView>) => void;
 }
@@ -242,6 +245,9 @@ export function ContentList({
   accounts,
   feedbackCards,
   reviewReadiness,
+  hasDeferredData = false,
+  isDeferredDataLoading = false,
+  onLoadDeferredData,
   onFeedbackCardChanged,
   onFeedbackCardsChanged,
 }: ContentListProps) {
@@ -342,7 +348,8 @@ export function ContentList({
   }, [videos, filters, snapshotMap, feedbackCards]);
 
   const visible = useMemo(() => filtered.slice(0, loadedCount), [filtered, loadedCount]);
-  const hasMore = loadedCount < filtered.length;
+  const hasMoreLocal = loadedCount < filtered.length;
+  const hasMore = hasMoreLocal || hasDeferredData;
   const timelineGroups = useMemo(() => buildTimeline(filtered), [filtered]);
 
   /* Intersection Observer for auto-load */
@@ -359,6 +366,10 @@ export function ContentList({
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting && hasMore && !isLoadingMore) {
+          if (hasDeferredData && onLoadDeferredData) {
+            void onLoadDeferredData();
+            return;
+          }
           setIsLoadingMore(true);
           setTimeout(() => {
             const nextIds = new Set<string>();
@@ -375,7 +386,7 @@ export function ContentList({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, loadedCount, filtered]);
+  }, [filtered, hasDeferredData, hasMore, isLoadingMore, loadedCount, onLoadDeferredData]);
 
   /* Current scroll index for timeline */
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -694,6 +705,10 @@ export function ContentList({
                 size="sm"
                 className="h-10 gap-1.5 rounded-xl border-zinc-200 px-6 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
                 onClick={() => {
+                  if (hasDeferredData && onLoadDeferredData) {
+                    void onLoadDeferredData();
+                    return;
+                  }
                   setIsLoadingMore(true);
                   setTimeout(() => {
                     const nextIds = new Set<string>();
@@ -704,16 +719,16 @@ export function ContentList({
                     setTimeout(() => setNewBatchIds(new Set()), 600);
                   }, 200);
                 }}
-                disabled={isLoadingMore}
+                disabled={isLoadingMore || isDeferredDataLoading}
               >
-                {isLoadingMore ? (
+                {isLoadingMore || isDeferredDataLoading ? (
                   <>加载中…</>
                 ) : (
                   <>
                     <ChevronDown className="size-3.5" />
                     加载更多
                     <span className="ml-1 text-[11px] text-zinc-400">
-                      ({filtered.length - loadedCount} 条剩余)
+                      ({hasDeferredData ? "更多历史" : `${filtered.length - loadedCount} 条剩余`})
                     </span>
                   </>
                 )}

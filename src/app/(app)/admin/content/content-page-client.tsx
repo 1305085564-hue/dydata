@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, startTransition } from "react";
+import { useCallback, useRef, useState, startTransition } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,7 +45,7 @@ export function ContentPageClient({
   const [perspective, setPerspective] = useState<AdminDataPerspective>(initialPerspective);
   const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
-  const hasLoadedFullInitialData = useRef(false);
+  const [isDeferredLoading, setIsDeferredLoading] = useState(false);
   const requestSeq = useRef(0);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
@@ -79,38 +79,15 @@ export function ContentPageClient({
     }
   }, []);
 
-  useEffect(() => {
-    if (!data.isPartial || hasLoadedFullInitialData.current) return;
-    let timeoutId: ReturnType<typeof window.setTimeout> | null = null;
-    let idleId: ReturnType<typeof window.requestIdleCallback> | null = null;
-
-    const loadFullData = () => {
-      hasLoadedFullInitialData.current = true;
-      void loadData(view, perspective, teamId, { background: true });
-    };
-    const scheduleLoad = () => {
-      timeoutId = globalThis.setTimeout(() => {
-        const requestIdle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined;
-        if (requestIdle) {
-          idleId = requestIdle(loadFullData, { timeout: 2500 });
-        } else {
-          loadFullData();
-        }
-      }, 1200);
-    };
-
-    if (document.readyState === "complete") {
-      scheduleLoad();
-    } else {
-      window.addEventListener("load", scheduleLoad, { once: true });
+  const loadDeferredData = useCallback(async () => {
+    if (!data.isPartial || isLoading || isDeferredLoading) return;
+    setIsDeferredLoading(true);
+    try {
+      await loadData(view, perspective, teamId, { background: true });
+    } finally {
+      setIsDeferredLoading(false);
     }
-
-    return () => {
-      window.removeEventListener("load", scheduleLoad);
-      if (idleId !== null) window.cancelIdleCallback(idleId);
-      if (timeoutId !== null) window.clearTimeout(timeoutId);
-    };
-  }, [data.isPartial, loadData, perspective, teamId, view]);
+  }, [data.isPartial, isDeferredLoading, isLoading, loadData, perspective, teamId, view]);
 
   const switchView = useCallback(async (nextView: ContentView) => {
     if (nextView === view) return;
@@ -287,6 +264,9 @@ export function ContentPageClient({
         accounts={data.accounts}
         feedbackCards={data.feedbackCards}
         reviewReadiness={data.reviewReadiness}
+        hasDeferredData={Boolean(data.isPartial)}
+        isDeferredDataLoading={isDeferredLoading}
+        onLoadDeferredData={loadDeferredData}
         onFeedbackCardChanged={handleFeedbackCardChanged}
         onFeedbackCardsChanged={handleFeedbackCardsChanged}
       />

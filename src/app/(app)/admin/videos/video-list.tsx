@@ -34,6 +34,9 @@ interface VideoListProps {
   accounts: AccountOption[];
   videoTags: VideoTag[];
   assetLibrary: Record<string, VideoAssetLibraryRecord>;
+  hasDeferredData?: boolean;
+  isDeferredDataLoading?: boolean;
+  onLoadDeferredData?: () => Promise<void>;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -72,7 +75,17 @@ function formatPercent(value: number | null | undefined) {
   return `${(value * 100).toFixed(2)}%`;
 }
 
-export function VideoList({ videos, snapshots, profiles, accounts, videoTags, assetLibrary }: VideoListProps) {
+export function VideoList({
+  videos,
+  snapshots,
+  profiles,
+  accounts,
+  videoTags,
+  assetLibrary,
+  hasDeferredData = false,
+  isDeferredDataLoading = false,
+  onLoadDeferredData,
+}: VideoListProps) {
   const [filters, setFilters] = useState<VideoFilterValue>({
     profileId: "all",
     accountId: "all",
@@ -154,7 +167,8 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
   }, [filters, sortedVideos]);
 
   const visibleVideos = useMemo(() => filteredVideos.slice(0, loadedCount), [filteredVideos, loadedCount]);
-  const hasMore = loadedCount < filteredVideos.length;
+  const hasMoreLocal = loadedCount < filteredVideos.length;
+  const hasMore = hasMoreLocal || hasDeferredData;
 
   const handleFilter = useCallback((value: VideoFilterValue) => {
     setFilters(value);
@@ -171,6 +185,10 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting && hasMore && !isLoadingMore) {
+          if (hasDeferredData && onLoadDeferredData) {
+            void onLoadDeferredData();
+            return;
+          }
           setIsLoadingMore(true);
           setTimeout(() => {
             setLoadedCount((c) => c + PAGE_SIZE);
@@ -183,7 +201,7 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, loadedCount, filteredVideos.length]);
+  }, [filteredVideos.length, hasDeferredData, hasMore, isLoadingMore, onLoadDeferredData]);
 
   const selectedVideo = useMemo(
     () => filteredVideos.find((video) => video.id === selectedVideoId) ?? null,
@@ -315,22 +333,26 @@ export function VideoList({ videos, snapshots, profiles, accounts, videoTags, as
             size="sm"
             className="h-10 gap-1.5 rounded-xl border-zinc-200 px-6 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
             onClick={() => {
+              if (hasDeferredData && onLoadDeferredData) {
+                void onLoadDeferredData();
+                return;
+              }
               setIsLoadingMore(true);
               setTimeout(() => {
                 setLoadedCount((c) => c + PAGE_SIZE);
                 setIsLoadingMore(false);
               }, 200);
             }}
-            disabled={isLoadingMore}
+            disabled={isLoadingMore || isDeferredDataLoading}
           >
-            {isLoadingMore ? (
+            {isLoadingMore || isDeferredDataLoading ? (
               <>加载中…</>
             ) : (
               <>
                 <ChevronDown className="size-3.5" />
                 加载更多
                 <span className="ml-1 text-[11px] text-zinc-400">
-                  ({filteredVideos.length - loadedCount} 条剩余)
+                  ({hasDeferredData ? "更多历史" : `${filteredVideos.length - loadedCount} 条剩余`})
                 </span>
               </>
             )}

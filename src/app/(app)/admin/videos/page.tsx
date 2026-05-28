@@ -31,7 +31,7 @@ export async function loadAdminVideosInitialData(
   },
 ) {
   const supabase = deps.createAdminClient();
-  return deps.loadAdminVideosPageData({ supabase, view, perspective: scope.perspective, teamId: scope.teamId });
+  return deps.loadAdminVideosPageData({ supabase, view, perspective: scope.perspective, teamId: scope.teamId, mode: "initial" });
 }
 
 export default async function AdminVideosPage({ searchParams }: Props) {

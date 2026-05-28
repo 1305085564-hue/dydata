@@ -183,6 +183,7 @@ export function AdminSecondaryNav({
                   : `${panelBasePath}?panel=${item.panel}`
                 : `${hrefPrefix}${item.href}`
             }
+            prefetch={false}
             aria-current={active ? "page" : undefined}
             data-tone={item.tone}
             className={getCardClassName(active)}

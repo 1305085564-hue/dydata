@@ -49,6 +49,12 @@ test("素材库首屏取数固定走管理员客户端", async () => {
   });
 
   assert.equal(adminCallCount, 1);
-  assert.deepEqual(receivedArgs, { supabase: adminClient, view: "all", perspective: "company", teamId: null });
+  assert.deepEqual(receivedArgs, {
+    supabase: adminClient,
+    view: "all",
+    perspective: "company",
+    teamId: null,
+    mode: "initial",
+  });
   assert.deepEqual(result, { ok: true, source: "videos" });
 });
