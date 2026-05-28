@@ -71,26 +71,11 @@ function getRoleLabel(role: UserRole | null | undefined): string {
 }
 
 const SIDEBAR_BADGES_POLL_MS = 120_000;
-const SIDEBAR_BADGES_IDLE_DELAY_MS = 1_200;
 
-function useSidebarBadges(intervalMs = SIDEBAR_BADGES_POLL_MS): SidebarBadges | null {
+function useSidebarBadges(intervalMs = SIDEBAR_BADGES_POLL_MS) {
   const [data, setData] = useState<SidebarBadges | null>(null);
   const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (ready) return;
-
-    if (typeof globalThis.requestIdleCallback === "function") {
-      const idleId = globalThis.requestIdleCallback(
-        () => setReady(true),
-        { timeout: SIDEBAR_BADGES_IDLE_DELAY_MS },
-      );
-      return () => globalThis.cancelIdleCallback(idleId);
-    }
-
-    const timer = globalThis.setTimeout(() => setReady(true), SIDEBAR_BADGES_IDLE_DELAY_MS);
-    return () => globalThis.clearTimeout(timer);
-  }, [ready]);
+  const activate = () => setReady(true);
 
   useEffect(() => {
     if (!ready) return;
@@ -112,7 +97,7 @@ function useSidebarBadges(intervalMs = SIDEBAR_BADGES_POLL_MS): SidebarBadges | 
     };
   }, [intervalMs, ready]);
 
-  return data;
+  return { data, activate };
 }
 
 const AI_CHANNELS_CHANGED_EVENT = "ai-channels:changed";
@@ -127,8 +112,12 @@ interface AdminSidebarProps {
 export function AdminSidebar({ userRole, businessRole, permissions, userName }: AdminSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const badges = useSidebarBadges();
+  const { data: badges, activate: activateBadges } = useSidebarBadges();
   const items = getVisibleNavItems({ userRole, businessRole, permissions: permissions ?? {} });
+
+  useEffect(() => {
+    if (mobileOpen) activateBadges();
+  }, [activateBadges, mobileOpen]);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -157,6 +146,9 @@ export function AdminSidebar({ userRole, businessRole, permissions, userName }: 
 
       {/* Sidebar */}
       <aside
+        onMouseEnter={activateBadges}
+        onFocusCapture={activateBadges}
+        onTouchStart={activateBadges}
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-zinc-200 bg-[#FAFAFB] transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] lg:static lg:translate-x-0 lg:shrink-0 lg:min-w-[240px]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
