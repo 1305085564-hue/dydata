@@ -254,7 +254,41 @@ export function ContentPageClient({
           ) : null}
         </div>
 
-        <h2 className="ml-auto text-[15px] font-medium tracking-tight text-zinc-400">批改台</h2>
+        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
+          {data.workflowSummary.draft > 0 && (
+            <span>
+              待确认
+              <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">
+                {data.workflowSummary.draft}
+              </span>
+            </span>
+          )}
+          {data.workflowSummary.confirmed > 0 && (
+            <span>
+              已确认未发
+              <span className="ml-0.5 font-mono tabular-nums text-[#D97757]">
+                {data.workflowSummary.confirmed}
+              </span>
+            </span>
+          )}
+          {data.workflowSummary.sent > 0 && (
+            <span>
+              已下发
+              <span className="ml-0.5 font-mono tabular-nums text-[#D97757]">
+                {data.workflowSummary.sent}
+              </span>
+            </span>
+          )}
+          {data.workflowSummary.viewed > 0 && (
+            <span>
+              员工已读
+              <span className="ml-0.5 font-mono tabular-nums text-[#6FAA7D]">
+                {data.workflowSummary.viewed}
+              </span>
+            </span>
+          )}
+          <span className="pl-2 text-[15px] font-medium tracking-tight text-zinc-400">批改台</span>
+        </div>
       </div>
 
       <ContentList

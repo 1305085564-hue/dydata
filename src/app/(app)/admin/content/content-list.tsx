@@ -551,25 +551,6 @@ export function ContentList({
         </Button>
       </div>
 
-      {/* 下发状态摘要 */}
-      {(() => {
-        const cards = Object.values(feedbackCards);
-        const sent = cards.filter((c) => c.workflow_status === "sent").length;
-        const viewed = cards.filter((c) => c.workflow_status === "viewed").length;
-        const confirmed = cards.filter((c) => c.workflow_status === "confirmed").length;
-        const draft = cards.filter((c) => c.workflow_status === "draft").length;
-        if (sent + viewed + confirmed + draft === 0) return null;
-        return (
-          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-[12px]">
-            <span className="text-zinc-400">下发进度</span>
-            {draft > 0 && <span className="text-zinc-500">待确认 <span className="font-mono text-[#D99E55]">{draft}</span></span>}
-            {confirmed > 0 && <span className="text-zinc-500">已确认未发 <span className="font-mono text-[#D97757]">{confirmed}</span></span>}
-            {sent > 0 && <span className="text-zinc-500">已下发 <span className="font-mono text-[#D97757]">{sent}</span></span>}
-            {viewed > 0 && <span className="text-zinc-500">员工已读 <span className="font-mono text-[#6FAA7D]">{viewed}</span></span>}
-          </div>
-        );
-      })()}
-
       <div className="flex gap-4">
         {/* Table area */}
         <div className="flex-1 min-w-0">
