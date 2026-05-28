@@ -85,6 +85,8 @@ function hasEnoughSamples(row: DashboardCaseRow) {
   return (row.pass_count ?? 0) + (row.fail_count ?? 0) >= 3;
 }
 
+const RANK_BOARD_SIZE = 5;
+
 export function selectDangerousTop3(rows: DashboardCaseRow[]) {
   return rows
     .filter(hasEnoughSamples)
@@ -96,7 +98,7 @@ export function selectDangerousTop3(rows: DashboardCaseRow[]) {
       if (left.fail_count !== right.fail_count) return right.fail_count - left.fail_count;
       return left.pass_count - right.pass_count;
     })
-    .slice(0, 3);
+    .slice(0, RANK_BOARD_SIZE);
 }
 
 export function selectSafeTop3(rows: DashboardCaseRow[]) {
@@ -111,7 +113,7 @@ export function selectSafeTop3(rows: DashboardCaseRow[]) {
       if (left.fail_count !== right.fail_count) return left.fail_count - right.fail_count;
       return right.pass_count - left.pass_count;
     })
-    .slice(0, 3);
+    .slice(0, RANK_BOARD_SIZE);
 }
 
 export function selectConversionTop3(rows: DashboardConversionRow[]) {
@@ -126,7 +128,7 @@ export function selectConversionTop3(rows: DashboardConversionRow[]) {
       }
       return (right.total_follows ?? 0) - (left.total_follows ?? 0);
     })
-    .slice(0, 3)
+    .slice(0, RANK_BOARD_SIZE)
     .map((row): DashboardConversionSummary => ({
       id: row.id,
       script_text: normalizeScriptText(row.script_text),

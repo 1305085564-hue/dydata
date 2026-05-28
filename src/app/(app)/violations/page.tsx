@@ -93,10 +93,8 @@ type DangerousItem = {
 type ConversionItem = {
   id: string;
   script_text: string;
-  total_views: number | null;
-  total_follows: number | null;
   usage_count: number | null;
-  weighted_conversion_rate: number | null;
+  conversion_rate: string | null;
 };
 
 type DashboardData = {
@@ -129,17 +127,12 @@ async function loadDashboard(): Promise<DashboardData> {
 /*  Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-function formatConversionRate(rate: number | null): string {
-  if (typeof rate !== "number" || !Number.isFinite(rate)) return "—";
-  return `${(rate * 100).toFixed(2)}%`;
-}
-
 function mapConversionToRankItems(items: ConversionItem[]): RankItem[] {
   return items.map((item) => ({
     id: item.id,
     script_text: item.script_text,
-    metricValue: formatConversionRate(item.weighted_conversion_rate),
-    metricRaw: item.weighted_conversion_rate,
+    metricValue: item.conversion_rate ?? "—",
+    metricRaw: null,
     usage_count: item.usage_count,
   }));
 }

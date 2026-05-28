@@ -97,7 +97,7 @@ export async function buildDashboardSummaryResponse(deps: DashboardSummaryDeps =
         .eq("status", "verified")
         .gte("usage_count", 3)
         .order("weighted_conversion_rate", { ascending: false, nullsFirst: false })
-        .limit(3)),
+        .limit(5)),
     ]);
 
   const firstError =
