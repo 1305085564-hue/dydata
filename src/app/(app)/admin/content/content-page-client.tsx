@@ -89,12 +89,14 @@ export function ContentPageClient({
       void loadData(view, perspective, teamId, { background: true });
     };
     const scheduleLoad = () => {
-      const requestIdle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined;
-      if (requestIdle) {
-        idleId = requestIdle(loadFullData, { timeout: 2500 });
-      } else {
-        timeoutId = globalThis.setTimeout(loadFullData, 1200);
-      }
+      timeoutId = globalThis.setTimeout(() => {
+        const requestIdle = window.requestIdleCallback as typeof window.requestIdleCallback | undefined;
+        if (requestIdle) {
+          idleId = requestIdle(loadFullData, { timeout: 2500 });
+        } else {
+          loadFullData();
+        }
+      }, 1200);
     };
 
     if (document.readyState === "complete") {
