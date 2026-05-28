@@ -68,14 +68,18 @@ export async function loadAdminVideosPageData({
   const scope = perm
     ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
     : null;
-  const [{ data: videos }, { data: profiles }, { data: accounts }, { data: tagIds }] = await Promise.all([
-    supabase
-      .from("videos")
-      .select("*, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)")
-      .order("published_at", { ascending: false }),
+  let videosQuery = supabase
+    .from("videos")
+    .select("*, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)")
+    .order("published_at", { ascending: false });
+  if (mode === "initial") {
+    videosQuery = videosQuery.range(0, ADMIN_VIDEOS_INITIAL_LIMIT - 1);
+  }
+
+  const [{ data: videos }, { data: profiles }, { data: accounts }] = await Promise.all([
+    videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),
-    supabase.from("video_tags").select("video_id"),
   ]);
 
   const normalizedVideos = scope
@@ -83,6 +87,9 @@ export async function loadAdminVideosPageData({
     : ((videos ?? []) as VideoRow[]);
   const scopedVideoIdSet = new Set(normalizedVideos.map((video) => video.id));
   const scopedVideoIds = Array.from(scopedVideoIdSet);
+  const { data: tagIds } = scopedVideoIds.length > 0
+    ? await supabase.from("video_tags").select("video_id").in("video_id", scopedVideoIds)
+    : { data: [] };
   const visibleProfileIds = new Set(scope?.visibleUserIds ?? normalizedVideos.map((video) => video.accounts?.profile_id ?? video.user_id));
   const taggedVideoIds = new Set(
     (tagIds ?? [])

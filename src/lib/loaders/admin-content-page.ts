@@ -133,24 +133,31 @@ export async function loadAdminContentPageData({
     ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
     : null;
 
+  let videosQuery = supabase
+    .from("videos")
+    .select(CONTENT_VIDEO_SELECT)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+  if (mode === "initial") {
+    videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_LIMIT - 1);
+  }
+
   const [
     { data: videosRaw },
     { data: profiles },
     { data: accounts },
     { data: reviewedResults },
   ] = await Promise.all([
-    supabase
-      .from("videos")
-      .select(CONTENT_VIDEO_SELECT)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false }),
+    videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),
-    serviceClient
-      .from("ai_insight_result")
-      .select("result_json")
-      .eq("insight_type", "next_day_review")
-      .eq("result_status", "success"),
+    mode === "full"
+      ? serviceClient
+          .from("ai_insight_result")
+          .select("result_json")
+          .eq("insight_type", "next_day_review")
+          .eq("result_status", "success")
+      : Promise.resolve({ data: [] }),
   ]);
 
   const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort((left, right) => {
