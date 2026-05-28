@@ -206,7 +206,7 @@ function createInitialMeta(today: string): FormMetaState {
     publishedAt,
     publishedAtText: "",
     anomalyStatus: "正常",
-    uploadedAt: new Date().toLocaleString("zh-CN"),
+    uploadedAt: "",
     topicTag: "复盘",
     contentKeywords: [],
   };
@@ -500,6 +500,11 @@ export function VideoSubmitForm({
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  // Set uploadedAt on client only to avoid hydration mismatch
+  useEffect(() => {
+    setMeta((prev) => prev.uploadedAt ? prev : { ...prev, uploadedAt: new Date().toLocaleString("zh-CN") });
+  }, []);
 
   const draftKey = useMemo(() => `dydata.draft.videoSubmit.${userId}`, [userId]);
 

@@ -6,12 +6,8 @@ import { cn } from "@/lib/utils";
 type NetworkState = "online" | "offline" | "recovered";
 
 export function NetworkStatusBar() {
-  const [state, setState] = useState<NetworkState>(
-    typeof navigator !== "undefined" && !navigator.onLine ? "offline" : "online",
-  );
-  const [visible, setVisible] = useState(
-    typeof navigator !== "undefined" && !navigator.onLine,
-  );
+  const [state, setState] = useState<NetworkState>("online");
+  const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -43,7 +39,6 @@ export function NetworkStatusBar() {
     if (!navigator.onLine) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setState("offline");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
     }
 

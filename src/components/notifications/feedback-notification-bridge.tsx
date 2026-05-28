@@ -23,12 +23,13 @@ type FeedbackResponse = {
 };
 
 export function FeedbackNotificationBridge() {
-  const { setLocalNotification } = useNotifications();
+  const { activated, setLocalNotification } = useNotifications();
   const fetchedRef = useRef(false);
   const [items, setItems] = useState<FeedbackCardItem[]>([]);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!activated) return;
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
@@ -39,7 +40,7 @@ export function FeedbackNotificationBridge() {
         setItems(json.items);
       })
       .catch(() => {});
-  }, []);
+  }, [activated]);
 
   const openDetail = useCallback((cardId: string) => {
     setActiveCardId(cardId);

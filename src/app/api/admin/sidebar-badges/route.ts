@@ -6,6 +6,7 @@ import { filterScopedRows, jsonBadRequest, parseDateParam, requireAdminServiceCl
 type CockpitSummary = {
   pending_videos?: number;
   pending_submissions?: number;
+  pending_violations?: number;
 };
 
 type PendingViolationBadgeRow = {
@@ -35,19 +36,25 @@ export async function buildSidebarBadgesResponse(
   const summary = summaryUnwrapped.data ?? {};
   const pendingVideos = Number(summary.pending_videos ?? 0);
   const pendingSubmissions = Number(summary.pending_submissions ?? 0);
+  const pendingViolations = Number(summary.pending_violations ?? 0);
+  const recentReviewWindowStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [{ data: reviewedResults }, { data: pendingRows }] = await Promise.all([
+  const [{ data: reviewedResults }, pendingRowsResult] = await Promise.all([
     supabase
       .from("ai_insight_result")
       .select("result_json")
       .eq("insight_type", "next_day_review")
-      .eq("result_status", "success"),
-    supabase
-      .from("violation_cases")
-      .select("id, submitted_by")
-      .eq("status", "submitted")
-      .eq("is_deleted", false),
+      .eq("result_status", "success")
+      .gte("created_at", recentReviewWindowStart),
+    auth.scope.kind === "all"
+      ? Promise.resolve({ data: [] as PendingViolationBadgeRow[] })
+      : supabase
+          .from("violation_cases")
+          .select("id, submitted_by")
+          .eq("status", "submitted")
+          .eq("is_deleted", false),
   ]);
+  const pendingRows = pendingRowsResult.data;
 
   const reviewedVideoIds = new Set(
     (reviewedResults ?? [])
@@ -73,16 +80,15 @@ export async function buildSidebarBadgesResponse(
     return account?.profile_id ?? (video.user_id as string | null);
   });
   const contentCount = scopedVideos.filter((video) => !reviewedVideoIds.has(video.id as string)).length;
-  const visiblePendingViolations = filterScopedRows(
-    auth.scope,
-    (pendingRows ?? []) as PendingViolationBadgeRow[],
-    (row) => row.submitted_by,
-  ).length;
-  const visibleConversionHubCount = filterScopedRows(
-    auth.scope,
-    (pendingRows ?? []) as PendingViolationBadgeRow[],
-    (row) => row.submitted_by,
-  ).length;
+  const visiblePendingViolations =
+    auth.scope.kind === "all"
+      ? pendingViolations
+      : filterScopedRows(
+          auth.scope,
+          (pendingRows ?? []) as PendingViolationBadgeRow[],
+          (row) => row.submitted_by,
+        ).length;
+  const visibleConversionHubCount = visiblePendingViolations;
 
   const visiblePendingSubmissions =
     auth.scope.kind === "all"

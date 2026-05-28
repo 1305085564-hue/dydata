@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Check, CheckCheck, ChevronRight, Inbox } from "lucide-react";
 import Link from "next/link";
 
@@ -116,6 +116,7 @@ function NotificationCard({
             {!isLocal && row.action_url ? (
               <Link
                 href={row.action_url}
+                prefetch={false}
                 className="active:translate-y-0 inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -186,11 +187,16 @@ function NotificationCard({
 }
 
 export function NotificationBell() {
-  const { notifications, counts, markRead, markAllRead, markDone } = useNotifications();
+  const { notifications, counts, loading, activate, markRead, markAllRead, markDone } = useNotifications();
   const [open, setOpen] = useState(false);
 
   const unread = counts.unread;
   const list = notifications;
+
+  useEffect(() => {
+    if (!open) return;
+    void activate();
+  }, [activate, open]);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -226,7 +232,13 @@ export function NotificationBell() {
           ) : null}
         </SheetHeader>
         <SheetBody className="space-y-2">
-          {list.length === 0 ? (
+          {loading && list.length === 0 ? (
+            <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2 text-center text-zinc-400">
+              <Bell className="size-8 animate-pulse stroke-[1.25]" />
+              <div className="text-[13px]">正在读取通知</div>
+              <div className="text-[12px] text-zinc-300">首次打开时会拉取待办和动态</div>
+            </div>
+          ) : list.length === 0 ? (
             <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2 text-center text-zinc-400">
               <Inbox className="size-8 stroke-[1.25]" />
               <div className="text-[13px]">暂无通知</div>

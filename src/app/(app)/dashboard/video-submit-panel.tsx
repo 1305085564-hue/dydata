@@ -333,10 +333,19 @@ export function VideoSubmitPanel({
     [mergedTodayReports, selectedAccount],
   );
 
+  const [isLate, setIsLate] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      setIsLate(now.getHours() > 11 || (now.getHours() === 11 && now.getMinutes() >= 15));
+    };
+    check();
+    const timer = setInterval(check, 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
   const checkpoints = useMemo(() => {
     const isDataReported = mergedTodayReports.some((report) => report.account_id === selectedAccountId);
-    const now = new Date();
-    const isLate = !isDataReported && (now.getHours() > 11 || (now.getHours() === 11 && now.getMinutes() >= 15));
     const dataStatus: CheckpointStatus = isDataReported ? "done" : isLate ? "late" : "pending";
 
     return [
@@ -346,7 +355,7 @@ export function VideoSubmitPanel({
       { id: 4, name: "文案第二关", time: "18:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
       { id: 5, name: "审片发布", time: "20:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
     ];
-  }, [mergedTodayReports, selectedAccountId]);
+  }, [mergedTodayReports, selectedAccountId, isLate]);
 
   const monthExemptionDates = useMemo(
     () => getExemptionDatesForMonth(userExemptionProfile, today, userExemptionGrants),

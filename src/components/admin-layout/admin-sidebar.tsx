@@ -71,11 +71,29 @@ function getRoleLabel(role: UserRole | null | undefined): string {
 }
 
 const SIDEBAR_BADGES_POLL_MS = 120_000;
+const SIDEBAR_BADGES_IDLE_DELAY_MS = 1_200;
 
 function useSidebarBadges(intervalMs = SIDEBAR_BADGES_POLL_MS): SidebarBadges | null {
   const [data, setData] = useState<SidebarBadges | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (ready) return;
+
+    if (typeof globalThis.requestIdleCallback === "function") {
+      const idleId = globalThis.requestIdleCallback(
+        () => setReady(true),
+        { timeout: SIDEBAR_BADGES_IDLE_DELAY_MS },
+      );
+      return () => globalThis.cancelIdleCallback(idleId);
+    }
+
+    const timer = globalThis.setTimeout(() => setReady(true), SIDEBAR_BADGES_IDLE_DELAY_MS);
+    return () => globalThis.clearTimeout(timer);
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready) return;
     let active = true;
     const load = async () => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
@@ -92,7 +110,7 @@ function useSidebarBadges(intervalMs = SIDEBAR_BADGES_POLL_MS): SidebarBadges | 
       active = false;
       clearInterval(id);
     };
-  }, [intervalMs]);
+  }, [intervalMs, ready]);
 
   return data;
 }
@@ -170,6 +188,7 @@ export function AdminSidebar({ userRole, businessRole, permissions, userName }: 
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    prefetch={false}
                     onClick={() => setMobileOpen(false)}
                     aria-current={active ? "page" : undefined}
                     className={cn(

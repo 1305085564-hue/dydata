@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Check, ChevronDown, LogOut, Settings, Zap } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
@@ -50,13 +50,14 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
     }
   }, [accounts]);
 
-  useEffect(() => {
-    for (const item of navItems) {
-      if (item.href !== pathname) {
-        router.prefetch(item.href);
+  const prefetchOnHover = useCallback(
+    (href: string) => {
+      if (href !== pathname) {
+        router.prefetch(href);
       }
-    }
-  }, [navItems, pathname, router]);
+    },
+    [pathname, router],
+  );
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -86,6 +87,8 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Link
               href="/dashboard"
+              prefetch={false}
+              onMouseEnter={() => prefetchOnHover("/dashboard")}
               className="active:translate-y-0 inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-white">
@@ -105,7 +108,13 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
               aria-label="主导航"
             >
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className={linkClass(item.href, item.match(pathname))}>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  prefetch={false}
+                  onMouseEnter={() => prefetchOnHover(item.href)}
+                  className={linkClass(item.href, item.match(pathname))}
+                >
                   {item.label}
                 </Link>
               ))}
@@ -237,6 +246,8 @@ export function NavBarClient({ name, role, showAdmin, showAiCopywriting = true, 
             {showSystemSettings && (
               <Link
                 href="/admin/settings"
+                prefetch={false}
+                onMouseEnter={() => prefetchOnHover("/admin/settings")}
                 className={cn(
                   "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   pathname.startsWith("/admin/settings")

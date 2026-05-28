@@ -48,6 +48,8 @@ interface NotificationContextValue {
   notifications: AnyNotificationRow[];
   counts: NotificationCounts;
   loading: boolean;
+  activated: boolean;
+  activate: () => Promise<void>;
   refresh: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
@@ -98,10 +100,12 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
   const [remoteCounts, setRemoteCounts] = useState<NotificationCounts>({ unread: 0, todoOpen: 0 });
   const [locals, setLocals] = useState<Record<string, LocalNotificationRow>>({});
   const [loading, setLoading] = useState(false);
+  const [activated, setActivated] = useState(false);
   const inFlightRef = useRef(false);
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async ({ force = false }: { force?: boolean } = {}) => {
     if (!enabled) return;
+    if (!force && !activated) return;
     if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
     if (inFlightRef.current) return;
     inFlightRef.current = true;
@@ -121,11 +125,16 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
       inFlightRef.current = false;
       setLoading(false);
     }
-  }, [enabled]);
+  }, [activated, enabled]);
+
+  const activate = useCallback(async () => {
+    if (!enabled) return;
+    setActivated(true);
+    await fetchAll({ force: true });
+  }, [enabled, fetchAll]);
 
   useEffect(() => {
-    if (!enabled) return;
-    void fetchAll();
+    if (!enabled || !activated) return;
     const timer = window.setInterval(() => void fetchAll(), POLL_INTERVAL_MS);
     const onFocus = () => void fetchAll();
     window.addEventListener("focus", onFocus);
@@ -133,7 +142,7 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };
-  }, [enabled, fetchAll]);
+  }, [activated, enabled, fetchAll]);
 
   const setLocalNotification = useCallback(
     (key: string, input: LocalNotificationInput | null) => {
@@ -256,13 +265,15 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
         todoOpen: remoteCounts.todoOpen + localTodoOpen,
       },
       loading,
+      activated,
+      activate,
       refresh: fetchAll,
       markRead,
       markAllRead,
       markDone,
       setLocalNotification,
     };
-  }, [locals, remote, remoteCounts, loading, fetchAll, markRead, markAllRead, markDone, setLocalNotification]);
+  }, [locals, remote, remoteCounts, loading, activated, activate, fetchAll, markRead, markAllRead, markDone, setLocalNotification]);
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }
@@ -271,6 +282,8 @@ const noopValue: NotificationContextValue = {
   notifications: [],
   counts: { unread: 0, todoOpen: 0 },
   loading: false,
+  activated: false,
+  activate: async () => {},
   refresh: async () => {},
   markRead: async () => {},
   markAllRead: async () => {},
