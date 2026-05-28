@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { RotateCcw } from "lucide-react";
 import {
   GUIDANCE_METHOD_LABELS,
-  SORT_OPTIONS,
   type GuidanceMethod,
   type SortKey,
 } from "./types";
@@ -14,11 +13,14 @@ const ALL_GUIDANCE_METHODS = Object.keys(
   GUIDANCE_METHOD_LABELS,
 ) as GuidanceMethod[];
 
-interface FilterBarProps {
-  purpose?: "violation" | "conversion";
-}
+/** 员工排序选项 — 不再分 violation / conversion 两套，合并展示 */
+const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
+  { key: "pass_rate", label: "通过率" },
+  { key: "usage_count", label: "使用次数" },
+  { key: "created_at", label: "最新提交" },
+];
 
-export function FilterBar({ purpose = "violation" }: FilterBarProps) {
+export function FilterBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -29,10 +31,6 @@ export function FilterBar({ purpose = "violation" }: FilterBarProps) {
   const activeGuidanceMethods: GuidanceMethod[] = rawGuidance
     ? (rawGuidance.split(",").filter(Boolean) as GuidanceMethod[])
     : [];
-
-  const availableSortOptions = SORT_OPTIONS.filter((opt) =>
-    opt.applicablePurposes.includes(purpose),
-  );
 
   const createQueryString = useCallback(
     (updates: Record<string, string | null>) => {
@@ -62,7 +60,6 @@ export function FilterBar({ purpose = "violation" }: FilterBarProps) {
 
   const toggleGuidanceMethod = useCallback(
     (method: GuidanceMethod) => {
-      // API currently supports single guidance_method only
       const next = activeGuidanceMethods.includes(method)
         ? activeGuidanceMethods.filter((m) => m !== method)
         : [...activeGuidanceMethods, method];
@@ -93,7 +90,7 @@ export function FilterBar({ purpose = "violation" }: FilterBarProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      {/* Guidance method pills */}
+      {/* 导粉方式 pills */}
       <div className="flex flex-wrap items-center gap-1.5">
         {ALL_GUIDANCE_METHODS.map((method) => {
           const active = activeGuidanceMethods.includes(method);
@@ -114,13 +111,13 @@ export function FilterBar({ purpose = "violation" }: FilterBarProps) {
         })}
       </div>
 
-      {/* Sort selector */}
+      {/* 排序 */}
       <select
         value={`${activeSort}:${activeOrder}`}
         onChange={(e) => handleSortChange(e.target.value)}
         className="h-8 cursor-pointer rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-700 outline-none transition-colors focus:border-zinc-300"
       >
-        {availableSortOptions.map((opt) => (
+        {SORT_OPTIONS.map((opt) => (
           <optgroup key={opt.key} label={opt.label}>
             <option value={`${opt.key}:desc`}>{opt.label}从高到低</option>
             <option value={`${opt.key}:asc`}>{opt.label}从低到高</option>
@@ -128,7 +125,7 @@ export function FilterBar({ purpose = "violation" }: FilterBarProps) {
         ))}
       </select>
 
-      {/* Reset */}
+      {/* 重置 */}
       {hasActiveFilters ? (
         <button
           type="button"

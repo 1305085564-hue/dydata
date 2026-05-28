@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { ArrowRight, FilePlus2, Sparkles } from "lucide-react";
+import { ArrowRight, FilePlus2, Settings2, TrendingUp } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
@@ -50,7 +50,6 @@ async function loadCases(params: {
   order: "asc" | "desc";
   guidanceMethods: string[];
   query: string;
-  tab: string;
 }): Promise<ViolationCase[]> {
   const searchParams = new URLSearchParams();
   searchParams.set("sort", params.sort);
@@ -151,16 +150,6 @@ function mapDangerousToRankItems(items: DangerousItem[]): RankItem[] {
   });
 }
 
-function getDefaultSort(tab: string): SortKey {
-  if (tab === "safe") return "conversion_rate";
-  return "pass_rate";
-}
-
-function getTabPurpose(tab: string): "violation" | "conversion" {
-  if (tab === "safe") return "conversion";
-  return "violation";
-}
-
 /* ------------------------------------------------------------------ */
 /*  Page                                                                */
 /* ------------------------------------------------------------------ */
@@ -186,14 +175,13 @@ export default async function ViolationsPage({
   const resolved = await searchParams;
   const query = readParam(resolved, "q");
   const view = readParam(resolved, "view") || "";
-  const tab = readParam(resolved, "tab") || "safe";
   const isManageView = canManageViolations && view === "manage";
 
   const sortParam = readParam(resolved, "sort") as SortKey | "";
   const orderParam = readParam(resolved, "order") as "asc" | "desc" | "";
   const guidanceMethods = readParamArray(resolved, "guidance_method");
 
-  const activeSort: SortKey = sortParam || getDefaultSort(tab);
+  const activeSort: SortKey = sortParam || "pass_rate";
   const activeOrder: "asc" | "desc" = orderParam || "desc";
 
   /* Fetch data in parallel */
@@ -205,7 +193,7 @@ export default async function ViolationsPage({
     [cases, dashboard] = await Promise.all([
       isManageView
         ? Promise.resolve([])
-        : loadCases({ sort: activeSort, order: activeOrder, guidanceMethods, query, tab }),
+        : loadCases({ sort: activeSort, order: activeOrder, guidanceMethods, query }),
       isManageView ? Promise.resolve(null) : loadDashboard(),
     ]);
   } catch (loadError) {
@@ -254,75 +242,46 @@ export default async function ViolationsPage({
               </p>
             </div>
 
-            {/* Primary CTA */}
-            {!isManageView ? (
-              <div className="flex shrink-0 items-center gap-2">
-                <Link
-                  href="/violations/submit"
-                  className="group inline-flex h-10 items-center gap-2 rounded-xl bg-[#D97757] px-4 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
-                >
-                  <FilePlus2 className="size-4 stroke-[1.75]" />
-                  上传话术
-                  <ArrowRight className="size-3.5 stroke-[1.75] transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </div>
-            ) : (
-              <div className="flex shrink-0 items-center gap-2">
-                <Link
-                  href="/violations"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
-                >
-                  员工视角
-                </Link>
-                <Link
-                  href="/violations/submit"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
-                >
-                  <FilePlus2 className="size-3.5 stroke-[1.5]" />
-                  替员工提交
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Tabs */}
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4">
-            <div className="inline-flex rounded-xl bg-zinc-100 p-1">
-              <Link
-                href="/violations?tab=safe"
-                className={`rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors active:translate-y-0 ${
-                  !isManageView && tab === "safe"
-                    ? "bg-white text-zinc-800 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
-                }`}
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Sparkles className="size-3 stroke-[1.5]" />
-                  找可用话术
-                </span>
-              </Link>
-              <Link
-                href="/violations?tab=risk"
-                className={`rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors active:translate-y-0 ${
-                  !isManageView && tab === "risk"
-                    ? "bg-white text-zinc-800 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
-                }`}
-              >
-                避坑指南
-              </Link>
-              {canManageViolations ? (
-                <Link
-                  href="/violations?view=manage"
-                  className={`rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors active:translate-y-0 ${
-                    isManageView
-                      ? "bg-white text-zinc-800 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700"
-                  }`}
-                >
-                  审批闭环
-                </Link>
-              ) : null}
+            {/* Right CTAs */}
+            <div className="flex shrink-0 items-center gap-2">
+              {isManageView ? (
+                <>
+                  <Link
+                    href="/violations"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+                  >
+                    <TrendingUp className="size-3.5 stroke-[1.5]" />
+                    员工视角
+                  </Link>
+                  <Link
+                    href="/violations/submit"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
+                  >
+                    <FilePlus2 className="size-3.5 stroke-[1.5]" />
+                    替员工提交
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {canManageViolations ? (
+                    <Link
+                      href="/violations?view=manage"
+                      className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-[13px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+                    >
+                      <Settings2 className="size-3.5 stroke-[1.5]" />
+                      管理工作台
+                    </Link>
+                  ) : null}
+                  <Link
+                    href="/violations/submit"
+                    className="group inline-flex h-10 items-center gap-2 rounded-xl bg-[#D97757] px-4 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#C96442] hover:shadow-md active:translate-y-0"
+                  >
+                    <FilePlus2 className="size-4 stroke-[1.75]" />
+                    上传话术
+                    <ArrowRight className="size-3.5 stroke-[1.75] transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -335,12 +294,13 @@ export default async function ViolationsPage({
             processed={manageData.processed}
             processedPending={!PROCESSED_RPC_READY}
             layoutVariant="embedded"
+            isOwner={isOwner}
           />
         ) : (
           <>
             {/* Filter Bar — 滚动浏览长列表时常驻吸顶 */}
             <section className="sticky top-0 z-20 -mx-4 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 [background:linear-gradient(to_bottom,rgba(240,240,241,0.92),rgba(240,240,241,0.78))]">
-              <FilterBar purpose={getTabPurpose(tab)} />
+              <FilterBar />
             </section>
 
             {error ? (

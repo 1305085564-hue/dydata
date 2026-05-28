@@ -24,6 +24,8 @@ export interface HubShellProps {
   eyebrow?: string;
   title?: string;
   description?: string;
+  /** 是否 Owner — 透传给详情 Dialog 内嵌的审批面板 */
+  isOwner?: boolean;
 }
 
 /* ─── shell ─── */
@@ -35,6 +37,7 @@ export function ConversionHubShell(props: HubShellProps) {
     processed = [],
     processedPending = false,
     layoutVariant = "page",
+    isOwner = false,
   } = props;
 
   const content = (
@@ -43,6 +46,7 @@ export function ConversionHubShell(props: HubShellProps) {
       counts={inboxCounts}
       processed={processed}
       processedPending={processedPending}
+      isOwner={isOwner}
     />
   );
 

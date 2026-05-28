@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 
@@ -14,122 +16,82 @@ interface TaskInboxShellProps {
   processed: InboxBucketEntry[];
   /** 后端 RPC 未上线时显示「即将上线」 */
   processedPending?: boolean;
+  isOwner?: boolean;
 }
-
-type MobileTab = "pending" | "processed";
 
 export function TaskInboxShell({
   inbox,
   counts,
   processed,
   processedPending = false,
+  isOwner = false,
 }: TaskInboxShellProps) {
-  const [mobileTab, setMobileTab] = useState<MobileTab>("pending");
-
   const pendingTotal =
     counts.high_risk_pending + counts.pending_review + counts.missing_data;
+  const processedCount = processedPending ? null : processed.length;
+
+  const [processedOpen, setProcessedOpen] = useState(false);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-      {/* Mobile tab switcher */}
-      <div className="border-b border-zinc-200 px-3 py-2 md:hidden">
-        <div className="inline-flex rounded-xl bg-zinc-100 p-1">
-          <MobileTabButton
-            active={mobileTab === "pending"}
-            onClick={() => setMobileTab("pending")}
-            label="待处理"
-            count={pendingTotal}
-          />
-          <MobileTabButton
-            active={mobileTab === "processed"}
-            onClick={() => setMobileTab("processed")}
-            label="已处理"
-            count={processedPending ? null : processed.length}
-          />
+    <div className="space-y-4">
+      {/* 待处理 — 默认展开，主舞台 */}
+      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="flex items-baseline justify-between gap-2 border-b border-zinc-100 px-5 py-4">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-[14px] font-semibold text-zinc-800">待处理</h2>
+            <span className="font-mono text-[13px] tabular-nums text-zinc-400">
+              {pendingTotal}
+            </span>
+          </div>
+          <span className="text-[11px] text-zinc-400">
+            高风险 / 待审核 / 缺数据
+          </span>
         </div>
-      </div>
+        <div className="px-4 py-4 sm:px-5 sm:py-5">
+          <TaskInbox inbox={inbox} counts={counts} isOwner={isOwner} />
+        </div>
+      </section>
 
-      <div className="grid md:grid-cols-2">
-        {/* Pending column */}
-        <section
-          className={cn(
-            "min-w-0 px-4 py-4 md:border-r md:border-zinc-200 md:px-5 md:py-5",
-            mobileTab === "pending" ? "block" : "hidden md:block",
-          )}
+      {/* 已处理 — 折叠面板，默认收起 */}
+      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <button
+          type="button"
+          onClick={() => setProcessedOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-2 px-5 py-4 text-left transition-colors hover:bg-zinc-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-inset"
         >
-          <SectionHeader title="待处理" hint="高风险 / 待审核 / 缺数据" count={pendingTotal} />
-          <div className="mt-4">
-            <TaskInbox inbox={inbox} counts={counts} />
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-[14px] font-semibold text-zinc-800">已处理</h2>
+            {processedCount !== null ? (
+              <span className="font-mono text-[13px] tabular-nums text-zinc-400">
+                {processedCount}
+              </span>
+            ) : null}
+            <span className="text-[11px] text-zinc-400">近 30 天审批记录</span>
           </div>
-        </section>
-
-        {/* Processed column */}
-        <section
-          className={cn(
-            "min-w-0 px-4 py-4 md:px-5 md:py-5",
-            mobileTab === "processed" ? "block" : "hidden md:block",
-          )}
-        >
-          <SectionHeader
-            title="已处理"
-            hint="近 30 天审批记录"
-            count={processedPending ? null : processed.length}
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-300",
+              processedOpen ? "" : "-rotate-90",
+            )}
           />
-          <div className="mt-4">
-            <ProcessedList items={processed} pendingBackend={processedPending} />
-          </div>
-        </section>
-      </div>
+        </button>
+        <AnimatePresence initial={false}>
+          {processedOpen ? (
+            <motion.div
+              key="processed-content"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-zinc-100 px-4 py-4 sm:px-5 sm:py-5">
+                <ProcessedList items={processed} pendingBackend={processedPending} />
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </section>
     </div>
-  );
-}
-
-function SectionHeader({
-  title,
-  hint,
-  count,
-}: {
-  title: string;
-  hint: string;
-  count: number | null;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <div className="flex items-baseline gap-2">
-        <h2 className="text-[14px] font-semibold text-zinc-800">{title}</h2>
-        {count !== null ? (
-          <span className="text-[12px] tabular-nums text-zinc-400">{count}</span>
-        ) : null}
-      </div>
-      <span className="text-[11px] text-zinc-400">{hint}</span>
-    </div>
-  );
-}
-
-function MobileTabButton({
-  active,
-  onClick,
-  label,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  count: number | null;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-lg px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
-        active ? "bg-white text-zinc-800 shadow-sm" : "text-zinc-500 hover:text-zinc-700",
-      )}
-    >
-      {label}
-      {count !== null && count > 0 ? (
-        <span className="ml-1.5 tabular-nums text-[11px] text-zinc-400">{count}</span>
-      ) : null}
-    </button>
   );
 }

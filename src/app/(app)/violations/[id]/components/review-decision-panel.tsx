@@ -128,6 +128,8 @@ interface Props {
   initialSuggestedAction?: string | null;
   initialReasonTagIds?: string[];
   isOwner: boolean;
+  /** 审核保存成功后的回调（用于让外层 Dialog 自行关闭）；不传则只 router.refresh */
+  onSuccess?: () => void;
 }
 
 function asUsageState(value: string | null | undefined, purpose: CasePurpose): UsageState {
@@ -152,6 +154,7 @@ export function ReviewDecisionPanel({
   initialSuggestedAction,
   initialReasonTagIds,
   isOwner,
+  onSuccess,
 }: Props) {
   const router = useRouter();
   const isViolation = purpose === "violation";
@@ -266,6 +269,7 @@ export function ReviewDecisionPanel({
 
       feedbackToast.success(decision === "verify" ? (isViolation ? "已采纳并落库" : "已入库，团队可复用") : "已驳回");
       router.refresh();
+      onSuccess?.();
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "审核失败");
     } finally {

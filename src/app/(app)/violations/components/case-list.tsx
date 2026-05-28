@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-import { CaseDetailDrawer } from "@/components/case-detail-drawer";
-import { CaseReviewDialog } from "@/components/case-review-dialog";
+import { CaseDetailDialog } from "@/components/case-detail-dialog";
 import { ImageLightbox } from "@/components/image-lightbox";
 
-import { CaseCard } from "./case-card";
+import { CaseRow } from "./case-row";
 import { RankBoard } from "./rank-board";
-import type { RankItem, ViolationCase, ViolationDetail } from "./types";
+import type { RankItem, ViolationCase } from "./types";
 
 interface CaseListProps {
   cases: ViolationCase[];
@@ -27,7 +26,7 @@ interface LightboxState {
   index: number;
 }
 
-/** URL 上的抽屉锚点 — `?case=xxx` */
+/** URL 上的弹窗锚点 — `?case=xxx` */
 const CASE_PARAM = "case";
 
 export function CaseList({
@@ -45,17 +44,15 @@ export function CaseList({
   const searchParams = useSearchParams();
 
   /**
-   * 抽屉状态由 URL 单一来源驱动 —
-   *   - 打开抽屉 = router.replace 写入 ?case=xxx
-   *   - 关闭抽屉 = 删除 ?case
+   * 弹窗状态由 URL 单一来源驱动 —
+   *   - 打开 = router.replace 写入 ?case=xxx
+   *   - 关闭 = 删除 ?case
    *   - 浏览器后退键、深链分享、刷新都自然生效
    */
-  const drawerCaseId = searchParams.get(CASE_PARAM);
-
-  const [reviewCase, setReviewCase] = useState<ViolationDetail | null>(null);
+  const dialogCaseId = searchParams.get(CASE_PARAM);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
 
-  // 抽屉里所有可被 j/k 翻动的案例 id 列表（来自当前列表）
+  // 弹窗里所有可被 j/k 翻动的案例 id 列表（来自当前列表）
   const navigableIds = useMemo(() => cases.map((c) => c.id), [cases]);
 
   /** 写入 URL 的辅助：保留其他 query，只动 ?case= */
@@ -77,7 +74,7 @@ export function CaseList({
     [writeCaseParam],
   );
 
-  const handleCloseDrawer = useCallback(
+  const handleCloseDialog = useCallback(
     (open: boolean) => {
       if (!open) writeCaseParam(null);
     },
@@ -88,32 +85,17 @@ export function CaseList({
     setLightbox({ paths, index });
   }, []);
 
-  const handleOpenReviewFromCard = useCallback((caseItem: ViolationCase) => {
-    setReviewCase(caseItem as ViolationDetail);
-  }, []);
-
-  const handleOpenReviewFromDrawer = useCallback((caseData: ViolationDetail) => {
-    setReviewCase(caseData);
-  }, []);
-
-  const handleCloseReview = useCallback((open: boolean) => {
-    if (!open) setReviewCase(null);
-  }, []);
-
   /**
-   * j / k 翻案例 — 抽屉打开时拦截，无需先关闭抽屉
-   * 兼容 ←/→ 不抢，留给输入框
+   * j / k 翻案例 — 弹窗打开时拦截
    */
   useEffect(() => {
-    if (!drawerCaseId) return;
+    if (!dialogCaseId) return;
     if (navigableIds.length === 0) return;
 
     function onKey(e: KeyboardEvent) {
-      // 只接受 j / k / J / K，避免和 ImageLightbox 的 ←/→ 冲突
       const key = e.key.toLowerCase();
       if (key !== "j" && key !== "k") return;
 
-      // 输入区域按键不拦截
       const target = e.target as HTMLElement | null;
       if (target) {
         const tag = target.tagName;
@@ -122,7 +104,7 @@ export function CaseList({
         }
       }
 
-      const idx = navigableIds.indexOf(drawerCaseId ?? "");
+      const idx = navigableIds.indexOf(dialogCaseId ?? "");
       if (idx < 0) return;
       const nextIdx =
         key === "j"
@@ -134,7 +116,7 @@ export function CaseList({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [drawerCaseId, navigableIds, writeCaseParam]);
+  }, [dialogCaseId, navigableIds, writeCaseParam]);
 
   const showCount = typeof totalCases === "number" && cases.length > 0;
 
@@ -150,7 +132,6 @@ export function CaseList({
           metricKey="conversion_rate"
           accentColor="#6FAA7D"
           emptyHint="样本不足，暂无排名"
-          viewAllHref="/violations?tab=safe&sort=conversion_rate&order=desc"
           onItemClick={handleOpenDetail}
         />
         <RankBoard
@@ -161,7 +142,6 @@ export function CaseList({
           metricKey="pass_rate"
           accentColor="#C9604D"
           emptyHint="样本不足，暂无排名"
-          viewAllHref="/violations?tab=risk&sort=pass_rate&order=asc"
           onItemClick={handleOpenDetail}
         />
       </section>
@@ -178,51 +158,30 @@ export function CaseList({
         </div>
       ) : null}
 
-      {/* Empty state or two-column card grid */}
+      {/* 大白卡列表（rounded-2xl border bg-white），内部行靠 border-b 分隔 */}
       {cases.length === 0 ? (
         emptyState
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {cases.map((caseItem) => (
-            <CaseCard
-              key={caseItem.id}
-              caseItem={caseItem}
-              onOpenDetail={handleOpenDetail}
-              onOpenLightbox={handleOpenLightbox}
-              onOpenReview={handleOpenReviewFromCard}
-              canManageViolations={canManageViolations}
-            />
-          ))}
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <ul className="divide-y divide-zinc-100">
+            {cases.map((caseItem) => (
+              <li key={caseItem.id}>
+                <CaseRow caseItem={caseItem} onOpenDetail={handleOpenDetail} />
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
-      {/* Drawer */}
-      <CaseDetailDrawer
-        caseId={drawerCaseId}
-        open={drawerCaseId !== null}
-        onOpenChange={handleCloseDrawer}
+      {/* Detail Dialog */}
+      <CaseDetailDialog
+        caseId={dialogCaseId}
+        open={dialogCaseId !== null}
+        onOpenChange={handleCloseDialog}
         onOpenLightbox={handleOpenLightbox}
-        onOpenReview={handleOpenReviewFromDrawer}
-        canManageViolations={canManageViolations}
+        showReviewPanel={canManageViolations}
+        isOwner={isOwner}
       />
-
-      {/* Review dialog */}
-      {reviewCase ? (
-        <CaseReviewDialog
-          open={reviewCase !== null}
-          onOpenChange={handleCloseReview}
-          caseId={reviewCase.id}
-          purpose={(reviewCase.purpose === "conversion" ? "conversion" : "violation") as "violation" | "conversion"}
-          initialStatus={reviewCase.status}
-          initialUsageState={reviewCase.usage_state}
-          initialRiskLevel={reviewCase.risk_level}
-          initialPromotionLevel={reviewCase.promotion_level}
-          initialAdminConclusion={reviewCase.admin_conclusion}
-          initialSuggestedAction={reviewCase.suggested_action}
-          initialReasonTagIds={[]}
-          isOwner={isOwner}
-        />
-      ) : null}
 
       {/* Lightbox */}
       {lightbox ? (

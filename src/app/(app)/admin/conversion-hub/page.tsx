@@ -39,6 +39,7 @@ export default async function ConversionHubPage() {
       inboxCounts={counts}
       processed={processed}
       processedPending={!PROCESSED_RPC_READY}
+      isOwner={perm.role === "owner"}
     />
   );
 }

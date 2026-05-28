@@ -1,18 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Check, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetBody,
-  SheetFooter,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ReviewDecisionPanel } from "@/app/(app)/violations/[id]/components/review-decision-panel";
 import { UsageStateBadge } from "@/app/(app)/violations/components/case-state-badge";
 import { PassRateBadge } from "@/app/(app)/violations/components/pass-rate-badge";
 import {
@@ -29,13 +27,16 @@ import type {
 import { resolveConfidence } from "@/lib/case-library/confidence";
 import { cn } from "@/lib/utils";
 
-interface CaseDetailDrawerProps {
+interface CaseDetailDialogProps {
   caseId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenLightbox?: (paths: string[], index: number) => void;
-  onOpenReview?: (caseData: ViolationDetail) => void;
-  canManageViolations?: boolean;
+  /** 管理员视角：内嵌 ReviewDecisionPanel */
+  showReviewPanel?: boolean;
+  isOwner?: boolean;
+  /** 审批保存成功后回调（用于关闭 Dialog） */
+  onReviewSuccess?: () => void;
 }
 
 type DetailRow = ViolationDetail & {
@@ -48,14 +49,15 @@ type DetailRow = ViolationDetail & {
   weighted_conversion_rate?: number | null;
 };
 
-export function CaseDetailDrawer({
+export function CaseDetailDialog({
   caseId,
   open,
   onOpenChange,
   onOpenLightbox,
-  onOpenReview,
-  canManageViolations,
-}: CaseDetailDrawerProps) {
+  showReviewPanel = false,
+  isOwner = false,
+  onReviewSuccess,
+}: CaseDetailDialogProps) {
   const [data, setData] = useState<DetailRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -92,13 +94,6 @@ export function CaseDetailDrawer({
     }
   }, [open]);
 
-  const handleScreenshotClick = useCallback(
-    (paths: string[], index: number) => {
-      onOpenLightbox?.(paths, index);
-    },
-    [onOpenLightbox],
-  );
-
   const handleCopy = useCallback(async () => {
     const text = data?.script_text;
     if (!text) return;
@@ -110,6 +105,13 @@ export function CaseDetailDrawer({
       /* noop */
     }
   }, [data]);
+
+  const handleScreenshotClick = useCallback(
+    (paths: string[], index: number) => {
+      onOpenLightbox?.(paths, index);
+    },
+    [onOpenLightbox],
+  );
 
   const isConversion = data?.purpose === "conversion";
   const passRate = data ? getPassRate(data) : null;
@@ -125,15 +127,20 @@ export function CaseDetailDrawer({
   })();
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[520px] max-w-[92vw]">
-        <SheetHeader>
-          <SheetTitle>话术详情</SheetTitle>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto p-0 sm:max-w-2xl">
+        <DialogHeader className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-6 pt-6 pb-4 backdrop-blur-md">
+          <DialogTitle className="text-[16px] font-semibold leading-[1.5] text-zinc-800">
+            话术详情
+          </DialogTitle>
+          <p className="text-[12px] text-zinc-400">
+            {showReviewPanel ? "完整详情 + 审批面板" : "复制即用"}
+          </p>
+        </DialogHeader>
 
-        <SheetBody>
+        <div className="px-6 pb-6">
           {loading ? (
-            <div className="space-y-4 animate-pulse">
+            <div className="space-y-4">
               <div className="h-6 w-32 rounded-md bg-zinc-100" />
               <div className="h-24 rounded-xl bg-zinc-100" />
               <div className="grid grid-cols-2 gap-2">
@@ -143,44 +150,45 @@ export function CaseDetailDrawer({
               <div className="h-20 rounded-xl bg-zinc-100" />
             </div>
           ) : data ? (
-            <div className="space-y-6">
-              {/* Sticky 话术头部 — 滚动时常驻可见 */}
-              <div className="sticky -top-4 z-10 -mx-6 -mt-4 border-b border-zinc-100 bg-white/95 px-6 pb-4 pt-4 backdrop-blur-md">
-                <div className="flex flex-wrap items-center gap-2">
-                  {!isConversion && <UsageStateBadge usageState={data.usage_state} size="md" />}
-                  {!isConversion && (
-                    <PassRateBadge passCount={data.pass_count} failCount={data.fail_count} />
-                  )}
-                  <span className="inline-flex items-center rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
-                    {data.category || "其他"}
-                  </span>
-                  {confidence ? (
+            <div className="space-y-6 pt-5">
+              {/* 标签行 */}
+              <div className="flex flex-wrap items-center gap-2">
+                {!isConversion && <UsageStateBadge usageState={data.usage_state} size="md" />}
+                {!isConversion && (
+                  <PassRateBadge passCount={data.pass_count} failCount={data.fail_count} />
+                )}
+                <span className="inline-flex items-center rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+                  {data.category || "其他"}
+                </span>
+                {confidence ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-medium"
+                    style={{
+                      borderColor: `${confidence.toneHex}33`,
+                      color: confidence.toneHex,
+                    }}
+                    title={confidence.hint}
+                  >
                     <span
-                      className="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-medium"
-                      style={{
-                        borderColor: `${confidence.toneHex}33`,
-                        color: confidence.toneHex,
-                      }}
-                      title={confidence.hint}
-                    >
-                      <span
-                        className="size-1.5 rounded-full"
-                        style={{ backgroundColor: confidence.toneHex }}
-                      />
-                      {confidence.label}
-                    </span>
-                  ) : null}
-                </div>
+                      className="size-1.5 rounded-full"
+                      style={{ backgroundColor: confidence.toneHex }}
+                    />
+                    {confidence.label}
+                  </span>
+                ) : null}
+              </div>
 
-                <div className="mt-3 flex items-start justify-between gap-3">
-                  <p className="line-clamp-3 flex-1 whitespace-pre-wrap text-[14px] font-medium leading-[1.7] text-zinc-800">
-                    {data.script_text}
+              {/* 话术全文 + 复制按钮 */}
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                    话术全文
                   </p>
                   <button
                     type="button"
                     onClick={handleCopy}
                     className={cn(
-                      "inline-flex h-7 shrink-0 items-center gap-1 rounded-md border px-2 text-[11px] font-medium transition-all active:translate-y-[1px]",
+                      "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[11px] font-medium transition-all active:translate-y-0",
                       copied
                         ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
                         : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-800",
@@ -199,23 +207,14 @@ export function CaseDetailDrawer({
                     )}
                   </button>
                 </div>
+                <p className="whitespace-pre-wrap text-[14px] leading-[1.7] text-zinc-800">
+                  {data.script_text}
+                </p>
               </div>
 
-              {/* 完整话术原文（如被 sticky 截断时给完整版） */}
-              {data.script_text.length > 140 ? (
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                    完整话术
-                  </p>
-                  <p className="mt-2 whitespace-pre-wrap text-[14px] leading-[1.7] text-zinc-800">
-                    {data.script_text}
-                  </p>
-                </div>
-              ) : null}
-
-              {/* Stats */}
+              {/* 统计指标 */}
               {isConversion ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <StatBlock label="转化率" value={formatConversionRate(data)} accent />
                   <StatBlock label="使用次数" value={formatCount(data.usage_count)} />
                   <StatBlock label="累计播放" value={formatCount(data.total_views)} />
@@ -241,7 +240,7 @@ export function CaseDetailDrawer({
                 </div>
               )}
 
-              {/* Admin conclusion */}
+              {/* 管理员点评 */}
               {data.admin_conclusion ? (
                 <div className="rounded-xl border border-[#D97757]/15 bg-[#D97757]/[0.04] p-4">
                   <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#D97757]">
@@ -253,7 +252,7 @@ export function CaseDetailDrawer({
                 </div>
               ) : null}
 
-              {/* Screenshots — 主图占 2 列，其余小图 */}
+              {/* 截图 */}
               {screenshots.length > 0 ? (
                 <div>
                   <div className="flex items-baseline justify-between">
@@ -308,7 +307,7 @@ export function CaseDetailDrawer({
                 </div>
               ) : null}
 
-              {/* Test records */}
+              {/* 测试明细 */}
               {testRecords.length > 0 ? (
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
@@ -346,47 +345,42 @@ export function CaseDetailDrawer({
                 </div>
               ) : null}
 
-              {/* Meta */}
+              {/* 元数据 */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-zinc-100 pt-4 text-[12px]">
                 <MetaRow label="提交人" value={getSubmitterName(data)} />
                 <MetaRow label="时间" value={formatDateTime(data.created_at)} />
                 <MetaRow label="账号" value={getAccountName(data)} />
                 <MetaRow label="团队" value={getTeamName(data)} />
               </div>
+
+              {/* 审批面板（仅管理员） */}
+              {showReviewPanel ? (
+                <ReviewDecisionPanel
+                  caseId={data.id}
+                  purpose={isConversion ? "conversion" : "violation"}
+                  initialStatus={data.status}
+                  initialUsageState={data.usage_state}
+                  initialRiskLevel={data.risk_level}
+                  initialPromotionLevel={data.promotion_level}
+                  initialAdminConclusion={data.admin_conclusion}
+                  initialSuggestedAction={data.suggested_action}
+                  initialReasonTagIds={[]}
+                  isOwner={isOwner}
+                  onSuccess={() => {
+                    onReviewSuccess?.();
+                    onOpenChange(false);
+                  }}
+                />
+              ) : null}
             </div>
           ) : (
             <div className="py-10 text-center text-[13px] text-zinc-400">
               加载失败或案例不存在
             </div>
           )}
-        </SheetBody>
-
-        <SheetFooter>
-          <div className="flex w-full items-center justify-between gap-2">
-            {caseId ? (
-              <Link
-                href={`/violations/${caseId}`}
-                className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 transition-colors hover:text-zinc-800"
-              >
-                查看完整详情
-                <ArrowRight className="size-3 stroke-[1.5]" />
-              </Link>
-            ) : (
-              <span />
-            )}
-            {canManageViolations && data ? (
-              <button
-                type="button"
-                onClick={() => onOpenReview?.(data)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#D97757] px-3.5 text-[13px] font-medium text-white shadow-sm transition-all hover:bg-[#C96442] active:translate-y-0"
-              >
-                审批
-              </button>
-            ) : null}
-          </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

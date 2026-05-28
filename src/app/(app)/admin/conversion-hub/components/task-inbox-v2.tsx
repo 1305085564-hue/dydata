@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { CaseRejectDialog } from "@/components/case-reject-dialog";
+import { CaseDetailDialog } from "@/components/case-detail-dialog";
 
 import type { InboxBucketEntry, InboxCounts } from "../data";
 
@@ -128,6 +128,7 @@ function TaskRow({
   selected,
   onToggle,
   onAction,
+  onOpenDetail,
   busyAction,
 }: {
   entry: InboxBucketEntry;
@@ -136,6 +137,7 @@ function TaskRow({
   selected: boolean;
   onToggle: () => void;
   onAction: (entry: InboxBucketEntry, action: RowAction) => void;
+  onOpenDetail: (id: string) => void;
   busyAction: RowAction | null;
 }) {
   const style = TONE[tone];
@@ -175,10 +177,11 @@ function TaskRow({
         )}
       />
 
-      {/* Content */}
-      <Link
-        href={`/violations/${entry.id}`}
-        className="min-w-0 flex-1 pl-1 focus-visible:outline-none"
+      {/* Content — 点击行打开中心 Dialog */}
+      <button
+        type="button"
+        onClick={() => onOpenDetail(entry.id)}
+        className="min-w-0 flex-1 cursor-pointer pl-1 text-left focus-visible:outline-none"
       >
         <p className="line-clamp-2 text-[13px] font-medium text-zinc-800">
           {entry.script_text}
@@ -202,7 +205,7 @@ function TaskRow({
           ) : null}
           {suffix}
         </div>
-      </Link>
+      </button>
 
       {/* Quick actions */}
       <div className="hidden shrink-0 items-center gap-1 sm:flex">
@@ -274,6 +277,7 @@ function CollapsibleSection({
   hiddenIds,
   onToggle,
   onAction,
+  onOpenDetail,
   busyMap,
 }: {
   section: InboxSection;
@@ -281,6 +285,7 @@ function CollapsibleSection({
   hiddenIds: Set<string>;
   onToggle: (id: string) => void;
   onAction: (entry: InboxBucketEntry, action: RowAction) => void;
+  onOpenDetail: (id: string) => void;
   busyMap: Map<string, RowAction>;
 }) {
   const [open, setOpen] = useState(section.defaultOpen ?? true);
@@ -391,6 +396,7 @@ function CollapsibleSection({
                           selected={selectedIds.has(entry.id)}
                           onToggle={() => onToggle(entry.id)}
                           onAction={onAction}
+                          onOpenDetail={onOpenDetail}
                           busyAction={busyMap.get(entry.id) ?? null}
                         />
                       </motion.div>
@@ -500,14 +506,18 @@ interface TaskInboxProps {
     promotion_candidates: InboxBucketEntry[];
   };
   counts: InboxCounts;
+  /** 是否 Owner — 透传给详情 Dialog 内嵌的审批面板 */
+  isOwner?: boolean;
 }
 
-export function TaskInbox({ inbox, counts }: TaskInboxProps) {
+export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [busyMap, setBusyMap] = useState<Map<string, RowAction>>(new Map());
   const [bulkBusy, setBulkBusy] = useState<RowAction | null>(null);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  /** 中心 Dialog 的当前案例 id — 行点击触发 */
+  const [detailCaseId, setDetailCaseId] = useState<string | null>(null);
   const [rejectState, setRejectState] = useState<
     | { mode: "single"; entry: InboxBucketEntry }
     | { mode: "bulk"; ids: string[] }
@@ -912,6 +922,7 @@ export function TaskInbox({ inbox, counts }: TaskInboxProps) {
             hiddenIds={hiddenIds}
             onToggle={toggleId}
             onAction={handleSingleAction}
+            onOpenDetail={setDetailCaseId}
             busyMap={busyMap}
           />
         ))}
@@ -959,6 +970,19 @@ export function TaskInbox({ inbox, counts }: TaskInboxProps) {
           if (!o && !rejectBusy) setRejectState(null);
         }}
         onConfirm={handleRejectConfirm}
+      />
+      <CaseDetailDialog
+        caseId={detailCaseId}
+        open={detailCaseId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDetailCaseId(null);
+        }}
+        showReviewPanel
+        isOwner={isOwner}
+        onReviewSuccess={() => {
+          // 审批后让 detail 关闭 + 列表刷新（router.refresh 已在 panel 内触发）
+          setDetailCaseId(null);
+        }}
       />
     </>
   );
