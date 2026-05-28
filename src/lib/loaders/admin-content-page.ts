@@ -27,12 +27,17 @@ type LoadMode = "initial" | "full";
 type FeedbackCardStatusRow = Pick<ContentFeedbackCard, "video_id" | "card_status">;
 type SegmentRow = { video_id: string };
 type SnapshotVideoIdRow = { video_id: string };
+type PreviousVideoCandidateRow = Pick<Video, "id" | "account_id" | "published_at">;
+type PreviousSnapshotRow = Pick<VideoMetricsSnapshot, "video_id" | "play_count" | "captured_at">;
 
 const CONTENT_VIDEO_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
 
 const CONTENT_SNAPSHOT_SELECT =
-  "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares";
+  "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares, favorites, screenshot_urls, curve_screenshot_url, retention_screenshot_url";
+
+const PREVIOUS_VIDEO_SELECT = "id, account_id, published_at";
+const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
 
 export const ADMIN_CONTENT_INITIAL_LIMIT = 30;
 
@@ -107,6 +112,166 @@ function buildWorkflowSummary(videos: VideoRow[], cardStatusRows: FeedbackCardSt
   }
 
   return counts;
+}
+
+function buildLatestPlayCountByVideoId(snapshots: PreviousSnapshotRow[]) {
+  const playCountByVideoId = new Map<string, number | null>();
+  const capturedAtByVideoId = new Map<string, number>();
+
+  for (const snapshot of snapshots) {
+    const capturedAt = snapshot.captured_at ? new Date(snapshot.captured_at).getTime() : 0;
+    const existingCapturedAt = capturedAtByVideoId.get(snapshot.video_id);
+    if (existingCapturedAt !== undefined && existingCapturedAt >= capturedAt) continue;
+
+    capturedAtByVideoId.set(snapshot.video_id, capturedAt);
+    playCountByVideoId.set(snapshot.video_id, snapshot.play_count ?? null);
+  }
+
+  return playCountByVideoId;
+}
+
+function findPreviousVideoByVisibleId(visibleVideos: VideoRow[], candidates: PreviousVideoCandidateRow[]) {
+  const candidatesByAccountId = new Map<string, PreviousVideoCandidateRow[]>();
+
+  for (const candidate of candidates) {
+    if (!candidate.account_id || !candidate.published_at) continue;
+    const rows = candidatesByAccountId.get(candidate.account_id) ?? [];
+    rows.push(candidate);
+    candidatesByAccountId.set(candidate.account_id, rows);
+  }
+
+  for (const rows of candidatesByAccountId.values()) {
+    rows.sort((left, right) => new Date(right.published_at!).getTime() - new Date(left.published_at!).getTime());
+  }
+
+  const previousByVideoId = new Map<string, PreviousVideoCandidateRow>();
+  for (const video of visibleVideos) {
+    if (!video.account_id || !video.published_at) continue;
+    const currentPublishedAt = new Date(video.published_at).getTime();
+    const previousVideo = candidatesByAccountId
+      .get(video.account_id)
+      ?.find((candidate) => candidate.id !== video.id && new Date(candidate.published_at!).getTime() < currentPublishedAt);
+
+    if (previousVideo) {
+      previousByVideoId.set(video.id, previousVideo);
+    }
+  }
+
+  return previousByVideoId;
+}
+
+function attachPlayChangeSignals({
+  videos,
+  currentSnapshots,
+  previousVideos,
+  previousSnapshots,
+}: {
+  videos: VideoRow[];
+  currentSnapshots: PreviousSnapshotRow[];
+  previousVideos: PreviousVideoCandidateRow[];
+  previousSnapshots: PreviousSnapshotRow[];
+}) {
+  const currentPlayCountByVideoId = buildLatestPlayCountByVideoId(currentSnapshots);
+  const previousPlayCountByVideoId = buildLatestPlayCountByVideoId(previousSnapshots);
+  const previousVideoByVisibleId = findPreviousVideoByVisibleId(videos, previousVideos);
+
+  return videos.map((video) => {
+    const previousVideo = previousVideoByVisibleId.get(video.id);
+    const currentPlayCount = currentPlayCountByVideoId.get(video.id);
+    const previousPlayCount = previousVideo ? previousPlayCountByVideoId.get(previousVideo.id) : null;
+
+    if (currentPlayCount == null || previousPlayCount == null || previousPlayCount <= 0) {
+      return {
+        ...video,
+        previous_play_count: previousPlayCount ?? null,
+        play_count_change_pct: null,
+        play_change_signal: null,
+      };
+    }
+
+    const playCountChangePct = ((currentPlayCount - previousPlayCount) / previousPlayCount) * 100;
+    const playChangeSignal: Video["play_change_signal"] =
+      playCountChangePct >= 100 ? "surge"
+        : playCountChangePct <= -50 ? "halve"
+          : null;
+
+    return {
+      ...video,
+      previous_play_count: previousPlayCount,
+      play_count_change_pct: playCountChangePct,
+      play_change_signal: playChangeSignal,
+    };
+  });
+}
+
+async function loadPlayChangeSignals({
+  supabase,
+  videos,
+  previousCandidateVideos,
+  currentSnapshots,
+}: {
+  supabase: LoaderSupabase;
+  videos: VideoRow[];
+  previousCandidateVideos: VideoRow[];
+  currentSnapshots: PreviousSnapshotRow[];
+}) {
+  const publishedVideos = previousCandidateVideos.filter((video) => video.account_id && video.published_at);
+  const visibleAccountIds = new Set(videos.map((video) => video.account_id).filter(Boolean));
+  const relevantCandidateVideos = publishedVideos.filter((video) => visibleAccountIds.has(video.account_id));
+  if (relevantCandidateVideos.length === 0) {
+    return attachPlayChangeSignals({
+      videos,
+      currentSnapshots,
+      previousVideos: [],
+      previousSnapshots: [],
+    });
+  }
+
+  const videosByAccountId = new Map<string, VideoRow[]>();
+  for (const video of relevantCandidateVideos) {
+    const rows = videosByAccountId.get(video.account_id) ?? [];
+    rows.push(video);
+    videosByAccountId.set(video.account_id, rows);
+  }
+
+  const previousVideoResults = await Promise.all(
+    Array.from(videosByAccountId.entries()).map(([accountId, accountVideos]) => {
+      const oldestKnownPublishedAt = accountVideos.reduce((oldest, video) => {
+        const publishedAt = new Date(video.published_at!).getTime();
+        return Math.min(oldest, publishedAt);
+      }, Number.POSITIVE_INFINITY);
+
+      return supabase
+        .from("videos")
+        .select(PREVIOUS_VIDEO_SELECT)
+        .eq("account_id", accountId)
+        .lt("published_at", new Date(oldestKnownPublishedAt).toISOString())
+        .order("published_at", { ascending: false })
+        .limit(1);
+    }),
+  );
+
+  const previousBoundaryVideos = previousVideoResults.flatMap((result) => (result.data ?? []) as PreviousVideoCandidateRow[]);
+  const previousCandidates = [...relevantCandidateVideos, ...previousBoundaryVideos];
+  const previousVideoByVisibleId = findPreviousVideoByVisibleId(videos, previousCandidates);
+  const previousVideoIds = Array.from(
+    new Set(Array.from(previousVideoByVisibleId.values()).map((video) => video.id)),
+  );
+  const { data: previousSnapshots } = previousVideoIds.length > 0
+    ? await supabase
+        .from("video_metrics_snapshots")
+        .select(PREVIOUS_SNAPSHOT_SELECT)
+        .eq("snapshot_type", "24h")
+        .in("video_id", previousVideoIds)
+        .order("captured_at", { ascending: false })
+    : { data: [] };
+
+  return attachPlayChangeSignals({
+    videos,
+    currentSnapshots,
+    previousVideos: previousCandidates,
+    previousSnapshots: (previousSnapshots ?? []) as PreviousSnapshotRow[],
+  });
 }
 
 export async function loadAdminContentPageData({
@@ -227,6 +392,12 @@ export async function loadAdminContentPageData({
           .in("video_id", scopedVideoIds)
       : Promise.resolve({ data: [] }),
   ]);
+  const initialVisibleVideosWithSignals = await loadPlayChangeSignals({
+    supabase,
+    videos: initialVisibleVideos,
+    previousCandidateVideos: videos,
+    currentSnapshots: (snapshots ?? []) as PreviousSnapshotRow[],
+  });
   const snapshotVideoIds = new Set((snapshots ?? []).map((snapshot) => snapshot.video_id as string));
   const snapshotSummaryVideoIds = mode === "initial"
     ? snapshotVideoIds
@@ -237,10 +408,10 @@ export async function loadAdminContentPageData({
     feedbackCardMap.set(row.video_id, row);
   }
   const feedbackCards = Object.fromEntries(
-    initialVisibleVideos.map((video) => [video.id, buildContentFeedbackCardView(video.id, feedbackCardMap.get(video.id) ?? null)]),
+    initialVisibleVideosWithSignals.map((video) => [video.id, buildContentFeedbackCardView(video.id, feedbackCardMap.get(video.id) ?? null)]),
   ) as Record<string, ContentFeedbackCardView>;
   const reviewReadiness = Object.fromEntries(
-    initialVisibleVideos.map((video) => [
+    initialVisibleVideosWithSignals.map((video) => [
       video.id,
       buildContentReviewReadiness({
         video,
@@ -253,7 +424,7 @@ export async function loadAdminContentPageData({
   const workflowSummary = buildWorkflowSummary(videos, (feedbackCardStatusRows ?? []) as FeedbackCardStatusRow[]);
 
   return {
-    videos: initialVisibleVideos,
+    videos: initialVisibleVideosWithSignals,
     snapshots: (snapshots ?? []) as VideoMetricsSnapshot[],
     profiles: (profiles ?? [])
       .filter((profile) => visibleProfileIds.has(profile.id))
@@ -279,6 +450,8 @@ export const __internal = {
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
   buildWorkflowSummary,
+  attachPlayChangeSignals,
+  findPreviousVideoByVisibleId,
   limitInitialVideos,
   normalizeVideoRows,
 };

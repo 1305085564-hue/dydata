@@ -75,53 +75,26 @@ export function FeedbackDetailDialog({ open, onOpenChange, item, onConfirmed }: 
             )}
           </div>
 
-          {confirmed?.summary?.problem_tags && confirmed.summary.problem_tags.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-medium text-zinc-400">问题标签</div>
-              <div className="flex flex-wrap gap-1.5">
-                {confirmed.summary.problem_tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] text-zinc-600"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {confirmed?.summary?.one_line && (
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-medium text-zinc-400">核心问题</div>
-              <p className="text-[13px] leading-relaxed text-zinc-700">
-                {confirmed.summary.one_line}
-              </p>
-            </div>
-          )}
-
-          {confirmed?.actions?.instructions && confirmed.actions.instructions.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-medium text-zinc-400">下一步动作</div>
-              <ol className="space-y-1">
-                {confirmed.actions.instructions.map((inst, i) => (
-                  <li key={i} className="flex gap-1.5 text-[13px] leading-relaxed text-zinc-700">
-                    <span className="shrink-0 font-medium text-[#D97757]">{i + 1}.</span>
-                    <span>{inst}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-
-          {confirmed?.actions?.message_for_member && (
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-medium text-zinc-400">管理者反馈</div>
-              <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-zinc-700">
-                {confirmed.actions.message_for_member}
-              </p>
-            </div>
-          )}
+          {(() => {
+            const mainProblem = confirmed?.summary?.one_line || (confirmed?.summary?.problem_tags?.length ? confirmed.summary.problem_tags.join(" / ") : "");
+            const improvement = confirmed?.actions?.message_for_member || "";
+            return (
+              <>
+                {mainProblem && (
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] font-medium text-zinc-400">主要问题</div>
+                    <p className="text-[13px] leading-relaxed text-zinc-700">{mainProblem}</p>
+                  </div>
+                )}
+                {improvement && (
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] font-medium text-zinc-400">改进反馈</div>
+                    <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-zinc-700">{improvement}</p>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           <div className="pt-3">
             <Button

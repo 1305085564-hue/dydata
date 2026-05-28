@@ -130,28 +130,26 @@ function CardRow({
 
       {expanded && confirmed && (
         <div className="space-y-3 border-t border-zinc-100 px-4 pb-4 pt-3 transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
-          {confirmed.actions.instructions.length > 0 && (
-            <div>
-              <div className="text-[11px] font-medium text-zinc-400">下一步动作</div>
-              <ol className="mt-1 space-y-0.5">
-                {confirmed.actions.instructions.map((inst, i) => (
-                  <li key={i} className="flex gap-1.5 text-[13px] leading-relaxed text-zinc-700">
-                    <span className="shrink-0 font-medium text-[#D97757]">{i + 1}.</span>
-                    <span>{inst}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-
-          {confirmed.actions.message_for_member && (
-            <div>
-              <div className="text-[11px] font-medium text-zinc-400">管理者反馈</div>
-              <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-zinc-700">
-                {confirmed.actions.message_for_member}
-              </p>
-            </div>
-          )}
+          {(() => {
+            const mainProblem = confirmed.summary.one_line || (confirmed.summary.problem_tags?.length ? confirmed.summary.problem_tags.join(" / ") : "");
+            const improvement = confirmed.actions.message_for_member || "";
+            return (
+              <>
+                {mainProblem && (
+                  <div>
+                    <div className="text-[11px] font-medium text-zinc-400">主要问题</div>
+                    <p className="mt-1 text-[13px] leading-relaxed text-zinc-700">{mainProblem}</p>
+                  </div>
+                )}
+                {improvement && (
+                  <div>
+                    <div className="text-[11px] font-medium text-zinc-400">改进反馈</div>
+                    <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-zinc-700">{improvement}</p>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {item.account?.name && (
             <div className="text-[11px] text-zinc-400">

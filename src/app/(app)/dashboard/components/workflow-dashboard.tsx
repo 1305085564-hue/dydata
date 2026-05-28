@@ -19,8 +19,7 @@ import {
 interface ReviewFeedback {
   videoTitle: string;
   mainIssues: string;
-  nextAction: string;
-  managerComment?: string;
+  improvementFeedback: string;
 }
 
 interface WorkflowDashboardProps {
@@ -236,7 +235,6 @@ export function WorkflowDashboard({
               </h4>
               <div className="space-y-5">
                 {PRODUCTION_CHECKPOINTS.map((checkpoint) => {
-                  const theme = STATUS_THEME[statuses[checkpoint.id]];
                   return (
                     <div
                       key={checkpoint.id}
@@ -275,15 +273,9 @@ export function WorkflowDashboard({
                       <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.mainIssues}</div>
                     </div>
                     <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                      <div className="text-[12px] text-zinc-400">下一条动作</div>
-                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.nextAction}</div>
+                      <div className="text-[12px] text-zinc-400">改进反馈</div>
+                      <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.improvementFeedback}</div>
                     </div>
-                    {reviewFeedback.managerComment && (
-                      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                        <div className="text-[12px] text-zinc-400">管理者反馈</div>
-                        <div className="mt-1 text-[13px] text-zinc-700">{reviewFeedback.managerComment}</div>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-center">

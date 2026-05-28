@@ -222,6 +222,9 @@ export interface Video {
   asset_note?: string | null;
   asset_reviewed_by?: string | null;
   asset_reviewed_at?: string | null;
+  previous_play_count?: number | null;
+  play_change_signal?: "surge" | "halve" | null;
+  play_count_change_pct?: number | null;
   created_at: string;
 }
 

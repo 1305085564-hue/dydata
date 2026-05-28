@@ -53,7 +53,7 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     href: "/admin/content",
     panel: "content",
     label: "批改台",
-    description: "文案拆解、次日复盘、内容判断和下一步动作。",
+    description: "异常作品复盘、内部分析和反馈下发。",
     icon: FileText,
     tone: "success",
     group: "daily",

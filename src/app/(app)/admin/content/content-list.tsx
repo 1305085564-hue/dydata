@@ -62,6 +62,25 @@ function formatRate(value: number | string | null | undefined) {
   return n.toFixed(1) + "%";
 }
 
+function PlayChangeBadge({ video }: { video: VideoRow }) {
+  if (!video.play_change_signal || video.play_count_change_pct == null) return null;
+  if (video.play_change_signal === "surge") {
+    return (
+      <span className="text-[11px] font-medium tabular-nums text-[#C9604D]">
+        (+{formatRate(video.play_count_change_pct)})
+      </span>
+    );
+  }
+  if (video.play_change_signal === "halve") {
+    return (
+      <span className="text-[11px] font-medium tabular-nums text-[#6FAA7D]">
+        (-{formatRate(Math.abs(video.play_count_change_pct))})
+      </span>
+    );
+  }
+  return null;
+}
+
 function formatDateTime(value: string | null) {
   if (!value) return "-";
   const date = new Date(value);
@@ -648,7 +667,12 @@ export function ContentList({
                           {formatDateTime(video.published_at ?? video.created_at)}
                         </TableCell>
                         <TableCell className="text-right text-sm">
-                          {snap ? formatNumber(snap.play_count) : "-"}
+                          {snap ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <span>{formatNumber(snap.play_count)}</span>
+                              <PlayChangeBadge video={video} />
+                            </div>
+                          ) : "-"}
                         </TableCell>
                         <TableCell className="text-right text-sm">
                           {snap ? formatRate(snap.bounce_rate_2s) : "-"}
