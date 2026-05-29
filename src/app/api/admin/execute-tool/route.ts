@@ -2,13 +2,19 @@ import { randomUUID } from "node:crypto";
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdminActor, toObject, toTrimmedString } from "@/app/api/admin/ai-assistant/_shared";
+import {
+  requireAdminActor,
+  toObject,
+  toTrimmedString,
+  type RequireAdminActorResult,
+  type RequireAdminActorSuccess,
+} from "@/app/api/admin/ai-assistant/_shared";
 import { assertToolIsWhitelisted, shouldRequireConfirmation, type AdminAiToolName } from "@/lib/admin-ai/core";
 import { executeAdminTool } from "@/lib/admin-tools";
 
 type ActionType = "query" | "modify" | "delete" | "retry_task" | "config_change" | "diagnosis";
 type ActionCategory = "user_management" | "data_correction" | "task_management" | "config" | "diagnosis";
-type AdminActorResult = Awaited<ReturnType<typeof requireAdminActor>>;
+type AdminActorResult = RequireAdminActorResult;
 
 type ExecuteToolBody = {
   toolName: string;
@@ -77,7 +83,7 @@ function buildRiskContext(params: Record<string, unknown>) {
 }
 
 async function insertActionLog(input: {
-  auth: Extract<AdminActorResult, { supabase: AdminActorResult["supabase"]; actor: AdminActorResult["actor"] }>;
+  auth: RequireAdminActorSuccess;
   toolName: AdminAiToolName;
   toolArgs: Record<string, unknown>;
   requiresConfirmation: boolean;
@@ -119,7 +125,7 @@ async function insertActionLog(input: {
 }
 
 async function loadPendingAction(
-  auth: Extract<AdminActorResult, { supabase: AdminActorResult["supabase"]; actor: AdminActorResult["actor"] }>,
+  auth: RequireAdminActorSuccess,
   confirmationToken: string,
 ) {
   const { data, error } = await auth.supabase

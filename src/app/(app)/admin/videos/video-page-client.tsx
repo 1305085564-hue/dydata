@@ -25,7 +25,7 @@ function buildVideoPageUrl(view: VideoView, perspective: AdminDataPerspective, t
 }
 
 function buildVideoApiUrl(view: VideoView, perspective: AdminDataPerspective, teamId: string | null) {
-  const params = new URLSearchParams({ view, scope: perspective });
+  const params = new URLSearchParams({ view, scope: perspective, mode: "full" });
   if (perspective === "team" && teamId) params.set("teamId", teamId);
   return `/api/admin/videos/list?${params.toString()}`;
 }

@@ -2,15 +2,15 @@ import { redirect } from "next/navigation";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { canAccessAdminPath } from "@/lib/analytics-access";
-import { getUserPermissions } from "@/lib/permissions";
-import { loadAdminVideosPageData } from "@/lib/loaders/admin-videos-page";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { loadAdminVideosInitialData as loadAdminVideosFirstScreenData } from "@/lib/loaders/admin-videos-page";
 import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { VideoPageClient } from "./video-page-client";
 
 type VideoView = "pending" | "all";
-type UserPermissionInfo = NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
+type PermissionContext = NonNullable<Awaited<ReturnType<typeof getCurrentPermissionContext>>>;
 
 interface Props {
   searchParams: Promise<{ view?: string; scope?: string; teamId?: string }>;
@@ -25,12 +25,13 @@ export async function loadAdminVideosInitialData(
   scope: { perspective: AdminDataPerspective; teamId: string | null },
   deps: {
     createAdminClient: typeof createAdminClient;
-    loadAdminVideosPageData: typeof loadAdminVideosPageData;
+    loadAdminVideosPageData: typeof loadAdminVideosFirstScreenData;
   } = {
     createAdminClient,
-    loadAdminVideosPageData,
+    loadAdminVideosPageData: loadAdminVideosFirstScreenData,
   },
-  permissionInfo?: UserPermissionInfo,
+  permissionInfo?: PermissionContext["permissionInfo"],
+  permissionScope?: PermissionContext["scope"],
 ) {
   const supabase = deps.createAdminClient();
   return deps.loadAdminVideosPageData({
@@ -38,17 +39,19 @@ export async function loadAdminVideosInitialData(
     view,
     perspective: scope.perspective,
     teamId: scope.teamId,
-    mode: "initial",
     permissionInfo,
+    scope: permissionScope,
   });
 }
 
 export default async function AdminVideosPage({ searchParams }: Props) {
-  const perm = await getUserPermissions();
-  if (!perm) redirect("/login");
+  const params = await searchParams;
+  const requestedPerspective = params.scope === "team" ? "team" : "company";
+  const permissionContext = await getCurrentPermissionContext(requestedPerspective, params.teamId ?? null);
+  if (!permissionContext) redirect("/login");
+  const { permissionInfo: perm } = permissionContext;
   if (!canAccessAdminPath("/admin/videos", perm.businessRole, perm.permissions)) redirect("/dashboard");
 
-  const params = await searchParams;
   const view = normalizeView(params.view);
   const canSwitchPerspective = perm.businessRole === "owner";
   const teams = canSwitchPerspective ? await getTeamOptions() : [];
@@ -59,7 +62,15 @@ export default async function AdminVideosPage({ searchParams }: Props) {
     availableTeamIds: teams.map((team) => team.id),
     fallbackTeamId: perm.teamId,
   });
-  const data = await loadAdminVideosInitialData(view, scope, undefined, perm);
+  const scopedPermissionContext = await getCurrentPermissionContext(scope.perspective, scope.teamId);
+  if (!scopedPermissionContext) redirect("/login");
+  const data = await loadAdminVideosInitialData(
+    view,
+    scope,
+    undefined,
+    scopedPermissionContext.permissionInfo,
+    scopedPermissionContext.scope,
+  );
 
   return (
     <AdminWorkspaceLayout

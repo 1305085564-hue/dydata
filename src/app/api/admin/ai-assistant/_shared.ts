@@ -13,11 +13,26 @@ export type AdminActor = {
   businessRole: BusinessRole;
   permissions: Permissions;
   name: string | null;
+  accessLevel?: number | null;
+  teamId?: string | null;
+  groupId?: string | null;
+  ledGroupIds?: string[];
 };
 
 type RequireAdminActorOptions = {
   requiredPermission?: PermissionKey;
 };
+
+export type RequireAdminActorError =
+  | { error: "未登录"; status: 401 }
+  | { error: "用户信息不存在" | "无权限"; status: 403 };
+
+export type RequireAdminActorSuccess = {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  actor: AdminActor;
+};
+
+export type RequireAdminActorResult = RequireAdminActorError | RequireAdminActorSuccess;
 
 function hasAnyAdminPermission(businessRole: BusinessRole, permissions: Permissions) {
   if (businessRole === "owner" || businessRole === "team_admin" || businessRole === "group_leader") return true;
@@ -35,7 +50,7 @@ function hasAnyAdminPermission(businessRole: BusinessRole, permissions: Permissi
   );
 }
 
-export async function requireAdminActor(options: RequireAdminActorOptions = {}) {
+export async function requireAdminActor(options: RequireAdminActorOptions = {}): Promise<RequireAdminActorResult> {
   const supabase = await createClient();
 
   const {
@@ -77,6 +92,10 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}) 
       businessRole: permissionInfo.businessRole,
       permissions: permissionInfo.permissions,
       name: profile.name ?? null,
+      accessLevel: permissionInfo.accessLevel,
+      teamId: permissionInfo.teamId,
+      groupId: permissionInfo.groupId,
+      ledGroupIds: permissionInfo.ledGroupIds,
     } satisfies AdminActor,
   };
 }

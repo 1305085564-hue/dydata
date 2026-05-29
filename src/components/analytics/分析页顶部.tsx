@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { AnalyticsRangePreset } from "@/lib/analytics-access";
 import { cn } from "@/lib/utils";
 
@@ -22,11 +23,39 @@ const presetOptions: Array<{ label: string; value: AnalyticsRangePreset }> = [
 ];
 
 export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPageHeaderProps) {
+  const [isExporting, setIsExporting] = useState(false);
+
   function getExportHref() {
     const params = new URLSearchParams();
     params.set("from", from);
     params.set("to", to);
     return `/api/export?${params.toString()}`;
+  }
+
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const res = await fetch(getExportHref());
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "导出失败" }));
+        if (err.error === "数据量过大" && err.message) {
+          feedbackToast.error(err.message);
+        } else {
+          feedbackToast.error(err.error || "导出失败");
+        }
+        return;
+      }
+
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `抖音数据日报_${from}_至_${to}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      feedbackToast.success("导出成功");
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
@@ -75,13 +104,15 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
             </div>
           ) : null}
 
-          <Link
-            href={getExportHref()}
+          <button
+            type="button"
+            onClick={() => void handleExport()}
+            disabled={isExporting}
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
           >
             <Download className="size-3.5 stroke-[1.5]" />
-            导出
-          </Link>
+            {isExporting ? "导出中..." : "导出"}
+          </button>
         </div>
       </div>
     </section>

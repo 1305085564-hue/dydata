@@ -75,6 +75,11 @@ test("内容管理首屏默认只下发第一页视频", () => {
   assert.equal(fullRows.length, ADMIN_CONTENT_INITIAL_LIMIT + 5);
 });
 
+test("内容管理首屏不触发播放涨跌信号计算", () => {
+  assert.equal(__internal.shouldLoadPlayChangeSignals("initial"), false);
+  assert.equal(__internal.shouldLoadPlayChangeSignals("full"), true);
+});
+
 function buildContentVideo(overrides: Record<string, unknown> = {}) {
   return {
     id: "video",
@@ -232,4 +237,19 @@ test("素材库首屏候选池大于最终下发数量", () => {
     videosInternal.ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT > ADMIN_VIDEOS_INITIAL_LIMIT,
     true,
   );
+});
+
+test("后台首屏候选池保持克制，避免一次抓取过多视频", () => {
+  assert.equal(__internal.ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT, 60);
+  assert.equal(videosInternal.ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT, 60);
+});
+
+test("内容管理首屏改走 read-model RPC", () => {
+  assert.equal(typeof __internal.ADMIN_CONTENT_FIRST_SCREEN_RPC, "string");
+  assert.equal(__internal.ADMIN_CONTENT_FIRST_SCREEN_RPC, "admin_content_first_screen");
+});
+
+test("素材库首屏改走 read-model RPC", () => {
+  assert.equal(typeof videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "string");
+  assert.equal(videosInternal.ADMIN_VIDEOS_FIRST_SCREEN_RPC, "admin_videos_first_screen");
 });

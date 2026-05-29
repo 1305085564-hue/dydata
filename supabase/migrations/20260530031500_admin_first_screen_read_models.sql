@@ -1,0 +1,638 @@
+-- ============================================================
+-- 077: admin first-screen read models
+-- 目标：将 /admin/content 与 /admin/videos 首屏 initial 取数下沉到数据库层
+-- 边界：只服务首屏最小工作集，不替代 full 模式和详情链路
+-- ============================================================
+
+create or replace function public.admin_content_first_screen(
+  p_visible_user_ids uuid[],
+  p_view text default 'pending',
+  p_limit_rows int default 30,
+  p_candidate_limit int default 60
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  normalized_view text := case when p_view = 'all' then 'all' else 'pending' end;
+  normalized_limit int := greatest(1, least(coalesce(p_limit_rows, 30), 100));
+  normalized_candidate_limit int := greatest(normalized_limit, least(coalesce(p_candidate_limit, 60), 200));
+begin
+  if p_visible_user_ids is null or array_length(p_visible_user_ids, 1) is null then
+    return jsonb_build_object(
+      'videos', '[]'::jsonb,
+      'snapshots', '[]'::jsonb,
+      'profiles', '[]'::jsonb,
+      'accounts', '[]'::jsonb,
+      'reviewedVideoIds', '[]'::jsonb,
+      'feedbackCards', '{}'::jsonb,
+      'reviewReadiness', '{}'::jsonb,
+      'summary', jsonb_build_object(
+        'totalVideos', 0,
+        'reviewedCount', 0,
+        'snapshotCount', 0,
+        'pendingReviewCount', 0
+      ),
+      'workflowSummary', jsonb_build_object(
+        'notStarted', 0,
+        'draft', 0,
+        'confirmed', 0,
+        'sent', 0,
+        'viewed', 0,
+        'pendingDelivery', 0
+      ),
+      'isPartial', false
+    );
+  end if;
+
+  return (
+    with scoped_videos as (
+      select
+        v.id,
+        v.account_id,
+        v.user_id,
+        v.video_url,
+        v.video_title,
+        v.content,
+        v.published_at,
+        v.uploaded_at,
+        v.anomaly_status,
+        v.created_at,
+        a.name as account_name,
+        a.profile_id as owner_profile_id,
+        p.name as profile_name
+      from public.videos v
+      left join public.accounts a on a.id = v.account_id
+      left join public.profiles p on p.id = v.user_id
+      where coalesce(a.profile_id, v.user_id) = any(p_visible_user_ids)
+    ),
+    reviewed_ids as (
+      select distinct (air.result_json ->> 'video_id') as video_id
+      from public.ai_insight_result air
+      where air.insight_type = 'next_day_review'
+        and air.result_status = 'success'
+        and (air.result_json ->> 'video_id') in (select id::text from scoped_videos)
+    ),
+    scoped_with_flags as (
+      select
+        sv.*,
+        exists (select 1 from reviewed_ids r where r.video_id = sv.id::text) as is_reviewed
+      from scoped_videos sv
+    ),
+    candidate_videos as (
+      select *
+      from scoped_with_flags
+      where normalized_view = 'all' or is_reviewed = false
+      order by coalesce(published_at, created_at) desc, created_at desc
+      limit normalized_candidate_limit
+    ),
+    visible_videos as (
+      select *
+      from candidate_videos
+      order by coalesce(published_at, created_at) desc, created_at desc
+      limit normalized_limit
+    ),
+    visible_ids as (
+      select id from visible_videos
+    ),
+    latest_snapshots as (
+      select distinct on (s.video_id)
+        s.id,
+        s.video_id,
+        s.snapshot_type,
+        s.captured_at,
+        s.play_count,
+        s.bounce_rate_2s,
+        s.completion_rate_5s,
+        s.completion_rate,
+        s.avg_play_duration,
+        s.follower_gain,
+        s.likes,
+        s.comments,
+        s.shares,
+        s.favorites,
+        s.screenshot_urls,
+        s.curve_screenshot_url,
+        s.retention_screenshot_url
+      from public.video_metrics_snapshots s
+      where s.snapshot_type = '24h'
+        and s.video_id in (select id from visible_ids)
+      order by s.video_id, s.captured_at desc
+    ),
+    visible_segments as (
+      select distinct vcs.video_id
+      from public.video_content_segments vcs
+      where vcs.video_id in (select id from visible_ids)
+    ),
+    visible_feedback_cards as (
+      select
+        cfc.id,
+        cfc.video_id,
+        cfc.card_status,
+        cfc.manager_note,
+        cfc.draft_payload,
+        cfc.draft_generated_at,
+        cfc.confirmed_at,
+        cfc.sent_at,
+        cfc.viewed_at
+      from public.content_feedback_cards cfc
+      where cfc.video_id in (select id from visible_ids)
+    ),
+    workflow_counts as (
+      select
+        count(*) filter (where coalesce(cfc.card_status, 'not_started') = 'not_started')::int as not_started_count,
+        count(*) filter (where cfc.card_status = 'draft')::int as draft_count,
+        count(*) filter (where cfc.card_status = 'confirmed')::int as confirmed_count,
+        count(*) filter (where cfc.card_status = 'sent')::int as sent_count,
+        count(*) filter (where cfc.card_status = 'viewed')::int as viewed_count
+      from scoped_with_flags sv
+      left join public.content_feedback_cards cfc on cfc.video_id = sv.id
+    ),
+    visible_profile_ids as (
+      select distinct coalesce(owner_profile_id, user_id) as profile_id
+      from scoped_videos
+    )
+    select jsonb_build_object(
+      'videos',
+      coalesce((
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', vv.id,
+            'account_id', vv.account_id,
+            'user_id', vv.user_id,
+            'video_url', vv.video_url,
+            'video_title', vv.video_title,
+            'content', vv.content,
+            'published_at', vv.published_at,
+            'uploaded_at', vv.uploaded_at,
+            'anomaly_status', vv.anomaly_status,
+            'created_at', vv.created_at,
+            'previous_play_count', null,
+            'play_count_change_pct', null,
+            'play_change_signal', null,
+            'accounts', jsonb_build_object('name', coalesce(vv.account_name, '未命名账号')),
+            'profiles', jsonb_build_object('name', coalesce(vv.profile_name, '未命名成员'))
+          )
+          order by coalesce(vv.published_at, vv.created_at) desc, vv.created_at desc
+        )
+        from visible_videos vv
+      ), '[]'::jsonb),
+      'snapshots',
+      coalesce((
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', ls.id,
+            'video_id', ls.video_id,
+            'snapshot_type', ls.snapshot_type,
+            'captured_at', ls.captured_at,
+            'play_count', ls.play_count,
+            'bounce_rate_2s', ls.bounce_rate_2s,
+            'completion_rate_5s', ls.completion_rate_5s,
+            'completion_rate', ls.completion_rate,
+            'avg_play_duration', ls.avg_play_duration,
+            'follower_gain', ls.follower_gain,
+            'likes', ls.likes,
+            'comments', ls.comments,
+            'shares', ls.shares,
+            'favorites', ls.favorites,
+            'screenshot_urls', ls.screenshot_urls,
+            'curve_screenshot_url', ls.curve_screenshot_url,
+            'retention_screenshot_url', ls.retention_screenshot_url
+          )
+          order by ls.captured_at desc
+        )
+        from latest_snapshots ls
+      ), '[]'::jsonb),
+      'profiles',
+      coalesce((
+        select jsonb_agg(jsonb_build_object('id', p.id, 'name', coalesce(p.name, '未命名成员')) order by p.name asc)
+        from public.profiles p
+        where p.id in (select profile_id from visible_profile_ids)
+      ), '[]'::jsonb),
+      'accounts',
+      coalesce((
+        select jsonb_agg(jsonb_build_object('id', a.id, 'name', coalesce(a.name, '未命名账号')) order by a.name asc)
+        from public.accounts a
+        where a.profile_id in (select profile_id from visible_profile_ids)
+      ), '[]'::jsonb),
+      'reviewedVideoIds',
+      coalesce((select jsonb_agg(r.video_id) from reviewed_ids r), '[]'::jsonb),
+      'feedbackCards',
+      coalesce((
+        select jsonb_object_agg(
+          vv.id::text,
+          jsonb_build_object(
+            'card_id', cfc.id,
+            'video_id', vv.id,
+            'workflow_status', coalesce(cfc.card_status, 'not_started'),
+            'workflow_label',
+              case coalesce(cfc.card_status, 'not_started')
+                when 'draft' then 'AI初稿待确认'
+                when 'confirmed' then '已确认待下发'
+                when 'sent' then '已下发待查看'
+                when 'viewed' then '员工已查看'
+                else '未生成'
+              end,
+            'has_ai_draft', (cfc.draft_payload is not null),
+            'latest_draft_at', cfc.draft_generated_at,
+            'confirmed_at', cfc.confirmed_at,
+            'sent_at', cfc.sent_at,
+            'viewed_at', cfc.viewed_at,
+            'manager_note', cfc.manager_note
+          )
+        )
+        from visible_videos vv
+        left join visible_feedback_cards cfc on cfc.video_id = vv.id
+      ), '{}'::jsonb),
+      'reviewReadiness',
+      coalesce((
+        select jsonb_object_agg(
+          vv.id::text,
+          jsonb_build_object(
+            'video_id', vv.id,
+            'status',
+              case
+                when coalesce(cfc.card_status, 'not_started') <> 'not_started' then cfc.card_status
+                when ls.video_id is null then 'missing_snapshot'
+                when coalesce(nullif(btrim(vv.content), ''), '') = '' then 'missing_content'
+                when vs.video_id is null then 'missing_segments'
+                else 'ready'
+              end,
+            'label',
+              case
+                when coalesce(cfc.card_status, 'not_started') = 'draft' then 'AI初稿待确认'
+                when coalesce(cfc.card_status, 'not_started') = 'confirmed' then '已确认待下发'
+                when coalesce(cfc.card_status, 'not_started') = 'sent' then '已下发待查看'
+                when coalesce(cfc.card_status, 'not_started') = 'viewed' then '员工已查看'
+                when ls.video_id is null then '缺24h数据'
+                when coalesce(nullif(btrim(vv.content), ''), '') = '' then '缺文案'
+                when vs.video_id is null then '缺拆段'
+                else '可生成'
+              end,
+            'can_generate',
+              (
+                coalesce(cfc.card_status, 'not_started') = 'not_started'
+                and ls.video_id is not null
+                and coalesce(nullif(btrim(vv.content), ''), '') <> ''
+              ),
+            'has_snapshot_24h', (ls.video_id is not null),
+            'has_content', (coalesce(nullif(btrim(vv.content), ''), '') <> ''),
+            'has_segments', (vs.video_id is not null)
+          )
+        )
+        from visible_videos vv
+        left join latest_snapshots ls on ls.video_id = vv.id
+        left join visible_segments vs on vs.video_id = vv.id
+        left join visible_feedback_cards cfc on cfc.video_id = vv.id
+      ), '{}'::jsonb),
+      'summary',
+      jsonb_build_object(
+        'totalVideos', (select count(*)::int from scoped_with_flags),
+        'reviewedCount', (select count(*)::int from reviewed_ids),
+        'snapshotCount', (select count(*)::int from public.video_metrics_snapshots s where s.snapshot_type = '24h' and s.video_id in (select id from scoped_videos)),
+        'pendingReviewCount', (select count(*)::int from scoped_with_flags where is_reviewed = false)
+      ),
+      'workflowSummary',
+      (
+        select jsonb_build_object(
+          'notStarted', wc.not_started_count,
+          'draft', wc.draft_count,
+          'confirmed', wc.confirmed_count,
+          'sent', wc.sent_count,
+          'viewed', wc.viewed_count,
+          'pendingDelivery', wc.draft_count + wc.confirmed_count
+        )
+        from workflow_counts wc
+      ),
+      'isPartial',
+      ((select count(*) from candidate_videos) > normalized_limit)
+    )
+  );
+end;
+$$;
+
+create or replace function public.admin_videos_first_screen(
+  p_visible_user_ids uuid[],
+  p_view text default 'pending',
+  p_limit_rows int default 30,
+  p_candidate_limit int default 60
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  normalized_view text := case when p_view = 'all' then 'all' else 'pending' end;
+  normalized_limit int := greatest(1, least(coalesce(p_limit_rows, 30), 100));
+  normalized_candidate_limit int := greatest(normalized_limit, least(coalesce(p_candidate_limit, 60), 200));
+begin
+  if p_visible_user_ids is null or array_length(p_visible_user_ids, 1) is null then
+    return jsonb_build_object(
+      'videos', '[]'::jsonb,
+      'snapshots', '[]'::jsonb,
+      'profiles', '[]'::jsonb,
+      'accounts', '[]'::jsonb,
+      'videoTags', '[]'::jsonb,
+      'assetLibrary', '{}'::jsonb,
+      'summary', jsonb_build_object(
+        'totalVideos', 0,
+        'taggedVideos', 0,
+        'snapshotCount', 0,
+        'abnormalCount', 0,
+        'pendingCount', 0
+      ),
+      'assetSummary', jsonb_build_object(
+        'readyCount', 0,
+        'pendingLibraryCount', 0,
+        'completeCount', 0,
+        'partialCount', 0,
+        'missingCount', 0,
+        'gradedCount', 0
+      ),
+      'isPartial', false
+    );
+  end if;
+
+  return (
+    with scoped_videos as (
+      select
+        v.id,
+        v.account_id,
+        v.user_id,
+        v.video_url,
+        v.video_title,
+        v.content,
+        v.published_at,
+        v.uploaded_at,
+        v.anomaly_status,
+        v.asset_level,
+        v.asset_note,
+        v.asset_reviewed_by,
+        v.asset_reviewed_at,
+        v.created_at,
+        a.name as account_name,
+        a.profile_id as owner_profile_id,
+        p.name as profile_name
+      from public.videos v
+      left join public.accounts a on a.id = v.account_id
+      left join public.profiles p on p.id = v.user_id
+      where coalesce(a.profile_id, v.user_id) = any(p_visible_user_ids)
+    ),
+    tag_counts as (
+      select vt.video_id, count(*)::int as tag_count
+      from public.video_tags vt
+      where vt.video_id in (select id from scoped_videos)
+      group by vt.video_id
+    ),
+    segment_counts as (
+      select vcs.video_id, count(*)::int as segment_count
+      from public.video_content_segments vcs
+      where vcs.video_id in (select id from scoped_videos)
+      group by vcs.video_id
+    ),
+    snapshot_flags as (
+      select distinct s.video_id
+      from public.video_metrics_snapshots s
+      where s.snapshot_type = '24h'
+        and s.video_id in (select id from scoped_videos)
+    ),
+    latest_snapshots as (
+      select distinct on (s.video_id)
+        s.id,
+        s.video_id,
+        s.snapshot_type,
+        s.captured_at,
+        s.play_count,
+        s.likes,
+        s.comments,
+        s.shares,
+        s.favorites,
+        s.follower_gain,
+        s.follower_loss,
+        s.fan_play_ratio,
+        s.homepage_visits,
+        s.follower_convert,
+        s.cover_click_rate,
+        s.avg_play_duration,
+        s.completion_rate,
+        s.bounce_rate_2s,
+        s.completion_rate_5s,
+        s.avg_play_ratio
+      from public.video_metrics_snapshots s
+      where s.snapshot_type = '24h'
+        and s.video_id in (select id from scoped_videos)
+      order by s.video_id, s.captured_at desc
+    ),
+    scoped_enriched as (
+      select
+        sv.*,
+        coalesce(tc.tag_count, 0) as tag_count,
+        coalesce(sc.segment_count, 0) as segment_count,
+        (sf.video_id is not null) as has_snapshot_24h,
+        (
+          coalesce(tc.tag_count, 0) = 0
+          or sv.anomaly_status <> '正常'
+        ) as is_pending
+      from scoped_videos sv
+      left join tag_counts tc on tc.video_id = sv.id
+      left join segment_counts sc on sc.video_id = sv.id
+      left join snapshot_flags sf on sf.video_id = sv.id
+    ),
+    candidate_videos as (
+      select *
+      from scoped_enriched
+      where normalized_view = 'all' or is_pending = true
+      order by coalesce(published_at, created_at) desc, created_at desc
+      limit normalized_candidate_limit
+    ),
+    visible_videos as (
+      select *
+      from candidate_videos
+      order by coalesce(published_at, created_at) desc, created_at desc
+      limit normalized_limit
+    ),
+    visible_ids as (
+      select id from visible_videos
+    ),
+    visible_tags as (
+      select vt.*
+      from public.video_tags vt
+      where vt.video_id in (select id from visible_ids)
+    ),
+    visible_profile_ids as (
+      select distinct coalesce(owner_profile_id, user_id) as profile_id
+      from scoped_enriched
+    ),
+    asset_summary_counts as (
+      select
+        count(*) filter (where has_snapshot_24h and tag_count > 0 and segment_count > 0 and coalesce(nullif(btrim(video_title), ''), '') <> '' and coalesce(nullif(btrim(content), ''), '') <> '')::int as ready_count,
+        count(*) filter (where not (has_snapshot_24h and tag_count > 0 and segment_count > 0 and coalesce(nullif(btrim(video_title), ''), '') <> '' and coalesce(nullif(btrim(content), ''), '') <> ''))::int as pending_library_count,
+        count(*) filter (where has_snapshot_24h and tag_count > 0 and segment_count > 0 and coalesce(nullif(btrim(video_title), ''), '') <> '' and coalesce(nullif(btrim(content), ''), '') <> '')::int as complete_count,
+        count(*) filter (where (has_snapshot_24h::int + (tag_count > 0)::int + (segment_count > 0)::int + (coalesce(nullif(btrim(video_title), ''), '') <> '')::int + (coalesce(nullif(btrim(content), ''), '') <> '')::int) between 1 and 4)::int as partial_count,
+        count(*) filter (where (has_snapshot_24h::int + (tag_count > 0)::int + (segment_count > 0)::int + (coalesce(nullif(btrim(video_title), ''), '') <> '')::int + (coalesce(nullif(btrim(content), ''), '') <> '')::int) = 0)::int as missing_count,
+        count(*) filter (where asset_level is not null)::int as graded_count
+      from scoped_enriched
+    )
+    select jsonb_build_object(
+      'videos',
+      coalesce((
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', vv.id,
+            'account_id', vv.account_id,
+            'user_id', vv.user_id,
+            'video_url', vv.video_url,
+            'video_title', vv.video_title,
+            'content', vv.content,
+            'published_at', vv.published_at,
+            'uploaded_at', vv.uploaded_at,
+            'anomaly_status', vv.anomaly_status,
+            'asset_level', vv.asset_level,
+            'asset_note', vv.asset_note,
+            'asset_reviewed_by', vv.asset_reviewed_by,
+            'asset_reviewed_at', vv.asset_reviewed_at,
+            'created_at', vv.created_at,
+            'accounts', jsonb_build_object('name', coalesce(vv.account_name, '未命名账号'), 'profile_id', vv.owner_profile_id),
+            'profiles', jsonb_build_object('name', coalesce(vv.profile_name, '未命名成员'))
+          )
+          order by coalesce(vv.published_at, vv.created_at) desc, vv.created_at desc
+        )
+        from visible_videos vv
+      ), '[]'::jsonb),
+      'snapshots',
+      coalesce((
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', ls.id,
+            'video_id', ls.video_id,
+            'snapshot_type', ls.snapshot_type,
+            'captured_at', ls.captured_at,
+            'play_count', ls.play_count,
+            'likes', ls.likes,
+            'comments', ls.comments,
+            'shares', ls.shares,
+            'favorites', ls.favorites,
+            'follower_gain', ls.follower_gain,
+            'follower_loss', ls.follower_loss,
+            'fan_play_ratio', ls.fan_play_ratio,
+            'homepage_visits', ls.homepage_visits,
+            'follower_convert', ls.follower_convert,
+            'cover_click_rate', ls.cover_click_rate,
+            'avg_play_duration', ls.avg_play_duration,
+            'completion_rate', ls.completion_rate,
+            'bounce_rate_2s', ls.bounce_rate_2s,
+            'completion_rate_5s', ls.completion_rate_5s,
+            'avg_play_ratio', ls.avg_play_ratio
+          )
+          order by ls.captured_at desc
+        )
+        from latest_snapshots ls
+        where ls.video_id in (select id from visible_ids)
+      ), '[]'::jsonb),
+      'profiles',
+      coalesce((
+        select jsonb_agg(jsonb_build_object('id', p.id, 'name', coalesce(p.name, '未命名成员')) order by p.name asc)
+        from public.profiles p
+        where p.id in (select profile_id from visible_profile_ids)
+      ), '[]'::jsonb),
+      'accounts',
+      coalesce((
+        select jsonb_agg(jsonb_build_object('id', a.id, 'name', coalesce(a.name, '未命名账号')) order by a.name asc)
+        from public.accounts a
+        where a.profile_id in (select profile_id from visible_profile_ids)
+      ), '[]'::jsonb),
+      'videoTags',
+      coalesce((
+        select jsonb_agg(
+          jsonb_build_object(
+            'id', vt.id,
+            'video_id', vt.video_id,
+            'tag_dimension', vt.tag_dimension,
+            'tag_value', vt.tag_value,
+            'source', vt.source,
+            'confidence', vt.confidence,
+            'reason', vt.reason,
+            'reviewed_by', vt.reviewed_by,
+            'created_at', vt.created_at
+          )
+          order by vt.created_at asc
+        )
+        from visible_tags vt
+      ), '[]'::jsonb),
+      'assetLibrary',
+      coalesce((
+        select jsonb_object_agg(
+          vv.id::text,
+          jsonb_build_object(
+            'video_id', vv.id,
+            'completeness_status',
+              case
+                when vv.has_snapshot_24h and vv.tag_count > 0 and vv.segment_count > 0 and coalesce(nullif(btrim(vv.video_title), ''), '') <> '' and coalesce(nullif(btrim(vv.content), ''), '') <> '' then 'complete'
+                when (vv.has_snapshot_24h::int + (vv.tag_count > 0)::int + (vv.segment_count > 0)::int + (coalesce(nullif(btrim(vv.video_title), ''), '') <> '')::int + (coalesce(nullif(btrim(vv.content), ''), '') <> '')::int) = 0 then 'missing'
+                else 'partial'
+              end,
+            'completeness_label',
+              case
+                when vv.has_snapshot_24h and vv.tag_count > 0 and vv.segment_count > 0 and coalesce(nullif(btrim(vv.video_title), ''), '') <> '' and coalesce(nullif(btrim(vv.content), ''), '') <> '' then '完整'
+                when (vv.has_snapshot_24h::int + (vv.tag_count > 0)::int + (vv.segment_count > 0)::int + (coalesce(nullif(btrim(vv.video_title), ''), '') <> '')::int + (coalesce(nullif(btrim(vv.content), ''), '') <> '')::int) = 0 then '缺失'
+                else '部分'
+              end,
+            'library_status',
+              case
+                when vv.has_snapshot_24h and vv.tag_count > 0 and vv.segment_count > 0 and coalesce(nullif(btrim(vv.video_title), ''), '') <> '' and coalesce(nullif(btrim(vv.content), ''), '') <> '' then 'ready'
+                else 'pending'
+              end,
+            'library_status_label',
+              case
+                when vv.has_snapshot_24h and vv.tag_count > 0 and vv.segment_count > 0 and coalesce(nullif(btrim(vv.video_title), ''), '') <> '' and coalesce(nullif(btrim(vv.content), ''), '') <> '' then '可入库'
+                else '待整理'
+              end,
+            'completion_ratio',
+              round(((vv.has_snapshot_24h::int + (vv.tag_count > 0)::int + (vv.segment_count > 0)::int + (coalesce(nullif(btrim(vv.video_title), ''), '') <> '')::int + (coalesce(nullif(btrim(vv.content), ''), '') <> '')::int)::numeric / 5), 2),
+            'missing_fields',
+              to_jsonb(array_remove(array[
+                case when coalesce(nullif(btrim(vv.video_title), ''), '') = '' then 'video_title' end,
+                case when coalesce(nullif(btrim(vv.content), ''), '') = '' then 'content' end,
+                case when not vv.has_snapshot_24h then 'snapshot_24h' end,
+                case when vv.tag_count = 0 then 'video_tags' end,
+                case when vv.segment_count = 0 then 'content_segments' end
+              ]::text[], null)),
+            'asset_level', vv.asset_level,
+            'asset_note', vv.asset_note,
+            'asset_reviewed_at', vv.asset_reviewed_at,
+            'asset_reviewed_by', vv.asset_reviewed_by
+          )
+        )
+        from visible_videos vv
+      ), '{}'::jsonb),
+      'summary',
+      jsonb_build_object(
+        'totalVideos', (select count(*)::int from scoped_enriched),
+        'taggedVideos', (select count(*)::int from scoped_enriched where tag_count > 0),
+        'snapshotCount', (select count(*)::int from snapshot_flags),
+        'abnormalCount', (select count(*)::int from scoped_enriched where anomaly_status <> '正常'),
+        'pendingCount', (select count(*)::int from scoped_enriched where is_pending = true)
+      ),
+      'assetSummary',
+      (
+        select jsonb_build_object(
+          'readyCount', ascs.ready_count,
+          'pendingLibraryCount', ascs.pending_library_count,
+          'completeCount', ascs.complete_count,
+          'partialCount', ascs.partial_count,
+          'missingCount', ascs.missing_count,
+          'gradedCount', ascs.graded_count
+        )
+        from asset_summary_counts ascs
+      ),
+      'isPartial',
+      ((select count(*) from candidate_videos) > normalized_limit)
+    )
+  );
+end;
+$$;

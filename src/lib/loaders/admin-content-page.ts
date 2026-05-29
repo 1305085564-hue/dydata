@@ -5,11 +5,11 @@ import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-s
 import { buildContentFeedbackCardView, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getUserPermissions } from "@/lib/permissions";
+import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentFeedbackCard, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
-type UserPermissionInfo = NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
+type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
 
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -38,9 +38,10 @@ const CONTENT_SNAPSHOT_SELECT =
 
 const PREVIOUS_VIDEO_SELECT = "id, account_id, published_at";
 const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
+const ADMIN_CONTENT_FIRST_SCREEN_RPC = "admin_content_first_screen";
 
 export const ADMIN_CONTENT_INITIAL_LIMIT = 30;
-const ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT = 200;
+const ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT = 60;
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -82,6 +83,10 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
 
 function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
+}
+
+function shouldLoadPlayChangeSignals(mode: LoadMode) {
+  return mode === "full";
 }
 
 function buildWorkflowSummary(videos: VideoRow[], cardStatusRows: FeedbackCardStatusRow[]) {
@@ -282,6 +287,7 @@ export async function loadAdminContentPageData({
   teamId = null,
   mode = "full",
   permissionInfo,
+  scope,
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
@@ -289,15 +295,29 @@ export async function loadAdminContentPageData({
   teamId?: string | null;
   mode?: LoadMode;
   permissionInfo?: UserPermissionInfo;
+  scope?: ScopeInput;
 }): Promise<AdminContentPageData> {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
-  const perm = permissionInfo ?? await getUserPermissions();
-  const scope = perm
-    ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
-    : null;
+  const resolvedScope = scope
+    ?? (permissionInfo
+      ? await buildDataAccessScope(createAdminClient(), permissionInfo.userId, {
+          perspective,
+          teamId,
+          profile: {
+            id: permissionInfo.userId,
+            role: permissionInfo.role,
+            permissions: permissionInfo.permissions,
+            access_level: permissionInfo.accessLevel,
+            team_id: permissionInfo.teamId,
+            group_id: permissionInfo.groupId,
+            led_group_ids: permissionInfo.ledGroupIds,
+            business_role: permissionInfo.businessRole,
+          },
+        })
+      : null);
 
   let videosQuery = supabase
     .from("videos")
@@ -331,12 +351,12 @@ export async function loadAdminContentPageData({
     const rightTs = right.published_at ? new Date(right.published_at).getTime() : new Date(right.created_at).getTime();
     return rightTs - leftTs;
   });
-  const videos = scope
-    ? filterRowsByDataScope(scope, allVideos, (video) => video.accounts?.profile_id ?? video.user_id)
+  const videos = resolvedScope
+    ? filterRowsByDataScope(resolvedScope, allVideos, (video) => video.accounts?.profile_id ?? video.user_id)
     : allVideos;
   const scopedVideoIds = videos.map((video) => video.id);
   const scopedVideoIdSet = new Set(scopedVideoIds);
-  const visibleProfileIds = new Set(scope?.visibleUserIds ?? videos.map((video) => video.accounts?.profile_id ?? video.user_id));
+  const visibleProfileIds = new Set(resolvedScope?.visibleUserIds ?? videos.map((video) => video.accounts?.profile_id ?? video.user_id));
 
   const reviewedVideoIds = Array.from(
     new Set(
@@ -355,6 +375,7 @@ export async function loadAdminContentPageData({
   const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
   const summaryVideoIds = mode === "initial" ? visibleVideoIds : scopedVideoIds;
+  const shouldReuseFeedbackRowsForSummary = mode === "initial";
   const [
     { data: snapshots },
     { data: segmentRows },
@@ -379,7 +400,9 @@ export async function loadAdminContentPageData({
           .select(CONTENT_FEEDBACK_CARD_SELECT)
           .in("video_id", visibleVideoIds)
       : Promise.resolve({ data: [] }),
-    summaryVideoIds.length > 0
+    shouldReuseFeedbackRowsForSummary
+      ? Promise.resolve({ data: [] })
+      : summaryVideoIds.length > 0
       ? serviceClient
           .from("content_feedback_cards")
           .select("video_id, card_status")
@@ -393,12 +416,19 @@ export async function loadAdminContentPageData({
           .in("video_id", scopedVideoIds)
       : Promise.resolve({ data: [] }),
   ]);
-  const initialVisibleVideosWithSignals = await loadPlayChangeSignals({
-    supabase,
-    videos: initialVisibleVideos,
-    previousCandidateVideos: videos,
-    currentSnapshots: (snapshots ?? []) as PreviousSnapshotRow[],
-  });
+  const initialVisibleVideosWithSignals = shouldLoadPlayChangeSignals(mode)
+    ? await loadPlayChangeSignals({
+        supabase,
+        videos: initialVisibleVideos,
+        previousCandidateVideos: videos,
+        currentSnapshots: (snapshots ?? []) as PreviousSnapshotRow[],
+      })
+    : initialVisibleVideos.map((video) => ({
+        ...video,
+        previous_play_count: null,
+        play_count_change_pct: null,
+        play_change_signal: null,
+      }));
   const snapshotVideoIds = new Set((snapshots ?? []).map((snapshot) => snapshot.video_id as string));
   const snapshotSummaryVideoIds = mode === "initial"
     ? snapshotVideoIds
@@ -422,7 +452,15 @@ export async function loadAdminContentPageData({
       }),
     ]),
   ) as Record<string, ContentReviewReadiness>;
-  const workflowSummary = buildWorkflowSummary(videos, (feedbackCardStatusRows ?? []) as FeedbackCardStatusRow[]);
+  const workflowSummary = buildWorkflowSummary(
+    videos,
+    shouldReuseFeedbackRowsForSummary
+      ? ((feedbackCardRows ?? []) as ContentFeedbackCard[]).map((row) => ({
+          video_id: row.video_id,
+          card_status: row.card_status,
+        }))
+      : ((feedbackCardStatusRows ?? []) as FeedbackCardStatusRow[]),
+  );
 
   return {
     videos: initialVisibleVideosWithSignals,
@@ -447,7 +485,55 @@ export async function loadAdminContentPageData({
   };
 }
 
+export async function loadAdminContentInitialData(args: {
+  supabase: LoaderSupabase;
+  view?: "pending" | "all";
+  perspective?: AdminDataPerspective;
+  teamId?: string | null;
+  permissionInfo?: UserPermissionInfo;
+  scope?: ScopeInput;
+}) {
+  if (!args.scope) {
+    return loadAdminContentPageData({
+      ...args,
+      mode: "initial",
+    });
+  }
+
+  const { data, error } = await args.supabase.rpc(ADMIN_CONTENT_FIRST_SCREEN_RPC, {
+    p_visible_user_ids: args.scope.visibleUserIds,
+    p_view: args.view ?? "pending",
+    p_limit_rows: ADMIN_CONTENT_INITIAL_LIMIT,
+    p_candidate_limit: ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
+  });
+
+  if (error || !data || typeof data !== "object") {
+    return loadAdminContentPageData({
+      ...args,
+      mode: "initial",
+    });
+  }
+
+  return data as AdminContentPageData;
+}
+
+export async function loadAdminContentFullData(args: {
+  supabase: LoaderSupabase;
+  view?: "pending" | "all";
+  perspective?: AdminDataPerspective;
+  teamId?: string | null;
+  permissionInfo?: UserPermissionInfo;
+  scope?: ScopeInput;
+}) {
+  return loadAdminContentPageData({
+    ...args,
+    mode: "full",
+  });
+}
+
 export const __internal = {
+  ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
+  ADMIN_CONTENT_FIRST_SCREEN_RPC,
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
   buildWorkflowSummary,
@@ -455,4 +541,5 @@ export const __internal = {
   findPreviousVideoByVisibleId,
   limitInitialVideos,
   normalizeVideoRows,
+  shouldLoadPlayChangeSignals,
 };

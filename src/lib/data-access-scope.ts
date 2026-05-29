@@ -25,17 +25,20 @@ export interface DataAccessScope {
 export interface BuildDataAccessScopeOptions {
   perspective?: "company" | "team";
   teamId?: string | null;
+  profile?: ScopeProfileInput | null;
 }
 
 type ScopeSupabase = SupabaseClient;
 
-type ProfileRow = {
+export type ScopeProfileInput = {
   id: string;
   role: UserRole | string | null;
   permissions: Permissions | null;
   access_level?: number | string | null;
   team_id: string | null;
   group_id: string | null;
+  led_group_ids?: string[] | null;
+  business_role?: BusinessRole | null;
 };
 
 function clampAccessLevel(value: unknown): AccessLevel | null {
@@ -72,7 +75,7 @@ function isMissingAccessLevelColumn(error: { message?: string } | null | undefin
   return message.includes("profiles.access_level") || message.includes("access_level") || message.includes("Could not find");
 }
 
-async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promise<ProfileRow | null> {
+async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promise<ScopeProfileInput | null> {
   const primary = await adminSupabase
     .from("profiles")
     .select("id, role, permissions, access_level, team_id, group_id")
@@ -80,7 +83,7 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
     .single();
 
   if (!isMissingAccessLevelColumn(primary.error)) {
-    return (primary.data as ProfileRow | null) ?? null;
+  return (primary.data as ScopeProfileInput | null) ?? null;
   }
 
   const fallback = await adminSupabase
@@ -89,7 +92,7 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
     .eq("id", userId)
     .single();
 
-  return (fallback.data as ProfileRow | null) ?? null;
+  return (fallback.data as ScopeProfileInput | null) ?? null;
 }
 
 export async function buildDataAccessScope(
@@ -97,16 +100,21 @@ export async function buildDataAccessScope(
   userId: string,
   options: BuildDataAccessScopeOptions = {},
 ): Promise<DataAccessScope | null> {
-  const profile = await loadProfile(adminSupabase, userId);
+  const profile = options.profile ?? await loadProfile(adminSupabase, userId);
   if (!profile) return null;
 
   const role = (profile.role ?? "member") as UserRole;
-  const { data: ledGroupsData } = await adminSupabase
-    .from("groups")
-    .select("id, team_id, leader_user_id")
-    .eq("leader_user_id", userId);
-  const ledGroups = (ledGroupsData ?? []) as BusinessGroup[];
-  const businessRole = resolveBusinessRole(
+  const ledGroups = profile.led_group_ids
+    ? profile.led_group_ids.map((id) => ({
+        id,
+        team_id: profile.team_id,
+        leader_user_id: userId,
+      })) as BusinessGroup[]
+    : ((await adminSupabase
+        .from("groups")
+        .select("id, team_id, leader_user_id")
+        .eq("leader_user_id", userId)).data ?? []) as BusinessGroup[];
+  const businessRole = profile.business_role ?? resolveBusinessRole(
     {
       id: profile.id,
       role,

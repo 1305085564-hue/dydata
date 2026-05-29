@@ -27,7 +27,7 @@ function buildContentPageUrl(view: ContentView, perspective: AdminDataPerspectiv
 }
 
 function buildContentApiUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
-  const params = new URLSearchParams({ view, scope: perspective });
+  const params = new URLSearchParams({ view, scope: perspective, mode: "full" });
   if (perspective === "team" && teamId) params.set("teamId", teamId);
   return `/api/admin/content/list?${params.toString()}`;
 }

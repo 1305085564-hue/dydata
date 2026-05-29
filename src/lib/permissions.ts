@@ -10,15 +10,21 @@ import {
 import { hasPermission, isAdminLevel } from "@/lib/permission-utils";
 import type { Permissions, UserRole } from "@/types";
 
-interface UserPermissionInfo {
+export interface UserPermissionInfo {
   userId: string;
   name: string | null;
   role: UserRole;
   businessRole: BusinessRole;
   permissions: Permissions;
+  accessLevel: number | null;
   teamId: string | null;
   groupId: string | null;
   ledGroupIds: string[];
+}
+
+function isMissingAccessLevelColumn(error: { message?: string } | null | undefined) {
+  const message = error?.message ?? "";
+  return message.includes("profiles.access_level") || message.includes("access_level") || message.includes("Could not find");
 }
 
 const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> => {
@@ -27,11 +33,34 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
   if (!user) return null;
 
   const adminSupabase = createAdminClient();
-  const { data: profile } = await adminSupabase
+  const primary = await adminSupabase
     .from("profiles")
-    .select("id, name, role, permissions, team_id, group_id")
+    .select("id, name, role, permissions, access_level, team_id, group_id")
     .eq("id", user.id)
     .single();
+  const profile = !isMissingAccessLevelColumn(primary.error)
+    ? (primary.data as {
+        id: string;
+        name: string | null;
+        role: UserRole | null;
+        permissions: Permissions | null;
+        access_level?: number | string | null;
+        team_id: string | null;
+        group_id: string | null;
+      } | null)
+    : (await adminSupabase
+        .from("profiles")
+        .select("id, name, role, permissions, team_id, group_id")
+        .eq("id", user.id)
+        .single()).data as {
+          id: string;
+          name: string | null;
+          role: UserRole | null;
+          permissions: Permissions | null;
+          access_level?: number | string | null;
+          team_id: string | null;
+          group_id: string | null;
+        } | null;
 
   if (!profile) return null;
 
@@ -59,6 +88,7 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
     role,
     businessRole,
     permissions: normalizePermissionsForBusinessRole(businessRole, rawPermissions),
+    accessLevel: typeof profile.access_level === "number" ? profile.access_level : null,
     teamId: profile.team_id ?? null,
     groupId: profile.group_id ?? null,
     ledGroupIds: groups.map((group) => group.id),

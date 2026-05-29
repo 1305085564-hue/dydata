@@ -2,12 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getUserPermissions } from "@/lib/permissions";
+import type { UserPermissionInfo } from "@/lib/permissions";
 import { buildVideoAssetRecord } from "@/lib/video-asset-library";
 import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
-type UserPermissionInfo = NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
+type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
 
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
@@ -24,7 +24,8 @@ type AccountOption = { id: string; name: string };
 type LoadMode = "initial" | "full";
 
 export const ADMIN_VIDEOS_INITIAL_LIMIT = 30;
-const ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT = 200;
+const ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT = 60;
+const ADMIN_VIDEOS_FIRST_SCREEN_RPC = "admin_videos_first_screen";
 const VIDEO_ASSET_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
 const VIDEO_SNAPSHOT_SELECT =
@@ -87,6 +88,7 @@ export async function loadAdminVideosPageData({
   teamId = null,
   mode = "full",
   permissionInfo,
+  scope,
 }: {
   supabase: LoaderSupabase;
   view?: "pending" | "all";
@@ -94,11 +96,25 @@ export async function loadAdminVideosPageData({
   teamId?: string | null;
   mode?: LoadMode;
   permissionInfo?: UserPermissionInfo;
+  scope?: ScopeInput;
 }): Promise<AdminVideosPageData> {
-  const perm = permissionInfo ?? await getUserPermissions();
-  const scope = perm
-    ? await buildDataAccessScope(createAdminClient(), perm.userId, { perspective, teamId })
-    : null;
+  const resolvedScope = scope
+    ?? (permissionInfo
+      ? await buildDataAccessScope(createAdminClient(), permissionInfo.userId, {
+          perspective,
+          teamId,
+          profile: {
+            id: permissionInfo.userId,
+            role: permissionInfo.role,
+            permissions: permissionInfo.permissions,
+            access_level: permissionInfo.accessLevel,
+            team_id: permissionInfo.teamId,
+            group_id: permissionInfo.groupId,
+            led_group_ids: permissionInfo.ledGroupIds,
+            business_role: permissionInfo.businessRole,
+          },
+        })
+      : null);
   let videosQuery = supabase
     .from("videos")
     .select(VIDEO_ASSET_SELECT)
@@ -114,15 +130,15 @@ export async function loadAdminVideosPageData({
   ]);
 
   const normalizedRows = normalizeVideoRows((videos ?? []) as unknown as RawVideoRow[]);
-  const normalizedVideos = scope
-    ? filterRowsByDataScope(scope, normalizedRows, (video) => video.accounts?.profile_id ?? video.user_id)
+  const normalizedVideos = resolvedScope
+    ? filterRowsByDataScope(resolvedScope, normalizedRows, (video) => video.accounts?.profile_id ?? video.user_id)
     : normalizedRows;
   const scopedVideoIdSet = new Set(normalizedVideos.map((video) => video.id));
   const scopedVideoIds = Array.from(scopedVideoIdSet);
   const { data: tagIds } = scopedVideoIds.length > 0
     ? await supabase.from("video_tags").select("video_id").in("video_id", scopedVideoIds)
     : { data: [] };
-  const visibleProfileIds = new Set(scope?.visibleUserIds ?? normalizedVideos.map((video) => video.accounts?.profile_id ?? video.user_id));
+  const visibleProfileIds = new Set(resolvedScope?.visibleUserIds ?? normalizedVideos.map((video) => video.accounts?.profile_id ?? video.user_id));
   const taggedVideoIds = new Set(
     (tagIds ?? [])
       .map((tag) => tag.video_id as string)
@@ -225,9 +241,56 @@ export async function loadAdminVideosPageData({
   };
 }
 
+export async function loadAdminVideosInitialData(args: {
+  supabase: LoaderSupabase;
+  view?: "pending" | "all";
+  perspective?: AdminDataPerspective;
+  teamId?: string | null;
+  permissionInfo?: UserPermissionInfo;
+  scope?: ScopeInput;
+}) {
+  if (!args.scope) {
+    return loadAdminVideosPageData({
+      ...args,
+      mode: "initial",
+    });
+  }
+
+  const { data, error } = await args.supabase.rpc(ADMIN_VIDEOS_FIRST_SCREEN_RPC, {
+    p_visible_user_ids: args.scope.visibleUserIds,
+    p_view: args.view ?? "pending",
+    p_limit_rows: ADMIN_VIDEOS_INITIAL_LIMIT,
+    p_candidate_limit: ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT,
+  });
+
+  if (error || !data || typeof data !== "object") {
+    return loadAdminVideosPageData({
+      ...args,
+      mode: "initial",
+    });
+  }
+
+  return data as AdminVideosPageData;
+}
+
+export async function loadAdminVideosFullData(args: {
+  supabase: LoaderSupabase;
+  view?: "pending" | "all";
+  perspective?: AdminDataPerspective;
+  teamId?: string | null;
+  permissionInfo?: UserPermissionInfo;
+  scope?: ScopeInput;
+}) {
+  return loadAdminVideosPageData({
+    ...args,
+    mode: "full",
+  });
+}
+
 export const __internal = {
   ADMIN_VIDEOS_INITIAL_LIMIT,
   ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT,
+  ADMIN_VIDEOS_FIRST_SCREEN_RPC,
   VIDEO_ASSET_SELECT,
   VIDEO_SNAPSHOT_SELECT,
   limitInitialVideos,
