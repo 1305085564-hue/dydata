@@ -16,6 +16,7 @@ import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
 import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { ChevronDown, Sparkles } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -63,25 +64,27 @@ function formatRate(value: number | string | null | undefined) {
   return n.toFixed(1) + "%";
 }
 
-// 配色按业务语义：surge 暴涨 = 琥珀（待关注，值得分析但非异常）/ halve 腰斩 = 矿物红（异常需干预）
-// 不要按股市红涨绿跌惯例改回，会误导优先级判断
-function PlayChangeBadge({ video }: { video: VideoRow }) {
-  if (!video.play_change_signal || video.play_count_change_pct == null) return null;
-  if (video.play_change_signal === "surge") {
-    return (
-      <span className="text-[11px] font-medium tabular-nums text-[#D99E55]">
-        (+{formatRate(video.play_count_change_pct)})
-      </span>
-    );
+// 配色：surge 暴涨 = 琥珀棕 / halve 腰斩 = 绿色（股市惯例：红涨绿跌）
+function PlayCountWithSignal({ video, playCount }: { video: VideoRow; playCount: number | null | undefined }) {
+  const hasSignal = video.play_change_signal && video.play_count_change_pct != null;
+  if (!hasSignal) {
+    return <span>{playCount != null ? formatNumber(playCount) : "-"}</span>;
   }
-  if (video.play_change_signal === "halve") {
-    return (
-      <span className="text-[11px] font-medium tabular-nums text-[#C9604D]">
-        (-{formatRate(Math.abs(video.play_count_change_pct))})
-      </span>
-    );
-  }
-  return null;
+  const isUp = video.play_change_signal === "surge";
+  const color = isUp ? "#B5651D" : "#2E7D32";
+  const pct = isUp ? video.play_count_change_pct! : Math.abs(video.play_count_change_pct!);
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger className="cursor-default font-medium" style={{ color }}>
+          {playCount != null ? formatNumber(playCount) : "-"}
+        </TooltipTrigger>
+        <TooltipContent className="text-base font-semibold">
+          <span style={{ color }}>{isUp ? "↑" : "↓"} {formatRate(pct)}</span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 function formatDateTime(value: string | null) {
@@ -538,7 +541,7 @@ export function ContentList({
   }, [batchCandidates, onFeedbackCardsChanged]);
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-1 flex-col min-h-0 space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-0">
           <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
@@ -555,7 +558,7 @@ export function ContentList({
         </Button>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-1 min-h-0 gap-4">
         {/* Table area */}
         <div className="flex-1 min-w-0">
           <div
@@ -576,8 +579,7 @@ export function ContentList({
           </div>
           <div
             ref={tableContainerRef}
-            className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
-            style={{ maxHeight: "70vh" }}
+            className="h-full overflow-x-hidden overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
           >
             <Table>
               <TableHeader className="sticky top-0 z-10">
@@ -684,10 +686,7 @@ export function ContentList({
                         </TableCell>
                         <TableCell className="text-right text-sm">
                           {snap ? (
-                            <div className="flex items-center justify-end gap-1.5">
-                              <span>{formatNumber(snap.play_count)}</span>
-                              <PlayChangeBadge video={video} />
-                            </div>
+                            <PlayCountWithSignal video={video} playCount={snap.play_count} />
                           ) : "-"}
                         </TableCell>
                         <TableCell className="text-right text-sm">

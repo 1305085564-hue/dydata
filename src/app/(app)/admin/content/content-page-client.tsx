@@ -164,7 +164,7 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5"
     >
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-wrap items-center gap-3">

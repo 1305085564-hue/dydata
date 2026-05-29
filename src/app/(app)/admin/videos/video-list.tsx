@@ -265,13 +265,12 @@ export function VideoList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 flex-col min-h-0 space-y-4">
       <VideoFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
 
       <div
         ref={tableContainerRef}
-        className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
-        style={{ maxHeight: "70vh" }}
+        className="h-full overflow-x-hidden overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
       >
         <Table>
           <TableHeader className="sticky top-0 z-10">

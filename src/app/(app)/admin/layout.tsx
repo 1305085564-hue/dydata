@@ -17,7 +17,7 @@ export default async function AdminLayout({
   if (!canAccessAdminPath(pathname, permissionInfo.businessRole, permissionInfo.permissions)) redirect("/dashboard");
 
   return (
-    <div className="flex min-h-[100dvh] bg-[var(--color-bg)]">
+    <div className="flex h-[100dvh] bg-[var(--color-bg)]">
       <AdminSidebar
         userRole={permissionInfo.role}
         businessRole={permissionInfo.businessRole}

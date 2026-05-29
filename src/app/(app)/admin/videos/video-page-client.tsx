@@ -103,7 +103,7 @@ export function VideoPageClient({
   return (
     <section
       id="video-asset-list"
-      className="scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-5"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-5"
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-3">

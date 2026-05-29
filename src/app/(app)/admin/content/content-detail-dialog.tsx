@@ -174,28 +174,46 @@ function Eyebrow({ children }: { children: ReactNode }) {
   );
 }
 
-function MetricBadge({
+function KpiHero({
   label,
   value,
   tone = "default",
 }: {
   label: string;
   value: string;
-  tone?: "default" | "amber" | "red";
+  tone?: "default" | "amber" | "red" | "halve";
 }) {
-  const labelTone =
+  const valueTone =
     tone === "red"
       ? "text-[#C9604D]"
       : tone === "amber"
-        ? "text-[#9c7437]"
-        : "text-zinc-400";
+        ? "text-[#B5651D]"
+        : tone === "halve"
+          ? "text-[#2E7D32]"
+          : "text-zinc-800";
   return (
-    <div className="flex flex-col gap-0.5 rounded-lg border border-zinc-200 bg-white px-3 py-2">
-      <span className={cn("text-[10px] font-medium uppercase tracking-[0.2em]", labelTone)}>
+    <div className="flex min-w-0 flex-col">
+      <span
+        className={cn(
+          "text-[26px] font-semibold tabular-nums leading-none tracking-[-0.02em]",
+          valueTone,
+        )}
+      >
+        {value}
+      </span>
+      <span className="mt-2 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-400">
         {label}
       </span>
-      <span className="text-[14px] font-semibold tabular-nums text-zinc-800">{value}</span>
     </div>
+  );
+}
+
+function KpiChip({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-baseline gap-1 text-[12px] text-zinc-500">
+      <span>{label}</span>
+      <span className="tabular-nums text-zinc-700">{value}</span>
+    </span>
   );
 }
 
@@ -207,42 +225,45 @@ function EmptyBlock({ children }: { children: ReactNode }) {
   );
 }
 
-type MetricTone = "default" | "amber" | "red";
+type MetricTone = "default" | "amber" | "red" | "halve";
 
-function buildRuleHints(snapshot: VideoMetricsSnapshot | null): string[] {
-  if (!snapshot) return ["暂无 24h 数据，建议复核后台截图后再批改。"];
+type RuleHintLevel = "high" | "low" | "weak" | "healthy";
+type RuleHintChip = { metric: string; status: string; level: RuleHintLevel };
 
-  const hints: string[] = [];
+function buildRuleHints(snapshot: VideoMetricsSnapshot | null): RuleHintChip[] {
+  if (!snapshot) return [];
+
+  const chips: RuleHintChip[] = [];
   if (snapshot.bounce_rate_2s != null) {
-    hints.push(
+    chips.push(
       snapshot.bounce_rate_2s >= 45
-        ? "2s 跳出率偏高，可能说明开头留人不足，建议复核前 3 秒表达。"
-        : "2s 跳出率未见明显异常，倾向于先看后段承接。",
+        ? { metric: "2s跳出", status: "偏高", level: "high" }
+        : { metric: "2s跳出", status: "健康", level: "healthy" },
     );
   }
   if (snapshot.completion_rate_5s != null) {
-    hints.push(
+    chips.push(
       snapshot.completion_rate_5s < 35
-        ? "5s 完播率偏低，疑似前段承接不够，建议复核开头到正文的过渡。"
-        : "5s 完播率有一定支撑，可能说明前段信息还能承接。",
+        ? { metric: "5s完播", status: "偏低", level: "low" }
+        : { metric: "5s完播", status: "健康", level: "healthy" },
     );
   }
   if (snapshot.completion_rate != null) {
-    hints.push(
+    chips.push(
       snapshot.completion_rate < 18
-        ? "完播率偏低，可能存在中后段信息密度或节奏问题，建议复核正文结构。"
-        : "完播率相对可参考，倾向于结合互动数据再判断。",
+        ? { metric: "完播", status: "偏低", level: "low" }
+        : { metric: "完播", status: "健康", level: "healthy" },
     );
   }
   if (snapshot.follower_gain != null && snapshot.play_count > 0) {
     const followRate = (snapshot.follower_gain / snapshot.play_count) * 100;
-    hints.push(
+    chips.push(
       followRate < 0.05
-        ? "涨粉效率偏弱，可能 CTA 或账号价值表达不够清楚，建议复核结尾。"
-        : "涨粉效率有一定信号，建议复核哪一段强化了关注理由。",
+        ? { metric: "涨粉", status: "偏弱", level: "weak" }
+        : { metric: "涨粉", status: "健康", level: "healthy" },
     );
   }
-  return hints.length ? hints : ["当前指标不足以直接判断，建议复核截图、文案和账号历史表现。"];
+  return chips;
 }
 
 const comparisonMetrics: Array<{
@@ -308,15 +329,6 @@ const suspectedStageOptions = [
   ["weak_conversion", "转化弱"],
 ] as const;
 
-const experienceOptions: Array<[ExperienceType, string]> = [
-  ["hot_case", "爆款案例"],
-  ["fail_case", "失败案例"],
-  ["opening_issue", "开头问题"],
-  ["middle_issue", "中段问题"],
-  ["retention_issue", "承接问题"],
-  ["conversion_issue", "转化问题"],
-];
-
 function SegmentedControl<T extends string>({
   value,
   options,
@@ -352,47 +364,6 @@ function SegmentedControl<T extends string>({
               active
                 ? "bg-white text-[#D97757] shadow-sm"
                 : "text-zinc-500 hover:text-zinc-800",
-            )}
-          >
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function PillGroup<T extends string>({
-  value,
-  options,
-  onChange,
-  ariaLabel,
-}: {
-  value: T;
-  options: readonly (readonly [T, string])[];
-  onChange: (value: T) => void;
-  ariaLabel: string;
-}) {
-  return (
-    <div
-      role="radiogroup"
-      aria-label={ariaLabel}
-      className="flex flex-wrap gap-1.5"
-    >
-      {options.map(([key, label]) => {
-        const active = value === key;
-        return (
-          <button
-            key={key}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => onChange(key)}
-            className={cn(
-              "active:translate-y-0 rounded-full border px-3 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              active
-                ? "border-[#D97757] bg-[#D97757]/5 text-[#D97757]"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-800",
             )}
           >
             {label}
@@ -535,10 +506,7 @@ export function ContentDetailDialog({
   const [observation, setObservation] = useState<ObservationForm>(defaultObservation);
   const [analysisResult, setAnalysisResult] = useState<ContentAnalysisResult | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
-  const [experienceType, setExperienceType] = useState<ExperienceType>("hot_case");
-  const [experienceNote, setExperienceNote] = useState("");
   const [isMarkingExperience, setIsMarkingExperience] = useState(false);
-  const [experienceFormOpen, setExperienceFormOpen] = useState(false);
   const [reusableOpen, setReusableOpen] = useState(false);
 
   // 自动保存草稿状态
@@ -561,9 +529,6 @@ export function ContentDetailDialog({
     setFeedback("");
     setObservation(defaultObservation);
     setAnalysisResult(null);
-    setExperienceType("hot_case");
-    setExperienceNote("");
-    setExperienceFormOpen(false);
     setReusableOpen(false);
     setCardDetail(null);
     setDraftSavedAt(null);
@@ -712,14 +677,14 @@ export function ContentDetailDialog({
     if (video.play_change_signal === "surge" && video.play_count_change_pct != null) {
       chips.push({
         label: "播放暴涨",
-        value: `+${formatRate(video.play_count_change_pct)}`,
+        value: formatRate(video.play_count_change_pct),
         tone: "amber",
       });
     } else if (video.play_change_signal === "halve" && video.play_count_change_pct != null) {
       chips.push({
         label: "播放腰斩",
-        value: `-${formatRate(Math.abs(video.play_count_change_pct))}`,
-        tone: "red",
+        value: formatRate(Math.abs(video.play_count_change_pct)),
+        tone: "halve",
       });
     }
     if (snapshot.bounce_rate_2s != null && snapshot.bounce_rate_2s >= 45) {
@@ -894,7 +859,7 @@ export function ContentDetailDialog({
     }
   }
 
-  async function handleSaveObservation() {
+  async function handleSaveObservation(silent = false) {
     if (!video) return;
     try {
       const res = await fetch("/api/admin/content-observations", {
@@ -904,9 +869,9 @@ export function ContentDetailDialog({
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "保存观察失败");
-      feedbackToast.success("观察已保存");
+      if (!silent) feedbackToast.success("观察已保存");
     } catch (error) {
-      feedbackToast.error(error instanceof Error ? error.message : "保存观察失败");
+      if (!silent) feedbackToast.error(error instanceof Error ? error.message : "保存观察失败");
     }
   }
 
@@ -914,6 +879,8 @@ export function ContentDetailDialog({
     if (!video) return;
     setIsGeneratingAnalysis(true);
     try {
+      // 生成前先静默保存观察，避免观察数据丢失
+      await handleSaveObservation(true);
       const res = await fetch("/api/admin/content-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -940,7 +907,7 @@ export function ContentDetailDialog({
 
   async function handleMarkExperience(
     source: "analysis" | "feedback",
-    presetType?: ExperienceType,
+    experienceType: ExperienceType,
   ) {
     if (!video) return;
     setIsMarkingExperience(true);
@@ -950,9 +917,9 @@ export function ContentDetailDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           videoId: video.id,
-          experienceType: presetType ?? experienceType,
+          experienceType,
           visibilityScope: "team",
-          note: experienceNote,
+          note: "",
           aiInsightResultId:
             source === "analysis" ? analysisResult?.insight_result_id : undefined,
           feedbackCardId: source === "feedback" ? cardDetail?.card_id : undefined,
@@ -960,8 +927,13 @@ export function ContentDetailDialog({
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "标记经验失败");
-      feedbackToast.success(presetType === "hot_case" ? "已标记为爆款" : "已标记为经验");
-      setExperienceFormOpen(false);
+      feedbackToast.success(
+        experienceType === "hot_case"
+          ? "已标记为爆款"
+          : experienceType === "fail_case"
+            ? "已标记为失败案例"
+            : "已标记为经验",
+      );
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "标记经验失败");
     } finally {
@@ -1038,7 +1010,9 @@ export function ContentDetailDialog({
                       chip.tone === "red" &&
                         "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
                       chip.tone === "amber" &&
-                        "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
+                        "border-[#B5651D]/30 bg-[#B5651D]/5 text-[#B5651D]",
+                      chip.tone === "halve" &&
+                        "border-[#2E7D32]/30 bg-[#2E7D32]/5 text-[#2E7D32]",
                     )}
                   >
                     <span className="text-zinc-500">{chip.label}</span>
@@ -1066,62 +1040,98 @@ export function ContentDetailDialog({
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="analysis" className="space-y-6">
-                {/* 文案原文（仅在有内容时） */}
+              <TabsContent value="analysis" className="space-y-5">
+                {/* 文案原文（默认 inline truncate，展开后才出盆地） */}
                 {video.content && (
                   <section className="space-y-2">
-                    <Eyebrow>文案原文</Eyebrow>
-                    <div className="rounded-xl bg-zinc-100/50 p-4">
-                      <div className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-700">
-                        {contentExpanded ? video.content : video.content.slice(0, 220)}
-                        {video.content.length > 220 && (
+                    {contentExpanded ? (
+                      <>
+                        <div className="flex items-baseline justify-between">
+                          <Eyebrow>文案原文</Eyebrow>
                           <button
                             type="button"
-                            className="ml-1 text-[12px] text-[#D97757] hover:underline underline-offset-4"
-                            onClick={() => setContentExpanded((v) => !v)}
+                            className="text-[12px] text-zinc-500 hover:text-zinc-800"
+                            onClick={() => setContentExpanded(false)}
                           >
-                            {contentExpanded ? "收起" : "展开全文"}
+                            收起
+                          </button>
+                        </div>
+                        <div className="rounded-xl bg-zinc-100/50 p-4">
+                          <div className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-700">
+                            {video.content}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-baseline gap-3">
+                        <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                          文案
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-[13px] text-zinc-600">
+                          {video.content}
+                        </span>
+                        {video.content.length > 80 && (
+                          <button
+                            type="button"
+                            className="shrink-0 text-[12px] text-[#D97757] hover:underline underline-offset-4"
+                            onClick={() => setContentExpanded(true)}
+                          >
+                            展开
                           </button>
                         )}
                       </div>
-                    </div>
+                    )}
                   </section>
                 )}
 
-                {/* 核心数据 紧凑档 */}
-                <section className="space-y-2">
+                {/* 核心数据 报纸式：4 主 KPI + 副 chip 行 */}
+                <section className="space-y-3">
                   <Eyebrow>核心数据</Eyebrow>
                   {snapshot ? (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                      <MetricBadge label="播放量" value={formatNumber(snapshot.play_count)} />
-                      <MetricBadge
-                        label="2s跳出率"
-                        value={formatRate(snapshot.bounce_rate_2s)}
-                        tone={metricTones["2s跳出率"]}
-                      />
-                      <MetricBadge
-                        label="5s完播率"
-                        value={formatRate(snapshot.completion_rate_5s)}
-                        tone={metricTones["5s完播率"]}
-                      />
-                      <MetricBadge
-                        label="完播率"
-                        value={formatRate(snapshot.completion_rate)}
-                        tone={metricTones["完播率"]}
-                      />
-                      <MetricBadge
-                        label="均播时长"
-                        value={formatSeconds(snapshot.avg_play_duration)}
-                      />
-                      <MetricBadge label="点赞" value={formatNumber(snapshot.likes)} />
-                      <MetricBadge label="评论" value={formatNumber(snapshot.comments)} />
-                      <MetricBadge label="分享" value={formatNumber(snapshot.shares)} />
-                      <MetricBadge label="收藏" value={formatNumber(snapshot.favorites)} />
-                      <MetricBadge
-                        label="涨粉"
-                        value={formatNumber(snapshot.follower_gain)}
-                        tone={metricTones["涨粉"]}
-                      />
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-4 gap-4">
+                        <KpiHero
+                          label="播放量"
+                          value={formatNumber(snapshot.play_count)}
+                        />
+                        <KpiHero
+                          label="2s跳出"
+                          value={formatRate(snapshot.bounce_rate_2s)}
+                          tone={metricTones["2s跳出率"]}
+                        />
+                        <KpiHero
+                          label="5s完播"
+                          value={formatRate(snapshot.completion_rate_5s)}
+                          tone={metricTones["5s完播率"]}
+                        />
+                        <KpiHero
+                          label="完播率"
+                          value={formatRate(snapshot.completion_rate)}
+                          tone={metricTones["完播率"]}
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-zinc-100 pt-3">
+                        <KpiChip
+                          label="均播"
+                          value={formatSeconds(snapshot.avg_play_duration)}
+                        />
+                        <span className="text-zinc-300">·</span>
+                        <KpiChip label="点赞" value={formatNumber(snapshot.likes)} />
+                        <span className="text-zinc-300">·</span>
+                        <KpiChip label="评论" value={formatNumber(snapshot.comments)} />
+                        <span className="text-zinc-300">·</span>
+                        <KpiChip label="分享" value={formatNumber(snapshot.shares)} />
+                        <span className="text-zinc-300">·</span>
+                        <KpiChip
+                          label="收藏"
+                          value={formatNumber(snapshot.favorites)}
+                        />
+                        <span className="text-zinc-300">·</span>
+                        <KpiChip
+                          label="涨粉"
+                          value={formatNumber(snapshot.follower_gain)}
+                        />
+                      </div>
                     </div>
                   ) : (
                     <EmptyBlock>暂无 24h 快照数据</EmptyBlock>
@@ -1153,7 +1163,7 @@ export function ContentDetailDialog({
                               unoptimized
                               className={cn(
                                 "w-full object-cover transition-transform duration-200 group-hover:scale-[1.01]",
-                                isHero ? "h-56" : "h-32",
+                                isHero ? "h-48" : "h-28",
                               )}
                             />
                             <div className="px-3 py-2 text-[11px] text-zinc-500">{item.label}</div>
@@ -1164,124 +1174,138 @@ export function ContentDetailDialog({
                   </section>
                 )}
 
-                {/* 上一条对比 + 差值列 */}
-                <section className="space-y-2">
-                  <Eyebrow>同账号上一条对比</Eyebrow>
-                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                    {comparison.loading ? (
-                      <div className="space-y-2">
-                        <Skeleton className="h-3 w-1/3" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-full" />
-                      </div>
-                    ) : comparison.error ? (
-                      <div className="text-[12px] text-zinc-500">{comparison.error}</div>
-                    ) : comparison.video ? (
-                      <div className="space-y-3">
-                        <div className="flex items-baseline gap-2 text-[12px] text-zinc-500">
-                          <span className="text-zinc-700 font-medium">
-                            {comparison.video.video_title ||
-                              comparison.video.content?.slice(0, 40) ||
-                              "上一条作品"}
-                          </span>
-                          <span className="text-zinc-300">·</span>
-                          <span>{formatDateTime(comparison.video.published_at)}</span>
-                        </div>
-                        {snapshot && comparison.snapshot ? (
-                          <div className="overflow-x-auto">
-                            <table className="w-full min-w-[520px] text-left text-[12px]">
-                              <thead>
-                                <tr className="border-b border-zinc-100 text-zinc-400">
-                                  <th className="py-2 pl-2 font-medium uppercase tracking-[0.2em] text-[10px]">
-                                    指标
-                                  </th>
-                                  <th className="py-2 font-medium uppercase tracking-[0.2em] text-[10px]">
-                                    当前
-                                  </th>
-                                  <th className="py-2 font-medium uppercase tracking-[0.2em] text-[10px]">
-                                    上一条
-                                  </th>
-                                  <th className="py-2 pr-2 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
-                                    差值
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {comparisonDiffs.map((row, idx) => {
-                                  const diffStr =
-                                    row.diffPct == null
-                                      ? "-"
-                                      : `${row.diffPct > 0 ? "+" : ""}${row.diffPct.toFixed(1)}%`;
-                                  const diffColor =
-                                    row.tone === "red"
-                                      ? "text-[#C9604D]"
-                                      : row.tone === "amber"
-                                        ? "text-[#9c7437]"
-                                        : "text-zinc-400";
-                                  const isMax = idx === maxDiffIndex;
-                                  return (
-                                    <tr
-                                      key={row.label}
-                                      className={cn(
-                                        "border-b border-zinc-50",
-                                        isMax && "border-l-2 border-l-[#D97757]",
-                                      )}
-                                    >
-                                      <td
-                                        className={cn(
-                                          "py-2 pl-2 text-zinc-500",
-                                          isMax && "text-zinc-700 font-medium",
-                                        )}
-                                      >
-                                        {row.label}
-                                      </td>
-                                      <td className="py-2 tabular-nums text-zinc-800">
-                                        {row.current}
-                                      </td>
-                                      <td className="py-2 tabular-nums text-zinc-500">
-                                        {row.previous}
-                                      </td>
-                                      <td
-                                        className={cn(
-                                          "py-2 pr-2 text-right tabular-nums font-medium",
-                                          diffColor,
-                                        )}
-                                      >
-                                        {diffStr}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        ) : (
-                          <div className="text-[12px] text-zinc-500">上一条作品暂无 24h 快照</div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-[12px] text-zinc-500">暂无上一条可对比作品</div>
+                {/* 上一条对比（裸表格） */}
+                <section className="space-y-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <Eyebrow>同账号上一条对比</Eyebrow>
+                    {comparison.video && (
+                      <span className="min-w-0 truncate text-[12px] text-zinc-500">
+                        《
+                        {comparison.video.video_title ||
+                          comparison.video.content?.slice(0, 24) ||
+                          "上一条作品"}
+                        》 {formatDateTime(comparison.video.published_at)}
+                      </span>
                     )}
                   </div>
+                  {comparison.loading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-1/3" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ) : comparison.error ? (
+                    <div className="text-[12px] text-zinc-500">{comparison.error}</div>
+                  ) : comparison.video ? (
+                    snapshot && comparison.snapshot ? (
+                      <table className="w-full text-left text-[12px]">
+                        <thead>
+                          <tr className="border-b border-zinc-200 text-zinc-400">
+                            <th className="py-1.5 font-medium uppercase tracking-[0.2em] text-[10px]">
+                              指标
+                            </th>
+                            <th className="py-1.5 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
+                              当前
+                            </th>
+                            <th className="py-1.5 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
+                              上一条
+                            </th>
+                            <th className="py-1.5 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
+                              差值
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {comparisonDiffs.map((row, idx) => {
+                            const diffStr =
+                              row.diffPct == null
+                                ? "-"
+                                : `${row.diffPct > 0 ? "+" : ""}${row.diffPct.toFixed(1)}%`;
+                            const diffColor =
+                              row.tone === "red"
+                                ? "text-[#C9604D]"
+                                : row.tone === "amber"
+                                  ? "text-[#B5651D]"
+                                  : "text-zinc-400";
+                            const isMax = idx === maxDiffIndex;
+                            return (
+                              <tr
+                                key={row.label}
+                                className={cn(
+                                  "border-b border-zinc-100",
+                                  isMax && "bg-zinc-100/40",
+                                )}
+                              >
+                                <td
+                                  className={cn(
+                                    "py-1.5 pl-2 text-zinc-500",
+                                    isMax && "text-zinc-700 font-medium",
+                                  )}
+                                >
+                                  {row.label}
+                                </td>
+                                <td className="py-1.5 text-right tabular-nums text-zinc-800">
+                                  {row.current}
+                                </td>
+                                <td className="py-1.5 text-right tabular-nums text-zinc-500">
+                                  {row.previous}
+                                </td>
+                                <td
+                                  className={cn(
+                                    "py-1.5 pr-2 text-right tabular-nums font-medium",
+                                    diffColor,
+                                  )}
+                                >
+                                  {diffStr}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="text-[12px] text-zinc-500">上一条作品暂无 24h 快照</div>
+                    )
+                  ) : (
+                    <div className="text-[12px] text-zinc-500">暂无上一条可对比作品</div>
+                  )}
                 </section>
 
-                {/* 规则提示 */}
-                <section className="space-y-2">
-                  <Eyebrow>规则指标提示</Eyebrow>
-                  <div className="space-y-1 rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-[1.7] text-zinc-700">
-                    {ruleHints.map((hint) => (
-                      <div key={hint}>{hint}</div>
-                    ))}
-                  </div>
-                </section>
+                {/* 规则提示 inline chip */}
+                {ruleHints.length > 0 && (
+                  <section className="space-y-2">
+                    <Eyebrow>规则指标提示</Eyebrow>
+                    <div className="flex flex-wrap gap-2">
+                      {ruleHints.map((chip) => {
+                        const statusTone =
+                          chip.level === "high" || chip.level === "low"
+                            ? "text-[#C9604D]"
+                            : chip.level === "weak"
+                              ? "text-[#9c7437]"
+                              : "text-[#3f6f4d]";
+                        return (
+                          <span
+                            key={chip.metric}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100/60 px-2 py-1 text-[11px]"
+                          >
+                            <span className="text-zinc-600">{chip.metric}</span>
+                            <span className={cn("font-medium", statusTone)}>
+                              {chip.status}
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
 
-                {/* 曲线观察 */}
+                {/* 曲线观察（裸排紧凑） */}
                 <section className="space-y-3">
                   <Eyebrow>曲线观察</Eyebrow>
-                  <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-4">
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <div className="space-y-1.5">
-                        <label className="text-[12px] text-zinc-500">推流峰值</label>
+                  <div className="space-y-2.5">
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-zinc-500">推流峰值</label>
                         <Select
                           value={observation.traffic_peak_level}
                           onValueChange={(v) =>
@@ -1291,7 +1315,7 @@ export function ContentDetailDialog({
                             }))
                           }
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="h-8 w-full text-[12px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1303,8 +1327,8 @@ export function ContentDetailDialog({
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[12px] text-zinc-500">峰值后走势</label>
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-zinc-500">峰值后走势</label>
                         <Select
                           value={observation.post_peak_trend}
                           onValueChange={(v) =>
@@ -1314,7 +1338,7 @@ export function ContentDetailDialog({
                             }))
                           }
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="h-8 w-full text-[12px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1326,8 +1350,8 @@ export function ContentDetailDialog({
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[12px] text-zinc-500">流量承接</label>
+                      <div className="space-y-1">
+                        <label className="text-[11px] text-zinc-500">流量承接</label>
                         <Select
                           value={observation.traffic_retention_quality}
                           onValueChange={(v) =>
@@ -1337,7 +1361,7 @@ export function ContentDetailDialog({
                             }))
                           }
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="h-8 w-full text-[12px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1351,8 +1375,8 @@ export function ContentDetailDialog({
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[12px] text-zinc-500">跳出集中阶段</label>
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-zinc-500">跳出集中阶段</label>
                       <SegmentedControl
                         value={
                           observation.drop_off_stage === "unset"
@@ -1367,8 +1391,8 @@ export function ContentDetailDialog({
                       />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[12px] text-zinc-500">疑似问题阶段</label>
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-zinc-500">疑似问题阶段</label>
                       <SegmentedControl
                         value={
                           observation.suspected_problem_stage === "unset"
@@ -1388,20 +1412,12 @@ export function ContentDetailDialog({
                       onChange={(event) =>
                         setObservation((prev) => ({ ...prev, note: event.target.value }))
                       }
-                      className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
-                      rows={3}
-                      placeholder="观察备注（自动保存到观察记录）"
+                      className="w-full resize-none rounded-lg border border-transparent bg-zinc-100/70 p-2.5 text-[12px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                      rows={2}
+                      placeholder="观察备注（自动保存）"
                     />
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 rounded-lg text-[12px]"
-                        onClick={handleSaveObservation}
-                      >
-                        保存观察
-                      </Button>
+                    <div className="flex justify-end pt-1">
                       <Button
                         size="sm"
                         variant="outline"
@@ -1416,10 +1432,10 @@ export function ContentDetailDialog({
                   </div>
                 </section>
 
-                {/* AI 辅助分析（破格主角） */}
+                {/* AI 辅助分析（破格主角：暖橙渐变底 + 加粗左导轨） */}
                 {(isGeneratingAnalysis || analysisResult) && (
                   <section className="space-y-2">
-                    <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-white p-5">
+                    <div className="rounded-xl border border-zinc-200 border-l-[3px] border-l-[#D97757] bg-gradient-to-b from-[#FFF8F3] to-white p-5">
                       <div className="flex items-center gap-1.5">
                         <SparklesIcon className="size-3.5 stroke-[1.5] text-[#D97757]" />
                         <Eyebrow>AI 辅助分析</Eyebrow>
@@ -1443,7 +1459,7 @@ export function ContentDetailDialog({
                           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
                           className="mt-3 space-y-4"
                         >
-                          <p className="text-[16px] font-semibold leading-[1.6] text-zinc-800">
+                          <p className="text-[17px] font-semibold leading-[1.55] text-zinc-800">
                             {analysisResult.data_summary}
                           </p>
 
@@ -1451,7 +1467,7 @@ export function ContentDetailDialog({
                             {analysisResult.suspected_stage.map((stage) => (
                               <span
                                 key={stage}
-                                className="inline-flex items-center rounded-full bg-zinc-100/70 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
+                                className="inline-flex items-center rounded-full border border-zinc-200 bg-white/80 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
                               >
                                 疑似 · {stage}
                               </span>
@@ -1459,7 +1475,7 @@ export function ContentDetailDialog({
                             {analysisResult.key_metric_evidence.slice(0, 3).map((ev) => (
                               <span
                                 key={ev}
-                                className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600"
+                                className="inline-flex items-center rounded-full border border-zinc-200 bg-white/80 px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600"
                               >
                                 {ev}
                               </span>
@@ -1492,7 +1508,7 @@ export function ContentDetailDialog({
                                 }
                               />
                               <CollapsibleContent className="data-[ending-style]:fade-out-0 data-[starting-style]:fade-in-0">
-                                <div className="mt-2 rounded-lg bg-zinc-100/50 p-3 text-[13px] leading-[1.7] text-zinc-700">
+                                <div className="mt-2 rounded-lg bg-white/70 border border-zinc-200 p-3 text-[13px] leading-[1.7] text-zinc-700">
                                   {analysisResult.reusable_experience}
                                 </div>
                               </CollapsibleContent>
@@ -1502,7 +1518,7 @@ export function ContentDetailDialog({
                           <div className="flex flex-wrap gap-2 pt-2">
                             <Button
                               size="sm"
-                              className="h-8 rounded-lg bg-[#D97757] text-[12px] text-white hover:bg-[#C96442]"
+                              className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
                               onClick={handleQuoteAnalysisToFeedback}
                             >
                               引用到反馈
@@ -1510,7 +1526,7 @@ export function ContentDetailDialog({
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-8 rounded-lg text-[12px]"
+                              className="h-9 rounded-lg border-zinc-200 bg-white/80 text-[12px]"
                               onClick={() => handleMarkExperience("analysis", "hot_case")}
                               disabled={isMarkingExperience}
                             >
@@ -1525,18 +1541,16 @@ export function ContentDetailDialog({
               </TabsContent>
 
               <TabsContent value="feedback" className="space-y-4">
-                {/* 复盘依据小卡 */}
+                {/* 复盘依据 inline */}
                 {feedbackEvidence.length > 0 && (
-                  <div className="space-y-2 rounded-xl bg-zinc-100/50 p-3">
-                    <Eyebrow>复盘依据</Eyebrow>
-                    <ul className="space-y-1 text-[13px] leading-[1.7] text-zinc-700">
-                      {feedbackEvidence.map((line) => (
-                        <li key={line} className="flex gap-2">
-                          <span className="mt-2 size-1 shrink-0 rounded-full bg-zinc-400" />
-                          <span>{line}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="rounded-lg bg-zinc-100/50 px-3 py-2.5 text-[12px] leading-[1.7] text-zinc-600">
+                    <span className="text-zinc-400">依据 · </span>
+                    {feedbackEvidence.map((line, i) => (
+                      <span key={line}>
+                        {i > 0 && <span className="text-zinc-300"> · </span>}
+                        <span className="text-zinc-700">{line}</span>
+                      </span>
+                    ))}
                   </div>
                 )}
 
@@ -1562,63 +1576,6 @@ export function ContentDetailDialog({
                     placeholder="写给员工的具体改进建议"
                     disabled={!isEditable}
                   />
-                </div>
-
-                {/* 经验标记（折叠形态） */}
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  {experienceFormOpen ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Eyebrow>标记为经验</Eyebrow>
-                        <button
-                          type="button"
-                          className="text-[11px] text-zinc-400 hover:text-zinc-600"
-                          onClick={() => setExperienceFormOpen(false)}
-                        >
-                          收起
-                        </button>
-                      </div>
-                      <PillGroup
-                        value={experienceType}
-                        options={experienceOptions}
-                        onChange={setExperienceType}
-                        ariaLabel="经验类型"
-                      />
-                      <input
-                        value={experienceNote}
-                        onChange={(event) => setExperienceNote(event.target.value)}
-                        className="h-9 w-full rounded-lg border border-transparent bg-zinc-100/70 px-3 text-[12px] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
-                        placeholder="可补充经验点（可选）"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="h-8 rounded-lg bg-zinc-800 text-[12px] text-white hover:bg-zinc-700"
-                          onClick={() => handleMarkExperience("feedback")}
-                          disabled={isMarkingExperience}
-                        >
-                          确认标记
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Eyebrow>经验标记</Eyebrow>
-                        <p className="mt-1 text-[12px] text-zinc-500">
-                          把这条作品沉淀到经验库，团队后续可参考
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 rounded-lg text-[12px]"
-                        onClick={() => setExperienceFormOpen(true)}
-                      >
-                        标记为经验
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -1702,6 +1659,18 @@ export function ContentDetailDialog({
                 <MoreHorizontalIcon className="size-4 stroke-[1.5]" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={6}>
+                <DropdownMenuItem
+                  onClick={() => handleMarkExperience("feedback", "hot_case")}
+                  disabled={isMarkingExperience}
+                >
+                  标记为爆款
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleMarkExperience("feedback", "fail_case")}
+                  disabled={isMarkingExperience}
+                >
+                  标记为失败案例
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => feedbackToast.warning("待后端补 action")}
                 >
