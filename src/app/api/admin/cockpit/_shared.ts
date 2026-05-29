@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
-import { buildDataAccessScope, canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
+import { canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
+import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RpcResult<T> = {
@@ -30,12 +31,17 @@ export async function requireAdminServiceClient() {
   }
 
   const supabase = createAdminClient();
-  const scope = await buildDataAccessScope(supabase, auth.actor.userId);
-  if (!scope) {
+  const permissionContext = await buildPermissionContextForActor(auth.actor);
+  if (!permissionContext) {
     return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
   }
 
-  return { supabase, actor: auth.actor, scope };
+  return {
+    supabase,
+    actor: auth.actor,
+    permissionInfo: permissionContext.permissionInfo,
+    scope: permissionContext.scope,
+  };
 }
 
 export function filterScopedRows<T>(

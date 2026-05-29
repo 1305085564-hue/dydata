@@ -1,22 +1,19 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { AnalyticsRangePreset } from "@/lib/analytics-access";
-import type { AnalyticsWorkbench } from "@/app/(app)/admin/analytics/analytics-workbench";
 import { getPresetRange } from "@/lib/analytics-access";
-import { buildDataAccessScope } from "@/lib/data-access-scope";
+import { ADMIN_FIRST_SCREEN_BUDGETS } from "@/lib/admin-first-screen-contract";
+import type { DataAccessScope } from "@/lib/data-access-scope";
+import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
-import type { UserRole } from "@/types";
+import type { UserPermissionInfo } from "@/lib/permissions";
 
-type AnalyticsSupabase = Awaited<ReturnType<typeof createClient>>;
+type AnalyticsSupabase = SupabaseClient;
+type LoadMode = "initial" | "full";
 
-type TeamProfile = { id: string; name: string; team_id: string | null };
-
-type ReportRow = Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"][number] & {
-  user_id: string;
-  account_id?: string | null;
-  accounts?: { id: string; name: string; profile_id: string | null } | null;
-};
-
-type AccountJoin = { id: string; name: string; profile_id: string | null };
+export const ANALYTICS_FIRST_SCREEN_RPC = "admin_analytics_first_screen";
+export const ANALYTICS_REPORT_SELECT =
+  "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at";
 
 function formatDate(date: Date) {
   return date.toISOString().split("T")[0];
@@ -34,16 +31,25 @@ function getInclusiveRangeDays(from: string, to: string) {
   return Math.floor((toDate.getTime() - fromDate.getTime()) / 86_400_000) + 1;
 }
 
-function normalizeJoinedOne<T>(value: T | T[] | null | undefined): T | null {
-  return Array.isArray(value) ? value[0] ?? null : value ?? null;
+export class AnalyticsRangeLimitError extends Error {
+  readonly currentRangeDays: number;
+  readonly maxRangeDays: number;
+
+  constructor(currentRangeDays: number, maxRangeDays: number) {
+    super(`经营分析首屏最多只支持 ${maxRangeDays} 天，当前请求为 ${currentRangeDays} 天`);
+    this.name = "AnalyticsRangeLimitError";
+    this.currentRangeDays = currentRangeDays;
+    this.maxRangeDays = maxRangeDays;
+  }
 }
 
-function getReportOwnerId(report: ReportRow) {
-  return report.accounts?.profile_id ?? report.user_id;
-}
-
-function getVideoOwnerId(video: { user_id: string; accounts?: { profile_id?: string | null } | null }) {
-  return video.accounts?.profile_id ?? video.user_id;
+export function assertAnalyticsRangeWithinBudget(from: string, to: string) {
+  const currentRangeDays = getInclusiveRangeDays(from, to);
+  const maxRangeDays = ADMIN_FIRST_SCREEN_BUDGETS.analytics.maxRangeDays;
+  if (currentRangeDays > maxRangeDays) {
+    throw new AnalyticsRangeLimitError(currentRangeDays, maxRangeDays);
+  }
+  return currentRangeDays;
 }
 
 export interface AnalyticsPageData {
@@ -53,11 +59,65 @@ export interface AnalyticsPageData {
   isPrivilegedUser: boolean;
   currentUserName: string;
   submitters: string[];
-  filteredReports: Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"];
-  previousPeriodReports: Parameters<typeof AnalyticsWorkbench>[0]["previousPeriodReports"];
-  filteredVideos: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideos"];
-  filteredSnapshots: Parameters<typeof AnalyticsWorkbench>[0]["filteredSnapshots"];
-  filteredVideoTags: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideoTags"];
+  filteredReports: Array<{
+    id: string;
+    user_id: string;
+    account_id?: string | null;
+    submitter: string;
+    title: string | null;
+    report_date: string;
+    play_count: number | null;
+    completion_rate: string | null;
+    avg_play_duration: string | null;
+    bounce_rate_2s: string | null;
+    completion_rate_5s: string | null;
+    likes: number | null;
+    comments: number | null;
+    shares: number | null;
+    favorites: number | null;
+    follower_gain: number | null;
+    follower_convert: number | null;
+    content?: string | null;
+    published_at?: string | null;
+    uploaded_at?: string;
+    cover_url?: string | null;
+  }>;
+  previousPeriodReports: Array<{
+    id: string;
+    user_id: string;
+    account_id?: string | null;
+    submitter: string;
+    title: string | null;
+    report_date: string;
+    play_count: number | null;
+    completion_rate: string | null;
+    avg_play_duration: string | null;
+    bounce_rate_2s: string | null;
+    completion_rate_5s: string | null;
+    likes: number | null;
+    comments: number | null;
+    shares: number | null;
+    favorites: number | null;
+    follower_gain: number | null;
+    follower_convert: number | null;
+    content?: string | null;
+    published_at?: string | null;
+    uploaded_at?: string;
+    cover_url?: string | null;
+  }>;
+}
+
+function emptyAnalyticsPayload(range: ReturnType<typeof getPresetRange>, userId: string): AnalyticsPageData {
+  return {
+    range,
+    userId,
+    role: "member",
+    isPrivilegedUser: false,
+    currentUserName: "我",
+    submitters: [],
+    filteredReports: [],
+    previousPeriodReports: [],
+  };
 }
 
 export async function loadAnalyticsPageData({
@@ -66,153 +126,114 @@ export async function loadAnalyticsPageData({
   preset,
   from,
   to,
-  includeVideoDetails = true,
+  permissionInfo,
+  scope,
+  mode = "initial",
 }: {
-  supabase: AnalyticsSupabase;
+  supabase?: AnalyticsSupabase;
   userId: string;
   preset: AnalyticsRangePreset;
   from?: string;
   to?: string;
-  includeVideoDetails?: boolean;
+  permissionInfo?: UserPermissionInfo;
+  scope?: DataAccessScope;
+  mode?: LoadMode;
 }): Promise<AnalyticsPageData> {
-  const adminSupabase = createAdminClient();
   const range = getPresetRange(preset, new Date(), { from, to });
+  const resolvedContext = scope
+    ? { permissionInfo: permissionInfo ?? null, scope }
+    : permissionInfo
+      ? await buildPermissionContextFromPermissionInfo(permissionInfo)
+      : null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, role, permissions, team_id")
-    .eq("id", userId)
-    .single();
-  const role = (profile?.role ?? "member") as UserRole;
-  const currentUserName = profile?.name ?? "我";
-  const currentUserTeamId = profile?.team_id ?? null;
-  const scope = await buildDataAccessScope(adminSupabase, userId);
-  const visibleUserIds = scope?.visibleUserIds ?? [userId];
-  const isPrivilegedUser = (scope?.accessLevel ?? 1) > 1;
-
-  let profilesQuery = adminSupabase.from("profiles").select("id, name, team_id").order("name");
-  if (scope?.kind !== "all") {
-    profilesQuery = profilesQuery.in("id", visibleUserIds);
+  if (!resolvedContext?.scope) {
+    return emptyAnalyticsPayload(range, userId);
   }
 
-  const { data: teamProfileRows } = await profilesQuery;
-  const teamProfiles: TeamProfile[] = (teamProfileRows ?? [{ id: userId, name: currentUserName, team_id: currentUserTeamId }]).map((item) => ({
-    id: item.id,
-    name: item.name,
-    team_id: item.team_id ?? null,
-  }));
-
-  const teamUserIds = teamProfiles.map((item) => item.id);
-  const teamUserIdSet = new Set(teamUserIds);
-  const submitters = isPrivilegedUser ? teamProfiles.map((item) => item.name) : [currentUserName];
-  const currentRangeDays = getInclusiveRangeDays(range.from, range.to);
+  const currentRangeDays = assertAnalyticsRangeWithinBudget(range.from, range.to);
   const shouldLoadPreviousPeriod = currentRangeDays <= 90;
   const previousPeriodFrom = shiftDays(range.from, -currentRangeDays);
   const previousPeriodTo = shiftDays(range.from, -1);
+  const client = supabase ?? createAdminClient();
 
-  const reportsQuery = adminSupabase
+  if (mode === "initial") {
+    const { data, error } = await client.rpc(ANALYTICS_FIRST_SCREEN_RPC, {
+      p_visible_user_ids: resolvedContext.scope.visibleUserIds,
+      p_user_id: userId,
+      p_role: resolvedContext.permissionInfo?.role ?? "member",
+      p_current_user_name: resolvedContext.permissionInfo?.name ?? "我",
+      p_from: range.from,
+      p_to: range.to,
+      p_should_load_previous_period: shouldLoadPreviousPeriod,
+      p_previous_from: shouldLoadPreviousPeriod ? previousPeriodFrom : null,
+      p_previous_to: shouldLoadPreviousPeriod ? previousPeriodTo : null,
+    });
+
+    if (!error && data && typeof data === "object") {
+      const payload = data as Omit<AnalyticsPageData, "range" | "userId">;
+      return {
+        range,
+        userId,
+        role: payload.role,
+        isPrivilegedUser: payload.isPrivilegedUser,
+        currentUserName: payload.currentUserName,
+        submitters: payload.submitters,
+        filteredReports: payload.filteredReports,
+        previousPeriodReports: payload.previousPeriodReports,
+      };
+    }
+  }
+
+  const { data: reports } = await client
     .from("daily_reports")
-    .select(
-      "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id)",
-    )
+    .select(ANALYTICS_REPORT_SELECT)
+    .in("user_id", resolvedContext.scope.visibleUserIds)
     .gte("report_date", range.from)
     .lte("report_date", range.to)
     .order("report_date", { ascending: false });
 
-  const previousPeriodReportsQuery = shouldLoadPreviousPeriod
-    ? adminSupabase
+  const { data: previousPeriodReports } = shouldLoadPreviousPeriod
+    ? await client
         .from("daily_reports")
-        .select(
-          "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id)",
-        )
+        .select(ANALYTICS_REPORT_SELECT)
+        .in("user_id", resolvedContext.scope.visibleUserIds)
         .gte("report_date", previousPeriodFrom)
         .lte("report_date", previousPeriodTo)
         .order("report_date", { ascending: false })
-    : null;
+    : { data: [] };
 
-  const videosQuery = includeVideoDetails
-    ? adminSupabase
-        .from("videos")
-        .select("*, accounts(name, profile_id)")
-        .gte("published_at", `${range.from}T00:00:00+08:00`)
-        .lte("published_at", `${range.to}T23:59:59+08:00`)
-        .order("published_at", { ascending: false })
-        .then((result) => {
-          const nameMap = new Map(teamProfiles.map((teamProfile) => [teamProfile.id, teamProfile.name]));
-          return {
-            ...result,
-            data: (result.data ?? []).map((video) => {
-              const account = normalizeJoinedOne(video.accounts as AccountJoin | AccountJoin[] | null);
-              return {
-                ...video,
-                accounts: account ? { name: account.name, profile_id: account.profile_id } : null,
-                profiles: { name: nameMap.get(getVideoOwnerId({ ...video, accounts: account })) ?? nameMap.get(video.user_id) ?? "未知" },
-              };
-            }),
-          };
-        })
-    : null;
-
-  const [reportsResult, previousPeriodReportsResult, videosResult] = includeVideoDetails
-    ? await Promise.all([reportsQuery, previousPeriodReportsQuery ?? Promise.resolve({ data: [] }), videosQuery])
-    : [await reportsQuery, previousPeriodReportsQuery ? await previousPeriodReportsQuery : { data: [] }, null];
-
-  const reports = reportsResult.data;
-  const previousPeriodReports = previousPeriodReportsResult.data;
-
-  const normalizedReports = ((reports ?? []) as unknown as Array<Omit<ReportRow, "accounts"> & { accounts?: AccountJoin | AccountJoin[] | null }>).map((report) => ({
+  const filteredReports = ((reports ?? []) as AnalyticsPageData["filteredReports"]).map((report) => ({
     ...report,
-    accounts: normalizeJoinedOne(report.accounts),
+    cover_url: null,
   }));
-  const filteredReports = normalizedReports.filter((report) => teamUserIdSet.has(getReportOwnerId(report)));
-  const normalizedPreviousPeriodReports = ((previousPeriodReports ?? []) as unknown as Array<
-    Omit<ReportRow, "accounts"> & { accounts?: AccountJoin | AccountJoin[] | null }
-  >).map((report) => ({
+  const filteredPreviousPeriodReports = ((previousPeriodReports ?? []) as AnalyticsPageData["previousPeriodReports"]).map((report) => ({
     ...report,
-    accounts: normalizeJoinedOne(report.accounts),
+    cover_url: null,
   }));
-  const filteredPreviousPeriodReports = normalizedPreviousPeriodReports.filter((report) => teamUserIdSet.has(getReportOwnerId(report)));
-
-  if (!includeVideoDetails) {
-    return {
-      range,
-      userId,
-      role,
-      isPrivilegedUser,
-      currentUserName,
-      submitters,
-      filteredReports,
-      previousPeriodReports: filteredPreviousPeriodReports,
-      filteredVideos: [],
-      filteredSnapshots: [],
-      filteredVideoTags: [],
-    };
-  }
-
-  const videos = videosResult?.data ?? [];
-  const filteredVideos = (videos ?? []).filter((video) => teamUserIdSet.has(getVideoOwnerId(video)));
-  const filteredVideoIds = filteredVideos.map((video) => video.id);
-  const [{ data: snapshots }, { data: videoTags }] =
-    filteredVideoIds.length > 0
-      ? await Promise.all([
-          adminSupabase.from("video_metrics_snapshots").select("*").in("video_id", filteredVideoIds),
-          adminSupabase.from("video_tags").select("*").in("video_id", filteredVideoIds),
-        ])
-      : [{ data: [] }, { data: [] }];
-  const filteredSnapshots = snapshots ?? [];
-  const filteredVideoTags = videoTags ?? [];
+  const submitters = Array.from(
+    new Set(
+      filteredReports
+        .map((report) => report.submitter)
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0),
+    ),
+  );
+  const isPrivilegedUser = (resolvedContext.scope.accessLevel ?? 1) > 1;
 
   return {
     range,
     userId,
-    role,
+    role: resolvedContext.permissionInfo?.role ?? "member",
     isPrivilegedUser,
-    currentUserName,
+    currentUserName: resolvedContext.permissionInfo?.name ?? "我",
     submitters,
     filteredReports,
     previousPeriodReports: filteredPreviousPeriodReports,
-    filteredVideos,
-    filteredSnapshots,
-    filteredVideoTags,
   };
 }
+
+export const __internal = {
+  ANALYTICS_FIRST_SCREEN_RPC,
+  ANALYTICS_REPORT_SELECT,
+  assertAnalyticsRangeWithinBudget,
+  getInclusiveRangeDays,
+};

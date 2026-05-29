@@ -1,8 +1,9 @@
+import { queueFirstScreenObservation, recordFirstScreenObservation } from "@/lib/admin-first-screen-observability";
 import { redirect } from "next/navigation";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { canAccessAdminPath } from "@/lib/analytics-access";
-import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { buildPermissionContextFromPermissionInfo, getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { loadAdminContentInitialData as loadAdminContentFirstScreenData } from "@/lib/loaders/admin-content-page";
 import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -11,6 +12,12 @@ import { ContentPageClient } from "./content-page-client";
 
 type ContentView = "pending" | "all";
 type PermissionContext = NonNullable<Awaited<ReturnType<typeof getCurrentPermissionContext>>>;
+type FirstScreenMetrics = {
+  auth: number;
+  context: number;
+  data: number;
+  total: number;
+};
 
 interface Props {
   searchParams: Promise<{ view?: string; scope?: string; teamId?: string }>;
@@ -18,6 +25,34 @@ interface Props {
 
 function normalizeView(value: string | undefined): ContentView {
   return value === "all" ? "all" : "pending";
+}
+
+function nowMs() {
+  return performance.now();
+}
+
+export async function recordAdminContentFirstScreenObservation(
+  input: {
+    actorUserId: string;
+    scopeKind: string;
+    metrics: FirstScreenMetrics;
+    statusCode?: number;
+    metadata?: Record<string, unknown>;
+  },
+  deps: {
+    recordObservation: typeof recordFirstScreenObservation;
+  } = {
+    recordObservation: recordFirstScreenObservation,
+  },
+) {
+  return deps.recordObservation({
+    route: "/admin/content",
+    statusCode: input.statusCode ?? 200,
+    metrics: input.metrics,
+    actorUserId: input.actorUserId,
+    scopeKind: input.scopeKind,
+    metadata: input.metadata,
+  });
 }
 
 export async function loadAdminContentInitialData(
@@ -45,9 +80,12 @@ export async function loadAdminContentInitialData(
 }
 
 export default async function AdminContentPage({ searchParams }: Props) {
+  const totalStart = nowMs();
   const params = await searchParams;
   const requestedPerspective = params.scope === "team" ? "team" : "company";
+  const authStart = nowMs();
   const permissionContext = await getCurrentPermissionContext(requestedPerspective, params.teamId ?? null);
+  const authMs = nowMs() - authStart;
   if (!permissionContext) redirect("/login");
   const { permissionInfo: perm } = permissionContext;
   if (!canAccessAdminPath("/admin/content", perm.businessRole, perm.permissions)) redirect("/dashboard");
@@ -62,8 +100,14 @@ export default async function AdminContentPage({ searchParams }: Props) {
     availableTeamIds: teams.map((team) => team.id),
     fallbackTeamId: perm.teamId,
   });
-  const scopedPermissionContext = await getCurrentPermissionContext(scope.perspective, scope.teamId);
+  const contextStart = nowMs();
+  const scopedPermissionContext = await buildPermissionContextFromPermissionInfo(perm, {
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+  });
+  const contextMs = nowMs() - contextStart;
   if (!scopedPermissionContext) redirect("/login");
+  const dataStart = nowMs();
   const data = await loadAdminContentInitialData(
     view,
     scope,
@@ -71,6 +115,26 @@ export default async function AdminContentPage({ searchParams }: Props) {
     scopedPermissionContext.permissionInfo,
     scopedPermissionContext.scope,
   );
+  const dataMs = nowMs() - dataStart;
+  const totalMs = nowMs() - totalStart;
+
+  queueFirstScreenObservation({
+    route: "/admin/content",
+    statusCode: 200,
+    metrics: {
+      auth: authMs,
+      context: contextMs,
+      data: dataMs,
+      total: totalMs,
+    },
+    actorUserId: scopedPermissionContext.permissionInfo.userId,
+    scopeKind: scopedPermissionContext.scope.kind,
+    metadata: {
+      view,
+      perspective: scope.perspective,
+      teamId: scope.teamId,
+    },
+  });
 
   return (
     <AdminWorkspaceLayout

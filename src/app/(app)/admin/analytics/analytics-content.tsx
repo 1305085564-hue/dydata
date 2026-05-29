@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnalyticsPageHeader } from "@/components/analytics/分析页顶部";
 import { type AnalyticsRangePreset } from "@/lib/analytics-access";
 import { type AnalyticsPageData } from "@/lib/loaders/analytics-page";
-import type { VideoMetricsSnapshot, VideoTag } from "@/types";
 
 import { AnalyticsWorkbench } from "./analytics-workbench";
 
@@ -16,9 +15,6 @@ interface AnalyticsContentProps {
   isPrivilegedUser?: boolean;
   filteredReports?: Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"];
   previousPeriodReports?: Parameters<typeof AnalyticsWorkbench>[0]["previousPeriodReports"];
-  filteredVideos?: Parameters<typeof AnalyticsWorkbench>[0]["filteredVideos"];
-  filteredSnapshots?: VideoMetricsSnapshot[];
-  filteredVideoTags?: VideoTag[];
   submitters?: string[];
   // Self-fetch mode: pass URL params (used by page.tsx)
   preset?: string;
@@ -41,9 +37,6 @@ export function AnalyticsContent({
   isPrivilegedUser: propIsPrivilegedUser,
   filteredReports: propFilteredReports,
   previousPeriodReports: propPreviousPeriodReports,
-  filteredVideos: propFilteredVideos,
-  filteredSnapshots: propFilteredSnapshots,
-  filteredVideoTags: propFilteredVideoTags,
   submitters: propSubmitters,
   preset,
   from: initialFrom,
@@ -124,9 +117,6 @@ export function AnalyticsContent({
         isPrivilegedUser={propIsPrivilegedUser!}
         filteredReports={propFilteredReports!}
         previousPeriodReports={propPreviousPeriodReports!}
-        filteredVideos={propFilteredVideos!}
-        filteredSnapshots={propFilteredSnapshots!}
-        filteredVideoTags={propFilteredVideoTags!}
         submitters={propSubmitters!}
       />
     );
@@ -157,9 +147,6 @@ export function AnalyticsContent({
           isPrivilegedUser={data.isPrivilegedUser}
           filteredReports={data.filteredReports}
           previousPeriodReports={data.previousPeriodReports}
-          filteredVideos={data.filteredVideos}
-          filteredSnapshots={data.filteredSnapshots}
-          filteredVideoTags={data.filteredVideoTags}
           submitters={data.submitters}
         />
       ) : null}

@@ -11,31 +11,36 @@ import { 视频结论卡 } from "@/app/(app)/admin/analytics/视频结论卡";
 import type { AnalyticsVideoRow } from "@/app/(app)/admin/analytics/视频结论卡-类型";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getDemoAnalyticsPageData } from "@/lib/demo-data";
+import { demoSnapshots, demoVideoTags, demoVideos, getDemoAnalyticsPageData } from "@/lib/demo-data";
 
 export default function DemoAdminAnalyticsPage() {
-  const data = getDemoAnalyticsPageData();
+  const analyticsData = getDemoAnalyticsPageData();
+  const demoVideoRows = demoVideos.map((video) => ({
+    ...video,
+    accounts: { name: video.account_name },
+    profiles: { name: video.owner_name },
+  }));
 
   const sections: AnalyticsSection[] = [
     {
       id: "follower-convert-trend",
       title: "导粉趋势",
-      content: <FollowerConvertTrend reports={data.filteredReports} />,
+      content: <FollowerConvertTrend reports={analyticsData.filteredReports} />,
     },
     {
       id: "hit-analyzer",
       title: "爆款分析器",
-      content: <HitAnalyzer reports={data.filteredReports} submitters={data.submitters} />,
+      content: <HitAnalyzer reports={analyticsData.filteredReports} submitters={analyticsData.submitters} />,
     },
     {
       id: "personnel-analysis",
       title: "人员深度分析",
-      content: <PersonnelAnalysis reports={data.filteredReports} title="演示团队成员表现" />,
+      content: <PersonnelAnalysis reports={analyticsData.filteredReports} title="演示团队成员表现" />,
     },
     {
       id: "time-analysis",
       title: "时间维度分析",
-      content: <TimeAnalysis reports={data.filteredReports} />,
+      content: <TimeAnalysis reports={analyticsData.filteredReports} />,
     },
     {
       id: "demo-advice",
@@ -72,7 +77,7 @@ export default function DemoAdminAnalyticsPage() {
         <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] shadow-[var(--shadow-light)]">
           <span className="size-1.5 rounded-full bg-[var(--color-primary)]" aria-hidden />
           <span>
-            {data.range.from} 至 {data.range.to}
+            {analyticsData.range.from} 至 {analyticsData.range.to}
           </span>
         </div>
       </AppShellHero>
@@ -83,9 +88,9 @@ export default function DemoAdminAnalyticsPage() {
         description="这里复用正式站内容，用虚拟样本保证首屏观感真实。"
       >
         <视频结论卡
-          videos={data.filteredVideos as AnalyticsVideoRow[]}
-          snapshots={data.filteredSnapshots as VideoMetricsSnapshot[]}
-          videoTags={data.filteredVideoTags as VideoTag[]}
+          videos={demoVideoRows as AnalyticsVideoRow[]}
+          snapshots={demoSnapshots as VideoMetricsSnapshot[]}
+          videoTags={demoVideoTags as VideoTag[]}
         />
       </AppShellSection>
 

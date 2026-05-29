@@ -1,0 +1,32 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import { __internal } from "./analytics-page";
+import { ADMIN_FIRST_SCREEN_BUDGETS } from "@/lib/admin-first-screen-contract";
+
+test("经营分析首屏 read-model RPC 名称固定，避免回退到多轮查表", () => {
+  assert.equal(__internal.ANALYTICS_FIRST_SCREEN_RPC, "admin_analytics_first_screen");
+});
+
+test("经营分析首屏周期预算固定，不允许无限拉长范围", () => {
+  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.analytics.maxRangeDays, 90);
+});
+
+test("经营分析首屏真实拦截超过 90 天的主区间", () => {
+  assert.equal(__internal.assertAnalyticsRangeWithinBudget("2026-01-01", "2026-03-31"), 90);
+  assert.throws(
+    () => __internal.assertAnalyticsRangeWithinBudget("2026-01-01", "2026-04-01"),
+    /最多只支持 90 天/,
+  );
+});
+
+test("经营分析首屏报表字段保持最小工作集", () => {
+  assert.equal(__internal.ANALYTICS_REPORT_SELECT.includes("*"), false);
+  assert.match(__internal.ANALYTICS_REPORT_SELECT, /\bid\b/);
+  assert.match(__internal.ANALYTICS_REPORT_SELECT, /submitter/);
+  assert.match(__internal.ANALYTICS_REPORT_SELECT, /play_count/);
+  assert.match(__internal.ANALYTICS_REPORT_SELECT, /completion_rate/);
+  assert.match(__internal.ANALYTICS_REPORT_SELECT, /follower_convert/);
+  assert.equal(__internal.ANALYTICS_REPORT_SELECT.includes("video_metrics_snapshots"), false);
+  assert.equal(__internal.ANALYTICS_REPORT_SELECT.includes("video_tags"), false);
+});

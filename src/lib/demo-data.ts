@@ -612,13 +612,6 @@ export function getDemoAnalyticsPageData() {
     submitters: demoProfiles.map((profile) => profile.name),
     filteredReports: demoReports,
     previousPeriodReports: [],
-    filteredVideos: demoVideos.map((video) => ({
-      ...video,
-      accounts: { name: video.account_name },
-      profiles: { name: video.owner_name },
-    })),
-    filteredSnapshots: demoSnapshots,
-    filteredVideoTags: demoVideoTags,
   };
 }
 

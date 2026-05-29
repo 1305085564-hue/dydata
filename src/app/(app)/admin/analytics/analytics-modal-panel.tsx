@@ -182,9 +182,6 @@ export function AnalyticsModalPanel({ initialPreset = "30d" }: AnalyticsModalPan
         isPrivilegedUser={data.isPrivilegedUser}
         filteredReports={data.filteredReports}
         previousPeriodReports={data.previousPeriodReports}
-        filteredVideos={data.filteredVideos}
-        filteredSnapshots={data.filteredSnapshots}
-        filteredVideoTags={data.filteredVideoTags}
         submitters={data.submitters}
       />
     </div>

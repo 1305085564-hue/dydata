@@ -1,14 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { VideoMetricsSnapshot, VideoTag } from "@/types";
 import type { AnalyticsSection } from "./analytics-sections";
 import { AnalyticsSections } from "./analytics-sections";
 import { HitAnalyzer } from "./hit-analyzer";
 import { PersonnelAnalysis } from "./personnel-analysis";
 import { TimeAnalysis } from "./time-analysis";
 import { AiInsight } from "./ai-insight";
-import type { AnalyticsVideoRow } from "./视频结论卡-类型";
 import { FollowerConvertTrend } from "./follower-convert-trend";
 import { HitHeroCard } from "./hit-hero-card";
 import { KpiSummary } from "./kpi-summary";
@@ -41,9 +39,6 @@ interface AnalyticsWorkbenchProps {
   isPrivilegedUser: boolean;
   filteredReports: ReportRow[];
   previousPeriodReports: ReportRow[];
-  filteredVideos: AnalyticsVideoRow[];
-  filteredSnapshots: VideoMetricsSnapshot[];
-  filteredVideoTags: VideoTag[];
   submitters: string[];
 }
 

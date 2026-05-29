@@ -46,38 +46,20 @@ async function resolveCurrentPermissionContext(
   const permissionInfo = await getUserPermissions();
   if (!permissionInfo) return null;
 
-  const adminSupabase = createAdminClient();
-  const scope = await buildDataAccessScope(adminSupabase, permissionInfo.userId, {
-    perspective,
-    teamId,
-    profile: {
-      id: permissionInfo.userId,
-      role: permissionInfo.role,
-      permissions: permissionInfo.permissions,
-      access_level: permissionInfo.accessLevel ?? inferBusinessAccessLevel(permissionInfo.businessRole),
-      team_id: permissionInfo.teamId,
-      group_id: permissionInfo.groupId,
-      led_group_ids: permissionInfo.ledGroupIds,
-      business_role: permissionInfo.businessRole,
-    },
-  });
-  if (!scope) return null;
-
-  return { permissionInfo, scope };
+  return buildPermissionContextFromPermissionInfo(permissionInfo, { perspective, teamId });
 }
 
 export const getCurrentPermissionContext = cache(resolveCurrentPermissionContext);
 
-export async function buildPermissionContextForActor(
-  actor: AdminActor,
+export async function buildPermissionContextFromPermissionInfo(
+  permissionInfo: UserPermissionInfo,
   options: {
     perspective?: "company" | "team";
     teamId?: string | null;
   } = {},
 ): Promise<CurrentPermissionContext | null> {
-  const permissionInfo = toPermissionInfo(actor);
   const adminSupabase = createAdminClient();
-  const scope = await buildDataAccessScope(adminSupabase, actor.userId, {
+  const scope = await buildDataAccessScope(adminSupabase, permissionInfo.userId, {
     perspective: options.perspective,
     teamId: options.teamId ?? null,
     profile: {
@@ -94,4 +76,15 @@ export async function buildPermissionContextForActor(
   if (!scope) return null;
 
   return { permissionInfo, scope };
+}
+
+export async function buildPermissionContextForActor(
+  actor: AdminActor,
+  options: {
+    perspective?: "company" | "team";
+    teamId?: string | null;
+  } = {},
+): Promise<CurrentPermissionContext | null> {
+  const permissionInfo = toPermissionInfo(actor);
+  return buildPermissionContextFromPermissionInfo(permissionInfo, options);
 }
