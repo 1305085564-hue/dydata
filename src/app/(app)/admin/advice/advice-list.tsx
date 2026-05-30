@@ -10,7 +10,8 @@ import type { AdviceAction, AdviceSource, AdviceStatus, Profile } from "@/types"
 
 import { AdviceDetailDialog } from "./advice-detail-dialog";
 import { AdviceFilters, type AdviceFilterValue } from "./advice-filters";
-import type { AdviceRow } from "./page";
+import type { AdviceDetailRow, AdviceRow } from "./page";
+import { hydrateAdviceListItems } from "@/lib/loaders/admin-advice-page";
 
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
@@ -71,7 +72,7 @@ function buildSummary(content: string) {
   return summary.length > 34 ? `${summary.slice(0, 34)}…` : summary;
 }
 
-function matchesDateRange(item: AdviceAction, filters: AdviceFilterValue) {
+function matchesDateRange(item: Pick<AdviceRow, "created_at">, filters: AdviceFilterValue) {
   const createdDate = item.created_at ? item.created_at.slice(0, 10) : "";
   if (filters.startDate && (!createdDate || createdDate < filters.startDate)) return false;
   if (filters.endDate && (!createdDate || createdDate > filters.endDate)) return false;
@@ -81,6 +82,7 @@ function matchesDateRange(item: AdviceAction, filters: AdviceFilterValue) {
 export function AdviceList({ advice, profiles, accounts, currentUserId }: AdviceListProps) {
   const [filters, setFilters] = useState<AdviceFilterValue>(INITIAL_FILTERS);
   const [rows, setRows] = useState(advice);
+  const [detailsById, setDetailsById] = useState<Record<string, AdviceDetailRow>>({});
   const [selectedAdviceId, setSelectedAdviceId] = useState<string | null>(null);
   const [isBatchRunning, startBatchRun] = useTransition();
 
@@ -108,11 +110,12 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
   }, [filteredRows]);
 
   const selectedAdvice = useMemo(
-    () => filteredRows.find((item) => item.id === selectedAdviceId) ?? rows.find((item) => item.id === selectedAdviceId) ?? null,
-    [filteredRows, rows, selectedAdviceId]
+    () => (selectedAdviceId ? detailsById[selectedAdviceId] ?? null : null),
+    [detailsById, selectedAdviceId]
   );
 
-  function handleAdviceUpdated(updated: AdviceRow) {
+  function handleAdviceUpdated(updated: AdviceDetailRow) {
+    setDetailsById((current) => ({ ...current, [updated.id]: updated }));
     setRows((current) => current.map((item) => (item.id === updated.id ? updated : item)));
   }
 
@@ -126,7 +129,28 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
       throw new Error(result.error || "刷新建议列表失败");
     }
 
-    setRows(result.advice as AdviceRow[]);
+    setRows(hydrateAdviceListItems(result.advice as AdviceRow[], detailsById));
+  }
+
+  async function loadAdviceDetail(adviceId: string) {
+    if (detailsById[adviceId]) {
+      setSelectedAdviceId(adviceId);
+      return;
+    }
+
+    const response = await fetch(`/api/admin/advice-actions/${adviceId}`, {
+      cache: "no-store",
+    });
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !result.item) {
+      throw new Error(result.error || "建议详情加载失败");
+    }
+
+    const detail = result.item as AdviceDetailRow;
+    setDetailsById((current) => ({ ...current, [adviceId]: detail }));
+    setRows((current) => current.map((item) => (item.id === adviceId ? detail : item)));
+    setSelectedAdviceId(adviceId);
   }
 
   function handleGenerateBatch() {
@@ -224,7 +248,11 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
                     <TableCell className="px-4 text-right">
                       <button
                         type="button"
-                        onClick={() => setSelectedAdviceId(item.id)}
+                        onClick={() => {
+                          void loadAdviceDetail(item.id).catch((error) => {
+                            feedbackToast.error(error instanceof Error ? error.message : "建议详情加载失败");
+                          });
+                        }}
                         className="text-[12px] text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline"
                       >
                         查看详情

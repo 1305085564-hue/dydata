@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   loadViolationCaseDetail,
+  loadViolationCaseTestRecords,
   type DetailClientLike,
 } from "./read-model";
 
@@ -74,4 +75,45 @@ test("detail service 在主查询 miss 时会回退读取 conversion 案例", as
   assert.equal(result.errorMessage, null);
   assert.equal(result.data?.id, "conv-1");
   assert.equal(result.data?.purpose, "conversion");
+});
+
+test("test record service 会单独读取该案例的测试记录", async () => {
+  const client: DetailClientLike = {
+    from(table: string) {
+      assert.equal(table, "violation_test_records");
+
+      let pendingCaseId: string | null = null;
+
+      const builder = {
+        select() {
+          return builder;
+        },
+        eq(column: string, value: unknown) {
+          if (column === "case_id") pendingCaseId = String(value);
+          return builder;
+        },
+        order() {
+          return builder;
+        },
+        async then(resolve: (value: unknown) => unknown) {
+          return resolve({
+            data: pendingCaseId === "case-1"
+              ? [{ id: "test-1", case_id: "case-1", passed: true }]
+              : [],
+            error: null,
+          });
+        },
+      };
+
+      return builder as never;
+    },
+  };
+
+  const result = await loadViolationCaseTestRecords({
+    supabase: client,
+    caseId: "case-1",
+  });
+
+  assert.equal(result.errorMessage, null);
+  assert.deepEqual(result.data, [{ id: "test-1", case_id: "case-1", passed: true }]);
 });

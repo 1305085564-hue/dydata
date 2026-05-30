@@ -130,6 +130,20 @@ export type QueryClientLike = {
 };
 
 export type DetailClientLike = QueryClientLike;
+export type TestRecordClientLike = QueryClientLike;
+
+export type ViolationCaseTestRecordRow = {
+  id: string;
+  case_id: string;
+  tested_by?: string | null;
+  tested_at: string;
+  account_id?: string | null;
+  passed: boolean;
+  note?: string | null;
+  account_name_snapshot?: string | null;
+  tester?: { id?: string | null; name?: string | null } | { id?: string | null; name?: string | null }[] | null;
+  accounts?: { id?: string | null; name?: string | null } | { id?: string | null; name?: string | null }[] | null;
+};
 
 export type LoadCaseIdsByVisualTagIds = (
   supabase: QueryClientLike,
@@ -204,19 +218,20 @@ const VIOLATION_DETAIL_SELECT = `
   reviewed_by,
   submitter:profiles!violation_cases_submitted_by_fkey(id, name),
   team:teams(id, name),
-  reviewer:profiles!violation_cases_reviewed_by_fkey(id, name),
-  test_records:violation_test_records(
-    id,
-    case_id,
-    tested_by,
-    tested_at,
-    account_id,
-    passed,
-    note,
-    account_name_snapshot,
-    tester:profiles!violation_test_records_tested_by_fkey(id, name),
-    accounts:accounts(id, name)
-  )
+  reviewer:profiles!violation_cases_reviewed_by_fkey(id, name)
+`;
+
+const VIOLATION_TEST_RECORD_SELECT = `
+  id,
+  case_id,
+  tested_by,
+  tested_at,
+  account_id,
+  passed,
+  note,
+  account_name_snapshot,
+  tester:profiles!violation_test_records_tested_by_fkey(id, name),
+  accounts:accounts(id, name)
 `;
 
 function buildViolationsListPayload(
@@ -485,6 +500,34 @@ export async function loadViolationCaseDetail({
   }
 
   return { data: null, errorMessage: null };
+}
+
+export async function loadViolationCaseTestRecords({
+  supabase,
+  caseId,
+}: {
+  supabase: TestRecordClientLike;
+  caseId: string;
+}): Promise<{ data: ViolationCaseTestRecordRow[]; errorMessage: string | null }> {
+  const { data, error } = await (supabase.from("violation_test_records") as {
+    select: (columns: string) => {
+      eq: (column: string, value: unknown) => {
+        order: (
+          column: string,
+          options: { ascending: boolean },
+        ) => Promise<{ data: ViolationCaseTestRecordRow[] | null; error: unknown }>;
+      };
+    };
+  })
+    .select(VIOLATION_TEST_RECORD_SELECT)
+    .eq("case_id", caseId)
+    .order("tested_at", { ascending: false });
+
+  if (error) {
+    return { data: [], errorMessage: "加载测试记录失败" };
+  }
+
+  return { data: (data ?? []) as ViolationCaseTestRecordRow[], errorMessage: null };
 }
 
 function fromSummaryTable(supabase: QueryClientLike, table: string) {

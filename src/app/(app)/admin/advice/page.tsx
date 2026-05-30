@@ -4,7 +4,7 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { loadAdminAdvicePageData } from "@/lib/loaders/admin-advice-page";
-export type { AdviceRow } from "@/lib/loaders/admin-advice-page";
+export type { AdviceRow, AdviceDetailRow } from "@/lib/loaders/admin-advice-page";
 import { AdviceList } from "./advice-list";
 
 export default async function AdminAdvicePage() {

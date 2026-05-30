@@ -21,14 +21,14 @@ import {
 } from "@/components/ui/select";
 import type { ReviewResult } from "@/types";
 
-import type { AdviceRow } from "./page";
+import type { AdviceDetailRow } from "./page";
 
 interface AdviceDetailDialogProps {
-  advice: AdviceRow | null;
+  advice: AdviceDetailRow | null;
   currentUserId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdated: (item: AdviceRow) => void;
+  onUpdated: (item: AdviceDetailRow) => void;
 }
 
 const STATUS_STYLES = {
@@ -87,22 +87,19 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
   const reviewedProfile = pickSingle(advice?.reviewed_profile);
   const relatedVideo = pickSingle(advice?.related_video);
 
-  function submitAction(body: Record<string, string>) {
+  function submitAction(
+    body:
+      | { action: "assign"; actor: string }
+      | { action: "status"; status: LocalStatus }
+      | { action: "review"; review_result: ReviewResult },
+  ) {
     if (!advice) return;
     const previousAdvice = advice;
-    const optimisticAdvice = {
+    const optimisticAdvice: AdviceDetailRow = {
       ...advice,
-      status:
-        body.action === "assign"
-          ? "待执行"
-          : body.action === "status"
-            ? body.status
-            : body.action === "review"
-              ? "已复核"
-              : advice.status,
-      review_result:
-        body.action === "review" ? body.review_result : advice.review_result,
-    } as AdviceRow;
+      status: body.action === "assign" ? "待执行" : body.action === "status" ? body.status : "已复核",
+      review_result: body.action === "review" ? body.review_result : advice.review_result,
+    };
 
     onUpdated(optimisticAdvice);
     feedbackToast.success("建议已更新");
@@ -120,7 +117,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
           throw new Error(result.error || "更新失败");
         }
 
-        onUpdated(result.item as AdviceRow);
+        onUpdated(result.item as AdviceDetailRow);
       } catch (error) {
         onUpdated(previousAdvice);
         feedbackToast.error(error instanceof Error ? error.message : "更新失败");

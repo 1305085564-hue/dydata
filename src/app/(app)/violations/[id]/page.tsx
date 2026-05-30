@@ -27,7 +27,7 @@ import {
 } from "../components/format";
 import { resolveConfidence } from "@/lib/case-library/confidence";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
-import { loadViolationCaseDetail } from "@/lib/violations/read-model";
+import { loadViolationCaseDetail, loadViolationCaseTestRecords } from "@/lib/violations/read-model";
 import type {
   ViolationAccount,
   ViolationDetail,
@@ -286,15 +286,19 @@ async function CaseDetailBottom({
   canManageViolations: boolean;
   isOwner: boolean;
 }) {
-  const [usageRecords, events, reasonTags] = await Promise.all([
+  const [usageRecords, events, reasonTags, testRecordResult] = await Promise.all([
     loadUsageRecords(caseItem.id),
     loadEvents(caseItem.id),
     loadReasonTags(caseItem.id),
+    loadViolationCaseTestRecords({
+      supabase: createAdminClient() as never,
+      caseId: caseItem.id,
+    }),
   ]);
 
   const purpose = (caseItem.purpose ?? "violation") as string;
   const isConversion = purpose === "conversion";
-  const testRecords = caseItem.test_records ?? caseItem.violation_test_records ?? [];
+  const testRecords = testRecordResult.data ?? [];
   const passCount = caseItem.pass_count ?? 0;
   const failCount = caseItem.fail_count ?? 0;
 

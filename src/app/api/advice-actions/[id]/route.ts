@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { loadAdminAdviceDetail } from "@/lib/loaders/admin-advice-page";
 import type { AdviceStatus, ReviewResult } from "@/types";
 
 import { buildAdviceUpdatePayload } from "./更新建议";
@@ -73,16 +74,21 @@ export async function PATCH(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("advice_actions")
     .update(payload)
     .eq("id", id)
-    .select("*")
+    .select("id")
     .single();
 
   if (error) {
     return NextResponse.json({ error: error.message || "更新建议失败" }, { status: 500 });
   }
 
-  return NextResponse.json({ item: data });
+  const detail = await loadAdminAdviceDetail({ supabase, id });
+  if (!detail) {
+    return NextResponse.json({ error: "更新后读取建议详情失败" }, { status: 500 });
+  }
+
+  return NextResponse.json({ item: detail });
 }

@@ -34,7 +34,6 @@ type GuidanceReport = {
   followerConvert: number | null;
   completionRate: string | null;
   completionRate5s: string | null;
-  avgPlayDuration: string | null;
   bounceRate2s: string | null;
 };
 

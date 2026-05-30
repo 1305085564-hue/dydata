@@ -20,5 +20,7 @@ export async function GET() {
 
   return NextResponse.json({
     advice: data.advice,
+    profiles: data.profiles,
+    accounts: data.accounts,
   });
 }
