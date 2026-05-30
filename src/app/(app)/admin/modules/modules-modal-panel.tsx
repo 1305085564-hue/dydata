@@ -91,11 +91,11 @@ export function ModulesModalPanel({ initialDate }: ModulesModalPanelProps) {
       <AdminModulesContent
         currentUserId={data.currentUserId}
         currentUserRole={data.perm.role}
+        currentUserBusinessRole={data.perm.businessRole}
         currentUserPermissions={data.perm.permissions}
         permissionManagerCapabilities={data.permissionManagerCapabilities}
         allProfiles={data.allProfiles}
         teams={data.teams}
-        teamManagement={data.teamManagement}
         defaultDate={data.queryDate}
         defaultTab="members"
       />

@@ -290,6 +290,7 @@ export function PermissionManager({
       return haystack.includes(normalizedQuery);
     });
   }, [searchQuery, teamFilter, visibleMembers]);
+  const hasAnyEmail = baselineMembers.some((member) => Boolean(member.email));
 
   const sheetMember = sheetMemberId
     ? baselineMembers.find((member) => member.id === sheetMemberId) ?? null
@@ -711,7 +712,7 @@ export function PermissionManager({
               setPmPage(1);
               setPmShowAll(false);
             }}
-            placeholder="搜索姓名、邮箱或团队"
+            placeholder={hasAnyEmail ? "搜索姓名、邮箱或团队" : "搜索姓名或团队，邮箱补全中"}
             className="h-9 w-full rounded-xl border-transparent bg-zinc-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-zinc-200 focus:bg-white focus:shadow-sm sm:w-64"
           />
         </div>
@@ -846,11 +847,11 @@ export function PermissionManager({
                 </div>
                 <p className="text-[12px] text-zinc-500">
                   {getTeamLabel(sheetMember.teamName)}
-                  {sheetMember.email ? (
-                    <span className="ml-2 font-mono tabular-nums text-zinc-400">
-                      {sheetMember.email}
-                    </span>
-                  ) : null}
+                  <span className="ml-2 text-zinc-400">
+                    {sheetMember.email ? (
+                      <span className="font-mono tabular-nums">{sheetMember.email}</span>
+                    ) : "邮箱补全中"}
+                  </span>
                 </p>
               </SheetHeader>
 
@@ -1188,7 +1189,7 @@ export function PermissionManager({
           <div className="space-y-4">
             {passwordResetTarget ? (
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-[13px] text-zinc-500">
-                <p>{passwordResetTarget.memberEmail || "未记录邮箱"}</p>
+                <p>{passwordResetTarget.memberEmail || "邮箱稍后补全，不影响重置密码"}</p>
                 <p>{getTeamLabel(passwordResetTarget.teamName)}</p>
               </div>
             ) : null}

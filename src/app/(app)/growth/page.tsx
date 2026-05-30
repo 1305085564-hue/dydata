@@ -15,6 +15,7 @@ export default async function GrowthPage() {
     supabase,
     userId: user.id,
     userEmail: user.email,
+    mode: "initial",
   });
 
   return <GrowthClientShell {...data} />;

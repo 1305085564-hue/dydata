@@ -1,20 +1,23 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { ArrowRight, FilePlus2, Settings2, TrendingUp } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { hasPermission } from "@/lib/permission-utils";
-import { getApiErrorMessage } from "@/lib/violations/errors";
 import { EmptyState } from "@/components/ui/empty-state";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  loadViolationDashboardSummary,
+  loadViolationsList,
+  type SortDirection,
+} from "@/lib/violations/read-model";
 
 import { CaseList } from "./components/case-list";
 import type {
   RankItem,
   SortKey,
   ViolationCase,
-  ViolationListResponse,
 } from "./components/types";
 
 import { ConversionHubShell } from "@/app/(app)/admin/conversion-hub/hub-shell";
@@ -46,38 +49,27 @@ function readParamArray(params: SearchParamsShape, key: string): string[] {
 /* ------------------------------------------------------------------ */
 
 async function loadCases(params: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
   sort: SortKey;
-  order: "asc" | "desc";
+  order: SortDirection;
   guidanceMethods: string[];
   query: string;
 }): Promise<ViolationCase[]> {
-  const searchParams = new URLSearchParams();
-  searchParams.set("sort", params.sort);
-  searchParams.set("order", params.order);
-  searchParams.set("view", "staff");
-  searchParams.set("pageSize", "30");
-  if (params.query) searchParams.set("q", params.query);
-  if (params.guidanceMethods.length > 0) {
-    searchParams.set("guidance_method", params.guidanceMethods[0]);
-  }
+  const { payload, errorMessage } = await loadViolationsList({
+    supabase: params.supabase as never,
+    view: "staff",
+    page: 1,
+    pageSize: 30,
+    from: 0,
+    to: 29,
+    search: params.query,
+    sort: params.sort,
+    order: params.order,
+    guidanceMethod: params.guidanceMethods[0] ?? null,
+  });
 
-  const headerStore = await headers();
-  const host = headerStore.get("host");
-  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
-  const cookie = headerStore.get("cookie") ?? "";
-
-  const response = await fetch(
-    `${protocol}://${host}/api/violations?${searchParams.toString()}`,
-    {
-      cache: "no-store",
-      headers: cookie ? { cookie } : undefined,
-    },
-  );
-  const payload: unknown = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(getApiErrorMessage(payload, "加载话术案例库失败"));
-
-  const listPayload = payload as ViolationListResponse;
-  return (listPayload.cases ?? listPayload.items ?? listPayload.data ?? []) as ViolationCase[];
+  if (errorMessage || !payload) throw new Error(errorMessage ?? "加载话术案例库失败");
+  return payload.data as ViolationCase[];
 }
 
 type DangerousItem = {
@@ -102,23 +94,11 @@ type DashboardData = {
   weeklyStats?: { newViolations: number; newCases: number };
 } | null;
 
-type DashboardPayload = {
-  data?: DashboardData;
-};
-
 async function loadDashboard(): Promise<DashboardData> {
-  const headerStore = await headers();
-  const host = headerStore.get("host");
-  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
-  const cookie = headerStore.get("cookie") ?? "";
-
-  const response = await fetch(`${protocol}://${host}/api/violations/dashboard-summary`, {
-    cache: "no-store",
-    headers: cookie ? { cookie } : undefined,
+  const { data } = await loadViolationDashboardSummary({
+    supabase: createAdminClient() as never,
   });
-  const payload: unknown = await response.json().catch(() => ({}));
-  if (!response.ok) return null;
-  return (payload as DashboardPayload).data ?? null;
+  return data ?? null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,14 +166,14 @@ export default async function ViolationsPage({
 
   /* Fetch data in parallel */
   let cases: ViolationCase[] = [];
-  let dashboard: DashboardPayload["data"] = null;
+  let dashboard: DashboardData = null;
   let error: string | null = null;
 
   try {
     [cases, dashboard] = await Promise.all([
       isManageView
         ? Promise.resolve([])
-        : loadCases({ sort: activeSort, order: activeOrder, guidanceMethods, query }),
+        : loadCases({ supabase, sort: activeSort, order: activeOrder, guidanceMethods, query }),
       isManageView ? Promise.resolve(null) : loadDashboard(),
     ]);
   } catch (loadError) {

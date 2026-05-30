@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ADMIN_FIRST_SCREEN_BUDGETS } from "@/lib/admin-first-screen-contract";
+import type { AdminRequestRow } from "@/lib/team-join/service";
+import type { ExemptionRequestRow } from "./豁免申请列表";
 
 test("批改台首屏取数固定走管理员客户端", async () => {
   const mod = await import(new URL("./content/page.tsx", import.meta.url).href);
@@ -126,9 +128,151 @@ test("素材库页面首屏观测会落到 /admin/videos 路由名下", async ()
   assert.equal(observations[0]?.scopeKind, "all");
 });
 
+test("中控台页面首屏观测会落到 /admin 路由名下", async () => {
+  const mod = await import(new URL("./page.tsx", import.meta.url).href);
+  const observations: Array<Record<string, unknown>> = [];
+
+  await mod.recordAdminCockpitFirstScreenObservation({
+    actorUserId: "owner-1",
+    scopeKind: "all",
+    metrics: { auth: 10, context: 0, data: 64, total: 74 },
+  }, {
+    recordObservation: async (observation: Record<string, unknown>) => {
+      observations.push(observation);
+    },
+  });
+
+  assert.equal(observations.length, 1);
+  assert.equal(observations[0]?.route, "/admin");
+  assert.equal(observations[0]?.statusCode, 200);
+  assert.equal(observations[0]?.actorUserId, "owner-1");
+  assert.equal(observations[0]?.scopeKind, "all");
+});
+
 test("后台首屏合同预算固定，避免候选池和阈值被随意放大", () => {
+  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.cockpit.warnTotalMs, 2500);
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.content.candidateLimit, 60);
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.content.payloadLimit, 30);
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.videos.candidateLimit, 60);
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.videos.payloadLimit, 30);
+});
+
+test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队列最小工作集", async () => {
+  const mod = await import(new URL("./components/admin-first-screen-loader.ts", import.meta.url).href);
+
+  const summaryRow = {
+    pending_videos: 8,
+    pending_violations: 5,
+    pending_submissions: 3,
+    pending_exemptions: 2,
+  };
+  const pendingVideos = [
+    {
+      id: "video-1",
+      account_name: "账号A",
+      report_date: "2026-05-31",
+      has_tags: false,
+      anomaly_flag: true,
+      submitted_by: "user-1",
+      submitted_by_name: "张三",
+    },
+  ];
+  const pendingSubmissions = [
+    {
+      profile_id: "user-2",
+      name: "李四",
+      team_id: "team-1",
+      team_name: "运营一组",
+      last_report_date: "2026-05-30",
+    },
+  ];
+  const pendingViolations = [
+    {
+      id: "violation-1",
+      script_text: "违规脚本片段",
+      category: "敏感",
+      risk_level: "high",
+      created_at: "2026-05-31T08:00:00.000Z",
+      submitted_by: "user-1",
+      submitted_by_name: "张三",
+    },
+  ];
+  const pendingExemptions: ExemptionRequestRow[] = [
+    {
+      id: "exemption-1",
+      applicant_user_id: "user-3",
+      applicant_name: "王五",
+      exemption_type: "yesterday",
+      exemption_category: null,
+      reason: "请假",
+      created_at: "2026-05-31T07:00:00.000Z",
+    },
+  ];
+  const pendingJoinRequests: AdminRequestRow[] = [
+    {
+      id: "join-1",
+      applicantUserId: "user-4",
+      applicantName: "赵六",
+      applicantEmail: null,
+      targetTeamId: "team-2",
+      targetTeamName: "增长组",
+      createdAt: "2026-05-31T06:00:00.000Z",
+    },
+  ];
+
+  const rpcCalls: string[] = [];
+  const result = await mod.loadAdminFirstScreenData("2026-05-31", {
+    requireAdminServiceClient: async () => ({
+      supabase: {
+        rpc(name: string) {
+          rpcCalls.push(name);
+          if (name === "admin_cockpit_summary") {
+            return Promise.resolve({ data: summaryRow, error: null });
+          }
+          if (name === "admin_pending_videos_today") {
+            return Promise.resolve({ data: pendingVideos, error: null });
+          }
+          if (name === "admin_pending_submissions_today") {
+            return Promise.resolve({ data: pendingSubmissions, error: null });
+          }
+          throw new Error(`unexpected rpc: ${name}`);
+        },
+      },
+      scope: {
+        userId: "owner-1",
+        role: "owner",
+        businessRole: "owner",
+        permissions: {},
+        accessLevel: 4,
+        teamId: null,
+        groupId: null,
+        kind: "all",
+        visibleUserIds: ["user-1", "user-2", "user-3", "user-4"],
+      },
+    }),
+    listPendingRequestsForAdmin: async () => ({ ok: true, data: pendingJoinRequests }),
+    loadPendingViolationRows: async () => pendingViolations,
+    loadPendingExemptionRows: async () => pendingExemptions,
+  });
+
+  assert.deepEqual(rpcCalls, [
+    "admin_cockpit_summary",
+    "admin_pending_videos_today",
+    "admin_pending_submissions_today",
+  ]);
+  assert.deepEqual(result, {
+    summary: {
+      pending_videos: 1,
+      pending_violations: 1,
+      pending_submissions: 1,
+      pending_exemptions: 2,
+    },
+    pendingVideos,
+    pendingViolations,
+    pendingSubmissions,
+    pendingExemptions,
+    pendingJoinRequests,
+  });
+  assert.equal("alerts" in result, false);
+  assert.equal("alertsUpdatedAt" in result, false);
 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 import {
   getAuthenticatedContext,
@@ -6,6 +7,7 @@ import {
   jsonUnauthorized,
   requireViolationAdmin,
 } from "@/lib/violations/api";
+import { loadViolationCaseDetail } from "@/lib/violations/read-model";
 
 export async function GET(
   _request: NextRequest,
@@ -18,27 +20,13 @@ export async function GET(
   }
 
   const { id } = await context.params;
+  const { data, errorMessage } = await loadViolationCaseDetail({
+    supabase,
+    fallbackDetailClient: createAdminClient(),
+    id,
+  });
 
-  const { data, error } = await supabase
-    .from("violation_cases")
-    .select(
-      `
-        *,
-        submitter:profiles!violation_cases_submitted_by_fkey(id, name),
-        team:teams(id, name),
-        reviewer:profiles!violation_cases_reviewed_by_fkey(id, name),
-        test_records:violation_test_records(
-          *,
-          tester:profiles!violation_test_records_tested_by_fkey(id, name),
-          account:accounts(id, name)
-        )
-      `,
-    )
-    .eq("id", id)
-    .eq("is_deleted", false)
-    .single();
-
-  if (error || !data) {
+  if (errorMessage || !data) {
     return jsonNotFound("违规话术不存在");
   }
 

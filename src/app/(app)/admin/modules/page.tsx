@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { loadAdminModulesData } from "@/lib/loaders/admin-modules";
+import { loadAdminModulesFirstScreenData } from "@/lib/loaders/admin-modules";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 
@@ -31,7 +31,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
   }
 
   const params = await searchParams;
-  const data = await loadAdminModulesData({
+  const data = await loadAdminModulesFirstScreenData({
     supabase,
     searchDate: params.date,
   });
@@ -58,7 +58,6 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
         permissionManagerCapabilities={data.permissionManagerCapabilities}
         allProfiles={data.allProfiles}
         teams={data.teams}
-        teamManagement={data.teamManagement}
         defaultDate={data.queryDate}
         defaultTab={normalizeFocus(params.focus)}
       />

@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft, TrendingUp, Eye, UserPlus, Repeat2, ShieldAlert, CheckCircle2 } from "lucide-react";
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getApiErrorMessage } from "@/lib/violations/errors";
 import { getUserPermissions } from "@/lib/permissions";
 import { hasPermission } from "@/lib/permission-utils";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
@@ -29,10 +27,10 @@ import {
 } from "../components/format";
 import { resolveConfidence } from "@/lib/case-library/confidence";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
+import { loadViolationCaseDetail } from "@/lib/violations/read-model";
 import type {
   ViolationAccount,
   ViolationDetail,
-  ViolationDetailResponse,
   ViolationTestRecord,
 } from "../components/types";
 import { StatsCard, StatsGrid } from "./components/stats-card";
@@ -65,40 +63,13 @@ type DetailRow = ViolationDetail & {
 };
 
 async function loadCase(id: string): Promise<DetailRow | null> {
-  const headerStore = await headers();
-  const host = headerStore.get("host");
-  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
-  const cookie = headerStore.get("cookie") ?? "";
-  const response = await fetch(`${protocol}://${host}/api/violations/${id}`, {
-    cache: "no-store",
-    headers: cookie ? { cookie } : undefined,
+  const { data, errorMessage } = await loadViolationCaseDetail({
+    supabase: await createClient() as never,
+    fallbackDetailClient: createAdminClient() as never,
+    id,
   });
-  const payload: unknown = await response.json().catch(() => ({}));
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error(getApiErrorMessage(payload, "加载案例失败"));
-
-  const detailPayload = payload as ViolationDetailResponse;
-  return (detailPayload.case ?? detailPayload.data ?? null) as DetailRow | null;
-}
-
-async function loadConversionCase(id: string): Promise<DetailRow | null> {
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("violation_cases")
-    .select(
-      `
-        *,
-        submitter:profiles!violation_cases_submitted_by_fkey(id, name),
-        team:teams(id, name)
-      `,
-    )
-    .eq("id", id)
-    .eq("is_deleted", false)
-    .eq("purpose", "conversion")
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as DetailRow;
+  if (errorMessage) throw new Error(errorMessage);
+  return data as DetailRow | null;
 }
 
 async function loadUsageRecords(id: string): Promise<UsageRecordItem[]> {
@@ -486,9 +457,6 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
   let error: string | null = null;
   try {
     caseItem = await loadCase(id);
-    if (!caseItem) {
-      caseItem = await loadConversionCase(id);
-    }
   } catch (loadError) {
     error = loadError instanceof Error ? loadError.message : "加载案例失败";
   }

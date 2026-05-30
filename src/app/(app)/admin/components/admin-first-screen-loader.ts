@@ -1,6 +1,4 @@
-import { buildDashboardAlertsResponse } from "@/app/api/admin/dashboard-alerts/route";
 import { filterScopedRows, requireAdminServiceClient, unwrapRpc } from "@/app/api/admin/cockpit/_shared";
-import type { AlertAggregationResult, AlertSource } from "@/lib/alert-sources/types";
 import type { ExemptionRequestRow } from "@/app/(app)/admin/豁免申请列表";
 import { listPendingRequestsForAdmin, type AdminRequestRow } from "@/lib/team-join/service";
 import type { DataAccessScope } from "@/lib/data-access-scope";
@@ -40,10 +38,6 @@ export type PendingSubmissionRow = {
   last_report_date: string | null;
 };
 
-export type DashboardAlertsData = AlertAggregationResult & {
-  meta?: { generatedAt: string; scope: "all" | "team"; teamId: string | null };
-};
-
 export type AdminFirstScreenData = {
   summary: CockpitSummary | null;
   pendingVideos: PendingVideoRow[];
@@ -51,9 +45,32 @@ export type AdminFirstScreenData = {
   pendingSubmissions: PendingSubmissionRow[];
   pendingExemptions: ExemptionRequestRow[];
   pendingJoinRequests: AdminRequestRow[];
-  alerts: DashboardAlertsData | null;
-  alertsUpdatedAt: number | null;
 };
+
+type AdminFirstScreenDeps = {
+  requireAdminServiceClient: typeof requireAdminServiceClient;
+  listPendingRequestsForAdmin: typeof listPendingRequestsForAdmin;
+  loadPendingViolationRows: typeof loadPendingViolationRows;
+  loadPendingExemptionRows: typeof loadPendingExemptionRows;
+};
+
+const defaultDeps: AdminFirstScreenDeps = {
+  requireAdminServiceClient,
+  listPendingRequestsForAdmin,
+  loadPendingViolationRows,
+  loadPendingExemptionRows,
+};
+
+function createEmptyAdminFirstScreenData(): AdminFirstScreenData {
+  return {
+    summary: null,
+    pendingVideos: [],
+    pendingViolations: [],
+    pendingSubmissions: [],
+    pendingExemptions: [],
+    pendingJoinRequests: [],
+  };
+}
 
 function normalizeSummary(value: Record<string, number> | null | undefined): CockpitSummary {
   return {
@@ -81,65 +98,13 @@ function buildScopedSummary(
   };
 }
 
-function normalizeAlertSummary(
-  summary: Partial<DashboardAlertsData["summary"]> | undefined,
-): DashboardAlertsData["summary"] {
-  const bySource = (summary?.bySource ?? {}) as Partial<Record<AlertSource, number>>;
-  return {
-    total: Number(summary?.total ?? 0),
-    critical: Number(summary?.critical ?? 0),
-    warning: Number(summary?.warning ?? 0),
-    info: Number(summary?.info ?? 0),
-    bySource: {
-      submission: Number(bySource.submission ?? 0),
-      playback: Number(bySource.playback ?? 0),
-      violation: Number(bySource.violation ?? 0),
-      conversion: Number(bySource.conversion ?? 0),
-      upload: Number(bySource.upload ?? 0),
-      task: Number(bySource.task ?? 0),
-    },
-  };
-}
-
-async function getDashboardAlerts(): Promise<{
-  data: DashboardAlertsData | null;
-  updatedAt: number | null;
-}> {
-  try {
-    const response = await buildDashboardAlertsResponse();
-    if (!response.ok) return { data: null, updatedAt: null };
-    const json = (await response.json()) as Partial<DashboardAlertsData>;
-    return {
-      data: {
-        alerts: Array.isArray(json.alerts) ? json.alerts : [],
-        groupedBySeverity: {
-          critical: Array.isArray(json.groupedBySeverity?.critical) ? json.groupedBySeverity.critical : [],
-          warning: Array.isArray(json.groupedBySeverity?.warning) ? json.groupedBySeverity.warning : [],
-          info: Array.isArray(json.groupedBySeverity?.info) ? json.groupedBySeverity.info : [],
-        },
-        summary: normalizeAlertSummary(json.summary),
-        meta: json.meta,
-      },
-      updatedAt: Date.now(),
-    };
-  } catch {
-    return { data: null, updatedAt: null };
-  }
-}
-
-export async function loadAdminFirstScreenData(date: string): Promise<AdminFirstScreenData> {
-  const auth = await requireAdminServiceClient();
+export async function loadAdminFirstScreenData(
+  date: string,
+  deps: AdminFirstScreenDeps = defaultDeps,
+): Promise<AdminFirstScreenData> {
+  const auth = await deps.requireAdminServiceClient();
   if ("response" in auth) {
-    return {
-      summary: null,
-      pendingVideos: [],
-      pendingViolations: [],
-      pendingSubmissions: [],
-      pendingExemptions: [],
-      pendingJoinRequests: [],
-      alerts: null,
-      alertsUpdatedAt: null,
-    };
+    return createEmptyAdminFirstScreenData();
   }
 
   const [
@@ -149,15 +114,13 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
     submissionsResult,
     exemptionsResult,
     joinRequestsResult,
-    alertsResult,
   ] = await Promise.all([
     auth.supabase.rpc("admin_cockpit_summary", { target_date: date }),
     auth.supabase.rpc("admin_pending_videos_today", { target_date: date, limit_rows: 10 }),
-    loadPendingViolationRows(auth.supabase, auth.scope),
+    deps.loadPendingViolationRows(auth.supabase, auth.scope),
     auth.supabase.rpc("admin_pending_submissions_today", { target_date: date }),
-    loadPendingExemptionRows(auth.supabase),
-    listPendingRequestsForAdmin(),
-    getDashboardAlerts(),
+    deps.loadPendingExemptionRows(auth.supabase),
+    deps.listPendingRequestsForAdmin(),
   ]);
 
   const summary = unwrapRpc<Record<string, number>>(summaryResult).data;
@@ -176,8 +139,6 @@ export async function loadAdminFirstScreenData(date: string): Promise<AdminFirst
     pendingSubmissions,
     pendingExemptions: exemptionsResult,
     pendingJoinRequests,
-    alerts: alertsResult.data,
-    alertsUpdatedAt: alertsResult.updatedAt,
   };
 }
 

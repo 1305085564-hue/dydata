@@ -43,7 +43,8 @@ test("first-screen monitor 遇到连续 3 次超阈值会发告警", async () =>
 	    assert.equal(payload.alerts.length, 1);
 	    assert.equal(calls.length, 1);
 	    assert.match(calls[0] ?? "", /\/api\/admin\/sidebar-badges/);
-      assert.equal(payload.coveredRoutes.length, 4);
+      assert.equal(payload.coveredRoutes.length, 5);
+      assert.equal(payload.coveredRoutes.includes("/admin"), true);
       assert.equal(payload.coveredRoutes.includes("/admin/content"), true);
       assert.equal(payload.coveredRoutes.includes("/admin/videos"), true);
       assert.equal(payload.coveredRoutes.includes("/api/admin/panels/analytics"), true);

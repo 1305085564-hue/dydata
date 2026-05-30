@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasPermission as hasUnifiedPermission } from "@/lib/permission-utils";
 import { isCaseLibraryView } from "@/lib/case-library/shared";
-import { calculatePassRate } from "@/lib/violations/dashboard-summary";
+import {
+  GUIDANCE_METHODS,
+  loadViolationsList,
+  SORT_KEYS,
+  type SortDirection,
+  type SortKey,
+  type ViolationsListView,
+} from "@/lib/violations/read-model";
 
 import {
   getAuthenticatedContext,
@@ -19,12 +26,6 @@ import {
 import { validateCreateViolationPayload } from "@/lib/violations/validation";
 import type { Permissions } from "@/types";
 
-type MinimalViolationsQueryResult = {
-  data: unknown[] | null;
-  error: unknown;
-  count: number | null;
-};
-
 type MinimalVisualTagQueryResult = {
   data: Array<{ case_id: string }> | null;
   error: unknown;
@@ -36,7 +37,11 @@ type MinimalViolationsQuery = {
   ilike: (column: string, value: string) => MinimalViolationsQuery;
   select: (columns: string, options?: { count?: "exact" }) => MinimalViolationsQuery;
   order: (column: string, options: { ascending: boolean; nullsFirst?: boolean }) => MinimalViolationsQuery;
-  range: (from: number, to: number) => Promise<MinimalViolationsQueryResult>;
+  range: (from: number, to: number) => Promise<{
+    data: unknown[] | null;
+    error: unknown;
+    count: number | null;
+  }>;
 };
 
 type MinimalViolationsSupabase = {
@@ -69,21 +74,6 @@ type ViolationsRouteDeps = {
   ) => Promise<{ caseIds: string[]; error: unknown }>;
 };
 
-type SortKey = "conversion_rate" | "pass_rate" | "usage_count" | "created_at";
-type SortDirection = "asc" | "desc";
-type StatusFilter = "pending" | "processed";
-type CaseListRow = {
-  id?: string | null;
-  pass_count?: number | null;
-  fail_count?: number | null;
-  created_at?: string | null;
-};
-
-const GUIDANCE_METHODS = ["oral", "visual", "profile", "comment", "other"] as const;
-const SORT_KEYS = new Set<SortKey>(["conversion_rate", "pass_rate", "usage_count", "created_at"]);
-const STATUS_FILTERS = new Set<StatusFilter>(["pending", "processed"]);
-const PROCESSED_STATUSES = ["verified", "rejected", "archived"];
-
 const defaultDeps: ViolationsRouteDeps = {
   getAuthenticatedContext: getAuthenticatedContext as unknown as ViolationsRouteDeps["getAuthenticatedContext"],
   getUserProfile: getUserProfile as unknown as ViolationsRouteDeps["getUserProfile"],
@@ -101,65 +91,6 @@ const defaultDeps: ViolationsRouteDeps = {
     };
   },
 };
-
-function buildViolationsListPayload(
-  data: unknown[],
-  view: string,
-  page: number,
-  pageSize: number,
-  totalItems: number,
-  sort: SortKey | null,
-  order: SortDirection,
-) {
-  return {
-    data,
-    view,
-    sort,
-    order,
-    pagination: {
-      page,
-      pageSize,
-      totalItems,
-      totalPages: totalItems > 0 ? Math.ceil(totalItems / pageSize) : 0,
-    },
-  };
-}
-
-function comparePassRate(left: CaseListRow, right: CaseListRow, direction: SortDirection) {
-  const leftRate = calculatePassRate(left.pass_count ?? null, left.fail_count ?? null) ?? -1;
-  const rightRate = calculatePassRate(right.pass_count ?? null, right.fail_count ?? null) ?? -1;
-  if (leftRate !== rightRate) {
-    return direction === "asc" ? leftRate - rightRate : rightRate - leftRate;
-  }
-
-  const leftSamples = (left.pass_count ?? 0) + (left.fail_count ?? 0);
-  const rightSamples = (right.pass_count ?? 0) + (right.fail_count ?? 0);
-  if (leftSamples !== rightSamples) return rightSamples - leftSamples;
-
-  const leftCreatedAt = left.created_at ?? "";
-  const rightCreatedAt = right.created_at ?? "";
-  if (leftCreatedAt !== rightCreatedAt) {
-    return direction === "asc"
-      ? leftCreatedAt.localeCompare(rightCreatedAt)
-      : rightCreatedAt.localeCompare(leftCreatedAt);
-  }
-
-  return String(left.id ?? "").localeCompare(String(right.id ?? ""));
-}
-
-function applyStatusFilter(query: MinimalViolationsQuery, status: string) {
-  if (STATUS_FILTERS.has(status as StatusFilter)) {
-    return status === "pending"
-      ? query.eq("status", "submitted")
-      : query.in("status", PROCESSED_STATUSES);
-  }
-
-  if (!isViolationStatus(status)) {
-    return null;
-  }
-
-  return query.eq("status", status);
-}
 
 export async function buildViolationsListResponse(
   request: NextRequest,
@@ -211,7 +142,7 @@ export async function buildViolationsListResponse(
     profile.permissions as Permissions,
     "manage_violations",
   );
-  const effectiveView = requestedView ?? (canManageViolations ? "admin" : "staff");
+  const effectiveView = (requestedView ?? (canManageViolations ? "admin" : "staff")) as ViolationsListView;
 
   if (effectiveView === "admin" && !canManageViolations) {
     return jsonForbidden("仅具备违规话术复核权限的用户可查看 admin 视角");
@@ -227,121 +158,37 @@ export async function buildViolationsListResponse(
     ?.split(",")
     .map((item) => item.trim())
     .filter(Boolean) ?? [];
-  let visualTagCaseIds: string[] | null = null;
-
-  if (visualTagIdList.length > 0) {
-    const { caseIds, error } = await loadCaseIdsByVisualTagIds(supabase, Array.from(new Set(visualTagIdList)));
-    if (error) {
-      return jsonServerError("获取画面标签筛选失败");
-    }
-    visualTagCaseIds = caseIds;
-    if (caseIds.length === 0) {
-      return NextResponse.json(
-        buildViolationsListPayload([], effectiveView, page, pageSize, 0, sort as SortKey | null, orderDir),
-      );
-    }
+  if (status && !["pending", "processed"].includes(status) && !isViolationStatus(status)) {
+    return jsonBadRequest("status 不合法");
   }
-
-  let query = (supabase.from("violation_cases") as MinimalViolationsQuery)
-    .select(
-      `
-        *,
-        submitter:profiles!violation_cases_submitted_by_fkey(id, name),
-        team:teams(id, name),
-        reviewer:profiles!violation_cases_reviewed_by_fkey(id, name)
-      `,
-      { count: "exact" },
-    )
-    .eq("is_deleted", false)
-    .eq("purpose", "violation");
-
-  if (status) {
-    const filteredQuery = applyStatusFilter(query, status);
-    if (!filteredQuery) {
-      return jsonBadRequest("status 不合法");
-    }
-    query = filteredQuery;
-  }
-
-  if (category) {
-    if (!isViolationCategory(category)) {
-      return jsonBadRequest("category 不合法");
-    }
-    query = query.eq("category", category);
-  }
-
-  if (teamId) {
-    query = query.eq("team_id", teamId);
-  }
-
-  if (search) {
-    query = query.ilike("script_text", `%${search}%`);
-  }
-
-  if (guidanceMethod) {
-    query = query.eq("guidance_method", guidanceMethod);
-  }
-
-  if (visualTagCaseIds && visualTagCaseIds.length > 0) {
-    query = query.in("id", visualTagCaseIds);
-  }
-
-  if (effectiveView === "staff") {
-    query = query
-      .eq("status", "verified")
-      .in("usage_state", ["available", "testing"]);
+  if (category && !isViolationCategory(category)) {
+    return jsonBadRequest("category 不合法");
   }
 
   const normalizedSort = sort as SortKey | null;
-  let orderedQuery = query;
+  const { payload, errorMessage } = await loadViolationsList({
+    supabase,
+    view: effectiveView,
+    page,
+    pageSize,
+    from,
+    to,
+    status,
+    category,
+    teamId,
+    search,
+    sort: normalizedSort,
+    order: orderDir,
+    guidanceMethod,
+    visualTagIds: visualTagIdList,
+    loadCaseIdsByVisualTagIds,
+  });
 
-  switch (normalizedSort) {
-    case "conversion_rate":
-      orderedQuery = orderedQuery
-        .order("weighted_conversion_rate", { ascending: orderDir === "asc", nullsFirst: false })
-        .order("usage_count", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false });
-      break;
-    case "usage_count":
-      orderedQuery = orderedQuery
-        .order("usage_count", { ascending: orderDir === "asc", nullsFirst: false })
-        .order("weighted_conversion_rate", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false });
-      break;
-    case "created_at":
-      orderedQuery = orderedQuery.order("created_at", { ascending: orderDir === "asc" });
-      break;
-    case "pass_rate":
-      orderedQuery = orderedQuery
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: true });
-      break;
-    default:
-      orderedQuery = orderedQuery
-        .order("status", { ascending: true })
-        .order("reviewed_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false });
-      break;
+  if (errorMessage || !payload) {
+    return jsonServerError(errorMessage ?? "获取违规话术列表失败");
   }
 
-  const usesInMemoryPassRateSort = normalizedSort === "pass_rate";
-  const { data, error, count } = await orderedQuery.range(usesInMemoryPassRateSort ? 0 : from, usesInMemoryPassRateSort ? 9999 : to);
-
-  if (error) {
-    return jsonServerError("获取违规话术列表失败");
-  }
-
-  let responseData = data ?? [];
-
-  if (usesInMemoryPassRateSort) {
-    responseData = [...responseData].sort((left, right) =>
-      comparePassRate(left as CaseListRow, right as CaseListRow, orderDir));
-    responseData = responseData.slice(from, to + 1);
-  }
-
-  return NextResponse.json(
-    buildViolationsListPayload(responseData, effectiveView, page, pageSize, count ?? 0, normalizedSort, orderDir),
-  );
+  return NextResponse.json(payload);
 }
 
 export async function GET(request: NextRequest) {

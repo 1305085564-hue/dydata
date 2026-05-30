@@ -185,7 +185,16 @@ function compareOrderValues(
   return 0;
 }
 
-function createViolationsListSupabase(rows: CaseRow[], tagLinks: VisualTagLink[] = []) {
+type ViolationsListTracker = {
+  selectQueries: string[];
+  rangeCalls: Array<{ from: number; to: number }>;
+};
+
+function createViolationsListSupabase(
+  rows: CaseRow[],
+  tagLinks: VisualTagLink[] = [],
+  tracker?: ViolationsListTracker,
+) {
   let filtered = rows.slice();
   const orderings: Array<{
     column: string;
@@ -215,31 +224,33 @@ function createViolationsListSupabase(rows: CaseRow[], tagLinks: VisualTagLink[]
 
       assert.equal(table, "violation_cases");
 
-      return {
-        select() {
-          return this;
+      const builder = {
+        select(query?: string) {
+          tracker?.selectQueries.push(query ?? "");
+          return builder;
         },
         eq(column: string, value: unknown) {
           filtered = filtered.filter((row) => {
             const cell = row[column as keyof CaseRow];
             return cell === value;
           });
-          return this;
+          return builder;
         },
         in(column: string, values: string[]) {
           filtered = filtered.filter((row) => values.includes(String(row[column as keyof CaseRow] ?? "")));
-          return this;
+          return builder;
         },
         ilike(column: string, pattern: string) {
           const needle = pattern.replaceAll("%", "").toLowerCase();
           filtered = filtered.filter((row) => String(row[column as keyof CaseRow] ?? "").toLowerCase().includes(needle));
-          return this;
+          return builder;
         },
         order(column: string, options: { ascending: boolean; nullsFirst?: boolean }) {
           orderings.push({ column, ...options });
-          return this;
+          return builder;
         },
         async range(from: number, to: number) {
+          tracker?.rangeCalls.push({ from, to });
           const ordered = filtered.slice();
 
           for (const ordering of [...orderings].reverse()) {
@@ -258,7 +269,28 @@ function createViolationsListSupabase(rows: CaseRow[], tagLinks: VisualTagLink[]
             count: ordered.length,
           };
         },
+        then(resolve: (value: unknown) => void, reject: (reason?: unknown) => void) {
+          const ordered = filtered.slice();
+
+          for (const ordering of [...orderings].reverse()) {
+            ordered.sort((left, right) =>
+              compareOrderValues(
+                left[ordering.column as keyof CaseRow] as string | number | boolean | null | undefined,
+                right[ordering.column as keyof CaseRow] as string | number | boolean | null | undefined,
+                ordering.ascending,
+                ordering.nullsFirst,
+              ));
+          }
+
+          return Promise.resolve({
+            data: ordered,
+            error: null,
+            count: ordered.length,
+          }).then(resolve, reject);
+        },
       };
+
+      return builder;
     },
   };
 }
@@ -956,10 +988,14 @@ test("violations list 支持排序和多种筛选参数", async () => {
     { case_id: "case-b", tag_id: "tag-1" },
     { case_id: "case-c", tag_id: "tag-2" },
   ];
+  const tracker: ViolationsListTracker = {
+    selectQueries: [],
+    rangeCalls: [],
+  };
 
   const deps = {
     getAuthenticatedContext: async () => ({
-      supabase: createViolationsListSupabase(rows, tagLinks),
+      supabase: createViolationsListSupabase(rows, tagLinks, tracker),
       user: { id: "owner-1" },
     }),
     getUserProfile: async (): Promise<Profile> => ({
@@ -983,6 +1019,8 @@ test("violations list 支持排序和多种筛选参数", async () => {
   );
   const passRateJson = await passRateResponse.json();
   assert.deepEqual(passRateJson.data.map((item: CaseRow) => item.id), ["case-a", "case-c", "case-b"]);
+  assert.equal(tracker.selectQueries.some((query) => query.includes("*")), false);
+  assert.equal(tracker.rangeCalls.some((call) => call.from === 0 && call.to === 9999), false);
 
   const guidanceMethodResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations?guidance_method=oral"),

@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type SetStateAction, useEffect, useState, useTransition } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState, useTransition } from "react";
 import { Plus, Trash2, UsersRound } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +24,8 @@ import { PermissionManager } from "../permission-manager";
 import { TeamGroupManager } from "../team-group-manager";
 import { createTeam, deleteTeam } from "../actions";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import type { AdminModulesTeamManagementData } from "@/lib/loaders/admin-modules";
+import { TeamManagementSkeleton } from "./团队管理骨架";
 
 interface AdminModulesContentProps {
   currentUserId: string;
@@ -46,7 +48,6 @@ interface AdminModulesContentProps {
     permissions: Permissions | null;
   }>;
   teams: Array<{ id: string; name: string }>;
-  teamManagement: Parameters<typeof TeamGroupManager>[0];
   defaultDate: string;
   defaultTab?: "members" | "teams";
 }
@@ -212,17 +213,27 @@ export function AdminModulesContent({
   permissionManagerCapabilities,
   allProfiles,
   teams,
-  teamManagement,
   defaultDate,
   defaultTab: requestedDefaultTab,
 }: AdminModulesContentProps) {
   const [governanceOpen, setGovernanceOpen] = useState(false);
   const [manageTeamOpen, setManageTeamOpen] = useState(false);
   const [localTeams, setLocalTeams] = useState(teams);
+  const [hydratedProfiles, setHydratedProfiles] = useState(allProfiles);
+  const [teamManagement, setTeamManagement] = useState<AdminModulesTeamManagementData | null>(null);
+  const [isTeamManagementLoading, setIsTeamManagementLoading] = useState(false);
+  const [teamManagementError, setTeamManagementError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"members" | "teams" | null>(null);
+  const hasRequestedEmails = useRef(false);
+  const hasRequestedTeamManagement = useRef(false);
 
   useEffect(() => {
     setLocalTeams(teams);
   }, [teams]);
+
+  useEffect(() => {
+    setHydratedProfiles(allProfiles);
+  }, [allProfiles]);
 
   const canManagePermissions =
     permissionManagerCapabilities.canRemoveMember ||
@@ -231,9 +242,75 @@ export function AdminModulesContent({
   const effectiveRole = currentUserBusinessRole ?? currentUserRole;
   const canEditData = hasPermission(effectiveRole, currentUserPermissions, "edit_data");
   const canExportData = hasPermission(effectiveRole, currentUserPermissions, "export_data");
-  const showTeams = canManagePermissions && teamManagement.access.canView;
+  const canViewTeamsTab =
+    effectiveRole === "owner" ||
+    effectiveRole === "team_admin" ||
+    effectiveRole === "group_leader";
+  const showTeams = canManagePermissions && canViewTeamsTab;
   const showGovernance = canEditData || canExportData;
   const hasVisibleModules = canManagePermissions || showGovernance;
+  const defaultTab = requestedDefaultTab === "teams" && showTeams ? "teams" : canManagePermissions ? "members" : "teams";
+
+  useEffect(() => {
+    if (hasRequestedEmails.current) return;
+    hasRequestedEmails.current = true;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/admin/modules/member-emails", { cache: "no-store" });
+        const payload = (await response.json()) as { error?: string; emails?: Record<string, string | null> };
+        if (!response.ok || payload.error || !payload.emails || cancelled) return;
+
+        setHydratedProfiles((current) =>
+          current.map((profile) => ({
+            ...profile,
+            email: payload.emails?.[profile.id] ?? profile.email,
+          })),
+        );
+      } catch {
+        // 邮箱补全失败不影响首屏可用性
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const nextActiveTab = activeTab ?? defaultTab;
+    if (nextActiveTab !== "teams" || !showTeams || hasRequestedTeamManagement.current) return;
+    hasRequestedTeamManagement.current = true;
+    setIsTeamManagementLoading(true);
+    setTeamManagementError(null);
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/admin/modules/team-management", { cache: "no-store" });
+        const payload = (await response.json()) as (AdminModulesTeamManagementData & { error?: string });
+        if (!response.ok || payload.error) {
+          throw new Error(payload.error || "加载团队与分组失败");
+        }
+        if (!cancelled) {
+          setTeamManagement(payload);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTeamManagementError(error instanceof Error ? error.message : "加载团队与分组失败");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsTeamManagementLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, defaultTab, showTeams]);
 
   if (!hasVisibleModules) {
     return (
@@ -241,12 +318,13 @@ export function AdminModulesContent({
     );
   }
 
-  const defaultTab = requestedDefaultTab === "teams" && showTeams ? "teams" : canManagePermissions ? "members" : "teams";
-
   return (
     <div className="space-y-8">
       {canManagePermissions || showTeams ? (
-        <Tabs defaultValue={defaultTab}>
+        <Tabs
+          defaultValue={defaultTab}
+          onValueChange={(value) => setActiveTab(value === "teams" ? "teams" : "members")}
+        >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center justify-end gap-3">
               <TabsList className="bg-zinc-100/70 p-1">
@@ -295,7 +373,7 @@ export function AdminModulesContent({
           {canManagePermissions ? (
             <TabsContent value="members" id="members" className="mt-6 scroll-mt-8">
               <PermissionManager
-                members={allProfiles.map((profile) => ({
+                members={hydratedProfiles.map((profile) => ({
                   id: profile.id,
                   name: profile.name,
                   email: profile.email,
@@ -315,15 +393,23 @@ export function AdminModulesContent({
 
           {showTeams ? (
             <TabsContent value="teams" id="teams" className="mt-6 scroll-mt-8">
-              <section className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6">
-                <TeamGroupManager
-                  access={teamManagement.access}
-                  teams={localTeams}
-                  groups={teamManagement.groups}
-                  profiles={teamManagement.profiles}
-                  leaderCandidates={teamManagement.leaderCandidates}
-                />
-              </section>
+              {isTeamManagementLoading && !teamManagement ? <TeamManagementSkeleton /> : null}
+              {teamManagementError && !teamManagement ? (
+                <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D]">
+                  {teamManagementError}
+                </div>
+              ) : null}
+              {teamManagement ? (
+                <section className="space-y-6 rounded-2xl border border-zinc-200 bg-white p-6">
+                  <TeamGroupManager
+                    access={teamManagement.access}
+                    teams={localTeams}
+                    groups={teamManagement.groups}
+                    profiles={teamManagement.profiles}
+                    leaderCandidates={teamManagement.leaderCandidates}
+                  />
+                </section>
+              ) : null}
             </TabsContent>
           ) : null}
         </Tabs>

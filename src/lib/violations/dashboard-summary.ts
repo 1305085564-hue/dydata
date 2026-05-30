@@ -85,7 +85,7 @@ function hasEnoughSamples(row: DashboardCaseRow) {
   return (row.pass_count ?? 0) + (row.fail_count ?? 0) >= 3;
 }
 
-const RANK_BOARD_SIZE = 5;
+const RANK_BOARD_SIZE = 3;
 
 export function selectDangerousTop3(rows: DashboardCaseRow[]) {
   return rows

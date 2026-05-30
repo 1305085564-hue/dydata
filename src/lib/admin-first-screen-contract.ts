@@ -1,4 +1,7 @@
 export const ADMIN_FIRST_SCREEN_BUDGETS = {
+  cockpit: {
+    warnTotalMs: 2500,
+  },
   content: {
     candidateLimit: 60,
     payloadLimit: 30,
@@ -27,4 +30,3 @@ export function formatServerTiming(metrics: FirstScreenMetricSnapshot) {
     .map(([name, duration]) => `${name};dur=${duration.toFixed(1)}`)
     .join(", ");
 }
-

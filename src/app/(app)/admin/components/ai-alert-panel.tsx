@@ -10,7 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useAlertContextStore } from "@/components/ai-assistant/alert-context-store";
 
-import type { DashboardAlertsData } from "./admin-first-screen-loader";
+type DashboardAlertsData = AlertAggregationResult & {
+  meta?: { generatedAt: string; scope: "all" | "team"; teamId: string | null };
+};
 
 const POLL_INTERVAL_MS = 180_000;
 const STORAGE_KEY = "dydata:cockpit:selected-alert-group";

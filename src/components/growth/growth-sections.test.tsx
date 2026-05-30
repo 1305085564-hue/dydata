@@ -58,11 +58,14 @@ test("DiagnosisCard 渲染分块结构而不是长段列表", () => {
     />,
   );
 
-  assert.match(html, /问题名：/);
-  assert.match(html, /数据证据/);
+  assert.match(html, /开头留人偏弱/);
+  assert.match(html, /增长转化偏弱/);
+  assert.match(html, /互动吸引暂时领先/);
+  assert.match(html, /前3秒留人偏弱/);
   assert.match(html, /该学谁 \/ 为什么：/);
-  assert.match(html, /下一步动作/);
-  assert.match(html, /示例内容/);
+  assert.match(html, /该盯谁 \/ 为什么：/);
+  assert.match(html, /先把第一句改成结论前置/);
+  assert.match(html, /主页看完整版/);
 });
 
 test("DiagnosisCard 有 submitter 样本时显示真实对标人名字", () => {
@@ -150,11 +153,14 @@ test("GrowthClientShell 使用统一行动面板替代旧双卡", () => {
         hasEnoughData: true,
         weakestDimension: null,
       }}
+      loadMode="initial"
+      isPartial={true}
     />,
   );
 
   assert.match(html, /AI 洞察与行动建议/);
   assert.match(html, /下一轮先怎么改/);
+  assert.match(html, /团队对标、PK 和结构化拆解补全中/);
   assert.doesNotMatch(html, /昨日复盘洞察/);
   assert.doesNotMatch(html, /诊断 \/ 参考 \/ 动作/);
 });
