@@ -4,7 +4,7 @@ export const ADMIN_FIRST_SCREEN_BUDGETS = {
   },
   content: {
     candidateLimit: 60,
-    payloadLimit: 30,
+    payloadLimit: 20,
     warnTotalMs: 2500,
   },
   videos: {

@@ -75,11 +75,6 @@ test("内容管理首屏默认只下发第一页视频", () => {
   assert.equal(fullRows.length, ADMIN_CONTENT_INITIAL_LIMIT + 5);
 });
 
-test("内容管理首屏不触发播放涨跌信号计算", () => {
-  assert.equal(__internal.shouldLoadPlayChangeSignals("initial"), false);
-  assert.equal(__internal.shouldLoadPlayChangeSignals("full"), true);
-});
-
 function buildContentVideo(overrides: Record<string, unknown> = {}) {
   return {
     id: "video",
@@ -150,6 +145,10 @@ test("内容管理播放涨跌上一条播放为 0 时不展示信号", () => {
   assert.equal(row?.previous_play_count, 0);
   assert.equal(row?.play_count_change_pct, null);
   assert.equal(row?.play_change_signal, null);
+});
+
+test("内容管理首屏条数合同收紧到 20", () => {
+  assert.equal(ADMIN_CONTENT_INITIAL_LIMIT, 20);
 });
 
 test("内容管理播放涨跌不用 created_at 或 uploaded_at 判断上一条", () => {

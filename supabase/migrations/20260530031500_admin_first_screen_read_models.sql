@@ -122,6 +122,66 @@ begin
         and s.video_id in (select id from visible_ids)
       order by s.video_id, s.captured_at desc
     ),
+    account_previous_boundary as (
+      select
+        vv.account_id,
+        min(vv.published_at) as oldest_visible_published_at
+      from visible_videos vv
+      where vv.account_id is not null
+        and vv.published_at is not null
+      group by vv.account_id
+    ),
+    previous_boundary_videos as (
+      select distinct on (v.account_id)
+        v.id,
+        v.account_id,
+        v.published_at
+      from public.videos v
+      join account_previous_boundary apb
+        on apb.account_id = v.account_id
+      where v.published_at is not null
+        and v.published_at < apb.oldest_visible_published_at
+      order by v.account_id, v.published_at desc
+    ),
+    previous_candidates as (
+      select vv.id, vv.account_id, vv.published_at
+      from visible_videos vv
+      where vv.account_id is not null
+        and vv.published_at is not null
+      union all
+      select pbv.id, pbv.account_id, pbv.published_at
+      from previous_boundary_videos pbv
+    ),
+    previous_video_links as (
+      select
+        vv.id as visible_video_id,
+        (
+          select pc.id
+          from previous_candidates pc
+          where pc.account_id = vv.account_id
+            and pc.id <> vv.id
+            and pc.published_at < vv.published_at
+          order by pc.published_at desc
+          limit 1
+        ) as previous_video_id
+      from visible_videos vv
+      where vv.account_id is not null
+        and vv.published_at is not null
+    ),
+    previous_latest_snapshots as (
+      select distinct on (s.video_id)
+        s.video_id,
+        s.play_count,
+        s.captured_at
+      from public.video_metrics_snapshots s
+      where s.snapshot_type = '24h'
+        and s.video_id in (
+          select previous_video_id
+          from previous_video_links
+          where previous_video_id is not null
+        )
+      order by s.video_id, s.captured_at desc
+    ),
     visible_segments as (
       select distinct vcs.video_id
       from public.video_content_segments vcs
@@ -170,15 +230,28 @@ begin
             'uploaded_at', vv.uploaded_at,
             'anomaly_status', vv.anomaly_status,
             'created_at', vv.created_at,
-            'previous_play_count', null,
-            'play_count_change_pct', null,
-            'play_change_signal', null,
+            'previous_play_count', pls.play_count,
+            'play_count_change_pct',
+              case
+                when ls.play_count is null or pls.play_count is null or pls.play_count <= 0 then null
+                else ((ls.play_count - pls.play_count)::numeric / pls.play_count::numeric) * 100
+              end,
+            'play_change_signal',
+              case
+                when ls.play_count is null or pls.play_count is null or pls.play_count <= 0 then null
+                when ((ls.play_count - pls.play_count)::numeric / pls.play_count::numeric) * 100 >= 100 then 'surge'
+                when ((ls.play_count - pls.play_count)::numeric / pls.play_count::numeric) * 100 <= -50 then 'halve'
+                else null
+              end,
             'accounts', jsonb_build_object('name', coalesce(vv.account_name, '未命名账号')),
             'profiles', jsonb_build_object('name', coalesce(vv.profile_name, '未命名成员'))
           )
           order by coalesce(vv.published_at, vv.created_at) desc, vv.created_at desc
         )
         from visible_videos vv
+        left join latest_snapshots ls on ls.video_id = vv.id
+        left join previous_video_links pvl on pvl.visible_video_id = vv.id
+        left join previous_latest_snapshots pls on pls.video_id = pvl.previous_video_id
       ), '[]'::jsonb),
       'snapshots',
       coalesce((

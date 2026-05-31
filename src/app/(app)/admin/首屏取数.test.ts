@@ -152,7 +152,7 @@ test("中控台页面首屏观测会落到 /admin 路由名下", async () => {
 test("后台首屏合同预算固定，避免候选池和阈值被随意放大", () => {
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.cockpit.warnTotalMs, 2500);
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.content.candidateLimit, 60);
-  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.content.payloadLimit, 30);
+  assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.content.payloadLimit, 20);
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.videos.candidateLimit, 60);
   assert.equal(ADMIN_FIRST_SCREEN_BUDGETS.videos.payloadLimit, 30);
 });

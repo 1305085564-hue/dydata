@@ -40,7 +40,7 @@ const PREVIOUS_VIDEO_SELECT = "id, account_id, published_at";
 const PREVIOUS_SNAPSHOT_SELECT = "video_id, play_count, captured_at";
 const ADMIN_CONTENT_FIRST_SCREEN_RPC = "admin_content_first_screen";
 
-export const ADMIN_CONTENT_INITIAL_LIMIT = 30;
+export const ADMIN_CONTENT_INITIAL_LIMIT = 20;
 const ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT = 60;
 
 export interface AdminContentPageData {
@@ -83,10 +83,6 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
 
 function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
-}
-
-function shouldLoadPlayChangeSignals(mode: LoadMode) {
-  return mode === "full";
 }
 
 function buildWorkflowSummary(videos: VideoRow[], cardStatusRows: FeedbackCardStatusRow[]) {
@@ -416,19 +412,12 @@ export async function loadAdminContentPageData({
           .in("video_id", scopedVideoIds)
       : Promise.resolve({ data: [] }),
   ]);
-  const initialVisibleVideosWithSignals = shouldLoadPlayChangeSignals(mode)
-    ? await loadPlayChangeSignals({
-        supabase,
-        videos: initialVisibleVideos,
-        previousCandidateVideos: videos,
-        currentSnapshots: (snapshots ?? []) as PreviousSnapshotRow[],
-      })
-    : initialVisibleVideos.map((video) => ({
-        ...video,
-        previous_play_count: null,
-        play_count_change_pct: null,
-        play_change_signal: null,
-      }));
+  const initialVisibleVideosWithSignals = await loadPlayChangeSignals({
+    supabase,
+    videos: initialVisibleVideos,
+    previousCandidateVideos: videos,
+    currentSnapshots: (snapshots ?? []) as PreviousSnapshotRow[],
+  });
   const snapshotVideoIds = new Set((snapshots ?? []).map((snapshot) => snapshot.video_id as string));
   const snapshotSummaryVideoIds = mode === "initial"
     ? snapshotVideoIds
@@ -541,5 +530,4 @@ export const __internal = {
   findPreviousVideoByVisibleId,
   limitInitialVideos,
   normalizeVideoRows,
-  shouldLoadPlayChangeSignals,
 };
