@@ -1,7 +1,15 @@
 import { normalizePermissionsForBusinessRole, type BusinessRole } from "@/lib/business-role";
-import type { Permissions, UserRole } from "@/types";
+import type { ExemptType, ExemptionCategory, Permissions, UserRole } from "@/types";
 
-export interface AdminModuleMemberSummary {
+interface ExemptionFields {
+  exempt_type?: ExemptType | null;
+  exempt_start_date?: string | null;
+  exempt_end_date?: string | null;
+  exempt_reason?: string | null;
+  exemption_category?: ExemptionCategory | null;
+}
+
+export interface AdminModuleMemberSummary extends ExemptionFields {
   id: string;
   name: string;
   role: UserRole;
@@ -13,7 +21,7 @@ export interface AdminModuleMemberSummary {
   team_name: string | null;
 }
 
-export interface AdminModuleMemberProfileLike {
+export interface AdminModuleMemberProfileLike extends ExemptionFields {
   id: string;
   name: string;
   role: UserRole;
@@ -55,6 +63,11 @@ export function buildAdminModuleMemberSummaries(
       team_id: profile.team_id ?? null,
       group_id: profile.group_id ?? null,
       team_name: profile.team_id ? (teamNameById.get(profile.team_id) ?? null) : null,
+      exempt_type: profile.exempt_type ?? null,
+      exempt_start_date: profile.exempt_start_date ?? null,
+      exempt_end_date: profile.exempt_end_date ?? null,
+      exempt_reason: profile.exempt_reason ?? null,
+      exemption_category: profile.exemption_category ?? null,
     };
   });
 }

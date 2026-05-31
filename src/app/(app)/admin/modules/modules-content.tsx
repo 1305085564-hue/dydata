@@ -46,6 +46,12 @@ interface AdminModulesContentProps {
     group_id?: string | null;
     team_name: string | null;
     permissions: Permissions | null;
+    status?: string | null;
+    exempt_type?: import("@/types").ExemptType | null;
+    exempt_start_date?: string | null;
+    exempt_end_date?: string | null;
+    exempt_reason?: string | null;
+    exemption_category?: import("@/types").ExemptionCategory | null;
   }>;
   teams: Array<{ id: string; name: string }>;
   defaultDate: string;
@@ -381,6 +387,12 @@ export function AdminModulesContent({
                   teamId: profile.team_id,
                   teamName: profile.team_name,
                   permissions: (profile.permissions ?? {}) as Permissions,
+                  status: (profile.status ?? null) as import("@/types").UserStatus | null,
+                  exempt_type: profile.exempt_type ?? null,
+                  exempt_start_date: profile.exempt_start_date ?? null,
+                  exempt_end_date: profile.exempt_end_date ?? null,
+                  exempt_reason: profile.exempt_reason ?? null,
+                  exemption_category: profile.exemption_category ?? null,
                 }))}
                 teams={localTeams}
                 currentUserId={currentUserId}

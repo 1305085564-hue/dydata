@@ -323,6 +323,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       await deactivateExistingGrants(supabase, values.userId);
       await writeAuditLog(supabase, perm.userId, "clear_exempt", values.userId, "清除豁免");
       revalidatePath("/admin");
+      revalidatePath("/admin/modules");
       revalidatePath("/dashboard");
       return {};
     }
@@ -361,6 +362,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
   );
 
   revalidatePath("/admin");
+  revalidatePath("/admin/modules");
   revalidatePath("/dashboard");
   return {};
 }
@@ -390,6 +392,7 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
   await writeAuditLog(supabase, perm.userId, "clear_exempt", userId, "清除豁免");
 
   revalidatePath("/admin");
+  revalidatePath("/admin/modules");
   revalidatePath("/dashboard");
   return {};
 }

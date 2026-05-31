@@ -4,7 +4,7 @@ import {
   type BusinessGroup,
   type BusinessRole,
 } from "@/lib/business-role";
-import type { PermissionKey, Permissions, UserRole } from "@/types";
+import type { ExemptType, ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
 
 function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
   if (role === "owner") return true;
@@ -21,6 +21,12 @@ export interface PermissionManagerMember {
   teamId?: string | null;
   teamName?: string | null;
   permissions: Permissions;
+  status?: UserStatus | null;
+  exempt_type?: ExemptType | null;
+  exempt_start_date?: string | null;
+  exempt_end_date?: string | null;
+  exempt_reason?: string | null;
+  exemption_category?: ExemptionCategory | null;
 }
 
 export interface PermissionManagerCapabilities {

@@ -59,6 +59,7 @@ import {
   resolveMemberTeamTransfer,
   type PermissionManagerMember,
 } from "./权限管理";
+import { ExemptionDialog } from "./豁免弹窗";
 
 interface TeamOption {
   id: string;
@@ -154,7 +155,7 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "group grid w-full grid-cols-[1fr_120px_72px_72px_16px] items-center gap-4 rounded-xl px-4 py-3 text-left text-[13px]",
+        "group grid w-full grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-6 rounded-xl px-4 py-3 text-left text-[13px]",
         "transition-[background-color,border-color] duration-150",
         "border border-transparent",
         isActive
@@ -169,20 +170,22 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
       <span className="truncate text-zinc-500" title={currentTeamName}>
         {currentTeamName}
       </span>
-      <span
-        className={cn(
-          "inline-flex h-6 items-center justify-center rounded-xl px-2 text-[11px] font-medium tracking-tight",
-          isAdmin
-            ? "gap-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700"
-            : "bg-zinc-100 text-zinc-600",
-        )}
-      >
-        {isAdmin ? (
-          <>
-            <span className="size-1.5 rounded-full bg-[#D97757]" aria-hidden />
-            管理员
-          </>
-        ) : "成员"}
+      <span className="flex justify-center">
+        <span
+          className={cn(
+            "inline-flex h-6 items-center justify-center whitespace-nowrap rounded-xl px-2.5 text-[11px] font-medium tracking-tight",
+            isAdmin
+              ? "gap-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700"
+              : "bg-zinc-100 text-zinc-600",
+          )}
+        >
+          {isAdmin ? (
+            <>
+              <span className="size-1.5 rounded-full bg-[#D97757]" aria-hidden />
+              管理员
+            </>
+          ) : "成员"}
+        </span>
       </span>
       <span className="text-right font-mono text-[12px] tabular-nums text-zinc-500">
         {totalCount > 0 ? `${enabledCount}/${totalCount}` : "—"}
@@ -224,6 +227,7 @@ export function PermissionManager({
   const [searchQuery, setSearchQuery] = useState("");
 
   const [sheetMemberId, setSheetMemberId] = useState<string | null>(null);
+  const [exemptionMemberId, setExemptionMemberId] = useState<string | null>(null);
   const [draftPermissions, setDraftPermissions] = useState<Permissions>({});
   const [aiSuggestion, setAiSuggestion] = useState<AiSuggestionState | null>(null);
   const [executingKey, setExecutingKey] = useState<string | null>(null);
@@ -725,15 +729,24 @@ export function PermissionManager({
         <p className="py-10 text-center text-[13px] text-zinc-400">暂无可管理成员</p>
       ) : (
         <>
-          <div className="grid grid-cols-[1fr_120px_72px_72px_16px] items-center gap-4 border-b border-zinc-200 px-4 pb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            <span>姓名</span>
-            <span>团队</span>
-            <span>角色</span>
-            <span className="text-right">权限</span>
-            <span aria-hidden />
+          <div className="grid grid-cols-1 gap-x-[146px] px-4 pb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 lg:grid-cols-2">
+            <div className="grid grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-6 border-b border-zinc-200 pb-2">
+              <span>姓名</span>
+              <span>团队</span>
+              <span className="text-center">角色</span>
+              <span className="text-right">权限</span>
+              <span aria-hidden />
+            </div>
+            <div className="hidden grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-6 border-b border-zinc-200 pb-2 lg:grid">
+              <span>姓名</span>
+              <span>团队</span>
+              <span className="text-center">角色</span>
+              <span className="text-right">权限</span>
+              <span aria-hidden />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+          <div className="grid grid-cols-1 gap-x-[146px] gap-y-2 lg:grid-cols-2">
             {pagedMembers.map((member) => (
               <MemberRow
                 key={member.id}
@@ -1127,6 +1140,16 @@ export function PermissionManager({
                       移出团队
                     </Button>
                   </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={actionDisabled}
+                    onClick={() => setExemptionMemberId(sheetMember.id)}
+                    className="h-9 w-full rounded-xl border-zinc-200 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                  >
+                    {sheetMember.exempt_type ? "调整豁免状态" : "设置豁免"}
+                  </Button>
                 </section>
               </SheetBody>
 
@@ -1279,6 +1302,35 @@ export function PermissionManager({
         onConfirm={handleRemoveMember}
         onOpenChange={(open) => {
           if (!open) setRemoveTarget(null);
+        }}
+      />
+
+      <ExemptionDialog
+        open={exemptionMemberId !== null}
+        profile={
+          exemptionMemberId
+            ? (() => {
+                const target = baselineMembers.find((m) => m.id === exemptionMemberId);
+                return target
+                  ? {
+                      id: target.id,
+                      name: target.name,
+                      status: target.status ?? "active",
+                      exempt_type: target.exempt_type ?? null,
+                      exempt_start_date: target.exempt_start_date ?? null,
+                      exempt_end_date: target.exempt_end_date ?? null,
+                      exempt_reason: target.exempt_reason ?? null,
+                      exemption_category: target.exemption_category ?? null,
+                    }
+                  : null;
+              })()
+            : null
+        }
+        onOpenChange={(open) => {
+          if (!open) {
+            setExemptionMemberId(null);
+            router.refresh();
+          }
         }}
       />
     </div>
