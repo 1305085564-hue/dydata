@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { updateProfile, updateAccountName } from "@/app/(app)/dashboard/actions";
+import { updateProfile, updateAccountName, createAccount } from "@/app/(app)/dashboard/actions";
 import { cn } from "@/lib/utils";
 
 interface Account {
@@ -56,6 +56,9 @@ export function ProfileEditDialog({
   const [isPending, startTransition] = useTransition();
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [editingAccountName, setEditingAccountName] = useState("");
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
+  const [newAccountName, setNewAccountName] = useState("");
+  const [newAccountDirection, setNewAccountDirection] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -120,6 +123,42 @@ export function ProfileEditDialog({
         feedbackToast.success("账号名称已更新");
         setEditingAccountId(null);
       }
+    });
+  }
+
+  function handleStartAddAccount() {
+    setIsAddingAccount(true);
+    setNewAccountName("");
+    setNewAccountDirection("");
+  }
+
+  function handleCancelAddAccount() {
+    setIsAddingAccount(false);
+    setNewAccountName("");
+    setNewAccountDirection("");
+  }
+
+  function handleConfirmAddAccount() {
+    const trimmedName = newAccountName.trim();
+    const trimmedDirection = newAccountDirection.trim();
+    if (!trimmedName) {
+      feedbackToast.error("请填写账号备注名");
+      return;
+    }
+    if (trimmedName.length > 30) {
+      feedbackToast.error("账号备注名最多 30 个字符");
+      return;
+    }
+    startTransition(async () => {
+      const result = await createAccount(trimmedName, trimmedDirection || undefined);
+      if (result?.error) {
+        feedbackToast.error(result.error);
+        return;
+      }
+      feedbackToast.success("账号已添加");
+      setIsAddingAccount(false);
+      setNewAccountName("");
+      setNewAccountDirection("");
     });
   }
 
@@ -273,6 +312,72 @@ export function ProfileEditDialog({
                     )}
                   </div>
                 ))}
+
+                {isAddingAccount ? (
+                  <div className="space-y-3 rounded-xl border border-[#D97757]/35 bg-[#FDF9F7] px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#C96442]">
+                        <span className="size-1.5 rounded-full bg-[#D97757]" />
+                        新增抖音账号
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCancelAddAccount}
+                        disabled={isPending}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-zinc-400 transition-[background-color,color] duration-150 hover:bg-white hover:text-zinc-700"
+                        aria-label="取消添加账号"
+                      >
+                        <X className="size-3.5 stroke-[1.6]" />
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      <Input
+                        value={newAccountName}
+                        onChange={(e) => setNewAccountName(e.target.value)}
+                        placeholder="账号备注名(例:主账号、矩阵号A)"
+                        maxLength={30}
+                        disabled={isPending}
+                        autoFocus
+                      />
+                      <Input
+                        value={newAccountDirection}
+                        onChange={(e) => setNewAccountDirection(e.target.value)}
+                        placeholder="出镜 / 图文方向(选填)"
+                        maxLength={30}
+                        disabled={isPending}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancelAddAccount}
+                        disabled={isPending}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleConfirmAddAccount}
+                        disabled={isPending}
+                      >
+                        {isPending ? "添加中..." : "确认添加"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleStartAddAccount}
+                    disabled={isPending}
+                    className="group flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-3 text-[12px] font-medium text-zinc-500 transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/45 hover:bg-[#FDF9F7] hover:text-[#C96442] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Plus className="size-3.5 stroke-[1.6]" />
+                    添加抖音账号
+                  </button>
+                )}
               </div>
               <p className="text-[12px] text-zinc-400">
                 修改后将同步更新所有相关数据

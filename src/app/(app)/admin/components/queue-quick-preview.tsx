@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 import {
   Dialog,
@@ -14,16 +14,9 @@ import { cn } from "@/lib/utils";
 import type {
   PendingSubmissionRow,
   PendingVideoRow,
-  PendingViolationRow,
 } from "./admin-first-screen-loader";
 import type { ExemptionRequestRow } from "../豁免申请列表";
 import type { AdminRequestRow } from "@/lib/team-join/service";
-
-const RISK_DOT: Record<string, { text: string; color: string }> = {
-  high: { text: "高", color: "bg-[#C9604D]" },
-  medium: { text: "中", color: "bg-[#D99E55]" },
-  low: { text: "低", color: "bg-zinc-300" },
-};
 
 const EXEMPTION_TYPE_LABELS: Record<string, string> = {
   yesterday: "昨日",
@@ -166,7 +159,7 @@ function MetaInline({ items }: { items: { label: string; value: React.ReactNode 
   );
 }
 
-/* ── 1. 待筛视频 ── */
+/* ── 1. 异常视频 ── */
 export function VideoPreviewDialog({
   row,
   open,
@@ -177,12 +170,9 @@ export function VideoPreviewDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   if (!row) return null;
-  const states: { text: string; dot: string }[] = [];
-  if (row.anomaly_flag) states.push({ text: "数据异常", dot: "bg-[#C9604D]" });
-  if (!row.has_tags) states.push({ text: "未打标", dot: "bg-zinc-300" });
-  if (row.has_tags && !row.anomaly_flag)
-    states.push({ text: "已打标", dot: "bg-[#6FAA7D]" });
-
+  const isSurge = row.play_change_signal === "surge";
+  const pct = row.play_count_change_pct;
+  const pctText = pct != null ? `${pct > 0 ? "+" : ""}${Math.round(pct)}%` : "—";
   return (
     <PreviewShell
       size="md"
@@ -192,89 +182,41 @@ export function VideoPreviewDialog({
       subtitle={
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span>
-            {row.submitted_by_name ?? "未知成员"} 提交 · {row.report_date}
-          </span>
-          {states.map((s) => (
-            <span
-              key={s.text}
-              className="inline-flex items-center gap-1 text-zinc-600"
-            >
-              <span className={cn("size-1.5 rounded-full", s.dot)} />
-              {s.text}
-            </span>
-          ))}
-        </span>
-      }
-      fullViewHref={`/admin/videos?focus=${row.id}`}
-      fullViewLabel="前往打标"
-    >
-      <p className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-[13px] leading-7 text-zinc-600">
-        打标和异常处理在视频详情页完成。点击下方“前往打标”打开完整工作台。
-      </p>
-    </PreviewShell>
-  );
-}
-
-/* ── 2. 待审违规 ── */
-export function ViolationPreviewDialog({
-  row,
-  open,
-  onOpenChange,
-  onReview,
-  reviewing,
-}: {
-  row: PendingViolationRow | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onReview: (row: PendingViolationRow, status: "verified" | "rejected") => void;
-  reviewing: boolean;
-}) {
-  if (!row) return null;
-  const risk = RISK_DOT[row.risk_level ?? ""] ?? null;
-  return (
-    <PreviewShell
-      size="lg"
-      open={open}
-      onOpenChange={onOpenChange}
-      title="案例复核"
-      subtitle={
-        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span>
             {row.submitted_by_name ?? "未知成员"} 提交
-            {row.category ? ` · ${row.category}` : ""}
+            {row.published_at ? ` · ${row.published_at.slice(0, 10)}` : ""}
           </span>
-          {risk ? (
-            <span className="inline-flex items-center gap-1 text-zinc-600">
-              <span className={cn("size-1.5 rounded-full", risk.color)} />
-              风险 {risk.text}
-            </span>
-          ) : null}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1",
+              isSurge ? "text-[#C9604D]" : "text-[#6FAA7D]",
+            )}
+          >
+            {isSurge ? "暴涨" : "腰斩"} {pctText}
+          </span>
         </span>
       }
-      fullViewHref={`/violations?perspective=review&focus=${row.id}`}
-      fullViewLabel="完整复核"
-      primaryAction={{
-        label: "通过",
-        tone: "primary",
-        onClick: () => onReview(row, "verified"),
-        loading: reviewing,
-      }}
-      secondaryAction={{
-        label: "驳回",
-        onClick: () => onReview(row, "rejected"),
-        loading: reviewing,
-      }}
+      fullViewHref={`/admin/content?view=all`}
+      fullViewLabel="前往批改台"
     >
-      <div className="max-h-[420px] min-h-[220px] overflow-y-auto rounded-xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 px-5 py-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200">
-        <p className="whitespace-pre-wrap text-[14px] leading-[1.85] text-zinc-800">
-          {row.script_text}
-        </p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+          <p className="text-[11px] text-zinc-400">本条 24h 播放</p>
+          <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-800">
+            {(row.current_play_count ?? 0).toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+          <p className="text-[11px] text-zinc-400">上一条 24h 播放</p>
+          <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-800">
+            {(row.previous_play_count ?? 0).toLocaleString()}
+          </p>
+        </div>
       </div>
     </PreviewShell>
   );
 }
 
-/* ── 3. 待催交 ── */
+/* ── 2. 待催交 ── */
 export function SubmissionPreviewDialog({
   row,
   date,

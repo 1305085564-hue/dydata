@@ -10,7 +10,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
-import { AI_CHANNELS_CHANGED } from "@/components/admin-layout/admin-sidebar";
+import { AI_CHANNELS_CHANGED } from "@/components/admin-layout/admin-events";
 
 import { ChannelDetailForm } from "./components/channel-detail-form";
 import { ChannelFeatureBindings } from "./components/channel-feature-bindings";

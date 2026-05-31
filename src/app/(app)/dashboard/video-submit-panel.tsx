@@ -623,7 +623,10 @@ export function VideoSubmitPanel({
         className="space-y-5"
       >
         <Card className={cn(
-          "mx-auto max-w-6xl overflow-hidden rounded-2xl border border-zinc-200 bg-white",
+          "mx-auto overflow-hidden",
+          embeddedChrome
+            ? "max-w-3xl rounded-none border-none bg-transparent shadow-none"
+            : "max-w-6xl rounded-2xl border border-zinc-200 bg-white",
         )}>
           {!embeddedChrome ? (
           <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
@@ -756,8 +759,10 @@ export function VideoSubmitPanel({
 
           <CardContent
             className={cn(
-              "min-h-[520px] space-y-6 bg-white px-5",
-              embeddedChrome ? "pb-6 pt-4 sm:px-8 sm:pb-8 sm:pt-5" : "py-6 sm:px-8 sm:py-8",
+              "min-h-[520px] space-y-6",
+              embeddedChrome
+                ? "bg-transparent px-0 pb-0 pt-0"
+                : "bg-white px-5 py-6 sm:px-8 sm:py-8",
             )}
           >
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />

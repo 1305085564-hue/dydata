@@ -356,7 +356,7 @@ export function AiAlertPanel({
       >
         <div className="flex items-center gap-3">
           <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">
-            今日待办
+            AI 速览
           </h2>
           {summary ? (
             <div className="flex items-center gap-1.5">
@@ -420,7 +420,7 @@ export function AiAlertPanel({
 
       {state.loading ? (
         <div className="p-4">
-          <PanelMessage tone="muted">正在加载今日待办…</PanelMessage>
+          <PanelMessage tone="muted">正在加载 AI 速览…</PanelMessage>
         </div>
       ) : state.error ? (
         <div className="p-4">

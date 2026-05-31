@@ -10,11 +10,12 @@ export async function GET(request: NextRequest) {
   const auth = await requireAdminServiceClient();
   if ("response" in auth) return auth.response;
 
-  const result = await auth.supabase.rpc("admin_pending_videos_today", {
+  const result = await auth.supabase.rpc("admin_anomaly_videos_today", {
+    p_visible_user_ids: auth.scope.kind === "all" ? null : auth.scope.visibleUserIds,
     target_date: date,
     limit_rows: parseLimitParam(request),
   });
-  const unwrapped = unwrapRpc<unknown[]>(result, "获取待筛视频失败");
+  const unwrapped = unwrapRpc<unknown[]>(result, "获取异常视频失败");
   if ("response" in unwrapped) return unwrapped.response;
 
   return NextResponse.json({

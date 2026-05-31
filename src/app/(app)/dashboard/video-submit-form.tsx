@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChevronUp, Sparkles, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 
@@ -19,15 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { containerVariants, itemVariants } from "@/lib/animations";
 import { getDefaultPublishedAtValue } from "@/lib/日报";
 import type {
   AnomalyStatus,
@@ -62,6 +53,7 @@ import {
   toManualFieldState,
 } from "@/components/submission/填报表单状态";
 import { normalizeOptionalText } from "./video-submit-form-state";
+import { DataReportWizard, type WizardMissingItem } from "./components/data-report-wizard";
 
 import type {
   SubmitPanelMode,
@@ -168,7 +160,6 @@ type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   ocrSummary?: string[];
 };
 
-const ANOMALY_OPTIONS: AnomalyStatus[] = ["正常", "删稿", "限流", "投流"];
 const OVERVIEW_FIELDS: EditableMetricKey[] = [
   "play_count",
   "follower_gain",
@@ -183,15 +174,6 @@ const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
   screenshot_1: "截图1",
   screenshot_2: "截图2",
   screenshot_3: "截图3",
-};
-
-const VIDEO_STATUS_LABELS: Record<AnomalyStatus, string> = {
-  正常: "正常发布",
-  删稿: "删稿",
-  限流: "限流",
-  投流: "投流",
-  活动干预: "活动干预",
-  未满24h: "未满24小时",
 };
 
 function createInitialMeta(today: string): FormMetaState {
@@ -215,21 +197,6 @@ function createInitialMeta(today: string): FormMetaState {
 function getDatePartFromDateTimeLocal(value: string) {
   const [datePart = ""] = value.split("T");
   return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : null;
-}
-
-function extractKeywordSuggestions(content: string): string[] {
-  if (!content.trim()) return [];
-  const words = content
-    .split(/[\s，。！？、；：""''（）【】\n]+/)
-    .filter((w) => w.length >= 2);
-  const freq = new Map<string, number>();
-  for (const word of words) {
-    freq.set(word, (freq.get(word) ?? 0) + 1);
-  }
-  return Array.from(freq.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([word]) => word);
 }
 
 function parseMetric(value: string, fallback = 0) {
@@ -646,7 +613,6 @@ export function VideoSubmitForm({
     setFocusedRole(null);
   }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today, submittedViewActive]);
 
-  const keywordSuggestions = useMemo(() => extractKeywordSuggestions(meta.content), [meta.content]);
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
   const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
   const issueSummary = useMemo(
@@ -656,9 +622,9 @@ export function VideoSubmitForm({
         anomalyStatus: meta.anomalyStatus,
         videoTitle: meta.videoTitle,
         content: meta.content,
-        contentKeywords: meta.contentKeywords,
+        // contentKeywords：前端暂隐藏不必填（保留后端字段，重做后再上线）
       }),
-    [submissionState, meta.topicTag, meta.anomalyStatus, meta.videoTitle, meta.content, meta.contentKeywords]
+    [submissionState, meta.topicTag, meta.anomalyStatus, meta.videoTitle, meta.content]
   );
   const submitCheck = canSubmit(submissionState, {
     anomalyStatus: meta.anomalyStatus,
@@ -1099,294 +1065,196 @@ export function VideoSubmitForm({
   }
 
 
-  const [mounted, setMounted] = useState(false);
-  const [showIssuePopover, setShowIssuePopover] = useState(false);
-  const issuePopoverRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    setMounted(true);
+  /* ---------------------------------------------------------------- */
+  /*  Step Wizard 状态                                                 */
+  /*  step 0 = 截图与识别                                              */
+  /*  step 1 = 数据指标                                                */
+  /*  step 2 = 视频信息（含提交按钮）                                  */
+  /* ---------------------------------------------------------------- */
+  const [stepIndex, setStepIndex] = useState(0);
+  const [stepDirection, setStepDirection] = useState<1 | -1>(1);
+
+  // 异常状态(删稿/限流)下 step0 视为已跳过:截图必填解除、step1 仅播放量必填
+  const isAbnormalStatus = meta.anomalyStatus === "限流" || meta.anomalyStatus === "删稿";
+  const playCountFilled = parseMetric(fields.play_count.value) > 0;
+
+  const stepCanAdvance = useMemo(() => {
+    if (stepIndex === 0) {
+      return (
+        issueSummary.missingRequiredSlots.length === 0 &&
+        issueSummary.failedRequiredSlots.length === 0 &&
+        issueSummary.pendingSlotConfirmations.length === 0
+      );
+    }
+    if (stepIndex === 1) {
+      // 异常路径：仅播放量必填；正常路径：保持向前推进
+      if (isAbnormalStatus) return playCountFilled;
+      return true;
+    }
+    return canActuallySubmit;
+  }, [
+    stepIndex,
+    issueSummary.missingRequiredSlots.length,
+    issueSummary.failedRequiredSlots.length,
+    issueSummary.pendingSlotConfirmations.length,
+    canActuallySubmit,
+    isAbnormalStatus,
+    playCountFilled,
+  ]);
+
+  const goNextStep = useCallback(() => {
+    setStepDirection(1);
+    setStepIndex((s) => Math.min(2, s + 1));
   }, []);
 
-  // Close issue popover on outside click
-  useEffect(() => {
-    if (!showIssuePopover) return;
-    function handleClick(event: MouseEvent) {
-      if (issuePopoverRef.current && !issuePopoverRef.current.contains(event.target as Node)) {
-        setShowIssuePopover(false);
+  const goPrevStep = useCallback(() => {
+    setStepDirection(-1);
+    setStepIndex((s) => Math.max(0, s - 1));
+  }, []);
+
+  const markStepAttempted = useCallback(() => {
+    if (stepIndex === 2) setHasAttemptedSubmit(true);
+  }, [stepIndex]);
+
+  // Wizard 跳转到指定步骤（用于"待完善"项点击）
+  const jumpToStep = useCallback((target: number) => {
+    setStepDirection(target > stepIndex ? 1 : -1);
+    setStepIndex(target);
+  }, [stepIndex]);
+
+  // 提交：触发 form 的提交事件，复用现有 handleSubmit
+  const triggerSubmit = useCallback(() => {
+    setHasAttemptedSubmit(true);
+    const formEl = document.getElementById("video-submit-form") as HTMLFormElement | null;
+    if (formEl) {
+      if (formEl.requestSubmit) {
+        formEl.requestSubmit();
+      } else {
+        formEl.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
       }
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showIssuePopover]);
+  }, []);
 
-  // Build missing items list for layer 1 popover
-  const missingItems = useMemo(() => {
-    const items: { label: string; anchor: "slots" | "metrics" | "topicTag" | "meta" }[] = [];
+  // 异常状态切换 → 自动跳过 step0 进入 step1；切回正常时若仍在 step1+ 不强制回退
+  const prevAbnormalRef = useRef(isAbnormalStatus);
+  useEffect(() => {
+    if (prevAbnormalRef.current !== isAbnormalStatus) {
+      prevAbnormalRef.current = isAbnormalStatus;
+      if (isAbnormalStatus && stepIndex === 0) {
+        toast.info("已跳过截图识别，请直接补全播放量和必要信息", { duration: 2400 });
+        setStepDirection(1);
+        setStepIndex(1);
+      }
+    }
+  }, [isAbnormalStatus, stepIndex]);
+
+  // OCR 双成功自动推进：仅在 step0、正常状态、首次满足条件时触发
+  const autoAdvancedRef = useRef(false);
+  useEffect(() => {
+    if (autoAdvancedRef.current) return;
+    if (stepIndex !== 0 || isAbnormalStatus) return;
+    const slot1 = slots.screenshot_1;
+    const slot2 = slots.screenshot_2;
+    if (!slot1 || !slot2) return;
+    const bothConfirmed = slot1.status === "confirmed" && slot2.status === "confirmed";
+    const anyPending =
+      slot1.status === "pending_confirm" ||
+      slot2.status === "pending_confirm" ||
+      slot1.status === "uploading" ||
+      slot2.status === "uploading" ||
+      slot1.status === "recognizing" ||
+      slot2.status === "recognizing";
+    if (bothConfirmed && !anyPending) {
+      autoAdvancedRef.current = true;
+      const timer = window.setTimeout(() => {
+        setStepDirection(1);
+        setStepIndex(1);
+      }, 350);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [slots, stepIndex, isAbnormalStatus]);
+
+  // 当用户主动回到 step0 重新上传时，允许再次自动推进
+  useEffect(() => {
+    if (stepIndex === 0) {
+      const slot1 = slots.screenshot_1;
+      const slot2 = slots.screenshot_2;
+      const anyEmpty = slot1?.status === "empty" || slot2?.status === "empty";
+      if (anyEmpty) autoAdvancedRef.current = false;
+    }
+  }, [stepIndex, slots]);
+
+  // 快捷键：Esc 上一步，Cmd/Ctrl+Enter 推进 / 提交
+  const stepIndexRef = useRef(stepIndex);
+  const stepCanAdvanceRef = useRef(stepCanAdvance);
+  const isSubmittingRef = useRef(isSubmitting);
+  const canSubmitRef = useRef(canActuallySubmit);
+  useEffect(() => { stepIndexRef.current = stepIndex; }, [stepIndex]);
+  useEffect(() => { stepCanAdvanceRef.current = stepCanAdvance; }, [stepCanAdvance]);
+  useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
+  useEffect(() => { canSubmitRef.current = canActuallySubmit; }, [canActuallySubmit]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (isSubmittingRef.current) return;
+      const target = event.target as HTMLElement | null;
+      // 在 input/textarea 内的 Esc 不抢，避免抢走 IME 关闭
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        if (event.key === "Escape") return;
+      }
+      const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+      const cmdEnter = event.key === "Enter" && (isMac ? event.metaKey : event.ctrlKey);
+      if (cmdEnter) {
+        event.preventDefault();
+        if (stepIndexRef.current === 2) {
+          if (canSubmitRef.current) triggerSubmit();
+        } else if (stepCanAdvanceRef.current) {
+          goNextStep();
+        }
+        return;
+      }
+      if (event.key === "Escape") {
+        if (stepIndexRef.current === 0) return;
+        event.preventDefault();
+        goPrevStep();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goNextStep, goPrevStep, triggerSubmit]);
+
+  /* ---------------------------------------------------------------- */
+  /*  待完善项映射 → wizard 待完善 popover                              */
+  /* ---------------------------------------------------------------- */
+  const missingItemsForWizard: WizardMissingItem[] = useMemo(() => {
+    const items: WizardMissingItem[] = [];
     if (issueSummary.missingRequiredSlots.length > 0) {
-      items.push({ label: "必传截图未上传", anchor: "slots" });
+      items.push({ label: "必传截图未上传", onClick: () => jumpToStep(0) });
     }
     if (issueSummary.failedRequiredSlots.length > 0) {
-      items.push({ label: "截图识别失败", anchor: "slots" });
+      items.push({ label: "截图识别失败", onClick: () => jumpToStep(0) });
     }
     if (issueSummary.pendingSlotConfirmations.length > 0) {
-      items.push({ label: "截图待确认", anchor: "slots" });
+      items.push({ label: "截图待确认", onClick: () => jumpToStep(0) });
     }
     if (issueSummary.missingRequiredMeta.includes("videoTitle")) {
-      items.push({ label: "视频标题", anchor: "meta" });
+      items.push({ label: "视频标题", onClick: () => jumpToStep(2) });
     }
     if (issueSummary.missingRequiredMeta.includes("content")) {
-      items.push({ label: "文案", anchor: "meta" });
-    }
-    if (issueSummary.missingRequiredMeta.includes("contentKeywords")) {
-      items.push({ label: "内容标签", anchor: "meta" });
+      items.push({ label: "文案", onClick: () => jumpToStep(2) });
     }
     if (issueSummary.topicTagMissing) {
-      items.push({ label: "话题标签", anchor: "topicTag" });
+      items.push({ label: "话题标签", onClick: () => jumpToStep(2) });
+    }
+    if (isAbnormalStatus && !playCountFilled) {
+      items.push({ label: "播放量", onClick: () => jumpToStep(1) });
     }
     return items;
-  }, [issueSummary]);
+  }, [issueSummary, jumpToStep, isAbnormalStatus, playCountFilled]);
 
-  // Video status dot color
-  const videoStatusDotColor = useMemo(() => {
-    switch (meta.anomalyStatus) {
-      case "正常":
-        return "bg-[#6FAA7D]";
-      case "限流":
-        return "bg-[#D99E55]";
-      case "删稿":
-        return "bg-[#C9604D]";
-      default:
-        return "bg-[#6FAA7D]";
-    }
-  }, [meta.anomalyStatus]);
 
-  const mobileSubmitBar = (
-    <div className="fixed inset-x-0 bottom-0 z-[100] px-3 pb-2 pt-2 md:hidden pointer-events-none">
-      <div className="mx-auto flex h-12 w-auto max-w-[calc(100vw-24px)] items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.18)] backdrop-blur-xl pointer-events-auto">
-        {/* Layer 1: Form status */}
-        <div className="flex items-center shrink-0">
-          {canActuallySubmit ? (
-            <div className="flex items-center gap-1.5 px-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
-              <span className="text-[13px] font-medium text-emerald-700">就绪</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowIssuePopover((v) => !v)}
-              className={cn(
-                "flex items-center gap-1 rounded-full px-2 py-1 transition-[background-color,box-shadow] duration-150",
-                showIssuePopover
-                  ? "bg-zinc-50 ring-1 ring-inset ring-zinc-200"
-                  : "hover:bg-zinc-50"
-              )}
-              aria-expanded={showIssuePopover}
-              aria-label={`待完善：${missingItems.length} 项，点击展开`}
-            >
-              <span className="h-2 w-2 rounded-full bg-amber-500 ring-1 ring-white" />
-              <span className="text-[13px] font-medium text-amber-700">待完善</span>
-              {missingItems.length > 0 ? (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[12px] font-semibold leading-none text-white tabular-nums">
-                  {missingItems.length}
-                </span>
-              ) : null}
-              <ChevronUp
-                className={cn(
-                  "size-3.5 text-amber-600/70 transition-transform duration-200",
-                  showIssuePopover ? "rotate-0" : "rotate-180"
-                )}
-              />
-            </button>
-          )}
-        </div>
-        <div className="h-4 w-px bg-zinc-200 shrink-0" />
-        {/* Layer 2: Video status */}
-        <div className="flex items-center gap-1 min-w-0">
-          <span className={cn("h-2 w-2 rounded-full ring-1 ring-white shrink-0", videoStatusDotColor)} />
-          <Select
-            value={meta.anomalyStatus}
-            onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-          >
-            <SelectTrigger className="h-8 w-[80px] border-0 rounded-full bg-transparent px-1.5 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50">
-              <SelectValue placeholder="状态" />
-            </SelectTrigger>
-            <SelectContent>
-              {ANOMALY_OPTIONS.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {VIDEO_STATUS_LABELS[option]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {onCancel ? (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="active:translate-y-0 rounded-full px-2.5 py-1 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
-            >
-              取消
-            </button>
-          ) : null}
-          <button
-            type="submit"
-            form="video-submit-form"
-            disabled={isSubmitting || !canActuallySubmit}
-            className={cn(
-              "rounded-full px-4 py-1.5 text-[13px] font-semibold transition-[transform,background-color,box-shadow] duration-150",
-              canActuallySubmit
-                ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] active:translate-y-px"
-                : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
-            )}
-          >
-            {isSubmitting ? "提交中" : isBackfillMode ? "补交" : initialSummary ? "保存" : "提交"}
-          </button>
-        </div>
-      </div>
-      {/* Issue popover for mobile */}
-      {showIssuePopover && missingItems.length > 0 ? (
-        <div
-          ref={issuePopoverRef}
-          className="absolute bottom-[calc(100%+4px)] left-6 z-[110] w-60 rounded-2xl border border-zinc-200 bg-white p-3 shadow-[0_12px_32px_-12px_rgba(15,23,42,0.18)] pointer-events-auto"
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-zinc-500">缺失项 · {missingItems.length}</span>
-          </div>
-          <div className="space-y-0.5">
-            {missingItems.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => {
-                  scrollToIssueAnchor(item.anchor);
-                  setShowIssuePopover(false);
-                }}
-                className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-zinc-50 hover:text-zinc-800"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
 
-  const desktopSubmitBar = (
-    <div className="fixed inset-x-0 bottom-0 z-50 hidden md:flex justify-center px-6 pb-4 pointer-events-none">
-      <div
-        className="relative flex h-[52px] w-auto items-center gap-4 rounded-full border border-zinc-200/80 bg-gradient-to-b from-white to-zinc-50/90 px-4 shadow-[0_1px_0_0_rgba(255,255,255,0.9)_inset,0_20px_48px_-20px_rgba(15,23,42,0.22),0_6px_16px_-10px_rgba(15,23,42,0.12)] backdrop-blur-2xl pointer-events-auto"
-      >
-        {/* Layer 1: Form status */}
-        <div className="flex items-center shrink-0">
-          {canActuallySubmit ? (
-            <div className="flex items-center gap-2 px-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
-              <span className="text-[13px] font-medium text-emerald-700">就绪</span>
-            </div>
-          ) : (
-            <div className="relative" ref={issuePopoverRef}>
-              <button
-                type="button"
-                onClick={() => setShowIssuePopover((v) => !v)}
-                className={cn(
-                  "group flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-[background-color,box-shadow] duration-150",
-                  showIssuePopover
-                    ? "bg-zinc-50 ring-1 ring-inset ring-zinc-200"
-                    : "hover:bg-zinc-50 hover:ring-1 hover:ring-inset hover:ring-zinc-200/60"
-                )}
-                aria-expanded={showIssuePopover}
-                aria-label={`待完善：${missingItems.length} 项，点击展开`}
-              >
-                <span className="h-2 w-2 rounded-full bg-amber-500 ring-1 ring-white" />
-                <span className="text-[13px] font-medium text-amber-700">待完善</span>
-                {missingItems.length > 0 ? (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[12px] font-semibold leading-none text-white tabular-nums">
-                    {missingItems.length}
-                  </span>
-                ) : null}
-                <ChevronUp
-                  className={cn(
-                    "size-3.5 text-amber-600/70 transition-transform duration-200",
-                    showIssuePopover ? "rotate-0" : "rotate-180"
-                  )}
-                />
-              </button>
-              {showIssuePopover && missingItems.length > 0 ? (
-                <div className="absolute bottom-[calc(100%+12px)] left-0 z-[60] w-60 rounded-2xl border border-zinc-200 bg-white p-3 shadow-[0_12px_32px_-12px_rgba(15,23,42,0.18)]">
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                    <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-zinc-500">缺失项 · {missingItems.length}</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    {missingItems.map((item) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => {
-                          scrollToIssueAnchor(item.anchor);
-                          setShowIssuePopover(false);
-                        }}
-                        className="block w-full rounded-lg px-2.5 py-2 text-left text-[13px] text-zinc-700 transition-colors duration-150 hover:bg-zinc-50 hover:text-zinc-800"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
-        <div className="h-4 w-px bg-zinc-200 shrink-0" />
-        {/* Layer 2: Video status */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className={cn("h-2 w-2 rounded-full ring-1 ring-white", videoStatusDotColor)} />
-          <Select
-            value={meta.anomalyStatus}
-            onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-          >
-            <SelectTrigger className="h-8 w-[92px] border-0 rounded-full bg-transparent px-2 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50">
-              <SelectValue placeholder="状态" />
-            </SelectTrigger>
-            <SelectContent>
-              {ANOMALY_OPTIONS.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {VIDEO_STATUS_LABELS[option]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {/* Buttons */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {onCancel ? (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="active:translate-y-0 rounded-full px-3 py-1.5 text-[13px] font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-800"
-            >
-              取消
-            </button>
-          ) : null}
-          <button
-            type="submit"
-            form="video-submit-form"
-            disabled={isSubmitting || !canActuallySubmit}
-            className={cn(
-              "rounded-full px-5 py-1.5 text-[13px] font-semibold transition-[transform,background-color,box-shadow] duration-150",
-              canActuallySubmit
-                ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.5)] hover:bg-[#C96442] active:translate-y-0"
-                : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
-            )}
-          >
-            {submitButtonLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   if (!account) {
     return (
@@ -1405,10 +1273,10 @@ export function VideoSubmitForm({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-4 pb-6"
+          className="space-y-4 pb-2"
         >
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#ECFDF3] text-[#067647]">
+            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D]">
               <CheckCircle className="size-8" />
             </div>
             <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
@@ -1457,10 +1325,10 @@ export function VideoSubmitForm({
                   className={cn(
                     "inline-flex h-5 items-center justify-center rounded-lg px-2 text-[11px] font-medium",
                     qualityCheck.data.overallStatus === "pass"
-                      ? "bg-[#067647]/10 text-[#067647]"
+                      ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                       : qualityCheck.data.overallStatus === "warning"
-                        ? "bg-[#EAB308]/10 text-[#EAB308]"
-                        : "bg-[#B42318]/10 text-[#B42318]",
+                        ? "bg-[#D99E55]/10 text-[#D99E55]"
+                        : "bg-[#C9604D]/10 text-[#C9604D]",
                   )}
                 >
                   {qualityCheck.data.overallStatus === "pass"
@@ -1485,11 +1353,11 @@ export function VideoSubmitForm({
                   >
                     <div className="flex min-w-0 flex-1 items-start gap-2">
                       {issue.severity === "critical" ? (
-                        <XCircle className="mt-0.5 size-4 shrink-0 text-[#B42318]" />
+                        <XCircle className="mt-0.5 size-4 shrink-0 text-[#C9604D]" />
                       ) : issue.severity === "warning" ? (
-                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#EAB308]" />
+                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#D99E55]" />
                       ) : (
-                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-[#067647]" />
+                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-[#6FAA7D]" />
                       )}
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-zinc-800">
@@ -1521,103 +1389,131 @@ export function VideoSubmitForm({
             </div>
           ) : null}
         </motion.div>
-      ) : null}
-
-      {!isSubmitted ? (
+      ) : (
         <>
-      <Dialog open={deleteTargetRole !== null} onOpenChange={(open) => !open && setDeleteTargetRole(null)}>
-        <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-sm">
-          <DialogHeader className="px-6 pt-6">
-            <DialogTitle>确认删除截图？</DialogTitle>
-            <DialogDescription>删除后需要重新上传并识别该槽位截图。</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="px-6 pb-6">
-            <Button type="button" variant="outline" onClick={() => setDeleteTargetRole(null)}>
-              取消
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => {
-                if (!deleteTargetRole) return;
+          <Dialog open={deleteTargetRole !== null} onOpenChange={(open) => !open && setDeleteTargetRole(null)}>
+            <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-sm">
+              <DialogHeader className="px-6 pt-6">
+                <DialogTitle>确认删除截图？</DialogTitle>
+                <DialogDescription>删除后需要重新上传并识别该槽位截图。</DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="px-6 pb-6">
+                <Button type="button" variant="outline" onClick={() => setDeleteTargetRole(null)}>
+                  取消
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    if (!deleteTargetRole) return;
+                    const targetSlot = slots[deleteTargetRole];
+                    if (targetSlot.previewUrl && targetSlot.previewUrl.startsWith("blob:")) {
+                      URL.revokeObjectURL(targetSlot.previewUrl);
+                      blobUrlsRef.current.delete(targetSlot.previewUrl);
+                    }
+                    setSlots((current) => ({
+                      ...current,
+                      [deleteTargetRole]: { ...createEditableSlots()[deleteTargetRole] },
+                    }));
+                    setDeleteTargetRole(null);
+                    feedbackToast.success("删除成功", {
+                      duration: 2000,
+                      className:
+                        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
+                    });
+                  }}
+                >
+                  确认删除
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-                // Cleanup Blob URL before deleting
-                const targetSlot = slots[deleteTargetRole];
-                if (targetSlot.previewUrl && targetSlot.previewUrl.startsWith("blob:")) {
-                  URL.revokeObjectURL(targetSlot.previewUrl);
-                  blobUrlsRef.current.delete(targetSlot.previewUrl);
-                }
-
-                setSlots((current) => ({
-                  ...current,
-                  [deleteTargetRole]: {
-                    ...createEditableSlots()[deleteTargetRole],
-                  },
-                }));
-                setDeleteTargetRole(null);
-                feedbackToast.success("删除成功", {
-                  duration: 2000,
-                  className:
-                    "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
-                });
-              }}
+          <motion.form
+            id="video-submit-form"
+            onSubmit={handleSubmit}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <DataReportWizard
+              visibleSteps={WIZARD_STEPS}
+              visibleStep={stepIndex}
+              contentKey={stepIndex}
+              direction={stepDirection}
+              stepStateOverrides={isAbnormalStatus ? { 0: "skipped" } : undefined}
+              leadingActionSlot={
+                <VideoStatusSegmented
+                  value={meta.anomalyStatus}
+                  onChange={(value) => updateMeta("anomalyStatus", value)}
+                />
+              }
+              showActions
+              isLastStep={stepIndex === 2}
+              canGoNext={stepCanAdvance}
+              canSubmit={canActuallySubmit}
+              isSubmitting={isSubmitting}
+              submitLabel={submitButtonLabel}
+              status={stepIndex === 2 ? (canActuallySubmit ? "ready" : "incomplete") : null}
+              missingItems={stepIndex === 2 && !canActuallySubmit ? missingItemsForWizard : undefined}
+              onPrev={goPrevStep}
+              onNext={goNextStep}
+              onSubmit={triggerSubmit}
+              onCancel={isBackfillMode || submittedViewActive ? onCancel : undefined}
+              onAttemptNext={markStepAttempted}
             >
-              确认删除
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {stepIndex === 0 ? (
+                <div ref={slotsSectionRef} className="space-y-4">
+                  <截图槽位区
+                    slots={slots}
+                    onSelectFile={handleSlotUpload}
+                    onDelete={(role) => setDeleteTargetRole(role)}
+                    onRetry={handleSlotRetry}
+                    onManualFill={(role) => {
+                      setSlots((current) => ({
+                        ...current,
+                        [role]: {
+                          ...current[role],
+                          status: "empty",
+                          confirmed: false,
+                          error: null,
+                          assetUrl: null,
+                          previewUrl: null,
+                          file: null,
+                          fileName: undefined,
+                          recognizedFields: null,
+                          ocrSummary: undefined,
+                        },
+                      }));
+                    }}
+                    screenshotsRequired={screenshotsRequired}
+                    focusedRole={focusedRole}
+                    highlightedOcrIndex={highlightedOcrIndex}
+                  />
+                </div>
+              ) : null}
 
-      <motion.form
-        id="video-submit-form"
-        onSubmit={handleSubmit}
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-10 pb-[84px] md:pb-[96px]"
-      >
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)] lg:gap-0">
-          {/* 左侧列：截图槽位区 + 视频信息 */}
-          <div className="flex min-w-0 flex-col gap-10 lg:border-r lg:border-zinc-200 lg:pr-10">
-            <motion.div ref={slotsSectionRef} variants={itemVariants}>
-              <截图槽位区
-                slots={slots}
-                onSelectFile={handleSlotUpload}
-                onDelete={(role) => setDeleteTargetRole(role)}
-                onRetry={handleSlotRetry}
-                onManualFill={(role) => {
-                  setSlots((current) => ({
-                    ...current,
-                    [role]: {
-                      ...current[role],
-                      status: "empty",
-                      confirmed: false,
-                      error: null,
-                      assetUrl: null,
-                      previewUrl: null,
-                      file: null,
-                      fileName: undefined,
-                      recognizedFields: null,
-                      ocrSummary: undefined,
-                    },
-                  }));
-                }}
-                screenshotsRequired={screenshotsRequired}
-                focusedRole={focusedRole}
-                highlightedOcrIndex={highlightedOcrIndex}
-                issueCount={
-                  issueSummary.missingRequiredSlots.length +
-                  issueSummary.failedRequiredSlots.length +
-                  issueSummary.pendingSlotConfirmations.length
-                }
-              />
-            </motion.div>
+              {stepIndex === 1 ? (
+                <motion.div ref={metricsSectionRef} initial={false} className="space-y-8">
+                  <指标分组区
+                    fields={fields}
+                    onFieldChange={updateField}
+                    onFocusField={handleFieldFocus}
+                    onBlurField={handleFieldBlur}
+                    anomalyStatus={meta.anomalyStatus}
+                  />
 
-            <hr className="border-zinc-100" />
+                  <导粉话术采集区
+                    visible={parseMetric(fields.follower_convert.value) > 0}
+                    value={scriptText}
+                    onChange={setScriptText}
+                    hasAttemptedSubmit={hasAttemptedSubmit}
+                  />
+                </motion.div>
+              ) : null}
 
-            <motion.div ref={metaSectionRef} variants={itemVariants}>
-
-              <div className="min-w-0 space-y-6">
+              {stepIndex === 2 ? (
+                <motion.div ref={metaSectionRef} initial={false} className="space-y-6">
                   <div className="space-y-1">
                     <Label htmlFor="video_url" className="text-[13px] font-medium text-zinc-500">抖音视频链接</Label>
                     <Input
@@ -1625,24 +1521,24 @@ export function VideoSubmitForm({
                       value={meta.videoUrl}
                       onChange={(event) => updateMeta("videoUrl", event.target.value)}
                       placeholder="https://www.douyin.com/video/..."
-                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
+                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
                     />
                   </div>
-                  <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("videoTitle"))}>
+                  <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle")}>
                     <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-500">视频标题 <span className="text-[#C9604D]">*</span></Label>
                     <Input
                       id="video_title"
                       value={meta.videoTitle}
                       onChange={(event) => updateMeta("videoTitle", event.target.value)}
                       placeholder="输入视频标题"
-                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
+                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
                     />
                     {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
                       <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
                     ) : null}
                   </div>
 
-                  <div ref={topicTagSectionRef} className="space-y-2 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.topicTagMissing)}>
+                  <div ref={topicTagSectionRef} className="space-y-2 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
                     <Label className="text-[13px] font-medium text-zinc-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
                     <div className="flex gap-4">
                       {(["干货", "复盘"] as const).map((tag) => (
@@ -1666,93 +1562,7 @@ export function VideoSubmitForm({
                     ) : null}
                   </div>
 
-                  <div className="space-y-2 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("contentKeywords"))}>
-                    <Label className="text-[13px] font-medium text-zinc-500">
-                      内容标签 <span className="text-[#C9604D]">*</span> <span className="text-[12px] font-normal text-zinc-400">最多3个</span>
-                    </Label>
-                    {keywordSuggestions.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {keywordSuggestions.map((kw) => (
-                          <button
-                            key={kw}
-                            type="button"
-                            disabled={meta.contentKeywords.length >= 3 && !meta.contentKeywords.includes(kw)}
-                            onClick={() => {
-                              if (meta.contentKeywords.includes(kw)) {
-                                updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw));
-                              } else if (meta.contentKeywords.length < 3) {
-                                updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
-                              }
-                            }}
-                            className={cn(
-                              "rounded-full border px-3 py-1 text-xs transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                              meta.contentKeywords.includes(kw)
-                                ? "border-[#D97757] bg-[#D97757] text-white"
-                                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 disabled:opacity-40"
-                            )}
-                          >
-                            {kw}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    {meta.contentKeywords.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {meta.contentKeywords.map((kw) => (
-                          <span
-                            key={kw}
-                            className="flex items-center gap-1 rounded-full bg-[#D97757]/10 px-3 py-1 text-[12px] font-medium text-[#C96442] ring-1 ring-inset ring-[#D97757]/25"
-                          >
-                            {kw}
-                            <button
-                              type="button"
-                              onClick={() => updateMeta("contentKeywords", meta.contentKeywords.filter((k) => k !== kw))}
-                              className="ml-0.5 text-[#D97757] opacity-70 hover:opacity-100 transition-opacity"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                    <div className="flex gap-2">
-                      <Input
-                        value={keywordInput}
-                        onChange={(event) => setKeywordInput(event.target.value)}
-                        onKeyDown={(event) => {
-                          if ((event.key === "Enter" || event.key === " ") && keywordInput.trim() && meta.contentKeywords.length < 3) {
-                            event.preventDefault();
-                            const kw = keywordInput.trim();
-                            if (!meta.contentKeywords.includes(kw)) {
-                              updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
-                            }
-                            setKeywordInput("");
-                          }
-                        }}
-                        placeholder={meta.contentKeywords.length >= 3 ? "最多3个标签" : "输入后按空格或回车添加"}
-                        disabled={meta.contentKeywords.length >= 3}
-                        className="h-10 rounded-xl bg-zinc-100/70 text-[13px] border-transparent text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={!keywordInput.trim() || meta.contentKeywords.length >= 3}
-                        onClick={() => {
-                          const kw = keywordInput.trim();
-                          if (kw && !meta.contentKeywords.includes(kw) && meta.contentKeywords.length < 3) {
-                            updateMeta("contentKeywords", [...meta.contentKeywords, kw]);
-                            setKeywordInput("");
-                          }
-                        }}
-                        className="h-10 rounded-lg px-3 text-[13px] border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
-                      >
-                        添加
-                      </Button>
-                    </div>
-                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("contentKeywords") ? (
-                      <p className="text-[12px] font-medium text-[#C9604D]">必填，至少添加 1 个内容标签</p>
-                    ) : null}
-                  </div>
+                  {/* 内容标签：前端暂隐藏（保留后端字段，重做后再上线） */}
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-1">
@@ -1777,7 +1587,7 @@ export function VideoSubmitForm({
                             publishedAtText: synced.publishedAtText,
                           }));
                         }}
-                        className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757] transition-[background-color,border-color,box-shadow] duration-150"
+                        className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1787,113 +1597,81 @@ export function VideoSubmitForm({
                       </div>
                     </div>
                   </div>
-              </div>
-            </motion.div>
-          </div>
 
-          {/* 右侧列：指标分组 + 文案 */}
-          <div className="flex min-w-0 flex-col h-full lg:pl-10">
-            <motion.div ref={metricsSectionRef} variants={itemVariants} className="shrink-0">
-              <指标分组区
-                fields={fields}
-                onFieldChange={updateField}
-                onFocusField={handleFieldFocus}
-                onBlurField={handleFieldBlur}
-                anomalyStatus={meta.anomalyStatus}
-              />
-            </motion.div>
-
-            <导粉话术采集区
-              visible={parseMetric(fields.follower_convert.value) > 0}
-              value={scriptText}
-              onChange={setScriptText}
-              hasAttemptedSubmit={hasAttemptedSubmit}
-            />
-
-            <hr className="my-8 border-zinc-100" />
-
-            <motion.div variants={itemVariants} className="flex flex-1 flex-col min-h-0">
-              <div className="flex flex-1 flex-col space-y-1 rounded-2xl border border-transparent transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && (issueSummary.missingRequiredMeta.includes("content"))}>
-                <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500 shrink-0">文案 <span className="text-[#C9604D]">*</span></Label>
-                <textarea
-                  id="content"
-                  value={meta.content}
-                  onChange={(event) => updateMeta("content", event.target.value)}
-                  placeholder="粘贴视频文案"
-                  className="min-h-[120px] w-full flex-1 resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
-                />
-                {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                  <p className="text-[12px] font-medium text-[#C9604D] shrink-0">必填，仍未填写文案</p>
-                ) : null}
-              </div>
-            </motion.div>
-          </div>
-        </div>
-
-        <motion.div variants={itemVariants} className="hidden">
-          {/* FAB 悬浮操作条 */}
- <div className="rounded-full pointer-events-auto bg-white border border-zinc-200 shadow-sm py-4 px-6 min-h-[72px] flex items-center justify-between gap-8 transition-[background-color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] w-max">
-            <div className="flex items-center gap-3">
-                {canActuallySubmit ? (
-                  <div className="flex size-5 items-center justify-center rounded-full bg-white border border-[#6FAA7D] text-[#6FAA7D]">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
+                    <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
+                    <textarea
+                      id="content"
+                      value={meta.content}
+                      onChange={(event) => updateMeta("content", event.target.value)}
+                      placeholder="粘贴视频文案"
+                      className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
+                    />
+                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
+                      <p className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
+                    ) : null}
                   </div>
-                ) : (
-                  <div className="flex size-5 items-center justify-center rounded-full bg-white border border-[#C9604D] text-[#C9604D]">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                  </div>
-                )}
-                <div className="flex flex-col justify-center">
-                  <p className="text-[14px] font-semibold text-zinc-800 leading-tight">
-                    {canActuallySubmit ? "已就绪" : "待完善"}
-                  </p>
-                  <p className="text-[11px] font-medium text-zinc-500 truncate max-w-[200px] leading-tight mt-0.5">
-                    {canActuallySubmit ? "可提交今日数据" : issueHintText || issueSummary.reason || submitCheck.reason || "请补全表单"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="grid gap-2 min-w-[120px]">
-                  <Select
-                    value={meta.anomalyStatus}
-                    onValueChange={(value) => updateMeta("anomalyStatus", value as AnomalyStatus)}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg bg-zinc-50 border-transparent text-[14px] font-medium text-zinc-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white focus:bg-white focus:border-zinc-200 focus:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5">
-                      <SelectValue placeholder="请选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ANOMALY_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {VIDEO_STATUS_LABELS[option]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                  {onCancel ? (
-                    <Button type="button" variant="ghost" className="h-11 rounded-full px-5 font-semibold text-[14px] text-zinc-700 bg-[#F4F4F5] hover:bg-zinc-200" onClick={onCancel}>
-                      取消
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || !canActuallySubmit}
-                    title={canActuallySubmit ? undefined : issueHintText || issueSummary.reason || submitCheck.reason || undefined}
-                    className="h-11 rounded-[10px] px-7 font-semibold text-[14px] transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] bg-[#D97757] text-white shadow-sm hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0 disabled:bg-zinc-200 disabled:text-zinc-400 disabled:hover:translate-y-0"
-                  >
-                    {submitButtonLabel}
-                  </Button>
-                </div>
-              </div>
-            </div>
-        </motion.div>
-      </motion.form>
-
-      {mounted ? createPortal(desktopSubmitBar, document.body) : null}
-      {mounted ? createPortal(mobileSubmitBar, document.body) : null}
+                </motion.div>
+              ) : null}
+            </DataReportWizard>
+          </motion.form>
         </>
-      ) : null}
+      )}
     </>
+  );
+}
+
+const WIZARD_STEPS = [
+  { key: "screenshots", label: "截图与识别", hint: "上传 2 张关键截图，OCR 自动识别成功后会进入下一步。" },
+  { key: "metrics", label: "数据指标", hint: "核对识别结果，按需补全播放、互动与留存指标。" },
+  { key: "info", label: "视频信息", hint: "补全标题、文案与发布时间，提交即归档到团队数据流。" },
+];
+
+const VIDEO_STATUS_OPTIONS: Array<{
+  value: AnomalyStatus;
+  label: string;
+  dotClass: string;
+  activeTextClass: string;
+}> = [
+  { value: "正常", label: "正常", dotClass: "bg-[#6FAA7D]", activeTextClass: "text-zinc-800" },
+  { value: "限流", label: "限流", dotClass: "bg-[#D99E55]", activeTextClass: "text-[#D99E55]" },
+  { value: "删稿", label: "删稿", dotClass: "bg-[#C9604D]", activeTextClass: "text-[#C9604D]" },
+];
+
+function VideoStatusSegmented({
+  value,
+  onChange,
+}: {
+  value: AnomalyStatus;
+  onChange: (next: AnomalyStatus) => void;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="视频状态"
+      className="inline-flex h-9 items-center rounded-full border border-zinc-200 bg-zinc-50 p-0.5"
+    >
+      {VIDEO_STATUS_OPTIONS.map((option) => {
+        const isActive = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={isActive}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium tracking-tight transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              isActive
+                ? cn("bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]", option.activeTextClass)
+                : "text-zinc-500 hover:text-zinc-800",
+            )}
+          >
+            <span className={cn("size-1.5 rounded-full", option.dotClass, !isActive && "opacity-60")} />
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

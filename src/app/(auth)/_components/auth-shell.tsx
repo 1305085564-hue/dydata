@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 interface AuthShellProps {
   eyebrow?: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   children: ReactNode;
 }
 
@@ -27,7 +27,9 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
           <h1 className="text-[24px] font-semibold tracking-tight text-zinc-800">
             {title}
           </h1>
-          <p className="text-[13px] leading-[1.7] text-zinc-500">{subtitle}</p>
+          {subtitle ? (
+            <p className="text-[13px] leading-[1.7] text-zinc-500">{subtitle}</p>
+          ) : null}
         </div>
 
         {children}

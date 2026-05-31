@@ -1,13 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Trash2, UploadCloud } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { Check, Eye, Trash2, UploadCloud } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { SPRING_EASE, shakeVariants } from "@/lib/animations";
+import { shakeVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
 import { NETWORK_RETRY_MESSAGE, OCR_FAIL_MESSAGE, resolveOcrErrorMessage } from "./截图上传错误";
@@ -35,21 +34,25 @@ interface SubmissionSlotCardProps {
 
 const ACCEPT = ".jpg,.jpeg,.png,.webp";
 
-function getStatusText(status: SubmissionSlotStatus) {
-  switch (status) {
-    case "uploading":
-      return "上传中";
-    case "recognizing":
-      return "识别中";
-    case "pending_confirm":
-      return "待确认";
-    case "confirmed":
-      return "已确认";
-    case "failed":
-      return "识别失败";
-    default:
-      return "待上传";
-  }
+interface StatusVisual {
+  label: string;
+  dotClass: string;
+  textClass: string;
+  borderClass: string;
+}
+
+function getStatusVisual(status: SubmissionSlotStatus, isWarning: boolean): StatusVisual {
+  if (status === "uploading")
+    return { label: "上传中", dotClass: "bg-[#D97757]", textClass: "text-[#D97757]", borderClass: "border-[#D97757]" };
+  if (status === "recognizing")
+    return { label: "识别中", dotClass: "bg-[#D97757]", textClass: "text-[#D97757]", borderClass: "border-[#D97757]" };
+  if (status === "failed")
+    return { label: "识别失败", dotClass: "bg-[#C9604D]", textClass: "text-[#C9604D]", borderClass: "border-[#C9604D]/40" };
+  if (status === "confirmed" && !isWarning)
+    return { label: "已识别", dotClass: "bg-[#6FAA7D]", textClass: "text-[#6FAA7D]", borderClass: "border-[#6FAA7D]/40" };
+  if (isWarning || status === "pending_confirm")
+    return { label: "待确认", dotClass: "bg-[#D99E55]", textClass: "text-[#D99E55]", borderClass: "border-[#D99E55]/40" };
+  return { label: "待上传", dotClass: "bg-zinc-300", textClass: "text-zinc-500", borderClass: "border-zinc-200" };
 }
 
 export function SubmissionSlotCard({
@@ -74,9 +77,12 @@ export function SubmissionSlotCard({
   const isProcessing = status === "uploading" || status === "recognizing";
   const isWarning = status === "pending_confirm" || ((confidenceScore ?? 1) < 0.7 && status !== "failed");
   const isError = status === "failed";
-  const isSuccess = status === "confirmed";
+  const isSuccess = status === "confirmed" && !isWarning;
   const isEmpty = status === "empty";
 
+  const visual = getStatusVisual(status, isWarning);
+
+  const [isDragOver, setIsDragOver] = useState(false);
   const [progress, setProgress] = useState(0);
   const isProcessingRef = useRef(isProcessing);
   const startTimeRef = useRef<number>(0);
@@ -95,22 +101,19 @@ export function SubmissionSlotCard({
       function animate(currentTime: number) {
         if (!isProcessingRef.current) return;
         const elapsed = currentTime - startTimeRef.current;
-
         let currentProgress = 0;
         if (elapsed <= 10000) {
           currentProgress = elapsed * 0.008;
         } else {
           const extraTime = elapsed - 10000;
-          currentProgress = 80 + (18 * (1 - Math.exp(-extraTime / 5000)));
+          currentProgress = 80 + 18 * (1 - Math.exp(-extraTime / 5000));
         }
-
         setProgress(currentProgress);
         if (isProcessingRef.current) {
           frameId = requestAnimationFrame(animate);
         }
       }
       frameId = requestAnimationFrame(animate);
-
       return () => cancelAnimationFrame(frameId);
     }
     return undefined;
@@ -122,289 +125,264 @@ export function SubmissionSlotCard({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setProgress(100);
       } else if (status === "empty") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setProgress(0);
       }
     }
   }, [isProcessing, status]);
 
-  // 高亮样式：已填充实线边框 + 阴影 + 微上浮；空槽位虚线边框
-  const highlightActive = isHighlighted && !isError && !isWarning && !isSuccess;
+  function handleFile(file: File) {
+    if (file.size > UPLOAD_LIMITS.screenshot) {
+      feedbackToast.error(`文件超过 ${formatSizeLimit(UPLOAD_LIMITS.screenshot)} 限制，请压缩后重试`);
+      return;
+    }
+    onSelectFile(file);
+  }
 
   return (
     <motion.div
       variants={isError ? shakeVariants : undefined}
       initial={isError ? "initial" : undefined}
       animate={isError ? "animate" : undefined}
-      className={cn(
-        "group/card relative overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        // 默认态
-        !highlightActive && !isError && !isWarning && !isSuccess && "border-zinc-200",
-        // 高亮态（已填充）
-        highlightActive && !isEmpty && "border-[#D97757] shadow-[0_12px_32px_-12px_rgba(217,119,87,0.35)] -translate-y-0.5",
-        // 高亮态（空槽位）
-        highlightActive && isEmpty && "border-dashed border-[#D97757] bg-[#FDF9F7]",
-        // 状态色覆盖（优先级高于高亮）
-        isWarning && "border-zinc-200",
-        isError && "border-zinc-200",
-        isSuccess && "border-zinc-200"
-      )}
+      className="group relative"
     >
-      <div className="flex flex-col sm:flex-row items-stretch">
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ACCEPT}
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) {
-              if (file.size > UPLOAD_LIMITS.screenshot) {
-                feedbackToast.error(
-                  `文件超过 ${formatSizeLimit(UPLOAD_LIMITS.screenshot)} 限制，请压缩后重试`
-                );
-                event.target.value = "";
-                return;
-              }
-              onSelectFile(file);
-            }
-            event.target.value = "";
-          }}
-        />
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPT}
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) handleFile(file);
+          event.target.value = "";
+        }}
+      />
 
-        {/* 左侧：1:1 正方形截图槽位 */}
-        <div className="w-full sm:w-[45%] aspect-square sm:aspect-auto sm:min-h-[180px] flex-shrink-0 relative border-b sm:border-b-0 sm:border-r border-zinc-100 bg-gradient-to-br from-zinc-50 to-white">
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              const file = event.dataTransfer.files?.[0];
-              if (file) {
-                if (file.size > UPLOAD_LIMITS.screenshot) {
-                  feedbackToast.error(
-                    `文件超过 ${formatSizeLimit(UPLOAD_LIMITS.screenshot)} 限制，请压缩后重试`
-                  );
-                  return;
-                }
-                onSelectFile(file);
-              }
-            }}
-            className="group relative flex h-full w-full flex-col items-center justify-center overflow-hidden transition-colors duration-300 cursor-pointer hover:bg-zinc-100/50"
+      <header className="flex items-center justify-between gap-3 pb-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[14px] font-medium leading-tight tracking-tight text-zinc-800">
+              {title}
+            </span>
+            {description ? (
+              <span className="truncate text-[12px] leading-tight text-zinc-400">
+                {description}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border bg-white px-2 py-[3px] text-[11px] font-medium transition-colors duration-150",
+              visual.borderClass,
+              visual.textClass,
+            )}
           >
-            {/* 悬浮标签：标题、状态等 */}
-            <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1.5">
-              <div className="flex items-center gap-1">
-                <span className="rounded-full bg-white/85 px-2 py-0.5 text-[12px] font-semibold text-zinc-700 backdrop-blur-md ring-1 ring-inset ring-zinc-200/80 shadow-sm">
-                  {title}
-                </span>
-                {required ? (
-                  <span className="rounded-full bg-[#D97757]/10 px-1.5 py-0.5 text-[12px] font-semibold text-[#D97757] backdrop-blur-md ring-1 ring-inset ring-[#D97757]/20">
-                    必传
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-zinc-100/80 px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 backdrop-blur-md ring-1 ring-inset ring-zinc-200/80">
-                    选传
-                  </span>
-                )}
-              </div>
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[12px] font-semibold backdrop-blur-md ring-1 ring-inset shadow-sm",
-                  isSuccess && "bg-zinc-50 text-zinc-700 border border-zinc-200",
-                  isError && "bg-zinc-50 text-zinc-700 border border-zinc-200",
-                  isWarning && "bg-zinc-50 text-zinc-700 border border-zinc-200",
-                  !isSuccess && !isError && !isWarning && "bg-white/85 text-zinc-600 ring-zinc-200/80"
-                )}
-              >
-                <span
-                  className={cn(
-                    "inline-block h-1.5 w-1.5 rounded-full",
-                    isSuccess && "bg-emerald-500",
-                    isError && "bg-rose-500",
-                    isWarning && "bg-amber-500",
-                    !isSuccess && !isError && !isWarning && "bg-zinc-400"
-                  )}
+            <span className={cn("size-1.5 rounded-full", visual.dotClass)} />
+            {visual.label}
+          </span>
+          {required ? (
+            <span className="inline-flex items-center rounded-full border border-[#D97757]/30 bg-white px-2 py-[3px] text-[11px] font-medium text-[#D97757]">
+              必传
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2 py-[3px] text-[11px] font-medium text-zinc-500">
+              选传
+            </span>
+          )}
+        </div>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+        <button
+          type="button"
+          onClick={() => !isProcessing && inputRef.current?.click()}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!isProcessing && !assetUrl) setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDragOver(false);
+            const file = event.dataTransfer.files?.[0];
+            if (file) handleFile(file);
+          }}
+          disabled={isProcessing}
+          className={cn(
+            "group/drop relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border bg-zinc-50/60 text-zinc-400 transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            !assetUrl && !isProcessing && !isDragOver && "border-dashed border-zinc-200 hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/60 hover:text-[#D97757]",
+            !assetUrl && isDragOver && "border-[#D97757] bg-[#FDF9F7] text-[#D97757]",
+            isProcessing && "border-[#D97757]/30 bg-white",
+            assetUrl && !isProcessing && "border-zinc-200 bg-white p-0",
+            isError && !assetUrl && "border-dashed border-[#C9604D]/40 bg-white",
+          )}
+        >
+          {assetUrl && !isProcessing ? (
+            <div
+              className="absolute inset-0 z-10 overflow-hidden rounded-xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Dialog>
+                <DialogTrigger
+                  render={
+                    <div className="group/img relative h-full w-full cursor-zoom-in">
+                      <img src={assetUrl} alt="截图预览" className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-[1.02]" />
+                      <div className="pointer-events-none absolute inset-0 flex items-end justify-end bg-gradient-to-t from-black/35 via-transparent to-transparent p-2 opacity-0 transition-opacity duration-150 group-hover/img:opacity-100">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-zinc-700 backdrop-blur">
+                          <Eye className="size-3 stroke-[1.6]" /> 放大
+                        </span>
+                      </div>
+                    </div>
+                  }
                 />
-                {getStatusText(status)}
+                <DialogContent
+                  className="w-auto max-w-4xl overflow-hidden border-none bg-transparent p-0 shadow-none"
+                  showCloseButton={false}
+                >
+                  <DialogTitle className="sr-only">截图预览放大</DialogTitle>
+                  <img src={assetUrl} alt="截图放大" className="h-auto max-h-[85vh] w-full rounded-2xl object-contain" />
+                </DialogContent>
+              </Dialog>
+            </div>
+          ) : null}
+
+          {isProcessing ? (
+            <div className="relative z-10 flex w-full max-w-[180px] flex-col items-center gap-2.5 px-4">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
+                <motion.div
+                  className="h-full rounded-full bg-[#D97757]"
+                  initial={false}
+                  animate={{ width: `${Math.min(100, Math.max(2, progress))}%` }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                />
+              </div>
+              <span className="font-mono text-[11px] tabular-nums tracking-[0.1em] text-[#D97757]">
+                {status === "uploading" ? "UPLOADING" : "AI READING"} · {Math.floor(Math.min(99, progress))}%
               </span>
             </div>
+          ) : null}
 
-            {/* 背景图片及预览 */}
-            {assetUrl && !isProcessing ? (
-              <div className="absolute inset-0 z-10 w-full h-full overflow-hidden bg-black/5" onClick={(e) => e.stopPropagation()}>
-                <Dialog>
-                  <DialogTrigger
-                    render={
-                      <div className="w-full h-full cursor-zoom-in relative group/img">
-                        <img src={assetUrl} alt="截图预览" className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105" />
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/30">
-                          <span className="bg-black/60 text-white text-[12px] px-2 py-1 rounded-full font-medium flex items-center gap-1">
-                            放大
-                          </span>
-                        </div>
-                      </div>
-                    }
-                  />
-                  <DialogContent className="max-w-4xl w-auto p-0 overflow-hidden bg-transparent border-none shadow-none" showCloseButton={false}>
-                    <DialogTitle className="sr-only">截图预览放大</DialogTitle>
-                    <img src={assetUrl} alt="截图放大" className="w-full h-auto object-contain max-h-[85vh] rounded-2xl shadow-sm" />
-                  </DialogContent>
-                </Dialog>
+          {!assetUrl && !isProcessing ? (
+            <div className="relative z-10 flex flex-col items-center gap-2 px-4 text-center">
+              <UploadCloud className="size-7 stroke-[1.4] transition-transform duration-150 group-hover/drop:-translate-y-0.5" />
+              <span className="text-[12px] font-medium leading-snug">
+                {isDragOver ? "松开以上传" : "点击或拖入截图"}
+              </span>
+              <span className="text-[10px] tracking-wide text-zinc-400">
+                JPG / PNG / WEBP · ≤ {formatSizeLimit(UPLOAD_LIMITS.screenshot)}
+              </span>
+            </div>
+          ) : null}
+
+          <AnimatePresence>
+            {isSuccess ? (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 360, damping: 22 }}
+                className="absolute right-2 top-2 z-20 flex size-6 items-center justify-center rounded-full bg-[#6FAA7D] text-white ring-2 ring-white"
+              >
+                <Check className="size-3.5" strokeWidth={2.5} />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </button>
+
+        <div className="flex min-h-[150px] flex-col gap-2.5">
+          {ocrSummary && ocrSummary.length > 0 ? (
+            <div className="flex min-h-0 flex-1 flex-col rounded-xl bg-zinc-50/80 p-3">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-400">
+                  <span className="size-1 rounded-full bg-[#D97757]" />
+                  AI 识别结果
+                </span>
+                {fileName ? (
+                  <span className="max-w-[140px] truncate font-mono text-[10px] tracking-wide text-zinc-400">
+                    {fileName}
+                  </span>
+                ) : null}
               </div>
-            ) : null}
-
-            {/* 上传中动画遮罩 */}
-            {isProcessing ? (
-              <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden bg-white/30" />
-            ) : null}
-
-            {/* 中心图标 (未上传或上传中) */}
-            {!assetUrl || isProcessing ? (
-              <div className="relative z-10 flex flex-col items-center justify-center gap-2 transition-transform duration-300 group- w-full px-4">
-                {isProcessing ? (
-                  <div className="flex flex-col items-center gap-2 w-full max-w-[120px]">
-                    <div className="w-full h-[3px] bg-zinc-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#D97757] to-[#E89B7E] transition-[width] duration-150"
-                        style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-                      />
-                    </div>
-                    <p className="text-[12px] font-medium text-[#D97757] bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full ring-1 ring-inset ring-[#D97757]/20 shadow-sm">
-                      AI 解析中 {Math.floor(Math.min(99, progress))}%
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex size-11 items-center justify-center rounded-2xl bg-white border border-zinc-200 text-zinc-400 shadow-sm transition-[color,border-color,box-shadow,transform] duration-200 group-hover:text-[#D97757] group-hover:border-[#D97757]/30 group-hover:shadow-[0_6px_16px_-6px_rgba(217,119,87,0.35)] group-hover:-translate-y-0.5">
-                      <UploadCloud className="size-5" />
-                    </div>
-                    <p className="text-[12px] font-medium text-zinc-500 px-2 text-center leading-tight transition-colors group-hover:text-zinc-700">
-                      点击或拖拽上传
-                    </p>
-                    <p className="text-[9px] text-zinc-400 px-2 text-center leading-tight">
-                      支持 JPG/PNG/WEBP，最大 {formatSizeLimit(UPLOAD_LIMITS.screenshot)}
-                    </p>
-                  </>
-                )}
+              <ul className="custom-scrollbar max-h-[130px] space-y-0.5 overflow-y-auto pr-1">
+                {ocrSummary.map((item, idx) => (
+                  <li
+                    key={item}
+                    className={cn(
+                      "rounded-md px-1.5 py-0.5 text-[12px] leading-snug transition-[color,background-color] duration-150",
+                      highlightedOcrIndex === idx
+                        ? "bg-[#D97757]/10 font-medium text-[#C96442]"
+                        : "text-zinc-700",
+                    )}
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : isError ? (
+            <div className="rounded-xl border border-[#C9604D]/30 bg-white p-3">
+              <p className="flex items-start gap-1.5 text-[12px] font-medium text-[#C9604D]">
+                <span className="mt-1 size-1 shrink-0 rounded-full bg-[#C9604D]" />
+                <span>{errorCode ? resolveOcrErrorMessage(errorCode) : error || OCR_FAIL_MESSAGE}</span>
+              </p>
+              <div className="mt-2 flex items-center gap-1.5">
+                {onRetry ? (
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="inline-flex h-7 items-center rounded-lg border border-[#C9604D]/35 bg-white px-2.5 text-[11px] font-medium text-[#C9604D] transition-[background-color,border-color] duration-150 hover:bg-[#C9604D] hover:text-white"
+                  >
+                    {error === NETWORK_RETRY_MESSAGE ? "重新识别" : "重新识别"}
+                  </button>
+                ) : null}
+                {onManualFill ? (
+                  <button
+                    type="button"
+                    onClick={onManualFill}
+                    className="inline-flex h-7 items-center rounded-lg border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-600 transition-[background-color,border-color,color] duration-150 hover:bg-zinc-50 hover:text-zinc-800"
+                  >
+                    手动填写
+                  </button>
+                ) : null}
               </div>
-            ) : null}
-
-            {/* 成功角标 */}
-            <AnimatePresence>
-              {isSuccess ? (
-                <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: SPRING_EASE }}
-                  className="absolute right-2 top-2 z-20 flex size-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-[0_4px_12px_-2px_rgba(16,185,129,0.5)] ring-2 ring-white"
-                >
-                  <Check className="size-3.5" strokeWidth={3} />
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </button>
-        </div>
-
-        {/* 右侧：说明与识别结果区 */}
-        <div className="flex-1 sm:w-[55%] flex flex-col relative bg-white p-4">
-          {/* 顶部描述与删除按钮 */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <p className="text-[11px] text-zinc-500 leading-snug flex-1 pr-6">{description}</p>
-            {(fileName || status !== "empty") && !isProcessing ? (
-              <div className="absolute right-2 top-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-full text-zinc-300 transition-[color,background-color] duration-150 hover:bg-zinc-100 hover:text-zinc-600"
-                  onClick={onDelete}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="flex flex-col gap-2 flex-1 relative">
-            {isWarning ? (
-              <div className="flex items-center gap-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] font-medium text-zinc-700 border border-zinc-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-                请确认识别结果
-              </div>
-            ) : null}
-
-            {isError ? (
-              <div className="space-y-1.5 rounded-lg bg-zinc-50 px-2.5 py-1.5 text-[11px] text-zinc-700 leading-snug border border-zinc-200">
-                <div className="flex items-start gap-1.5 font-medium">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0 mt-1" />
-                  <span>{errorCode ? resolveOcrErrorMessage(errorCode) : error || OCR_FAIL_MESSAGE}</span>
+            </div>
+          ) : isProcessing ? (
+            <div className="flex flex-1 items-center justify-center rounded-xl bg-zinc-50/80 p-4">
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center gap-1">
+                  <span className="size-1 animate-pulse rounded-full bg-[#D97757]" style={{ animationDelay: "0ms" }} />
+                  <span className="size-1 animate-pulse rounded-full bg-[#D97757]" style={{ animationDelay: "120ms" }} />
+                  <span className="size-1 animate-pulse rounded-full bg-[#D97757]" style={{ animationDelay: "240ms" }} />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {onRetry && error === NETWORK_RETRY_MESSAGE ? (
-                    <button
-                      type="button"
-                      onClick={onRetry}
-                      className="active:translate-y-0 inline-flex h-6 items-center rounded-full bg-white px-3 text-[12px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
-                    >
-                      重新识别
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onRetry) onRetry();
-                      }}
-                      className="inline-flex h-6 items-center rounded-full bg-white px-3 text-[12px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-rose-600 hover:text-white hover:ring-rose-600"
-                    >
-                      重新识别
-                    </button>
-                  )}
-                  {onManualFill ? (
-                    <button
-                      type="button"
-                      onClick={onManualFill}
-                      className="active:translate-y-0 inline-flex h-6 items-center rounded-full bg-white px-3 text-[12px] font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-300 transition-[color,background-color,border-color,box-shadow] duration-150 hover:bg-zinc-600 hover:text-white hover:ring-zinc-600"
-                    >
-                      手动填写
-                    </button>
-                  ) : null}
-                </div>
+                <span className="font-mono text-[10px] tracking-[0.18em] text-zinc-400">PARSING METRICS</span>
               </div>
-            ) : null}
-
-            {ocrSummary && ocrSummary.length > 0 ? (
-              <div className="flex-1 rounded-xl bg-gradient-to-br from-zinc-50 to-white px-3 py-2 text-[11px] text-zinc-800 ring-1 ring-inset ring-zinc-200 overflow-hidden flex flex-col max-h-[140px]">
-                <div className="mb-1.5 flex items-center gap-1.5 shrink-0">
-                  <span className="h-1 w-1 rounded-full bg-[#D97757]" />
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-zinc-500">AI 识别结果</span>
-                </div>
-                <ul className="space-y-0.5 overflow-y-auto pr-1 flex-1 min-h-0 custom-scrollbar">
-                  {ocrSummary.map((item, idx) => (
-                    <li
-                      key={item}
-                      className={cn(
-                        "leading-snug text-[10.5px] rounded-md px-1.5 py-0.5 transition-[color,background-color,border-color,box-shadow] duration-200",
-                        highlightedOcrIndex === idx
-                          ? "bg-[#D97757]/10 text-[#C96442] font-medium ring-1 ring-inset ring-[#D97757]/20"
-                          : "text-zinc-600"
-                      )}
-                    >
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+            </div>
+          ) : (
+            <div className="flex flex-1 items-center justify-center rounded-xl bg-zinc-50/60 p-4">
+              <div className="relative flex size-12 items-center justify-center">
+                <div className="absolute inset-0 rounded-full border border-dashed border-zinc-200" />
+                <div className="absolute left-1/2 top-1/2 h-px w-8 -translate-x-1/2 -translate-y-1/2 bg-zinc-200" />
+                <div className="absolute left-1/2 top-1/2 h-8 w-px -translate-x-1/2 -translate-y-1/2 bg-zinc-200" />
+                <span className="relative size-1 rounded-full bg-zinc-300" />
               </div>
-            ) : !isProcessing && !isError ? (
-              <div className="flex-1 rounded-xl bg-zinc-50/70 ring-1 ring-inset ring-zinc-200 flex items-center justify-center text-[12px] text-zinc-400 min-h-[60px]">
-                暂无识别结果
-              </div>
-            ) : null}
-          </div>
+              <span className="ml-3 text-[11px] tracking-wide text-zinc-400">等待识别结果</span>
+            </div>
+          )}
         </div>
       </div>
+
+      {(fileName || status !== "empty") && !isProcessing ? (
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label="删除截图"
+          className="absolute right-0 top-0 inline-flex size-7 items-center justify-center rounded-full text-zinc-300 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-[#C9604D]"
+        >
+          <Trash2 className="size-3.5 stroke-[1.6]" />
+        </button>
+      ) : null}
     </motion.div>
   );
 }

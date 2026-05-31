@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import {
   Bell,
   ChevronRight,
-  ShieldAlert,
+  TrendingDown,
+  TrendingUp,
   UserCheck2,
   UserPlus,
   Video,
@@ -14,7 +15,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { fetchWithTimeout } from "@/lib/fetch-timeout";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import type { SopMemberStatus, SopCheckpoint } from "@/types";
 import type { AdminRequestRow } from "@/lib/team-join/service";
 import type { ExemptionRequestRow } from "../豁免申请列表";
 import { reviewExemptionRequest } from "../actions";
@@ -26,16 +26,9 @@ import type {
   CockpitSummary,
   PendingSubmissionRow,
   PendingVideoRow,
-  PendingViolationRow,
 } from "./admin-first-screen-loader";
 import { RemindLogDialog } from "./remind-log-dialog";
 import { VideoPreviewDialog } from "./queue-quick-preview";
-
-const SOP_CHECKPOINT_MAP: Record<string, SopCheckpoint[]> = {
-  "待筛视频": ["VIDEO"],
-  "待审违规": ["SCRIPT", "TOPIC"],
-  "待催交成员": ["DATA_REPORT", "MORNING_REVIEW"],
-};
 
 const EXEMPTION_TYPE_LABELS: Record<string, string> = {
   yesterday: "昨日",
@@ -45,12 +38,6 @@ const EXEMPTION_TYPE_LABELS: Record<string, string> = {
   "3days": "多日",
   "4days": "多日",
   "5days": "多日",
-};
-
-const RISK_RAIL: Record<string, string> = {
-  high: "border-l-[#C9604D]",
-  medium: "border-l-[#D99E55]",
-  low: "border-l-zinc-200",
 };
 
 function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null = null) {
@@ -85,37 +72,6 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null
   return { data, error };
 }
 
-function useSopOverdueCount(date: string) {
-  const { data } = useSafeFetch<{ ok: boolean; members: SopMemberStatus[] }>(
-    `/api/sop/status?date=${date}`,
-    60_000,
-    null,
-  );
-  const members = data?.ok ? data.members : [];
-  const counts = useCallback(
-    (checkpoints: SopCheckpoint[]) => {
-      let n = 0;
-      for (const m of members) {
-        for (const cp of checkpoints) {
-          if (m.statuses[cp] === "OVERDUE") n++;
-        }
-      }
-      return n;
-    },
-    [members],
-  );
-  return { counts };
-}
-
-function OverdueBadge({ count }: { count: number }) {
-  if (count <= 0) return null;
-  return (
-    <span className="ml-1 inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-medium tabular-nums text-white">
-      {count > 99 ? "99+" : count}
-    </span>
-  );
-}
-
 interface CardShellProps {
   title: string;
   icon: React.ReactNode;
@@ -123,7 +79,6 @@ interface CardShellProps {
   totalTone: "neutral" | "warning" | "danger";
   empty: string;
   hasContent: boolean;
-  overdueCount?: number;
   headerRight?: React.ReactNode;
   totalNote?: React.ReactNode;
   className?: string;
@@ -137,7 +92,6 @@ function CardShell({
   totalTone,
   empty,
   hasContent,
-  overdueCount,
   headerRight,
   totalNote,
   className,
@@ -169,7 +123,6 @@ function CardShell({
             {total}
           </span>
           {totalNote}
-          <OverdueBadge count={overdueCount ?? 0} />
         </div>
         <div className="flex shrink-0 items-center gap-2">{headerRight}</div>
       </header>
@@ -200,16 +153,20 @@ function ViewAllLink({ href, label = "查看全部" }: { href: string; label?: s
   );
 }
 
-/* ── 1. 待筛视频 ── */
+/* ── 1. 异常视频 ── */
+function formatPct(pct: number | null): string {
+  if (pct == null) return "";
+  const rounded = Math.round(pct);
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+}
+
 function PendingVideosCard({
   date,
   initialRows,
-  overdueCount,
   total,
 }: {
   date: string;
   initialRows: PendingVideoRow[];
-  overdueCount: number;
   total: number;
 }) {
   const { data } = useSafeFetch<{ data: PendingVideoRow[] }>(
@@ -223,27 +180,17 @@ function PendingVideosCard({
   return (
     <>
       <CardShell
-        title="待筛视频"
+        title="异常视频"
         icon={<Video className="size-4 stroke-[1.5]" />}
         total={total}
         totalTone="warning"
-        empty="今天的视频都已打标且无异常"
+        empty="今天没有暴涨或腰斩的视频"
         hasContent={rows.length > 0}
-        overdueCount={overdueCount}
-        headerRight={<ViewAllLink href="/admin/videos?view=pending" />}
+        headerRight={<ViewAllLink href="/admin/content?view=all" />}
       >
         <ul className="space-y-0.5">
           {rows.slice(0, 5).map((row) => {
-            const stateDot = row.anomaly_flag
-              ? "bg-[#C9604D]"
-              : !row.has_tags
-                ? "bg-zinc-300"
-                : "bg-[#6FAA7D]";
-            const stateText = row.anomaly_flag
-              ? "异常"
-              : !row.has_tags
-                ? "未打标"
-                : "已打标";
+            const isSurge = row.play_change_signal === "surge";
             return (
               <li key={row.id}>
                 <button
@@ -251,15 +198,35 @@ function PendingVideosCard({
                   onClick={() => setActiveRow(row)}
                   className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-zinc-50"
                 >
-                  <span className={cn("size-1.5 shrink-0 rounded-full", stateDot)} />
+                  <span
+                    className={cn(
+                      "flex size-5 shrink-0 items-center justify-center",
+                      isSurge ? "text-[#C9604D]" : "text-[#6FAA7D]",
+                    )}
+                  >
+                    {isSurge ? (
+                      <TrendingUp className="size-4 stroke-[1.75]" />
+                    ) : (
+                      <TrendingDown className="size-4 stroke-[1.75]" />
+                    )}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-medium tracking-tight text-zinc-800">
                       {row.account_name}
                     </p>
                     <p className="mt-0.5 truncate text-[11px] text-zinc-400">
-                      {row.submitted_by_name ?? "未知成员"} · {row.report_date} · {stateText}
+                      {row.submitted_by_name ?? "未知成员"} · {isSurge ? "暴涨" : "腰斩"}{" "}
+                      {formatPct(row.play_count_change_pct)}
                     </p>
                   </div>
+                  <span
+                    className={cn(
+                      "shrink-0 text-[12px] font-medium tabular-nums",
+                      isSurge ? "text-[#C9604D]" : "text-[#6FAA7D]",
+                    )}
+                  >
+                    {(row.current_play_count ?? 0).toLocaleString()}
+                  </span>
                 </button>
               </li>
             );
@@ -275,156 +242,7 @@ function PendingVideosCard({
   );
 }
 
-/* ── 2. 待审违规 ── */
-function PendingViolationsCard({
-  initialRows,
-  overdueCount,
-  total,
-}: {
-  initialRows: PendingViolationRow[];
-  overdueCount: number;
-  total: number;
-}) {
-  const { data } = useSafeFetch<{ data: PendingViolationRow[] }>(
-    `/api/admin/cockpit/pending-violations?limit=10`,
-    180_000,
-    { data: initialRows },
-  );
-  const rows = data?.data ?? [];
-  const [handledMap, setHandledMap] = useState<Record<string, "verified" | "rejected">>({});
-  const [reviewing, setReviewing] = useState(false);
-
-  const handledCount = useMemo(
-    () => Object.keys(handledMap).length,
-    [handledMap],
-  );
-
-  async function handleReview(row: PendingViolationRow, status: "verified" | "rejected") {
-    if (reviewing) return;
-    const resultLabel = status === "verified" ? "已批准" : "已拒绝";
-    setHandledMap((prev) => ({ ...prev, [row.id]: status }));
-    setReviewing(true);
-
-    toast.success(resultLabel, {
-      action: {
-        label: "撤销",
-        onClick: () => {
-          setHandledMap((prev) => {
-            const next = { ...prev };
-            delete next[row.id];
-            return next;
-          });
-        },
-      },
-    });
-
-    try {
-      const res = await fetch(`/api/violations/${row.id}/review`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status,
-          risk_level: row.risk_level ?? null,
-          admin_conclusion: null,
-          suggested_action: null,
-        }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("操作失败");
-    } catch (e) {
-      setHandledMap((prev) => {
-        const next = { ...prev };
-        delete next[row.id];
-        return next;
-      });
-      feedbackToast.error(e instanceof Error ? e.message : "操作失败");
-    } finally {
-      setReviewing(false);
-    }
-  }
-
-  return (
-    <CardShell
-      title="待复核"
-      icon={<ShieldAlert className="size-4 stroke-[1.5]" />}
-      total={total}
-      totalTone="danger"
-      empty="当前没有需要复核的案例"
-      hasContent={rows.length > 0}
-      overdueCount={overdueCount}
-      headerRight={<ViewAllLink href="/violations?perspective=review" />}
-      totalNote={
-        handledCount > 0 ? (
-          <span className="text-[11px] text-zinc-400">(已处理 {handledCount})</span>
-        ) : null
-      }
-    >
-      <ul className="space-y-0.5">
-        {rows.slice(0, 5).map((row) => {
-          const railClass = RISK_RAIL[row.risk_level ?? ""] ?? "border-l-zinc-200";
-          const handled = handledMap[row.id];
-          return (
-            <li
-              key={row.id}
-              className={cn(
-                "group relative",
-                handled && "opacity-40 pointer-events-none",
-              )}
-            >
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-start gap-2 border-l-[2px] pl-3 pr-2 py-1.5 text-left transition-colors hover:bg-zinc-50",
-                  railClass,
-                )}
-              >
-                <div className="min-w-0 flex-1 pr-[100px]">
-                  <p className="line-clamp-2 text-[13px] leading-[1.55] tracking-tight text-zinc-700">
-                    {row.script_text}
-                  </p>
-                  <p className="mt-0.5 truncate text-[11px] text-zinc-400">
-                    {row.submitted_by_name ?? "未知成员"}
-                    {row.category ? ` · ${row.category}` : ""}
-                  </p>
-                </div>
-              </button>
-              {handled ? (
-                <span className="absolute top-1 right-2 text-[10px] text-zinc-400">
-                  {handled === "verified" ? "已批准" : "已拒绝"}
-                </span>
-              ) : (
-                <div className="absolute right-2 top-1/2 flex -translate-y-1/2 translate-x-2 items-center gap-1.5 opacity-0 pointer-events-none transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-hover:pointer-events-auto">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleReview(row, "verified");
-                    }}
-                    className="inline-flex h-7 items-center rounded-lg bg-[#D97757] px-2.5 text-[12px] text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
-                  >
-                    批准
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleReview(row, "rejected");
-                    }}
-                    className="inline-flex h-7 items-center rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-700 transition-colors hover:border-zinc-300 active:translate-y-0"
-                  >
-                    拒绝
-                  </button>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </CardShell>
-  );
-}
-
-/* ── 3. 待审批合并卡（催交 / 豁免 / 入团） ── */
+/* ── 2. 待审批合并卡（催交 / 豁免 / 入团） ── */
 type ReviewTab = "submissions" | "exemptions" | "joins";
 
 function HoverActions({
@@ -485,7 +303,6 @@ function ReviewBatchCard({
   initialJoins,
   submissionsTotal,
   exemptionsTotal,
-  submissionsOverdue,
 }: {
   date: string;
   initialSubmissions: PendingSubmissionRow[];
@@ -493,7 +310,6 @@ function ReviewBatchCard({
   initialJoins: AdminRequestRow[];
   submissionsTotal: number;
   exemptionsTotal: number;
-  submissionsOverdue: number;
 }) {
   const [activeTab, setActiveTab] = useState<ReviewTab>(() => {
     if (initialJoins.length > 0) return "joins";
@@ -510,13 +326,11 @@ function ReviewBatchCard({
 
   const [exemptions, setExemptions] = useState(initialExemptions);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
     setExemptions(initialExemptions);
   }, [initialExemptions]);
 
   const [joins, setJoins] = useState(initialJoins);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
     setJoins(initialJoins);
   }, [initialJoins]);
 
@@ -659,7 +473,6 @@ function ReviewBatchCard({
             {handledCount > 0 ? (
               <span className="text-[11px] text-zinc-400">(已处理 {handledCount})</span>
             ) : null}
-            <OverdueBadge count={submissionsOverdue} />
           </div>
           <div className="flex shrink-0 items-center gap-2">{headerActions}</div>
         </header>
@@ -858,14 +671,6 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
-function computeGapDays(lastReport: string | null, todayStr: string): number | null {
-  if (!lastReport) return null;
-  const a = new Date(lastReport);
-  const b = new Date(todayStr);
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return null;
-  return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000));
-}
-
 export function AdminQueueSection({
   date,
   initialSummary = null,
@@ -875,7 +680,6 @@ export function AdminQueueSection({
   initialSummary?: CockpitSummary | null;
   initialData?: {
     pendingVideos: PendingVideoRow[];
-    pendingViolations: PendingViolationRow[];
     pendingSubmissions: PendingSubmissionRow[];
     pendingExemptions: ExemptionRequestRow[];
     pendingJoinRequests: AdminRequestRow[];
@@ -883,7 +687,6 @@ export function AdminQueueSection({
 }) {
   const resolved = initialData ?? {
     pendingVideos: [],
-    pendingViolations: [],
     pendingSubmissions: [],
     pendingExemptions: [],
     pendingJoinRequests: [],
@@ -894,50 +697,28 @@ export function AdminQueueSection({
     180_000,
     initialSummary,
   );
-  const { counts } = useSopOverdueCount(date);
 
   const totals = {
     videos: summary?.pending_videos ?? 0,
-    violations: summary?.pending_violations ?? 0,
     submissions: summary?.pending_submissions ?? 0,
     exemptions: summary?.pending_exemptions ?? 0,
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-[20px] font-semibold tracking-tight text-zinc-800">
-          团队管理
-        </h1>
-        <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
-          今天该处理谁
-        </span>
-      </div>
-
-      <div className="grid items-stretch gap-1 lg:grid-cols-2 xl:grid-cols-3">
-        <PendingVideosCard
-          date={date}
-          initialRows={resolved.pendingVideos}
-          overdueCount={counts(SOP_CHECKPOINT_MAP["待筛视频"])}
-          total={totals.videos}
-        />
-        <PendingViolationsCard
-          initialRows={resolved.pendingViolations}
-          overdueCount={counts(SOP_CHECKPOINT_MAP["待审违规"])}
-          total={totals.violations}
-        />
-        <div className="lg:col-span-2 xl:col-span-1">
-          <ReviewBatchCard
-            date={date}
-            initialSubmissions={resolved.pendingSubmissions}
-            initialExemptions={resolved.pendingExemptions}
-            initialJoins={resolved.pendingJoinRequests}
-            submissionsTotal={totals.submissions}
-            exemptionsTotal={totals.exemptions}
-            submissionsOverdue={counts(SOP_CHECKPOINT_MAP["待催交成员"])}
-          />
-        </div>
-      </div>
+    <div className="grid items-stretch gap-3 lg:grid-cols-2">
+      <PendingVideosCard
+        date={date}
+        initialRows={resolved.pendingVideos}
+        total={totals.videos}
+      />
+      <ReviewBatchCard
+        date={date}
+        initialSubmissions={resolved.pendingSubmissions}
+        initialExemptions={resolved.pendingExemptions}
+        initialJoins={resolved.pendingJoinRequests}
+        submissionsTotal={totals.submissions}
+        exemptionsTotal={totals.exemptions}
+      />
     </div>
   );
 }

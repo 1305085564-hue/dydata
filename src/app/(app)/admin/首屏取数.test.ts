@@ -162,7 +162,6 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
 
   const summaryRow = {
     pending_videos: 8,
-    pending_violations: 5,
     pending_submissions: 3,
     pending_exemptions: 2,
   };
@@ -170,9 +169,12 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
     {
       id: "video-1",
       account_name: "账号A",
-      report_date: "2026-05-31",
-      has_tags: false,
-      anomaly_flag: true,
+      video_title: "暴涨视频",
+      published_at: "2026-05-31T08:00:00.000Z",
+      play_change_signal: "surge",
+      play_count_change_pct: 220,
+      current_play_count: 32000,
+      previous_play_count: 1000,
       submitted_by: "user-1",
       submitted_by_name: "张三",
     },
@@ -184,17 +186,6 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
       team_id: "team-1",
       team_name: "运营一组",
       last_report_date: "2026-05-30",
-    },
-  ];
-  const pendingViolations = [
-    {
-      id: "violation-1",
-      script_text: "违规脚本片段",
-      category: "敏感",
-      risk_level: "high",
-      created_at: "2026-05-31T08:00:00.000Z",
-      submitted_by: "user-1",
-      submitted_by_name: "张三",
     },
   ];
   const pendingExemptions: ExemptionRequestRow[] = [
@@ -229,7 +220,7 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
           if (name === "admin_cockpit_summary") {
             return Promise.resolve({ data: summaryRow, error: null });
           }
-          if (name === "admin_pending_videos_today") {
+          if (name === "admin_anomaly_videos_today") {
             return Promise.resolve({ data: pendingVideos, error: null });
           }
           if (name === "admin_pending_submissions_today") {
@@ -251,24 +242,21 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
       },
     }),
     listPendingRequestsForAdmin: async () => ({ ok: true, data: pendingJoinRequests }),
-    loadPendingViolationRows: async () => pendingViolations,
     loadPendingExemptionRows: async () => pendingExemptions,
   });
 
   assert.deepEqual(rpcCalls, [
     "admin_cockpit_summary",
-    "admin_pending_videos_today",
+    "admin_anomaly_videos_today",
     "admin_pending_submissions_today",
   ]);
   assert.deepEqual(result, {
     summary: {
       pending_videos: 1,
-      pending_violations: 1,
       pending_submissions: 1,
       pending_exemptions: 2,
     },
     pendingVideos,
-    pendingViolations,
     pendingSubmissions,
     pendingExemptions,
     pendingJoinRequests,

@@ -4,10 +4,8 @@ import { redirect } from "next/navigation";
 import { getUserPermissions } from "@/lib/permissions";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 
-import {
-  AdminQueueSection,
-} from "./components/admin-cockpit";
 import { AiAlertPanel } from "./components/ai-alert-panel";
+import { AdminQueueSection } from "./components/admin-cockpit";
 import { loadAdminFirstScreenData } from "./components/admin-first-screen-loader";
 
 interface AdminPageProps {
@@ -60,9 +58,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const params = await searchParams;
   const queryDate = params.date || new Date().toISOString().split("T")[0];
+
   const dataStart = nowMs();
-  const initialData = await loadAdminFirstScreenData(queryDate);
+  const queueData = await loadAdminFirstScreenData(queryDate);
   const dataMs = nowMs() - dataStart;
+
   const totalMs = nowMs() - totalStart;
 
   queueFirstScreenObservation({
@@ -83,19 +83,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   });
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
+      <AiAlertPanel />
       <AdminQueueSection
         date={queryDate}
-        initialSummary={initialData.summary}
+        initialSummary={queueData.summary}
         initialData={{
-          pendingVideos: initialData.pendingVideos,
-          pendingViolations: initialData.pendingViolations,
-          pendingSubmissions: initialData.pendingSubmissions,
-          pendingExemptions: initialData.pendingExemptions,
-          pendingJoinRequests: initialData.pendingJoinRequests,
+          pendingVideos: queueData.pendingVideos,
+          pendingSubmissions: queueData.pendingSubmissions,
+          pendingExemptions: queueData.pendingExemptions,
+          pendingJoinRequests: queueData.pendingJoinRequests,
         }}
       />
-      <AiAlertPanel />
     </div>
   );
 }

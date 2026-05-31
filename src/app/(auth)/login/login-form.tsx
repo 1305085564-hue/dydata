@@ -88,7 +88,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   }, [notice]);
 
   return (
-    <AuthShell title="回到工作台" subtitle="继续处理日报、经营分析和成长复盘">
+    <AuthShell title="回到工作台">
       <form action={formAction} className="space-y-5">
         {showExpiredAlert && (
           <div className="flex items-start gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5">
