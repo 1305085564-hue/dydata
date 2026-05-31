@@ -71,7 +71,7 @@ function PlayCountWithSignal({ video, playCount }: { video: VideoRow; playCount:
     return <span>{playCount != null ? formatNumber(playCount) : "-"}</span>;
   }
   const isUp = video.play_change_signal === "surge";
-  const color = isUp ? "#B5651D" : "#2E7D32";
+  const color = isUp ? "#B42318" : "#166534";
   const pct = isUp ? video.play_count_change_pct! : Math.abs(video.play_count_change_pct!);
   return (
     <TooltipProvider>

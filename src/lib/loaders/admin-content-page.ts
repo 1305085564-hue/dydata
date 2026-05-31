@@ -43,6 +43,8 @@ const ADMIN_CONTENT_FIRST_SCREEN_RPC = "admin_content_first_screen";
 export const ADMIN_CONTENT_INITIAL_LIMIT = 20;
 const ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT = 60;
 const FULL_QUERY_BATCH_SIZE = 200;
+const PLAY_CHANGE_SURGE_DELTA_MIN = 5_000;
+const PLAY_CHANGE_HALVE_CURRENT_FLOOR = 5_000;
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -209,9 +211,15 @@ function attachPlayChangeSignals({
     }
 
     const playCountChangePct = ((currentPlayCount - previousPlayCount) / previousPlayCount) * 100;
+    const isSurge =
+      currentPlayCount - previousPlayCount >= PLAY_CHANGE_SURGE_DELTA_MIN &&
+      playCountChangePct >= 100;
+    const isHalve =
+      currentPlayCount >= PLAY_CHANGE_HALVE_CURRENT_FLOOR &&
+      playCountChangePct <= -50;
     const playChangeSignal: Video["play_change_signal"] =
-      playCountChangePct >= 100 ? "surge"
-        : playCountChangePct <= -50 ? "halve"
+      isSurge ? "surge"
+        : isHalve ? "halve"
           : null;
 
     return {
@@ -219,6 +227,43 @@ function attachPlayChangeSignals({
       previous_play_count: previousPlayCount,
       play_count_change_pct: playCountChangePct,
       play_change_signal: playChangeSignal,
+    };
+  });
+}
+
+function enforcePlayChangeThresholdsOnVideos(videos: VideoRow[], currentSnapshots: PreviousSnapshotRow[]) {
+  const currentPlayCountByVideoId = buildLatestPlayCountByVideoId(currentSnapshots);
+
+  return videos.map((video) => {
+    if (!video.play_change_signal || video.play_count_change_pct == null) {
+      return video;
+    }
+
+    const currentPlayCount = currentPlayCountByVideoId.get(video.id);
+    const previousPlayCount = video.previous_play_count ?? null;
+    if (currentPlayCount == null || previousPlayCount == null || previousPlayCount <= 0) {
+      return {
+        ...video,
+        play_count_change_pct: null,
+        play_change_signal: null,
+      };
+    }
+
+    const isSurge =
+      currentPlayCount - previousPlayCount >= PLAY_CHANGE_SURGE_DELTA_MIN &&
+      video.play_count_change_pct >= 100;
+    const isHalve =
+      currentPlayCount >= PLAY_CHANGE_HALVE_CURRENT_FLOOR &&
+      video.play_count_change_pct <= -50;
+
+    if (isSurge || isHalve) {
+      return video;
+    }
+
+    return {
+      ...video,
+      play_count_change_pct: null,
+      play_change_signal: null,
     };
   });
 }
@@ -528,7 +573,14 @@ export async function loadAdminContentInitialData(args: {
     });
   }
 
-  return data as AdminContentPageData;
+  const initialData = data as AdminContentPageData;
+  return {
+    ...initialData,
+    videos: enforcePlayChangeThresholdsOnVideos(
+      initialData.videos as VideoRow[],
+      initialData.snapshots as PreviousSnapshotRow[],
+    ),
+  };
 }
 
 export async function loadAdminContentFullData(args: {
@@ -548,11 +600,14 @@ export async function loadAdminContentFullData(args: {
 export const __internal = {
   ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
   FULL_QUERY_BATCH_SIZE,
+  PLAY_CHANGE_SURGE_DELTA_MIN,
+  PLAY_CHANGE_HALVE_CURRENT_FLOOR,
   ADMIN_CONTENT_FIRST_SCREEN_RPC,
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
   buildWorkflowSummary,
   attachPlayChangeSignals,
+  enforcePlayChangeThresholdsOnVideos,
   findPreviousVideoByVisibleId,
   limitInitialVideos,
   normalizeVideoRows,

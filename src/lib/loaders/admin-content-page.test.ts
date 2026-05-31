@@ -100,24 +100,24 @@ test("内容管理播放涨跌信号按 published_at 找同账号上一条", () 
       buildContentVideo({ id: "drop", published_at: "2026-05-02T00:00:00.000Z" }),
     ],
     currentSnapshots: [
-      { video_id: "current", play_count: 300, captured_at: "2026-05-04T00:00:00.000Z" },
-      { video_id: "drop", play_count: 40, captured_at: "2026-05-03T00:00:00.000Z" },
+      { video_id: "current", play_count: 12_000, captured_at: "2026-05-04T00:00:00.000Z" },
+      { video_id: "drop", play_count: 5_000, captured_at: "2026-05-03T00:00:00.000Z" },
     ],
     previousVideos: [
       { id: "previous", account_id: "account-1", published_at: "2026-05-02T12:00:00.000Z" },
       { id: "drop-previous", account_id: "account-1", published_at: "2026-05-01T00:00:00.000Z" },
     ],
     previousSnapshots: [
-      { video_id: "previous", play_count: 100, captured_at: "2026-05-03T12:00:00.000Z" },
-      { video_id: "drop-previous", play_count: 100, captured_at: "2026-05-02T00:00:00.000Z" },
+      { video_id: "previous", play_count: 5_000, captured_at: "2026-05-03T12:00:00.000Z" },
+      { video_id: "drop-previous", play_count: 10_500, captured_at: "2026-05-02T00:00:00.000Z" },
     ],
   });
 
-  assert.equal(rows[0]?.previous_play_count, 100);
-  assert.equal(rows[0]?.play_count_change_pct, 200);
+  assert.equal(rows[0]?.previous_play_count, 5_000);
+  assert.equal(rows[0]?.play_count_change_pct, 140);
   assert.equal(rows[0]?.play_change_signal, "surge");
-  assert.equal(rows[1]?.previous_play_count, 100);
-  assert.equal(rows[1]?.play_count_change_pct, -60);
+  assert.equal(rows[1]?.previous_play_count, 10_500);
+  assert.equal(rows[1]?.play_count_change_pct, -52.38095238095239);
   assert.equal(rows[1]?.play_change_signal, "halve");
 });
 
@@ -145,6 +145,94 @@ test("内容管理播放涨跌上一条播放为 0 时不展示信号", () => {
   assert.equal(row?.previous_play_count, 0);
   assert.equal(row?.play_count_change_pct, null);
   assert.equal(row?.play_change_signal, null);
+});
+
+test("内容管理小基数翻倍不展示信号", () => {
+  const [row] = __internal.attachPlayChangeSignals({
+    videos: [buildContentVideo({ id: "current" })],
+    currentSnapshots: [{ video_id: "current", play_count: 9_000, captured_at: "2026-05-04T00:00:00.000Z" }],
+    previousVideos: [{ id: "previous", account_id: "account-1", published_at: "2026-05-02T00:00:00.000Z" }],
+    previousSnapshots: [{ video_id: "previous", play_count: 4_500, captured_at: "2026-05-03T00:00:00.000Z" }],
+  });
+
+  assert.equal(row?.previous_play_count, 4_500);
+  assert.equal(row?.play_count_change_pct, 100);
+  assert.equal(row?.play_change_signal, null);
+});
+
+test("内容管理绝对增量超过 5000 的翻倍仍展示信号", () => {
+  const [row] = __internal.attachPlayChangeSignals({
+    videos: [buildContentVideo({ id: "current" })],
+    currentSnapshots: [{ video_id: "current", play_count: 31_000, captured_at: "2026-05-04T00:00:00.000Z" }],
+    previousVideos: [{ id: "previous", account_id: "account-1", published_at: "2026-05-02T00:00:00.000Z" }],
+    previousSnapshots: [{ video_id: "previous", play_count: 1_176, captured_at: "2026-05-03T00:00:00.000Z" }],
+  });
+
+  assert.equal(row?.previous_play_count, 1_176);
+  assert.equal(row?.play_count_change_pct, 2536.0544217687075);
+  assert.equal(row?.play_change_signal, "surge");
+});
+
+test("内容管理小基数腰斩不展示信号", () => {
+  const [row] = __internal.attachPlayChangeSignals({
+    videos: [buildContentVideo({ id: "current" })],
+    currentSnapshots: [{ video_id: "current", play_count: 4_900, captured_at: "2026-05-04T00:00:00.000Z" }],
+    previousVideos: [{ id: "previous", account_id: "account-1", published_at: "2026-05-02T00:00:00.000Z" }],
+    previousSnapshots: [{ video_id: "previous", play_count: 10_000, captured_at: "2026-05-03T00:00:00.000Z" }],
+  });
+
+  assert.equal(row?.previous_play_count, 10_000);
+  assert.equal(row?.play_count_change_pct, -51);
+  assert.equal(row?.play_change_signal, null);
+});
+
+test("内容管理播放涨跌信号阈值合同固定为涨幅增量 5000 与腰斩底线 5000", () => {
+  assert.equal(__internal.PLAY_CHANGE_SURGE_DELTA_MIN, 5_000);
+  assert.equal(__internal.PLAY_CHANGE_HALVE_CURRENT_FLOOR, 5_000);
+});
+
+test("内容管理首屏与 full 回填使用同一套播放涨跌阈值", () => {
+  const lowBaseSurge = __internal.attachPlayChangeSignals({
+    videos: [buildContentVideo({ id: "surge-low-base" })],
+    currentSnapshots: [{ video_id: "surge-low-base", play_count: 9_000, captured_at: "2026-05-04T00:00:00.000Z" }],
+    previousVideos: [{ id: "surge-prev", account_id: "account-1", published_at: "2026-05-02T00:00:00.000Z" }],
+    previousSnapshots: [{ video_id: "surge-prev", play_count: 4_800, captured_at: "2026-05-03T00:00:00.000Z" }],
+  })[0];
+
+  const lowFloorHalve = __internal.attachPlayChangeSignals({
+    videos: [buildContentVideo({ id: "halve-low-floor" })],
+    currentSnapshots: [{ video_id: "halve-low-floor", play_count: 4_800, captured_at: "2026-05-04T00:00:00.000Z" }],
+    previousVideos: [{ id: "halve-prev", account_id: "account-1", published_at: "2026-05-02T00:00:00.000Z" }],
+    previousSnapshots: [{ video_id: "halve-prev", play_count: 12_000, captured_at: "2026-05-03T00:00:00.000Z" }],
+  })[0];
+
+  assert.equal(lowBaseSurge?.play_change_signal, null);
+  assert.equal(lowFloorHalve?.play_change_signal, null);
+});
+
+test("内容管理首屏 RPC 结果会按服务端统一规则兜底校正", () => {
+  const rows = __internal.enforcePlayChangeThresholdsOnVideos([
+    buildContentVideo({
+      id: "old-rpc-low-surge",
+      previous_play_count: 4_800,
+      play_count_change_pct: 87.5,
+      play_change_signal: "surge",
+    }),
+    buildContentVideo({
+      id: "valid-surge",
+      previous_play_count: 1_176,
+      play_count_change_pct: 2536.0544217687075,
+      play_change_signal: "surge",
+    }),
+  ], [
+    { video_id: "old-rpc-low-surge", play_count: 9_000, captured_at: "2026-05-04T00:00:00.000Z" },
+    { video_id: "valid-surge", play_count: 31_000, captured_at: "2026-05-04T00:00:00.000Z" },
+  ]);
+
+  assert.equal(rows[0]?.play_change_signal, null);
+  assert.equal(rows[0]?.play_count_change_pct, null);
+  assert.equal(rows[1]?.play_change_signal, "surge");
+  assert.equal(rows[1]?.play_count_change_pct, 2536.0544217687075);
 });
 
 test("内容管理首屏条数合同收紧到 20", () => {
