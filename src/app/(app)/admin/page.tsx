@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 
 import { getUserPermissions } from "@/lib/permissions";
 import { canAccessAdminPath } from "@/lib/analytics-access";
+import { aggregateDashboardAlerts } from "@/lib/alert-sources/aggregator";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
+import type { BusinessRole } from "@/lib/business-role";
+import type { AlertAggregationResult } from "@/lib/alert-sources/types";
 
 import { AiAlertPanel } from "./components/ai-alert-panel";
 import { AdminQueueSection } from "./components/admin-cockpit";
@@ -17,6 +22,10 @@ type FirstScreenMetrics = {
   context: number;
   data: number;
   total: number;
+};
+
+type DashboardAlertsData = AlertAggregationResult & {
+  meta?: { generatedAt: string; scope: "all" | "team"; teamId: string | null };
 };
 
 function nowMs() {
@@ -47,6 +56,42 @@ export async function recordAdminCockpitFirstScreenObservation(
   });
 }
 
+async function loadAlertsForSSR(userId: string): Promise<{ data: DashboardAlertsData; fetchedAt: number } | null> {
+  try {
+    const supabase = createAdminClient();
+    const rawScope = await buildDataAccessScope(supabase, userId);
+    if (!rawScope) return null;
+
+    const br = rawScope.businessRole as BusinessRole;
+    if (br !== "owner" && br !== "team_admin") return null;
+
+    const result = await aggregateDashboardAlerts({
+      supabase,
+      scope: {
+        actorUserId: rawScope.userId,
+        businessRole: br,
+        teamId: rawScope.teamId,
+        visibleUserIds: rawScope.visibleUserIds,
+      },
+      now: new Date(),
+    });
+
+    return {
+      data: {
+        ...result,
+        meta: {
+          generatedAt: new Date().toISOString(),
+          scope: br === "owner" ? "all" : "team",
+          teamId: rawScope.teamId,
+        },
+      },
+      fetchedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const totalStart = nowMs();
   const authStart = nowMs();
@@ -60,7 +105,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const queryDate = params.date || new Date().toISOString().split("T")[0];
 
   const dataStart = nowMs();
-  const queueData = await loadAdminFirstScreenData(queryDate);
+  const [queueData, alertsResult] = await Promise.all([
+    loadAdminFirstScreenData(queryDate),
+    loadAlertsForSSR(permissionInfo.userId),
+  ]);
   const dataMs = nowMs() - dataStart;
 
   const totalMs = nowMs() - totalStart;
@@ -84,7 +132,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <div className="space-y-6">
-      <AiAlertPanel />
+      <AiAlertPanel initialData={alertsResult?.data ?? null} initialUpdatedAt={alertsResult?.fetchedAt ?? null} />
       <AdminQueueSection
         date={queryDate}
         initialSummary={queueData.summary}
