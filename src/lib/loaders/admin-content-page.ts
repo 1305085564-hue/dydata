@@ -42,6 +42,7 @@ const ADMIN_CONTENT_FIRST_SCREEN_RPC = "admin_content_first_screen";
 
 export const ADMIN_CONTENT_INITIAL_LIMIT = 20;
 const ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT = 60;
+const FULL_QUERY_BATCH_SIZE = 200;
 
 export interface AdminContentPageData {
   videos: VideoRow[];
@@ -83,6 +84,22 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
 
 function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
+}
+
+async function selectInBatches<Row>(
+  ids: string[],
+  run: (batch: string[]) => Promise<{ data: unknown[] | null }>,
+) {
+  const rows: Row[] = [];
+  for (let index = 0; index < ids.length; index += FULL_QUERY_BATCH_SIZE) {
+    const batch = ids.slice(index, index + FULL_QUERY_BATCH_SIZE);
+    if (batch.length === 0) continue;
+    const { data } = await run(batch);
+    if (data?.length) {
+      rows.push(...(data as Row[]));
+    }
+  }
+  return rows;
 }
 
 function buildWorkflowSummary(videos: VideoRow[], cardStatusRows: FeedbackCardStatusRow[]) {
@@ -260,12 +277,16 @@ async function loadPlayChangeSignals({
     new Set(Array.from(previousVideoByVisibleId.values()).map((video) => video.id)),
   );
   const { data: previousSnapshots } = previousVideoIds.length > 0
-    ? await supabase
-        .from("video_metrics_snapshots")
-        .select(PREVIOUS_SNAPSHOT_SELECT)
-        .eq("snapshot_type", "24h")
-        .in("video_id", previousVideoIds)
-        .order("captured_at", { ascending: false })
+    ? {
+        data: await selectInBatches<PreviousSnapshotRow>(previousVideoIds, (batch) =>
+          Promise.resolve(supabase
+            .from("video_metrics_snapshots")
+            .select(PREVIOUS_SNAPSHOT_SELECT)
+            .eq("snapshot_type", "24h")
+            .in("video_id", batch)
+            .order("captured_at", { ascending: false })),
+        ),
+      }
     : { data: [] };
 
   return attachPlayChangeSignals({
@@ -372,59 +393,63 @@ export async function loadAdminContentPageData({
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
   const summaryVideoIds = mode === "initial" ? visibleVideoIds : scopedVideoIds;
   const shouldReuseFeedbackRowsForSummary = mode === "initial";
-  const [
-    { data: snapshots },
-    { data: segmentRows },
-    { data: feedbackCardRows },
-    { data: feedbackCardStatusRows },
-    { data: snapshotFlagRows },
-  ] = await Promise.all([
+  const [snapshots, segmentRows, feedbackCardRows, feedbackCardStatusRows, snapshotFlagRows] = await Promise.all([
     visibleVideoIds.length > 0
-      ? supabase
-          .from("video_metrics_snapshots")
-          .select(CONTENT_SNAPSHOT_SELECT)
-          .eq("snapshot_type", "24h")
-          .in("video_id", visibleVideoIds)
-          .order("captured_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
+      ? selectInBatches<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
+          Promise.resolve(supabase
+            .from("video_metrics_snapshots")
+            .select(CONTENT_SNAPSHOT_SELECT)
+            .eq("snapshot_type", "24h")
+            .in("video_id", batch)
+            .order("captured_at", { ascending: false })),
+        )
+      : Promise.resolve([]),
     visibleVideoIds.length > 0
-      ? supabase.from("video_content_segments").select("video_id").in("video_id", visibleVideoIds)
-      : Promise.resolve({ data: [] }),
+      ? selectInBatches<SegmentRow>(visibleVideoIds, (batch) =>
+          Promise.resolve(supabase.from("video_content_segments").select("video_id").in("video_id", batch)),
+        )
+      : Promise.resolve([]),
     visibleVideoIds.length > 0
-      ? serviceClient
-          .from("content_feedback_cards")
-          .select(CONTENT_FEEDBACK_CARD_SELECT)
-          .in("video_id", visibleVideoIds)
-      : Promise.resolve({ data: [] }),
+      ? selectInBatches<ContentFeedbackCard>(visibleVideoIds, (batch) =>
+          Promise.resolve(serviceClient
+            .from("content_feedback_cards")
+            .select(CONTENT_FEEDBACK_CARD_SELECT)
+            .in("video_id", batch)),
+        )
+      : Promise.resolve([]),
     shouldReuseFeedbackRowsForSummary
-      ? Promise.resolve({ data: [] })
+      ? Promise.resolve([])
       : summaryVideoIds.length > 0
-      ? serviceClient
-          .from("content_feedback_cards")
-          .select("video_id, card_status")
-          .in("video_id", summaryVideoIds)
-      : Promise.resolve({ data: [] }),
+      ? selectInBatches<FeedbackCardStatusRow>(summaryVideoIds, (batch) =>
+          Promise.resolve(serviceClient
+            .from("content_feedback_cards")
+            .select("video_id, card_status")
+            .in("video_id", batch)),
+        )
+      : Promise.resolve([]),
     mode === "full" && scopedVideoIds.length > 0
-      ? supabase
-          .from("video_metrics_snapshots")
-          .select("video_id")
-          .eq("snapshot_type", "24h")
-          .in("video_id", scopedVideoIds)
-      : Promise.resolve({ data: [] }),
+      ? selectInBatches<SnapshotVideoIdRow>(scopedVideoIds, (batch) =>
+          Promise.resolve(supabase
+            .from("video_metrics_snapshots")
+            .select("video_id")
+            .eq("snapshot_type", "24h")
+            .in("video_id", batch)),
+        )
+      : Promise.resolve([]),
   ]);
   const initialVisibleVideosWithSignals = await loadPlayChangeSignals({
     supabase,
     videos: initialVisibleVideos,
     previousCandidateVideos: videos,
-    currentSnapshots: (snapshots ?? []) as PreviousSnapshotRow[],
+    currentSnapshots: snapshots as PreviousSnapshotRow[],
   });
-  const snapshotVideoIds = new Set((snapshots ?? []).map((snapshot) => snapshot.video_id as string));
+  const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id as string));
   const snapshotSummaryVideoIds = mode === "initial"
     ? snapshotVideoIds
-    : new Set((snapshotFlagRows ?? []).map((row) => (row as SnapshotVideoIdRow).video_id));
-  const segmentedVideoIds = new Set((segmentRows ?? []).map((row) => (row as SegmentRow).video_id));
+    : new Set(snapshotFlagRows.map((row) => row.video_id));
+  const segmentedVideoIds = new Set(segmentRows.map((row) => row.video_id));
   const feedbackCardMap = new Map<string, ContentFeedbackCard>();
-  for (const row of (feedbackCardRows ?? []) as ContentFeedbackCard[]) {
+  for (const row of feedbackCardRows) {
     feedbackCardMap.set(row.video_id, row);
   }
   const feedbackCards = Object.fromEntries(
@@ -444,16 +469,16 @@ export async function loadAdminContentPageData({
   const workflowSummary = buildWorkflowSummary(
     videos,
     shouldReuseFeedbackRowsForSummary
-      ? ((feedbackCardRows ?? []) as ContentFeedbackCard[]).map((row) => ({
+      ? feedbackCardRows.map((row) => ({
           video_id: row.video_id,
           card_status: row.card_status,
         }))
-      : ((feedbackCardStatusRows ?? []) as FeedbackCardStatusRow[]),
+      : feedbackCardStatusRows,
   );
 
   return {
     videos: initialVisibleVideosWithSignals,
-    snapshots: (snapshots ?? []) as VideoMetricsSnapshot[],
+    snapshots,
     profiles: (profiles ?? [])
       .filter((profile) => visibleProfileIds.has(profile.id))
       .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" })),
