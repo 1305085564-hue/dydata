@@ -1,14 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   Bell,
   ChevronRight,
-  TrendingDown,
-  TrendingUp,
   UserCheck2,
   UserPlus,
-  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,74 +69,7 @@ function useSafeFetch<T>(url: string, intervalMs = 60_000, initialData: T | null
   return { data, error };
 }
 
-interface CardShellProps {
-  title: string;
-  icon: React.ReactNode;
-  total: number;
-  totalTone: "neutral" | "warning" | "danger";
-  empty: string;
-  hasContent: boolean;
-  headerRight?: React.ReactNode;
-  totalNote?: React.ReactNode;
-  className?: string;
-  children: React.ReactNode;
-}
-
-function CardShell({
-  title,
-  icon,
-  total,
-  totalTone,
-  empty,
-  hasContent,
-  headerRight,
-  totalNote,
-  className,
-  children,
-}: CardShellProps) {
-  const totalToneClass = {
-    neutral: total === 0 ? "text-zinc-300" : "text-zinc-800",
-    warning: total > 0 ? "text-[#D99E55]" : "text-zinc-300",
-    danger: total > 0 ? "text-[#C9604D]" : "text-zinc-300",
-  }[totalTone];
-
-  return (
-    <section
-      className={cn(
-        "relative flex h-[320px] flex-col rounded-2xl border border-zinc-200 bg-white",
-        className,
-      )}
-    >
-      <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3.5 pb-2.5">
-        <div className="flex min-w-0 items-baseline gap-2.5">
-          <span className="self-center text-zinc-400">{icon}</span>
-          <h3 className="text-[12px] font-medium tracking-tight text-zinc-600">{title}</h3>
-          <span
-            className={cn(
-              "text-[18px] font-medium leading-none tabular-nums",
-              totalToneClass,
-            )}
-          >
-            {total}
-          </span>
-          {totalNote}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">{headerRight}</div>
-      </header>
-      <div className="flex flex-1 min-h-0 flex-col border-t border-zinc-100">
-        {!hasContent ? (
-          <div className="flex flex-1 items-center justify-center px-3 py-6">
-            <p className="text-[12px] text-zinc-400">{empty}</p>
-          </div>
-        ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-track]:bg-transparent">
-            {children}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
+// CardShell 已删除，新版用 AnomalyTimeline 替代 PendingVideosCard
 
 function ViewAllLink({ href, label = "查看全部" }: { href: string; label?: string }) {
   return (
@@ -153,96 +83,13 @@ function ViewAllLink({ href, label = "查看全部" }: { href: string; label?: s
   );
 }
 
-/* ── 1. 异常视频 ── */
 function formatPct(pct: number | null): string {
   if (pct == null) return "";
   const rounded = Math.round(pct);
   return `${rounded > 0 ? "+" : ""}${rounded}%`;
 }
 
-function PendingVideosCard({
-  date,
-  initialRows,
-  total,
-}: {
-  date: string;
-  initialRows: PendingVideoRow[];
-  total: number;
-}) {
-  const { data } = useSafeFetch<{ data: PendingVideoRow[] }>(
-    `/api/admin/cockpit/pending-videos?date=${date}&limit=10`,
-    180_000,
-    { data: initialRows },
-  );
-  const rows = data?.data ?? [];
-  const [activeRow, setActiveRow] = useState<PendingVideoRow | null>(null);
-
-  return (
-    <>
-      <CardShell
-        title="异常视频"
-        icon={<Video className="size-4 stroke-[1.5]" />}
-        total={total}
-        totalTone="warning"
-        empty="今天没有暴涨或腰斩的视频"
-        hasContent={rows.length > 0}
-        headerRight={<ViewAllLink href="/admin/content?view=all" />}
-      >
-        <ul className="space-y-0.5">
-          {rows.slice(0, 5).map((row) => {
-            const isSurge = row.play_change_signal === "surge";
-            return (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  onClick={() => setActiveRow(row)}
-                  className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-zinc-50"
-                >
-                  <span
-                    className={cn(
-                      "flex size-5 shrink-0 items-center justify-center",
-                      isSurge ? "text-[#C9604D]" : "text-[#6FAA7D]",
-                    )}
-                  >
-                    {isSurge ? (
-                      <TrendingUp className="size-4 stroke-[1.75]" />
-                    ) : (
-                      <TrendingDown className="size-4 stroke-[1.75]" />
-                    )}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium tracking-tight text-zinc-800">
-                      {row.account_name}
-                    </p>
-                    <p className="mt-0.5 truncate text-[11px] text-zinc-400">
-                      {row.submitted_by_name ?? "未知成员"} · {isSurge ? "暴涨" : "腰斩"}{" "}
-                      {formatPct(row.play_count_change_pct)}
-                    </p>
-                  </div>
-                  <span
-                    className={cn(
-                      "shrink-0 text-[12px] font-medium tabular-nums",
-                      isSurge ? "text-[#C9604D]" : "text-[#6FAA7D]",
-                    )}
-                  >
-                    {(row.current_play_count ?? 0).toLocaleString()}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </CardShell>
-      <VideoPreviewDialog
-        row={activeRow}
-        open={activeRow !== null}
-        onOpenChange={(o) => !o && setActiveRow(null)}
-      />
-    </>
-  );
-}
-
-/* ── 2. 待审批合并卡（催交 / 豁免 / 入团） ── */
+/* ── 待审批合并卡（催交 / 豁免 / 入团） ── */
 type ReviewTab = "submissions" | "exemptions" | "joins";
 
 function HoverActions({
@@ -340,10 +187,35 @@ function ReviewBatchCard({
   const [remindLogOpen, setRemindLogOpen] = useState(false);
   const [handledMap, setHandledMap] = useState<Record<string, "approved" | "rejected">>({});
 
+  // 流转与撤销共存：点击瞬间标记(淡出+下一条顶上)，移除延迟到撤销窗口结束。按 id 独立计时，支持批量。
+  const SETTLE_MS = 5000;
+  const settleTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  useEffect(() => {
+    const timers = settleTimers.current;
+    return () => Object.values(timers).forEach(clearTimeout);
+  }, []);
+
   const handledCount = useMemo(
     () => Object.keys(handledMap).length,
     [handledMap],
   );
+
+  function clearSettle(id: string) {
+    const t = settleTimers.current[id];
+    if (t) {
+      clearTimeout(t);
+      delete settleTimers.current[id];
+    }
+  }
+
+  function unmark(id: string) {
+    clearSettle(id);
+    setHandledMap((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }
 
   function handleExemptionDecision(
     row: ExemptionRequestRow,
@@ -353,27 +225,20 @@ function ReviewBatchCard({
     setHandledMap((prev) => ({ ...prev, [row.id]: decision }));
     setExemptionBusy(true);
 
+    settleTimers.current[row.id] = setTimeout(() => {
+      setExemptions((prev) => prev.filter((r) => r.id !== row.id));
+      delete settleTimers.current[row.id];
+    }, SETTLE_MS);
+
     toast.success(`${resultLabel} ${row.applicant_name} 的豁免申请`, {
-      action: {
-        label: "撤销",
-        onClick: () => {
-          setHandledMap((prev) => {
-            const next = { ...prev };
-            delete next[row.id];
-            return next;
-          });
-        },
-      },
+      duration: SETTLE_MS,
+      action: { label: "撤销", onClick: () => unmark(row.id) },
     });
 
     startTransition(async () => {
       const result = await reviewExemptionRequest({ requestId: row.id, decision });
       if (result.error) {
-        setHandledMap((prev) => {
-          const next = { ...prev };
-          delete next[row.id];
-          return next;
-        });
+        unmark(row.id);
         feedbackToast.error(result.error);
       }
       setExemptionBusy(false);
@@ -385,17 +250,14 @@ function ReviewBatchCard({
     setHandledMap((prev) => ({ ...prev, [row.id]: decision }));
     setJoinBusy(true);
 
+    settleTimers.current[row.id] = setTimeout(() => {
+      setJoins((prev) => prev.filter((r) => r.id !== row.id));
+      delete settleTimers.current[row.id];
+    }, SETTLE_MS);
+
     toast.success(`${resultLabel} ${row.applicantName || "未命名"} 的入团申请`, {
-      action: {
-        label: "撤销",
-        onClick: () => {
-          setHandledMap((prev) => {
-            const next = { ...prev };
-            delete next[row.id];
-            return next;
-          });
-        },
-      },
+      duration: SETTLE_MS,
+      action: { label: "撤销", onClick: () => unmark(row.id) },
     });
 
     startTransition(async () => {
@@ -403,11 +265,7 @@ function ReviewBatchCard({
         decision === "approved" ? approveJoinRequestAction : rejectJoinRequestAction;
       const result = await action(row.id, null);
       if (!result.ok) {
-        setHandledMap((prev) => {
-          const next = { ...prev };
-          delete next[row.id];
-          return next;
-        });
+        unmark(row.id);
         feedbackToast.error(result.error);
       }
       setJoinBusy(false);
@@ -453,13 +311,13 @@ function ReviewBatchCard({
 
   return (
     <>
-      <section className="relative flex h-[320px] flex-col rounded-2xl border border-zinc-200 bg-white">
-        <header className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3.5 pb-2.5">
+      <section className="relative flex h-[480px] flex-col rounded-2xl border border-zinc-200 bg-white">
+        <header className="flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-3">
           <div className="flex min-w-0 items-baseline gap-2.5">
             <span className="self-center text-zinc-400">
               <UserCheck2 className="size-4 stroke-[1.5]" />
             </span>
-            <h3 className="text-[12px] font-medium tracking-tight text-zinc-600">
+            <h3 className="text-[16px] font-semibold tracking-tight text-zinc-800">
               待审批
             </h3>
             <span
@@ -471,13 +329,13 @@ function ReviewBatchCard({
               {totalAll}
             </span>
             {handledCount > 0 ? (
-              <span className="text-[11px] text-zinc-400">(已处理 {handledCount})</span>
+              <span className="text-[11px] text-zinc-400">已处理 {handledCount}</span>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">{headerActions}</div>
         </header>
 
-        <div className="flex shrink-0 items-center gap-1 border-t border-zinc-100 px-3 pt-2 pb-1">
+        <div className="flex shrink-0 items-center gap-1 border-t border-zinc-100 px-4 pt-2 pb-1.5">
           {tabs.map((t) => (
             <button
               key={t.key}
@@ -561,9 +419,10 @@ function ReviewBatchCard({
                       <li
                         key={row.id}
                         className={cn(
-                          "group relative rounded-lg",
-                          handled && "opacity-40 pointer-events-none",
-                          !handled && "hover:bg-zinc-50",
+                          "group relative rounded-lg transition-all duration-300",
+                          handled
+                            ? "max-h-0 opacity-0 overflow-hidden pointer-events-none"
+                            : "hover:bg-zinc-50",
                         )}
                       >
                         <div className="flex w-full items-start gap-2.5 px-3 py-1.5 pr-[120px]">
@@ -580,11 +439,7 @@ function ReviewBatchCard({
                             </p>
                           </div>
                         </div>
-                        {handled ? (
-                          <span className="absolute top-1 right-2 text-[10px] text-zinc-400">
-                            {handled === "approved" ? "已批准" : "已拒绝"}
-                          </span>
-                        ) : (
+                        {handled ? null : (
                           <HoverActions>
                             <RejectButton
                               onClick={() => handleExemptionDecision(row, "rejected")}
@@ -616,9 +471,10 @@ function ReviewBatchCard({
                       <li
                         key={row.id}
                         className={cn(
-                          "group relative rounded-lg",
-                          handled && "opacity-40 pointer-events-none",
-                          !handled && "hover:bg-zinc-50",
+                          "group relative rounded-lg transition-all duration-300",
+                          handled
+                            ? "max-h-0 opacity-0 overflow-hidden pointer-events-none"
+                            : "hover:bg-zinc-50",
                         )}
                       >
                         <div className="flex w-full items-start gap-2 px-3 py-1.5 pr-[120px]">
@@ -632,11 +488,7 @@ function ReviewBatchCard({
                             </p>
                           </div>
                         </div>
-                        {handled ? (
-                          <span className="absolute top-1 right-2 text-[10px] text-zinc-400">
-                            {handled === "approved" ? "已批准" : "已拒绝"}
-                          </span>
-                        ) : (
+                        {handled ? null : (
                           <HoverActions>
                             <RejectButton
                               onClick={() => handleJoinDecision(row, "rejected")}
@@ -668,6 +520,163 @@ function EmptyState({ text }: { text: string }) {
     <div className="flex flex-1 items-center justify-center px-3 py-8">
       <p className="text-[12px] text-zinc-400">{text}</p>
     </div>
+  );
+}
+
+/* ── Today Hero：今日待办大数字（每屏唯一 Display） ── */
+function TodayHero({ date, totalPending }: { date: string; totalPending: number }) {
+  const dateLabel = useMemo(() => {
+    try {
+      const d = new Date(date);
+      return d.toLocaleDateString("zh-CN", {
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+      });
+    } catch {
+      return date;
+    }
+  }, [date]);
+
+  return (
+    <section className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          Today · {dateLabel}
+        </p>
+        <div className="mt-3 flex items-baseline gap-3">
+          <span className="text-[32px] font-semibold leading-none tracking-tight tabular-nums text-zinc-950">
+            {totalPending}
+          </span>
+          <span className="text-[14px] font-medium text-zinc-500">件 待你处理</span>
+        </div>
+        <p className="mt-2 max-w-xl text-[13px] leading-[1.7] text-zinc-500">
+          下方主区是必须当天拍板的事，处理完会自动推进到下一条；底部的数字是其他模块的入口。
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ── Anomaly Timeline：异常线索横向带（复盘提示，非主动作） ── */
+function AnomalyTimeline({
+  date,
+  initialRows,
+  total,
+}: {
+  date: string;
+  initialRows: PendingVideoRow[];
+  total: number;
+}) {
+  const { data } = useSafeFetch<{ data: PendingVideoRow[] }>(
+    `/api/admin/cockpit/pending-videos?date=${date}&limit=12`,
+    180_000,
+    { data: initialRows },
+  );
+  const rows = data?.data ?? [];
+  const [activeRow, setActiveRow] = useState<PendingVideoRow | null>(null);
+
+  return (
+    <>
+      <section>
+        <header className="flex items-baseline justify-between gap-3 px-1">
+          <div className="flex items-baseline gap-2.5">
+            <h3 className="text-[13px] font-medium tracking-tight text-zinc-700">
+              异常线索
+            </h3>
+            <span className="text-[12px] tabular-nums text-zinc-400">
+              {total} 条
+            </span>
+          </div>
+          <a
+            href="/admin/content?view=all"
+            className="inline-flex items-center gap-0.5 text-[12px] text-zinc-400 transition-colors hover:text-zinc-700"
+          >
+            去批改台
+            <ChevronRight className="size-3 stroke-[1.5]" />
+          </a>
+        </header>
+
+        {rows.length === 0 ? (
+          <div className="mt-3 rounded-xl bg-zinc-50/60 px-4 py-6 text-center">
+            <p className="text-[12px] text-zinc-400">今天没有暴涨或腰斩的视频</p>
+          </div>
+        ) : (
+          <ul className="mt-3 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {rows.map((row) => {
+              const isSurge = row.play_change_signal === "surge";
+              return (
+                <li key={row.id} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveRow(row)}
+                    className="active:translate-y-0 group flex h-[88px] w-[200px] flex-col justify-between rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-left transition-[border-color,background-color] duration-150 hover:border-zinc-300 hover:bg-zinc-50/60"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="truncate text-[13px] font-medium text-zinc-800">
+                        {row.account_name}
+                      </span>
+                      <span
+                        className={cn(
+                          "ml-2 inline-flex size-1.5 shrink-0 rounded-full",
+                          isSurge ? "bg-[#C9604D]" : "bg-[#6FAA7D]",
+                        )}
+                      />
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[11px] text-zinc-400">
+                        {isSurge ? "暴涨" : "腰斩"} {formatPct(row.play_count_change_pct)}
+                      </span>
+                      <span className="text-[14px] font-medium tabular-nums text-zinc-700">
+                        {(row.current_play_count ?? 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+      <VideoPreviewDialog
+        row={activeRow}
+        open={activeRow !== null}
+        onOpenChange={(o) => !o && setActiveRow(null)}
+      />
+    </>
+  );
+}
+
+/* ── Metric Links：底部数据钩子，把其他模块的核心数字拉到首页 ── */
+function MetricLinks() {
+  const items = [
+    { label: "新增视频", value: "—", hint: "今日入库", href: "/admin/videos" },
+    { label: "提交率", value: "—", hint: "本周累计", href: "/admin/analytics" },
+    { label: "复盘完成", value: "—", hint: "本周", href: "/admin/content" },
+    { label: "案例沉淀", value: "—", hint: "待整理", href: "/admin/violations" },
+  ];
+  return (
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {items.map((it) => (
+        <a
+          key={it.label}
+          href={it.href}
+          className="active:translate-y-0 group flex flex-col rounded-xl border border-zinc-200 bg-white px-4 py-3.5 transition-[border-color,background-color] duration-150 hover:border-zinc-300 hover:bg-zinc-50/40"
+        >
+          <span className="text-[11px] text-zinc-400">{it.hint}</span>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-[18px] font-semibold tabular-nums text-zinc-800">
+              {it.value}
+            </span>
+            <span className="text-[12px] text-zinc-500">{it.label}</span>
+          </div>
+          <span className="mt-2 inline-flex items-center gap-0.5 text-[11px] text-zinc-400 transition-colors group-hover:text-zinc-700">
+            打开
+            <ChevronRight className="size-3 stroke-[1.5]" />
+          </span>
+        </a>
+      ))}
+    </section>
   );
 }
 
@@ -704,13 +713,13 @@ export function AdminQueueSection({
     exemptions: summary?.pending_exemptions ?? 0,
   };
 
+  const totalPending =
+    totals.submissions + totals.exemptions + resolved.pendingJoinRequests.length;
+
   return (
-    <div className="grid items-stretch gap-3 lg:grid-cols-2">
-      <PendingVideosCard
-        date={date}
-        initialRows={resolved.pendingVideos}
-        total={totals.videos}
-      />
+    <div className="space-y-8">
+      <TodayHero date={date} totalPending={totalPending} />
+
       <ReviewBatchCard
         date={date}
         initialSubmissions={resolved.pendingSubmissions}
@@ -719,6 +728,14 @@ export function AdminQueueSection({
         submissionsTotal={totals.submissions}
         exemptionsTotal={totals.exemptions}
       />
+
+      <AnomalyTimeline
+        date={date}
+        initialRows={resolved.pendingVideos}
+        total={totals.videos}
+      />
+
+      <MetricLinks />
     </div>
   );
 }
