@@ -547,6 +547,7 @@ export async function loadAdminContentFullData(args: {
 
 export const __internal = {
   ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
+  FULL_QUERY_BATCH_SIZE,
   ADMIN_CONTENT_FIRST_SCREEN_RPC,
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
@@ -555,4 +556,5 @@ export const __internal = {
   findPreviousVideoByVisibleId,
   limitInitialVideos,
   normalizeVideoRows,
+  selectInBatches,
 };

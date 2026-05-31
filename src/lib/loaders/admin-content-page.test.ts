@@ -243,6 +243,24 @@ test("后台首屏候选池保持克制，避免一次抓取过多视频", () =>
   assert.equal(videosInternal.ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT, 60);
 });
 
+test("内容管理 full 查询会按批次拆分，避免大 video_id in 查询失败", async () => {
+  const ids = Array.from({ length: __internal.FULL_QUERY_BATCH_SIZE * 2 + 5 }, (_, index) => `video-${index}`);
+  const batches: string[][] = [];
+
+  const rows = await __internal.selectInBatches<{ video_id: string }>(ids, async (batch) => {
+    batches.push(batch);
+    return {
+      data: batch.map((videoId) => ({ video_id: videoId })),
+    };
+  });
+
+  assert.equal(batches.length, 3);
+  assert.equal(batches[0]?.length, __internal.FULL_QUERY_BATCH_SIZE);
+  assert.equal(batches[1]?.length, __internal.FULL_QUERY_BATCH_SIZE);
+  assert.equal(batches[2]?.length, 5);
+  assert.deepEqual(rows.map((row) => row.video_id), ids);
+});
+
 test("内容管理首屏改走 read-model RPC", () => {
   assert.equal(typeof __internal.ADMIN_CONTENT_FIRST_SCREEN_RPC, "string");
   assert.equal(__internal.ADMIN_CONTENT_FIRST_SCREEN_RPC, "admin_content_first_screen");
