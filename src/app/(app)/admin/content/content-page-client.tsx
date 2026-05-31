@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, startTransition } from "react";
+import { useCallback, useEffect, useRef, useState, startTransition } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +46,7 @@ export function ContentPageClient({
   const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
+  const hasLoadedFullInitialData = useRef(false);
   const requestSeq = useRef(0);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
@@ -79,8 +80,48 @@ export function ContentPageClient({
     }
   }, []);
 
+  useEffect(() => {
+    if (!data.isPartial || hasLoadedFullInitialData.current) return;
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+
+    const loadFullData = () => {
+      if (hasLoadedFullInitialData.current) return;
+      hasLoadedFullInitialData.current = true;
+      setIsDeferredLoading(true);
+      void loadData(view, perspective, teamId, { background: true }).finally(() => {
+        setIsDeferredLoading(false);
+      });
+    };
+
+    const scheduleLoad = () => {
+      timeoutId = window.setTimeout(() => {
+        if ("requestIdleCallback" in window) {
+          idleId = window.requestIdleCallback(loadFullData, { timeout: 2500 });
+          return;
+        }
+        loadFullData();
+      }, 1200);
+    };
+
+    if (document.readyState === "complete") {
+      scheduleLoad();
+    } else {
+      window.addEventListener("load", scheduleLoad, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("load", scheduleLoad);
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+    };
+  }, [data.isPartial, loadData, perspective, teamId, view]);
+
   const loadDeferredData = useCallback(async () => {
     if (!data.isPartial || isLoading || isDeferredLoading) return;
+    hasLoadedFullInitialData.current = true;
     setIsDeferredLoading(true);
     try {
       await loadData(view, perspective, teamId, { background: true });
@@ -91,18 +132,21 @@ export function ContentPageClient({
 
   const switchView = useCallback(async (nextView: ContentView) => {
     if (nextView === view) return;
+    hasLoadedFullInitialData.current = false;
     await loadData(nextView, perspective, teamId);
   }, [loadData, perspective, teamId, view]);
 
   const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
     if (nextPerspective === perspective) return;
     const nextTeamId = nextPerspective === "team" ? teamId ?? teams[0]?.id ?? null : teamId;
+    hasLoadedFullInitialData.current = false;
     await loadData(view, nextPerspective, nextTeamId);
   }, [loadData, perspective, teamId, teams, view]);
 
   const switchTeam = useCallback(async (nextTeamId: string | null) => {
     if (!nextTeamId) return;
     if (nextTeamId === teamId) return;
+    hasLoadedFullInitialData.current = false;
     await loadData(view, "team", nextTeamId);
   }, [loadData, teamId, view]);
 

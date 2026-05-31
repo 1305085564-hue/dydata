@@ -295,9 +295,6 @@ export function ContentList({
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
   const [newBatchIds, setNewBatchIds] = useState<Set<string>>(new Set());
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const topScrollRef = useRef<HTMLDivElement>(null);
-  const topScrollInnerRef = useRef<HTMLDivElement>(null);
-  const scrollSyncing = useRef(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [hasUserScrolledList, setHasUserScrolledList] = useState(false);
 
@@ -447,37 +444,6 @@ export function ContentList({
     return () => container.removeEventListener("scroll", onScroll);
   }, [currentPageStart, visible]);
 
-  /* Sync top scrollbar width with table scroll width */
-  useEffect(() => {
-    const container = tableContainerRef.current;
-    const tableScroller = container?.querySelector<HTMLElement>('[data-slot="table-container"]');
-    const top = topScrollRef.current;
-    const inner = topScrollInnerRef.current;
-    if (!tableScroller || !top || !inner) return;
-
-    const updateWidth = () => {
-      inner.style.width = `${tableScroller.scrollWidth}px`;
-      top.scrollLeft = tableScroller.scrollLeft;
-    };
-    const syncTopFromTable = () => {
-      if (scrollSyncing.current) return;
-      scrollSyncing.current = true;
-      top.scrollLeft = tableScroller.scrollLeft;
-      requestAnimationFrame(() => {
-        scrollSyncing.current = false;
-      });
-    };
-
-    updateWidth();
-    const ro = new ResizeObserver(updateWidth);
-    ro.observe(tableScroller);
-    tableScroller.addEventListener("scroll", syncTopFromTable, { passive: true });
-    return () => {
-      ro.disconnect();
-      tableScroller.removeEventListener("scroll", syncTopFromTable);
-    };
-  }, []);
-
   const handleTimelineSeek = useCallback(
     (index: number) => {
       const targetId = filtered[index]?.id;
@@ -558,28 +524,13 @@ export function ContentList({
         </Button>
       </div>
 
-      <div className="flex flex-1 min-h-0 gap-4">
+      <div className="flex gap-4">
         {/* Table area */}
         <div className="flex-1 min-w-0">
           <div
-            ref={topScrollRef}
-            className="overflow-x-auto overflow-y-hidden h-4"
-            onScroll={() => {
-              const tableScroller = tableContainerRef.current?.querySelector<HTMLElement>('[data-slot="table-container"]');
-              if (!scrollSyncing.current && tableScroller && topScrollRef.current) {
-                scrollSyncing.current = true;
-                tableScroller.scrollLeft = topScrollRef.current.scrollLeft;
-                requestAnimationFrame(() => {
-                  scrollSyncing.current = false;
-                });
-              }
-            }}
-          >
-            <div ref={topScrollInnerRef} className="h-px" />
-          </div>
-          <div
             ref={tableContainerRef}
-            className="h-full overflow-x-hidden overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
+            className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
+            style={{ maxHeight: "calc(100vh - 280px)" }}
           >
             <Table>
               <TableHeader className="sticky top-0 z-10">

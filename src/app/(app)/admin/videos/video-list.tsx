@@ -270,7 +270,8 @@ export function VideoList({
 
       <div
         ref={tableContainerRef}
-        className="h-full overflow-x-hidden overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
+        className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
+        style={{ maxHeight: "calc(100vh - 280px)" }}
       >
         <Table>
           <TableHeader className="sticky top-0 z-10">
