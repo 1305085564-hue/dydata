@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { hasSupabaseAuthCookie } from "@/lib/supabase-auth-cookie";
+import { hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
 import { createServerClient } from "@supabase/ssr";
+
+const SITE_CLEARED_COOKIE = "dydata-site-cleared";
+const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 
 function createClientFromRequest(request: NextRequest) {
   return createServerClient(
@@ -21,10 +24,31 @@ function createClientFromRequest(request: NextRequest) {
   );
 }
 
+function buildClearSiteDataResponse(request: NextRequest) {
+  const nextUrl = request.nextUrl.clone();
+  nextUrl.searchParams.set(CLEAR_SITE_DATA_QUERY, "1");
+  const response = NextResponse.redirect(nextUrl);
+  response.headers.set("Clear-Site-Data", "\"cache\", \"storage\"");
+  response.cookies.set(SITE_CLEARED_COOKIE, "1", {
+    path: "/",
+    httpOnly: false,
+    sameSite: "lax",
+    secure: true,
+    maxAge: 60 * 60 * 24 * 7,
+  });
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isDashboardRoute = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  const hasClearedSiteData = request.cookies.get(SITE_CLEARED_COOKIE)?.value === "1";
+  const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
+
+  if (!hasClearedSiteData && !isClearSiteDataPass) {
+    return buildClearSiteDataResponse(request);
+  }
 
   // 速率限制（登录注册和静态资源除外）
   if (!isRateLimitExempt(pathname)) {
@@ -44,6 +68,8 @@ export async function middleware(request: NextRequest) {
     request.cookies.getAll(),
     process.env.NEXT_PUBLIC_SUPABASE_URL,
   );
+  const allSupabaseAuthCookieNames = listSupabaseAuthCookieNames(request.cookies.getAll());
+  const hasLegacySupabaseAuthCookie = !hasAuthCookie && allSupabaseAuthCookieNames.length > 0;
 
   // AI 配置中心统一由渠道页承载，旧链接继续重定向
   if (pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/")) {
@@ -54,7 +80,15 @@ export async function middleware(request: NextRequest) {
   // if (pathname === "/") { ... }
 
   if (!hasAuthCookie && (isDashboardRoute || isAdminRoute)) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const response = NextResponse.redirect(
+      new URL(hasLegacySupabaseAuthCookie ? "/login?expired=1" : "/login", request.url),
+    );
+    if (hasLegacySupabaseAuthCookie) {
+      allSupabaseAuthCookieNames.forEach((cookieName) => {
+        response.cookies.delete(cookieName);
+      });
+    }
+    return response;
   }
 
   // 有 cookie 时进一步校验 session 是否有效
@@ -65,18 +99,8 @@ export async function middleware(request: NextRequest) {
       if (error || !data.session) {
         // session 无效或过期，清除 cookie 并重定向到登录页
         const response = NextResponse.redirect(new URL("/login?expired=1", request.url));
-        const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL
-          ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split(".")[0]
-          : null;
-        const prefix = projectRef ? `sb-${projectRef}-auth-token` : null;
-        request.cookies.getAll().forEach((cookie) => {
-          if (prefix) {
-            if (cookie.name === prefix || cookie.name.startsWith(`${prefix}.`)) {
-              response.cookies.delete(cookie.name);
-            }
-          } else if (/^sb-[^-]+-auth-token(?:\.\d+)?$/.test(cookie.name)) {
-            response.cookies.delete(cookie.name);
-          }
+        listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
+          response.cookies.delete(cookieName);
         });
         return response;
       }
