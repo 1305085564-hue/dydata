@@ -67,11 +67,11 @@ export async function loadApprovedList({
   errorMessage?: string;
 }> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase.rpc("publish_drafts_approved_list", {
-    p_limit: limit,
-    p_account_id: accountId,
-    p_search: search,
-  });
+  const params: Record<string, unknown> = { p_limit: limit };
+  if (accountId) params.p_account_id = accountId;
+  if (search) params.p_search = search;
+
+  const { data, error } = await supabase.rpc("publish_drafts_approved_list", params);
 
   if (error) {
     console.error("[loadApprovedList] RPC error:", JSON.stringify(error));
