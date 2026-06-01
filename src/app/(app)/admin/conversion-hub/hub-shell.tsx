@@ -56,7 +56,7 @@ export function ConversionHubShell(props: HubShellProps) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow={props.eyebrow ?? "话术案例库"}
+      eyebrow={props.eyebrow ?? "导粉中心"}
       title={props.title ?? "管理工作台"}
       description={
         props.description ??

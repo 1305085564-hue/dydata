@@ -471,7 +471,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
       <div className="mx-auto max-w-6xl space-y-5 py-8">
         <Breadcrumb
           items={[
-            { label: "话术案例库", href: "/violations" },
+            { label: "导粉中心", href: "/violations" },
             { label: "案例详情" },
           ]}
         />
@@ -491,7 +491,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
     <div className="mx-auto max-w-6xl space-y-5 py-8">
       <Breadcrumb
         items={[
-          { label: "话术案例库", href: "/violations" },
+          { label: "导粉中心", href: "/violations" },
           { label: "案例详情" },
         ]}
       />

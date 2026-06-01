@@ -68,7 +68,7 @@ async function loadCases(params: {
     guidanceMethod: params.guidanceMethods[0] ?? null,
   });
 
-  if (errorMessage || !payload) throw new Error(errorMessage ?? "加载话术案例库失败");
+  if (errorMessage || !payload) throw new Error(errorMessage ?? "加载导粉中心失败");
   return payload.data as ViolationCase[];
 }
 
@@ -210,7 +210,7 @@ export default async function ViolationsPage({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                话术案例库
+                导粉中心
               </p>
               <h1 className="mt-2 text-[24px] font-semibold leading-[1.33] tracking-tight text-zinc-800">
                 {isManageView ? "管理工作台" : "找话术 · 避坑"}

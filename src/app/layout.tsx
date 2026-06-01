@@ -33,7 +33,7 @@ export default function RootLayout({
     <html lang="zh-CN" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased">
         {children}
-        <Toaster richColors position="top-center" />
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

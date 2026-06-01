@@ -72,7 +72,7 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     requiresAdmin: true,
   },
 ];
-// Note: 转化中心、合规审核 已迁至 /violations 话术案例库下 perspective tabs。
+// Note: 转化中心、合规审核 已迁至 /violations 导粉中心下 perspective tabs。
 
 export function getAdminSecondaryNavItems(options: {
   canManageAdmin: boolean;

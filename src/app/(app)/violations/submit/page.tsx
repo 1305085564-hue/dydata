@@ -54,7 +54,7 @@ export default async function SubmitViolationPage({
     <div className="mx-auto max-w-6xl space-y-6 py-8">
       <Breadcrumb
         items={[
-          { label: "话术案例库", href: "/violations" },
+          { label: "导粉中心", href: "/violations" },
           { label: "提交新案例" },
         ]}
       />

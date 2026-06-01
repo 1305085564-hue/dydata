@@ -90,8 +90,7 @@ export function NavBarClient({
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [todoOpen, setTodoOpen] = useState(false);
 
-  const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
-  const showAdminCenter = showAdmin && isAdminPath;
+  const showAdminCenter = showAdmin;
   const todoCount = useTodoCount(showAdminCenter);
 
   const snapshot = useSyncExternalStore(subscribeDashboardStore, getDashboardSnapshot, getDashboardSnapshot);

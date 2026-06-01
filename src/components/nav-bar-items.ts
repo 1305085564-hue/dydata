@@ -21,7 +21,7 @@ export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boo
     },
     {
       href: "/violations",
-      label: "话术案例库",
+      label: "导粉中心",
       match: (pathname) => pathname.startsWith("/violations"),
     },
     {
