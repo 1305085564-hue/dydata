@@ -15,19 +15,19 @@ export async function POST(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
-  const { supabase, user } = await getAuthenticatedContext();
+  const { user } = await getAuthenticatedContext();
   if (!user) {
     return jsonUnauthorized();
   }
 
-  const reviewAccess = await ensureCanReview(supabase, user.id);
+  const adminSupabase = createAdminClient();
+  const reviewAccess = await ensureCanReview(adminSupabase, user.id);
   if (!reviewAccess.ok) {
     return reviewAccess.response;
   }
 
   const { id } = await context.params;
-  const adminSupabase = createAdminClient();
-  const { data: reviewerProfile, error: reviewerError } = await supabase
+  const { data: reviewerProfile, error: reviewerError } = await adminSupabase
     .from("profiles")
     .select("name")
     .eq("id", user.id)

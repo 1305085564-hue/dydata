@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 import {
   parseApprovedDraftItem,
@@ -30,7 +30,7 @@ export async function loadReviewQueue(userId: string): Promise<{
   data: ReviewQueuePayload | null;
   errorMessage?: string;
 }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase.rpc("publish_drafts_review_queue", {
     p_user_id: userId,
   });
@@ -66,7 +66,7 @@ export async function loadApprovedList({
   data: ApprovedDraftItem[] | null;
   errorMessage?: string;
 }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase.rpc("publish_drafts_approved_list", {
     p_limit: limit,
     p_account_id: accountId,
@@ -74,7 +74,8 @@ export async function loadApprovedList({
   });
 
   if (error) {
-    return { data: null, errorMessage: "获取已通过列表失败" };
+    console.error("[loadApprovedList] RPC error:", JSON.stringify(error));
+    return { data: null, errorMessage: `获取已通过列表失败: ${error.message}` };
   }
 
   if (!Array.isArray(data)) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ensureCanReview,
   getAuthenticatedContext,
@@ -9,12 +10,12 @@ import {
 import { loadReviewQueue } from "@/lib/publish-drafts/read-model";
 
 export async function GET() {
-  const { supabase, user } = await getAuthenticatedContext();
+  const { user } = await getAuthenticatedContext();
   if (!user) {
     return jsonUnauthorized();
   }
 
-  const reviewAccess = await ensureCanReview(supabase, user.id);
+  const reviewAccess = await ensureCanReview(createAdminClient(), user.id);
   if (!reviewAccess.ok) {
     return reviewAccess.response;
   }

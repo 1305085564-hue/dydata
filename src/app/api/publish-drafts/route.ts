@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getAuthenticatedContext,
-  getOwnedAccount,
   jsonBadRequest,
   jsonServerError,
   jsonUnauthorized,
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { supabase, user } = await getAuthenticatedContext();
+  const { user } = await getAuthenticatedContext();
   if (!user) {
     return jsonUnauthorized();
   }
@@ -59,28 +58,44 @@ export async function POST(request: NextRequest) {
     return jsonValidationError("screenshot_paths 包含无效路径");
   }
 
-  const accountResult = await getOwnedAccount(supabase, user.id, validation.data.account_id);
-  if (!accountResult.ok) {
-    return accountResult.response;
+  const admin = createAdminClient();
+
+  let accountId: string | null = null;
+  let accountName: string | null = null;
+
+  if (validation.data.account_id) {
+    const { data: acct, error: acctErr } = await admin
+      .from("accounts")
+      .select("id, name, profile_id")
+      .eq("id", validation.data.account_id)
+      .eq("profile_id", user.id)
+      .maybeSingle();
+
+    if (acctErr || !acct) {
+      return jsonServerError("account_id 不属于当前用户");
+    }
+
+    accountId = acct.id;
+    accountName = acct.name;
   }
 
-  const profileQuery = await supabase
+  const { data: profile, error: profileErr } = await admin
     .from("profiles")
     .select("team_id")
     .eq("id", user.id)
     .single();
 
-  if (profileQuery.error || !profileQuery.data) {
+  if (profileErr || !profile) {
     return jsonServerError("用户资料不存在");
   }
 
-  const { data, error } = await createAdminClient()
+  const { data, error } = await admin
     .from("publish_drafts")
     .insert({
       submitted_by: user.id,
-      account_id: accountResult.account?.id ?? null,
-      account_name_snapshot: accountResult.account?.name ?? null,
-      team_id: (profileQuery.data.team_id ?? null) as string | null,
+      account_id: accountId,
+      account_name_snapshot: accountName,
+      team_id: (profile.team_id ?? null) as string | null,
       script_text: validation.data.script_text,
       screenshot_paths: validation.data.screenshot_paths,
       status: "pending",
@@ -91,7 +106,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error || !data) {
-    return jsonServerError("提交视频审核稿失败");
+    console.error("[POST /api/publish-drafts] insert error:", JSON.stringify(error));
+    return jsonServerError(error?.message ?? "提交视频审核稿失败");
   }
 
   return NextResponse.json({ data }, { status: 201 });
