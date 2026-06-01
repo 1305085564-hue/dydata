@@ -24,6 +24,11 @@ export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boo
       label: "话术案例库",
       match: (pathname) => pathname.startsWith("/violations"),
     },
+    {
+      href: "/video-review",
+      label: "视频审核",
+      match: (pathname) => pathname.startsWith("/video-review"),
+    },
   ];
 
   if (input.showAiCopywriting !== false) {
@@ -36,8 +41,8 @@ export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boo
 
   if (input.showAdmin) {
     items.push({
-      href: "/admin",
-      label: "团队管理",
+      href: "/admin/content",
+      label: "内容中心",
       match: (pathname) => pathname === "/admin" || (pathname.startsWith("/admin/") && !pathname.startsWith("/admin/settings")),
     });
   }

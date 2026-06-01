@@ -152,7 +152,7 @@ as $$
       cfc.video_id,
       cfc.card_status,
       cfc.confirmed_at,
-      cfc.delivered_at,
+      cfc.sent_at,
       cfc.viewed_at
     from public.content_feedback_cards cfc
     where cfc.video_id in (select id from visible_ids)
@@ -283,7 +283,7 @@ as $$
               else '未开始'
             end,
           'confirmed_at', cfc.confirmed_at,
-          'delivered_at', cfc.delivered_at,
+          'sent_at', cfc.sent_at,
           'viewed_at', cfc.viewed_at
         )
       )
