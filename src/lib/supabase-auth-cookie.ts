@@ -3,6 +3,8 @@ type CookieLike = {
   value?: string;
 };
 
+const SUPABASE_AUTH_COOKIE_PATTERN = /^sb-([^-]+)-auth-token(?:\.\d+)?$/;
+
 function getSupabaseProjectRef(supabaseUrl?: string) {
   if (!supabaseUrl) return null;
 
@@ -24,6 +26,12 @@ export function hasSupabaseAuthCookie(cookies: CookieLike[], supabaseUrl?: strin
       return cookie.name === expectedPrefix || cookie.name.startsWith(`${expectedPrefix}.`);
     }
 
-    return /^sb-[^-]+-auth-token(?:\.\d+)?$/.test(cookie.name);
+    return SUPABASE_AUTH_COOKIE_PATTERN.test(cookie.name);
   });
+}
+
+export function listSupabaseAuthCookieNames(cookies: CookieLike[]) {
+  return cookies
+    .filter((cookie) => Boolean(cookie.value) && SUPABASE_AUTH_COOKIE_PATTERN.test(cookie.name))
+    .map((cookie) => cookie.name);
 }
