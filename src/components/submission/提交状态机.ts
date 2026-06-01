@@ -27,7 +27,7 @@ export type EditableMetricKey =
 export type SubmissionFieldSource = "ocr" | "manual";
 export type SubmissionStage = "草稿" | "识别中" | "待确认" | "可提交" | "已提交";
 export type SubmissionIssueAnchor = "slots" | "metrics" | "topicTag" | "meta" | null;
-export type RequiredMetaKey = "videoTitle" | "content" | "contentKeywords";
+export type RequiredMetaKey = "videoTitle" | "content";
 
 export interface SubmissionSlotState {
   role: SubmissionSlotRole;
@@ -161,9 +161,6 @@ export function summarizeSubmissionIssues(
   if (meta.content !== undefined && !meta.content.trim()) {
     missingRequiredMeta.push("content");
   }
-  if (meta.contentKeywords !== undefined && !meta.contentKeywords.some((item) => item.trim())) {
-    missingRequiredMeta.push("contentKeywords");
-  }
 
   const totalIssueCount =
     missingRequiredSlots.length +
@@ -189,7 +186,7 @@ export function summarizeSubmissionIssues(
   } else if (pendingSlotConfirmations.length > 0) {
     reason = "请先确认必传截图槽位";
   } else if (missingRequiredMeta.length > 0) {
-    reason = "请补全标题、文案和内容标签";
+    reason = "请补全标题和文案";
   } else if (topicTagMissing) {
     reason = "请选择话题标签（干货或复盘）";
   }

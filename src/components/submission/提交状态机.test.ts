@@ -120,7 +120,7 @@ test("问题汇总只保留截图与话题标签缺项", () => {
   assert.equal(summary.canSubmit, false);
 });
 
-test("标题、文案、内容标签缺失时仍不能提交", () => {
+test("标题和文案缺失时仍不能提交，但不再要求内容标签", () => {
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
@@ -137,9 +137,30 @@ test("标题、文案、内容标签缺失时仍不能提交", () => {
     contentKeywords: [],
   });
 
-  assert.deepEqual(summary.missingRequiredMeta, ["videoTitle", "content", "contentKeywords"]);
+  assert.deepEqual(summary.missingRequiredMeta, ["videoTitle", "content"]);
   assert.equal(summary.firstIssueAnchor, "meta");
   assert.equal(summary.canSubmit, false);
+});
+
+test("标题、文案和话题标签齐全时可提交，即使内容标签为空", () => {
+  const state = createInitialSubmissionState({
+    slots: {
+      screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
+      screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
+      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
+    },
+  });
+
+  const summary = summarizeSubmissionIssues(state, {
+    topicTag: "复盘",
+    anomalyStatus: "正常",
+    videoTitle: "标题",
+    content: "文案",
+    contentKeywords: [],
+  });
+
+  assert.deepEqual(summary.missingRequiredMeta, []);
+  assert.equal(summary.canSubmit, true);
 });
 
 test("异常状态下截图改为可选", () => {

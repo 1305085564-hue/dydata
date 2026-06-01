@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { normalizeContentKeywords, validateVideoSubmitPayload } from "./validation";
 import { buildStableUuid, buildSubmissionFingerprint, buildSubmissionRecordId } from "./stability";
 
-test("提交接口要求标题、文案、内容标签至少一个", () => {
+test("提交接口要求标题和文案，内容标签可为空", () => {
   const result = validateVideoSubmitPayload({
     account_id: "acc-1",
     video_title: "",
@@ -14,8 +14,23 @@ test("提交接口要求标题、文案、内容标签至少一个", () => {
 
   assert.deepEqual(result, {
     ok: false,
-    error: "标题、文案、内容标签为必填项",
+    error: "标题和文案为必填项",
   });
+});
+
+test("提交接口允许内容标签为空数组", () => {
+  const result = validateVideoSubmitPayload({
+    account_id: "acc-1",
+    video_title: "标题",
+    content: "文案",
+    content_keywords: [],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.deepEqual(result.contentKeywords, []);
+  assert.deepEqual(result.normalized.content_keywords, []);
 });
 
 test("内容标签会去空格、去重，并最多保留 3 个", () => {

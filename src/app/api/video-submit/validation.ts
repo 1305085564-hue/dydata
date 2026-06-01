@@ -157,8 +157,8 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
     return { ok: false, error: assetUrlError };
   }
 
-  if (!title || !content || keywords.length === 0) {
-    return { ok: false, error: "标题、文案、内容标签为必填项" };
+  if (!title || !content) {
+    return { ok: false, error: "标题和文案为必填项" };
   }
 
   return {

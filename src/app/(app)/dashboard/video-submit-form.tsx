@@ -413,10 +413,6 @@ function buildIssueMessages(summary: ReturnType<typeof summarizeSubmissionIssues
   if (summary.missingRequiredMeta.includes("content")) {
     messages.push("必填项未完成：文案");
   }
-  if (summary.missingRequiredMeta.includes("contentKeywords")) {
-    messages.push("必填项未完成：内容标签");
-  }
-
   return messages;
 }
 
