@@ -26,7 +26,7 @@ export interface ContentFilterValue {
   reviewed: "all" | "yes" | "no";
   feedbackStatus: "all" | "no_feedback" | "confirmed" | "sent" | "viewed";
   rankScope: "all" | "day" | "month";
-  sortMode: "latest" | "play";
+  sortMode: "priority" | "latest" | "play";
 }
 
 interface ContentFiltersProps {
@@ -45,7 +45,7 @@ const INITIAL_FILTERS: ContentFilterValue = {
   reviewed: "all",
   feedbackStatus: "all",
   rankScope: "all",
-  sortMode: "latest",
+  sortMode: "priority",
 };
 
 const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [
@@ -152,10 +152,19 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
       }}>
         <SelectTrigger className="h-8 w-28 rounded-lg bg-white text-[12px]">
           <SelectValue>
-            {filters.rankScope === "day" ? "日排名" : filters.rankScope === "month" ? "月排名" : filters.sortMode === "play" ? "播放优先" : "最新优先"}
+            {filters.rankScope === "day"
+              ? "日排名"
+              : filters.rankScope === "month"
+              ? "月排名"
+              : filters.sortMode === "play"
+              ? "播放优先"
+              : filters.sortMode === "latest"
+              ? "最新优先"
+              : "智能优先"}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="all:priority">智能优先</SelectItem>
           <SelectItem value="all:latest">最新优先</SelectItem>
           <SelectItem value="all:play">播放优先</SelectItem>
           <SelectItem value="day:play">日播放排名</SelectItem>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FileText, Gauge, Video } from "lucide-react";
 
 import type { Permissions, UserRole } from "@/types";
 import type { BusinessRole } from "@/lib/business-role";
@@ -13,14 +12,13 @@ import { cn } from "@/lib/utils";
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  badgeKey?: keyof CenterNavBadges;
   requiresOwner?: boolean;
-  badgeKey?: keyof TopNavBadges;
   requiresManageMembers?: boolean;
   requiresPermission?: keyof Permissions;
 }
 
-type TopNavBadges = {
+type CenterNavBadges = {
   cockpit: number;
   videos: number;
   content: number;
@@ -29,10 +27,9 @@ type TopNavBadges = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "今日待办", icon: Gauge, badgeKey: "cockpit" },
-  { href: "/admin/analytics", label: "经营分析", icon: BarChart3 },
-  { href: "/admin/videos", label: "素材库", icon: Video, badgeKey: "videos" },
-  { href: "/admin/content", label: "批改台", icon: FileText, badgeKey: "content" },
+  { href: "/admin/content", label: "批改台", badgeKey: "content" },
+  { href: "/admin/videos", label: "素材库", badgeKey: "videos" },
+  { href: "/admin/analytics", label: "经营分析" },
 ];
 
 function getVisibleNavItems(input: {
@@ -56,10 +53,10 @@ function getVisibleNavItems(input: {
   });
 }
 
-const TOP_NAV_BADGES_POLL_MS = 120_000;
+const CENTER_NAV_BADGES_POLL_MS = 120_000;
 
-function useTopNavBadges(intervalMs = TOP_NAV_BADGES_POLL_MS) {
-  const [data, setData] = useState<TopNavBadges | null>(null);
+function useCenterNavBadges(intervalMs = CENTER_NAV_BADGES_POLL_MS) {
+  const [data, setData] = useState<CenterNavBadges | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -68,7 +65,7 @@ function useTopNavBadges(intervalMs = TOP_NAV_BADGES_POLL_MS) {
       try {
         const res = await fetch("/api/admin/sidebar-badges", { credentials: "include" });
         if (!res.ok) return;
-        const json = (await res.json()) as TopNavBadges;
+        const json = (await res.json()) as CenterNavBadges;
         if (active) setData(json);
       } catch {}
     };
@@ -83,95 +80,100 @@ function useTopNavBadges(intervalMs = TOP_NAV_BADGES_POLL_MS) {
   return data;
 }
 
-interface AdminTopNavProps {
+interface AdminCenterNavProps {
   userRole: UserRole | null | undefined;
   businessRole?: BusinessRole | null;
   permissions?: Permissions | null;
 }
 
-export function AdminTopNav({ userRole, businessRole, permissions }: AdminTopNavProps) {
+export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCenterNavProps) {
   const pathname = usePathname();
-  const badges = useTopNavBadges();
+  const badges = useCenterNavBadges();
   const items = getVisibleNavItems({ userRole, businessRole, permissions: permissions ?? {} });
-  const navRef = useRef<HTMLDivElement | null>(null);
-  const activeRef = useRef<HTMLAnchorElement | null>(null);
+  const containerRef = useRef<HTMLUListElement | null>(null);
+  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [indicator, setIndicator] = useState<{ left: number; width: number }>({
+    left: 0,
+    width: 0,
+  });
 
   const isActive = (href: string) => {
-    if (href === "/admin") return pathname === "/admin";
+    if (href === "/admin/content") {
+      return pathname === "/admin" || pathname === href || pathname.startsWith(`${href}/`);
+    }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  useEffect(() => {
-    const el = activeRef.current;
-    if (!el) return;
-    el.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
-  }, [pathname]);
+  const activeIndex = items.findIndex((item) => isActive(item.href));
+
+  useLayoutEffect(() => {
+    if (activeIndex < 0) return;
+    const container = containerRef.current;
+    const el = itemRefs.current[activeIndex];
+    if (!container || !el) return;
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    setIndicator({
+      left: elRect.left - containerRect.left,
+      width: elRect.width,
+    });
+  }, [activeIndex, pathname]);
+
+  const indicatorVisible = activeIndex >= 0 && indicator.width > 0;
+
+  if (items.length === 0) return null;
 
   return (
-    <nav
-      ref={navRef}
-      aria-label="团队管理子导航"
-      className="sticky top-0 z-30 border-b border-zinc-200 bg-white"
-    >
-      <div className="mx-auto flex h-11 max-w-[1400px] items-stretch overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ul className="flex shrink-0 items-stretch">
-          {items.map((item) => {
-            const active = isActive(item.href);
-            const Icon = item.icon;
-            const badgeValue = item.badgeKey ? badges?.[item.badgeKey] ?? 0 : 0;
-            return (
-              <li key={item.href} className="flex shrink-0 items-stretch">
-                <Link
-                  ref={active ? activeRef : undefined}
-                  href={item.href}
-                  prefetch={false}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "group relative inline-flex items-center gap-2 px-4 text-[13px] tracking-tight transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    active
-                      ? "font-semibold text-zinc-800"
-                      : "font-medium text-zinc-500 hover:text-zinc-800 focus-visible:text-zinc-800",
-                    "outline-none focus-visible:ring-0",
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      "size-4 shrink-0 stroke-[1.5] transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                      active
-                        ? "text-[#D97757]"
-                        : "text-zinc-400 group-hover:text-zinc-600",
-                    )}
-                  />
-                  <span className="whitespace-nowrap">{item.label}</span>
-                  {badgeValue > 0 ? (
-                    <span
-                      className={cn(
-                        "text-[11px] tabular-nums transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                        active
-                          ? "font-semibold text-[#D97757]"
-                          : "font-medium text-zinc-400 group-hover:text-zinc-500",
-                      )}
-                      aria-label={`${badgeValue} 项待办`}
-                    >
-                      {badgeValue > 99 ? "99+" : badgeValue}
-                    </span>
-                  ) : null}
-
+    <nav aria-label="内容中心主导航" className="flex shrink-0 items-stretch">
+      <ul ref={containerRef} className="relative flex shrink-0 items-stretch gap-1">
+        {items.map((item, index) => {
+          const active = index === activeIndex;
+          const badgeValue = item.badgeKey ? badges?.[item.badgeKey] ?? 0 : 0;
+          return (
+            <li key={item.href} className="flex shrink-0 items-stretch">
+              <Link
+                ref={(node) => {
+                  itemRefs.current[index] = node;
+                }}
+                href={item.href}
+                prefetch={false}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "group relative inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[14px] tracking-tight transition-[color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
+                  active
+                    ? "font-semibold text-zinc-800"
+                    : "font-medium text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/60 focus-visible:text-zinc-800",
+                  "outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5",
+                )}
+              >
+                <span className="whitespace-nowrap">{item.label}</span>
+                {badgeValue > 0 ? (
                   <span
-                    aria-hidden
                     className={cn(
-                      "pointer-events-none absolute inset-x-3 -bottom-px h-[2px] rounded-full transition-[background-color,opacity,transform] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                      active
-                        ? "bg-[#D97757] opacity-100 scale-x-100"
-                        : "bg-zinc-300 opacity-0 scale-x-50 group-hover:opacity-50 group-hover:scale-x-90",
+                      "text-[11px] tabular-nums transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                      active ? "font-semibold text-[#D97757]" : "font-medium text-zinc-400 group-hover:text-zinc-500",
                     )}
-                  />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+                    aria-label={`${badgeValue} 项`}
+                  >
+                    {badgeValue > 99 ? "99+" : badgeValue}
+                  </span>
+                ) : null}
+              </Link>
+            </li>
+          );
+        })}
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute -bottom-2 h-[2px] rounded-full bg-[#D97757] transition-[transform,width,opacity] duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none",
+            indicatorVisible ? "opacity-100" : "opacity-0",
+          )}
+          style={{
+            transform: `translateX(${indicator.left}px)`,
+            width: indicator.width ? `${indicator.width}px` : 0,
+          }}
+        />
+      </ul>
     </nav>
   );
 }

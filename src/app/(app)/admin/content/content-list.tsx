@@ -287,7 +287,7 @@ export function ContentList({
     reviewed: "all",
     feedbackStatus: "all",
     rankScope: "all",
-    sortMode: "latest",
+    sortMode: "priority",
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
@@ -311,6 +311,32 @@ export function ContentList({
     }
     return map;
   }, [snapshots]);
+
+  const priorityScoreMap = useMemo(() => {
+    const map = new Map<string, number>();
+    const now = Date.now();
+    for (const v of videos) {
+      let score = 0;
+      if (v.anomaly_status === "删稿" || v.anomaly_status === "限流") score += 1000;
+      if (v.play_change_signal === "halve") score += 800;
+      if (v.play_change_signal === "surge") score += 400;
+      if (v.anomaly_status === "投流" || v.anomaly_status === "活动干预") score += 200;
+      const cardStatus = feedbackCards[v.id]?.workflow_status ?? "not_started";
+      if (cardStatus === "not_started") score += 100;
+      const playCount = snapshotMap.get(v.id)?.play_count ?? 0;
+      score += Math.min(playCount / 10000, 50);
+      const ts = getVideoTimestamp(v);
+      if (ts > 0) {
+        const days = Math.floor((now - ts) / 86400000);
+        score += Math.min(Math.max(days, 0), 30) * 5;
+      }
+      if (cardStatus === "sent" || cardStatus === "viewed") score -= 2000;
+      map.set(v.id, score);
+    }
+    return map;
+  }, [videos, snapshotMap, feedbackCards]);
+
+  const PRIORITY_HIGHLIGHT_THRESHOLD = 200;
 
   const handleFilter = useCallback((value: ContentFilterValue) => {
     setFilters(value);
@@ -363,13 +389,18 @@ export function ContentList({
     }
 
     return [...scopedRows].sort((left, right) => {
+      if (filters.sortMode === "priority") {
+        const scoreDiff = (priorityScoreMap.get(right.id) ?? 0) - (priorityScoreMap.get(left.id) ?? 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return getVideoTimestamp(right) - getVideoTimestamp(left);
+      }
       if (filters.sortMode === "play") {
         const playDiff = getSnapshotPlay(snapshotMap.get(right.id)) - getSnapshotPlay(snapshotMap.get(left.id));
         if (playDiff !== 0) return playDiff;
       }
       return getVideoTimestamp(right) - getVideoTimestamp(left);
     });
-  }, [videos, filters, snapshotMap, feedbackCards]);
+  }, [videos, filters, snapshotMap, feedbackCards, priorityScoreMap]);
 
   const visible = useMemo(() => filtered.slice(0, loadedCount), [filtered, loadedCount]);
   const hasMoreLocal = loadedCount < filtered.length;
@@ -579,7 +610,17 @@ export function ContentList({
                         }
                       >
                         <TableCell className="py-2 text-[13px] font-medium font-mono tabular-nums text-zinc-400">
-                          #{index + 1}
+                          <span className="inline-flex items-center gap-1.5">
+                            {filters.sortMode === "priority" &&
+                            (priorityScoreMap.get(video.id) ?? 0) >= PRIORITY_HIGHLIGHT_THRESHOLD ? (
+                              <span
+                                aria-hidden
+                                className="size-2 shrink-0 rounded-full bg-[#D97757]"
+                                title="该先批"
+                              />
+                            ) : null}
+                            #{index + 1}
+                          </span>
                         </TableCell>
                         <TableCell className="max-w-md py-2">
                           <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>

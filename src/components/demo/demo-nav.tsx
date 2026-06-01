@@ -29,7 +29,7 @@ const demoNavItems = [
   },
   {
     href: "/demo/admin",
-    label: "团队管理",
+    label: "内容中心",
     match: (pathname: string) =>
       pathname === "/demo/admin" ||
       pathname.startsWith("/demo/admin/analytics") ||

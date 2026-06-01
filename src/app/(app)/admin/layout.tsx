@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
-import { AdminTopNav } from "@/components/admin-layout/admin-top-nav";
 import { AdminMainArea } from "@/components/admin-layout/admin-main-area";
 
 export default async function AdminLayout({
@@ -18,11 +17,6 @@ export default async function AdminLayout({
 
   return (
     <div className="flex h-[100dvh] flex-col bg-[var(--color-bg)]">
-      <AdminTopNav
-        userRole={permissionInfo.role}
-        businessRole={permissionInfo.businessRole}
-        permissions={permissionInfo.permissions}
-      />
       <AdminMainArea>{children}</AdminMainArea>
     </div>
   );

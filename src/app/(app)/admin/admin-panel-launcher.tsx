@@ -146,7 +146,7 @@ export function AdminPanelLauncher({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-2">
                       <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">
-                        团队管理
+                        内容中心
                       </DialogTitle>
                       <DialogDescription className="max-w-3xl text-[13px] leading-[1.7] text-zinc-500">
                         在同一个工作台里切换模块，不跳页、不改顶部标题，直接处理当前团队任务。

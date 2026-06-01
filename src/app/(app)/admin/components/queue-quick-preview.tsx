@@ -363,7 +363,7 @@ export function JoinPreviewDialog({
       title={`${row.applicantName || "未命名"} 申请入团`}
       subtitle={<span>{formatDate(row.createdAt)}</span>}
       fullViewHref={`/admin/modules?focus=team`}
-      fullViewLabel="团队管理"
+      fullViewLabel="内容中心"
       primaryAction={{
         label: "同意",
         tone: "primary",
