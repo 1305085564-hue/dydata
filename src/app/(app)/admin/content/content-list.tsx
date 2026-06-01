@@ -331,11 +331,11 @@ export function ContentList({
       if (filters.hasSnapshot === "yes" && !hasSnap) return false;
       if (filters.hasSnapshot === "no" && hasSnap) return false;
       const card = feedbackCards[video.id];
-      const hasDraft = card?.workflow_status !== "not_started";
+      const cardStatus = card?.workflow_status ?? "not_started";
+      const hasDraft = cardStatus !== "not_started";
       if (filters.reviewed === "yes" && !hasDraft) return false;
       if (filters.reviewed === "no" && hasDraft) return false;
       if (filters.feedbackStatus !== "all") {
-        const cardStatus = card?.workflow_status ?? "not_started";
         if (filters.feedbackStatus === "no_feedback" && cardStatus !== "not_started" && cardStatus !== "draft") return false;
         if (filters.feedbackStatus === "confirmed" && cardStatus !== "confirmed") return false;
         if (filters.feedbackStatus === "sent" && cardStatus !== "sent") return false;
@@ -559,6 +559,7 @@ export function ContentList({
                   visible.map((video, index) => {
                     const snap = snapshotMap.get(video.id);
                     const card = feedbackCards[video.id];
+                    const cardStatus = card?.workflow_status ?? "not_started";
                     const readiness = reviewReadiness[video.id];
                     const isNewBatch = newBatchIds.has(video.id);
                     return (
@@ -588,7 +589,6 @@ export function ContentList({
                         <TableCell>
                           {(() => {
                             const hasSignal = Boolean(video.play_change_signal);
-                            const cardStatus = card?.workflow_status ?? "not_started";
                             const sent = cardStatus === "sent" || cardStatus === "viewed";
                             // 三档：异常未批改 → 暖橙实色推到眼前；已下发 → outline 灰；其他 → ghost 极淡
                             if (hasSignal && !sent) {
@@ -655,10 +655,10 @@ export function ContentList({
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {card?.workflow_status !== "not_started" ? (
+                          {cardStatus !== "not_started" && card ? (
                             <Badge
                               variant="outline"
-                              className={`text-xs ${workflowStatusClass[card.workflow_status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                              className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
                             >
                               {card.workflow_label}
                             </Badge>
