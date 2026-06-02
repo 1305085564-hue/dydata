@@ -72,6 +72,7 @@ function buildScopedSummary(
   rows: {
     pendingVideos: PendingVideoRow[];
     pendingSubmissions: PendingSubmissionRow[];
+    pendingExemptions: ExemptionRequestRow[];
   },
 ): CockpitSummary {
   const summary = normalizeSummary(value);
@@ -79,6 +80,7 @@ function buildScopedSummary(
     ...summary,
     pending_videos: rows.pendingVideos.length,
     pending_submissions: rows.pendingSubmissions.length,
+    pending_exemptions: rows.pendingExemptions.length,
   };
 }
 
@@ -112,16 +114,24 @@ export async function loadAdminFirstScreenData(
   const summary = unwrapRpc<Record<string, number>>(summaryResult).data;
   const pendingVideos = filterScopedRows(auth.scope, unwrapRpc<PendingVideoRow[]>(videosResult).data, (row) => row.submitted_by);
   const pendingSubmissions = filterScopedRows(auth.scope, unwrapRpc<PendingSubmissionRow[]>(submissionsResult).data, (row) => row.profile_id);
-  const pendingJoinRequests = joinRequestsResult.ok ? joinRequestsResult.data : [];
+  const pendingExemptions = filterScopedRows(
+    auth.scope,
+    exemptionsResult,
+    (row) => row.applicant_user_id,
+  );
+  const pendingJoinRequests = joinRequestsResult.ok
+    ? filterScopedRows(auth.scope, joinRequestsResult.data, (row) => row.applicantUserId)
+    : [];
 
   return {
     summary: buildScopedSummary(summary, {
       pendingVideos,
       pendingSubmissions,
+      pendingExemptions,
     }),
     pendingVideos,
     pendingSubmissions,
-    pendingExemptions: exemptionsResult,
+    pendingExemptions,
     pendingJoinRequests,
   };
 }
@@ -132,7 +142,7 @@ type AdminSupabase = Awaited<ReturnType<typeof requireAdminServiceClient>> exten
     : never
   : never;
 
-async function loadPendingExemptionRows(
+export async function loadPendingExemptionRows(
   supabase: AdminSupabase,
 ): Promise<ExemptionRequestRow[]> {
   try {

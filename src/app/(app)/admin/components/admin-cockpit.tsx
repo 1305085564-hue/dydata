@@ -91,6 +91,21 @@ function formatPct(pct: number | null): string {
 
 /* ── 待审批合并卡（催交 / 豁免 / 入团） ── */
 type ReviewTab = "submissions" | "exemptions" | "joins";
+type QueueMetricSummary = {
+  newVideosToday: number;
+  weeklySubmissionRate: number;
+  weeklyReviewedCount: number;
+  caseLibraryPendingCount: number;
+};
+
+type QueueOverviewPayload = {
+  summary: CockpitSummary | null;
+  pendingVideos: PendingVideoRow[];
+  pendingSubmissions: PendingSubmissionRow[];
+  pendingExemptions: ExemptionRequestRow[];
+  pendingJoinRequests: AdminRequestRow[];
+  metrics: QueueMetricSummary;
+};
 
 function HoverActions({
   children,
@@ -164,12 +179,10 @@ function ReviewBatchCard({
     return "submissions";
   });
 
-  const { data: submissionData } = useSafeFetch<{ data: PendingSubmissionRow[] }>(
-    `/api/admin/cockpit/pending-submissions?date=${date}`,
-    300_000,
-    { data: initialSubmissions },
-  );
-  const submissions = submissionData?.data ?? [];
+  const [submissions, setSubmissions] = useState(initialSubmissions);
+  useEffect(() => {
+    setSubmissions(initialSubmissions);
+  }, [initialSubmissions]);
 
   const [exemptions, setExemptions] = useState(initialExemptions);
   useEffect(() => {
@@ -560,20 +573,12 @@ function TodayHero({ date, totalPending }: { date: string; totalPending: number 
 
 /* ── Anomaly Timeline：异常线索横向带（复盘提示，非主动作） ── */
 function AnomalyTimeline({
-  date,
-  initialRows,
+  rows,
   total,
 }: {
-  date: string;
-  initialRows: PendingVideoRow[];
+  rows: PendingVideoRow[];
   total: number;
 }) {
-  const { data } = useSafeFetch<{ data: PendingVideoRow[] }>(
-    `/api/admin/cockpit/pending-videos?date=${date}&limit=12`,
-    180_000,
-    { data: initialRows },
-  );
-  const rows = data?.data ?? [];
   const [activeRow, setActiveRow] = useState<PendingVideoRow | null>(null);
 
   return (
@@ -648,12 +653,12 @@ function AnomalyTimeline({
 }
 
 /* ── Metric Links：底部数据钩子，把其他模块的核心数字拉到首页 ── */
-function MetricLinks() {
+function MetricLinks({ metrics }: { metrics: QueueMetricSummary }) {
   const items = [
-    { label: "新增视频", value: "—", hint: "今日入库", href: "/admin/videos" },
-    { label: "提交率", value: "—", hint: "本周累计", href: "/admin/analytics" },
-    { label: "复盘完成", value: "—", hint: "本周", href: "/admin/content" },
-    { label: "案例沉淀", value: "—", hint: "待整理", href: "/admin/violations" },
+    { label: "新增视频", value: String(metrics.newVideosToday), hint: "今日入库", href: "/admin/videos" },
+    { label: "提交率", value: `${metrics.weeklySubmissionRate}%`, hint: "本周累计", href: "/admin/analytics" },
+    { label: "复盘完成", value: String(metrics.weeklyReviewedCount), hint: "本周", href: "/admin/content" },
+    { label: "案例沉淀", value: String(metrics.caseLibraryPendingCount), hint: "待整理", href: "/admin/violations" },
   ];
   return (
     <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -701,11 +706,40 @@ export function AdminQueueSection({
     pendingJoinRequests: [],
   };
 
-  const { data: summary } = useSafeFetch<CockpitSummary>(
-    `/api/admin/cockpit/summary?date=${date}`,
+  const initialOverview: QueueOverviewPayload | null =
+    initialSummary && initialData
+      ? {
+          summary: initialSummary,
+          pendingVideos: initialData.pendingVideos,
+          pendingSubmissions: initialData.pendingSubmissions,
+          pendingExemptions: initialData.pendingExemptions,
+          pendingJoinRequests: initialData.pendingJoinRequests,
+          metrics: {
+            newVideosToday: initialData.pendingVideos.length,
+            weeklySubmissionRate: 0,
+            weeklyReviewedCount: 0,
+            caseLibraryPendingCount: 0,
+          },
+        }
+      : null;
+
+  const { data: overview, error } = useSafeFetch<QueueOverviewPayload>(
+    `/api/admin/cockpit/queue-overview?date=${date}`,
     180_000,
-    initialSummary,
+    initialOverview,
   );
+
+  const summary = overview?.summary ?? initialSummary;
+  const pendingVideos = overview?.pendingVideos ?? resolved.pendingVideos;
+  const pendingSubmissions = overview?.pendingSubmissions ?? resolved.pendingSubmissions;
+  const pendingExemptions = overview?.pendingExemptions ?? resolved.pendingExemptions;
+  const pendingJoinRequests = overview?.pendingJoinRequests ?? resolved.pendingJoinRequests;
+  const metrics = overview?.metrics ?? {
+    newVideosToday: pendingVideos.length,
+    weeklySubmissionRate: 0,
+    weeklyReviewedCount: 0,
+    caseLibraryPendingCount: 0,
+  };
 
   const totals = {
     videos: summary?.pending_videos ?? 0,
@@ -714,28 +748,33 @@ export function AdminQueueSection({
   };
 
   const totalPending =
-    totals.submissions + totals.exemptions + resolved.pendingJoinRequests.length;
+    totals.submissions + totals.exemptions + pendingJoinRequests.length;
+
+  const isInitialLoading =
+    overview == null && initialSummary == null && initialData == null && error == null;
 
   return (
     <div className="space-y-8">
       <TodayHero date={date} totalPending={totalPending} />
 
-      <ReviewBatchCard
-        date={date}
-        initialSubmissions={resolved.pendingSubmissions}
-        initialExemptions={resolved.pendingExemptions}
-        initialJoins={resolved.pendingJoinRequests}
-        submissionsTotal={totals.submissions}
-        exemptionsTotal={totals.exemptions}
-      />
+      {isInitialLoading ? (
+        <section className="flex h-[480px] items-center justify-center rounded-2xl border border-zinc-200 bg-white">
+          <p className="text-[12px] text-zinc-400">正在加载待办数据…</p>
+        </section>
+      ) : (
+        <ReviewBatchCard
+          date={date}
+          initialSubmissions={pendingSubmissions}
+          initialExemptions={pendingExemptions}
+          initialJoins={pendingJoinRequests}
+          submissionsTotal={totals.submissions}
+          exemptionsTotal={totals.exemptions}
+        />
+      )}
 
-      <AnomalyTimeline
-        date={date}
-        initialRows={resolved.pendingVideos}
-        total={totals.videos}
-      />
+      <AnomalyTimeline rows={pendingVideos} total={totals.videos} />
 
-      <MetricLinks />
+      <MetricLinks metrics={metrics} />
     </div>
   );
 }
