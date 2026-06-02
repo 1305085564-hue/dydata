@@ -105,7 +105,7 @@ export default async function VideoReviewPage({
             </div>
           </div>
         ) : (
-          <ApprovedList items={items} query={query} />
+          <ApprovedList items={items} query={query} currentUserId={user.id} />
         )}
       </div>
     </div>

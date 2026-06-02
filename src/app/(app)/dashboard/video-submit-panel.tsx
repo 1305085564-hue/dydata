@@ -427,6 +427,8 @@ export function VideoSubmitPanel({
     [activeBizDate, activeDateReport, activeExemptionState, today],
   );
   const shouldShowBlockedStateCard = activeDateStatus.state === "waive" || activeDateStatus.state === "leave";
+  const isPermanentExemption = activeExemptionState.isExempt && activeExemptionState.type === "permanent";
+  const shouldHideFormForExemption = shouldShowBlockedStateCard && !isPermanentExemption;
   useEffect(() => {
     if (!pendingBackfillDate || isDataViewOpen) return;
     if (activeBizDate !== pendingBackfillDate || primaryMode !== "backfill") return;
@@ -910,7 +912,7 @@ export function VideoSubmitPanel({
               </div>
             ) : null}
 
-            {selectedAccount && !shouldShowBlockedStateCard && (!isPrimarySummaryMode || activeBizDate !== today || submittedViewActive) ? (
+            {selectedAccount && !shouldHideFormForExemption && (!isPrimarySummaryMode || activeBizDate !== today || submittedViewActive) ? (
               <VideoSubmitForm
                 key={`form-${selectedAccount.id}-${activeBizDate}`}
                 account={selectedAccount}

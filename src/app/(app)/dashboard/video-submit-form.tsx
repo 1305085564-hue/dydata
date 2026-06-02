@@ -970,7 +970,7 @@ export function VideoSubmitForm({
     }
 
     if (!meta.topicTag) {
-      feedbackToast.error("请选择话题标签（干货或复盘）");
+      feedbackToast.error("请选择话题标签");
       scrollToIssueAnchor("topicTag");
       return;
     }
@@ -1536,8 +1536,8 @@ export function VideoSubmitForm({
 
                   <div ref={topicTagSectionRef} className="space-y-2 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
                     <Label className="text-[13px] font-medium text-zinc-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
-                    <div className="flex gap-4">
-                      {(["干货", "复盘"] as const).map((tag) => (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                      {(["干货", "复盘", "复盘干货", "视频转推"] as const).map((tag) => (
                         <button
                           key={tag}
                           type="button"

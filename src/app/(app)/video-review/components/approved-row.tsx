@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Image as ImageIcon } from "lucide-react";
+import Link from "next/link";
+import { Check, Copy, Image as ImageIcon, Upload } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getScriptOpening, formatShortDate } from "./format";
@@ -10,10 +11,11 @@ import type { ApprovedDraftItem } from "./types";
 interface ApprovedRowProps {
   item: ApprovedDraftItem;
   isLast: boolean;
+  isMine: boolean;
   onOpenLightbox: (paths: string[], index: number) => void;
 }
 
-export function ApprovedRow({ item, isLast, onOpenLightbox }: ApprovedRowProps) {
+export function ApprovedRow({ item, isLast, isMine, onOpenLightbox }: ApprovedRowProps) {
   const [copied, setCopied] = useState(false);
   const screenshotCount = item.screenshot_paths.length;
 
@@ -36,13 +38,14 @@ export function ApprovedRow({ item, isLast, onOpenLightbox }: ApprovedRowProps) 
   return (
     <div
       className={cn(
-        "group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-50",
+        "group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-zinc-50",
         !isLast && "border-b border-zinc-100",
+        isMine && "border-l-[3px] border-l-[#D97757]/60 bg-[#D97757]/[0.02]",
       )}
     >
       <span
         className="size-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: "#6FAA7D" }}
+        style={{ backgroundColor: isMine ? "#D97757" : "#6FAA7D" }}
         aria-hidden
       />
 
@@ -55,11 +58,21 @@ export function ApprovedRow({ item, isLast, onOpenLightbox }: ApprovedRowProps) 
           <span className="text-zinc-300">·</span>
           <span className="tabular-nums">{formatShortDate(item.approved_at)}</span>
           <span className="text-zinc-300">·</span>
-          <span>{item.submitted_by_name}</span>
+          <span className={isMine ? "text-[#D97757]" : ""}>{item.submitted_by_name}</span>
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        {isMine ? (
+          <Link
+            href={`/video-review/submit?edit=${item.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+          >
+            <Upload className="size-3.5 stroke-[1.5]" />
+            补交截图
+          </Link>
+        ) : null}
         <button
           type="button"
           onClick={handleViewShots}
