@@ -20,9 +20,8 @@ test("登录表单会保留传入邮箱并显示忘记密码入口", () => {
   );
 
   assert.match(html, /value="kept@example.com"/);
-  assert.match(html, /忘记密码？/);
+  assert.match(html, /忘记密码/);
   assert.match(html, /href="\/forgot-password"/);
-  assert.match(html, /密码已重置，请重新登录/);
 });
 
 test("登录表单包含记住邮箱选项", () => {

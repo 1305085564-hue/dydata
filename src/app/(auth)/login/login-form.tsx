@@ -44,7 +44,7 @@ function SubmitButton() {
 
 export function LoginForm({ action, initialEmail = "", notice = null }: LoginFormProps) {
   const searchParams = useSearchParams();
-  const isExpired = searchParams.get("expired") === "1";
+  const isExpired = searchParams?.get("expired") === "1";
   const [showExpiredAlert, setShowExpiredAlert] = useState(isExpired);
 
   const [state, formAction] = useActionState(action, { ...initialState, email: initialEmail });

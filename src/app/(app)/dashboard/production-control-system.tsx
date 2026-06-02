@@ -17,7 +17,6 @@ import {
 
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { DataReportStage } from "./components/data-report-stage";
-import { FocusHeroCard } from "./components/focus-hero-card";
 
 interface ProductionControlSystemProps {
   today: string;
@@ -132,19 +131,6 @@ export function ProductionControlSystem({
           userDisplayName={userDisplayName}
           userRole={userRole}
         />
-
-        {userRole === "member" && (
-          <div className="mx-auto mb-4 max-w-6xl">
-            <FocusHeroCard
-              todayReports={todayReports}
-              totalAccounts={accounts.length}
-              userDisplayName={userDisplayName}
-              userRole={userRole}
-              today={today}
-              accounts={accounts}
-            />
-          </div>
-        )}
 
         <DataReportStage
           key={`${selectedAccountId}-${activeBizDate}`}
