@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Sparkles, Loader2, X } from "lucide-react";
+import { ChevronRight, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -119,7 +119,7 @@ interface AiSuggestionState {
 }
 
 function getTeamLabel(teamName?: string | null) {
-  return teamName?.trim() || "深圳二部";
+  return teamName?.trim() || "未分配";
 }
 
 function getEditableKeys(role: UserRole): readonly PermissionKey[] {

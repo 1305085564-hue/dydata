@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildFulfillmentCalendarData } from "@/lib/loaders/fulfillment-page";
+import { buildFulfillmentCalendarData, resolveFulfillmentDateRange } from "@/lib/loaders/fulfillment-page";
 
 test("发布履约日历按成员聚合并计算今日异常与统计", () => {
   const data = buildFulfillmentCalendarData({
@@ -101,9 +101,47 @@ test("发布履约日历按成员聚合并计算今日异常与统计", () => {
   assert.equal(data.stats.pendingToday, 1);
   assert.equal(data.stats.waivedToday, 0);
   assert.equal(data.stats.absentToday, 1);
-  assert.equal(data.stats.monthlyFulfillmentRate, 33);
+  assert.equal(data.stats.consecutiveMissingMembers, 1);
+  assert.equal(data.stats.periodFulfillmentRate, 33);
   assert.deepEqual(data.todayExceptions.map((member) => member.userId), ["user-a"]);
+  assert.deepEqual(data.rangeExceptions.map((member) => member.userId), ["user-a"]);
+  assert.equal(data.range.startDate, "2026-06-01");
+  assert.equal(data.range.endDate, "2026-06-03");
+  assert.equal(data.members[0]?.teamId, "team-1");
   assert.equal(data.members[0]?.publishedDays, 1);
   assert.equal(data.members[1]?.publishedDays, 1);
   assert.equal(data.members[1]?.waivedDays, 1);
+});
+
+test("发布履约日期范围支持高频预设与自定义范围", () => {
+  assert.deepEqual(resolveFulfillmentDateRange({ preset: "today" }, "2026-06-03"), {
+    preset: "today",
+    startDate: "2026-06-03",
+    endDate: "2026-06-03",
+    label: "今天",
+  });
+
+  assert.deepEqual(resolveFulfillmentDateRange({ preset: "last7" }, "2026-06-03"), {
+    preset: "last7",
+    startDate: "2026-05-28",
+    endDate: "2026-06-03",
+    label: "最近 7 天",
+  });
+
+  assert.deepEqual(resolveFulfillmentDateRange({ preset: "last_month" }, "2026-06-03"), {
+    preset: "last_month",
+    startDate: "2026-05-01",
+    endDate: "2026-05-31",
+    label: "上月",
+  });
+
+  assert.deepEqual(resolveFulfillmentDateRange({
+    startDate: "2026-05-12",
+    endDate: "2026-05-20",
+  }, "2026-06-03"), {
+    preset: "custom",
+    startDate: "2026-05-12",
+    endDate: "2026-05-20",
+    label: "2026-05-12 至 2026-05-20",
+  });
 });

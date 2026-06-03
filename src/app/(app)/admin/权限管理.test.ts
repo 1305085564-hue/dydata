@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   applyRoleChangeToMember,
   buildMemberTeamTransferPatch,
+  buildRemovedMemberProfilePatch,
   canChangeMemberRole,
   canRemoveMemberTarget,
   getChangedAdminPermissions,
@@ -619,6 +620,15 @@ test("调配团队写入 profiles 时会同步清空 group_id", () => {
     group_id: null,
   });
   assert.deepEqual(buildMemberTeamTransferPatch(null), {
+    team_id: null,
+    group_id: null,
+  });
+});
+
+test("移除成员写入 profiles 时会同步清空团队与分组归属", () => {
+  assert.deepEqual(buildRemovedMemberProfilePatch(), {
+    role: "member",
+    permissions: {},
     team_id: null,
     group_id: null,
   });

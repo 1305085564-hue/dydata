@@ -4,11 +4,7 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 import { AdminMainArea } from "@/components/admin-layout/admin-main-area";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const permissionInfo = await getUserPermissions();
   if (!permissionInfo) redirect("/login");
   const headersList = await headers();

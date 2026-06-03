@@ -32,6 +32,7 @@ import {
 import type { Permissions, UserRole } from "@/types";
 import {
   buildMemberTeamTransferPatch,
+  buildRemovedMemberProfilePatch,
   canChangeMemberRole,
   canRemoveMemberTarget,
   isProfileWriteApplied,
@@ -59,6 +60,15 @@ async function getProfileTeamId(
   userId: string
 ) {
   const adminSupabase = createAdminClient();
+  const profileResult = await adminSupabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!profileResult.error && profileResult.data) {
+    return profileResult.data.team_id ?? null;
+  }
+
   const { data, error } = await adminSupabase.auth.admin.getUserById(userId);
   if (error) {
     throw new Error(error.message);
@@ -106,19 +116,12 @@ async function loadTeamManagementContext(perm: { userId: string; role: UserRole;
   const rawProfiles = profilesResult.error ? fallbackProfilesResult.data ?? [] : profilesResult.data ?? [];
   const authUsersResult = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
   const authUserById = new Map((authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]));
-  const teams = await getTeamOptions();
-  const teamIdByName = new Map(teams.map((team) => [team.name, team.id]));
   const profiles = (rawProfiles as TeamManagementProfile[]).map((profile) => {
-    const metadata = authUserById.get(profile.id)?.user_metadata ?? {};
-    const metadataTeamId = typeof metadata.team_id === "string" ? metadata.team_id : null;
-    const metadataTeamName = typeof metadata.team_name === "string" ? metadata.team_name : null;
-    const fallbackTeamId = metadataTeamId ?? (metadataTeamName ? teamIdByName.get(metadataTeamName) ?? null : null);
-
     return {
       ...profile,
       role: profile.role as UserRole,
       permissions: (profile.permissions ?? {}) as Permissions,
-      team_id: profile.team_id ?? fallbackTeamId ?? null,
+      team_id: profile.team_id ?? null,
       group_id: profile.group_id ?? null,
       email: authUserById.get(profile.id)?.email ?? null,
     };
@@ -631,6 +634,26 @@ function formatTeamName(teamId: string | null, teamNames: Map<string, string>) {
   return teamNames.get(teamId) ?? teamId;
 }
 
+async function syncAuthUserTeamMetadata(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  teamId: string | null,
+  teamName: string | null,
+) {
+  const { data: userData, error: fetchError } = await adminSupabase.auth.admin.getUserById(userId);
+  if (fetchError) return fetchError;
+
+  const userMetadata = {
+    ...(userData.user?.user_metadata ?? {}),
+    team_id: teamId,
+    team_name: teamName,
+  };
+  const { error } = await adminSupabase.auth.admin.updateUserById(userId, {
+    user_metadata: userMetadata,
+  });
+  return error;
+}
+
 export async function updateMemberTeam(
   targetUserId: string,
   newTeamId: string | null,
@@ -679,6 +702,13 @@ export async function updateMemberTeam(
   const teamNames = await getTeamNameMap(adminSupabase, [oldTeamId, newTeamId]);
   const oldTeamName = formatTeamName(oldTeamId, teamNames);
   const newTeamName = formatTeamName(newTeamId, teamNames);
+  const metadataError = await syncAuthUserTeamMetadata(
+    adminSupabase,
+    targetUserId,
+    newTeamId,
+    newTeamId ? newTeamName : null,
+  );
+  if (metadataError) return { error: metadataError.message };
 
   await adminSupabase.from("member_change_log").insert({
     user_id: targetUserId,
@@ -696,6 +726,7 @@ export async function updateMemberTeam(
   );
 
   revalidatePath("/admin");
+  revalidatePath("/admin/modules");
   return {};
 }
 
@@ -741,9 +772,10 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
   });
   if (banError) return { error: banError.message };
 
+  const teamId = target.team_id ?? null;
   const { data: updatedProfile, error } = await adminSupabase
     .from("profiles")
-    .update({ role: "member", permissions: {} })
+    .update(buildRemovedMemberProfilePatch())
     .eq("id", targetUserId)
     .select("id")
     .single();
@@ -751,7 +783,9 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
   if (error) return { error: error.message };
   if (!isProfileWriteApplied(updatedProfile)) return { error: "成员移除未生效，请刷新后重试" };
 
-  const teamId = await getProfileTeamId(supabase, targetUserId);
+  const metadataError = await syncAuthUserTeamMetadata(adminSupabase, targetUserId, null, null);
+  if (metadataError) return { error: metadataError.message };
+
   await adminSupabase.from("member_change_log").insert({
     user_id: targetUserId,
     team_id: teamId,
@@ -762,6 +796,7 @@ export async function removeMember(targetUserId: string): Promise<{ error?: stri
   await writeAuditLog(supabase, perm.userId, "remove_member", targetUserId, `移除成员: ${target.name}`);
 
   revalidatePath("/admin");
+  revalidatePath("/admin/modules");
   return {};
 }
 

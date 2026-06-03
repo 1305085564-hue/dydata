@@ -231,15 +231,8 @@ export async function loadAdminPageData({
       .order("name", { ascending: true }),
   ]);
 
-  const authUserById = new Map((authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser]));
   const authEmailByUserId = new Map((authUsersResult.data?.users ?? []).map((authUser) => [authUser.id, authUser.email ?? null]));
-  const teamIdByName = new Map(teams.map((team) => [team.name, team.id]));
   const hydratedProfiles = ((allProfiles ?? []) as AdminProfileRow[]).map((profile) => {
-    const metadata = authUserById.get(profile.id)?.user_metadata ?? {};
-    const metadataTeamId = typeof metadata.team_id === "string" ? metadata.team_id : null;
-    const metadataTeamName = typeof metadata.team_name === "string" ? metadata.team_name : null;
-    const fallbackTeamId = metadataTeamId ?? (metadataTeamName ? teamIdByName.get(metadataTeamName) ?? null : null);
-
     return {
       ...profile,
       role: profile.role as UserRole,
@@ -250,7 +243,7 @@ export async function loadAdminPageData({
       exempt_reason: profile.exempt_reason ?? null,
       exemption_category: profile.exemption_category ?? null,
       permissions: (profile.permissions ?? {}) as Permissions,
-      team_id: profile.team_id ?? fallbackTeamId ?? null,
+      team_id: profile.team_id ?? null,
       group_id: profile.group_id ?? null,
       email: authEmailByUserId.get(profile.id) ?? null,
     };

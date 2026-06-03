@@ -5,6 +5,7 @@ import {
   readJsonBody,
   requireAdminServiceClient,
   requireOwnerOrAdminRole,
+  requireVisibleUsers,
   unwrapRpc,
 } from "../_shared";
 
@@ -19,10 +20,13 @@ export async function POST(request: Request) {
   const forbidden = requireOwnerOrAdminRole(auth);
   if (forbidden) return forbidden;
   if ("response" in auth) return auth.response;
+  const scoped = requireVisibleUsers(auth, [payload.data.userId]);
+  if (scoped) return scoped;
 
   const result = await auth.supabase.rpc("remove_fulfillment_mark", {
     p_user_id: payload.data.userId,
     p_record_date: payload.data.recordDate,
+    p_marker_id: auth.actor.userId,
   });
   const unwrapped = unwrapRpc<unknown>(result, "删除发布履约标记失败");
   if ("response" in unwrapped) return unwrapped.response;

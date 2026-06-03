@@ -6,62 +6,92 @@ interface StatsBarProps {
   stats: FulfillmentCalendarData["stats"];
 }
 
-function StatItem({
+function BigStat({
   label,
   value,
-  unit,
+  sub,
   color,
 }: {
   label: string;
   value: number;
-  unit?: string;
+  sub?: string;
   color?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col">
       <span className="text-[12px] text-zinc-400">{label}</span>
-      <div className="flex items-baseline gap-1">
+      <div className="mt-1 flex items-baseline gap-1.5">
         <span
-          className="font-mono text-[24px] font-semibold tabular-nums tracking-tight"
+          className="font-mono text-[32px] font-semibold tabular-nums tracking-tight leading-none"
           style={{ color: color || "#18181b" }}
         >
           {value}
         </span>
-        {unit ? <span className="text-[12px] font-medium text-zinc-400">{unit}</span> : null}
+        {sub ? <span className="text-[12px] font-medium text-zinc-400">{sub}</span> : null}
       </div>
+    </div>
+  );
+}
+
+function SmallStat({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number | string;
+  color?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-[11px] text-zinc-400">{label}</span>
+      <span
+        className="font-mono text-[16px] font-semibold tabular-nums tracking-tight"
+        style={{ color: color || "#3f3f46" }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
 
 export function StatsBar({ stats }: StatsBarProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <StatItem
-          label="本月发布率"
-          value={stats.monthlyFulfillmentRate}
-          unit="%"
-          color={stats.monthlyFulfillmentRate >= 80 ? "#6FAA7D" : stats.monthlyFulfillmentRate >= 60 ? "#D99E55" : "#C9604D"}
-        />
-      </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <StatItem
+    <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+      {/* 左侧大数字 */}
+      <div className="flex gap-8">
+        <BigStat
           label="今日待处理"
           value={stats.pendingToday}
-          color={stats.pendingToday > 0 ? "#D99E55" : undefined}
+          color={stats.pendingToday > 0 ? "#C9604D" : "#6FAA7D"}
+        />
+        <BigStat
+          label="连续未发"
+          value={stats.consecutiveMissingMembers}
+          color={stats.consecutiveMissingMembers > 0 ? "#D99E55" : undefined}
         />
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <StatItem label="已请假" value={stats.leaveToday} />
-      </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <StatItem label="已豁免" value={stats.waivedToday} />
-      </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <StatItem
-          label="已缺勤"
-          value={stats.absentToday}
-          color={stats.absentToday > 0 ? "#C9604D" : undefined}
+
+      {/* 分隔线 */}
+      <div className="hidden h-10 w-px bg-zinc-200 sm:block" />
+
+      {/* 右侧小数字 */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <SmallStat label="总成员" value={stats.totalMembers} />
+        <SmallStat label="今日已发布" value={stats.publishedToday} color="#6FAA7D" />
+        <SmallStat label="请假" value={stats.leaveToday} color="#8AA8C7" />
+        <SmallStat label="豁免" value={stats.waivedToday} color="#8AA8C7" />
+        <SmallStat label="缺勤" value={stats.absentToday} color="#C9604D" />
+        <SmallStat
+          label="发布率"
+          value={`${stats.periodFulfillmentRate}%`}
+          color={
+            stats.periodFulfillmentRate >= 80
+              ? "#6FAA7D"
+              : stats.periodFulfillmentRate >= 60
+                ? "#D99E55"
+                : "#C9604D"
+          }
         />
       </div>
     </div>

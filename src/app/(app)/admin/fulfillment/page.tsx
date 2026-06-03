@@ -3,11 +3,12 @@ import { redirect } from "next/navigation";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { loadFulfillmentCalendar } from "@/lib/loaders/fulfillment-page";
+import type { TimeRangePreset } from "@/types/fulfillment";
 
 import { FulfillmentWorkbench } from "./fulfillment-workbench";
 
 interface FulfillmentPageProps {
-  searchParams: Promise<{ year?: string; month?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; range?: string }>;
 }
 
 function clampMonth(value: number) {
@@ -26,6 +27,14 @@ function resolveYearMonth(year: string | undefined, month: string | undefined) {
   };
 }
 
+function resolveRange(range: string | undefined): TimeRangePreset {
+  const validRanges: TimeRangePreset[] = ["today", "last7days", "thisMonth", "lastMonth", "custom"];
+  if (validRanges.includes(range as TimeRangePreset)) {
+    return range as TimeRangePreset;
+  }
+  return "today";
+}
+
 export default async function FulfillmentPage({ searchParams }: FulfillmentPageProps) {
   const params = await searchParams;
   const context = await getCurrentPermissionContext("company", null);
@@ -37,15 +46,16 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
   }
 
   const { year, month } = resolveYearMonth(params.year, params.month);
+  const range = resolveRange(params.range);
   const data = await loadFulfillmentCalendar(year, month, scope.visibleUserIds);
 
   return (
     <div className="space-y-4">
       <div>
         <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">发布履约</p>
-        <h1 className="mt-1 text-[18px] font-medium tracking-tight text-zinc-800">团队发布日历</h1>
+        <h1 className="mt-1 text-[18px] font-medium tracking-tight text-zinc-800">发布履约工作台</h1>
       </div>
-      <FulfillmentWorkbench data={data} />
+      <FulfillmentWorkbench data={data} range={range} />
     </div>
   );
 }

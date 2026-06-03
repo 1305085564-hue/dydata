@@ -133,3 +133,42 @@ test("邮箱补全只覆盖命中的成员，不改动其他首屏摘要字段",
     },
   ]);
 });
+
+test("邮箱补全不会用 auth metadata 把已移出成员重新归回团队", () => {
+  const hydrated = hydrateAdminModuleMemberEmails(
+    [
+      {
+        id: "member-1",
+        name: "成员乙",
+        role: "member",
+        status: "active",
+        permissions: { export_data: false },
+        email: null,
+        team_id: null,
+        group_id: null,
+        team_name: null,
+      },
+    ],
+    {
+      "member-1": {
+        email: "member-1@dydata.cc",
+        team_id: "team-2",
+        team_name: "深圳二部",
+      },
+    },
+  );
+
+  assert.deepEqual(hydrated, [
+    {
+      id: "member-1",
+      name: "成员乙",
+      role: "member",
+      status: "active",
+      permissions: { export_data: false },
+      email: "member-1@dydata.cc",
+      team_id: null,
+      group_id: null,
+      team_name: null,
+    },
+  ]);
+});

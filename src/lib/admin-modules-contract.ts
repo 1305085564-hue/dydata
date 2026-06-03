@@ -90,8 +90,8 @@ export function hydrateAdminModuleMemberEmails(
     return {
       ...member,
       email: hydration.email,
-      team_id: hydration.team_id ?? member.team_id ?? null,
-      team_name: hydration.team_name ?? member.team_name,
+      team_id: member.team_id ?? null,
+      team_name: member.team_name,
     };
   });
 }

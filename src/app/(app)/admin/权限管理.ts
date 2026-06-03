@@ -252,6 +252,15 @@ export function buildMemberTeamTransferPatch(newTeamId: string | null) {
   };
 }
 
+export function buildRemovedMemberProfilePatch() {
+  return {
+    role: "member" as const,
+    permissions: {},
+    team_id: null,
+    group_id: null,
+  };
+}
+
 export function isProfileWriteApplied(result: AdminProfileWriteResult | null | undefined) {
   return Boolean(result?.id);
 }

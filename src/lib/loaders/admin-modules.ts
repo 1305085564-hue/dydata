@@ -21,7 +21,7 @@ import {
   type TeamManagementGroup,
   type TeamManagementProfile,
 } from "@/lib/team-management";
-import { getTeamMeta, getTeamOptions } from "@/lib/teams";
+import { getTeamOptions } from "@/lib/teams";
 import type { Permissions, UserRole } from "@/types";
 
 import { shiftDateOnly } from "./shared";
@@ -225,8 +225,14 @@ async function loadAdminModuleMemberHydrationMap(
   return Object.fromEntries(
     (authUsersResult.data?.users ?? []).map((authUser) => {
       const metadata = authUser.user_metadata ?? {};
-      const metadataTeamName = getTeamMeta(metadata).teamName;
-      const metadataTeamId = typeof metadata.team_id === "string" ? metadata.team_id : null;
+      const metadataTeamName =
+        typeof metadata.team_name === "string" && metadata.team_name.trim()
+          ? metadata.team_name.trim()
+          : null;
+      const metadataTeamId =
+        typeof metadata.team_id === "string" && metadata.team_id.trim()
+          ? metadata.team_id.trim()
+          : null;
       const resolvedTeamId =
         metadataTeamId ?? (metadataTeamName ? (teamIdByName.get(metadataTeamName) ?? null) : null);
 
