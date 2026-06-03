@@ -4,10 +4,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { AdminSecondaryNav, getAdminSecondaryNavItems } from "./admin-secondary-nav";
 
-test("日常管理组对管理员只输出四个核心入口", () => {
+test("日常管理组对管理员输出核心入口", () => {
   assert.deepEqual(
     getAdminSecondaryNavItems({ canManageAdmin: true, canManageMembers: true, userRole: "admin", group: "daily" }).map((item) => item.label),
-    ["今日待办", "经营分析", "批改台", "素材库"],
+    ["今日待办", "经营分析", "批改台", "素材库", "发布履约"],
   );
 });
 

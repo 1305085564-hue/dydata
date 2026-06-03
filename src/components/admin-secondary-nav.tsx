@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { BarChart3, FileText, FolderOpen, Gauge } from "lucide-react";
+import { BarChart3, CalendarCheck, FileText, FolderOpen, Gauge } from "lucide-react";
 
 import type { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,8 @@ export type AdminPanelKey =
   | "overview"
   | "analytics"
   | "content"
-  | "videos";
+  | "videos"
+  | "fulfillment";
 
 export interface AdminSecondaryNavItem {
   href: string;
@@ -69,6 +70,17 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     tone: "neutral",
     group: "daily",
     match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
+    requiresAdmin: true,
+  },
+  {
+    href: "/admin/fulfillment",
+    panel: "fulfillment",
+    label: "发布履约",
+    description: "谁没发、什么原因、本月履约全局一目了然。",
+    icon: CalendarCheck,
+    tone: "warning",
+    group: "daily",
+    match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
     requiresAdmin: true,
   },
 ];
