@@ -30,9 +30,10 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/content", label: "批改台", badgeKey: "content" },
   { href: "/admin/videos", label: "素材库", badgeKey: "videos" },
   { href: "/admin/analytics", label: "经营分析" },
+  { href: "/admin/fulfillment", label: "发布履约" },
 ];
 
-function getVisibleNavItems(input: {
+export function getVisibleNavItems(input: {
   userRole: UserRole | null | undefined;
   businessRole: BusinessRole | null | undefined;
   permissions: Permissions;
