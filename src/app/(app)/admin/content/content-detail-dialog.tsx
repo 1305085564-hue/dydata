@@ -315,6 +315,7 @@ const observationSelectOptions = {
 } as const;
 
 const dropOffStageOptions = [
+  ["unset", "未判断"],
   ["opening", "开头"],
   ["middle", "中段"],
   ["ending", "后段"],
@@ -322,6 +323,7 @@ const dropOffStageOptions = [
 ] as const;
 
 const suspectedStageOptions = [
+  ["unset", "未判断"],
   ["opening", "开头问题"],
   ["middle_content", "中段内容"],
   ["topic_mismatch", "题材承接"],
@@ -899,6 +901,7 @@ export function ContentDetailDialog({
 
   function handleQuoteAnalysisToFeedback() {
     if (!analysisResult) return;
+    skipNextSaveRef.current = true;
     setMainIssues(analysisResult.feedback_draft.main_issues);
     setFeedback(analysisResult.feedback_draft.improvement_feedback);
     setActiveTab("feedback");
@@ -1378,11 +1381,7 @@ export function ContentDetailDialog({
                     <div className="space-y-1">
                       <label className="text-[11px] text-zinc-500">跳出集中阶段</label>
                       <SegmentedControl
-                        value={
-                          observation.drop_off_stage === "unset"
-                            ? "not_obvious"
-                            : observation.drop_off_stage
-                        }
+                        value={observation.drop_off_stage}
                         options={dropOffStageOptions}
                         onChange={(v) =>
                           setObservation((prev) => ({ ...prev, drop_off_stage: v }))
@@ -1394,11 +1393,7 @@ export function ContentDetailDialog({
                     <div className="space-y-1">
                       <label className="text-[11px] text-zinc-500">疑似问题阶段</label>
                       <SegmentedControl
-                        value={
-                          observation.suspected_problem_stage === "unset"
-                            ? "opening"
-                            : observation.suspected_problem_stage
-                        }
+                        value={observation.suspected_problem_stage}
                         options={suspectedStageOptions}
                         onChange={(v) =>
                           setObservation((prev) => ({ ...prev, suspected_problem_stage: v }))
@@ -1515,23 +1510,28 @@ export function ContentDetailDialog({
                             </Collapsible>
                           )}
 
-                          <div className="flex flex-wrap gap-2 pt-2">
-                            <Button
-                              size="sm"
-                              className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
-                              onClick={handleQuoteAnalysisToFeedback}
-                            >
-                              引用到反馈
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-9 rounded-lg border-zinc-200 bg-white/80 text-[12px]"
-                              onClick={() => handleMarkExperience("analysis", "hot_case")}
-                              disabled={isMarkingExperience}
-                            >
-                              一键标爆款
-                            </Button>
+                          <div className="space-y-2 pt-2">
+                            <p className="text-[11px] text-zinc-400">
+                              引用后仅填入反馈字段，不会自动保存或下发
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
+                                onClick={handleQuoteAnalysisToFeedback}
+                              >
+                                引用到反馈
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 rounded-lg border-zinc-200 bg-white/80 text-[12px]"
+                                onClick={() => handleMarkExperience("analysis", "hot_case")}
+                                disabled={isMarkingExperience}
+                              >
+                                沉淀为爆款案例
+                              </Button>
+                            </div>
                           </div>
                         </motion.div>
                       ) : null}
@@ -1663,23 +1663,13 @@ export function ContentDetailDialog({
                   onClick={() => handleMarkExperience("feedback", "hot_case")}
                   disabled={isMarkingExperience}
                 >
-                  标记为爆款
+                  沉淀为爆款案例
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleMarkExperience("feedback", "fail_case")}
                   disabled={isMarkingExperience}
                 >
-                  标记为失败案例
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => feedbackToast.warning("待后端补 action")}
-                >
-                  标记不需批改
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => feedbackToast.warning("待后端补 action")}
-                >
-                  稍后处理
+                  沉淀为失败案例
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

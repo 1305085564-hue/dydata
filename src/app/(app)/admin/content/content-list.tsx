@@ -76,11 +76,18 @@ function PlayCountWithSignal({ video, playCount }: { video: VideoRow; playCount:
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="cursor-default font-medium" style={{ color }}>
-          {playCount != null ? formatNumber(playCount) : "-"}
+        <TooltipTrigger className="cursor-default">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="font-medium" style={{ color }}>
+              {playCount != null ? formatNumber(playCount) : "-"}
+            </span>
+            <span className="text-[11px] font-medium tabular-nums" style={{ color }}>
+              {isUp ? "↑" : "↓"}{formatRate(pct)}
+            </span>
+          </span>
         </TooltipTrigger>
         <TooltipContent className="text-base font-semibold">
-          <span style={{ color }}>{isUp ? "↑" : "↓"} {formatRate(pct)}</span>
+          <span style={{ color }}>{isUp ? "较上条暴涨" : "较上条腰斩"} {formatRate(pct)}</span>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -545,13 +552,13 @@ export function ContentList({
         </div>
         <Button
           size="sm"
-          variant="outline"
-          className="h-8 shrink-0 gap-1.5 rounded-xl bg-white text-[12px]"
+          variant="ghost"
+          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
           onClick={handleBatchGenerate}
           disabled={isBatchGenerating || batchCandidates.length === 0}
         >
           <Sparkles className="size-3.5" />
-          {isBatchGenerating ? "生成中..." : `生成草稿${batchCandidates.length > 0 ? ` · ${batchCandidates.length}` : ""}`}
+          {isBatchGenerating ? "生成中..." : `批量生成反馈草稿${batchCandidates.length > 0 ? ` · ${batchCandidates.length}` : ""}`}
         </Button>
       </div>
 
