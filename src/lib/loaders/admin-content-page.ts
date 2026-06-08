@@ -88,6 +88,12 @@ function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
 }
 
+function getVideoSortTimestamp(video: Pick<Video, "uploaded_at" | "created_at">) {
+  const raw = video.uploaded_at ?? video.created_at;
+  const timestamp = raw ? new Date(raw).getTime() : 0;
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
 async function selectInBatches<Row>(
   ids: string[],
   run: (batch: string[]) => Promise<{ data: unknown[] | null }>,
@@ -384,7 +390,7 @@ export async function loadAdminContentPageData({
   let videosQuery = supabase
     .from("videos")
     .select(CONTENT_VIDEO_SELECT)
-    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("uploaded_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
   if (mode === "initial") {
     videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
@@ -408,11 +414,9 @@ export async function loadAdminContentPageData({
       : Promise.resolve({ data: [] }),
   ]);
 
-  const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort((left, right) => {
-    const leftTs = left.published_at ? new Date(left.published_at).getTime() : new Date(left.created_at).getTime();
-    const rightTs = right.published_at ? new Date(right.published_at).getTime() : new Date(right.created_at).getTime();
-    return rightTs - leftTs;
-  });
+  const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort(
+    (left, right) => getVideoSortTimestamp(right) - getVideoSortTimestamp(left),
+  );
   const videos = resolvedScope
     ? filterRowsByDataScope(resolvedScope, allVideos, (video) => video.accounts?.profile_id ?? video.user_id)
     : allVideos;
@@ -612,4 +616,5 @@ export const __internal = {
   limitInitialVideos,
   normalizeVideoRows,
   selectInBatches,
+  getVideoSortTimestamp,
 };

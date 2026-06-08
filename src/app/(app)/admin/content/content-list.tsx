@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { getShanghaiDateString } from "@/lib/remind-submission";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
 import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
@@ -107,23 +108,34 @@ function formatDateTime(value: string | null) {
   }).format(date);
 }
 
-function getVideoDateKey(video: VideoRow) {
-  return (video.published_at ?? video.created_at)?.slice(0, 10) ?? "";
+function toShanghaiDateKey(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return getShanghaiDateString(date);
 }
 
-function getVideoMonthKey(video: VideoRow) {
-  return getVideoDateKey(video).slice(0, 7);
+function getVideoUploadDateKey(video: VideoRow) {
+  return toShanghaiDateKey(video.uploaded_at ?? video.created_at);
+}
+
+function getVideoUploadMonthKey(video: VideoRow) {
+  return getVideoUploadDateKey(video).slice(0, 7);
 }
 
 function getSnapshotPlay(snapshot: VideoMetricsSnapshot | undefined) {
   return snapshot?.play_count ?? 0;
 }
 
-function getVideoTimestamp(video: VideoRow) {
-  const raw = video.published_at ?? video.created_at;
+function getVideoUploadTimestamp(video: VideoRow) {
+  const raw = video.uploaded_at ?? video.created_at;
   if (!raw) return 0;
   const ts = new Date(raw).getTime();
   return Number.isNaN(ts) ? 0 : ts;
+}
+
+function isVideoUploadedToday(video: VideoRow) {
+  return getVideoUploadDateKey(video) === getShanghaiDateString();
 }
 
 /* ------------------------------------------------------------------ */
@@ -142,7 +154,7 @@ function buildTimeline(rows: VideoRow[]): MonthGroup[] {
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const month = getVideoMonthKey(row);
+    const month = getVideoUploadMonthKey(row);
     const label = month.replace("-", "年") + "月";
 
     if (!current || current.label !== label) {
@@ -294,7 +306,7 @@ export function ContentList({
     reviewed: "all",
     feedbackStatus: "all",
     rankScope: "all",
-    sortMode: "priority",
+    sortMode: "latest",
   });
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
@@ -332,7 +344,7 @@ export function ContentList({
       if (cardStatus === "not_started") score += 100;
       const playCount = snapshotMap.get(v.id)?.play_count ?? 0;
       score += Math.min(playCount / 10000, 50);
-      const ts = getVideoTimestamp(v);
+      const ts = getVideoUploadTimestamp(v);
       if (ts > 0) {
         const days = Math.floor((now - ts) / 86400000);
         score += Math.min(Math.max(days, 0), 30) * 5;
@@ -357,9 +369,9 @@ export function ContentList({
       if (filters.profileId !== "all" && video.user_id !== filters.profileId) return false;
       if (filters.accountId !== "all" && video.account_id !== filters.accountId) return false;
       if (filters.status !== "all" && video.anomaly_status !== filters.status) return false;
-      const pub = getVideoDateKey(video);
-      if (filters.startDate && pub < filters.startDate) return false;
-      if (filters.endDate && pub > filters.endDate) return false;
+      const uploadedDate = getVideoUploadDateKey(video);
+      if (filters.startDate && uploadedDate < filters.startDate) return false;
+      if (filters.endDate && uploadedDate > filters.endDate) return false;
       const hasSnap = snapshotMap.has(video.id);
       if (filters.hasSnapshot === "yes" && !hasSnap) return false;
       if (filters.hasSnapshot === "no" && hasSnap) return false;
@@ -382,30 +394,30 @@ export function ContentList({
       const targetDay =
         filters.startDate ||
         filters.endDate ||
-        rows.map(getVideoDateKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
+        rows.map(getVideoUploadDateKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
         "";
-      scopedRows = targetDay ? rows.filter((video) => getVideoDateKey(video) === targetDay) : rows;
+      scopedRows = targetDay ? rows.filter((video) => getVideoUploadDateKey(video) === targetDay) : rows;
     }
 
     if (filters.rankScope === "month") {
       const targetMonth =
         (filters.startDate || filters.endDate)?.slice(0, 7) ||
-        rows.map(getVideoMonthKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
+        rows.map(getVideoUploadMonthKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
         "";
-      scopedRows = targetMonth ? rows.filter((video) => getVideoMonthKey(video) === targetMonth) : rows;
+      scopedRows = targetMonth ? rows.filter((video) => getVideoUploadMonthKey(video) === targetMonth) : rows;
     }
 
     return [...scopedRows].sort((left, right) => {
       if (filters.sortMode === "priority") {
         const scoreDiff = (priorityScoreMap.get(right.id) ?? 0) - (priorityScoreMap.get(left.id) ?? 0);
         if (scoreDiff !== 0) return scoreDiff;
-        return getVideoTimestamp(right) - getVideoTimestamp(left);
+        return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
       }
       if (filters.sortMode === "play") {
         const playDiff = getSnapshotPlay(snapshotMap.get(right.id)) - getSnapshotPlay(snapshotMap.get(left.id));
         if (playDiff !== 0) return playDiff;
       }
-      return getVideoTimestamp(right) - getVideoTimestamp(left);
+      return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
     });
   }, [videos, filters, snapshotMap, feedbackCards, priorityScoreMap]);
 
@@ -578,7 +590,7 @@ export function ContentList({
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">人员</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">上传时间</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">播放</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">2s跳出</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">5s完播</TableHead>
@@ -600,6 +612,7 @@ export function ContentList({
                     const cardStatus = card?.workflow_status ?? "not_started";
                     const readiness = reviewReadiness[video.id];
                     const isNewBatch = newBatchIds.has(video.id);
+                    const isUploadedToday = isVideoUploadedToday(video);
                     return (
                       <TableRow
                         key={video.id}
@@ -626,7 +639,16 @@ export function ContentList({
                                 title="该先批"
                               />
                             ) : null}
-                            #{index + 1}
+                            <span
+                              className={[
+                                "inline-flex items-center rounded-lg px-2 py-1",
+                                isUploadedToday
+                                  ? "bg-[#FFF1E8] text-[#C96442] ring-1 ring-[#F2C2AE]"
+                                  : "text-zinc-400",
+                              ].join(" ")}
+                            >
+                              {isUploadedToday ? `今日 #{index + 1}` : `#${index + 1}`}
+                            </span>
                           </span>
                         </TableCell>
                         <TableCell className="max-w-md py-2">
@@ -681,7 +703,7 @@ export function ContentList({
                           {video.accounts.name}
                         </TableCell>
                         <TableCell className="text-sm text-zinc-500">
-                          {formatDateTime(video.published_at ?? video.created_at)}
+                          {formatDateTime(video.uploaded_at ?? video.created_at)}
                         </TableCell>
                         <TableCell className="text-right text-sm">
                           {snap ? (

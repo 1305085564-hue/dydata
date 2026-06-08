@@ -45,7 +45,7 @@ const INITIAL_FILTERS: ContentFilterValue = {
   reviewed: "all",
   feedbackStatus: "all",
   rankScope: "all",
-  sortMode: "priority",
+  sortMode: "latest",
 };
 
 const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [
@@ -159,13 +159,13 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
               : filters.sortMode === "play"
               ? "播放优先"
               : filters.sortMode === "latest"
-              ? "最新优先"
+              ? "最新上传"
               : "智能优先"}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="all:latest">最新上传</SelectItem>
           <SelectItem value="all:priority">智能优先</SelectItem>
-          <SelectItem value="all:latest">最新优先</SelectItem>
           <SelectItem value="all:play">播放优先</SelectItem>
           <SelectItem value="day:play">日播放排名</SelectItem>
           <SelectItem value="month:play">月播放排名</SelectItem>

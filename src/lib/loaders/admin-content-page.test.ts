@@ -258,6 +258,25 @@ test("内容管理播放涨跌不用 created_at 或 uploaded_at 判断上一条"
   assert.equal(previousByVideoId.get("current")?.id, "published-before");
 });
 
+test("内容管理列表排序口径优先使用 uploaded_at", () => {
+  const newestUpload = __internal.getVideoSortTimestamp(
+    buildContentVideo({
+      published_at: "2026-04-01T00:00:00.000Z",
+      uploaded_at: "2026-06-08T02:00:00.000Z",
+      created_at: "2026-04-01T00:00:00.000Z",
+    }),
+  );
+  const olderUpload = __internal.getVideoSortTimestamp(
+    buildContentVideo({
+      published_at: "2026-06-07T00:00:00.000Z",
+      uploaded_at: "2026-06-07T02:00:00.000Z",
+      created_at: "2026-06-07T00:00:00.000Z",
+    }),
+  );
+
+  assert.equal(newestUpload > olderUpload, true);
+});
+
 test("素材库首屏默认只下发第一页视频", () => {
   const rows = Array.from({ length: ADMIN_VIDEOS_INITIAL_LIMIT + 5 }, (_, index) => ({
     id: `video-${index}`,
