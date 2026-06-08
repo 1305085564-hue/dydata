@@ -78,13 +78,8 @@ function PlayCountWithSignal({ video, playCount }: { video: VideoRow; playCount:
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger className="cursor-default">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="font-medium" style={{ color }}>
-              {playCount != null ? formatNumber(playCount) : "-"}
-            </span>
-            <span className="text-[11px] font-medium tabular-nums" style={{ color }}>
-              {isUp ? "↑" : "↓"}{formatRate(pct)}
-            </span>
+          <span className="font-medium" style={{ color }}>
+            {playCount != null ? formatNumber(playCount) : "-"}
           </span>
         </TooltipTrigger>
         <TooltipContent className="text-base font-semibold">
@@ -624,7 +619,7 @@ export function ContentList({
                           <TableRow className="hover:bg-transparent">
                             <TableCell colSpan={11} className="px-4 py-2">
                               <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-                                <span className="shrink-0 tracking-[0.18em]">今日之前</span>
+                                <span className="shrink-0 tracking-[0.18em]">历史</span>
                                 <span className="h-px flex-1 bg-zinc-200" />
                               </div>
                             </TableCell>
@@ -654,7 +649,7 @@ export function ContentList({
                                   title="该先批"
                                 />
                               ) : null}
-                              <span>#{index + 1}</span>
+                              <span>{index + 1}</span>
                             </span>
                           </TableCell>
                           <TableCell className="max-w-md py-2">
