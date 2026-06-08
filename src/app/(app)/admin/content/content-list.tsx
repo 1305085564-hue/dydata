@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -613,137 +613,144 @@ export function ContentList({
                     const readiness = reviewReadiness[video.id];
                     const isNewBatch = newBatchIds.has(video.id);
                     const isUploadedToday = isVideoUploadedToday(video);
+                    const previousVideo = index > 0 ? visible[index - 1] : null;
+                    const showTodayDivider =
+                      previousVideo !== null &&
+                      isVideoUploadedToday(previousVideo) &&
+                      !isUploadedToday;
                     return (
-                      <TableRow
-                        key={video.id}
-                        data-video-id={video.id}
-                        className={[
-                          "border-b border-zinc-100 hover:bg-zinc-50",
-                          isNewBatch && "animate-fade-in-up",
-                        ].filter(Boolean).join(" ")}
-                        style={
-                          isNewBatch
-                            ? {
-                                animation: "fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) forwards",
-                              }
-                            : undefined
-                        }
-                      >
-                        <TableCell className="py-2 text-[13px] font-medium font-mono tabular-nums text-zinc-400">
-                          <span className="inline-flex items-center gap-1.5">
-                            {filters.sortMode === "priority" &&
-                            (priorityScoreMap.get(video.id) ?? 0) >= PRIORITY_HIGHLIGHT_THRESHOLD ? (
-                              <span
-                                aria-hidden
-                                className="size-2 shrink-0 rounded-full bg-[#D97757]"
-                                title="该先批"
-                              />
-                            ) : null}
-                            <span
-                              className={[
-                                "inline-flex items-center rounded-lg px-2 py-1",
-                                isUploadedToday
-                                  ? "bg-[#FFF1E8] text-[#C96442] ring-1 ring-[#F2C2AE]"
-                                  : "text-zinc-400",
-                              ].join(" ")}
-                            >
-                              {isUploadedToday ? `今日 #{index + 1}` : `#${index + 1}`}
+                      <Fragment key={video.id}>
+                        {showTodayDivider ? (
+                          <TableRow className="hover:bg-transparent">
+                            <TableCell colSpan={11} className="px-4 py-2">
+                              <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                                <span className="shrink-0 tracking-[0.18em]">今日之前</span>
+                                <span className="h-px flex-1 bg-zinc-200" />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : null}
+                        <TableRow
+                          data-video-id={video.id}
+                          className={[
+                            "border-b border-zinc-100 hover:bg-zinc-50",
+                            isNewBatch && "animate-fade-in-up",
+                          ].filter(Boolean).join(" ")}
+                          style={
+                            isNewBatch
+                              ? {
+                                  animation: "fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) forwards",
+                                }
+                              : undefined
+                          }
+                        >
+                          <TableCell className="py-2 text-[13px] font-medium font-mono tabular-nums text-zinc-400">
+                            <span className="inline-flex items-center gap-1.5">
+                              {filters.sortMode === "priority" &&
+                              (priorityScoreMap.get(video.id) ?? 0) >= PRIORITY_HIGHLIGHT_THRESHOLD ? (
+                                <span
+                                  aria-hidden
+                                  className="size-2 shrink-0 rounded-full bg-[#D97757]"
+                                  title="该先批"
+                                />
+                              ) : null}
+                              <span>#{index + 1}</span>
                             </span>
-                          </span>
-                        </TableCell>
-                        <TableCell className="max-w-md py-2">
-                          <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
-                            {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {(() => {
-                            const hasSignal = Boolean(video.play_change_signal);
-                            const sent = cardStatus === "sent" || cardStatus === "viewed";
-                            // 三档：异常未批改 → 暖橙实色推到眼前；已下发 → outline 灰；其他 → ghost 极淡
-                            if (hasSignal && !sent) {
+                          </TableCell>
+                          <TableCell className="max-w-md py-2">
+                            <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                              {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const hasSignal = Boolean(video.play_change_signal);
+                              const sent = cardStatus === "sent" || cardStatus === "viewed";
+                              // 三档：异常未批改 → 暖橙实色推到眼前；已下发 → outline 灰；其他 → ghost 极淡
+                              if (hasSignal && !sent) {
+                                return (
+                                  <Button
+                                    size="sm"
+                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0"
+                                    onClick={() => setSelectedVideoId(video.id)}
+                                  >
+                                    批改
+                                  </Button>
+                                );
+                              }
+                              if (sent) {
+                                return (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800"
+                                    onClick={() => setSelectedVideoId(video.id)}
+                                  >
+                                    查看
+                                  </Button>
+                                );
+                              }
                               return (
                                 <Button
+                                  variant="ghost"
                                   size="sm"
-                                  className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0"
+                                  className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
                                   onClick={() => setSelectedVideoId(video.id)}
                                 >
                                   批改
                                 </Button>
                               );
-                            }
-                            if (sent) {
-                              return (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800"
-                                  onClick={() => setSelectedVideoId(video.id)}
-                                >
-                                  查看
-                                </Button>
-                              );
-                            }
-                            return (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
-                                onClick={() => setSelectedVideoId(video.id)}
+                            })()}
+                          </TableCell>
+                          <TableCell className="text-sm text-zinc-500">
+                            {video.profiles.name}
+                          </TableCell>
+                          <TableCell className="text-sm text-zinc-500">
+                            {video.accounts.name}
+                          </TableCell>
+                          <TableCell className="text-sm text-zinc-500">
+                            {formatDateTime(video.uploaded_at ?? video.created_at)}
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
+                            {snap ? (
+                              <PlayCountWithSignal video={video} playCount={snap.play_count} />
+                            ) : "-"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
+                            {snap ? formatRate(snap.bounce_rate_2s) : "-"}
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
+                            {snap ? formatRate(snap.completion_rate_5s) : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${statusClassName[video.anomaly_status]}`}
+                            >
+                              {video.anomaly_status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {cardStatus !== "not_started" && card ? (
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
                               >
-                                批改
-                              </Button>
-                            );
-                          })()}
-                        </TableCell>
-                        <TableCell className="text-sm text-zinc-500">
-                          {video.profiles.name}
-                        </TableCell>
-                        <TableCell className="text-sm text-zinc-500">
-                          {video.accounts.name}
-                        </TableCell>
-                        <TableCell className="text-sm text-zinc-500">
-                          {formatDateTime(video.uploaded_at ?? video.created_at)}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {snap ? (
-                            <PlayCountWithSignal video={video} playCount={snap.play_count} />
-                          ) : "-"}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {snap ? formatRate(snap.bounce_rate_2s) : "-"}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {snap ? formatRate(snap.completion_rate_5s) : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${statusClassName[video.anomaly_status]}`}
-                          >
-                            {video.anomaly_status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {cardStatus !== "not_started" && card ? (
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
-                            >
-                              {card.workflow_label}
-                            </Badge>
-                          ) : readiness ? (
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${readinessClass[readiness.status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
-                            >
-                              {readiness.label}
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-zinc-500">未生成</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
+                                {card.workflow_label}
+                              </Badge>
+                            ) : readiness ? (
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${readinessClass[readiness.status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                              >
+                                {readiness.label}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-zinc-500">未生成</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      </Fragment>
                     );
                   })
                 )}
