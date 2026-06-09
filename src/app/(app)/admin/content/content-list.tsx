@@ -585,7 +585,7 @@ export function ContentList({
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">人员</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">上传时间</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">播放</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">2s跳出</TableHead>
                   <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">5s完播</TableHead>
@@ -704,7 +704,7 @@ export function ContentList({
                             {video.accounts.name}
                           </TableCell>
                           <TableCell className="text-sm text-zinc-500">
-                            {formatDateTime(video.uploaded_at ?? video.created_at)}
+                            {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                           </TableCell>
                           <TableCell className="text-right text-sm">
                             {snap ? (

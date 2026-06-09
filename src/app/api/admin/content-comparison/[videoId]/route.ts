@@ -8,6 +8,19 @@ const COMPARISON_VIDEO_SELECT =
 const COMPARISON_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, bounce_rate_2s, completion_rate_5s, completion_rate, avg_play_duration, follower_gain, likes, comments, shares, favorites";
 
+type MetricRow = {
+  play_count: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
+  avg_play_duration: number | null;
+  follower_gain: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+};
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ videoId: string }> },
@@ -19,50 +32,96 @@ export async function GET(
   }
 
   if (!access.video.account_id || !access.video.published_at) {
-    return NextResponse.json({
-      video_id: videoId,
-      previous_video: null,
-      previous_snapshot: null,
-    });
+    return NextResponse.json({ video_id: videoId, previous: null, yesterday: null, three_days: null });
   }
 
-  const { data: previousVideo, error: previousError } = await access.supabase
-    .from("videos")
-    .select(COMPARISON_VIDEO_SELECT)
-    .eq("account_id", access.video.account_id)
-    .lt("published_at", access.video.published_at)
-    .order("published_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const publishedAt = access.video.published_at;
+  const accountId = access.video.account_id;
+  const supabase = access.supabase;
 
-  if (previousError) {
-    return NextResponse.json({ error: previousError.message || "加载上一条视频失败" }, { status: 500 });
+  // Fetch: previous 1 video + recent 3 videos (for "近3条" average)
+  const [prevResult, recent3Result] = await Promise.all([
+    supabase
+      .from("videos")
+      .select(COMPARISON_VIDEO_SELECT)
+      .eq("account_id", accountId)
+      .lt("published_at", publishedAt)
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("videos")
+      .select("id, published_at")
+      .eq("account_id", accountId)
+      .neq("id", videoId)
+      .lt("published_at", publishedAt)
+      .order("published_at", { ascending: false })
+      .limit(3),
+  ]);
+
+  const previousVideo = prevResult.data;
+  const recent3Videos: { id: string; published_at: string }[] = recent3Result.data ?? [];
+
+  // Collect all video IDs that need snapshots
+  const snapshotVideoIds = new Set<string>();
+  if (previousVideo) snapshotVideoIds.add(previousVideo.id);
+  recent3Videos.forEach((v) => snapshotVideoIds.add(v.id));
+
+  let snapshotMap = new Map<string, any>();
+  if (snapshotVideoIds.size > 0) {
+    const { data: snapshots } = await supabase
+      .from("video_metrics_snapshots")
+      .select(COMPARISON_SNAPSHOT_SELECT)
+      .in("video_id", Array.from(snapshotVideoIds))
+      .eq("snapshot_type", "24h");
+    if (snapshots) {
+      for (const s of snapshots) {
+        if (!snapshotMap.has(s.video_id)) snapshotMap.set(s.video_id, s);
+      }
+    }
   }
 
-  if (!previousVideo) {
-    return NextResponse.json({
-      video_id: videoId,
-      previous_video: null,
-      previous_snapshot: null,
-    });
-  }
+  // Previous
+  const prevSnapshot = previousVideo ? snapshotMap.get(previousVideo.id) ?? null : null;
+  const previous = prevSnapshot ? toMetricRow(prevSnapshot) : null;
 
-  const { data: previousSnapshot, error: snapshotError } = await access.supabase
-    .from("video_metrics_snapshots")
-    .select(COMPARISON_SNAPSHOT_SELECT)
-    .eq("video_id", previousVideo.id)
-    .eq("snapshot_type", "24h")
-    .order("captured_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (snapshotError) {
-    return NextResponse.json({ error: snapshotError.message || "加载上一条快照失败" }, { status: 500 });
-  }
+  // Recent 3 average
+  const recent3 = computeAverage(recent3Videos.map((v) => snapshotMap.get(v.id)).filter(Boolean));
 
   return NextResponse.json({
     video_id: videoId,
-    previous_video: previousVideo,
-    previous_snapshot: previousSnapshot ?? null,
+    previous: previous
+      ? { ...previous, title: previousVideo?.video_title || null, published_at: previousVideo?.published_at }
+      : null,
+    recent3: recent3 ? { ...recent3, count: recent3Videos.length } : null,
   });
+}
+
+function toMetricRow(s: any): MetricRow {
+  return {
+    play_count: s.play_count,
+    bounce_rate_2s: s.bounce_rate_2s,
+    completion_rate_5s: s.completion_rate_5s,
+    completion_rate: s.completion_rate,
+    avg_play_duration: s.avg_play_duration,
+    follower_gain: s.follower_gain,
+    likes: s.likes,
+    comments: s.comments,
+    shares: s.shares,
+    favorites: s.favorites,
+  };
+}
+
+function computeAverage(snapshots: any[]): MetricRow | null {
+  if (snapshots.length === 0) return null;
+  const keys: (keyof MetricRow)[] = [
+    "play_count", "bounce_rate_2s", "completion_rate_5s", "completion_rate",
+    "avg_play_duration", "follower_gain", "likes", "comments", "shares", "favorites",
+  ];
+  const result: any = {};
+  for (const key of keys) {
+    const values = snapshots.map((s) => s[key]).filter((v: any): v is number => v != null);
+    result[key] = values.length > 0 ? values.reduce((a: number, b: number) => a + b, 0) / values.length : null;
+  }
+  return result as MetricRow;
 }

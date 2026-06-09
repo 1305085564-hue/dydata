@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -65,7 +66,6 @@ interface ContentDetailDialogProps {
 }
 
 type DetailTab = "analysis" | "feedback";
-type ComparisonVideo = Pick<Video, "id" | "video_title" | "published_at" | "video_url" | "content">;
 type ObservationForm = {
   traffic_peak_level: "high" | "medium" | "low" | "unset";
   post_peak_trend: "smooth_decline" | "cliff_drop" | "multiple_peaks" | "unset";
@@ -100,10 +100,23 @@ type ExperienceType =
   | "middle_issue"
   | "retention_issue"
   | "conversion_issue";
-type ComparisonState = {
+type ComparisonMetricRow = {
+  play_count: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
+  avg_play_duration: number | null;
+  follower_gain: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+};
+
+type AllComparisonData = {
   loading: boolean;
-  video: ComparisonVideo | null;
-  snapshot: VideoMetricsSnapshot | null;
+  previous: (ComparisonMetricRow & { title: string | null; published_at: string | null }) | null;
+  recent3: (ComparisonMetricRow & { count: number }) | null;
   error: string | null;
 };
 
@@ -174,54 +187,61 @@ function Eyebrow({ children }: { children: ReactNode }) {
   );
 }
 
-function KpiHero({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  tone?: "default" | "amber" | "red" | "halve";
-}) {
-  const valueTone =
-    tone === "red"
-      ? "text-[#C9604D]"
-      : tone === "amber"
-        ? "text-[#B5651D]"
-        : tone === "halve"
-          ? "text-[#2E7D32]"
-          : "text-zinc-800";
-  return (
-    <div className="flex min-w-0 flex-col">
-      <span
-        className={cn(
-          "text-[26px] font-semibold tabular-nums leading-none tracking-[-0.02em]",
-          valueTone,
-        )}
-      >
-        {value}
-      </span>
-      <span className="mt-2 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-400">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function KpiChip({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="inline-flex items-baseline gap-1 text-[12px] text-zinc-500">
-      <span>{label}</span>
-      <span className="tabular-nums text-zinc-700">{value}</span>
-    </span>
-  );
-}
-
 function EmptyBlock({ children }: { children: ReactNode }) {
   return (
     <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
       {children}
     </div>
+  );
+}
+
+function ComparisonTableRow({
+  label,
+  snapshot,
+  metricRow,
+  baseSnapshot,
+  isCurrent,
+}: {
+  label: string;
+  snapshot?: VideoMetricsSnapshot | null;
+  metricRow?: ComparisonMetricRow | null;
+  baseSnapshot: VideoMetricsSnapshot | null;
+  isCurrent?: boolean;
+}) {
+  return (
+    <tr className={cn("border-b border-zinc-100", isCurrent && "bg-zinc-50/50")}>
+      <td className="sticky left-0 bg-white py-2 pl-3 pr-2 text-[11px] font-medium text-zinc-500 whitespace-nowrap">
+        {label}
+      </td>
+      {comparisonMetrics.map((metric) => {
+        const rawValue = snapshot ? metric.read(snapshot) : metricRow ? (metricRow as unknown as Record<string, number | null>)[metric.key] : null;
+        const value = rawValue != null && metric.key !== "bounce_rate_2s" && metric.key !== "completion_rate_5s" && metric.key !== "completion_rate" && metric.key !== "avg_play_duration"
+          ? Math.round(rawValue)
+          : rawValue;
+        const formatted = metric.format(value);
+        let diffStr = "";
+        let diffColor = "";
+        if (!isCurrent && baseSnapshot && value != null && value !== 0) {
+          const base = metric.read(baseSnapshot);
+          if (base != null) {
+            const pct = ((base - value) / Math.abs(value)) * 100;
+            if (Number.isFinite(pct) && Math.abs(pct) >= 3) {
+              diffStr = `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`;
+              const better = metric.higherIsBetter ? pct > 0 : pct < 0;
+              diffColor = better ? "text-[#6FAA7D]" : "text-[#C9604D]";
+            }
+          }
+        }
+        return (
+          <td key={metric.key} className="whitespace-nowrap py-2 px-1.5 text-left tabular-nums text-[12px]">
+            <span className={cn("font-semibold", isCurrent ? "text-zinc-900" : "text-zinc-700")}>{formatted}</span>
+            {diffStr && (
+              <span className={cn("ml-1 text-[10px] font-medium", diffColor)}>{diffStr}</span>
+            )}
+          </td>
+        );
+      })}
+    </tr>
   );
 }
 
@@ -268,20 +288,21 @@ function buildRuleHints(snapshot: VideoMetricsSnapshot | null): RuleHintChip[] {
 
 const comparisonMetrics: Array<{
   label: string;
+  key: string;
   read: (snapshot: VideoMetricsSnapshot) => number | null;
   format: (value: number | null | undefined) => string;
   higherIsBetter: boolean;
 }> = [
-  { label: "播放量", read: (s) => s.play_count, format: formatNumber, higherIsBetter: true },
-  { label: "2s跳出率", read: (s) => s.bounce_rate_2s, format: formatRate, higherIsBetter: false },
-  { label: "5s完播率", read: (s) => s.completion_rate_5s, format: formatRate, higherIsBetter: true },
-  { label: "完播率", read: (s) => s.completion_rate, format: formatRate, higherIsBetter: true },
-  { label: "均播时长", read: (s) => s.avg_play_duration, format: formatSeconds, higherIsBetter: true },
-  { label: "点赞", read: (s) => s.likes, format: formatNumber, higherIsBetter: true },
-  { label: "评论", read: (s) => s.comments, format: formatNumber, higherIsBetter: true },
-  { label: "分享", read: (s) => s.shares, format: formatNumber, higherIsBetter: true },
-  { label: "收藏", read: (s) => s.favorites, format: formatNumber, higherIsBetter: true },
-  { label: "涨粉", read: (s) => s.follower_gain, format: formatNumber, higherIsBetter: true },
+  { label: "播放", key: "play_count", read: (s) => s.play_count, format: formatNumber, higherIsBetter: true },
+  { label: "2s跳出", key: "bounce_rate_2s", read: (s) => s.bounce_rate_2s, format: formatRate, higherIsBetter: false },
+  { label: "5s完播", key: "completion_rate_5s", read: (s) => s.completion_rate_5s, format: formatRate, higherIsBetter: true },
+  { label: "完播", key: "completion_rate", read: (s) => s.completion_rate, format: formatRate, higherIsBetter: true },
+  { label: "均播", key: "avg_play_duration", read: (s) => s.avg_play_duration, format: formatSeconds, higherIsBetter: true },
+  { label: "赞", key: "likes", read: (s) => s.likes, format: formatNumber, higherIsBetter: true },
+  { label: "评论", key: "comments", read: (s) => s.comments, format: formatNumber, higherIsBetter: true },
+  { label: "转发", key: "shares", read: (s) => s.shares, format: formatNumber, higherIsBetter: true },
+  { label: "藏", key: "favorites", read: (s) => s.favorites, format: formatNumber, higherIsBetter: true },
+  { label: "粉", key: "follower_gain", read: (s) => s.follower_gain, format: formatNumber, higherIsBetter: true },
 ];
 
 const defaultObservation: ObservationForm = {
@@ -495,10 +516,10 @@ export function ContentDetailDialog({
   const [activeTab, setActiveTab] = useState<DetailTab>("analysis");
   const [contentExpanded, setContentExpanded] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const [comparison, setComparison] = useState<ComparisonState>({
+  const [comparison, setComparison] = useState<AllComparisonData>({
     loading: false,
-    video: null,
-    snapshot: null,
+    previous: null,
+    recent3: null,
     error: null,
   });
   const [cardDetail, setCardDetail] = useState<ContentFeedbackCardDetail | null>(null);
@@ -518,6 +539,27 @@ export function ContentDetailDialog({
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipNextSaveRef = useRef(true);
 
+  const fetchComparison = useCallback((videoId: string) => {
+    setComparison({ loading: true, previous: null, recent3: null, error: null });
+    fetch(`/api/admin/content-comparison/${videoId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) {
+          setComparison({ loading: false, previous: null, recent3: null, error: data.error });
+          return;
+        }
+        setComparison({
+          loading: false,
+          previous: data.previous ?? null,
+          recent3: data.recent3 ?? null,
+          error: null,
+        });
+      })
+      .catch(() => {
+        setComparison({ loading: false, previous: null, recent3: null, error: "对比数据加载失败" });
+      });
+  }, []);
+
   useEffect(() => {
     if (!open || !video) {
       setCardDetail(null);
@@ -526,7 +568,7 @@ export function ContentDetailDialog({
     }
     setActiveTab("analysis");
     setContentExpanded(false);
-    setComparison({ loading: true, video: null, snapshot: null, error: null });
+    setComparison({ loading: true, previous: null, recent3: null, error: null });
     setMainIssues("");
     setFeedback("");
     setObservation(defaultObservation);
@@ -555,29 +597,7 @@ export function ContentDetailDialog({
       })
       .catch(() => {});
 
-    fetch(`/api/admin/content-comparison/${video.id}`)
-      .then((res) => res.json())
-      .then(
-        (data: {
-          previous_video?: ComparisonVideo | null;
-          previous_snapshot?: VideoMetricsSnapshot | null;
-          error?: string;
-        }) => {
-          if (data.error) {
-            setComparison({ loading: false, video: null, snapshot: null, error: data.error });
-            return;
-          }
-          setComparison({
-            loading: false,
-            video: data.previous_video ?? null,
-            snapshot: data.previous_snapshot ?? null,
-            error: null,
-          });
-        },
-      )
-      .catch(() => {
-        setComparison({ loading: false, video: null, snapshot: null, error: "上一条对比加载失败" });
-      });
+    fetchComparison(video.id);
 
     fetch(`/api/admin/content-observations?videoId=${video.id}`)
       .then((res) => res.json())
@@ -706,60 +726,24 @@ export function ContentDetailDialog({
     return chips;
   }, [video, snapshot]);
 
-  const metricTones = useMemo(() => {
-    if (!snapshot) return {} as Record<string, MetricTone>;
-    const tones: Record<string, MetricTone> = {};
-    if (snapshot.bounce_rate_2s != null && snapshot.bounce_rate_2s >= 45) tones["2s跳出率"] = "red";
-    if (snapshot.completion_rate_5s != null && snapshot.completion_rate_5s < 35)
-      tones["5s完播率"] = "red";
-    if (snapshot.completion_rate != null && snapshot.completion_rate < 18)
-      tones["完播率"] = "red";
-    if (snapshot.follower_gain != null && snapshot.play_count > 0) {
-      const followRate = (snapshot.follower_gain / snapshot.play_count) * 100;
-      if (followRate < 0.05) tones["涨粉"] = "amber";
-    }
-    return tones;
-  }, [snapshot]);
-
   // 对比表差值与最大差异行
-  const comparisonDiffs = useMemo(() => {
-    if (!snapshot || !comparison.snapshot) return [] as Array<{
-      label: string;
-      current: string;
-      previous: string;
-      diffPct: number | null;
-      tone: MetricTone;
-    }>;
-    return comparisonMetrics.map((metric) => {
+  const maxPrevDiff = useMemo(() => {
+    if (!snapshot || !comparison.previous) return null;
+    let max = 0;
+    let result: { label: string; diffPct: number } | null = null;
+    for (const metric of comparisonMetrics) {
       const cur = metric.read(snapshot);
-      const prev = metric.read(comparison.snapshot!);
-      const curStr = metric.format(cur);
-      const prevStr = metric.format(prev);
-      let diffPct: number | null = null;
-      let tone: MetricTone = "default";
+      const prev = (comparison.previous as unknown as Record<string, number | null>)[metric.key];
       if (cur != null && prev != null && prev !== 0) {
-        diffPct = ((cur - prev) / Math.abs(prev)) * 100;
-        const better = metric.higherIsBetter ? diffPct > 0 : diffPct < 0;
-        if (Math.abs(diffPct) >= 5) {
-          tone = better ? "amber" : "red";
+        const pct = ((cur - prev) / Math.abs(prev)) * 100;
+        if (Math.abs(pct) > max) {
+          max = Math.abs(pct);
+          result = { label: metric.label, diffPct: pct };
         }
       }
-      return { label: metric.label, current: curStr, previous: prevStr, diffPct, tone };
-    });
-  }, [snapshot, comparison.snapshot]);
-
-  const maxDiffIndex = useMemo(() => {
-    let max = 0;
-    let idx = -1;
-    comparisonDiffs.forEach((row, i) => {
-      const v = Math.abs(row.diffPct ?? 0);
-      if (v > max) {
-        max = v;
-        idx = i;
-      }
-    });
-    return max >= 10 ? idx : -1;
-  }, [comparisonDiffs]);
+    }
+    return max >= 10 ? result : null;
+  }, [snapshot, comparison.previous]);
 
   const feedbackEvidence = useMemo(() => {
     const list: string[] = [];
@@ -772,18 +756,15 @@ export function ContentDetailDialog({
     if (snapshot?.completion_rate != null && snapshot.completion_rate < 18) {
       list.push(`完播 ${formatRate(snapshot.completion_rate)}（低于阈值）`);
     }
-    if (maxDiffIndex >= 0) {
-      const row = comparisonDiffs[maxDiffIndex];
-      if (row && row.diffPct != null) {
-        const sign = row.diffPct > 0 ? "+" : "";
-        list.push(`${row.label} 较上一条 ${sign}${row.diffPct.toFixed(1)}%`);
-      }
+    if (maxPrevDiff) {
+      const sign = maxPrevDiff.diffPct > 0 ? "+" : "";
+      list.push(`${maxPrevDiff.label} 较上一条 ${sign}${maxPrevDiff.diffPct.toFixed(1)}%`);
     }
     if (analysisResult?.data_summary) {
       list.push(`AI 判断：${analysisResult.data_summary}`);
     }
     return list;
-  }, [snapshot, maxDiffIndex, comparisonDiffs, analysisResult]);
+  }, [snapshot, maxPrevDiff, analysisResult]);
 
   async function handleConfirmAndSend() {
     if (!video) return;
@@ -974,7 +955,9 @@ export function ContentDetailDialog({
                 <span className="text-zinc-300">·</span>
                 <span>{video.accounts.name}</span>
                 <span className="text-zinc-300">·</span>
-                <span>{formatDateTime(video.published_at)}</span>
+                <span>发布 {formatDateTime(video.published_at)}</span>
+                <span className="text-zinc-300">·</span>
+                <span>上传 {formatDateTime(video.uploaded_at ?? video.created_at)}</span>
                 {video.video_url && (
                   <>
                     <span className="text-zinc-300">·</span>
@@ -1087,192 +1070,88 @@ export function ContentDetailDialog({
                   </section>
                 )}
 
-                {/* 核心数据 报纸式：4 主 KPI + 副 chip 行 */}
+                {/* 数据对比表 */}
                 <section className="space-y-3">
-                  <Eyebrow>核心数据</Eyebrow>
+                  <Eyebrow>数据对比</Eyebrow>
                   {snapshot ? (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-4 gap-4">
-                        <KpiHero
-                          label="播放量"
-                          value={formatNumber(snapshot.play_count)}
-                        />
-                        <KpiHero
-                          label="2s跳出"
-                          value={formatRate(snapshot.bounce_rate_2s)}
-                          tone={metricTones["2s跳出率"]}
-                        />
-                        <KpiHero
-                          label="5s完播"
-                          value={formatRate(snapshot.completion_rate_5s)}
-                          tone={metricTones["5s完播率"]}
-                        />
-                        <KpiHero
-                          label="完播率"
-                          value={formatRate(snapshot.completion_rate)}
-                          tone={metricTones["完播率"]}
-                        />
-                      </div>
-                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-zinc-100 pt-3">
-                        <KpiChip
-                          label="均播"
-                          value={formatSeconds(snapshot.avg_play_duration)}
-                        />
-                        <span className="text-zinc-300">·</span>
-                        <KpiChip label="点赞" value={formatNumber(snapshot.likes)} />
-                        <span className="text-zinc-300">·</span>
-                        <KpiChip label="评论" value={formatNumber(snapshot.comments)} />
-                        <span className="text-zinc-300">·</span>
-                        <KpiChip label="分享" value={formatNumber(snapshot.shares)} />
-                        <span className="text-zinc-300">·</span>
-                        <KpiChip
-                          label="收藏"
-                          value={formatNumber(snapshot.favorites)}
-                        />
-                        <span className="text-zinc-300">·</span>
-                        <KpiChip
-                          label="涨粉"
-                          value={formatNumber(snapshot.follower_gain)}
-                        />
-                      </div>
+                    <div className="overflow-x-auto rounded-lg border border-zinc-200">
+                      <table className="w-full text-[11px]">
+                        <thead>
+                          <tr className="border-b border-zinc-200 bg-zinc-50">
+                            <th className="sticky left-0 bg-zinc-50 py-1.5 pl-3 pr-2 text-left font-medium text-zinc-400 text-[10px]"></th>
+                            {comparisonMetrics.map((m) => (
+                              <th key={m.key} className="whitespace-nowrap py-1.5 px-1.5 text-left font-medium text-zinc-400 text-[10px]">
+                                {m.label}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <ComparisonTableRow
+                            label="本条"
+                            snapshot={snapshot}
+                            baseSnapshot={null}
+                            isCurrent
+                          />
+                          {comparison.loading ? (
+                            <tr><td colSpan={11} className="py-3 text-center text-zinc-400">加载中...</td></tr>
+                          ) : comparison.error ? (
+                            <tr><td colSpan={11} className="py-3 text-center text-zinc-400">{comparison.error}</td></tr>
+                          ) : (
+                            <>
+                              {comparison.previous && (
+                                <ComparisonTableRow
+                                  label="上一条"
+                                  metricRow={comparison.previous}
+                                  baseSnapshot={snapshot}
+                                />
+                              )}
+                              {comparison.recent3 && (
+                                <ComparisonTableRow
+                                  label={`近3条`}
+                                  metricRow={comparison.recent3}
+                                  baseSnapshot={snapshot}
+                                />
+                              )}
+                              {!comparison.previous && !comparison.recent3 && (
+                                <tr><td colSpan={11} className="py-3 text-center text-zinc-400">暂无对比数据</td></tr>
+                              )}
+                            </>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   ) : (
                     <EmptyBlock>暂无 24h 快照数据</EmptyBlock>
                   )}
                 </section>
 
-                {/* 截图主次分层 */}
+                {/* 截图左右对比 */}
                 {screenshotItems.length > 0 && (
                   <section className="space-y-2">
                     <Eyebrow>截图</Eyebrow>
-                    <div className="grid grid-cols-3 gap-3">
-                      {screenshotItems.map((item, index) => {
-                        const isHero = index < 2;
-                        return (
-                          <button
-                            key={`${item.label}-${item.url}`}
-                            type="button"
-                            className={cn(
-                              "active:translate-y-0 group overflow-hidden rounded-xl border border-zinc-200 bg-white text-left transition-[box-shadow,border-color] duration-150 hover:border-zinc-300 hover:shadow-sm",
-                              isHero ? "col-span-3 sm:col-span-2 sm:row-span-1" : "col-span-1",
-                            )}
-                            onClick={() => setPreviewIndex(index)}
-                          >
-                            <Image
-                              src={item.url}
-                              alt={item.label}
-                              width={isHero ? 720 : 320}
-                              height={isHero ? 360 : 160}
-                              unoptimized
-                              className={cn(
-                                "w-full object-cover transition-transform duration-200 group-hover:scale-[1.01]",
-                                isHero ? "h-48" : "h-28",
-                              )}
-                            />
-                            <div className="px-3 py-2 text-[11px] text-zinc-500">{item.label}</div>
-                          </button>
-                        );
-                      })}
+                    <div className="grid grid-cols-2 gap-3">
+                      {screenshotItems.slice(0, 2).map((item, index) => (
+                        <button
+                          key={`${item.label}-${item.url}`}
+                          type="button"
+                          className="group overflow-hidden rounded-xl border border-zinc-200 bg-white text-left transition-[box-shadow,border-color] duration-150 hover:border-zinc-300 hover:shadow-sm active:translate-y-0"
+                          onClick={() => setPreviewIndex(index)}
+                        >
+                          <Image
+                            src={item.url}
+                            alt={item.label}
+                            width={720}
+                            height={360}
+                            unoptimized
+                            className="w-full object-cover transition-transform duration-200 group-hover:scale-[1.01] h-48"
+                          />
+                          <div className="px-3 py-2 text-[11px] text-zinc-500">{item.label}</div>
+                        </button>
+                      ))}
                     </div>
                   </section>
                 )}
-
-                {/* 上一条对比（裸表格） */}
-                <section className="space-y-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <Eyebrow>同账号上一条对比</Eyebrow>
-                    {comparison.video && (
-                      <span className="min-w-0 truncate text-[12px] text-zinc-500">
-                        《
-                        {comparison.video.video_title ||
-                          comparison.video.content?.slice(0, 24) ||
-                          "上一条作品"}
-                        》 {formatDateTime(comparison.video.published_at)}
-                      </span>
-                    )}
-                  </div>
-                  {comparison.loading ? (
-                    <div className="space-y-2">
-                      <Skeleton className="h-3 w-1/3" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  ) : comparison.error ? (
-                    <div className="text-[12px] text-zinc-500">{comparison.error}</div>
-                  ) : comparison.video ? (
-                    snapshot && comparison.snapshot ? (
-                      <table className="w-full text-left text-[12px]">
-                        <thead>
-                          <tr className="border-b border-zinc-200 text-zinc-400">
-                            <th className="py-1.5 font-medium uppercase tracking-[0.2em] text-[10px]">
-                              指标
-                            </th>
-                            <th className="py-1.5 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
-                              当前
-                            </th>
-                            <th className="py-1.5 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
-                              上一条
-                            </th>
-                            <th className="py-1.5 text-right font-medium uppercase tracking-[0.2em] text-[10px]">
-                              差值
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {comparisonDiffs.map((row, idx) => {
-                            const diffStr =
-                              row.diffPct == null
-                                ? "-"
-                                : `${row.diffPct > 0 ? "+" : ""}${row.diffPct.toFixed(1)}%`;
-                            const diffColor =
-                              row.tone === "red"
-                                ? "text-[#C9604D]"
-                                : row.tone === "amber"
-                                  ? "text-[#B5651D]"
-                                  : "text-zinc-400";
-                            const isMax = idx === maxDiffIndex;
-                            return (
-                              <tr
-                                key={row.label}
-                                className={cn(
-                                  "border-b border-zinc-100",
-                                  isMax && "bg-zinc-100/40",
-                                )}
-                              >
-                                <td
-                                  className={cn(
-                                    "py-1.5 pl-2 text-zinc-500",
-                                    isMax && "text-zinc-700 font-medium",
-                                  )}
-                                >
-                                  {row.label}
-                                </td>
-                                <td className="py-1.5 text-right tabular-nums text-zinc-800">
-                                  {row.current}
-                                </td>
-                                <td className="py-1.5 text-right tabular-nums text-zinc-500">
-                                  {row.previous}
-                                </td>
-                                <td
-                                  className={cn(
-                                    "py-1.5 pr-2 text-right tabular-nums font-medium",
-                                    diffColor,
-                                  )}
-                                >
-                                  {diffStr}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <div className="text-[12px] text-zinc-500">上一条作品暂无 24h 快照</div>
-                    )
-                  ) : (
-                    <div className="text-[12px] text-zinc-500">暂无上一条可对比作品</div>
-                  )}
-                </section>
 
                 {/* 规则提示 inline chip */}
                 {ruleHints.length > 0 && (
@@ -1677,14 +1556,15 @@ export function ContentDetailDialog({
         </SheetFooter>
       </SheetContent>
 
-      {previewIndex !== null && screenshotItems[previewIndex] && (
+      {previewIndex !== null && screenshotItems[previewIndex] && createPortal(
         <ScreenshotPreview
           items={screenshotItems}
           index={previewIndex}
           onClose={handleClosePreview}
           onPrev={handlePrevPreview}
           onNext={handleNextPreview}
-        />
+        />,
+        document.body,
       )}
     </Sheet>
   );
