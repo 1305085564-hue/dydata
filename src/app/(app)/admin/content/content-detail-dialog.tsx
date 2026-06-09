@@ -228,7 +228,7 @@ function ComparisonTableRow({
             if (Number.isFinite(pct) && Math.abs(pct) >= 3) {
               diffStr = `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`;
               const better = metric.higherIsBetter ? pct > 0 : pct < 0;
-              diffColor = better ? "text-[#6FAA7D]" : "text-[#C9604D]";
+              diffColor = better ? "text-[#C9604D]" : "text-[#6FAA7D]";
             }
           }
         }
