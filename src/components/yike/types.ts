@@ -1,3 +1,5 @@
+import * as React from "react";
+
 export type YikeItemStatus = "planned" | "doing" | "delegated" | "done";
 export type YikeItemType = "task" | "memo";
 export type YikeComplexity = "deep" | "focus" | "small" | "quick";
@@ -103,6 +105,13 @@ export const STATUS_LABELS: Record<YikeItemStatus, string> = {
   done: "做完了",
 };
 
+export const STATUS_SHORT_LABELS: Record<YikeItemStatus, string> = {
+  planned: "计划",
+  doing: "进行",
+  delegated: "委托",
+  done: "完成",
+};
+
 export const COMPLEXITY_LABELS: Record<YikeComplexity, string> = {
   deep: "深度",
   focus: "专注",
@@ -121,4 +130,38 @@ export const TIME_BUCKET_LABELS: Record<YikeTimeBucket, string> = {
 export const ITEM_TYPE_LABELS: Record<YikeItemType, string> = {
   task: "任务",
   memo: "备忘",
+};
+
+/** 允许的状态流转 */
+export const ALLOWED_TRANSITIONS: Record<YikeItemStatus, YikeItemStatus[]> = {
+  planned: ["doing", "delegated", "done"],
+  doing: ["done", "delegated", "planned"],
+  delegated: ["done", "planned"],
+  done: ["planned"],
+};
+
+export interface TransitionAction {
+  target: YikeItemStatus;
+  label: string;
+  variant: "default" | "secondary" | "outline";
+}
+
+export const TRANSITION_ACTIONS: Record<YikeItemStatus, TransitionAction[]> = {
+  planned: [
+    { target: "doing", label: "开始", variant: "default" },
+    { target: "delegated", label: "委托", variant: "outline" },
+    { target: "done", label: "完成", variant: "secondary" },
+  ],
+  doing: [
+    { target: "done", label: "完成", variant: "default" },
+    { target: "delegated", label: "转委托", variant: "outline" },
+    { target: "planned", label: "放回计划", variant: "secondary" },
+  ],
+  delegated: [
+    { target: "done", label: "已完成", variant: "default" },
+    { target: "planned", label: "收回", variant: "secondary" },
+  ],
+  done: [
+    { target: "planned", label: "重做", variant: "secondary" },
+  ],
 };

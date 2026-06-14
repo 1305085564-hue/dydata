@@ -18,8 +18,13 @@ export default function YikePageRoute() {
       const payload = await fetchYikeWorkbench();
       setWorkbench(mapWorkbenchPayloadToWorkbench(payload));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "加载失败");
-      // 保留 mockWorkbench 作为开发兜底
+      // 未登录时后端应返回 401 并重定向，这里只记录错误但不叠加 mock
+      if (err instanceof Error && err.message.includes("401")) {
+        setError("请先登录");
+      } else {
+        setError(err instanceof Error ? err.message : "加载失败");
+      }
+      // 保留 mockWorkbench 仅用于开发兜底
     } finally {
       setLoading(false);
     }

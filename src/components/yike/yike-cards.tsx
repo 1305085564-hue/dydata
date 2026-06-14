@@ -2,10 +2,16 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Circle, Sparkles } from "lucide-react";
+import { Circle, Loader2, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import type { YikeItem } from "./types";
-import { COMPLEXITY_LABELS, TIME_BUCKET_LABELS, ITEM_TYPE_LABELS } from "./types";
+import type { YikeItem, YikeItemStatus, TransitionAction } from "./types";
+import {
+  COMPLEXITY_LABELS,
+  TIME_BUCKET_LABELS,
+  ITEM_TYPE_LABELS,
+  TRANSITION_ACTIONS,
+} from "./types";
+import { Button } from "@/components/ui/button";
 
 function StatusDot({ status }: { status: YikeItem["status"] }) {
   const map: Record<YikeItem["status"], string> = {
@@ -65,17 +71,25 @@ const cardVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+interface LaneCardProps {
+  item: YikeItem;
+  recommended?: boolean;
+  className?: string;
+  onClick?: () => void;
+  onTransition?: (itemId: string, target: YikeItemStatus) => void;
+  transitioning?: boolean;
+}
+
 export function LaneCard({
   item,
   recommended = false,
   className,
   onClick,
-}: {
-  item: YikeItem;
-  recommended?: boolean;
-  className?: string;
-  onClick?: () => void;
-}) {
+  onTransition,
+  transitioning = false,
+}: LaneCardProps) {
+  const actions = TRANSITION_ACTIONS[item.status];
+
   return (
     <motion.div
       variants={cardVariants}
@@ -83,13 +97,10 @@ export function LaneCard({
       animate="visible"
       whileHover={{ y: -1, transition: { duration: 0.15 } }}
       whileTap={{ y: 0 }}
-      onClick={onClick}
-      tabIndex={onClick ? 0 : undefined}
-      role={onClick ? "button" : undefined}
       className={cn(
         "group relative flex flex-col gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5",
         item.itemType === "memo" && "bg-zinc-50/60",
-        onClick && "cursor-pointer",
+        (onClick || onTransition) && "cursor-pointer",
         className
       )}
     >
@@ -113,17 +124,37 @@ export function LaneCard({
         <ItemMeta item={item} />
         <ReminderBadges item={item} />
       </div>
+
+      {onTransition && actions.length > 0 && (
+        <div className="yike-transition-bar pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end rounded-b-xl p-2">
+          <div
+            className="pointer-events-auto flex flex-wrap items-center justify-end gap-1 rounded-lg border border-zinc-100 bg-white/95 px-2 py-1.5 shadow-sm backdrop-blur-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {actions.map((action) => (
+              <Button
+                key={action.target}
+                variant={action.variant}
+                size="xs"
+                disabled={transitioning}
+                onClick={() => onTransition(item.id, action.target)}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
 
-export function ProjectFocusCard({
-  project,
-  className,
-}: {
+interface ProjectFocusCardProps {
   project: { id: string; name: string; nextTaskTitle?: string | null };
   className?: string;
-}) {
+}
+
+export function ProjectFocusCard({ project, className }: ProjectFocusCardProps) {
   return (
     <motion.div
       variants={cardVariants}
@@ -136,7 +167,7 @@ export function ProjectFocusCard({
         className
       )}
     >
-      <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
         <Circle className="h-3 w-3 fill-[#D97757]/10 text-[#D97757]" />
         项目推进
       </div>
@@ -154,24 +185,89 @@ export function ProjectFocusCard({
   );
 }
 
-export function EmptySlot({
-  slotKey,
-  label,
-  className,
-}: {
+interface EmptySlotProps {
   slotKey: string;
   label: string;
+  description?: string;
   className?: string;
-}) {
+}
+
+export function EmptySlot({ slotKey, label, description, className }: EmptySlotProps) {
   return (
     <div
       className={cn(
-        "yike-empty-slot flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-5 text-center text-zinc-400",
+        "yike-empty-slot yike-calipers relative flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-5 text-center text-zinc-400",
         className
       )}
     >
       <span className="text-[12px] font-medium">{label}</span>
-      <span className="text-[11px] text-zinc-300">空位</span>
+      {description && <span className="text-[11px] text-zinc-300">{description}</span>}
     </div>
+  );
+}
+
+interface LoadingSlotProps {
+  className?: string;
+  lines?: number;
+}
+
+export function LoadingSlot({ className, lines = 2 }: LoadingSlotProps) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3",
+        className
+      )}
+    >
+      <div className="yike-skeleton h-4 w-2/3" />
+      {lines > 1 && <div className="yike-skeleton h-3 w-1/2" />}
+    </div>
+  );
+}
+
+export function LoadingHeroTask({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "yike-hero-task relative rounded-2xl border border-zinc-100 px-6 py-5",
+        className
+      )}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div className="yike-skeleton h-4 w-20" />
+        <div className="yike-skeleton h-5 w-16 rounded-full" />
+      </div>
+      <div className="yike-skeleton mb-3 h-6 w-3/4" />
+      <div className="yike-skeleton mb-4 h-4 w-1/2" />
+      <div className="yike-skeleton h-9 w-24 rounded-lg" />
+    </div>
+  );
+}
+
+interface RecommendedChipProps {
+  title: string;
+  onClick?: () => void;
+  disabled?: boolean;
+}
+
+export function RecommendedChip({ title, onClick, disabled }: RecommendedChipProps) {
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      whileTap={disabled ? undefined : { y: 0 }}
+      className={cn(
+        "yike-recommended-chip inline-flex max-w-[200px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-left text-[12px]",
+        disabled && "cursor-not-allowed opacity-60"
+      )}
+      title="完成当前主任务后继续做这一件"
+    >
+      {disabled ? (
+        <Loader2 className="h-3 w-3 shrink-0 animate-spin text-zinc-400" />
+      ) : (
+        <Sparkles className="h-3 w-3 shrink-0 text-[#D97757]" />
+      )}
+      <span className="truncate">{title}</span>
+    </motion.button>
   );
 }

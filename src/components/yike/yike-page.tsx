@@ -3,13 +3,14 @@
 import * as React from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { YikeWorkbench } from "./types";
-import { QuickInput, StatusLanes } from "./yike-input-and-lanes";
+import type { YikeWorkbench, YikeItemStatus } from "./types";
+import { QuickInput, StatusLanes, StatusLanesSkeleton } from "./yike-input-and-lanes";
 import { ExecutionArea } from "./execution-area";
 import {
   completeYikeFocus,
   quickCreateYikeItem,
   replaceYikeFocusSlot,
+  transitionYikeItem,
 } from "@/lib/yike/client";
 import { cn } from "@/lib/utils";
 
@@ -24,30 +25,38 @@ export function YikePage({ workbench, loading, error, onReload }: YikePageProps)
   const [isCreating, setIsCreating] = React.useState(false);
   const [completingId, setCompletingId] = React.useState<string | null>(null);
   const [replacingSlot, setReplacingSlot] = React.useState<string | null>(null);
+  const [transitioningId, setTransitioningId] = React.useState<string | null>(null);
+  const [optimisticError, setOptimisticError] = React.useState<string | null>(null);
 
   const handleQuickSubmit = async (text: string) => {
     if (isCreating) return;
     setIsCreating(true);
+    setOptimisticError(null);
     try {
       await quickCreateYikeItem({
         rawText: text,
         clientRequestId: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       });
       onReload?.();
+    } catch (err) {
+      setOptimisticError(err instanceof Error ? err.message : "创建失败");
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleCompletePrimary = async (itemId: string, continueWithItemId?: string) => {
-    if (completingId) return;
+    if (completingId || !itemId) return;
     setCompletingId(itemId);
+    setOptimisticError(null);
     try {
       await completeYikeFocus({
         itemId,
         continueWithItemId: continueWithItemId ?? null,
       });
       onReload?.();
+    } catch (err) {
+      setOptimisticError(err instanceof Error ? err.message : "完成任务失败");
     } finally {
       setCompletingId(null);
     }
@@ -56,25 +65,44 @@ export function YikePage({ workbench, loading, error, onReload }: YikePageProps)
   const handleReplaceSlot = async (slotKey: "primary_task" | "candidate_1" | "candidate_2", itemId: string) => {
     if (replacingSlot) return;
     setReplacingSlot(slotKey);
+    setOptimisticError(null);
     try {
       await replaceYikeFocusSlot({ slotKey, itemId });
       onReload?.();
+    } catch (err) {
+      setOptimisticError(err instanceof Error ? err.message : "替换执行槽失败");
     } finally {
       setReplacingSlot(null);
     }
   };
 
+  const handleTransition = async (itemId: string, target: YikeItemStatus) => {
+    if (transitioningId) return;
+    setTransitioningId(itemId);
+    setOptimisticError(null);
+    try {
+      await transitionYikeItem(itemId, { toStatus: target });
+      onReload?.();
+    } catch (err) {
+      setOptimisticError(err instanceof Error ? err.message : "状态流转失败");
+    } finally {
+      setTransitioningId(null);
+    }
+  };
+
+  const displayError = optimisticError ?? error;
+
   return (
-    <div className={cn("yike-page mx-auto max-w-6xl space-y-6 pb-12", loading && "opacity-80")}>
+    <div className={cn("yike-page mx-auto max-w-6xl space-y-8 pb-12", loading && "opacity-90")}>
       <AnimatePresence>
-        {error && (
+        {displayError && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             className="rounded-xl border border-[#C9604D]/15 bg-[#C9604D]/[0.04] px-4 py-3 text-[13px] text-[#C9604D]"
           >
-            {error}
+            {displayError}
             {onReload && (
               <button
                 onClick={onReload}
@@ -105,7 +133,6 @@ export function YikePage({ workbench, loading, error, onReload }: YikePageProps)
           </p>
         </div>
         <div className="flex items-center gap-2 text-right">
-          <p className="text-[13px] text-zinc-500">你好，阿禅</p>
           {onReload && (
             <button
               onClick={onReload}
@@ -127,11 +154,20 @@ export function YikePage({ workbench, loading, error, onReload }: YikePageProps)
         onReplaceSlot={handleReplaceSlot}
         completingId={completingId}
         replacingSlot={replacingSlot}
+        loading={loading}
       />
 
       <div className="yike-lane-divider" />
 
-      <StatusLanes lanes={workbench.lanes} />
+      {loading ? (
+        <StatusLanesSkeleton />
+      ) : (
+        <StatusLanes
+          lanes={workbench.lanes}
+          onTransition={handleTransition}
+          transitioningId={transitioningId}
+        />
+      )}
     </div>
   );
 }

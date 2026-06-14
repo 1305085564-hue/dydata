@@ -12,6 +12,7 @@
   --yike-pencil: #D4D4D8;
   --yike-primary: #D97757;
   --yike-primary-soft: #FBF4F1;
+  --yike-track: #EAEAEA;
 }
 
 /* 执行区主任务：全页唯一主角破格。
@@ -22,7 +23,7 @@
   background-color: var(--yike-paper);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
-    0 8px 28px rgba(217, 119, 87, 0.08);
+    0 10px 32px rgba(217, 119, 87, 0.09);
   transition:
     transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -32,21 +33,21 @@
   transform: translateY(-2px);
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.04),
-    0 12px 34px rgba(217, 119, 87, 0.11);
+    0 14px 38px rgba(217, 119, 87, 0.13);
 }
 
 .yike-hero-task::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
+  top: 16px;
+  bottom: 16px;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
   background: linear-gradient(
     180deg,
-    rgba(217, 119, 87, 0.35) 0%,
-    rgba(217, 119, 87, 0.12) 100%
+    rgba(217, 119, 87, 0.55) 0%,
+    rgba(217, 119, 87, 0.18) 100%
   );
 }
 
@@ -56,17 +57,17 @@
   box-shadow: var(--shadow-card);
 }
 
-/* 空槽：虚线稿纸感，不是 disabled */
+/* 空槽：仪器卡尺感，用淡灰几何占位 */
 .yike-empty-slot {
   border: 1px dashed var(--yike-pencil);
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.45);
   transition:
     background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
     border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .yike-empty-slot:hover {
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.75);
   border-color: var(--yike-ink-faint);
 }
 
@@ -112,10 +113,104 @@
   color: var(--yike-ink-soft);
   transition:
     border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .yike-recommended-chip:hover {
-  border-color: rgba(217, 119, 87, 0.3);
+  border-color: rgba(217, 119, 87, 0.35);
   background-color: rgba(217, 119, 87, 0.03);
+  transform: translateY(-1px);
+}
+
+.yike-recommended-chip:active {
+  transform: translateY(0);
+}
+
+/* 候选槽 hover 时浮现的“替换”提示 */
+.yike-slot-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.92) 60%,
+    rgba(255, 255, 255, 0.75) 100%
+  );
+}
+
+/* 状态流转操作条：只在 hover 时显示 */
+.yike-transition-bar {
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.group:hover .yike-transition-bar,
+.yike-transition-bar:focus-within {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 骨架屏 shimmer */
+.yike-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(228, 228, 231, 0.6) 25%,
+    rgba(228, 228, 231, 0.9) 50%,
+    rgba(228, 228, 231, 0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: yike-shimmer 1.6s linear infinite;
+  border-radius: 6px;
+}
+
+@keyframes yike-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 仪器卡尺空状态：中心十字 */
+.yike-calipers::before,
+.yike-calipers::after {
+  content: "";
+  position: absolute;
+  background-color: var(--yike-pencil);
+}
+
+.yike-calipers::before {
+  width: 24px;
+  height: 1px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.yike-calipers::after {
+  width: 1px;
+  height: 24px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .yike-hero-task,
+  .yike-slot-card,
+  .yike-empty-slot,
+  .yike-quick-input,
+  .yike-recommended-chip {
+    transition: none;
+  }
+
+  .yike-hero-task:hover,
+  .yike-recommended-chip:hover {
+    transform: none;
+  }
+
+  .yike-skeleton {
+    animation: none;
+    background: rgba(228, 228, 231, 0.7);
+  }
 }
