@@ -1,0 +1,121 @@
+/* 一刻：今日行动台 · 页面专属气质
+ * 规则：不改动全局底色/字体/字号，只在执行区做局部破格。
+ * 核心感觉：像从工作台抽出一张便签纸，纸张上浮，焦点明确。
+ */
+
+/* 页面专属变量（仅作用于 .yike-page 内部） */
+.yike-page {
+  --yike-paper: #FFFFFF;
+  --yike-ink: #27272A;
+  --yike-ink-soft: #71717A;
+  --yike-ink-faint: #A1A1AA;
+  --yike-pencil: #D4D4D8;
+  --yike-primary: #D97757;
+  --yike-primary-soft: #FBF4F1;
+}
+
+/* 执行区主任务：全页唯一主角破格。
+ * 用 L2 白底 + 暖橙左侧导轨 + 弥散柔光阴影，制造“摊开便签”感。
+ */
+.yike-hero-task {
+  position: relative;
+  background-color: var(--yike-paper);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 28px rgba(217, 119, 87, 0.08);
+  transition:
+    transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.yike-hero-task:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 12px 34px rgba(217, 119, 87, 0.11);
+}
+
+.yike-hero-task::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(
+    180deg,
+    rgba(217, 119, 87, 0.35) 0%,
+    rgba(217, 119, 87, 0.12) 100%
+  );
+}
+
+/* 执行区其余槽位：普通白卡，hover 微浮 */
+.yike-slot-card {
+  background-color: var(--yike-paper);
+  box-shadow: var(--shadow-card);
+}
+
+/* 空槽：虚线稿纸感，不是 disabled */
+.yike-empty-slot {
+  border: 1px dashed var(--yike-pencil);
+  background-color: rgba(255, 255, 255, 0.5);
+  transition:
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.yike-empty-slot:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: var(--yike-ink-faint);
+}
+
+/* 状态栏分隔：用淡色细线，不抢注意力 */
+.yike-lane-divider {
+  border-top: 1px solid var(--color-border);
+}
+
+/* 快速输入框：Soft Fill 基础上加一条淡淡的下划线暗示“可写” */
+.yike-quick-input {
+  background-color: var(--color-focus);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-light);
+  transition:
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.yike-quick-input:focus-within {
+  background-color: var(--yike-paper);
+  border-color: var(--color-border-warm);
+  box-shadow: var(--shadow-medium);
+}
+
+/* 状态栏标题：小眉题样式 */
+.yike-lane-title {
+  letter-spacing: 0.04em;
+}
+
+/* 执行区标题：更亲密的副标题 */
+.yike-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--yike-ink-soft);
+  letter-spacing: 0.02em;
+}
+
+/* 推荐标签按钮：hover 时暖橙晕染 */
+.yike-recommended-chip {
+  border: 1px solid var(--yike-pencil);
+  background-color: var(--yike-paper);
+  color: var(--yike-ink-soft);
+  transition:
+    border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.yike-recommended-chip:hover {
+  border-color: rgba(217, 119, 87, 0.3);
+  background-color: rgba(217, 119, 87, 0.03);
+}
