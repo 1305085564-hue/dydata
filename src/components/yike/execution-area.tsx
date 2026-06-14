@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, Plus, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ExecutionArea, ExecutionSlot, YikeItemStatus } from "./types";
+import type { ExecutionArea } from "./types";
 import {
   LaneCard,
   ProjectFocusCard,
@@ -191,7 +191,10 @@ export function ExecutionArea({
       className="space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-[13px] font-semibold text-zinc-800">当前执行区</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-[13px] font-semibold text-zinc-800">当前执行区</h2>
+          <span className="text-[12px] text-zinc-400">状态栏的聚光灯</span>
+        </div>
         <span className="text-[12px] text-zinc-400">
           {filledCount}/{totalSlots} 槽位 · 1 主任务 · 2 候选 · 1 项目
         </span>

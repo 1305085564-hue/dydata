@@ -65,6 +65,45 @@ export function mapPersonDtoToPerson(dto: YikePersonDTO): YikePerson {
   };
 }
 
+function getLocalDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function createEmptyYikeWorkbench(today = getLocalDateString()): YikeWorkbench {
+  return {
+    workspace: { id: "", name: "一刻" },
+    today,
+    execution: {
+      primaryTask: null,
+      candidateTasks: [],
+      recommendedTasks: [],
+      projectFocus: null,
+      emptySlots: ["primary_task", "candidate_1", "candidate_2", "project_focus"],
+    },
+    lanes: {
+      planned: { items: [], hiddenCount: 0 },
+      doing: { items: [], hiddenCount: 0 },
+      delegated: { items: [], hiddenCount: 0 },
+      done: { items: [], hiddenCount: 0 },
+    },
+    reminders: {
+      urgent: [],
+      dueSoon: [],
+      projectsMissingNextTask: [],
+      memosSuggestSplit: [],
+    },
+    drawerData: {
+      areas: [],
+      projects: [],
+      people: [],
+    },
+  };
+}
+
 export function mapWorkbenchPayloadToWorkbench(payload: YikeWorkbenchPayload): YikeWorkbench {
   const card = (c: YikeWorkbenchCard): YikeItem & { requiresConfirmation: boolean } => ({
     ...mapCardToItem(c),
@@ -142,17 +181,7 @@ export function mapWorkbenchPayloadToWorkbench(payload: YikeWorkbenchPayload): Y
     },
   };
 
-  // 确保状态栏里没有重复显示当前执行槽中的任务
-  const slotItemIds = new Set<string>();
-  if (primaryTask?.itemId) slotItemIds.add(primaryTask.itemId);
-  candidateTasks.forEach((s) => {
-    if (s.itemId) slotItemIds.add(s.itemId);
-  });
-
-  (Object.keys(lanes) as YikeItemStatus[]).forEach((status) => {
-    lanes[status].items = lanes[status].items.filter((i) => !slotItemIds.has(i.id));
-  });
-
+  // 执行区是状态栏的「镜头」，任务仍属于原状态栏，不再过滤。
   return {
     workspace: payload.workspace,
     today: payload.today,

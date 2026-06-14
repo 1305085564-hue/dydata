@@ -197,7 +197,8 @@ const allItems: YikeItem[] = [
 
 const primaryTask = allItems.find((i) => i.status === "doing") ?? null;
 const plannedItems = allItems.filter((i) => i.status === "planned");
-const doingItems = allItems.filter((i) => i.status === "doing" && i.id !== primaryTask?.id);
+// 执行区是状态栏的聚光灯：主任务仍保留在「正在做」栏中
+const doingItems = allItems.filter((i) => i.status === "doing");
 const delegatedItems = allItems.filter((i) => i.status === "delegated");
 const doneItems = allItems.filter((i) => i.status === "done");
 
