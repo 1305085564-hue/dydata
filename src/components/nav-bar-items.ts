@@ -10,6 +10,11 @@ export type NavItem = {
 export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boolean; showSystemSettings?: boolean }): NavItem[] {
   const items: NavItem[] = [
     {
+      href: "/yike",
+      label: "一刻",
+      match: (pathname) => pathname === "/yike" || pathname.startsWith("/yike/"),
+    },
+    {
       href: "/dashboard",
       label: "今日工作台",
       match: (pathname) => pathname === "/dashboard",

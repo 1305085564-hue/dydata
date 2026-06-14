@@ -64,6 +64,12 @@ export default async function HomePage() {
               >
                 先看演示站
               </Link>
+              <Link
+                href="/yike"
+                className="active:translate-y-0 inline-flex items-center justify-center rounded-[10px] border border-[#E4E4E7] bg-white px-6 py-2.5 text-[13px] font-medium text-[#27272A] transition-colors hover:bg-[#FAFAFB]"
+              >
+                一刻
+              </Link>
             </div>
 
             <div className="inline-block border-t border-[#E4E4E7] pt-6">

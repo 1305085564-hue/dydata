@@ -8,6 +8,7 @@
 @import "../styles/components/app-shell.css";
 @import "../styles/components/dashboard.css";
 @import "../styles/components/admin.css";
+@import "../styles/components/yike.css";
 
 @custom-variant dark (&:is(.dark *));
 

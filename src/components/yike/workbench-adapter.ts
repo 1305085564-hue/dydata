@@ -10,13 +10,25 @@ import type {
   YikeItem,
   YikePerson,
   YikeProject,
+  YikeProjectFocus,
   YikeWorkbench,
-  ExecutionSlot,
-  ExecutionSlotKey,
-  YikeItemStatus,
 } from "@/components/yike/types";
 
-export function mapCardToItem(card: YikeWorkbenchCard): YikeItem {
+interface NameMaps {
+  areas: Map<string, string>;
+  areaColors: Map<string, string | null>;
+  projects: Map<string, string>;
+  people: Map<string, string>;
+}
+
+const EMPTY_NAME_MAPS: NameMaps = {
+  areas: new Map(),
+  areaColors: new Map(),
+  projects: new Map(),
+  people: new Map(),
+};
+
+export function mapCardToItem(card: YikeWorkbenchCard, names: NameMaps = EMPTY_NAME_MAPS): YikeItem {
   return {
     id: card.id,
     itemType: card.itemType,
@@ -25,18 +37,23 @@ export function mapCardToItem(card: YikeWorkbenchCard): YikeItem {
     note: card.note,
     rawInput: card.rawInput,
     areaId: card.areaId,
+    areaName: card.areaId ? names.areas.get(card.areaId) ?? null : null,
+    areaColor: card.areaId ? names.areaColors.get(card.areaId) ?? null : null,
     projectId: card.projectId,
+    projectName: card.projectId ? names.projects.get(card.projectId) ?? null : null,
     complexity: card.complexity,
     timeBucket: card.timeBucket,
     dueDate: card.dueDate,
     isUrgent: card.isUrgent,
     memoGranularity: card.memoGranularity,
     assigneePersonId: card.assigneePersonId,
+    assigneeName: card.assigneePersonId ? names.people.get(card.assigneePersonId) ?? null : null,
     delegatedNote: card.delegatedNote,
     followUpBucket: card.followUpBucket,
     sourceMemoId: card.sourceMemoId,
     completedAt: card.completedAt,
     createdAt: card.createdAt,
+    requiresConfirmation: card.requiresConfirmation,
   };
 }
 
@@ -45,6 +62,7 @@ export function mapAreaDtoToArea(dto: YikeAreaDTO): YikeArea {
     id: dto.id,
     name: dto.name,
     sortOrder: dto.sortOrder,
+    color: (dto as { color?: string | null }).color ?? null,
   };
 }
 
@@ -78,11 +96,10 @@ export function createEmptyYikeWorkbench(today = getLocalDateString()): YikeWork
     workspace: { id: "", name: "一刻" },
     today,
     execution: {
-      primaryTask: null,
-      candidateTasks: [],
+      primaryTaskId: null,
+      candidateTaskIds: [],
       recommendedTasks: [],
       projectFocus: null,
-      emptySlots: ["primary_task", "candidate_1", "candidate_2", "project_focus"],
     },
     lanes: {
       planned: { items: [], hiddenCount: 0 },
@@ -105,99 +122,61 @@ export function createEmptyYikeWorkbench(today = getLocalDateString()): YikeWork
 }
 
 export function mapWorkbenchPayloadToWorkbench(payload: YikeWorkbenchPayload): YikeWorkbench {
-  const card = (c: YikeWorkbenchCard): YikeItem & { requiresConfirmation: boolean } => ({
-    ...mapCardToItem(c),
-    requiresConfirmation: c.requiresConfirmation,
-  });
-
-  const toSlot = (
-    slotKey: ExecutionSlotKey,
-    item: (YikeItem & { requiresConfirmation?: boolean }) | null,
-    project: YikeProject | null,
-    filledReason: "auto" | "manual" = "auto",
-  ): ExecutionSlot => ({
-    slotKey,
-    itemId: item?.id ?? (project?.id ? null : null),
-    projectId: project?.id ?? null,
-    filledReason,
-    item: item
-      ? {
-          ...item,
-          requiresConfirmation:
-            "requiresConfirmation" in item ? Boolean(item.requiresConfirmation) : false,
-        }
-      : null,
-    project,
-    requiresConfirmation:
-      item && "requiresConfirmation" in item
-        ? Boolean(item.requiresConfirmation)
-        : false,
-  });
-
-  const primaryTask = payload.execution.primaryTask
-    ? toSlot("primary_task", card(payload.execution.primaryTask), null, "manual")
-    : null;
-
-  const candidateTasks: ExecutionSlot[] = payload.execution.candidateTasks.map((c, idx) =>
-    toSlot(
-      idx === 0 ? "candidate_1" : "candidate_2",
-      card(c),
-      null,
-      c.requiresConfirmation ? "auto" : "manual",
+  const names: NameMaps = {
+    areas: new Map(payload.drawerData.areas.map((a) => [a.id, a.name])),
+    areaColors: new Map(
+      payload.drawerData.areas.map((a) => [a.id, (a as { color?: string | null }).color ?? null]),
     ),
-  );
+    projects: new Map(payload.drawerData.projects.map((p) => [p.id, p.name])),
+    people: new Map(payload.drawerData.people.map((p) => [p.id, p.name])),
+  };
 
-  const projectFocus = payload.execution.projectFocus
-    ? toSlot(
-        "project_focus",
-        null,
-        {
-          id: payload.execution.projectFocus.project.id,
-          name: payload.execution.projectFocus.project.name,
-          nextTaskId: payload.execution.projectFocus.project.nextTaskId,
-          nextTaskTitle: payload.execution.projectFocus.nextTask?.title ?? null,
-          areaId: payload.execution.projectFocus.project.areaId,
-        },
-        "auto",
-      )
-    : null;
+  const toItem = (c: YikeWorkbenchCard) => mapCardToItem(c, names);
 
   const lanes = {
     planned: {
-      items: payload.lanes.planned.items.map(mapCardToItem),
+      items: payload.lanes.planned.items.map(toItem),
       hiddenCount: payload.lanes.planned.hiddenCount,
     },
     doing: {
-      items: payload.lanes.doing.items.map(mapCardToItem),
+      items: payload.lanes.doing.items.map(toItem),
       hiddenCount: payload.lanes.doing.hiddenCount,
     },
     delegated: {
-      items: payload.lanes.delegated.items.map(mapCardToItem),
+      items: payload.lanes.delegated.items.map(toItem),
       hiddenCount: payload.lanes.delegated.hiddenCount,
     },
     done: {
-      items: payload.lanes.done.items.map(mapCardToItem),
+      items: payload.lanes.done.items.map(toItem),
       hiddenCount: payload.lanes.done.hiddenCount,
     },
   };
 
-  // 执行区是状态栏的「镜头」，任务仍属于原状态栏，不再过滤。
+  const projectFocus: YikeProjectFocus | null = payload.execution.projectFocus
+    ? {
+        projectId: payload.execution.projectFocus.project.id,
+        projectName: payload.execution.projectFocus.project.name,
+        nextTaskId: payload.execution.projectFocus.nextTask?.id ?? null,
+        nextTaskTitle: payload.execution.projectFocus.nextTask?.title ?? null,
+      }
+    : null;
+
+  // 执行区是状态栏的「镜头」：1+2+1 用 id 标记溶进栏内，任务仍属于原栏，不复制成第二套数据。
   return {
     workspace: payload.workspace,
     today: payload.today,
     execution: {
-      primaryTask,
-      candidateTasks,
-      recommendedTasks: payload.execution.recommendedTasks.map(mapCardToItem),
+      primaryTaskId: payload.execution.primaryTask?.id ?? null,
+      candidateTaskIds: payload.execution.candidateTasks.map((c) => c.id),
+      recommendedTasks: payload.execution.recommendedTasks.map(toItem),
       projectFocus,
-      emptySlots: payload.execution.emptySlots as ExecutionSlotKey[],
     },
     lanes,
     reminders: {
-      urgent: payload.reminders.urgent.map(mapCardToItem),
-      dueSoon: payload.reminders.dueSoon.map(mapCardToItem),
+      urgent: payload.reminders.urgent.map(toItem),
+      dueSoon: payload.reminders.dueSoon.map(toItem),
       projectsMissingNextTask: payload.reminders.projectsMissingNextTask.map(mapProjectDtoToProject),
-      memosSuggestSplit: payload.reminders.memosSuggestSplit.map(mapCardToItem),
+      memosSuggestSplit: payload.reminders.memosSuggestSplit.map(toItem),
     },
     drawerData: {
       areas: payload.drawerData.areas.map(mapAreaDtoToArea),

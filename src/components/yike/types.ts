@@ -1,5 +1,3 @@
-import * as React from "react";
-
 export type YikeItemStatus = "planned" | "doing" | "delegated" | "done";
 export type YikeItemType = "task" | "memo";
 export type YikeComplexity = "deep" | "focus" | "small" | "quick";
@@ -7,10 +5,27 @@ export type YikeTimeBucket = "today" | "tomorrow" | "this_week" | "this_month" |
 export type YikeMemoGranularity = "single" | "multiple" | "unknown";
 export type ExecutionSlotKey = "primary_task" | "candidate_1" | "candidate_2" | "project_focus";
 
+export const YIKE_COMPLEXITIES: YikeComplexity[] = ["deep", "focus", "small", "quick"];
+export const YIKE_TIME_BUCKETS: YikeTimeBucket[] = ["today", "tomorrow", "this_week", "this_month", "later"];
+
+/** 提交给 PATCH /items/:id 的字段子集（前端可编辑部分） */
+export interface YikeUpdatePayload {
+  title?: string;
+  note?: string | null;
+  complexity?: YikeComplexity;
+  timeBucket?: YikeTimeBucket;
+  areaId?: string | null;
+  projectId?: string | null;
+  dueDate?: string | null;
+  isUrgent?: boolean;
+  assigneePersonId?: string | null;
+}
+
 export interface YikeArea {
   id: string;
   name: string;
   sortOrder: number;
+  color: string | null;
 }
 
 export interface YikeProject {
@@ -35,6 +50,7 @@ export interface YikeItem {
   rawInput: string | null;
   areaId: string | null;
   areaName?: string | null;
+  areaColor?: string | null;
   projectId: string | null;
   projectName?: string | null;
   complexity: YikeComplexity;
@@ -52,22 +68,23 @@ export interface YikeItem {
   requiresConfirmation?: boolean;
 }
 
-export interface ExecutionSlot {
-  slotKey: ExecutionSlotKey;
-  itemId: string | null;
-  projectId: string | null;
-  filledReason: "auto" | "manual";
-  item?: YikeItem | null;
-  project?: YikeProject | null;
-  requiresConfirmation?: boolean;
+export interface YikeProjectFocus {
+  projectId: string;
+  projectName: string;
+  nextTaskId: string | null;
+  nextTaskTitle: string | null;
 }
 
-export interface ExecutionArea {
-  primaryTask: ExecutionSlot | null;
-  candidateTasks: ExecutionSlot[];
+/** 执行区不再是独立数据，只是状态栏的「聚光灯」：用 id 标记栏内某几条。 */
+export interface ExecutionSpotlight {
+  /** 正在做栏里被提为焦点的那条（默认 = doing 栏首条） */
+  primaryTaskId: string | null;
+  /** 计划做栏里被标为候选的事项 id */
+  candidateTaskIds: string[];
+  /** 完成焦点后可继续做的推荐项（来自计划做栏） */
   recommendedTasks: YikeItem[];
-  projectFocus: ExecutionSlot | null;
-  emptySlots: ExecutionSlotKey[];
+  /** 当前聚焦的项目推进 */
+  projectFocus: YikeProjectFocus | null;
 }
 
 export interface YikeLane {
@@ -78,7 +95,7 @@ export interface YikeLane {
 export interface YikeWorkbench {
   workspace: { id: string; name: string };
   today: string;
-  execution: ExecutionArea;
+  execution: ExecutionSpotlight;
   lanes: {
     planned: YikeLane;
     doing: YikeLane;

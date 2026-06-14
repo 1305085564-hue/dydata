@@ -16,10 +16,13 @@ interface LoginPageProps {
     registered?: string;
     reset?: string;
     from?: string;
+    next?: string;
   }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+
   async function loginAction(_: LoginFormState, formData: FormData): Promise<LoginFormState> {
     "use server";
 
@@ -50,10 +53,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       return { error: "未找到账号资料，请联系管理员。", email };
     }
 
-    redirect(getPostLoginRedirectPath(profile.role));
+    redirect(getPostLoginRedirectPath(profile.role, params.next));
   }
-
-  const params = await searchParams;
 
   return <LoginForm action={loginAction} notice={getLoginNotice(params)} />;
 }

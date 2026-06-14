@@ -39,10 +39,26 @@ function buildClearSiteDataResponse(request: NextRequest) {
   return response;
 }
 
+function getProtectedReturnPath(request: NextRequest) {
+  const nextUrl = request.nextUrl.clone();
+  nextUrl.searchParams.delete(CLEAR_SITE_DATA_QUERY);
+  const search = nextUrl.searchParams.toString();
+  return `${nextUrl.pathname}${search ? `?${search}` : ""}`;
+}
+
+function buildLoginRedirect(request: NextRequest, options: { expired?: boolean } = {}) {
+  const loginUrl = new URL("/login", request.url);
+  if (options.expired) loginUrl.searchParams.set("expired", "1");
+  loginUrl.searchParams.set("next", getProtectedReturnPath(request));
+  return NextResponse.redirect(loginUrl);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isDashboardRoute = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isYikeRoute = pathname === "/yike" || pathname.startsWith("/yike/");
+  const isProtectedAppRoute = isDashboardRoute || isAdminRoute || isYikeRoute;
   const hasClearedSiteData = request.cookies.get(SITE_CLEARED_COOKIE)?.value === "1";
   const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
 
@@ -79,10 +95,8 @@ export async function middleware(request: NextRequest) {
   // 首页已改为落地页，不再自动跳转；已登录用户通过页面内逻辑跳转
   // if (pathname === "/") { ... }
 
-  if (!hasAuthCookie && (isDashboardRoute || isAdminRoute)) {
-    const response = NextResponse.redirect(
-      new URL(hasLegacySupabaseAuthCookie ? "/login?expired=1" : "/login", request.url),
-    );
+  if (!hasAuthCookie && isProtectedAppRoute) {
+    const response = buildLoginRedirect(request, { expired: hasLegacySupabaseAuthCookie });
     if (hasLegacySupabaseAuthCookie) {
       allSupabaseAuthCookieNames.forEach((cookieName) => {
         response.cookies.delete(cookieName);
@@ -92,13 +106,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // 有 cookie 时进一步校验 session 是否有效
-  if (hasAuthCookie && (isDashboardRoute || isAdminRoute)) {
+  if (hasAuthCookie && isProtectedAppRoute) {
     try {
       const supabase = createClientFromRequest(request);
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
         // session 无效或过期，清除 cookie 并重定向到登录页
-        const response = NextResponse.redirect(new URL("/login?expired=1", request.url));
+        const response = buildLoginRedirect(request, { expired: true });
         listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
           response.cookies.delete(cookieName);
         });
@@ -120,5 +134,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/login", "/register"],
+  matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/yike/:path*", "/login", "/register"],
 };

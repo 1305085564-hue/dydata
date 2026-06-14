@@ -1,5 +1,7 @@
-export function getPostLoginRedirectPath(_: string | null | undefined) {
+import { sanitizeNextPath } from "@/lib/auth-password";
+
+export function getPostLoginRedirectPath(_: string | null | undefined, next?: string | null) {
   void _;
 
-  return "/dashboard";
+  return sanitizeNextPath(next, "/dashboard");
 }

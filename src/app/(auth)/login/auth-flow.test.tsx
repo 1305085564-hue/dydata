@@ -39,6 +39,13 @@ test("登录成功后所有角色都默认进入 dashboard", () => {
   assert.equal(getPostLoginRedirectPath("member"), "/dashboard");
 });
 
+test("登录成功后优先回到安全的 next 路径", () => {
+  assert.equal(getPostLoginRedirectPath("member", "/yike"), "/yike");
+  assert.equal(getPostLoginRedirectPath("member", "/yike?date=2026-06-14"), "/yike?date=2026-06-14");
+  assert.equal(getPostLoginRedirectPath("member", "https://evil.com"), "/dashboard");
+  assert.equal(getPostLoginRedirectPath("member", "//evil.com"), "/dashboard");
+});
+
 test("登录页提示文案会按 query 参数返回", () => {
   assert.equal(getLoginNotice({ registered: "1" }), "注册成功，请登录");
   assert.equal(getLoginNotice({ reset: "success" }), "密码已重置，请重新登录");

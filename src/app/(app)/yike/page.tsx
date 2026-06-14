@@ -2,12 +2,11 @@
 
 import * as React from "react";
 import { YikePage } from "@/components/yike/yike-page";
-import { mockWorkbench } from "@/components/yike/mock-data";
-import { mapWorkbenchPayloadToWorkbench } from "@/components/yike/workbench-adapter";
+import { createEmptyYikeWorkbench, mapWorkbenchPayloadToWorkbench } from "@/components/yike/workbench-adapter";
 import { fetchYikeWorkbench } from "@/lib/yike/client";
 
 export default function YikePageRoute() {
-  const [workbench, setWorkbench] = React.useState(() => mockWorkbench);
+  const [workbench, setWorkbench] = React.useState(() => createEmptyYikeWorkbench());
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -24,7 +23,6 @@ export default function YikePageRoute() {
       } else {
         setError(err instanceof Error ? err.message : "加载失败");
       }
-      // 保留 mockWorkbench 仅用于开发兜底
     } finally {
       setLoading(false);
     }
