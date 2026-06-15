@@ -484,9 +484,10 @@ interface ManageDrawerProps {
   onOpenChange: (open: boolean) => void;
   onTabChange: (tab: ManageTab) => void;
   onCreateArea: (name: string, color?: string | null) => void;
-  onCreateProject: (name: string, nextTaskTitle: string | null) => void;
+  onCreateProject: (name: string, nextTaskTitle: string | null, areaId: string | null) => void;
   onCreatePerson: (name: string) => void;
   onSetAreaColor?: (areaId: string, color: string | null) => void;
+  onSetProjectArea?: (projectId: string, areaId: string | null) => void;
   onReorderAreas?: (ordered: { id: string; sortOrder: number }[]) => void;
 }
 
@@ -509,23 +510,26 @@ export function ManageDrawer({
   onCreateProject,
   onCreatePerson,
   onSetAreaColor,
+  onSetProjectArea,
   onReorderAreas,
 }: ManageDrawerProps) {
   const [name, setName] = React.useState("");
   const [nextTask, setNextTask] = React.useState("");
   const [newColor, setNewColor] = React.useState<string | null>(AREA_COLORS[0].value);
+  const [projectAreaId, setProjectAreaId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setName("");
     setNextTask("");
     setNewColor(AREA_COLORS[0].value);
+    setProjectAreaId(null);
   }, [tab, open]);
 
   const handleCreate = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
     if (tab === "area") onCreateArea(trimmed, newColor);
-    else if (tab === "project") onCreateProject(trimmed, nextTask.trim() || null);
+    else if (tab === "project") onCreateProject(trimmed, nextTask.trim() || null, projectAreaId);
     else onCreatePerson(trimmed);
     setName("");
     setNextTask("");
@@ -570,13 +574,31 @@ export function ManageDrawer({
           </Field>
 
           {tab === "project" && (
-            <Field label="下一步任务（可选）">
-              <Input
-                value={nextTask}
-                onChange={(e) => setNextTask(e.target.value)}
-                placeholder="填了就自动设为项目下一步"
-              />
-            </Field>
+            <>
+              <Field label="领域分类">
+                <PillRow
+                  options={areas.map((a) => ({
+                    value: a.id,
+                    label: a.name,
+                    dot: resolveAreaColor(a.color)?.solid ?? null,
+                  }))}
+                  value={projectAreaId}
+                  onChange={setProjectAreaId}
+                  allowNone
+                  noneLabel="未分类"
+                  tintFromDot
+                  wrap
+                />
+              </Field>
+
+              <Field label="下一步任务（可选）">
+                <Input
+                  value={nextTask}
+                  onChange={(e) => setNextTask(e.target.value)}
+                  placeholder="填了就自动设为项目下一步"
+                />
+              </Field>
+            </>
           )}
 
           {tab === "area" && (
@@ -599,13 +621,42 @@ export function ManageDrawer({
                 onSetColor={onSetAreaColor}
                 onReorder={onReorderAreas}
               />
-            ) : (
-              existing.map((e) => (
+            ) : tab === "project" ? (
+              projects.map((project) => (
                 <div
-                  key={e.id}
+                  key={project.id}
+                  className="flex flex-col gap-2 rounded-lg border border-zinc-100 bg-zinc-50/60 px-3 py-2 text-[13px] text-zinc-700"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{project.name}</span>
+                    <span className="text-[12px] text-zinc-400">
+                      {areas.find((area) => area.id === project.areaId)?.name ?? "未分类"}
+                    </span>
+                  </div>
+                  {onSetProjectArea && (
+                    <PillRow
+                      options={areas.map((area) => ({
+                        value: area.id,
+                        label: area.name,
+                        dot: resolveAreaColor(area.color)?.solid ?? null,
+                      }))}
+                      value={project.areaId ?? null}
+                      onChange={(areaId) => onSetProjectArea(project.id, areaId)}
+                      allowNone
+                      noneLabel="未分类"
+                      tintFromDot
+                      wrap
+                    />
+                  )}
+                </div>
+              ))
+            ) : (
+              people.map((person) => (
+                <div
+                  key={person.id}
                   className="rounded-lg border border-zinc-100 bg-zinc-50/60 px-3 py-2 text-[13px] text-zinc-700"
                 >
-                  {e.name}
+                  {person.name}
                 </div>
               ))
             )}
@@ -690,7 +741,6 @@ interface EditItemPanelProps {
   people: YikePerson[];
   saving?: boolean;
   onCollapse: () => void;
-  onSave: (itemId: string, payload: YikeUpdatePayload) => void;
   onManage: (tab: ManageTab) => void;
   onSetField?: (itemId: string, payload: YikeUpdatePayload) => void;
 }
@@ -703,7 +753,6 @@ export function EditItemPanel({
   people,
   saving,
   onCollapse,
-  onSave,
   onManage,
   onSetField,
 }: EditItemPanelProps) {
@@ -743,6 +792,10 @@ export function EditItemPanel({
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const isMemo = item.itemType === "memo";
+
+  const setProject = (projectId: string | null) => {
+    set("projectId", projectId);
+  };
 
   // 备忘只有一个备忘栏：编辑时把全文存进 note，失焦时从全文截一个短标题回填 title（后端 title 必填）。
   const memoText = form.note?.trim() ? (form.note as string) : (form.title ?? "");
@@ -814,7 +867,7 @@ export function EditItemPanel({
           </>
         )}
 
-        <DockField label="领域" icon={<Tag className="h-3.5 w-3.5" />}>
+        <DockField label="领域分类" icon={<Tag className="h-3.5 w-3.5" />}>
           <PillRow
             options={areas.map((a) => ({
               value: a.id,
@@ -824,7 +877,7 @@ export function EditItemPanel({
             value={form.areaId ?? null}
             onChange={(v) => set("areaId", v)}
             allowNone
-            noneLabel="未分配"
+            noneLabel="未分类"
             onAdd={() => onManage("area")}
             addLabel="领域"
             dropField="areaId"
@@ -854,11 +907,11 @@ export function EditItemPanel({
           />
         </DockField>
 
-        <DockField label="项目" icon={<FolderKanban className="h-3.5 w-3.5" />}>
+        <DockField label="所属项目" icon={<FolderKanban className="h-3.5 w-3.5" />}>
           <PillRow
             options={projects.map((p) => ({ value: p.id, label: p.name }))}
             value={form.projectId ?? null}
-            onChange={(v) => set("projectId", v)}
+            onChange={setProject}
             allowNone
             onAdd={() => onManage("project")}
             addLabel="项目"
@@ -949,4 +1002,3 @@ export function EmptyEditPanel({ onCollapse }: { onCollapse: () => void }) {
     </div>
   );
 }
-

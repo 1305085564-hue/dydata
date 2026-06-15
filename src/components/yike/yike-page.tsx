@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, RefreshCw, CheckCircle2, PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, PanelRightOpen, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ManageTab } from "./item-drawer";
 import type { YikeItem, YikeUpdatePayload, YikeWorkbench } from "./types";
@@ -38,12 +38,14 @@ import {
   transitionYikeItem,
   updateYikeArea,
   updateYikeItem,
+  updateYikeProject,
 } from "@/lib/yike/client";
 import { cn } from "@/lib/utils";
 
 const SPLIT_N_KEY = "yike-title-split-n";
 const SPLIT_N_OPTIONS = [4, 5, 6];
 const SPLIT_MODE_KEY = "yike-title-split-mode";
+const YIKE_PRODUCT_NAME = "此刻";
 type SplitMode = "punct" | "chars";
 // 标点分割：第一个分隔标点之前作标题，之后（含该标点后）作备注
 const SPLIT_PUNCT = /[，。、；：！？,.;:!?/]/;
@@ -285,13 +287,6 @@ function YikePageInner({ workbench, loading, error, onReload }: YikePageProps) {
     setBusyId(null);
   };
 
-  const handleSaveItem = async (itemId: string, payload: YikeUpdatePayload) => {
-    setSaving(true);
-    const ok = await run(() => updateYikeItem(itemId, payload), "保存失败");
-    setSaving(false);
-    if (ok) setEditItemId(null);
-  };
-
   const handleSplit = async (itemId: string, titles: string[], archiveSource: boolean) => {
     setSaving(true);
     const ok = await run(
@@ -316,17 +311,21 @@ function YikePageInner({ workbench, loading, error, onReload }: YikePageProps) {
     await run(() => updateYikeArea(areaId, { color }), "更新领域颜色失败");
   };
 
+  const handleSetProjectArea = async (projectId: string, areaId: string | null) => {
+    await run(() => updateYikeProject(projectId, { areaId }), "更新项目领域失败");
+  };
+
   const handleReorderAreas = async (ordered: { id: string; sortOrder: number }[]) => {
     await run(() => reorderYikeAreas(ordered), "领域排序失败");
   };
 
-  const handleCreateProject = async (name: string, nextTaskTitle: string | null) => {
+  const handleCreateProject = async (name: string, nextTaskTitle: string | null, areaId: string | null) => {
     setSaving(true);
     await run(
       () =>
         createYikeProject({
           name,
-          areaId: null,
+          areaId,
           goalNote: null,
           acceptanceCriteria: null,
           nextTaskTitle,
@@ -383,7 +382,7 @@ function YikePageInner({ workbench, loading, error, onReload }: YikePageProps) {
       >
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[24px] font-semibold text-zinc-800">{workbench.workspace.name}</h1>
+            <h1 className="text-[24px] font-semibold text-zinc-800">{YIKE_PRODUCT_NAME}</h1>
             {loading && <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />}
           </div>
           <p className="text-[13px] text-zinc-500">{workbench.today} · 只关心现在最该做的一件</p>
@@ -519,7 +518,6 @@ function YikePageInner({ workbench, loading, error, onReload }: YikePageProps) {
                     people={workbench.drawerData.people}
                     saving={saving}
                     onCollapse={() => setPanelCollapsed(true)}
-                    onSave={handleSaveItem}
                     onManage={openManage}
                     onSetField={handleSetField}
                   />
@@ -567,6 +565,7 @@ function YikePageInner({ workbench, loading, error, onReload }: YikePageProps) {
         onCreateProject={handleCreateProject}
         onCreatePerson={handleCreatePerson}
         onSetAreaColor={handleSetAreaColor}
+        onSetProjectArea={handleSetProjectArea}
         onReorderAreas={handleReorderAreas}
       />
 

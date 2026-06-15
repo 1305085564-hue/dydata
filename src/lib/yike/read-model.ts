@@ -38,8 +38,9 @@ type BuildWorkbenchInput = {
   slots: YikeExecutionSlotRow[];
 };
 
-const LANE_LIMIT = 50;
+const LANE_LIMIT = 10;
 const SLOT_ORDER: YikeExecutionSlotKey[] = ["primary_task", "candidate_1", "candidate_2", "project_focus"];
+const PRODUCT_WORKSPACE_NAME = "此刻";
 
 function getClient(client?: YikeDbClient): YikeDbClient {
   return client ?? (createAdminClient() as unknown as YikeDbClient);
@@ -126,6 +127,10 @@ function sortCards(cards: YikeWorkbenchCard[]) {
   return [...cards].sort(compareYikeCards);
 }
 
+function normalizeWorkspaceName(name: string) {
+  return name === "一刻" ? PRODUCT_WORKSPACE_NAME : name;
+}
+
 function buildLane(cards: YikeWorkbenchCard[]) {
   const sorted = sortCards(cards);
   return {
@@ -206,7 +211,7 @@ export function buildYikeWorkbenchPayload(input: BuildWorkbenchInput): YikeWorkb
   return {
     workspace: {
       id: input.workspace.id,
-      name: input.workspace.name,
+      name: normalizeWorkspaceName(input.workspace.name),
     },
     today: input.today,
     execution: {
@@ -251,7 +256,7 @@ export async function loadYikeWorkbench(
 
   const firstError = areas.error ?? projects.error ?? people.error ?? items.error ?? slots.error;
   if (firstError) {
-    throw new Error(firstError.message ?? "读取一刻工作台失败");
+    throw new Error(firstError.message ?? "读取此刻工作台失败");
   }
 
   return buildYikeWorkbenchPayload({

@@ -312,7 +312,7 @@ export async function getOrCreateYikeWorkspace(
   if (existing.error) {
     throw new YikeServiceError({
       code: "INTERNAL_ERROR",
-      message: existing.error.message ?? "读取一刻工作区失败",
+      message: existing.error.message ?? "读取此刻工作区失败",
     });
   }
 
@@ -320,7 +320,7 @@ export async function getOrCreateYikeWorkspace(
 
   const created = await client
     .from("yike_workspaces")
-    .insert({ user_id: actor.userId, name: "一刻" })
+    .insert({ user_id: actor.userId, name: "此刻" })
     .select("id, user_id, name, created_at, updated_at")
     .single<YikeWorkspaceRow>();
 
@@ -336,14 +336,14 @@ export async function getOrCreateYikeWorkspace(
 
     throw new YikeServiceError({
       code: "INTERNAL_ERROR",
-      message: created.error.message ?? "创建一刻工作区失败",
+      message: created.error.message ?? "创建此刻工作区失败",
     });
   }
 
   if (!created.data) {
     throw new YikeServiceError({
       code: "INTERNAL_ERROR",
-      message: "创建一刻工作区失败",
+      message: "创建此刻工作区失败",
     });
   }
 
@@ -790,6 +790,7 @@ export async function updateYikeProject(
     .maybeSingle();
   if (updated.error) return { ok: false, error: yikeError("INTERNAL_ERROR", updated.error.message ?? "更新项目失败") };
   if (!updated.data) return { ok: false, error: yikeError("NOT_FOUND", "项目不存在") };
+
   return { ok: true, data: toYikeProjectDTO(updated.data as YikeProjectRow) };
 }
 

@@ -49,7 +49,7 @@ function row(overrides: Partial<YikeItemRow> = {}): YikeItemRow {
 
 test("buildCreateItemInsert 按 actor 和 workspace 生成安全插入对象", () => {
   const input: YikeCreateItemInput = {
-    rawText: "把一刻的数据库方案整理给 Kimi",
+    rawText: "把此刻的数据库方案整理给 Kimi",
     title: "数据库方案",
     note: null,
     itemType: "memo",
@@ -73,8 +73,8 @@ test("buildCreateItemInsert 按 actor 和 workspace 生成安全插入对象", (
     item_type: "memo",
     status: "planned",
     title: "数据库方案",
-    note: "把一刻的数据库方案整理给 Kimi",
-    raw_input: "把一刻的数据库方案整理给 Kimi",
+    note: "把此刻的数据库方案整理给 Kimi",
+    raw_input: "把此刻的数据库方案整理给 Kimi",
     area_id: null,
     project_id: null,
     complexity: "small",
@@ -247,12 +247,12 @@ test("buildUpdateItemPayload 改时间桶会同步把锚定日刷成今天", () 
   assert.equal(noTouch.bucket_anchor_date, undefined);
 });
 
-test("首次读取一刻时会自动创建个人 workspace", async () => {
+test("首次读取此刻时会自动创建个人 workspace", async () => {
   const inserts: unknown[] = [];
   const createdWorkspace = {
     id: workspaceId,
     user_id: userId,
-    name: "一刻",
+    name: "此刻",
     created_at: "2026-06-14T08:00:00.000Z",
     updated_at: "2026-06-14T08:00:00.000Z",
   };
@@ -287,6 +287,6 @@ test("首次读取一刻时会自动创建个人 workspace", async () => {
 
   const workspace = await getOrCreateYikeWorkspace({ userId }, { client: client as never });
 
-  assert.deepEqual(inserts, [{ user_id: userId, name: "一刻" }]);
+  assert.deepEqual(inserts, [{ user_id: userId, name: "此刻" }]);
   assert.deepEqual(workspace, createdWorkspace);
 });

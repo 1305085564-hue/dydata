@@ -93,7 +93,7 @@ function getLocalDateString() {
 
 export function createEmptyYikeWorkbench(today = getLocalDateString()): YikeWorkbench {
   return {
-    workspace: { id: "", name: "一刻" },
+    workspace: { id: "", name: "此刻" },
     today,
     execution: {
       primaryTaskId: null,

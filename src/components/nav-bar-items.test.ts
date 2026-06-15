@@ -4,11 +4,12 @@ import assert from "node:assert/strict";
 import { getNavItems } from "./nav-bar-items";
 
 test("管理员导航包含团队管理和系统设置入口", () => {
-  const items = getNavItems({ showAdmin: true, showSystemSettings: true });
+  const items = getNavItems({ showAdmin: true, showSystemSettings: true, showYike: true });
 
   assert.deepEqual(
     items.map((item) => ({ href: item.href, label: item.label })),
     [
+      { href: "/yike", label: "此刻" },
       { href: "/dashboard", label: "今日工作台" },
       { href: "/growth", label: "个人成长" },
       { href: "/violations", label: "导粉中心" },
@@ -48,5 +49,16 @@ test("负责人和 owner 显示系统设置", () => {
   assert.equal(
     withoutSettings.some((item) => item.href === "/admin/content"),
     true
+  );
+});
+
+test("只有明确允许时显示此刻入口", () => {
+  assert.equal(
+    getNavItems({ showAdmin: false }).some((item) => item.href === "/yike"),
+    false,
+  );
+  assert.equal(
+    getNavItems({ showAdmin: false, showYike: true }).some((item) => item.href === "/yike"),
+    true,
   );
 });

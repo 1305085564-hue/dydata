@@ -18,6 +18,6 @@ export async function GET(request: NextRequest) {
     await rolloverYikeItems(auth.actor, today).catch(() => undefined);
     return Response.json(await loadYikeWorkbench(auth.actor, { today }));
   } catch (error) {
-    return jsonInternalError(error, "读取一刻工作台失败");
+    return jsonInternalError(error, "读取此刻工作台失败");
   }
 }

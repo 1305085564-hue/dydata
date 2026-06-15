@@ -48,7 +48,7 @@ function project(overrides: Partial<YikeProjectRow> = {}): YikeProjectRow {
     workspace_id: workspaceId,
     user_id: userId,
     area_id: null,
-    name: "一刻 V1",
+    name: "此刻 V1",
     goal_note: null,
     acceptance_criteria: null,
     next_task_id: "task-1",

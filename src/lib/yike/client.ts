@@ -10,6 +10,7 @@ import type {
   YikePersonInput,
   YikeProjectInput,
   YikeProjectTaskInput,
+  YikeProjectUpdateInput,
   YikeQuickCreateInput,
   YikeSetProjectNextTaskInput,
   YikeTransitionInput,
@@ -132,6 +133,10 @@ export async function reorderYikeAreas(areas: Array<{ id: string; sortOrder: num
 
 export async function createYikeProject(input: YikeProjectInput) {
   return postJson("/api/yike/projects", input, "创建项目失败");
+}
+
+export async function updateYikeProject(projectId: string, input: YikeProjectUpdateInput) {
+  return patchJson(`/api/yike/projects/${projectId}`, input, "更新项目失败");
 }
 
 export async function addYikeProjectTask(projectId: string, input: YikeProjectTaskInput) {

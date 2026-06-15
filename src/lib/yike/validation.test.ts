@@ -9,7 +9,7 @@ import {
 
 test("快速创建只传一句话会规范成默认备忘", () => {
   const result = validateQuickCreateInput({
-    rawText: "  把一刻的数据库方案整理给 Kimi  ",
+    rawText: "  把此刻的数据库方案整理给 Kimi  ",
     clientRequestId: " req-1 ",
   });
 
@@ -17,7 +17,7 @@ test("快速创建只传一句话会规范成默认备忘", () => {
   if (!result.ok) return;
 
   assert.deepEqual(result.data, {
-    rawText: "把一刻的数据库方案整理给 Kimi",
+    rawText: "把此刻的数据库方案整理给 Kimi",
     clientRequestId: "req-1",
   });
 });

@@ -7,13 +7,13 @@ export type NavItem = {
   match: (pathname: string) => boolean;
 };
 
-export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boolean; showSystemSettings?: boolean }): NavItem[] {
+export function getNavItems(input: {
+  showAdmin: boolean;
+  showAiCopywriting?: boolean;
+  showSystemSettings?: boolean;
+  showYike?: boolean;
+}): NavItem[] {
   const items: NavItem[] = [
-    {
-      href: "/yike",
-      label: "一刻",
-      match: (pathname) => pathname === "/yike" || pathname.startsWith("/yike/"),
-    },
     {
       href: "/dashboard",
       label: "今日工作台",
@@ -35,6 +35,14 @@ export function getNavItems(input: { showAdmin: boolean; showAiCopywriting?: boo
       match: (pathname) => pathname.startsWith("/video-review"),
     },
   ];
+
+  if (input.showYike) {
+    items.unshift({
+      href: "/yike",
+      label: "此刻",
+      match: (pathname) => pathname === "/yike" || pathname.startsWith("/yike/"),
+    });
+  }
 
   if (input.showAiCopywriting !== false) {
     items.push({

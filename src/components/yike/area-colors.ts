@@ -1,6 +1,6 @@
 /** 领域颜色预设：token → 各场景实际色值。
  * 卡片整卡用极淡背景(tintBg) + 左缘细色条(rail)；选色器/色点用 solid。
- * 全部低饱和暖色系为主，跟一刻整体气质一致，不刺眼。
+ * 全部低饱和暖色系为主，跟此刻整体气质一致，不刺眼。
  */
 export interface AreaColorToken {
   value: string; // 存进数据库的 token

@@ -68,7 +68,7 @@ export default async function HomePage() {
                 href="/yike"
                 className="active:translate-y-0 inline-flex items-center justify-center rounded-[10px] border border-[#E4E4E7] bg-white px-6 py-2.5 text-[13px] font-medium text-[#27272A] transition-colors hover:bg-[#FAFAFB]"
               >
-                一刻
+                此刻
               </Link>
             </div>
 

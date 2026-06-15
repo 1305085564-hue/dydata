@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { canUseYike } from "@/lib/yike/access";
 import type { YikeActor, YikeApiError, YikeApiErrorCode } from "@/lib/yike/types";
 
 const STATUS_BY_CODE: Record<YikeApiErrorCode, number> = {
@@ -24,7 +25,7 @@ export function jsonBadRequest(message = "请求体不是合法 JSON") {
   );
 }
 
-export function jsonInternalError(error: unknown, fallback = "一刻服务异常") {
+export function jsonInternalError(error: unknown, fallback = "此刻服务异常") {
   return NextResponse.json(
     {
       error: {
@@ -51,6 +52,16 @@ export async function requireYikeActor(): Promise<
       response: NextResponse.json(
         { error: { code: "UNAUTHORIZED", message: "未登录" } },
         { status: 401 },
+      ),
+    };
+  }
+
+  if (!canUseYike(user.email)) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: { code: "FORBIDDEN", message: "此刻仅限本人使用" } },
+        { status: 403 },
       ),
     };
   }

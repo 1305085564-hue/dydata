@@ -13,7 +13,7 @@ const userId = "user-1";
 const workspace = {
   id: "workspace-1",
   user_id: userId,
-  name: "一刻",
+  name: "此刻",
   created_at: "2026-06-14T08:00:00.000Z",
   updated_at: "2026-06-14T08:00:00.000Z",
 };
@@ -70,7 +70,7 @@ function project(overrides: Partial<YikeProjectRow> = {}): YikeProjectRow {
     workspace_id: workspace.id,
     user_id: userId,
     area_id: null,
-    name: "一刻 V1",
+    name: "此刻 V1",
     goal_note: null,
     acceptance_criteria: null,
     next_task_id: null,
@@ -108,7 +108,7 @@ test("空数据 workbench 返回 1+2+1 空槽结构", () => {
     slots: [],
   });
 
-  assert.equal(payload.workspace.name, "一刻");
+  assert.equal(payload.workspace.name, "此刻");
   assert.equal(payload.execution.primaryTask, null);
   assert.deepEqual(payload.execution.candidateTasks, []);
   assert.deepEqual(payload.execution.recommendedTasks, []);
@@ -119,6 +119,38 @@ test("空数据 workbench 返回 1+2+1 空槽结构", () => {
     "candidate_2",
     "project_focus",
   ]);
+});
+
+test("旧 workspace 展示名会归一为此刻", () => {
+  const payload = buildYikeWorkbenchPayload({
+    workspace: { ...workspace, name: "一刻" },
+    today: "2026-06-14",
+    areas: [],
+    projects: [],
+    people: [],
+    items: [],
+    slots: [],
+  });
+
+  assert.equal(payload.workspace.name, "此刻");
+});
+
+test("项目事项保留自己的领域分类，项目只作为独立归属", () => {
+  const payload = buildYikeWorkbenchPayload({
+    workspace,
+    today: "2026-06-14",
+    areas: [
+      area({ id: "area-item", name: "事项旧领域", sort_order: 10 }),
+      area({ id: "area-project", name: "项目领域", sort_order: 1 }),
+    ],
+    projects: [project({ id: "project-1", area_id: "area-project" })],
+    people: [],
+    items: [item({ id: "task-1", area_id: "area-item", project_id: "project-1" })],
+    slots: [],
+  });
+
+  assert.equal(payload.lanes.planned.items[0]?.areaId, "area-item");
+  assert.equal(payload.lanes.planned.items[0]?.projectId, "project-1");
 });
 
 test("状态栏按统一排序且计划做只返回前 10 条", () => {

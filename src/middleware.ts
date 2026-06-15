@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
+import { canUseYike } from "@/lib/yike/access";
 import { createServerClient } from "@supabase/ssr";
 
 const SITE_CLEARED_COOKIE = "dydata-site-cleared";
@@ -51,6 +52,10 @@ function buildLoginRedirect(request: NextRequest, options: { expired?: boolean }
   if (options.expired) loginUrl.searchParams.set("expired", "1");
   loginUrl.searchParams.set("next", getProtectedReturnPath(request));
   return NextResponse.redirect(loginUrl);
+}
+
+function buildYikeAccessRedirect(request: NextRequest) {
+  return NextResponse.redirect(new URL("/dashboard", request.url));
 }
 
 export async function middleware(request: NextRequest) {
@@ -117,6 +122,9 @@ export async function middleware(request: NextRequest) {
           response.cookies.delete(cookieName);
         });
         return response;
+      }
+      if (isYikeRoute && !canUseYike(data.session.user.email)) {
+        return buildYikeAccessRedirect(request);
       }
     } catch {
       // 校验失败时保守处理：允许通过，让页面层自行处理

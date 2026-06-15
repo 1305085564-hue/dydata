@@ -40,6 +40,6 @@ export async function POST(request: NextRequest) {
     if (!result.ok) return jsonYikeError(result.error);
     return NextResponse.json({ ok: true, ...result.data, today });
   } catch (error) {
-    return jsonInternalError(error, "顺延一刻事项失败");
+    return jsonInternalError(error, "顺延此刻事项失败");
   }
 }
