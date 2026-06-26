@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdminActor, toTrimmedString } from "../ai-assistant/_shared";
+import { requireAdminActor, toTrimmedString } from "../auth-helper";
 
 function toIssueType(value: string) {
   if (value === "code_bug") return "code_bug";

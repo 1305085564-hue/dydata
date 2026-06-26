@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdminActor, toObject, toTrimmedString } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor, toObject, toTrimmedString } from "@/app/api/admin/auth-helper";
 import { ADMIN_AI_ALLOWED_TOOLS, isWhitelistedToolName } from "@/lib/admin-ai/core";
 import { getAnomalousData, getUserInfo } from "@/lib/admin-tools/data-query";
 import { callAiJson, extractJsonString } from "@/lib/ai/client";

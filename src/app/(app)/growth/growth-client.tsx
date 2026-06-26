@@ -48,6 +48,7 @@ export function GrowthClientShell(initialData: GrowthPageData) {
     if (!initialData.isPartial) return;
 
     const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrationState({ status: "loading" });
 
     fetchFullGrowthPageData(controller.signal)

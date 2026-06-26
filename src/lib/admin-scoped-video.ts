@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { requireAdminActor, type AdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor, type AdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";

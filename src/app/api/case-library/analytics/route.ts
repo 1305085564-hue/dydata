@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getWeekStartDate } from "@/app/(app)/admin/conversion-hub/data";
+import { getWeekStartDate } from "@/app/(app)/violations/admin-components/data";
 import { loadScriptsTab, type ScriptsTabData } from "@/lib/case-library/analytics";
 import {
   getAuthenticatedContext,

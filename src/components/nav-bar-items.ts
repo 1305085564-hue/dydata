@@ -11,7 +11,6 @@ export function getNavItems(input: {
   showAdmin: boolean;
   showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
-  showYike?: boolean;
 }): NavItem[] {
   const items: NavItem[] = [
     {
@@ -35,14 +34,6 @@ export function getNavItems(input: {
       match: (pathname) => pathname.startsWith("/video-review"),
     },
   ];
-
-  if (input.showYike) {
-    items.unshift({
-      href: "/yike",
-      label: "此刻",
-      match: (pathname) => pathname === "/yike" || pathname.startsWith("/yike/"),
-    });
-  }
 
   if (input.showAiCopywriting !== false) {
     items.push({

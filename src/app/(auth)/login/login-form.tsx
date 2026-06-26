@@ -157,12 +157,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
 
         <SubmitButton />
 
-        <Link
-          className="flex w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2 text-[13px] font-medium tracking-tight text-zinc-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-zinc-100 hover:text-zinc-800 active:translate-y-0"
-          href="/demo"
-        >
-          先看演示站
-        </Link>
+
 
         <p className="text-center text-[13px] text-zinc-500">
           还没有账号？

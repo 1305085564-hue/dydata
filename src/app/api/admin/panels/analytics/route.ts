@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessAdminPath, type AnalyticsRangePreset } from "@/lib/analytics-access";
 import { formatServerTiming } from "@/lib/admin-first-screen-contract";
 import { recordFirstScreenObservation } from "@/lib/admin-first-screen-observability";

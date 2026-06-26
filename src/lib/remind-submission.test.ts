@@ -21,6 +21,7 @@ test("提交状态同时兼容 user_id 和 account_id 归属", () => {
       { id: "u1", name: "小王", role: "member", status: "active", exempt_type: null, exempt_start_date: null, exempt_end_date: null, exempt_reason: null },
       { id: "u2", name: "小李", role: "member", status: "active", exempt_type: null, exempt_start_date: null, exempt_end_date: null, exempt_reason: null },
       { id: "u3", name: "小赵", role: "member", status: "exempt", exempt_type: "permanent", exempt_start_date: null, exempt_end_date: null, exempt_reason: null },
+      { id: "u4", name: "小孙", role: "member", status: "active", exempt_type: null, exempt_start_date: null, exempt_end_date: null, exempt_reason: null },
     ],
     accounts: [
       { id: "a1", profile_id: "u1" },

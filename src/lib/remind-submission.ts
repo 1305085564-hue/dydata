@@ -59,6 +59,7 @@ export function buildSubmissionStatus(params: {
   today: string;
 }) {
   const accountOwnerById = new Map(params.accounts.map((account) => [account.id, account.profile_id]));
+  const profileIdsWithAccounts = new Set(params.accounts.map((account) => account.profile_id));
   const submittedProfileIds = new Set<string>();
 
   for (const report of params.reports) {
@@ -80,6 +81,7 @@ export function buildSubmissionStatus(params: {
 
   return params.profiles
     .filter((profile) => profile.role === "member")
+    .filter((profile) => profileIdsWithAccounts.has(profile.id))
     .filter((profile) => !getExemptionStateForDate(profile, params.today).isExempt)
     .map((profile) => ({
       user_id: profile.id,

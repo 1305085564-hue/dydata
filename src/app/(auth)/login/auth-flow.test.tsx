@@ -40,8 +40,8 @@ test("登录成功后所有角色都默认进入 dashboard", () => {
 });
 
 test("登录成功后优先回到安全的 next 路径", () => {
-  assert.equal(getPostLoginRedirectPath("member", "/yike"), "/yike");
-  assert.equal(getPostLoginRedirectPath("member", "/yike?date=2026-06-14"), "/yike?date=2026-06-14");
+  assert.equal(getPostLoginRedirectPath("member", "/violations"), "/violations");
+  assert.equal(getPostLoginRedirectPath("member", "/violations?date=2026-06-14"), "/violations?date=2026-06-14");
   assert.equal(getPostLoginRedirectPath("member", "https://evil.com"), "/dashboard");
   assert.equal(getPostLoginRedirectPath("member", "//evil.com"), "/dashboard");
 });

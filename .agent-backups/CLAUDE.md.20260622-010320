@@ -69,7 +69,6 @@
 ## 关键规则
 - git config user.email = 1305085564@qq.com（Vercel Hobby 要求）
 - git remote：git@github.com:1305085564-hue/dydata.git
-- 日常代码修复、小功能、明确验收闭环默认推送到 main；如果未推送，收尾必须明确说明。规则、配置、大改按确认后再推。
 - 服务端接口用 SUPABASE_SERVICE_ROLE_KEY，× 用 anon key
 - cron 接口兼容 CRON_SECRET ?? REMIND_SECRET
 - 中文组件名内部用英文 PascalCase，导出时再用中文别名

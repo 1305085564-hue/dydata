@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdminActor, toObject, toTrimmedString } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor, toObject, toTrimmedString } from "@/app/api/admin/auth-helper";
 import { assertToolIsWhitelisted, shouldRequireConfirmation, type AdminAiToolName } from "@/lib/admin-ai/core";
 import { aggregateDashboardAlerts } from "@/lib/alert-sources/aggregator";
 import type { Alert, DashboardAlertScope, SuggestedAction } from "@/lib/alert-sources/types";

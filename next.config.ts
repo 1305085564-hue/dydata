@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["recharts", "lucide-react", "framer-motion"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/demo/:path*",
+        destination: "/",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

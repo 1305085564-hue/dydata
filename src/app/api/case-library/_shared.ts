@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RpcResult<T> = {

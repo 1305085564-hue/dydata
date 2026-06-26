@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   buildConfirmedFeedbackPayload,
   buildContentFeedbackCardView,
+  buildFeedbackSaveDraftMutation,
   isFeedbackCardDelivered,
 } from "./content-feedback-cards";
 import type { NextDayReviewResult } from "@/types";
@@ -121,4 +122,42 @@ test("buildConfirmedFeedbackPayload 在明确传入空 instructions 时保留空
   });
 
   assert.deepEqual(confirmed.actions.instructions, []);
+});
+
+test("buildFeedbackSaveDraftMutation 保存已确认卡片时不退回草稿或清空确认状态", () => {
+  const payload = createDraftResult();
+  const mutation = buildFeedbackSaveDraftMutation({
+    currentStatus: "confirmed",
+    payload,
+    managerNote: "更新后的反馈",
+    hasManagerNote: true,
+    currentManagerNote: "旧反馈",
+    now: "2026-06-04T06:00:00.000Z",
+  });
+
+  assert.equal(mutation.card_status, "confirmed");
+  assert.equal(mutation.manager_note, "更新后的反馈");
+  assert.equal(mutation.confirmed_payload, payload);
+  assert.equal(Object.hasOwn(mutation, "confirmed_by"), false);
+  assert.equal(Object.hasOwn(mutation, "confirmed_at"), false);
+  assert.equal(Object.hasOwn(mutation, "sent_by"), false);
+  assert.equal(Object.hasOwn(mutation, "sent_at"), false);
+});
+
+test("buildFeedbackSaveDraftMutation 保存草稿卡片时仍会清理未下发状态", () => {
+  const payload = createDraftResult();
+  const mutation = buildFeedbackSaveDraftMutation({
+    currentStatus: "draft",
+    payload,
+    managerNote: null,
+    hasManagerNote: false,
+    currentManagerNote: "保留原备注",
+    now: "2026-06-04T06:00:00.000Z",
+  });
+
+  assert.equal(mutation.card_status, "draft");
+  assert.equal(mutation.manager_note, "保留原备注");
+  assert.equal(mutation.draft_payload, payload);
+  assert.equal(mutation.confirmed_payload, null);
+  assert.equal(mutation.sent_at, null);
 });

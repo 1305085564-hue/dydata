@@ -67,7 +67,11 @@ export async function GET(
   if (previousVideo) snapshotVideoIds.add(previousVideo.id);
   recent3Videos.forEach((v) => snapshotVideoIds.add(v.id));
 
-  let snapshotMap = new Map<string, any>();
+  type SnapshotData = {
+    video_id: string;
+  } & MetricRow;
+
+  const snapshotMap = new Map<string, SnapshotData>();
   if (snapshotVideoIds.size > 0) {
     const { data: snapshots } = await supabase
       .from("video_metrics_snapshots")
@@ -76,7 +80,8 @@ export async function GET(
       .eq("snapshot_type", "24h");
     if (snapshots) {
       for (const s of snapshots) {
-        if (!snapshotMap.has(s.video_id)) snapshotMap.set(s.video_id, s);
+        const row = s as unknown as SnapshotData;
+        if (!snapshotMap.has(row.video_id)) snapshotMap.set(row.video_id, row);
       }
     }
   }
@@ -86,7 +91,7 @@ export async function GET(
   const previous = prevSnapshot ? toMetricRow(prevSnapshot) : null;
 
   // Recent 3 average
-  const recent3 = computeAverage(recent3Videos.map((v) => snapshotMap.get(v.id)).filter(Boolean));
+  const recent3 = computeAverage(recent3Videos.map((v) => snapshotMap.get(v.id)).filter((s): s is SnapshotData => s !== undefined));
 
   return NextResponse.json({
     video_id: videoId,
@@ -97,7 +102,7 @@ export async function GET(
   });
 }
 
-function toMetricRow(s: any): MetricRow {
+function toMetricRow(s: MetricRow): MetricRow {
   return {
     play_count: s.play_count,
     bounce_rate_2s: s.bounce_rate_2s,
@@ -112,16 +117,16 @@ function toMetricRow(s: any): MetricRow {
   };
 }
 
-function computeAverage(snapshots: any[]): MetricRow | null {
+function computeAverage(snapshots: MetricRow[]): MetricRow | null {
   if (snapshots.length === 0) return null;
   const keys: (keyof MetricRow)[] = [
     "play_count", "bounce_rate_2s", "completion_rate_5s", "completion_rate",
     "avg_play_duration", "follower_gain", "likes", "comments", "shares", "favorites",
   ];
-  const result: any = {};
+  const result: Record<string, number | null> = {};
   for (const key of keys) {
-    const values = snapshots.map((s) => s[key]).filter((v: any): v is number => v != null);
+    const values = snapshots.map((s) => s[key]).filter((v): v is number => v != null);
     result[key] = values.length > 0 ? values.reduce((a: number, b: number) => a + b, 0) / values.length : null;
   }
-  return result as MetricRow;
+  return result as unknown as MetricRow;
 }

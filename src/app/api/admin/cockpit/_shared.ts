@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessOwner, type DataAccessScope } from "@/lib/data-access-scope";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";

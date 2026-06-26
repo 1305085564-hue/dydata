@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { __internal as aiClientInternal, buildUpstreamUrl } from "@/lib/ai/client";
 import { toBoolean, toTrimmedString } from "@/lib/type-guards";
-import { requireAdminActor } from "../ai-assistant/_shared";
+import { requireAdminActor } from "../auth-helper";
 
 export { toBoolean, toTrimmedString };
 

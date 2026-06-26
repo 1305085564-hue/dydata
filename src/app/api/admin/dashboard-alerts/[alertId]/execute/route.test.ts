@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import type { ToolExecutionResult } from "@/lib/admin-tools";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 

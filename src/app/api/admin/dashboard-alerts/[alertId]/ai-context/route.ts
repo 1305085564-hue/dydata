@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireAdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { aggregateDashboardAlerts } from "@/lib/alert-sources/aggregator";
 import type { Alert, DashboardAlertScope } from "@/lib/alert-sources/types";
 import { buildDataAccessScope } from "@/lib/data-access-scope";

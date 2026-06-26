@@ -3,7 +3,6 @@ import { canAccessSystemSettings, getNavigationAccess } from "@/lib/analytics-ac
 import { canUseAiCopywriting } from "@/lib/permission-utils";
 import { getUserPermissions } from "@/lib/permissions";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
-import { canUseYike } from "@/lib/yike/access";
 import { NavBarClient } from "./nav-bar-client";
 
 export async function NavBar() {
@@ -56,7 +55,6 @@ export async function NavBar() {
       showAdmin={navigation.showAdmin}
       showAiCopywriting={showAiCopywriting}
       showSystemSettings={showSystemSettings}
-      showYike={canUseYike(user.email)}
       accounts={displayAccounts}
     />
   );

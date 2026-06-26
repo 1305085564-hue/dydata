@@ -20,13 +20,13 @@ import type {
   ViolationCase,
 } from "./components/types";
 
-import { ConversionHubShell } from "@/app/(app)/admin/conversion-hub/hub-shell";
+import { ConversionHubShell } from "@/app/(app)/violations/admin-components/hub-shell";
 import {
   getWeekStartDate,
   loadInboxData,
   loadProcessedData,
   PROCESSED_RPC_READY,
-} from "@/app/(app)/admin/conversion-hub/data";
+} from "@/app/(app)/violations/admin-components/data";
 import { BackButton } from "./components/back-button";
 
 type SearchParamsShape = Record<string, string | string[] | undefined>;

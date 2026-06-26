@@ -54,6 +54,8 @@ type GeneratedNextDayReview = NextDayReviewResult & {
   feedback_card: ContentFeedbackCardDetail;
 };
 
+type DraftSyncMode = "ensure" | "refresh";
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
@@ -73,14 +75,18 @@ async function loadFeedbackCard(supabase: Pick<SupabaseClient, "from">, videoId:
   return (data as ContentFeedbackCard | null) ?? null;
 }
 
-async function syncDraftFeedbackCard(params: {
+export function resolveNextDayReviewDraftSyncMode(forceRefresh: boolean): DraftSyncMode {
+  return forceRefresh ? "refresh" : "ensure";
+}
+
+export async function syncDraftFeedbackCard(params: {
   supabase: Pick<SupabaseClient, "from">;
   videoId: string;
   targetUserId: string;
   targetAccountId: string | null;
   sourceResultId: string;
   draftPayload: NextDayReviewResult;
-  mode: "ensure" | "refresh";
+  mode: DraftSyncMode;
 }) {
   const { supabase, videoId, targetUserId, targetAccountId, sourceResultId, draftPayload, mode } = params;
   const now = new Date().toISOString();
@@ -351,7 +357,7 @@ export async function generateNextDayReviewForAccess(
       targetAccountId: video.account_id,
       sourceResultId: savedResult.id,
       draftPayload: finalResult,
-      mode: "refresh",
+      mode: resolveNextDayReviewDraftSyncMode(forceRefresh),
     });
 
     if (!feedbackCard) {

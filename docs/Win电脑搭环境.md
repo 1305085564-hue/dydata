@@ -41,7 +41,7 @@ git config user.name "1305085564-1671"
 在项目根目录创建 `.env.local` 文件，内容如下：
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://mkkvnogkqcupvxmnoefy.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://gcrhhxaopomtposmahsw.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<从 Supabase 控制台 settings → API 复制 anon public key>
 SUPABASE_SERVICE_ROLE_KEY=<从 Supabase 控制台 settings → API 复制 service_role key，不要提交到 git>
 FEISHU_WEBHOOK_URL=<飞书自定义机器人 webhook 地址>

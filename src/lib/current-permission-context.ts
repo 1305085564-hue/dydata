@@ -4,7 +4,7 @@ import {
   inferBusinessAccessLevel,
   type DataAccessScope,
 } from "@/lib/data-access-scope";
-import type { AdminActor } from "@/app/api/admin/ai-assistant/_shared";
+import type { AdminActor } from "@/app/api/admin/auth-helper";
 import { getUserPermissions, type UserPermissionInfo } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { BusinessRole } from "@/lib/business-role";

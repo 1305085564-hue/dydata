@@ -81,12 +81,6 @@ function canAccessAiSettings(role: UserRole | BusinessRole) {
 
 function canAccessDailyManagementPath(pathname: string, role: UserRole | BusinessRole, permissions: Permissions = {}) {
   if (!canAccessTeamManagement(role, permissions)) return false;
-  if (pathname === "/admin/violations" || pathname.startsWith("/admin/violations/")) {
-    return role === "owner" || hasPermission(role, permissions, "manage_violations");
-  }
-  if (pathname === "/admin/conversion-hub" || pathname.startsWith("/admin/conversion-hub/")) {
-    return role === "owner" || hasPermission(role, permissions, "view_conversion_hub") || hasPermission(role, permissions, "manage_violations");
-  }
   if (pathname === "/admin/content" || pathname.startsWith("/admin/content/")) {
     return role === "owner" || hasPermission(role, permissions, "view_content_review") || hasPermission(role, permissions, "view_analytics");
   }
@@ -104,9 +98,7 @@ function canAccessDailyManagementPath(pathname: string, role: UserRole | Busines
     pathname === "/admin/advice" ||
     pathname.startsWith("/admin/advice/") ||
     pathname === "/admin/guidance" ||
-    pathname.startsWith("/admin/guidance/") ||
-    pathname === "/admin/market" ||
-    pathname.startsWith("/admin/market/")
+    pathname.startsWith("/admin/guidance/")
   ) {
     return role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data");
   }
@@ -135,11 +127,7 @@ export function canAccessAdminPath(pathname: string, role: UserRole | BusinessRo
   }
   if (
     pathname === "/admin/ai-channels" ||
-    pathname.startsWith("/admin/ai-channels/") ||
-    pathname === "/admin/ai-rewrite" ||
-    pathname.startsWith("/admin/ai-rewrite/") ||
-    pathname === "/admin/ai-features" ||
-    pathname.startsWith("/admin/ai-features/")
+    pathname.startsWith("/admin/ai-channels/")
   ) {
     return canAccessAiSettings(role);
   }

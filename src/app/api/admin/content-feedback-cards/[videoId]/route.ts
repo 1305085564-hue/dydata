@@ -6,6 +6,7 @@ import {
   buildConfirmedFeedbackPayload,
   buildManualConfirmedPayload,
   buildContentFeedbackCardDetail,
+  buildFeedbackSaveDraftMutation,
   CONTENT_FEEDBACK_CARD_SELECT,
 } from "@/lib/content-feedback-cards";
 import type { ContentFeedbackCard } from "@/types";
@@ -129,20 +130,17 @@ export async function PATCH(
     const managerNote = typeof body.manager_note === "string" ? body.manager_note.trim() || null : null;
 
     if (currentCard) {
+      const updatePayload = buildFeedbackSaveDraftMutation({
+        currentStatus: currentCard.card_status,
+        payload: draftPayload,
+        managerNote,
+        hasManagerNote: typeof body.manager_note === "string",
+        currentManagerNote: currentCard.manager_note,
+        now: new Date().toISOString(),
+      });
       const { data, error } = await access.supabase
         .from("content_feedback_cards")
-        .update({
-          card_status: "draft",
-          manager_note: typeof body.manager_note === "string" ? managerNote : currentCard.manager_note,
-          draft_payload: draftPayload,
-          draft_generated_at: new Date().toISOString(),
-          confirmed_payload: null,
-          confirmed_by: null,
-          confirmed_at: null,
-          sent_by: null,
-          sent_at: null,
-          viewed_at: null,
-        })
+        .update(updatePayload)
         .eq("id", currentCard.id)
         .select(CONTENT_FEEDBACK_CARD_SELECT)
         .single();

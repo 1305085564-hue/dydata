@@ -36,7 +36,6 @@ interface NavBarClientProps {
   showAdmin: boolean;
   showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
-  showYike?: boolean;
   accounts?: Account[];
 }
 
@@ -79,14 +78,13 @@ export function NavBarClient({
   showAdmin,
   showAiCopywriting = true,
   showSystemSettings = false,
-  showYike = false,
   accounts = [],
 }: NavBarClientProps) {
   const pathname = usePathname();
   const router = useRouter();
   const navItems = useMemo(
-    () => getNavItems({ showAdmin, showAiCopywriting, showSystemSettings, showYike }),
-    [showAdmin, showAiCopywriting, showSystemSettings, showYike],
+    () => getNavItems({ showAdmin, showAiCopywriting, showSystemSettings }),
+    [showAdmin, showAiCopywriting, showSystemSettings],
   );
   const initial = name?.trim()?.slice(0, 1)?.toUpperCase() || "?";
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);

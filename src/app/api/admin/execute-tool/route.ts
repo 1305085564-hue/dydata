@@ -8,7 +8,7 @@ import {
   toTrimmedString,
   type RequireAdminActorResult,
   type RequireAdminActorSuccess,
-} from "@/app/api/admin/ai-assistant/_shared";
+} from "@/app/api/admin/auth-helper";
 import { assertToolIsWhitelisted, shouldRequireConfirmation, type AdminAiToolName } from "@/lib/admin-ai/core";
 import { executeAdminTool } from "@/lib/admin-tools";
 

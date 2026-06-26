@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-const FULLSCREEN_PATHS = ["/admin/ai-assistant"];
+const FULLSCREEN_PATHS: string[] = [];
 
 export function AdminMainArea({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

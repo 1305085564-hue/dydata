@@ -100,6 +100,15 @@ type ManualPayloadInput = {
   actions: { instructions: string[]; message_for_member: string };
 };
 
+type SaveDraftMutationInput = {
+  currentStatus: ContentFeedbackCardStatus;
+  payload: NextDayReviewResult;
+  managerNote: string | null;
+  hasManagerNote: boolean;
+  currentManagerNote: string | null;
+  now: string;
+};
+
 export function buildManualConfirmedPayload(input: ManualPayloadInput): NextDayReviewResult {
   return {
     metrics: {
@@ -131,6 +140,31 @@ export function buildManualConfirmedPayload(input: ManualPayloadInput): NextDayR
     anomaly_notice: null,
     cached: false,
   } as unknown as NextDayReviewResult;
+}
+
+export function buildFeedbackSaveDraftMutation(input: SaveDraftMutationInput): Record<string, unknown> {
+  const managerNote = input.hasManagerNote ? input.managerNote : input.currentManagerNote;
+
+  if (input.currentStatus === "confirmed") {
+    return {
+      card_status: "confirmed",
+      manager_note: managerNote,
+      confirmed_payload: input.payload,
+    };
+  }
+
+  return {
+    card_status: "draft",
+    manager_note: managerNote,
+    draft_payload: input.payload,
+    draft_generated_at: input.now,
+    confirmed_payload: null,
+    confirmed_by: null,
+    confirmed_at: null,
+    sent_by: null,
+    sent_at: null,
+    viewed_at: null,
+  };
 }
 
 export function isFeedbackCardDelivered(status: ContentFeedbackCardView["workflow_status"]) {
