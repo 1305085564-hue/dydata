@@ -81,12 +81,12 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
   },
   admin_assistant: {
     group: "后台 AI 助手",
-    title: "后台 AI 助手",
-    location: "/admin/ai-assistant",
-    purpose: "把管理员自然语言指令转成后台白名单工具动作，先判断再执行。",
+    title: "后台 AI 助手（已下线）",
+    location: "已从主站下线",
+    purpose: "历史后台 AI 管理助手能力，页面已从 DYData 主站删除。",
     inputSummary: "管理员消息、上下文、允许调用的工具列表。",
     outputSummary: "一句回复 + 工具名 + 参数 + 简短理由。",
-    recommendedWhen: "后台要快速查人、查数据、补数据或重跑任务时用它。",
+    recommendedWhen: "当前不需要配置；如以后恢复，先重新评估产品入口。",
   },
   period_insight: {
     group: "其他已有 AI 能力",
