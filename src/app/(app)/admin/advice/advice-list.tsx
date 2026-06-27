@@ -209,7 +209,7 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
       <AdviceFilters profiles={profiles} accounts={accounts} onFilter={setFilters} />
 
       <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
-        <Table>
+        <Table freezeFirst>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="h-9 px-4 text-[12px] font-medium text-zinc-500">目标员工</TableHead>
@@ -228,7 +228,7 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
                 const targetAccount = pickSingle(item.target_account);
 
                 return (
-                  <TableRow key={item.id} className="h-10">
+                  <TableRow key={item.id} className="group h-10">
                     <TableCell className="px-4 text-[13px] font-medium text-zinc-800">{targetProfile?.name || "-"}</TableCell>
                     <TableCell className="text-[13px] text-zinc-600">{targetAccount?.name || "-"}</TableCell>
                     <TableCell className="max-w-[360px] whitespace-normal align-top">
@@ -248,12 +248,8 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
                     <TableCell className="px-4 text-right">
                       <button
                         type="button"
-                        onClick={() => {
-                          void loadAdviceDetail(item.id).catch((error) => {
-                            feedbackToast.error(error instanceof Error ? error.message : "建议详情加载失败");
-                          });
-                        }}
-                        className="text-[12px] text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline"
+                        onClick={() => loadAdviceDetail(item.id)}
+                        className="text-[12px] text-[#D97757] underline-offset-4 hover:underline opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                       >
                         查看详情
                       </button>

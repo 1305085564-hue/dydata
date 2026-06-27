@@ -416,7 +416,7 @@ export function JoinRequestReviewList({ rows }: Props) {
           const isRejecting = rejectingId === row.id;
           const isSelected = selectedIds.has(row.id);
           return (
-            <div key={row.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-6">
+            <div key={row.id} className="group flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-6 hover:bg-zinc-100/30 transition-colors duration-150">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Checkbox
                   checked={isSelected}
@@ -438,7 +438,7 @@ export function JoinRequestReviewList({ rows }: Props) {
               </div>
 
               {!isRejecting ? (
-                <div className="flex shrink-0 gap-2">
+                <div className="flex shrink-0 gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
                   <Button
                     size="sm"
                     onClick={() => handleApprove(row.id)}

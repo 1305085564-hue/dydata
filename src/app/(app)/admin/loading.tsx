@@ -1,10 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 export default function AdminLoading() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <Skeleton className="h-8 w-40" />
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <Skeleton className="h-5 w-28" />
         <div className="grid grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -12,11 +13,11 @@ export default function AdminLoading() {
           ))}
         </div>
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <Skeleton className="h-5 w-28" />
-        <Skeleton className="h-48" />
+        <TableSkeleton columnCount={6} rowCount={5} />
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-32" />
       </div>

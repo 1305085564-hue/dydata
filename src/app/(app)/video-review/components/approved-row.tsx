@@ -62,7 +62,7 @@ export function ApprovedRow({ item, isLast, isMine, onOpenLightbox }: ApprovedRo
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
         {isMine ? (
           <Link
             href={`/video-review/submit?edit=${item.id}`}

@@ -104,7 +104,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
             {visible.map((report) => (
               <TableRow
                 key={report.id}
-                className={onReportOpen ? "cursor-pointer" : undefined}
+                className={"group " + (onReportOpen ? "cursor-pointer" : "")}
                 onClick={onReportOpen ? () => onReportOpen(report) : undefined}
               >
                 <TableCell className="whitespace-nowrap text-zinc-500 font-mono tabular-nums">
@@ -129,7 +129,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-7"
+                    className="size-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                     onClick={(event) => {
                       event.stopPropagation();
                       setEditingReport(report);

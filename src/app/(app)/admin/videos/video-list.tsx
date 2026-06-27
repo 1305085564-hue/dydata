@@ -273,7 +273,7 @@ export function VideoList({
         className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
         style={{ maxHeight: "calc(100vh - 280px)" }}
       >
-        <Table>
+        <Table freezeFirst>
           <TableHeader className="sticky top-0 z-10">
             <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
               <TableHead className="h-9 px-4 text-[12px] font-medium text-zinc-500">视频标题</TableHead>
@@ -294,7 +294,7 @@ export function VideoList({
                 const showPatchButton = shouldShowPatch24hButton(video, snapshot);
 
                 return (
-                  <TableRow key={video.id} data-video-id={video.id} className="hover:bg-zinc-50">
+                  <TableRow key={video.id} data-video-id={video.id} className="group hover:bg-zinc-50">
                     <TableCell className="max-w-[280px] whitespace-normal px-4 align-top">
                       <div className="line-clamp-2 text-[13px] font-medium text-zinc-800">
                         {video.video_title?.trim() || "未命名视频"}
@@ -312,7 +312,7 @@ export function VideoList({
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 text-right">
-                      <div className="flex items-center justify-end gap-4">
+                      <div className="flex items-center justify-end gap-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
                         {showPatchButton ? (
                           <button
                             type="button"
