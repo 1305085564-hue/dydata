@@ -43,13 +43,5 @@ export function getNavItems(input: {
     });
   }
 
-  if (input.showAdmin) {
-    items.push({
-      href: "/admin/content",
-      label: "内容中心",
-      match: (pathname) => pathname === "/admin" || (pathname.startsWith("/admin/") && !pathname.startsWith("/admin/settings")),
-    });
-  }
-
   return items;
 }

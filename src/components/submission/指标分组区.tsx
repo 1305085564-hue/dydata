@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
@@ -99,6 +99,14 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
     }
   }, [focusNext, focusPrev]);
 
+  const playCount = Number(fields.play_count?.value || 0);
+  const interactions =
+    Number(fields.likes?.value || 0) +
+    Number(fields.comments?.value || 0) +
+    Number(fields.shares?.value || 0) +
+    Number(fields.favorites?.value || 0);
+  const showInteractionWarning = playCount > 0 && interactions > playCount;
+
   return (
     <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -141,8 +149,20 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         {/* 互动数据 */}
         <div className="relative pl-4">
           <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D99E55]/70" />
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="text-[13px] font-medium text-zinc-800">互动数据</h3>
+            <AnimatePresence>
+              {showInteractionWarning && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-[12px] text-[#D99E55]"
+                >
+                  互动总数大于播放量，请核对
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {INTERACTION_ITEMS.map((item, index) => (

@@ -506,6 +506,13 @@ export function VideoSubmitPanel({
     setLastSubmittedVideoId(video.id);
     setLastAiTags(aiTags);
     setIsDataViewOpen(false);
+
+    fetch("/api/dashboard/trend")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.trendData) setTrendData(data.trendData);
+      })
+      .catch(() => {});
   }
 
   function dismissPendingExemption() {
@@ -608,7 +615,7 @@ export function VideoSubmitPanel({
 
   if (!accounts.length) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-[#FAFAFB] shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200/60 bg-zinc-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
         <div className="px-6 py-5 text-[13px] text-zinc-500">
           当前没有可提交的数据账号，请联系管理员分配账号后再继续操作。
         </div>
@@ -628,7 +635,7 @@ export function VideoSubmitPanel({
           "mx-auto overflow-hidden",
           embeddedChrome
             ? "max-w-3xl rounded-none border-none bg-transparent shadow-none"
-            : "max-w-6xl rounded-2xl border border-zinc-200 bg-white",
+            : "max-w-6xl rounded-2xl border border-zinc-200/60 bg-zinc-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
         )}>
           {!embeddedChrome ? (
           <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
@@ -649,7 +656,7 @@ export function VideoSubmitPanel({
                     <button
                       type="button"
                       onClick={() => setIsAccountMenuOpen((open) => !open)}
-                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200 bg-white px-3 py-2 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 active:translate-y-0"
+                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200/60 bg-white px-3 py-2 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 active:translate-y-0"
                       aria-expanded={isAccountMenuOpen}
                       aria-haspopup="listbox"
                     >
@@ -668,7 +675,7 @@ export function VideoSubmitPanel({
                     {isAccountMenuOpen ? (
                       <div
                         role="listbox"
-                        className="absolute right-0 top-[calc(100%+8px)] z-40 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm"
+                        className="absolute right-0 top-[calc(100%+8px)] z-40 w-64 overflow-hidden rounded-2xl border border-zinc-200/60 bg-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
                       >
                         <div className="px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.2em] text-zinc-400">切换账号</div>
                         <div className="max-h-72 space-y-1 overflow-y-auto">
@@ -797,8 +804,17 @@ export function VideoSubmitPanel({
             )}
 
             {primarySummary && isPrimarySummaryMode ? (
-              <div className="rounded-2xl border border-zinc-200 bg-[#FAFAFB] p-6 text-[13px] text-zinc-800">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <motion.div 
+                initial={{ scale: 0.96, opacity: 0, backgroundColor: "#6FAA7D0A" }}
+                animate={{ scale: 1, opacity: 1, backgroundColor: "#FAFAFB" }}
+                transition={{ 
+                  scale: { type: "spring", stiffness: 300, damping: 24 },
+                  opacity: { duration: 0.2 },
+                  backgroundColor: { duration: 1.5, delay: 0.2 }
+                }}
+                className="relative overflow-hidden rounded-2xl border border-zinc-200/60 p-6 text-[13px] text-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+              >
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between relative z-10">
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
@@ -863,7 +879,7 @@ export function VideoSubmitPanel({
                     </Button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ) : null}
 
             {lastSubmittedVideoId && lastAiTags.length ? (
@@ -944,7 +960,7 @@ export function VideoSubmitPanel({
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col items-center rounded-2xl border-2 border-dashed border-zinc-200 bg-[#FAFAFB] px-6 py-20 text-center"
               >
-                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-300 shadow-sm">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-zinc-200/60 bg-white text-zinc-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                   <Lock className="size-10 stroke-[1.5]" />
                 </div>
                 <h4 className="text-[18px] font-semibold uppercase tracking-tight text-zinc-800">

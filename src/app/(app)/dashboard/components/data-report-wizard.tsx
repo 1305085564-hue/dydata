@@ -105,7 +105,7 @@ export function DataReportWizard({
       />
 
       {/* Inner card: 唯一承载当前 step 内容 */}
-      <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-8">
+      <motion.div layout className="relative overflow-hidden rounded-xl border border-zinc-200/60 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={contentKey}
@@ -117,7 +117,7 @@ export function DataReportWizard({
             {children}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* Action bar: 卡外左右两端 */}
       <AnimatePresence initial={false}>
@@ -234,13 +234,14 @@ export function DataReportWizard({
                   onClick={onSubmit}
                   disabled={isSubmitting || !canSubmit}
                   className={cn(
-                    "h-11 rounded-lg px-6 text-[13px] font-semibold transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
+                    "group relative h-11 overflow-hidden rounded-xl px-6 text-[13px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98]",
                     isSubmitting || !canSubmit
                       ? "cursor-not-allowed bg-zinc-100 text-zinc-400"
-                      : "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.4)] hover:bg-[#C96442]",
+                      : "bg-[#D97757] text-white shadow-[0_4px_12px_rgba(217,119,87,0.25)] hover:shadow-[0_8px_24px_rgba(217,119,87,0.4)] hover:-translate-y-0.5"
                   )}
                 >
-                  {submitLabel}
+                  <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <span className="relative z-10 flex items-center justify-center gap-2">{submitLabel}</span>
                 </button>
               ) : (
                 <button
@@ -252,13 +253,14 @@ export function DataReportWizard({
                   disabled={!canGoNext}
                   title={canGoNext ? undefined : "本步必要项尚未完成"}
                   className={cn(
-                    "h-11 rounded-lg px-6 text-[13px] font-semibold transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
+                    "group relative h-11 overflow-hidden rounded-xl px-6 text-[13px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98]",
                     canGoNext
-                      ? "bg-[#D97757] text-white shadow-[0_2px_8px_-2px_rgba(217,119,87,0.4)] hover:bg-[#C96442]"
-                      : "cursor-not-allowed bg-zinc-100 text-zinc-400",
+                      ? "bg-[#D97757] text-white shadow-[0_4px_12px_rgba(217,119,87,0.25)] hover:shadow-[0_8px_24px_rgba(217,119,87,0.4)] hover:-translate-y-0.5"
+                      : "cursor-not-allowed bg-zinc-100 text-zinc-400"
                   )}
                 >
-                  下一步
+                  <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <span className="relative z-10 flex items-center justify-center gap-2">下一步</span>
                 </button>
               )}
             </div>

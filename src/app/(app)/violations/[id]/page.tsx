@@ -468,7 +468,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
 
   if (error || !caseItem) {
     return (
-      <div className="mx-auto max-w-6xl space-y-5 py-8">
+      <div className="space-y-5">
         <Breadcrumb
           items={[
             { label: "导粉中心", href: "/violations" },
@@ -488,7 +488,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
   const purposeMeta = PURPOSE_META[(caseItem.purpose ?? "violation") as string] ?? PURPOSE_META.violation;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 py-8">
+    <div className="space-y-5">
       <Breadcrumb
         items={[
           { label: "导粉中心", href: "/violations" },

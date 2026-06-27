@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -91,12 +91,6 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
   const pathname = usePathname();
   const badges = useCenterNavBadges();
   const items = getVisibleNavItems({ userRole, businessRole, permissions: permissions ?? {} });
-  const containerRef = useRef<HTMLUListElement | null>(null);
-  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const [indicator, setIndicator] = useState<{ left: number; width: number }>({
-    left: 0,
-    width: 0,
-  });
 
   const isActive = (href: string) => {
     if (href === "/admin/content") {
@@ -105,46 +99,25 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const activeIndex = items.findIndex((item) => isActive(item.href));
-
-  useLayoutEffect(() => {
-    if (activeIndex < 0) return;
-    const container = containerRef.current;
-    const el = itemRefs.current[activeIndex];
-    if (!container || !el) return;
-    const containerRect = container.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    setIndicator({
-      left: elRect.left - containerRect.left,
-      width: elRect.width,
-    });
-  }, [activeIndex, pathname]);
-
-  const indicatorVisible = activeIndex >= 0 && indicator.width > 0;
-
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="内容中心主导航" className="flex shrink-0 items-stretch">
-      <ul ref={containerRef} className="relative flex shrink-0 items-stretch gap-1">
-        {items.map((item, index) => {
-          const active = index === activeIndex;
+    <nav aria-label="内容中心主导航" className="flex h-8 items-center overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ul className="flex items-center gap-1">
+        {items.map((item) => {
+          const active = isActive(item.href);
           const badgeValue = item.badgeKey ? badges?.[item.badgeKey] ?? 0 : 0;
           return (
-            <li key={item.href} className="flex shrink-0 items-stretch">
+            <li key={item.href} className="flex shrink-0 items-center">
               <Link
-                ref={(node) => {
-                  itemRefs.current[index] = node;
-                }}
                 href={item.href}
                 prefetch={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group relative inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[14px] tracking-tight transition-[color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
+                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[14px] font-medium tracking-tight transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
                   active
-                    ? "font-semibold text-zinc-800"
-                    : "font-medium text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/60 focus-visible:text-zinc-800",
-                  "outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5",
+                    ? "bg-zinc-100 text-zinc-800 font-semibold"
+                    : "text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700",
                 )}
               >
                 <span className="whitespace-nowrap">{item.label}</span>
@@ -163,17 +136,6 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
             </li>
           );
         })}
-        <span
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute -bottom-2 h-[2px] rounded-full bg-[#D97757] transition-[transform,width,opacity] duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none",
-            indicatorVisible ? "opacity-100" : "opacity-0",
-          )}
-          style={{
-            transform: `translateX(${indicator.left}px)`,
-            width: indicator.width ? `${indicator.width}px` : 0,
-          }}
-        />
       </ul>
     </nav>
   );

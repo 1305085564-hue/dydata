@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!canAccessAdminPath(pathname, permissionInfo.businessRole, permissionInfo.permissions)) redirect("/dashboard");
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[var(--color-bg)]">
+    <div className="w-full bg-[var(--color-bg)]">
       <AdminMainArea>{children}</AdminMainArea>
     </div>
   );

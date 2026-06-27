@@ -29,8 +29,7 @@ export default async function VideoReviewManagePage() {
   const pendingCount = data?.pending_count ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#F0F0F1]">
-      <div className="mx-auto max-w-[1400px] space-y-6 px-4 py-8 sm:px-6">
+    <div className="space-y-6">
         <Breadcrumb
           items={[
             { label: "视频审核", href: "/video-review" },
@@ -56,7 +55,6 @@ export default async function VideoReviewManagePage() {
         ) : (
           <ManageShell initialQueue={queue} initialPendingCount={pendingCount} />
         )}
-      </div>
     </div>
   );
 }

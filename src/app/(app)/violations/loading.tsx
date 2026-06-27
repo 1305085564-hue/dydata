@@ -6,8 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function ViolationsLoading() {
   return (
-    <div className="min-h-screen bg-[#F0F0F1]">
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+    <div className="space-y-6">
         {/* Hero header */}
         <header className="rounded-2xl border border-zinc-200 bg-white px-6 py-5 sm:px-8 sm:py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -74,7 +73,6 @@ export default function ViolationsLoading() {
             </div>
           ))}
         </div>
-      </div>
     </div>
   );
 }

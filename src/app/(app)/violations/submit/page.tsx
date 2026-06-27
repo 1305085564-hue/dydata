@@ -51,7 +51,7 @@ export default async function SubmitViolationPage({
     typeof resolvedSearchParams.account_id === "string" ? resolvedSearchParams.account_id : null;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 py-8">
+    <div className="space-y-6">
       <Breadcrumb
         items={[
           { label: "导粉中心", href: "/violations" },

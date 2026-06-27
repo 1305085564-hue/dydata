@@ -121,97 +121,130 @@ export function NavBarClient({
 
   const primaryLinkClass = (active: boolean) =>
     cn(
-      "inline-flex h-8 shrink-0 items-center px-2 text-[12px] font-medium tracking-tight transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
-      active ? "text-zinc-800" : "text-zinc-400 hover:text-zinc-700",
+      "inline-flex h-9 shrink-0 items-center rounded-lg px-3 text-[14px] font-medium tracking-tight transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
+      active ? "bg-zinc-100 text-zinc-800" : "text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700",
     );
 
   return (
     <>
-      <nav className="fixed inset-x-0 top-0 z-40 border-b border-zinc-200 bg-[#FAFAFB] pt-[max(env(safe-area-inset-top),0px)]">
-        <div className="mx-auto px-3 sm:px-6">
-          <div className="flex min-h-[var(--app-nav-height)] items-center gap-3 px-2 py-2 sm:gap-4 sm:px-3.5">
+      <nav className="fixed inset-x-0 top-0 z-50 border-b border-zinc-200/50 bg-zinc-50/80 backdrop-blur-md pt-[max(env(safe-area-inset-top),0px)]">
+        <div className="mx-auto w-full max-w-7xl px-3 sm:px-6">
+          <div className="flex min-h-[var(--app-nav-height)] items-end gap-3 px-2 pb-2 sm:gap-4 sm:px-3.5">
             {/* 左：logo + 一级 tab 字链 */}
-            <div className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3">
+            <div className="flex min-w-0 shrink items-end gap-2.5 sm:gap-3">
               <Link
                 href="/dashboard"
                 prefetch={false}
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
                 className="active:translate-y-0 inline-flex shrink-0 items-center gap-2 rounded-2xl border border-transparent px-1.5 py-1 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-white">
-                  <Zap className="size-3.5 stroke-[1.5] fill-current" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-white">
+                  <Zap className="size-[18px] stroke-[1.5] fill-current" />
                 </div>
                 <div className="hidden min-w-0 sm:block">
-                  <div className="text-[13px] font-semibold tracking-tight text-zinc-800">
+                  <div className="text-[14px] font-semibold tracking-tight text-zinc-800">
                     DYData <span className="font-normal text-zinc-400">CNSL</span>
                   </div>
-                  <div className="text-[10px] font-medium uppercase leading-none tracking-[0.25em] text-zinc-400">
+                  <div className="text-[11px] font-medium uppercase leading-none tracking-[0.25em] text-zinc-400">
                     短视频团队管理系统
                   </div>
                 </div>
               </Link>
-              <div
-                className="hidden min-w-0 items-center gap-0 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex"
-                aria-label="主导航"
-              >
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    prefetch={false}
-                    onMouseEnter={() => prefetchOnHover(item.href)}
-                    className={primaryLinkClass(item.match(pathname))}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
 
-            {/* 中：管理后台主导航（仅 admin path + 管理者） */}
-            <div className="hidden flex-1 justify-center min-w-0 md:flex">
-              {showAdminCenter ? (
-                <AdminCenterNav
-                  userRole={role as UserRole}
-                  businessRole={businessRole}
-                  permissions={permissions}
-                />
-              ) : null}
+              {pathname.startsWith("/admin") ? (
+                <div className="hidden min-w-0 items-center gap-1.5 md:flex">
+                  <AdminCenterNav
+                    userRole={role as UserRole}
+                    businessRole={businessRole}
+                    permissions={permissions}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="hidden min-w-0 items-center gap-0 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex"
+                  aria-label="主导航"
+                >
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      prefetch={false}
+                      onMouseEnter={() => prefetchOnHover(item.href)}
+                      className={primaryLinkClass(item.match(pathname))}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {/* 分隔线与视角切换胶囊 (仅管理员可见) */}
+              {showAdminCenter && (
+                <>
+                  <div className="hidden h-4 w-[1px] bg-zinc-200/85 md:block" />
+                  <div className="hidden items-center bg-zinc-200/50 p-0.5 rounded-lg md:flex shrink-0">
+                    <Link
+                      href="/dashboard"
+                      prefetch={false}
+                      className={cn(
+                        "px-3.5 py-1 text-[12px] font-medium rounded-md transition-all duration-150 ease-out",
+                        !pathname.startsWith("/admin")
+                          ? "bg-white text-zinc-800 shadow-sm font-semibold"
+                          : "text-zinc-500 hover:text-zinc-800"
+                      )}
+                    >
+                      工作台
+                    </Link>
+                    <Link
+                      href="/admin/content"
+                      prefetch={false}
+                      className={cn(
+                        "px-3.5 py-1 text-[12px] font-medium rounded-md transition-all duration-150 ease-out",
+                        pathname.startsWith("/admin")
+                          ? "bg-white text-zinc-800 shadow-sm font-semibold"
+                          : "text-zinc-500 hover:text-zinc-800"
+                      )}
+                    >
+                      管理后台
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 右：用户区 → ⚙ 系统 → ☑ 待办 → 🔔 通知 → 退出 */}
-            <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-2.5">
+            <div className="ml-auto flex shrink-0 items-end gap-2 sm:gap-2.5">
               {accounts.length > 1 ? (
                 <div className="relative" data-account-menu>
                   <button
                     type="button"
                     onClick={() => setIsAccountMenuOpen((open) => !open)}
-                    className="group flex items-center gap-2.5 rounded-2xl border border-zinc-200/80 px-2 py-1.5 transition-colors hover:border-zinc-200 hover:bg-white"
+                    className="group flex items-end gap-2.5 rounded-2xl border border-transparent px-2 pb-1 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100/80"
                     aria-expanded={isAccountMenuOpen}
                     aria-haspopup="listbox"
                   >
-                    <div className="hidden items-center gap-2 sm:flex">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white">
+                    <div className="hidden items-end gap-2 sm:flex pb-0.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[13px] font-semibold text-zinc-700">
                         {initial}
                       </div>
-                      <div className="min-w-0 flex items-center gap-1.5">
-                        <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
+                      <div className="min-w-0 flex items-baseline gap-1.5 pb-1.5">
+                        <span className="max-w-24 truncate text-[13px] font-medium leading-none text-zinc-800">{name}</span>
                         {selectedAccount && (
                           <>
                             <span className="text-[12px] text-zinc-300">|</span>
-                            <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
+                            <span className="max-w-28 truncate text-[12px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
                           </>
                         )}
                       </div>
                     </div>
-                    <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">{name}</span>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white sm:hidden">
+                    <span className="max-w-24 truncate text-[13px] font-medium text-zinc-700 sm:hidden mb-2">{name}</span>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[14px] font-semibold text-zinc-700 sm:hidden">
                       {initial}
                     </div>
                     <ChevronDown
                       size={12}
                       className={cn(
-                        "hidden text-zinc-400 transition-transform sm:block",
+                        "hidden text-zinc-400 transition-transform sm:block mb-2",
                         isAccountMenuOpen && "rotate-180",
                       )}
                     />
@@ -266,25 +299,25 @@ export function NavBarClient({
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-end gap-2">
                   <ProfileEditDialog currentName={name} role={role} accounts={accounts} trigger="menu-item">
-                    <div className="group flex items-center gap-2 rounded-2xl border border-zinc-200/80 px-2 py-1.5 transition-[background-color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-200 hover:bg-white">
-                      <div className="hidden items-center gap-2 sm:flex">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white">
+                    <div className="group flex items-end gap-2 rounded-2xl border border-transparent px-2 pb-1 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100/80">
+                      <div className="hidden items-end gap-2 sm:flex pb-0.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[13px] font-semibold text-zinc-700">
                           {initial}
                         </div>
-                        <div className="min-w-0 flex items-center gap-1.5">
-                          <span className="max-w-24 truncate text-[12px] font-medium leading-none text-zinc-800">{name}</span>
+                        <div className="min-w-0 flex items-baseline gap-1.5 pb-1.5">
+                          <span className="max-w-24 truncate text-[13px] font-medium leading-none text-zinc-800">{name}</span>
                           {selectedAccount && (
                             <>
                               <span className="text-[12px] text-zinc-300">|</span>
-                              <span className="max-w-28 truncate text-[11px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
+                              <span className="max-w-28 truncate text-[12px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
                             </>
                           )}
                         </div>
                       </div>
-                      <span className="max-w-24 truncate text-[12px] font-medium text-zinc-700 sm:hidden">{name}</span>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800 text-[12px] font-medium text-white sm:hidden">
+                      <span className="max-w-24 truncate text-[13px] font-medium text-zinc-700 sm:hidden mb-2">{name}</span>
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[14px] font-semibold text-zinc-700 sm:hidden">
                         {initial}
                       </div>
                     </div>

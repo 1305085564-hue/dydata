@@ -35,7 +35,7 @@
   --sidebar-accent-foreground: #27272A;
   --sidebar-border: #E4E4E7;
   --sidebar-ring: rgba(9, 9, 11, 0.05);
-  --app-nav-height: 3.25rem;
+  --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
   /* 法典五 圆角阶梯 */

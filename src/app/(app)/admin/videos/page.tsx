@@ -139,6 +139,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
   return (
     <AdminWorkspaceLayout
       indexItems={[]}
+      width="full"
     >
       <VideoPageClient
         initialView={view}

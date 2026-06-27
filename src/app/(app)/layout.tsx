@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <NavBar />
         {/* JoinBanner 现在只往通知中心注册条目，无视觉占位 */}
         <JoinBanner />
-        <main className="app-main min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+1.25rem)] sm:px-6">
+        <main className="app-main w-full min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+1.25rem)] sm:px-6">
           {children}
         </main>
         <FeedbackNotificationBridge />

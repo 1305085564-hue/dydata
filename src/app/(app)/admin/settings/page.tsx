@@ -5,6 +5,8 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { Sparkles, UsersRound, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+
 interface SettingCardProps {
   href: string;
   title: string;
@@ -41,21 +43,12 @@ export default async function AdminSettingsPage() {
   const isOwner = permission.businessRole === "owner" || permission.role === "owner";
 
   return (
-    <div className="min-w-0 space-y-8">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            系统设置
-          </p>
-          <h1 className="mt-2 text-[24px] font-semibold tracking-tight text-zinc-800">
-            系统维护
-          </h1>
-          <p className="mt-1 max-w-3xl text-[13px] leading-[1.7] text-zinc-500">
-            负责人处理成员权限和团队分组；owner 额外管理 AI 配置。
-          </p>
-        </div>
-      </header>
-
+    <AdminWorkspaceLayout
+      eyebrow="系统设置"
+      title="系统维护"
+      description="负责人处理成员权限和团队分组；owner 额外管理 AI 配置。"
+      indexItems={[]}
+    >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <SettingCard
           href="/admin/modules"
@@ -78,6 +71,6 @@ export default async function AdminSettingsPage() {
         />
         ) : null}
       </div>
-    </div>
+    </AdminWorkspaceLayout>
   );
 }

@@ -139,6 +139,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
   return (
     <AdminWorkspaceLayout
       indexItems={[]}
+      width="full"
     >
       <ContentPageClient
         initialView={view}

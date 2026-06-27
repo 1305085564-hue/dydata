@@ -84,12 +84,17 @@ export function SubmissionSlotCard({
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const isProcessingRef = useRef(isProcessing);
   const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     isProcessingRef.current = isProcessing;
   }, [isProcessing]);
+
+  useEffect(() => {
+    setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
 
   useEffect(() => {
     if (isProcessing) {
@@ -210,15 +215,23 @@ export function SubmissionSlotCard({
             if (file) handleFile(file);
           }}
           disabled={isProcessing}
-          className={cn(
-            "group/drop relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border bg-zinc-50/60 text-zinc-400 transition-[background-color,border-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-            !assetUrl && !isProcessing && !isDragOver && "border-dashed border-zinc-200 hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/60 hover:text-[#D97757]",
-            !assetUrl && isDragOver && "border-[#D97757] bg-[#FDF9F7] text-[#D97757]",
-            isProcessing && "border-[#D97757]/30 bg-white",
-            assetUrl && !isProcessing && "border-zinc-200 bg-white p-0",
-            isError && !assetUrl && "border-dashed border-[#C9604D]/40 bg-white",
-          )}
+          className="relative col-span-1"
         >
+          <motion.div 
+            animate={{ 
+              scale: isDragOver ? 1.02 : 1,
+              borderColor: isDragOver ? "#D97757" : (assetUrl || isProcessing ? "transparent" : "#e4e4e7") 
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className={cn(
+              "group/drop relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border bg-zinc-50/60 text-zinc-400 transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              !assetUrl && !isProcessing && !isDragOver && (isTouchDevice ? "border-solid border-zinc-200 bg-white active:scale-[0.98]" : "border-dashed hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/60 hover:text-[#D97757]"),
+              !assetUrl && isDragOver && "border-solid border-[#D97757] bg-[#FDF9F7] text-[#D97757] shadow-[0_0_20px_rgba(217,119,87,0.15)] ring-2 ring-[#D97757]/20",
+              isProcessing && "bg-white border-zinc-100",
+              assetUrl && !isProcessing && "bg-white p-0 border-zinc-200",
+              isError && !assetUrl && "border-dashed border-[#C9604D]/40 bg-white",
+            )}
+          >
           {assetUrl && !isProcessing ? (
             <div
               className="absolute inset-0 z-10 overflow-hidden rounded-xl"
@@ -266,9 +279,14 @@ export function SubmissionSlotCard({
 
           {!assetUrl && !isProcessing ? (
             <div className="relative z-10 flex flex-col items-center gap-2 px-4 text-center">
-              <UploadCloud className="size-7 stroke-[1.4] transition-transform duration-150 group-hover/drop:-translate-y-0.5" />
-              <span className="text-[12px] font-medium leading-snug">
-                {isDragOver ? "松开以上传" : "点击或拖入截图"}
+              <motion.div 
+                animate={{ y: isDragOver ? -4 : 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <UploadCloud className="size-8 stroke-[1.4]" />
+              </motion.div>
+              <span className="text-[13px] font-medium leading-snug">
+                {isDragOver ? "松开以上传截图" : (isTouchDevice ? "点击从相册选择" : "点击或拖入截图")}
               </span>
               <span className="text-[10px] tracking-wide text-zinc-400">
                 JPG / PNG / WEBP · ≤ {formatSizeLimit(UPLOAD_LIMITS.screenshot)}
@@ -289,6 +307,7 @@ export function SubmissionSlotCard({
               </motion.div>
             ) : null}
           </AnimatePresence>
+          </motion.div>
         </button>
 
         <div className="flex min-h-[150px] flex-col gap-2.5">

@@ -13,6 +13,8 @@ interface AdminWorkspaceIndexGroup {
   items: AdminWorkspaceIndexItem[];
 }
 
+export type AdminWorkspaceLayoutWidth = "wide" | "full";
+
 interface AdminWorkspaceLayoutProps {
   eyebrow?: string;
   title?: string;
@@ -21,7 +23,13 @@ interface AdminWorkspaceLayoutProps {
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
+  width?: AdminWorkspaceLayoutWidth;
 }
+
+const widthMap: Record<AdminWorkspaceLayoutWidth, string> = {
+  wide: "mx-auto w-full max-w-7xl",
+  full: "mx-auto w-full max-w-none",
+};
 
 export function AdminWorkspaceLayout({
   eyebrow,
@@ -31,11 +39,12 @@ export function AdminWorkspaceLayout({
   actions,
   children,
   className,
+  width = "wide",
 }: AdminWorkspaceLayoutProps) {
   const hasHeader = eyebrow || title || description || actions;
 
   return (
-    <div className={cn("min-w-0 space-y-6", className)}>
+    <div className={cn("min-w-0 space-y-6", widthMap[width], className)}>
       {hasHeader ? (
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>

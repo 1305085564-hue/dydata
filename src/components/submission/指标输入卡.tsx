@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -149,30 +150,42 @@ export function MetricInputCard({
       </div>
 
       <div className="relative">
-        <Input
-          ref={inputEl as React.RefObject<HTMLInputElement>}
-          type="number"
-          min={0}
-          step={step}
-          inputMode="numeric"
-          value={displayValue}
-          onChange={(event) => onChange(event.target.value)}
-          onFocus={(e) => {
-            e.currentTarget.select();
-            onFocus?.();
-          }}
-          onBlur={onBlur}
-          onKeyDown={onKeyDown}
-          className={cn(
-            "rounded-xl pr-8 font-mono tabular-nums text-zinc-800 transition-colors",
-            "bg-zinc-100/70 border-transparent text-[13px]",
-            "focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757]",
-            "h-10",
+        <motion.div
+          animate={
             field.source === "ocr"
-              ? "border-b-2 border-b-[#D97757]/40 shadow-[0_1px_0_0_rgba(217,119,87,0.06)]"
-              : ""
-          )}
-        />
+              ? {
+                  boxShadow: ["0 0 0px rgba(217,119,87,0)", "0 0 12px rgba(217,119,87,0.3)", "0 0 0px rgba(217,119,87,0)"],
+                }
+              : {}
+          }
+          transition={{ duration: 1.5, ease: "easeInOut", times: [0, 0.5, 1], delay: animationDelay / 1000 }}
+          className="rounded-xl"
+        >
+          <Input
+            ref={inputEl as React.RefObject<HTMLInputElement>}
+            type="number"
+            min={0}
+            step={step}
+            inputMode="numeric"
+            value={displayValue}
+            onChange={(event) => onChange(event.target.value)}
+            onFocus={(e) => {
+              e.currentTarget.select();
+              onFocus?.();
+            }}
+            onBlur={onBlur}
+            onKeyDown={onKeyDown}
+            className={cn(
+              "rounded-xl pr-8 font-mono tabular-nums text-zinc-800 transition-[background-color,border-color,box-shadow,color] duration-300",
+              "bg-zinc-100/70 border-transparent text-[13px]",
+              "focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757]",
+              "h-10",
+              field.source === "ocr"
+                ? "border-b-2 border-b-[#D97757]/60 shadow-[0_1px_0_0_rgba(217,119,87,0.1)] bg-[#D97757]/[0.03] text-[#D97757]"
+                : ""
+            )}
+          />
+        </motion.div>
         {/* 后缀或置信度圆点 */}
         {confidenceProps ? (
           <span
@@ -180,9 +193,9 @@ export function MetricInputCard({
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <span className={cn("inline-block h-2 w-2 rounded-full ring-1 ring-white", confidenceProps.color)} />
+            <span className={cn("inline-block h-2 w-2 rounded-full ring-1 ring-white shadow-sm", confidenceProps.color)} />
             {showTooltip ? (
-              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30">
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-lg">
                 {confidenceProps.tooltip}
               </span>
             ) : null}
