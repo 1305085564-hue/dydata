@@ -9,7 +9,6 @@ interface BuildAnalyticsAccessContextInput {
   role: UserRole | BusinessRole;
   permissions?: Permissions;
   teamId: string | null;
-  demoTeamId: string | null;
 }
 
 export interface AnalyticsAccessContext {
@@ -17,7 +16,6 @@ export interface AnalyticsAccessContext {
   role: UserRole;
   effectiveTeamId: string | null;
   canViewAllMembers: boolean;
-  isDemoFallback: boolean;
 }
 
 export interface NavigationAccess {
@@ -105,8 +103,8 @@ function canAccessDailyManagementPath(pathname: string, role: UserRole | Busines
   return pathname === "/admin";
 }
 
-export function buildAnalyticsAccessContext({ userId, role, permissions = {}, teamId, demoTeamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
-  const effectiveTeamId = teamId ?? demoTeamId ?? null;
+export function buildAnalyticsAccessContext({ userId, role, permissions = {}, teamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
+  const effectiveTeamId = teamId ?? null;
   const canViewAllMembers = role === "admin" || role === "team_admin" || hasPermission(role, permissions, "view_all_data");
 
   return {
@@ -114,7 +112,6 @@ export function buildAnalyticsAccessContext({ userId, role, permissions = {}, te
     role: role === "team_admin" || role === "group_leader" ? "admin" : role,
     effectiveTeamId,
     canViewAllMembers,
-    isDemoFallback: !teamId && Boolean(demoTeamId),
   };
 }
 

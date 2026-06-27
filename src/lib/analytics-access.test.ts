@@ -9,20 +9,18 @@ import {
   restrictPersonRows,
 } from "./analytics-access";
 
-test("成员没有 team_id 时回退到演示团队，且不能查看全部成员", () => {
+test("成员没有 team_id 时保持空团队，且不能查看全部成员", () => {
   const context = buildAnalyticsAccessContext({
     userId: "user-1",
     role: "member",
     teamId: null,
-    demoTeamId: "demo-team",
   });
 
   assert.deepEqual(context, {
     userId: "user-1",
     role: "member",
-    effectiveTeamId: "demo-team",
+    effectiveTeamId: null,
     canViewAllMembers: false,
-    isDemoFallback: true,
   });
 });
 
@@ -31,12 +29,10 @@ test("管理员保留真实 team_id 且可查看全部成员", () => {
     userId: "admin-1",
     role: "admin",
     teamId: "team-1",
-    demoTeamId: "demo-team",
   });
 
   assert.equal(context.effectiveTeamId, "team-1");
   assert.equal(context.canViewAllMembers, true);
-  assert.equal(context.isDemoFallback, false);
 });
 
 test("成员不能访问任何管理后台页面", () => {

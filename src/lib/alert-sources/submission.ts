@@ -1,9 +1,10 @@
 import { getAnomalousData } from "@/lib/admin-tools/data-query";
 import { getShanghaiDateString, shiftDateString } from "@/lib/remind-submission";
 import { detectNoSubmission, type AlertProfile, type AlertReport } from "@/lib/smart-alert";
-import { SOP_CHECKPOINT_DEADLINES } from "@/lib/sop/core";
 
 import type { Alert, AlertDetectorContext, SuggestedAction } from "./types";
+
+const DATA_REPORT_DEADLINE = "11:15";
 
 type ProfileRow = {
   id: string;
@@ -54,7 +55,7 @@ function getShanghaiHourMinute(now: Date) {
 
 function getMinutesUntilDataDeadline(now: Date) {
   const { hour, minute } = getShanghaiHourMinute(now);
-  const [deadlineHourText, deadlineMinuteText] = SOP_CHECKPOINT_DEADLINES.DATA_REPORT.split(":");
+  const [deadlineHourText, deadlineMinuteText] = DATA_REPORT_DEADLINE.split(":");
   const deadlineMinutes = (Number.parseInt(deadlineHourText, 10) || 0) * 60 + (Number.parseInt(deadlineMinuteText, 10) || 0);
   const currentMinutes = hour * 60 + minute;
   return deadlineMinutes - currentMinutes;
