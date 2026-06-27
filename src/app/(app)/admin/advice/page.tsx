@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { loadAdminAdvicePageData } from "@/lib/loaders/admin-advice-page";
 export type { AdviceRow, AdviceDetailRow } from "@/lib/loaders/admin-advice-page";
 import { AdviceList } from "./advice-list";
@@ -18,9 +20,6 @@ export default async function AdminAdvicePage() {
     redirect("/dashboard");
   }
 
-  const supabase = await createClient();
-  const data = await loadAdminAdvicePageData({ supabase });
-
   return (
     <AdminWorkspaceLayout
       eyebrow="建议队列"
@@ -29,20 +28,35 @@ export default async function AdminAdvicePage() {
       indexItems={[]}
       className="pb-8"
     >
-      <section
-        id="advice-queue"
-        className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6"
-      >
-        <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">建议队列</h2>
+      <Suspense fallback={
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 mt-4">
+          <TableSkeleton columnCount={5} rowCount={6} showHeader={true} />
         </div>
-        <AdviceList
-          advice={data.advice}
-          profiles={data.profiles}
-          accounts={data.accounts}
-          currentUserId={permission.userId}
-        />
-      </section>
+      }>
+        <AdviceDataContainer currentUserId={permission.userId} />
+      </Suspense>
     </AdminWorkspaceLayout>
+  );
+}
+
+async function AdviceDataContainer({ currentUserId }: { currentUserId: string }) {
+  const supabase = await createClient();
+  const data = await loadAdminAdvicePageData({ supabase });
+
+  return (
+    <section
+      id="advice-queue"
+      className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 mt-4"
+    >
+      <div className="flex items-center border-l-2 border-[#D97757] pl-3">
+        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">建议队列</h2>
+      </div>
+      <AdviceList
+        advice={data.advice}
+        profiles={data.profiles}
+        accounts={data.accounts}
+        currentUserId={currentUserId}
+      />
+    </section>
   );
 }

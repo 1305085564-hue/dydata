@@ -28,7 +28,7 @@ export default async function RewritePage() {
   }
 
   return (
-    <div className="h-[calc(100dvh-var(--app-top-offset))] w-full overflow-hidden">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 h-[calc(100dvh-var(--app-top-offset))] w-full overflow-hidden">
       <RewriteWorkbench />
     </div>
   )

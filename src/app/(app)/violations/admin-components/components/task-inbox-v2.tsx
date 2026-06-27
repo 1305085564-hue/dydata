@@ -16,10 +16,14 @@ import {
 
 import { cn } from "@/lib/utils";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { CaseRejectDialog } from "@/components/case-reject-dialog";
 import { CaseDetailDialog } from "@/components/case-detail-dialog";
-
 import type { InboxBucketEntry, InboxCounts } from "../data";
+import dynamic from "next/dynamic";
+
+const CaseRejectDialog = dynamic(
+  () => import("@/components/case-reject-dialog").then((m) => m.CaseRejectDialog),
+  { ssr: false }
+);
 
 /** 后端 batch-review / [id]/review response 里的旧状态快照 */
 type ReviewSnapshot = {
@@ -181,6 +185,9 @@ function TaskRow({
       <button
         type="button"
         onClick={() => onOpenDetail(entry.id)}
+        onMouseEnter={() => {
+          import("@/components/case-detail-dialog");
+        }}
         className="min-w-0 flex-1 cursor-pointer pl-1 text-left focus-visible:outline-none"
       >
         <p className="line-clamp-2 text-[13px] font-medium text-zinc-800">
@@ -460,7 +467,7 @@ function BulkActionBar({
           bottom:
             "calc(env(safe-area-inset-bottom, 0px) + var(--bulk-bar-offset, 24px))",
         }}
-        className="fixed left-1/2 z-50 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-lg shadow-zinc-900/8 sm:gap-3 sm:px-5 sm:py-3 [--bulk-bar-offset:24px] max-sm:[--bulk-bar-offset:96px]"
+        className="fixed left-1/2 z-50 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm sm:gap-3 sm:px-5 sm:py-3 [--bulk-bar-offset:24px] max-sm:[--bulk-bar-offset:96px]"
       >
         <span className="whitespace-nowrap text-[13px] font-medium text-zinc-800">
           已选择 <span className="tabular-nums text-[#D97757]">{count}</span> 项

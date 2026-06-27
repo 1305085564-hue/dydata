@@ -488,7 +488,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
   const purposeMeta = PURPOSE_META[(caseItem.purpose ?? "violation") as string] ?? PURPOSE_META.violation;
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-7xl space-y-5">
       <Breadcrumb
         items={[
           { label: "导粉中心", href: "/violations" },

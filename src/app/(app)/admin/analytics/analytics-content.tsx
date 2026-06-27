@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { AnalyticsPageHeader } from "@/components/analytics/分析页顶部";
@@ -11,6 +11,7 @@ import { AnalyticsWorkbench } from "./analytics-workbench";
 
 interface AnalyticsContentProps {
   userId: string;
+  initialData?: AnalyticsPageData;
   // Legacy mode: pass all data directly (used by analytics-modal-panel)
   isPrivilegedUser?: boolean;
   filteredReports?: Parameters<typeof AnalyticsWorkbench>[0]["filteredReports"];
@@ -34,6 +35,7 @@ function LoadingSpinner() {
 
 export function AnalyticsContent({
   userId,
+  initialData,
   isPrivilegedUser: propIsPrivilegedUser,
   filteredReports: propFilteredReports,
   previousPeriodReports: propPreviousPeriodReports,
@@ -47,8 +49,9 @@ export function AnalyticsContent({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
-  const [data, setData] = useState<AnalyticsPageData | null>(null);
+  const [data, setData] = useState<AnalyticsPageData | null>(initialData ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cacheRef = useRef<Map<string, AnalyticsPageData>>(new Map());
@@ -59,6 +62,9 @@ export function AnalyticsContent({
       const cached = cacheRef.current.get(key);
       if (cached) {
         setData(cached);
+        setIsLoading(false);
+        setError(null);
+        return;
       }
       setIsLoading(true);
       setError(null);
@@ -91,8 +97,19 @@ export function AnalyticsContent({
     const p = (searchParams.get("preset") ?? preset ?? "30d") as AnalyticsRangePreset;
     const f = searchParams.get("from") ?? initialFrom ?? undefined;
     const t = searchParams.get("to") ?? initialTo ?? undefined;
+
+    if (initialData && initialData.range.preset === p &&
+        (p !== "custom" || (initialData.range.from === f && initialData.range.to === t))) {
+      setData(initialData);
+      const key = `${p}:${f ?? ""}:${t ?? ""}`;
+      cacheRef.current.set(key, initialData);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
     load(p, f, t);
-  }, [searchParams, preset, initialFrom, initialTo, load, isLegacy]);
+  }, [searchParams, preset, initialFrom, initialTo, load, isLegacy, initialData]);
 
   const handleRangeChange = useCallback(
     (nextPreset: AnalyticsRangePreset, overrides?: { from?: string; to?: string }) => {
@@ -105,7 +122,10 @@ export function AnalyticsContent({
         params.delete("from");
         params.delete("to");
       }
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      });
     },
     [router, pathname, searchParams, data]
   );

@@ -202,7 +202,7 @@ export function StepWizard({
                   "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
                   isSubmitting || !canGoNext
                     ? "cursor-not-allowed opacity-70"
-                    : "hover:bg-[#C96442] hover:shadow-md",
+                    : "hover:bg-[#C96442] hover:shadow-sm",
                 )}
               >
                 {isSubmitting ? "提交中..." : "确认提交"}
@@ -216,7 +216,7 @@ export function StepWizard({
                   "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
                   !canGoNext
                     ? "cursor-not-allowed opacity-70"
-                    : "hover:bg-[#C96442] hover:shadow-md",
+                    : "hover:bg-[#C96442] hover:shadow-sm",
                 )}
               >
                 下一步

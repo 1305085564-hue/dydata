@@ -194,7 +194,7 @@ export function ReviewDetail({
                 "inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#D97757] px-5 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
                 approveDisabled
                   ? "cursor-not-allowed opacity-60"
-                  : "hover:bg-[#C96442] hover:shadow-md",
+                  : "hover:bg-[#C96442] hover:shadow-sm",
               )}
             >
               <Check className="size-3.5 stroke-[2]" />

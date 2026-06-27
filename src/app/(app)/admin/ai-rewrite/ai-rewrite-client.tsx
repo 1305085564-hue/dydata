@@ -1057,7 +1057,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
           </TableHeader>
           <TableBody>
             {bundle.modelRoutes.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} className="group">
                 <TableCell className="font-mono text-xs text-zinc-700">{row.actual_model}</TableCell>
                 <TableCell>
                   <div className="space-y-1">
@@ -1072,7 +1072,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <TableCell>{row.weight}</TableCell>
                 <TableCell>{getStatusBadge(row.is_enabled)}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                     <Button variant="outline" size="sm" onClick={() => openRouteEditor(row)}>
                       <Pencil className="size-4" />
                       编辑
@@ -1116,7 +1116,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
           </TableHeader>
           <TableBody>
             {bundle.modes.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} className="group">
                 <TableCell>
                   <div className="space-y-1">
                     <div className="font-medium text-zinc-800">{row.name}</div>
@@ -1129,7 +1129,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <TableCell>{row.sort_order}</TableCell>
                 <TableCell>{getStatusBadge(row.is_enabled, row.is_default)}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                     <Button variant="outline" size="sm" onClick={() => openModeEditor(row)}>
                       <Pencil className="size-4" />
                       编辑
@@ -1173,7 +1173,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
           </TableHeader>
           <TableBody>
             {bundle.lengthPresets.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} className="group">
                 <TableCell>
                   <div className="space-y-1">
                     <div className="font-medium text-zinc-800">{row.name}</div>
@@ -1186,7 +1186,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <TableCell>{row.sort_order}</TableCell>
                 <TableCell>{getStatusBadge(row.is_enabled, row.is_default)}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                     <Button variant="outline" size="sm" onClick={() => openLengthPresetEditor(row)}>
                       <Pencil className="size-4" />
                       编辑
@@ -1275,7 +1275,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                   </TableHeader>
                   <TableBody>
                     {steps.map((step) => (
-                      <TableRow key={step.id}>
+                      <TableRow key={step.id} className="group">
                         <TableCell>
                           <div className="space-y-1">
                             <div className="font-medium text-zinc-800">{step.name}</div>
@@ -1293,7 +1293,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                         <TableCell>{step.sort_order}</TableCell>
                         <TableCell>{getStatusBadge(step.is_enabled)}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                             <Button variant="outline" size="sm" onClick={() => openWorkflowStepEditor(step)}>
                               <Pencil className="size-4" />
                               编辑

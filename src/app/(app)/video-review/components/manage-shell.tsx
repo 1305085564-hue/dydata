@@ -27,7 +27,7 @@ export function ManageShell({
   const [activeId, setActiveId] = useState<string | null>(
     initialQueue[0]?.id ?? null,
   );
-  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [inFlightIds, setInFlightIds] = useState<Set<string>>(new Set());
   const [todayProcessed, setTodayProcessed] = useState(0);
 
   const [lightbox, setLightbox] = useState<{ paths: string[]; index: number } | null>(null);
@@ -37,28 +37,31 @@ export function ManageShell({
     [activeId, queue],
   );
 
-  // 处理后从队列移除并自动跳下一条
-  const advanceAfterAction = useCallback(
-    (handledId: string) => {
+  const handleApprove = useCallback(
+    async (draftId: string) => {
+      const originalItem = queue.find((q) => q.id === draftId);
+      if (!originalItem) return;
+
+      const originalIndex = queue.findIndex((q) => q.id === draftId);
+
+      setInFlightIds((prev) => {
+        const next = new Set(prev);
+        next.add(draftId);
+        return next;
+      });
+
       setQueue((prev) => {
-        const idx = prev.findIndex((q) => q.id === handledId);
+        const idx = prev.findIndex((q) => q.id === draftId);
         if (idx === -1) return prev;
-        const next = prev.filter((q) => q.id !== handledId);
-        // 自动定位下一条：原位置 → 末尾兜底 → 空
-        const nextActive =
-          next[idx]?.id ?? next[Math.max(idx - 1, 0)]?.id ?? null;
+        const next = prev.filter((q) => q.id !== draftId);
+        const nextActive = next[idx]?.id ?? next[Math.max(idx - 1, 0)]?.id ?? null;
         setActiveId(nextActive);
         return next;
       });
+
       setPendingCount((c) => Math.max(0, c - 1));
       setTodayProcessed((c) => c + 1);
-    },
-    [],
-  );
 
-  const handleApprove = useCallback(
-    async (draftId: string) => {
-      setProcessingId(draftId);
       try {
         const res = await fetch(`/api/publish-drafts/${draftId}/approve`, {
           method: "POST",
@@ -68,16 +71,30 @@ export function ManageShell({
           throw new Error(getApiErrorMessage(payload, "通过失败"));
         }
         feedbackToast.success("已通过 · 已沉入数据页");
-        advanceAfterAction(draftId);
-        // 已通过列表受影响，刷新数据页缓存
         router.refresh();
       } catch (e) {
         feedbackToast.error(e instanceof Error ? e.message : "通过失败");
+        
+        setQueue((prev) => {
+          if (prev.some((q) => q.id === draftId)) return prev;
+          const next = [...prev];
+          const insertIdx = Math.min(originalIndex, next.length);
+          next.splice(insertIdx, 0, originalItem);
+          return next;
+        });
+
+        setPendingCount((c) => c + 1);
+        setTodayProcessed((c) => Math.max(0, c - 1));
+        setActiveId((curr) => curr ?? draftId);
       } finally {
-        setProcessingId(null);
+        setInFlightIds((prev) => {
+          const next = new Set(prev);
+          next.delete(draftId);
+          return next;
+        });
       }
     },
-    [advanceAfterAction, router],
+    [queue, router],
   );
 
   const handleReject = useCallback(
@@ -87,7 +104,30 @@ export function ManageShell({
         feedbackToast.error("请填写优化建议");
         return;
       }
-      setProcessingId(draftId);
+
+      const originalItem = queue.find((q) => q.id === draftId);
+      if (!originalItem) return;
+
+      const originalIndex = queue.findIndex((q) => q.id === draftId);
+
+      setInFlightIds((prev) => {
+        const next = new Set(prev);
+        next.add(draftId);
+        return next;
+      });
+
+      setQueue((prev) => {
+        const idx = prev.findIndex((q) => q.id === draftId);
+        if (idx === -1) return prev;
+        const next = prev.filter((q) => q.id !== draftId);
+        const nextActive = next[idx]?.id ?? next[Math.max(idx - 1, 0)]?.id ?? null;
+        setActiveId(nextActive);
+        return next;
+      });
+
+      setPendingCount((c) => Math.max(0, c - 1));
+      setTodayProcessed((c) => c + 1);
+
       try {
         const res = await fetch(`/api/publish-drafts/${draftId}/reject`, {
           method: "POST",
@@ -99,14 +139,29 @@ export function ManageShell({
           throw new Error(getApiErrorMessage(payload, "打回失败"));
         }
         feedbackToast.success("已打回 · 等待提交者整改");
-        advanceAfterAction(draftId);
       } catch (e) {
         feedbackToast.error(e instanceof Error ? e.message : "打回失败");
+
+        setQueue((prev) => {
+          if (prev.some((q) => q.id === draftId)) return prev;
+          const next = [...prev];
+          const insertIdx = Math.min(originalIndex, next.length);
+          next.splice(insertIdx, 0, originalItem);
+          return next;
+        });
+
+        setPendingCount((c) => c + 1);
+        setTodayProcessed((c) => Math.max(0, c - 1));
+        setActiveId((curr) => curr ?? draftId);
       } finally {
-        setProcessingId(null);
+        setInFlightIds((prev) => {
+          const next = new Set(prev);
+          next.delete(draftId);
+          return next;
+        });
       }
     },
-    [advanceAfterAction],
+    [queue],
   );
 
   // 键盘 j/k 翻队列
@@ -161,7 +216,7 @@ export function ManageShell({
           <ReviewDetail
             key={activeItem.id}
             item={activeItem}
-            isProcessing={processingId === activeItem.id}
+            isProcessing={inFlightIds.has(activeItem.id)}
             onApprove={() => handleApprove(activeItem.id)}
             onReject={(text) => handleReject(activeItem.id, text)}
             onPreview={(paths, index) => setLightbox({ paths, index })}

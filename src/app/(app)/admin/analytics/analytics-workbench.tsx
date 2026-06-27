@@ -1,16 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import type { AnalyticsSection } from "./analytics-sections";
 import { AnalyticsSections } from "./analytics-sections";
 import { HitAnalyzer } from "./hit-analyzer";
 import { PersonnelAnalysis } from "./personnel-analysis";
 import { TimeAnalysis } from "./time-analysis";
-import { AiInsight } from "./ai-insight";
 import { FollowerConvertTrend } from "./follower-convert-trend";
 import { HitHeroCard } from "./hit-hero-card";
 import { KpiSummary } from "./kpi-summary";
 import { Button } from "@/components/ui/button";
+
+const AiInsight = dynamic(() => import("./ai-insight").then((module) => module.AiInsight), {
+  ssr: false,
+});
 
 interface ReportRow {
   id: string;

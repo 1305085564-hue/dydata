@@ -128,7 +128,7 @@ export function CaseRejectDialog({
               "inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#C9604D] px-4 text-[12px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
               !canConfirm
                 ? "cursor-not-allowed opacity-60"
-                : "hover:bg-[#B0533F] hover:shadow-md",
+                : "hover:bg-[#B0533F] hover:shadow-sm",
             )}
           >
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}

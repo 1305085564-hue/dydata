@@ -299,6 +299,37 @@ export default function AIChannelsClient() {
   const handleChannelAction = async (id: string, action: "test" | "ocr_test" | "toggle" | "recover" | "delete", isEnabled?: boolean) => {
     setBusy(`${action}:${id}`, true);
 
+    const originalChannels = [...channelsRef.current];
+    const originalFeatures = [...featuresRef.current];
+    const originalSelectedChannelId = selectedChannelIdRef.current;
+
+    // Apply Optimistic Update if action is toggle or delete
+    if (action === "toggle") {
+      setChannels((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, is_enabled: !!isEnabled } : c))
+      );
+    } else if (action === "delete") {
+      const remainingChannels = originalChannels.filter((channel) => channel.id !== id);
+      setChannels(remainingChannels);
+      setFeatures((prev) =>
+        prev.map((feature) =>
+          feature.channel_id === id
+            ? { ...feature, channel_id: "", channel_name: null }
+            : feature,
+        ),
+      );
+      if (originalSelectedChannelId === id) {
+        updateSelection(
+          resolveSelectedChannelId({
+            channels: remainingChannels,
+            currentSelectedChannelId: null,
+            isCreatingChannel: false,
+          }),
+          false,
+        );
+      }
+    }
+
     try {
       let res: Response;
       if (action === "test" || action === "ocr_test") {
@@ -357,31 +388,6 @@ export default function AIChannelsClient() {
         }
       } else {
         feedbackToast.success("已删除渠道");
-
-        const remainingChannels = channelsRef.current.filter((channel) => channel.id !== id);
-        setChannels(remainingChannels);
-        setFeatures((prev) =>
-          prev.map((feature) =>
-            feature.channel_id === id
-              ? {
-                  ...feature,
-                  channel_id: "",
-                  channel_name: null,
-                }
-              : feature,
-          ),
-        );
-
-        if (selectedChannelIdRef.current === id) {
-          updateSelection(
-            resolveSelectedChannelId({
-              channels: remainingChannels,
-              currentSelectedChannelId: null,
-              isCreatingChannel: false,
-            }),
-            false,
-          );
-        }
       }
 
       if (action === "toggle" || action === "recover" || action === "delete") {
@@ -390,6 +396,13 @@ export default function AIChannelsClient() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "操作失败";
       feedbackToast.error(message);
+
+      // Rollback optimistic updates on failure
+      if (action === "toggle" || action === "delete") {
+        setChannels(originalChannels);
+        setFeatures(originalFeatures);
+        updateSelection(originalSelectedChannelId, false);
+      }
     } finally {
       setBusy(`${action}:${id}`, false);
       if (action === "delete") setDeleteTarget(null);

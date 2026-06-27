@@ -395,7 +395,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                             getIntensityClass(cell.medianPlay, heatmapData.maxMedianPlay),
                             cell.count > 0 ? "active:translate-y-0" : "opacity-65 hover:opacity-80",
                             isWindowCell && "ring-1 ring-[#D97757]/40",
-                            isPreview && "scale-[1.03] shadow-md",
+                            isPreview && "scale-[1.03] shadow-sm",
                             isPinned && "ring-2 ring-[#D97757] ring-offset-2 ring-offset-white",
                             isActive && !isPinned && "ring-2 ring-zinc-300 ring-offset-2 ring-offset-white",
                           )}

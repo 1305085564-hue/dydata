@@ -110,7 +110,7 @@ export function ProductionControlSystem({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-800 antialiased">
+    <div className="antialiased">
       <main className="px-4 py-3 lg:px-8 lg:py-5">
         <DashboardWorkspaceHeader
           today={today}

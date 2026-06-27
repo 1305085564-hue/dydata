@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { loadFulfillmentCalendar } from "@/lib/loaders/fulfillment-page";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import type { TimeRangePreset } from "@/types/fulfillment";
 
 import { FulfillmentWorkbench } from "./fulfillment-workbench";
@@ -47,15 +50,23 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 
   const { year, month } = resolveYearMonth(params.year, params.month);
   const range = resolveRange(params.range);
-  const data = await loadFulfillmentCalendar(year, month, scope.visibleUserIds);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">发布履约</p>
-        <h1 className="mt-1 text-[18px] font-medium tracking-tight text-zinc-800">发布履约工作台</h1>
+    <AdminWorkspaceLayout indexItems={[]} width="wide">
+      <div className="space-y-4">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">发布履约</p>
+          <h1 className="mt-1 text-[18px] font-medium tracking-tight text-zinc-800">发布履约工作台</h1>
+        </div>
+        <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
+          <FulfillmentDataContainer year={year} month={month} visibleUserIds={scope.visibleUserIds} range={range} />
+        </Suspense>
       </div>
-      <FulfillmentWorkbench data={data} range={range} />
-    </div>
+    </AdminWorkspaceLayout>
   );
+}
+
+async function FulfillmentDataContainer({ year, month, visibleUserIds, range }: { year: number, month: number, visibleUserIds: string[], range: TimeRangePreset }) {
+  const data = await loadFulfillmentCalendar(year, month, visibleUserIds);
+  return <FulfillmentWorkbench data={data} range={range} />;
 }

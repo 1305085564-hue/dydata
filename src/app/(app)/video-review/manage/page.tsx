@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { hasPermission } from "@/lib/permission-utils";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { loadReviewQueue } from "@/lib/publish-drafts/read-model";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
-import { ManageShell } from "../components/manage-shell";
+import { ReviewQueueDataContainer } from "./review-queue-data-container";
 
 export default async function VideoReviewManagePage() {
   const supabase = await createClient();
@@ -24,37 +25,35 @@ export default async function VideoReviewManagePage() {
 
   if (!canReview) redirect("/video-review");
 
-  const { data, errorMessage } = await loadReviewQueue(user.id);
-  const queue = data?.queue ?? [];
-  const pendingCount = data?.pending_count ?? 0;
-
   return (
-    <div className="space-y-6">
-        <Breadcrumb
-          items={[
-            { label: "视频审核", href: "/video-review" },
-            { label: "管理审核台" },
-          ]}
-        />
-        <header>
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-            Review Workbench
-          </p>
-          <h1 className="mt-2 text-[24px] font-semibold leading-[1.33] tracking-tight text-zinc-800">
-            管理审核台
-          </h1>
-          <p className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
-            等最久的顶最前。一键通过即沉入数据页；打回时填一句优化建议，处理完自动跳下一条。
-          </p>
-        </header>
+    <div className="mx-auto w-full max-w-7xl space-y-6">
+      <Breadcrumb
+        items={[
+          { label: "视频审核", href: "/video-review" },
+          { label: "管理审核台" },
+        ]}
+      />
+      <header>
+        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          Review Workbench
+        </p>
+        <h1 className="mt-2 text-[24px] font-semibold leading-[1.33] tracking-tight text-zinc-800">
+          管理审核台
+        </h1>
+        <p className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
+          等最久的顶最前。一键通过即沉入数据页；打回时填一句优化建议，处理完自动跳下一条。
+        </p>
+      </header>
 
-        {errorMessage ? (
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-[13px] leading-[1.7] text-[#D99E55]">
-            {errorMessage}
+      <Suspense
+        fallback={
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <TableSkeleton columnCount={5} rowCount={6} showHeader={false} />
           </div>
-        ) : (
-          <ManageShell initialQueue={queue} initialPendingCount={pendingCount} />
-        )}
+        }
+      >
+        <ReviewQueueDataContainer userId={user.id} />
+      </Suspense>
     </div>
   );
 }

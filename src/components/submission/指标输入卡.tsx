@@ -195,7 +195,7 @@ export function MetricInputCard({
           >
             <span className={cn("inline-block h-2 w-2 rounded-full ring-1 ring-white shadow-sm", confidenceProps.color)} />
             {showTooltip ? (
-              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-lg">
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
                 {confidenceProps.tooltip}
               </span>
             ) : null}

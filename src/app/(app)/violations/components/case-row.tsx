@@ -95,6 +95,9 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
+      onMouseEnter={() => {
+        import("@/components/case-detail-dialog");
+      }}
       className={cn(
         "group relative flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors duration-150",
         "hover:bg-zinc-50 focus-visible:bg-zinc-50 focus-visible:outline-none",
@@ -153,9 +156,10 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
           type="button"
           onClick={handleCopy}
           className={cn(
-            "inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-colors active:translate-y-0",
+            "inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-all active:translate-y-0",
+            "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-within:opacity-100",
             copied
-              ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
+              ? "bg-[#6FAA7D]/10 text-[#6FAA7D] opacity-100"
               : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700",
           )}
           aria-label="复制话术"

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { loadAdminModulesFirstScreenData } from "@/lib/loaders/admin-modules";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
@@ -31,14 +32,6 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
   }
 
   const params = await searchParams;
-  const data = await loadAdminModulesFirstScreenData({
-    supabase,
-    searchDate: params.date,
-  });
-
-  if (!data) {
-    redirect("/login");
-  }
 
   return (
     <AdminWorkspaceLayout
@@ -50,17 +43,39 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
         { id: "teams", label: "团队与分组" },
       ]}
     >
-      <AdminModulesContent
-        currentUserId={data.currentUserId}
-        currentUserRole={data.perm.role}
-        currentUserBusinessRole={data.perm.businessRole}
-        currentUserPermissions={data.perm.permissions}
-        permissionManagerCapabilities={data.permissionManagerCapabilities}
-        allProfiles={data.allProfiles}
-        teams={data.teams}
-        defaultDate={data.queryDate}
-        defaultTab={normalizeFocus(params.focus)}
-      />
+      <Suspense fallback={
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 mt-4">
+          <TableSkeleton columnCount={4} rowCount={6} showHeader={true} />
+        </div>
+      }>
+        <ModulesDataContainer searchDate={params.date} focus={params.focus} />
+      </Suspense>
     </AdminWorkspaceLayout>
+  );
+}
+
+async function ModulesDataContainer({ searchDate, focus }: { searchDate?: string, focus?: string }) {
+  const supabase = await createClient();
+  const data = await loadAdminModulesFirstScreenData({
+    supabase,
+    searchDate: searchDate,
+  });
+
+  if (!data) {
+    redirect("/login");
+  }
+
+  return (
+    <AdminModulesContent
+      currentUserId={data.currentUserId}
+      currentUserRole={data.perm.role}
+      currentUserBusinessRole={data.perm.businessRole}
+      currentUserPermissions={data.perm.permissions}
+      permissionManagerCapabilities={data.permissionManagerCapabilities}
+      allProfiles={data.allProfiles}
+      teams={data.teams}
+      defaultDate={data.queryDate}
+      defaultTab={normalizeFocus(focus)}
+    />
   );
 }
