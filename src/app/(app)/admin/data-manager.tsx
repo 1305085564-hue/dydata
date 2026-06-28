@@ -482,7 +482,7 @@ export function DataManager({
   function renderReportRow(report: (typeof reportsWithMeta)[number]) {
     const isEditing = editingId === report.id;
     return (
-      <TableRow key={report.id} className={`border-zinc-200 ${isEditing ? "bg-zinc-50" : "hover:bg-zinc-50"}`}>
+      <TableRow key={report.id} className={`group border-zinc-200 ${isEditing ? "bg-zinc-50" : "hover:bg-zinc-50"}`}>
         <TableCell>
           <div className="space-y-1">
             <p className="text-sm text-zinc-800">{viewMode === "account" ? report.accountName : report.profileName}</p>
@@ -512,7 +512,7 @@ export function DataManager({
               size="sm"
               variant="ghost"
               onClick={() => setContentDialog({ title: report.title, content: report.content ?? "" })}
-              className="h-7 text-xs text-zinc-500 hover:text-zinc-800"
+              className="h-7 text-xs text-zinc-500 hover:text-zinc-800 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
             >
               查看
             </Button>
@@ -520,9 +520,9 @@ export function DataManager({
             <span className="text-xs text-zinc-500">-</span>
           )}
         </TableCell>
-        <TableCell className="space-x-1 text-right">
+        <TableCell className="text-right">
           {!isEditing ? (
-            <>
+            <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
               <Button
                 size="sm"
                 variant="ghost"
@@ -539,7 +539,7 @@ export function DataManager({
               >
                 删除
               </Button>
-            </>
+            </div>
           ) : null}
         </TableCell>
       </TableRow>

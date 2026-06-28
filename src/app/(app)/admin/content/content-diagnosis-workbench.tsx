@@ -737,7 +737,7 @@ export function ContentDiagnosisWorkbench({
                     <YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: "#71717A", fontSize: 11 }} />
                     <ChartTooltip
                       contentStyle={{ borderRadius: "12px", border: "1px solid #E4E4E7", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
-                      formatter={(val: number) => [`${val.toFixed(1)}%`, "留存率"]}
+                      formatter={(val: any) => [`${parseFloat(val).toFixed(1)}%`, "留存率"]}
                     />
                     <Area type="monotone" dataKey="rate" stroke="#D97757" strokeWidth={2} fillOpacity={1} fill="url(#colorRate)" />
                   </AreaChart>
@@ -998,7 +998,7 @@ export function ContentDiagnosisWorkbench({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 gap-1.5 rounded-xl border-[#D97757]/30 bg-[#D97757]/5 text-xs text-[#D97757] hover:bg-[#D97757]/10"
+                      className="h-8 gap-1.5 rounded-xl border-zinc-200 bg-white text-xs text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.98] transition-all duration-150"
                       onClick={handleGenerateAnalysis}
                       disabled={isGeneratingAnalysis}
                     >
@@ -1010,7 +1010,7 @@ export function ContentDiagnosisWorkbench({
 
                 {/* Section: AI Analysis Results */}
                 {(isGeneratingAnalysis || analysisResult) && (
-                  <div className="rounded-2xl border border-zinc-200 border-l-[3px] border-l-[#D97757] bg-gradient-to-b from-[#FFFDFB] to-white p-5 shadow-sm space-y-4">
+                  <div className="rounded-2xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-zinc-100/50 p-5 shadow-sm space-y-4">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-[#D97757] uppercase tracking-widest">
                       <Sparkles className="size-4" />
                       AI 智能诊断
@@ -1375,7 +1375,7 @@ function ScreenshotPreview({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/90 backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/60 backdrop-blur-md"
         onClick={onClose}
       >
         <button

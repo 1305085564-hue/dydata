@@ -260,8 +260,7 @@ export function ContentPageClient({
         <div className="mb-2 space-y-2 border-b border-zinc-100 pb-5">
           <h2 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
             <span className="relative flex size-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex size-2 rounded-full bg-red-500"></span>
+              <span className="relative inline-flex size-2 rounded-full bg-[#C9604D]"></span>
             </span>
             异常预警雷达 (Anomaly Radar)
           </h2>
@@ -278,15 +277,15 @@ export function ContentPageClient({
                       <span className="text-[9px] text-zinc-400 font-medium truncate max-w-[120px]">
                         {(v.profiles?.name || "未知")} · {(v.accounts?.name || "未知")}
                       </span>
-                      <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium scale-90 ${
+                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium scale-90 ${
                         v.anomaly_status === "限流" || v.anomaly_status === "删稿"
-                          ? "bg-red-50 text-red-600 border border-red-100"
-                          : "bg-amber-50 text-amber-600 border border-amber-100"
+                          ? "bg-[#C9604D]/0.04 text-[#C9604D] border border-[#C9604D]/15"
+                          : "bg-[#D99E55]/0.04 text-[#D99E55] border border-[#D99E55]/15"
                       }`}>
                         {v.anomaly_status === "正常" ? "限流异常" : v.anomaly_status}
                       </span>
                     </div>
-                    <h3 className="text-[11px] font-semibold text-zinc-800 line-clamp-2 leading-relaxed" title={v.video_title || v.content}>
+                    <h3 className="text-[11px] font-semibold text-zinc-800 line-clamp-2 leading-relaxed" title={v.video_title || v.content || undefined}>
                       {v.video_title || v.content || "（无标题）"}
                     </h3>
                   </div>
@@ -301,7 +300,7 @@ export function ContentPageClient({
                     <Button
                       size="sm"
                       onClick={() => setSelectedVideoId(v.id)}
-                      className="h-6 rounded-lg bg-zinc-900 px-2.5 text-[9px] text-white hover:bg-zinc-800 transition-colors"
+                      className="h-6 rounded-lg bg-[#D97757] px-2.5 text-[9px] text-white hover:bg-[#C96442] active:scale-[0.98] transition-all duration-155"
                     >
                       去诊断
                     </Button>

@@ -78,7 +78,7 @@ function CardRow({
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmitReply(status: "acknowledged" | "disputed") {
-    if (!replyText.trim()) return;
+    if (!replyText.trim() || !item.feedback_card.card_id) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/content/feedback/reply", {

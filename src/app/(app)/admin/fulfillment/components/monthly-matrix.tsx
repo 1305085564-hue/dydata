@@ -207,14 +207,14 @@ export function MonthlyMatrix({
                                   <button
                                     type="button"
                                     onClick={() => onCellClick(member, dateKey)}
-                                    className={`mx-auto block size-[16px] rounded-[3px] border transition-all duration-150 hover:scale-125 hover:shadow-sm hover:z-10 ${getStatusColor(status)} ${
+                                    className={`mx-auto block size-[16px] rounded-[3px] border transition-all duration-150 hover:scale-110 hover:z-10 ${getStatusColor(status)} ${
                                       isToday ? "ring-1 ring-[#D97757] ring-offset-1 z-10" : ""
-                                    } ${appeal ? "ring-1.5 ring-amber-500 ring-offset-0.5 animate-pulse" : ""}`}
+                                    } ${appeal ? "ring-1.5 ring-amber-500 ring-offset-0.5" : ""}`}
                                   />
                                 }
                               />
                               <TooltipContent
-                                className="flex flex-col items-start gap-1.5 p-3 bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg shadow-xl w-60 z-50 text-[11px]"
+                                className="flex flex-col items-start gap-1.5 p-3 bg-zinc-900 border border-zinc-800 text-white rounded-lg shadow-md w-60 z-50 text-[11px]"
                                 align="center"
                                 side="top"
                               >
@@ -283,7 +283,7 @@ export function MonthlyMatrix({
             </div>
 
             {/* 图例 */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500 bg-zinc-50/50 p-2.5 rounded-lg border border-zinc-200/30">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500 bg-zinc-100/50 p-2.5 rounded-lg">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block size-[10px] rounded-sm bg-[#6FAA7D] border border-[#5d946a]" />
                 已发布 / 已确认

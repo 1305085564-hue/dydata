@@ -106,7 +106,7 @@ export function FilterBar({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* 时间预设按钮 */}
-          <div className="flex items-center gap-1 rounded-lg border border-zinc-200/60 bg-zinc-50/50 p-1">
+          <div className="flex items-center gap-1 rounded-lg bg-zinc-100/50 p-1">
             {PRESET_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -114,7 +114,7 @@ export function FilterBar({
                 onClick={() => handlePresetChange(opt.value)}
                 className={`rounded-md px-2.5 py-1 text-[13px] transition-all duration-150 ${
                   range === opt.value
-                    ? "bg-white shadow-sm font-semibold text-zinc-900 ring-1 ring-zinc-200/5"
+                    ? "bg-white shadow-sm font-semibold text-zinc-800 ring-1 ring-zinc-200/5"
                     : "text-zinc-500 hover:text-zinc-800"
                 }`}
               >
@@ -155,7 +155,7 @@ export function FilterBar({
         </div>
 
         {/* 飞书催交总开关 */}
-        <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 transition-colors duration-200">
           <span className="text-[12px] font-medium text-zinc-600">飞书自动催交</span>
           {isUpdatingSettings ? (
             <div className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />

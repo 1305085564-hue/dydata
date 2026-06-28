@@ -37,8 +37,8 @@ interface ActionConfig {
 }
 
 const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
-  leave: { label: "标记请假", variant: "outline", colorClass: "text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5" },
-  waived: { label: "标记豁免", variant: "outline", colorClass: "text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5" },
+  leave: { label: "标记请假", variant: "outline", colorClass: "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900" },
+  waived: { label: "标记豁免", variant: "outline", colorClass: "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900" },
   absent: { label: "确认缺勤", variant: "destructive" },
   confirmed_published: { label: "确认已发", variant: "default" },
 };
@@ -241,37 +241,37 @@ export function MemberDrawer({
                 当前统计
               </h3>
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-400">应发天数</p>
                   <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-zinc-800">
                     {member.totalDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-400">实发天数</p>
                   <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#6FAA7D]">
                     {member.publishedDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-400">发布率</p>
                   <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-zinc-800">
                     {member.fulfillmentRate}%
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-400">请假</p>
                   <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#8AA8C7]">
                     {member.leaveDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-400">豁免</p>
                   <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#8AA8C7]">
                     {member.waivedDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-400">缺勤</p>
                   <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#C9604D]">
                     {member.absentDays}
@@ -359,7 +359,7 @@ export function MemberDrawer({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D] font-medium"
+                      className="flex-1 border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 font-medium"
                       onClick={() => handleHandleAppeal(dateAppeal.id, "approve")}
                       disabled={isSubmittingAppeal}
                     >
@@ -368,7 +368,7 @@ export function MemberDrawer({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#C9604D] font-medium"
+                      className="flex-1 border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 font-medium"
                       onClick={() => handleHandleAppeal(dateAppeal.id, "reject")}
                       disabled={isSubmittingAppeal}
                     >
@@ -380,7 +380,7 @@ export function MemberDrawer({
                 {dateAppeal.status !== "pending" && (
                   <div className="text-[12px] font-medium pt-1 text-zinc-700">
                     审批状态：
-                    <span className={dateAppeal.status === "approved" ? "text-green-600" : "text-red-600"}>
+                    <span className={dateAppeal.status === "approved" ? "text-[#6FAA7D]" : "text-[#C9604D]"}>
                       {dateAppeal.status === "approved" ? "已同意改判" : "已驳回"}
                     </span>
                     {dateAppeal.handler_name && (
@@ -446,7 +446,7 @@ export function MemberDrawer({
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       placeholder="请输入原因..."
-                      className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-1 focus:ring-zinc-950/5"
+                      className="w-full rounded-lg border border-transparent bg-zinc-100/70 px-3 py-2 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5"
                       disabled={isSubmitting}
                     />
                   </div>
@@ -488,7 +488,7 @@ export function MemberDrawer({
                   {dayRecord && dayRecord.status !== "published" && dayRecord.status !== "exempted" && dayRecord.status !== "unconfirmed" && (
                     <Button
                       variant="outline"
-                      className="w-full text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#C9604D]"
+                      className="w-full border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
                       onClick={() => setRemoveConfirmOpen(true)}
                     >
                       <Trash2 className="size-3.5 mr-1" />

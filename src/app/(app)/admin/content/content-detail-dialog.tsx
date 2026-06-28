@@ -1295,7 +1295,7 @@ export function ContentDetailDialog({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 gap-1.5 rounded-lg border-[#D97757]/40 bg-[#D97757]/5 text-[12px] text-[#D97757] hover:bg-[#D97757]/10"
+                        className="h-8 gap-1.5 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.98] transition-all duration-150"
                         onClick={handleGenerateAnalysis}
                         disabled={isGeneratingAnalysis}
                       >
@@ -1306,10 +1306,10 @@ export function ContentDetailDialog({
                   </div>
                 </section>
 
-                {/* AI 辅助分析（破格主角：暖橙渐变底 + 加粗左导轨） */}
+                {/* AI 辅助分析（破格主角：次级盆地 + 2px左导轨） */}
                 {(isGeneratingAnalysis || analysisResult) && (
                   <section className="space-y-2">
-                    <div className="rounded-xl border border-zinc-200 border-l-[3px] border-l-[#D97757] bg-gradient-to-b from-[#FFF8F3] to-white p-5">
+                    <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-zinc-100/50 p-5">
                       <div className="flex items-center gap-1.5">
                         <SparklesIcon className="size-3.5 stroke-[1.5] text-[#D97757]" />
                         <Eyebrow>AI 辅助分析</Eyebrow>

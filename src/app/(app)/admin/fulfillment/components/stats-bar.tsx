@@ -12,7 +12,7 @@ export function StatsBar({ stats }: StatsBarProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* 核心焦点卡片 - 今日待处理 (深色反差特权 / 一页一魂) */}
-      <div className="relative overflow-hidden rounded-xl bg-zinc-950 p-5 text-white shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:shadow-xl">
+      <div className="relative overflow-hidden rounded-xl bg-zinc-950 p-5 text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-white/10 transition-all duration-300">
         {/* 背景微网格渐变 */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-850/20 via-zinc-950 to-zinc-950 opacity-40 pointer-events-none" />
         
@@ -20,16 +20,13 @@ export function StatsBar({ stats }: StatsBarProps) {
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium tracking-wider text-zinc-400 uppercase">今日待处理</span>
             {hasPending ? (
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55]" />
             ) : (
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
             )}
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className="font-mono text-[36px] font-bold tabular-nums tracking-tight leading-none text-white">
+            <span className="font-mono text-[36px] font-semibold tabular-nums tracking-tight leading-none text-white">
               {stats.pendingToday}
             </span>
             <span className="text-[12px] font-medium text-zinc-400">人未处理</span>
@@ -43,13 +40,13 @@ export function StatsBar({ stats }: StatsBarProps) {
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium tracking-wider text-zinc-500 uppercase">连续未发人数</span>
             {stats.consecutiveMissingMembers > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 ring-1 ring-amber-600/10">
+              <span className="inline-flex items-center gap-1 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[10px] font-medium text-[#D99E55]">
                 需要关注
               </span>
             ) : null}
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className={`font-mono text-[36px] font-bold tabular-nums tracking-tight leading-none ${
+            <span className={`font-mono text-[36px] font-semibold tabular-nums tracking-tight leading-none ${
               stats.consecutiveMissingMembers > 0 ? "text-[#D99E55]" : "text-zinc-800"
             }`}>
               {stats.consecutiveMissingMembers}
@@ -77,21 +74,30 @@ export function StatsBar({ stats }: StatsBarProps) {
           <div className="mt-4 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-3">
             <div className="flex flex-col items-center">
               <span className="text-[10px] text-zinc-400 font-medium">总成员</span>
-              <span className="mt-1 font-mono text-[14px] font-bold text-zinc-700">{stats.totalMembers}</span>
+              <span className="mt-1 font-mono text-[14px] font-semibold text-zinc-750">{stats.totalMembers}</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[10px] text-[#6FAA7D] font-medium">今日已发</span>
-              <span className="mt-1 font-mono text-[14px] font-bold text-[#6FAA7D]">{stats.publishedToday}</span>
+              <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-0.5">
+                <span className="size-1 rounded-full bg-[#6FAA7D]" />
+                已发
+              </span>
+              <span className="mt-1 font-mono text-[14px] font-semibold text-zinc-850">{stats.publishedToday}</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[10px] text-[#8AA8C7] font-medium">请假/豁免</span>
-              <span className="mt-1 font-mono text-[14px] font-bold text-[#8AA8C7]">
+              <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-0.5">
+                <span className="size-1 rounded-full bg-[#8AA8C7]" />
+                豁免
+              </span>
+              <span className="mt-1 font-mono text-[14px] font-semibold text-zinc-850">
                 {stats.leaveToday + stats.waivedToday}
               </span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[10px] text-[#C9604D] font-medium">缺勤</span>
-              <span className="mt-1 font-mono text-[14px] font-bold text-[#C9604D]">{stats.absentToday}</span>
+              <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-0.5">
+                <span className="size-1 rounded-full bg-[#C9604D]" />
+                缺勤
+              </span>
+              <span className="mt-1 font-mono text-[14px] font-semibold text-zinc-850">{stats.absentToday}</span>
             </div>
           </div>
         </div>

@@ -172,12 +172,12 @@ function ManageTeamSheet({
                 {localTeams.map((team) => (
                   <div
                     key={team.id}
-                    className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-zinc-50"
+                    className="group flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-zinc-50"
                   >
                     <span className="text-[13px] text-zinc-700">{team.name}</span>
                     <button
                       type="button"
-                      className="active:translate-y-0 rounded-md p-1 text-zinc-300 transition-colors hover:text-[#C9604D]"
+                      className="active:translate-y-0 rounded-md p-1 text-zinc-300 transition-colors hover:text-[#C9604D] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                       onClick={() => setDeleteTarget(team)}
                     >
                       <Trash2 className="size-3.5" />

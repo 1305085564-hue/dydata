@@ -1388,7 +1388,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 exit={{ opacity: 0, scale: 0.96, y: -4 }}
                 transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                 style={{ transformOrigin: "top right" }}
-                className="absolute right-0 top-full z-30 mt-2 w-[min(720px,calc(100vw-3rem))] origin-top-right rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]"
+                className="absolute right-0 top-full z-30 mt-2 w-[min(720px,calc(100vw-3rem))] origin-top-right rounded-2xl border border-zinc-200 bg-white p-5 ring-1 ring-foreground/10 shadow-sm"
               >
                 <div className="flex flex-col gap-3 border-b border-zinc-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">

@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status: FulfillmentStatus }) {
     waived: { label: "豁免", dot: "bg-[#8AA8C7]" },
     exempted: { label: "豁免期", dot: "bg-[#8AA8C7]/50" },
     absent: { label: "缺勤", dot: "bg-[#C9604D]" },
-    unconfirmed: { label: "待确认", dot: "bg-zinc-300" },
+    unconfirmed: { label: "待确认", dot: "bg-zinc-200" },
   };
   const c = config[status] ?? config.unconfirmed;
   return (
@@ -187,7 +187,7 @@ export function ExceptionQueue({
                 return (
                   <tr
                     key={member.userId}
-                    className="group border-b border-zinc-100 last:border-b-0 transition-colors duration-150 odd:bg-white even:bg-zinc-50/20 hover:bg-zinc-50/60!"
+                    className="group border-b border-zinc-100 last:border-b-0 transition-colors duration-150 bg-white hover:bg-zinc-100"
                   >
                     <td className="px-3 py-2.5">
                       <Checkbox
@@ -201,7 +201,7 @@ export function ExceptionQueue({
                         onClick={() => onMemberClick(member)}
                         className="text-left group/btn"
                       >
-                        <p className="font-medium text-zinc-800 group-hover/btn:text-[#D97757] transition-colors">
+                        <p className="font-medium text-zinc-800 group-hover/btn:text-zinc-950 transition-colors">
                           {member.userName}
                         </p>
                         <p className="text-[11px] text-zinc-400">
@@ -249,7 +249,7 @@ export function ExceptionQueue({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D] font-medium"
+                          className="h-8 border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 font-medium"
                           disabled={isMarking}
                           onClick={() => handleQuickMark(member.userId, "confirmed_published")}
                         >
@@ -317,7 +317,7 @@ export function ExceptionQueue({
             <Button
               variant="outline"
               size="sm"
-              className="text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D]"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
               onClick={() => openBatchConfirm("confirmed_published")}
             >
               批量确认已发
@@ -325,7 +325,7 @@ export function ExceptionQueue({
             <Button
               variant="outline"
               size="sm"
-              className="text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5 hover:text-[#8AA8C7]"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
               onClick={() => openBatchConfirm("leave")}
             >
               批量请假
@@ -333,7 +333,7 @@ export function ExceptionQueue({
             <Button
               variant="outline"
               size="sm"
-              className="text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5 hover:text-[#8AA8C7]"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
               onClick={() => openBatchConfirm("waived")}
             >
               批量豁免
@@ -369,7 +369,7 @@ export function ExceptionQueue({
               value={batchReason}
               onChange={(e) => setBatchReason(e.target.value)}
               placeholder="请输入批量操作原因..."
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-1 focus:ring-zinc-950/5"
+              className="w-full rounded-lg border border-transparent bg-zinc-100/70 px-3 py-2 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5"
             />
           </div>
           <DialogFooter>

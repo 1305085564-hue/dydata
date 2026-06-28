@@ -485,7 +485,7 @@ export function TeamGroupManager({
                       groupMembers.map((member) => (
                         <div
                           key={member.id}
-                          className="flex items-center justify-between gap-2 rounded-xl bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition"
+                          className="group flex items-center justify-between gap-2 rounded-xl bg-zinc-50 px-3 py-2 hover:bg-zinc-100 transition"
                         >
                           <span className="text-[13px]">{member.name}</span>
                           {access.canEditGroups && member.role === "member" ? (
@@ -493,7 +493,7 @@ export function TeamGroupManager({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-zinc-500 hover:text-[#C9604D]"
+                              className="text-zinc-500 hover:text-[#C9604D] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                               onClick={() => handleRemoveMember(member.id)}
                               disabled={isPending}
                             >

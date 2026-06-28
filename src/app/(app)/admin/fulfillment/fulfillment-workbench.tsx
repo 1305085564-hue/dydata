@@ -569,7 +569,8 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
               <TabsTrigger value="appeals" className="text-[14px]">
                 待审核申诉
                 {pendingAppeals.length > 0 ? (
-                  <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold animate-pulse">
+                  <span className="ml-1.5 inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium">
+                    <span className="size-1 rounded-full bg-[#D99E55]" />
                     {pendingAppeals.length}
                   </span>
                 ) : (

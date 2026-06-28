@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { loadContentToolsPageData } from "@/lib/loaders/content-tools-page";
-import { ContentToolsClient } from "./content-tools-client";
+import ContentToolsLoading from "./loading";
+import { ContentToolsDataContainer } from "./content-tools-data-container";
 
 export default async function ContentToolsPage() {
   const supabase = await createClient();
@@ -11,10 +12,9 @@ export default async function ContentToolsPage() {
 
   if (!user) redirect("/login");
 
-  const data = await loadContentToolsPageData({
-    supabase,
-    userId: user.id,
-  });
-
-  return <ContentToolsClient accounts={data.accounts} summary={data.summary} />;
+  return (
+    <Suspense fallback={<ContentToolsLoading />}>
+      <ContentToolsDataContainer userId={user.id} />
+    </Suspense>
+  );
 }

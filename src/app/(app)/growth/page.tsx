@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { loadGrowthPageData } from "@/lib/loaders/growth-page";
-import { GrowthClientShell } from "./growth-client";
+import GrowthLoading from "./loading";
+import { GrowthDataContainer } from "./growth-data-container";
 
 export default async function GrowthPage() {
   const supabase = await createClient();
@@ -11,12 +12,9 @@ export default async function GrowthPage() {
 
   if (!user) redirect("/login");
 
-  const data = await loadGrowthPageData({
-    supabase,
-    userId: user.id,
-    userEmail: user.email,
-    mode: "initial",
-  });
-
-  return <GrowthClientShell {...data} />;
+  return (
+    <Suspense fallback={<GrowthLoading />}>
+      <GrowthDataContainer userId={user.id} userEmail={user.email} />
+    </Suspense>
+  );
 }

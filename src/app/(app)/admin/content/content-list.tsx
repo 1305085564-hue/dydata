@@ -45,12 +45,12 @@ interface ContentListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
-  删稿: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  限流: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
+  正常: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
+  删稿: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
+  限流: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
+  投流: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  活动干预: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  "未满24h": "border-zinc-200 bg-zinc-100/50 text-zinc-500",
 };
 
 const PAGE_SIZE = 30;
@@ -250,7 +250,7 @@ function MiniTimeline({
       {/* Tooltip */}
       {hovered && tooltip && (
         <div
-          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-600 shadow-sm"
+          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] text-white shadow-md"
           style={{ top: tooltip.y - 12 }}
         >
           {tooltip.label}
@@ -265,18 +265,18 @@ function MiniTimeline({
 /* ------------------------------------------------------------------ */
 
 const workflowStatusClass: Record<string, string> = {
-  not_started: "border-zinc-200 bg-zinc-50 text-zinc-500",
-  draft: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  confirmed: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  sent: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
-  viewed: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  not_started: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
+  draft: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  confirmed: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  sent: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
+  viewed: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
 };
 
 const readinessClass: Record<string, string> = {
-  missing_snapshot: "border-zinc-200 bg-zinc-50 text-zinc-500",
-  missing_content: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  missing_segments: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  ready: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  missing_snapshot: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
+  missing_content: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
+  missing_segments: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  ready: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
 };
 
 export function ContentList({
@@ -582,7 +582,7 @@ export function ContentList({
           >
             <Table>
               <TableHeader className="sticky top-0 z-10">
-                <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
+                <TableRow className="border-b border-zinc-200 bg-zinc-100/50 hover:bg-zinc-100/50">
                   <TableHead className="h-9 w-16 text-[12px] font-medium text-zinc-500">排名</TableHead>
                   <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-zinc-500">标题</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
@@ -631,7 +631,7 @@ export function ContentList({
                         <TableRow
                           data-video-id={video.id}
                           className={[
-                            "group border-b border-zinc-100 hover:bg-zinc-50",
+                            "group border-b border-zinc-100 hover:bg-zinc-100",
                             isNewBatch && "animate-fade-in-up",
                           ].filter(Boolean).join(" ")}
                           style={
@@ -669,7 +669,7 @@ export function ContentList({
                                 return (
                                   <Button
                                     size="sm"
-                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     批改
@@ -681,7 +681,7 @@ export function ContentList({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800 transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     查看
@@ -692,7 +692,7 @@ export function ContentList({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                  className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                   onClick={() => onSelectVideoId(video.id)}
                                 >
                                   批改
@@ -742,8 +742,8 @@ export function ContentList({
                                     variant="outline"
                                     className={`text-[10px] scale-90 -translate-x-1 ${
                                       card.employee_reply_status === "acknowledged"
-                                        ? "border-green-200 bg-green-50 text-green-700 font-medium"
-                                        : "border-amber-200 bg-amber-50 text-amber-700 font-medium"
+                                        ? "border-[#6FAA7D]/15 bg-[#6FAA7D]/[0.04] text-[#6FAA7D] font-medium"
+                                        : "border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium"
                                     }`}
                                   >
                                     {card.employee_reply_status === "acknowledged" ? "已回传：采纳" : "已回传：申诉"}
