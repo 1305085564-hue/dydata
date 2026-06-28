@@ -219,32 +219,27 @@ export function NavBarClient({
                   <button
                     type="button"
                     onClick={() => setIsAccountMenuOpen((open) => !open)}
-                    className="group flex items-end gap-2.5 rounded-2xl border border-transparent px-2 pb-1 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100/80"
+                    className={cn(
+                      "group flex items-center justify-between gap-1.5 rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1 transition-all duration-150 hover:bg-zinc-50 hover:border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)]",
+                      isAccountMenuOpen && "border-zinc-300 bg-zinc-50"
+                    )}
                     aria-expanded={isAccountMenuOpen}
                     aria-haspopup="listbox"
                   >
-                    <div className="hidden items-end gap-2 sm:flex pb-0.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[13px] font-semibold text-zinc-700">
-                        {initial}
-                      </div>
-                      <div className="min-w-0 flex items-baseline gap-1.5 pb-1.5">
-                        <span className="max-w-24 truncate text-[13px] font-medium leading-none text-zinc-800">{name}</span>
-                        {selectedAccount && (
-                          <>
-                            <span className="text-[12px] text-zinc-300">|</span>
-                            <span className="max-w-28 truncate text-[12px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <span className="max-w-24 truncate text-[13px] font-medium text-zinc-700 sm:hidden mb-2">{name}</span>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[14px] font-semibold text-zinc-700 sm:hidden">
-                      {initial}
+                    <div className="min-w-0 flex flex-col items-start text-left">
+                      <span className="max-w-[90px] truncate text-[11px] font-semibold leading-tight text-zinc-900">
+                        {name}
+                      </span>
+                      {selectedAccount && (
+                        <span className="max-w-[100px] truncate text-[10px] font-medium leading-none text-zinc-500 mt-0.5 tracking-tight">
+                          {selectedAccount.display_name}
+                        </span>
+                      )}
                     </div>
                     <ChevronDown
                       size={12}
                       className={cn(
-                        "hidden text-zinc-400 transition-transform sm:block mb-2",
+                        "text-zinc-500 transition-transform shrink-0 ml-0.5",
                         isAccountMenuOpen && "rotate-180",
                       )}
                     />
@@ -301,24 +296,16 @@ export function NavBarClient({
               ) : (
                 <div className="flex items-end gap-2">
                   <ProfileEditDialog currentName={name} role={role} accounts={accounts} trigger="menu-item">
-                    <div className="group flex items-end gap-2 rounded-2xl border border-transparent px-2 pb-1 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100/80">
-                      <div className="hidden items-end gap-2 sm:flex pb-0.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[13px] font-semibold text-zinc-700">
-                          {initial}
-                        </div>
-                        <div className="min-w-0 flex items-baseline gap-1.5 pb-1.5">
-                          <span className="max-w-24 truncate text-[13px] font-medium leading-none text-zinc-800">{name}</span>
-                          {selectedAccount && (
-                            <>
-                              <span className="text-[12px] text-zinc-300">|</span>
-                              <span className="max-w-28 truncate text-[12px] font-semibold leading-none text-zinc-500">{selectedAccount.display_name}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <span className="max-w-24 truncate text-[13px] font-medium text-zinc-700 sm:hidden mb-2">{name}</span>
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 border border-zinc-200/50 text-[14px] font-semibold text-zinc-700 sm:hidden">
-                        {initial}
+                    <div className="group flex items-center gap-1.5 rounded-lg border border-zinc-200/80 bg-white px-2.5 py-1.5 transition-all duration-150 hover:bg-zinc-50 hover:border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] cursor-pointer">
+                      <div className="min-w-0 flex flex-col items-start text-left">
+                        <span className="max-w-[90px] truncate text-[11px] font-semibold leading-tight text-zinc-900">
+                          {name}
+                        </span>
+                        {selectedAccount && (
+                          <span className="max-w-[100px] truncate text-[10px] font-medium leading-none text-zinc-500 mt-0.5 tracking-tight">
+                            {selectedAccount.display_name}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </ProfileEditDialog>
