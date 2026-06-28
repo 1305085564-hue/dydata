@@ -496,7 +496,7 @@ export async function loadViolationCaseDetail({
 
   // Fallback to query knowledge_cases directly
   try {
-    const { data: kcData, error: kcError } = await supabase
+    const { data: kcData, error: kcError } = await (supabase as any)
       .from("knowledge_cases")
       .select(`
         id,

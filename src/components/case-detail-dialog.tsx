@@ -48,6 +48,8 @@ type DetailRow = ViolationDetail & {
   total_follows?: number | null;
   usage_count?: number | null;
   weighted_conversion_rate?: number | null;
+  revision_note?: string | null;
+  revision_missing_fields?: string[] | null;
 };
 
 export function CaseDetailDialog({

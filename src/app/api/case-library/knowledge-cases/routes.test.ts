@@ -9,7 +9,7 @@ test("enrich verify route 缺少 hook_text 时返回 400", async () => {
     admin_insight: "这条案例的高转化点在开头冲突。",
   });
 
-  assert.equal(response.status, 400);
+  assert.equal(response!.status, 400);
 });
 
 test("enrich verify route 调用 enrich_and_verify_case RPC", async () => {
@@ -36,18 +36,18 @@ test("enrich verify route 调用 enrich_and_verify_case RPC", async () => {
           },
         },
       }) as never,
-      unwrapCaseLibraryRpc: (result) => ({ data: result.data }),
+      unwrapCaseLibraryRpc: (result: any) => ({ data: result.data ?? undefined }),
     },
   );
 
-  assert.equal(response.status, 200);
-  assert.equal((await response.json()).item.status, "verified");
+  assert.equal(response!.status, 200);
+  assert.equal((await response!.json()).item.status, "verified");
 });
 
 test("request supplement route 缺少 reason 时返回 400", async () => {
   const response = await buildRequestKnowledgeCaseSupplementResponse("case-1", {});
 
-  assert.equal(response.status, 400);
+  assert.equal(response!.status, 400);
 });
 
 test("request supplement route 调用 request_case_supplement RPC", async () => {
@@ -69,10 +69,10 @@ test("request supplement route 调用 request_case_supplement RPC", async () => 
           },
         },
       }) as never,
-      unwrapCaseLibraryRpc: (result) => ({ data: result.data }),
+      unwrapCaseLibraryRpc: (result: any) => ({ data: result.data ?? undefined }),
     },
   );
 
-  assert.equal(response.status, 200);
-  assert.equal((await response.json()).item.status, "needs_revision");
+  assert.equal(response!.status, 200);
+  assert.equal((await response!.json()).item.status, "needs_revision");
 });

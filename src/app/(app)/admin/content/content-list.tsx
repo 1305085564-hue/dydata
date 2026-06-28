@@ -14,6 +14,7 @@ import {
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getShanghaiDateString } from "@/lib/remind-submission";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
+import { ContentDetailDialog } from "./content-detail-dialog";
 import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -846,7 +847,7 @@ export function ContentList({
       <ContentDetailDialog
         open={selectedVideo !== null}
         onOpenChange={(open) => {
-          if (!open) setSelectedVideoId(null);
+          if (!open) onSelectVideoId(null);
         }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
