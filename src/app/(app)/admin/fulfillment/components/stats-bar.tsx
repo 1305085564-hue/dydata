@@ -20,7 +20,10 @@ export function StatsBar({ stats }: StatsBarProps) {
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium tracking-wider text-zinc-400 uppercase">今日待处理</span>
             {hasPending ? (
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55]" />
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute -inset-0.5 rounded-full bg-[#D99E55]/40 animate-pulse" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#D99E55]" />
+              </span>
             ) : (
               <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
             )}
