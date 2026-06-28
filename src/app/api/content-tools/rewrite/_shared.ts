@@ -15,6 +15,24 @@ function normalizeRewriteApiErrorMessage(message: string) {
       message.includes("schema cache") ||
       message.includes("does not exist") ||
       message.includes("Could not find the '"));
+  const missingV2SchemaVersion =
+    message.includes("schema_version") &&
+    (message.includes("column") && message.includes("does not exist") ||
+      message.includes("schema cache") ||
+      message.includes("Could not find the '"));
+  const missingV2Tables =
+    (message.includes("rewrite_documents") ||
+      message.includes("rewrite_skills") ||
+      message.includes("rewrite_skill_versions") ||
+      message.includes("ai_providers") ||
+      message.includes("ai_provider_keys")) &&
+    (message.includes("relation") && message.includes("does not exist") ||
+      message.includes("Could not find the table") ||
+      message.includes("schema cache"));
+
+  if (missingV2SchemaVersion || missingV2Tables) {
+    return "文案助手 v2 数据表未就绪，请先执行对应 migration";
+  }
 
   if (
     missingRewriteTableOrColumn ||

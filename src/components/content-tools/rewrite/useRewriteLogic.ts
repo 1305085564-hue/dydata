@@ -151,6 +151,10 @@ export function useRewriteLogic() {
   const [isSending, setIsSending] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
+  // New States for Double-column Workspace
+  const [activeOriginalDraft, setActiveOriginalDraft] = useState('');
+  const [polishedText, setPolishedText] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentConversationIdRef = useRef<string | null>(null);
   const messageCacheRef = useRef(new Map<string, Message[]>());
@@ -195,6 +199,34 @@ export function useRewriteLogic() {
   useEffect(() => {
     currentConversationIdRef.current = currentConversationId;
   }, [currentConversationId]);
+
+  // Sync original draft and polished text based on message stream
+  useEffect(() => {
+    if (messages.length === 0) {
+      setActiveOriginalDraft('');
+      setPolishedText('');
+      return;
+    }
+
+    // 1. Find the first User message content as the original draft baseline
+    const firstUserMsg = messages.find((m) => m.role === 'user');
+    if (firstUserMsg) {
+      setActiveOriginalDraft(firstUserMsg.content);
+    } else {
+      setActiveOriginalDraft('');
+    }
+
+    // 2. Find the last Assistant message content (including currently streaming ones)
+    const assistantMsgs = messages.filter((m) => m.role === 'assistant');
+    if (assistantMsgs.length > 0) {
+      const lastAssistant = assistantMsgs[assistantMsgs.length - 1];
+      const recommendedText = lastAssistant.structuredResult?.final?.recommendedText ?? '';
+      const firstVersion = lastAssistant.structuredResult?.final?.versions?.[0]?.content ?? '';
+      setPolishedText(recommendedText || firstVersion || lastAssistant.content || '');
+    } else {
+      setPolishedText('');
+    }
+  }, [messages]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -629,6 +661,47 @@ export function useRewriteLogic() {
     }
   }
 
+  function handleReloadAsInput(text: string) {
+    handleNewConversation();
+    setInputText(text);
+    setActiveOriginalDraft(text);
+  }
+
+  function handleUpdateLastAssistantMessage(newText: string) {
+    setMessages((prev) => {
+      const next = [...prev];
+      const lastAssistantIdx = [...next].reverse().findIndex((m) => m.role === 'assistant');
+      if (lastAssistantIdx !== -1) {
+        const actualIdx = next.length - 1 - lastAssistantIdx;
+        const target = next[actualIdx];
+
+        const updatedStructuredResult = target.structuredResult
+          ? {
+              ...target.structuredResult,
+              final: {
+                ...target.structuredResult.final,
+                recommendedText: newText,
+                versions: target.structuredResult.final.versions.map((v, idx) =>
+                  idx === 0 ? { ...v, content: newText } : v
+                ),
+              },
+            }
+          : null;
+
+        next[actualIdx] = {
+          ...target,
+          content: newText,
+          structuredResult: updatedStructuredResult,
+        };
+
+        if (currentConversationIdRef.current) {
+          cacheConversationMessages(currentConversationIdRef.current, next);
+        }
+      }
+      return next;
+    });
+  }
+
   function handleCopy(key: string, text: string) {
     navigator.clipboard.writeText(text).catch(() => {});
     setCopiedKey(key);
@@ -656,6 +729,8 @@ export function useRewriteLogic() {
       interactionControlsDisabled,
       activeFixedMode,
       customControlsLocked,
+      activeOriginalDraft,
+      polishedText,
     },
     actions: {
       setSelectedFixedModeId,
@@ -669,6 +744,8 @@ export function useRewriteLogic() {
       handleSend,
       handleCopy,
       prefetchConversation,
+      handleReloadAsInput,
+      handleUpdateLastAssistantMessage,
     }
   };
 }
