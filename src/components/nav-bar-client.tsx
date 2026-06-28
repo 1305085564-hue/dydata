@@ -193,7 +193,7 @@ export function NavBarClient({
                           : "text-zinc-500 hover:text-zinc-800"
                       )}
                     >
-                      工作台
+                      用户
                     </Link>
                     <Link
                       href="/admin/content"
@@ -205,7 +205,7 @@ export function NavBarClient({
                           : "text-zinc-500 hover:text-zinc-800"
                       )}
                     >
-                      管理后台
+                      管理
                     </Link>
                   </div>
                 </>
