@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { AlertCircle, UserCheck, UserX, UserMinus, ShieldCheck } from "lucide-react";
+import { AlertCircle, ChevronDown } from "lucide-react";
 
 import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +15,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 type MarkAction = Extract<FulfillmentStatus, "leave" | "waived" | "absent" | "confirmed_published">;
 
@@ -29,37 +35,12 @@ interface ExceptionQueueProps {
   onMemberClick: (member: FulfillmentMemberSummary) => void;
 }
 
-const QUICK_ACTIONS: {
-  action: MarkAction;
-  label: string;
-  icon: React.ReactNode;
-  colorClass: string;
-}[] = [
-  {
-    action: "leave",
-    label: "请假",
-    icon: <UserMinus className="size-3" />,
-    colorClass: "text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5",
-  },
-  {
-    action: "waived",
-    label: "豁免",
-    icon: <ShieldCheck className="size-3" />,
-    colorClass: "text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5",
-  },
-  {
-    action: "absent",
-    label: "缺勤",
-    icon: <UserX className="size-3" />,
-    colorClass: "text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5",
-  },
-  {
-    action: "confirmed_published",
-    label: "确认已发",
-    icon: <UserCheck className="size-3" />,
-    colorClass: "text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5",
-  },
-];
+const ACTION_LABELS: Record<MarkAction, string> = {
+  leave: "请假",
+  waived: "豁免",
+  absent: "缺勤",
+  confirmed_published: "确认已发",
+};
 
 function StatusBadge({ status }: { status: FulfillmentStatus }) {
   const config: Record<string, { label: string; dot: string }> = {
@@ -142,7 +123,7 @@ export function ExceptionQueue({
 
   if (members.length === 0) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white py-12">
+      <div className="rounded-2xl border border-zinc-200/50 bg-white py-12 shadow-sm">
         <EmptyState
           title="当前范围内无人待处理"
           description="所有成员的发布状态已确认完毕"
@@ -165,11 +146,11 @@ export function ExceptionQueue({
       </div>
 
       {/* 列表 */}
-      <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
+      <div className="rounded-2xl border border-zinc-200/50 bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50/50">
+              <tr className="border-b border-zinc-200/50 bg-zinc-50/50">
                 <th className="w-10 px-3 py-2.5 text-left">
                   <Checkbox
                     checked={allSelected}
@@ -192,7 +173,7 @@ export function ExceptionQueue({
                   发布率
                 </th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                  快速操作
+                  操作
                 </th>
               </tr>
             </thead>
@@ -206,7 +187,7 @@ export function ExceptionQueue({
                 return (
                   <tr
                     key={member.userId}
-                    className="border-b border-zinc-100 last:border-b-0 transition-colors duration-150 hover:bg-zinc-50/50"
+                    className="border-b border-zinc-100 last:border-b-0 transition-colors duration-150 hover:bg-zinc-50/30"
                   >
                     <td className="px-3 py-2.5">
                       <Checkbox
@@ -218,9 +199,9 @@ export function ExceptionQueue({
                       <button
                         type="button"
                         onClick={() => onMemberClick(member)}
-                        className="text-left"
+                        className="text-left group"
                       >
-                        <p className="font-medium text-zinc-800 hover:text-[#D97757] transition-colors">
+                        <p className="font-medium text-zinc-800 group-hover:text-[#D97757] transition-colors">
                           {member.userName}
                         </p>
                         <p className="text-[11px] text-zinc-400">
@@ -264,24 +245,49 @@ export function ExceptionQueue({
                       </span>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-end gap-1">
-                        {QUICK_ACTIONS.map(({ action, label, icon, colorClass }) => (
-                          <Button
-                            key={action}
-                            variant="outline"
-                            size="icon-xs"
-                            className={`size-7 ${colorClass}`}
-                            title={label}
-                            disabled={isMarking || todayRecord?.status === action}
-                            onClick={() => handleQuickMark(member.userId, action)}
-                          >
-                            {isMarking ? (
-                              <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                            ) : (
-                              icon
-                            )}
-                          </Button>
-                        ))}
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D] font-medium"
+                          disabled={isMarking}
+                          onClick={() => handleQuickMark(member.userId, "confirmed_published")}
+                        >
+                          {isMarking && markingId === member.userId ? (
+                            <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" />
+                          ) : null}
+                          确认已发
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="outline" size="sm" className="h-8 text-zinc-600 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-800">
+                                异常打标 <ChevronDown className="size-3 ml-1 text-zinc-400" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end" className="w-32 bg-white">
+                            <DropdownMenuItem
+                              onClick={() => handleQuickMark(member.userId, "leave")}
+                              className="text-zinc-700 cursor-pointer hover:bg-zinc-50"
+                            >
+                              请假
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleQuickMark(member.userId, "waived")}
+                              className="text-zinc-700 cursor-pointer hover:bg-zinc-50"
+                            >
+                              豁免
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleQuickMark(member.userId, "absent")}
+                              variant="destructive"
+                              className="cursor-pointer hover:bg-red-50"
+                            >
+                              确认缺勤
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
@@ -294,44 +300,64 @@ export function ExceptionQueue({
 
       {/* 批量操作浮条 */}
       {someSelected && (
-        <div className="sticky bottom-4 z-30 flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+        <div className="sticky bottom-4 z-30 flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-3 shadow-md">
           <div className="flex items-center gap-3">
             <span className="text-[13px] font-medium text-zinc-700">
-              已选 <span className="font-mono tabular-nums text-[#D97757]">{selectedIds.size}</span> 人
+              已选 <span className="font-mono tabular-nums text-[#D97757] font-semibold">{selectedIds.size}</span> 人
             </span>
             <button
               type="button"
               onClick={() => onSelectAll(false)}
-              className="text-[12px] text-zinc-400 hover:text-zinc-600"
+              className="text-[12px] text-zinc-400 hover:text-zinc-600 transition-colors"
             >
               清除
             </button>
           </div>
           <div className="flex items-center gap-2">
-            {QUICK_ACTIONS.map(({ action, label, colorClass }) => (
-              <Button
-                key={action}
-                variant="outline"
-                size="sm"
-                className={colorClass}
-                onClick={() => openBatchConfirm(action)}
-              >
-                批量{label}
-              </Button>
-            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D]"
+              onClick={() => openBatchConfirm("confirmed_published")}
+            >
+              批量确认已发
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5 hover:text-[#8AA8C7]"
+              onClick={() => openBatchConfirm("leave")}
+            >
+              批量请假
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[#8AA8C7] border-[#8AA8C7]/30 hover:bg-[#8AA8C7]/5 hover:text-[#8AA8C7]"
+              onClick={() => openBatchConfirm("waived")}
+            >
+              批量豁免
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => openBatchConfirm("absent")}
+            >
+              批量确认缺勤
+            </Button>
           </div>
         </div>
       )}
 
       {/* 批量确认弹窗 */}
       <Dialog open={batchConfirmOpen} onOpenChange={setBatchConfirmOpen}>
-        <DialogContent showCloseButton={!batchSubmitting}>
+        <DialogContent showCloseButton={!batchSubmitting} className="bg-white">
           <DialogHeader>
             <DialogTitle>
-              批量{batchAction ? QUICK_ACTIONS.find((a) => a.action === batchAction)?.label : ""}
+              批量{batchAction ? ACTION_LABELS[batchAction] : ""}
             </DialogTitle>
             <DialogDescription>
-              将对 {selectedIds.size} 位成员执行此操作，确认后继续。
+              将对 {selectedIds.size} 位成员执行批量{batchAction ? ACTION_LABELS[batchAction] : ""}操作，确认后继续。
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">

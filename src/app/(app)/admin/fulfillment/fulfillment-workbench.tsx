@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
+import { toast } from "sonner";
 
 import type {
   FulfillmentCalendarData,
@@ -14,13 +14,16 @@ import { StatsBar } from "./components/stats-bar";
 import { ExceptionQueue } from "./components/exception-queue";
 import { MonthlyMatrix } from "./components/monthly-matrix";
 import { MemberDrawer } from "./components/member-drawer";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Source = "queue" | "matrix";
 type MarkAction = Extract<FulfillmentStatus, "leave" | "waived" | "absent" | "confirmed_published">;
 
 interface FulfillmentWorkbenchProps {
-  data: FulfillmentCalendarData;
-  range: TimeRangePreset;
+  initialData: FulfillmentCalendarData;
+  initialRange: TimeRangePreset;
 }
 
 function formatTodayDateOnly() {
@@ -110,10 +113,23 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
   };
 }
 
-export function FulfillmentWorkbench({ data, range }: FulfillmentWorkbenchProps) {
-  const router = useRouter();
+export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentWorkbenchProps) {
   const today = formatTodayDateOnly();
 
+  // 1. 核心状态：日历数据与范围
+  const [calendarData, setCalendarData] = useState<FulfillmentCalendarData>(initialData);
+  const [range, setRange] = useState<TimeRangePreset>(initialRange);
+  const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
+
+  // 2. 飞书自动催交总开关状态
+  const [feishuEnabled, setFeishuEnabled] = useState(false);
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
+
+  // 3. 申诉状态
+  const [appeals, setAppeals] = useState<any[]>([]);
+  const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
+
+  // 4. 选择与抽屉状态
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -126,24 +142,145 @@ export function FulfillmentWorkbench({ data, range }: FulfillmentWorkbenchProps)
   const queueRef = useRef<FulfillmentMemberSummary[]>([]);
   const queueIndexRef = useRef<number>(-1);
 
-  // 客户端过滤 + 排序
+  // 5. 初始化配置加载与申诉加载
+  const fetchAppeals = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/fulfillment/appeals?limit=150");
+      if (res.ok) {
+        const result = await res.json();
+        setAppeals(result.appeals || []);
+      }
+    } catch (err) {
+      console.error("加载申诉失败", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/admin/system/settings");
+        if (res.ok) {
+          const val = await res.json();
+          setFeishuEnabled(val.feishuFulfillmentReminderEnabled);
+        }
+      } catch (err) {
+        console.error("加载飞书设置失败", err);
+      }
+    }
+    loadSettings();
+    fetchAppeals();
+  }, [fetchAppeals]);
+
+  // 6. 飞书总开关变更处理
+  const handleFeishuChange = async (checked: boolean) => {
+    setIsUpdatingSettings(true);
+    // 乐观更新
+    setFeishuEnabled(checked);
+    try {
+      const res = await fetch("/api/admin/system/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feishuFulfillmentReminderEnabled: checked }),
+      });
+      if (!res.ok) {
+        throw new Error("更新失败");
+      }
+      toast.success(checked ? "已开启飞书自动催交" : "已关闭飞书自动催交");
+    } catch {
+      toast.error("更新飞书催交配置失败，已回滚");
+      setFeishuEnabled(!checked);
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
+  // 7. 处理申诉审批动作
+  const handleHandleAppeal = async (appealId: string, decision: "approve" | "reject") => {
+    setIsSubmittingAppeal(true);
+    try {
+      const res = await fetch("/api/admin/fulfillment/appeal/handle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appealId, decision }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "操作失败" }));
+        toast.error(err.error || "操作失败");
+        return;
+      }
+      toast.success(decision === "approve" ? "已同意申诉并改判" : "已驳回申诉");
+      
+      // 静默重新加载日历和申诉
+      await fetchAppeals();
+      const calendarRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+      if (calendarRes.ok) {
+        const refreshResult = await calendarRes.json();
+        setCalendarData(refreshResult.data);
+      }
+    } catch {
+      toast.error("处理申诉发生网络错误");
+    } finally {
+      setIsSubmittingAppeal(false);
+    }
+  };
+
+  // 8. 客户端无感日历加载器
+  const loadCalendar = useCallback(async (targetYear: number, targetMonth: number, targetRange: TimeRangePreset) => {
+    setIsLoadingCalendar(true);
+    try {
+      const res = await fetch(`/api/admin/fulfillment/calendar?year=${targetYear}&month=${targetMonth}`);
+      if (!res.ok) throw new Error("加载数据失败");
+      const result = await res.json();
+      setCalendarData(result.data);
+
+      // 同步 URL 参数
+      const url = new URL(window.location.href);
+      url.searchParams.set("year", String(targetYear));
+      url.searchParams.set("month", String(targetMonth));
+      url.searchParams.set("range", targetRange);
+      window.history.pushState(null, "", url.pathname + url.search);
+    } catch {
+      toast.error("加载履约日历失败，请重试");
+    } finally {
+      setIsLoadingCalendar(false);
+    }
+  }, []);
+
+  const handlePresetChange = useCallback(
+    (targetPreset: TimeRangePreset, targetYear: number, targetMonth: number) => {
+      setRange(targetPreset);
+      loadCalendar(targetYear, targetMonth, targetPreset);
+    },
+    [loadCalendar]
+  );
+
+  const handleMonthChange = useCallback(
+    (targetYear: number, targetMonth: number) => {
+      loadCalendar(targetYear, targetMonth, range);
+    },
+    [loadCalendar, range]
+  );
+
+  // 9. 客户端过滤与统计
   const filteredMembers = useMemo(
-    () => filterMembers(data.members, selectedTeam, selectedGroup, range, today),
-    [data.members, selectedTeam, selectedGroup, range, today],
+    () => filterMembers(calendarData.members, selectedTeam, selectedGroup, range, today),
+    [calendarData.members, selectedTeam, selectedGroup, range, today],
   );
 
   const exceptionMembers = useMemo(() => {
-    // 异常队列：默认显示今天 unconfirmed 的人
+    // 异常队列：待处理 unconfirmed 成员
     const exceptions = filteredMembers.filter((m) => m.days[today]?.status === "unconfirmed");
     return sortExceptions(exceptions, today);
   }, [filteredMembers, today]);
 
-  const stats = useMemo(() => calcStats(filteredMembers, today), [filteredMembers, today]);
+  const pendingAppeals = useMemo(() => {
+    if (!Array.isArray(appeals)) return [];
+    // 过滤出当前管理范围内的 pending 申诉
+    const visibleUserSet = new Set(calendarData.members.map((m) => m.userId));
+    return appeals.filter((a) => a.status === "pending" && visibleUserSet.has(a.user_id));
+  }, [appeals, calendarData.members]);
 
-  // 矩阵成员：全部过滤后成员（用于月度矩阵显示）
-  const matrixMembers = useMemo(() => {
-    return filteredMembers;
-  }, [filteredMembers]);
+  const stats = useMemo(() => calcStats(filteredMembers, today), [filteredMembers, today]);
 
   const handleTeamChange = useCallback((team: string | null) => {
     setSelectedTeam(team);
@@ -197,16 +334,19 @@ export function FulfillmentWorkbench({ data, range }: FulfillmentWorkbenchProps)
     setSheetOpen(true);
   }, []);
 
-  const handleMonthChange = useCallback(
-    (year: number, month: number) => {
-      router.push(`/admin/fulfillment?year=${year}&month=${month}&range=${range}`);
-    },
-    [router, range],
-  );
-
+  // 10. 操作回调
   const handleActionComplete = useCallback(() => {
-    router.refresh();
     setSelectedIds(new Set());
+
+    // 重新拉取最新的日历和申诉
+    fetchAppeals();
+    fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`)
+      .then(async (res) => {
+        if (res.ok) {
+          const r = await res.json();
+          setCalendarData(r.data);
+        }
+      });
 
     if (source === "queue") {
       const queue = queueRef.current;
@@ -223,93 +363,329 @@ export function FulfillmentWorkbench({ data, range }: FulfillmentWorkbenchProps)
         }, 200);
       }
     }
-  }, [source, router, today]);
+  }, [source, today, calendarData.year, calendarData.month, fetchAppeals]);
 
+  // 11. 快速与批量打标的乐观更新机制
   const handleQuickMark = useCallback(
     async (userId: string, status: MarkAction) => {
-      const res = await fetch("/api/admin/fulfillment/mark", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          recordDate: today,
-          status,
-        }),
+      const originalMembers = calendarData.members;
+
+      // 乐观更新状态
+      setCalendarData((prev) => {
+        const nextMembers = prev.members.map((m) => {
+          if (m.userId !== userId) return m;
+          const originalRecord = m.days[today];
+          const newRecord = {
+            ...originalRecord,
+            userId,
+            userName: m.userName,
+            teamId: m.teamId,
+            teamName: m.teamName,
+            groupId: m.groupId,
+            groupName: m.groupName,
+            date: today,
+            status,
+            reason: "",
+            markedByName: "您",
+            publishedCount: originalRecord?.publishedCount || 0,
+            consecutiveMissing: 0,
+          };
+          const nextDays = { ...m.days, [today]: newRecord };
+          
+          let publishedDays = 0;
+          let leaveDays = 0;
+          let waivedDays = 0;
+          let absentDays = 0;
+          Object.values(nextDays).forEach((d) => {
+            if (d.status === "published" || d.status === "confirmed_published") publishedDays++;
+            else if (d.status === "leave") leaveDays++;
+            else if (d.status === "waived" || d.status === "exempted") waivedDays++;
+            else if (d.status === "absent") absentDays++;
+          });
+          
+          return {
+            ...m,
+            consecutiveMissing: 0,
+            publishedDays,
+            leaveDays,
+            waivedDays,
+            absentDays,
+            fulfillmentRate: m.totalDays > 0 ? Math.round((publishedDays / m.totalDays) * 100) : 0,
+            days: nextDays,
+          };
+        });
+        return { ...prev, members: nextMembers };
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "标记失败" }));
-        throw new Error(err.error || "标记失败");
+
+      // 静默发包
+      try {
+        const res = await fetch("/api/admin/fulfillment/mark", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            recordDate: today,
+            status,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "标记失败" }));
+          throw new Error(err.error || "标记失败");
+        }
+        toast.success("标记成功");
+        
+        // 后台静默刷新以同步统计大盘
+        const refreshRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+        if (refreshRes.ok) {
+          const refreshResult = await refreshRes.json();
+          setCalendarData(refreshResult.data);
+        }
+      } catch (err: any) {
+        toast.error(err.message || "标记失败，已回滚");
+        setCalendarData((prev) => ({ ...prev, members: originalMembers }));
       }
-      router.refresh();
     },
-    [router, today],
+    [calendarData.members, calendarData.year, calendarData.month, today]
   );
 
   const handleBatchMark = useCallback(
     async (userIds: string[], status: MarkAction, reason: string) => {
-      const res = await fetch("/api/admin/fulfillment/bulk-mark", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userIds,
-          recordDate: today,
-          status,
-          reason: reason || null,
-        }),
+      const originalMembers = calendarData.members;
+
+      // 乐观更新状态
+      setCalendarData((prev) => {
+        const nextMembers = prev.members.map((m) => {
+          if (!userIds.includes(m.userId)) return m;
+          const originalRecord = m.days[today];
+          const newRecord = {
+            ...originalRecord,
+            userId: m.userId,
+            userName: m.userName,
+            teamId: m.teamId,
+            teamName: m.teamName,
+            groupId: m.groupId,
+            groupName: m.groupName,
+            date: today,
+            status,
+            reason,
+            markedByName: "您",
+            publishedCount: originalRecord?.publishedCount || 0,
+            consecutiveMissing: 0,
+          };
+          const nextDays = { ...m.days, [today]: newRecord };
+
+          let publishedDays = 0;
+          let leaveDays = 0;
+          let waivedDays = 0;
+          let absentDays = 0;
+          Object.values(nextDays).forEach((d) => {
+            if (d.status === "published" || d.status === "confirmed_published") publishedDays++;
+            else if (d.status === "leave") leaveDays++;
+            else if (d.status === "waived" || d.status === "exempted") waivedDays++;
+            else if (d.status === "absent") absentDays++;
+          });
+
+          return {
+            ...m,
+            consecutiveMissing: 0,
+            publishedDays,
+            leaveDays,
+            waivedDays,
+            absentDays,
+            fulfillmentRate: m.totalDays > 0 ? Math.round((publishedDays / m.totalDays) * 100) : 0,
+            days: nextDays,
+          };
+        });
+        return { ...prev, members: nextMembers };
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "批量标记失败" }));
-        throw new Error(err.error || "批量标记失败");
-      }
-
       setSelectedIds(new Set());
-      router.refresh();
+
+      // 静默发包
+      try {
+        const res = await fetch("/api/admin/fulfillment/bulk-mark", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userIds,
+            recordDate: today,
+            status,
+            reason: reason || null,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "批量标记失败" }));
+          throw new Error(err.error || "批量标记失败");
+        }
+        toast.success("批量标记成功");
+
+        // 后台静默刷新以同步统计大盘
+        const refreshRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+        if (refreshRes.ok) {
+          const refreshResult = await refreshRes.json();
+          setCalendarData(refreshResult.data);
+        }
+      } catch (err: any) {
+        toast.error(err.message || "批量标记失败，已回滚");
+        setCalendarData((prev) => ({ ...prev, members: originalMembers }));
+      }
     },
-    [router, today],
+    [calendarData.members, calendarData.year, calendarData.month, today]
   );
 
   return (
     <div className="space-y-6">
       {/* 筛选工具栏 */}
       <FilterBar
-        year={data.year}
-        month={data.month}
+        year={calendarData.year}
+        month={calendarData.month}
         range={range}
-        members={data.members}
+        members={calendarData.members}
         selectedTeam={selectedTeam}
         selectedGroup={selectedGroup}
         onTeamChange={handleTeamChange}
         onGroupChange={handleGroupChange}
+        onPresetChange={handlePresetChange}
+        feishuEnabled={feishuEnabled}
+        isUpdatingSettings={isUpdatingSettings}
+        onFeishuChange={handleFeishuChange}
       />
 
       {/* 统计条 */}
       <StatsBar stats={stats} />
 
-      {/* P0 — 异常处理队列 */}
-      <section>
-        <ExceptionQueue
-          members={exceptionMembers}
-          today={today}
-          selectedIds={selectedIds}
-          onSelectToggle={handleSelectToggle}
-          onSelectAll={handleSelectAll}
-          onQuickMark={handleQuickMark}
-          onBatchMark={handleBatchMark}
-          onMemberClick={handleQueueMemberClick}
-        />
+      {/* P0 — 待处理工作流 (Tab 整合：异常处理队列 与 待处理申诉列表) */}
+      <section className="space-y-3">
+        <Tabs defaultValue="exceptions" className="w-full">
+          <div className="flex items-center justify-between border-b border-zinc-200/50 pb-2">
+            <TabsList variant="line">
+              <TabsTrigger value="exceptions" className="text-[14px]">
+                待处理异常
+                <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                  {exceptionMembers.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="appeals" className="text-[14px]">
+                待审核申诉
+                {pendingAppeals.length > 0 ? (
+                  <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold animate-pulse">
+                    {pendingAppeals.length}
+                  </span>
+                ) : (
+                  <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                    0
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="exceptions" className="mt-3">
+            {isLoadingCalendar ? (
+              <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
+                <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
+                <span className="text-[13px] text-zinc-500">正在刷新数据...</span>
+              </div>
+            ) : (
+              <ExceptionQueue
+                members={exceptionMembers}
+                today={today}
+                selectedIds={selectedIds}
+                onSelectToggle={handleSelectToggle}
+                onSelectAll={handleSelectAll}
+                onQuickMark={handleQuickMark}
+                onBatchMark={handleBatchMark}
+                onMemberClick={handleQueueMemberClick}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="appeals" className="mt-3">
+            {isSubmittingAppeal ? (
+              <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
+                <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
+                <span className="text-[13px] text-zinc-500">正在处理申诉...</span>
+              </div>
+            ) : pendingAppeals.length === 0 ? (
+              <div className="rounded-2xl border border-zinc-200/50 bg-white py-12 shadow-sm">
+                <EmptyState title="当前无待处理申诉" description="所有成员的申诉请求已处理完毕" />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-zinc-200/50 bg-white overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[13px]">
+                    <thead>
+                      <tr className="border-b border-zinc-200/50 bg-zinc-50/50">
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">成员</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">申诉日期</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">申诉原因</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">提交时间</th>
+                        <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingAppeals.map((appeal) => (
+                        <tr key={appeal.id} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/30 transition-colors">
+                          <td className="px-3 py-2.5 font-medium text-zinc-800">{appeal.user_name || "未知成员"}</td>
+                          <td className="px-3 py-2.5 font-mono text-[12px]">{appeal.record_date}</td>
+                          <td className="px-3 py-2.5 text-zinc-600 max-w-[240px] truncate" title={appeal.reason}>
+                            {appeal.reason}
+                          </td>
+                          <td className="px-3 py-2.5 text-zinc-400 font-mono text-[11px]">
+                            {new Date(appeal.created_at).toLocaleString("zh-CN")}
+                          </td>
+                          <td className="px-3 py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D] font-medium"
+                                onClick={() => handleHandleAppeal(appeal.id, "approve")}
+                              >
+                                同意并改判
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#C9604D] font-medium"
+                                onClick={() => handleHandleAppeal(appeal.id, "reject")}
+                              >
+                                驳回
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </section>
 
       {/* P2 — 月度矩阵（可折叠） */}
       <section>
-        <MonthlyMatrix
-          year={data.year}
-          month={data.month}
-          members={matrixMembers}
-          today={today}
-          onCellClick={handleMatrixCellClick}
-          onMonthChange={handleMonthChange}
-        />
+        {isLoadingCalendar ? (
+          <div className="flex flex-col gap-3">
+            <button disabled className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left">
+              <span className="text-[14px] font-semibold text-zinc-400">正在刷新日历数据...</span>
+              <span className="size-4 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
+            </button>
+          </div>
+        ) : (
+          <MonthlyMatrix
+            year={calendarData.year}
+            month={calendarData.month}
+            members={filteredMembers}
+            today={today}
+            onCellClick={handleMatrixCellClick}
+            onMonthChange={handleMonthChange}
+            appeals={appeals}
+          />
+        )}
       </section>
 
       {/* P3 — 成员履约抽屉 */}
@@ -320,6 +696,7 @@ export function FulfillmentWorkbench({ data, range }: FulfillmentWorkbenchProps)
         date={selectedDate}
         source={source}
         onActionComplete={handleActionComplete}
+        appeals={appeals}
       />
     </div>
   );

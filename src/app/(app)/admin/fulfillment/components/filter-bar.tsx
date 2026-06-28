@@ -1,8 +1,6 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import { useRouter } from "next/navigation";
-
 import type { TimeRangePreset } from "@/types/fulfillment";
 import type { FulfillmentMemberSummary } from "@/types/fulfillment";
 import {
@@ -12,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface FilterBarProps {
   year: number;
@@ -22,6 +21,10 @@ interface FilterBarProps {
   selectedGroup: string | null;
   onTeamChange: (team: string | null) => void;
   onGroupChange: (group: string | null) => void;
+  onPresetChange: (preset: TimeRangePreset, targetYear: number, targetMonth: number) => void;
+  feishuEnabled: boolean;
+  isUpdatingSettings: boolean;
+  onFeishuChange: (checked: boolean) => void;
 }
 
 const PRESET_OPTIONS: { value: TimeRangePreset; label: string }[] = [
@@ -58,8 +61,11 @@ export function FilterBar({
   selectedGroup,
   onTeamChange,
   onGroupChange,
+  onPresetChange,
+  feishuEnabled,
+  isUpdatingSettings,
+  onFeishuChange,
 }: FilterBarProps) {
-  const router = useRouter();
   const teams = Array.from(
     new Set(members.map((member) => member.teamName).filter((teamName): teamName is string => Boolean(teamName))),
   ).sort();
@@ -82,7 +88,7 @@ export function FilterBar({
       targetMonth = d.getMonth() + 1;
     }
 
-    router.push(`/admin/fulfillment?year=${targetYear}&month=${targetMonth}&range=${preset}`);
+    onPresetChange(preset, targetYear, targetMonth);
   };
 
   const handleTeamChange = (value: string | null) => {
@@ -97,54 +103,66 @@ export function FilterBar({
   return (
     <div className="flex flex-col gap-3">
       {/* 时间筛选 + 团队筛选 行 */}
-      <div className="flex flex-wrap items-center gap-2">
-        {/* 时间预设按钮 */}
-        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1">
-          {PRESET_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => handlePresetChange(opt.value)}
-              className={`rounded-md px-2.5 py-1 text-[13px] transition-colors duration-150 ${
-                range === opt.value
-                  ? "bg-zinc-100 font-medium text-zinc-800"
-                  : "text-zinc-500 hover:text-zinc-700"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 时间预设按钮 */}
+          <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+            {PRESET_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handlePresetChange(opt.value)}
+                className={`rounded-md px-2.5 py-1 text-[13px] transition-colors duration-150 ${
+                  range === opt.value
+                    ? "bg-zinc-100 font-medium text-zinc-800"
+                    : "text-zinc-500 hover:text-zinc-700"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 团队筛选 */}
+          <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
+            <SelectTrigger size="sm" className="w-40">
+              <SelectValue placeholder="全部团队" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">全部团队</SelectItem>
+              {teams.map((team) => (
+                <SelectItem key={team} value={team}>
+                  {team}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* 小组筛选 */}
+          <Select value={selectedGroup ?? ""} onValueChange={handleGroupChange}>
+            <SelectTrigger size="sm" className="w-40">
+              <SelectValue placeholder="全部小组" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">全部小组</SelectItem>
+              {groups.map((group) => (
+                <SelectItem key={group} value={group}>
+                  {group}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* 团队筛选 */}
-        <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
-          <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="全部团队" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">全部团队</SelectItem>
-            {teams.map((team) => (
-              <SelectItem key={team} value={team}>
-                {team}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* 小组筛选 */}
-        <Select value={selectedGroup ?? ""} onValueChange={handleGroupChange}>
-          <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="全部小组" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">全部小组</SelectItem>
-            {groups.map((group) => (
-              <SelectItem key={group} value={group}>
-                {group}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* 飞书催交总开关 */}
+        <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 shadow-sm hover:shadow-md transition-shadow duration-200">
+          <span className="text-[12px] font-medium text-zinc-600">飞书自动催交</span>
+          {isUpdatingSettings ? (
+            <div className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
+          ) : (
+            <Switch checked={feishuEnabled} onCheckedChange={onFeishuChange} />
+          )}
+        </div>
       </div>
 
       {/* 当前范围指示 */}

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
 
 import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface MonthlyMatrixProps {
   year: number;
@@ -13,6 +14,7 @@ interface MonthlyMatrixProps {
   today: string;
   onCellClick: (member: FulfillmentMemberSummary, date: string) => void;
   onMonthChange: (year: number, month: number) => void;
+  appeals?: any[];
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -42,7 +44,7 @@ function getStatusColor(status: FulfillmentStatus | undefined): string {
       return "bg-zinc-300";
     default:
       return "bg-zinc-100";
-  }
+    }
 }
 
 function getStatusLabel(status: FulfillmentStatus | undefined): string {
@@ -59,10 +61,29 @@ function getStatusLabel(status: FulfillmentStatus | undefined): string {
   return labels[status] ?? status;
 }
 
-export function MonthlyMatrix({ year, month, members, today, onCellClick, onMonthChange }: MonthlyMatrixProps) {
+export function MonthlyMatrix({
+  year,
+  month,
+  members,
+  today,
+  onCellClick,
+  onMonthChange,
+  appeals = [],
+}: MonthlyMatrixProps) {
   const [expanded, setExpanded] = useState(false);
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
   const dayNumbers = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
+
+  // 构建申诉缓存映射以供快速查找
+  const appealMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (Array.isArray(appeals)) {
+      for (const appeal of appeals) {
+        map.set(`${appeal.user_id}_${appeal.record_date}`, appeal);
+      }
+    }
+    return map;
+  }, [appeals]);
 
   const handlePrevMonth = () => {
     if (month === 1) {
@@ -91,151 +112,206 @@ export function MonthlyMatrix({ year, month, members, today, onCellClick, onMont
   };
 
   return (
-    <div className="space-y-3">
-      {/* 折叠头部 */}
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-zinc-50/50"
-      >
-        <div className="flex items-center gap-3">
-          <h2 className="text-[14px] font-semibold text-zinc-700">月度矩阵</h2>
-          <span className="text-[12px] text-zinc-400">
-            {year}年{month}月 · {members.length} 人
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {expanded && (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon-xs" onClick={handlePrevMonth}>
-                <ChevronLeft className="size-3.5" />
-              </Button>
-              <span className="min-w-[72px] text-center text-[12px] font-medium text-zinc-600">
-                {year}年{month}月
-              </span>
-              <Button variant="ghost" size="icon-xs" onClick={handleNextMonth}>
-                <ChevronRight className="size-3.5" />
-              </Button>
-              {!isCurrentMonth() && (
-                <Button variant="ghost" size="xs" onClick={handleCurrentMonth} className="ml-1 text-[11px]">
-                  当月
+    <TooltipProvider delay={100}>
+      <div className="space-y-3">
+        {/* 折叠头部 */}
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="flex w-full items-center justify-between rounded-xl border border-zinc-200/50 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-zinc-50/30"
+        >
+          <div className="flex items-center gap-3">
+            <h2 className="text-[14px] font-semibold text-zinc-700">月度矩阵</h2>
+            <span className="text-[12px] text-zinc-400">
+              {year}年{month}月 · {members.length} 人
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {expanded && (
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon-xs" onClick={handlePrevMonth}>
+                  <ChevronLeft className="size-3.5" />
                 </Button>
-              )}
-            </div>
-          )}
-          {expanded ? (
-            <ChevronUp className="size-4 text-zinc-400" />
-          ) : (
-            <ChevronDown className="size-4 text-zinc-400" />
-          )}
-        </div>
-      </button>
+                <span className="min-w-[72px] text-center text-[12px] font-medium text-zinc-600">
+                  {year}年{month}月
+                </span>
+                <Button variant="ghost" size="icon-xs" onClick={handleNextMonth}>
+                  <ChevronRight className="size-3.5" />
+                </Button>
+                {!isCurrentMonth() && (
+                  <Button variant="ghost" size="xs" onClick={handleCurrentMonth} className="ml-1 text-[11px]">
+                    当月
+                  </Button>
+                )}
+              </div>
+            )}
+            {expanded ? (
+              <ChevronUp className="size-4 text-zinc-400" />
+            ) : (
+              <ChevronDown className="size-4 text-zinc-400" />
+            )}
+          </div>
+        </button>
 
-      {/* 展开内容 */}
-      {expanded && (
-        <div className="space-y-3">
-          <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-zinc-200">
-                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200 bg-white px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400">
-                    成员
-                  </th>
-                  {dayNumbers.map((day) => {
-                    const dateKey = formatDateKey(year, month, day);
-                    const isToday = dateKey === today;
-                    return (
-                      <th
-                        key={day}
-                        className={`min-w-[28px] px-0.5 py-2 text-center text-[11px] font-medium tabular-nums ${
-                          isToday ? "text-[#D97757]" : "text-zinc-400"
-                        }`}
-                      >
-                        {day}
-                      </th>
-                    );
-                  })}
-                  <th className="min-w-[72px] border-l border-zinc-200 px-3 py-2 text-right text-[11px] font-medium text-zinc-400">
-                    实发/应发
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0">
-                    <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2">
-                      <div className="flex flex-col">
-                        <span className="text-[13px] font-medium text-zinc-800">{member.userName}</span>
-                        <span className="text-[11px] text-zinc-400">{member.groupName ?? member.teamName ?? ""}</span>
-                      </div>
-                    </td>
+        {/* 展开内容 */}
+        {expanded && (
+          <div className="space-y-3">
+            <div className="overflow-x-auto rounded-2xl border border-zinc-200/50 bg-white shadow-sm">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-200/50">
+                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200/50 bg-white px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                      成员
+                    </th>
                     {dayNumbers.map((day) => {
                       const dateKey = formatDateKey(year, month, day);
-                      const record = member.days[dateKey];
-                      const status = record?.status;
                       const isToday = dateKey === today;
-
                       return (
-                        <td key={day} className="px-0.5 py-1.5">
-                          <button
-                            type="button"
-                            onClick={() => onCellClick(member, dateKey)}
-                            title={`${member.userName} · ${dateKey} · ${getStatusLabel(status)}`}
-                            className={`mx-auto block size-[18px] rounded-sm transition-transform duration-150 hover:scale-125 ${getStatusColor(status)} ${
-                              isToday ? "ring-1 ring-[#D97757]/40" : ""
-                            }`}
-                          />
-                        </td>
+                        <th
+                          key={day}
+                          className={`min-w-[28px] px-0.5 py-2 text-center text-[11px] font-medium tabular-nums ${
+                            isToday ? "text-[#D97757]" : "text-zinc-400"
+                          }`}
+                        >
+                          {day}
+                        </th>
                       );
                     })}
-                    <td className="border-l border-zinc-200 px-3 py-2 text-right">
-                      <span
-                        className={`font-mono text-[12px] tabular-nums font-medium ${
-                          member.publishedDays >= member.totalDays
-                            ? "text-[#6FAA7D]"
-                            : member.publishedDays / member.totalDays >= 0.6
-                              ? "text-zinc-700"
-                              : "text-[#C9604D]"
-                        }`}
-                      >
-                        {member.publishedDays}
-                      </span>
-                      <span className="mx-0.5 text-[11px] text-zinc-300">/</span>
-                      <span className="font-mono text-[12px] tabular-nums text-zinc-400">
-                        {member.totalDays}
-                      </span>
-                    </td>
+                    <th className="min-w-[72px] border-l border-zinc-200/50 px-3 py-2 text-right text-[11px] font-medium text-zinc-400">
+                      实发/应发
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
 
-          {/* 图例 */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#6FAA7D]" />
-              已发布
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]" />
-              请假
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]/50" />
-              豁免
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#C9604D]" />
-              缺勤
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-zinc-300" />
-              待确认
-            </span>
+                <tbody>
+                  {members.map((member) => (
+                    <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0">
+                      <td className="sticky left-0 z-10 border-r border-zinc-200/50 bg-white px-3 py-2 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                        <div className="flex flex-col">
+                          <span className="text-[13px] font-medium text-zinc-800">{member.userName}</span>
+                          <span className="text-[11px] text-zinc-400">{member.groupName ?? member.teamName ?? ""}</span>
+                        </div>
+                      </td>
+                      {dayNumbers.map((day) => {
+                        const dateKey = formatDateKey(year, month, day);
+                        const record = member.days[dateKey];
+                        const status = record?.status;
+                        const isToday = dateKey === today;
+                        const appeal = appealMap.get(`${member.userId}_${dateKey}`);
+
+                        return (
+                          <td key={day} className="px-0.5 py-1.5">
+                            <Tooltip>
+                              <TooltipTrigger
+                                render={
+                                  <button
+                                    type="button"
+                                    onClick={() => onCellClick(member, dateKey)}
+                                    className={`mx-auto block size-[18px] rounded-sm transition-transform duration-150 hover:scale-125 ${getStatusColor(status)} ${
+                                      isToday ? "ring-1 ring-[#D97757] ring-offset-1" : ""
+                                    } ${appeal ? "ring-2 ring-amber-500 ring-offset-0.5 animate-pulse" : ""}`}
+                                  />
+                                }
+                              />
+                              <TooltipContent
+                                className="flex flex-col items-start gap-1.5 p-3 bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg shadow-xl w-60 z-50 text-[11px]"
+                                align="center"
+                                side="top"
+                              >
+                                <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
+                                  <span className="font-semibold text-zinc-200">{dateKey}</span>
+                                  <span className="font-medium text-zinc-400">{member.userName}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className={`size-2 rounded-full ${getStatusColor(status)}`} />
+                                  <span className="font-semibold">{getStatusLabel(status)}</span>
+                                  {record && record.publishedCount > 0 && (
+                                    <span className="text-zinc-500 font-mono">({record.publishedCount} 条视频)</span>
+                                  )}
+                                </div>
+                                
+                                {record?.reason && (
+                                  <div className="w-full text-zinc-400 bg-zinc-900/50 p-1.5 rounded border border-zinc-800/40">
+                                    <span className="text-zinc-500 block text-[10px] font-medium">打标原因：</span>
+                                    <p className="mt-0.5 text-zinc-300 leading-normal">{record.reason}</p>
+                                    {record.markedByName && (
+                                      <span className="block text-[9px] text-zinc-500 mt-1 text-right">— 标记人: {record.markedByName}</span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {appeal && (
+                                  <div className="w-full border border-amber-500/20 bg-amber-500/10 p-1.5 rounded text-amber-200 mt-1">
+                                    <div className="flex items-center gap-1 font-semibold">
+                                      <span className="size-1 bg-amber-400 rounded-full" />
+                                      员工申诉 ({appeal.status === "pending" ? "待处理" : appeal.status === "approved" ? "申诉通过" : "被驳回"})
+                                    </div>
+                                    <p className="mt-1 text-zinc-300 leading-relaxed italic text-[10px]">
+                                      "{appeal.reason}"
+                                    </p>
+                                    {appeal.handler_name && (
+                                      <span className="block text-[9px] text-zinc-400 mt-1 text-right">处理人: {appeal.handler_name}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          </td>
+                        );
+                      })}
+                      <td className="border-l border-zinc-200/50 px-3 py-2 text-right">
+                        <span
+                          className={`font-mono text-[12px] tabular-nums font-medium ${
+                            member.publishedDays >= member.totalDays
+                              ? "text-[#6FAA7D]"
+                              : member.publishedDays / member.totalDays >= 0.6
+                                ? "text-zinc-700"
+                                : "text-[#C9604D]"
+                          }`}
+                        >
+                          {member.publishedDays}
+                        </span>
+                        <span className="mx-0.5 text-[11px] text-zinc-300">/</span>
+                        <span className="font-mono text-[12px] tabular-nums text-zinc-400">
+                          {member.totalDays}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 图例 */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block size-[10px] rounded-sm bg-[#6FAA7D]" />
+                已发布 / 已确认
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]" />
+                请假
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]/50" />
+                豁免
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block size-[10px] rounded-sm bg-[#C9604D]" />
+                缺勤
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block size-[10px] rounded-sm bg-zinc-300" />
+                待确认
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block size-[10px] rounded-sm border-2 border-amber-500" />
+                有申诉
+              </span>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }

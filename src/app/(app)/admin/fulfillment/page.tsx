@@ -68,5 +68,5 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 
 async function FulfillmentDataContainer({ year, month, visibleUserIds, range }: { year: number, month: number, visibleUserIds: string[], range: TimeRangePreset }) {
   const data = await loadFulfillmentCalendar(year, month, visibleUserIds);
-  return <FulfillmentWorkbench data={data} range={range} />;
+  return <FulfillmentWorkbench initialData={data} initialRange={range} />;
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
 import {
@@ -26,6 +27,7 @@ interface MemberDrawerProps {
   date: string | null;
   source: Source;
   onActionComplete: () => void;
+  appeals?: any[];
 }
 
 interface ActionConfig {
@@ -60,13 +62,21 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function MemberDrawer({ open, onOpenChange, member, date, onActionComplete }: MemberDrawerProps) {
+export function MemberDrawer({
+  open,
+  onOpenChange,
+  member,
+  date,
+  onActionComplete,
+  appeals = [],
+}: MemberDrawerProps) {
   const [activeAction, setActiveAction] = useState<MarkAction | null>(null);
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(date);
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
 
   // 同步外部 date 到内部 selectedDate
   const effectiveDate = selectedDate ?? date;
@@ -78,6 +88,12 @@ export function MemberDrawer({ open, onOpenChange, member, date, onActionComplet
     if (!member) return [];
     return Object.keys(member.days).sort().reverse();
   }, [member]);
+
+  // 查找选中日期对应的申诉记录
+  const dateAppeal = useMemo(() => {
+    if (!member || !effectiveDate || !Array.isArray(appeals)) return null;
+    return appeals.find((a) => a.user_id === member.userId && a.record_date === effectiveDate);
+  }, [member, effectiveDate, appeals]);
 
   const handleActionClick = useCallback((action: MarkAction) => {
     setActiveAction(action);
@@ -105,13 +121,16 @@ export function MemberDrawer({ open, onOpenChange, member, date, onActionComplet
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "标记失败" }));
-        alert(err.error || "标记失败");
+        toast.error(err.error || "标记失败");
         return;
       }
+      toast.success("标记成功");
       setActiveAction(null);
       setReason("");
       onOpenChange(false);
       onActionComplete();
+    } catch {
+      toast.error("网络错误，标记失败");
     } finally {
       setIsSubmitting(false);
     }
@@ -131,16 +150,41 @@ export function MemberDrawer({ open, onOpenChange, member, date, onActionComplet
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "删除标记失败" }));
-        alert(err.error || "删除标记失败");
+        toast.error(err.error || "删除标记失败");
         return;
       }
+      toast.success("删除标记成功");
       setRemoveConfirmOpen(false);
       onOpenChange(false);
       onActionComplete();
+    } catch {
+      toast.error("网络错误，删除标记失败");
     } finally {
       setIsRemoving(false);
     }
   }, [member, effectiveDate, onOpenChange, onActionComplete]);
+
+  const handleHandleAppeal = useCallback(async (appealId: string, decision: "approve" | "reject") => {
+    setIsSubmittingAppeal(true);
+    try {
+      const res = await fetch("/api/admin/fulfillment/appeal/handle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appealId, decision }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "处理申诉失败" }));
+        toast.error(err.error || "处理申诉失败");
+        return;
+      }
+      toast.success(decision === "approve" ? "已同意申诉并改判" : "已驳回申诉");
+      onActionComplete();
+    } catch {
+      toast.error("网络错误，处理申诉失败");
+    } finally {
+      setIsSubmittingAppeal(false);
+    }
+  }, [onActionComplete]);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -178,7 +222,7 @@ export function MemberDrawer({ open, onOpenChange, member, date, onActionComplet
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="right" className="w-[480px]">
+        <SheetContent side="right" className="w-[480px] bg-white">
           <SheetHeader>
             <div className="flex items-center gap-2">
               <SheetTitle>{member.userName}</SheetTitle>
@@ -248,12 +292,12 @@ export function MemberDrawer({ open, onOpenChange, member, date, onActionComplet
               </section>
             )}
 
-            {/* 历史时间线 */}
+            {/* 历史记录时间线 */}
             <section>
               <h3 className="mb-3 text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-400">
                 历史记录
               </h3>
-              <div className="max-h-[280px] overflow-y-auto rounded-xl border border-zinc-200">
+              <div className="max-h-[200px] overflow-y-auto rounded-xl border border-zinc-200">
                 {historyDates.length === 0 ? (
                   <p className="p-4 text-[13px] text-zinc-400">暂无历史记录</p>
                 ) : (
@@ -296,39 +340,90 @@ export function MemberDrawer({ open, onOpenChange, member, date, onActionComplet
               </div>
             </section>
 
+            {/* 员工申诉状态 (新集成) */}
+            {dateAppeal && (
+              <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4 space-y-3">
+                <h4 className="text-[12px] font-semibold text-amber-800 flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-amber-400" />
+                  员工发起申诉
+                </h4>
+                <div className="text-[13px] text-zinc-700 bg-white border border-zinc-200/60 p-2.5 rounded-lg italic">
+                  "{dateAppeal.reason}"
+                </div>
+                <p className="text-[10px] text-zinc-400">
+                  提交时间: {new Date(dateAppeal.created_at).toLocaleString("zh-CN")}
+                </p>
+                
+                {dateAppeal.status === "pending" && (
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D] font-medium"
+                      onClick={() => handleHandleAppeal(dateAppeal.id, "approve")}
+                      disabled={isSubmittingAppeal}
+                    >
+                      同意并改判
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#C9604D] font-medium"
+                      onClick={() => handleHandleAppeal(dateAppeal.id, "reject")}
+                      disabled={isSubmittingAppeal}
+                    >
+                      驳回申诉
+                    </Button>
+                  </div>
+                )}
+
+                {dateAppeal.status !== "pending" && (
+                  <div className="text-[12px] font-medium pt-1 text-zinc-700">
+                    审批状态：
+                    <span className={dateAppeal.status === "approved" ? "text-green-600" : "text-red-600"}>
+                      {dateAppeal.status === "approved" ? "已同意改判" : "已驳回"}
+                    </span>
+                    {dateAppeal.handler_name && (
+                      <span className="text-zinc-400 ml-1.5 text-[11px]">({dateAppeal.handler_name})</span>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* 当日/选中日状态 */}
             <section>
               <h3 className="mb-3 text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-400">
                 {effectiveDate === date ? "当日状态" : `${effectiveDate?.slice(5)} 状态`}
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-2 bg-zinc-50/50 border border-zinc-200/50 rounded-xl p-3.5">
                 {dayRecord ? (
-                  <>
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-[13px]">
                       <span className="text-zinc-500">发布数量</span>
-                      <span className="font-mono tabular-nums font-medium text-zinc-800">
+                      <span className="font-mono tabular-nums font-semibold text-zinc-800">
                         {dayRecord.publishedCount} 条
                       </span>
                     </div>
                     {dayRecord.reason ? (
-                      <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-3">
-                        <p className="text-[12px] text-zinc-400">原因</p>
-                        <p className="mt-1 text-[13px] text-zinc-700">{dayRecord.reason}</p>
+                      <div className="rounded-lg border border-zinc-200/60 bg-white p-2.5">
+                        <p className="text-[11px] text-zinc-400">打标备注原因</p>
+                        <p className="mt-1 text-[13px] text-zinc-700 leading-normal">{dayRecord.reason}</p>
                       </div>
                     ) : null}
                     {dayRecord.markedByName ? (
                       <div className="flex items-center justify-between text-[13px]">
                         <span className="text-zinc-500">标记人</span>
-                        <span className="text-zinc-700">{dayRecord.markedByName}</span>
+                        <span className="text-zinc-700 font-medium">{dayRecord.markedByName}</span>
                       </div>
                     ) : null}
                     {dayRecord.markedAt ? (
                       <div className="flex items-center justify-between text-[13px]">
                         <span className="text-zinc-500">标记时间</span>
-                        <span className="text-zinc-700">{dayRecord.markedAt}</span>
+                        <span className="text-zinc-600 text-[12px]">{new Date(dayRecord.markedAt).toLocaleString("zh-CN")}</span>
                       </div>
                     ) : null}
-                  </>
+                  </div>
                 ) : (
                   <p className="text-[13px] text-zinc-500">当日无记录</p>
                 )}
@@ -393,7 +488,7 @@ export function MemberDrawer({ open, onOpenChange, member, date, onActionComplet
                   {dayRecord && dayRecord.status !== "published" && dayRecord.status !== "exempted" && dayRecord.status !== "unconfirmed" && (
                     <Button
                       variant="outline"
-                      className="w-full text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5"
+                      className="w-full text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#C9604D]"
                       onClick={() => setRemoveConfirmOpen(true)}
                     >
                       <Trash2 className="size-3.5 mr-1" />
