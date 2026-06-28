@@ -1,5 +1,6 @@
 import type {
   ContentFeedbackCardDetail,
+  ContentFeedbackReplyStatus,
   ContentFeedbackCardStatus,
   ContentFeedbackCardView,
   NextDayReviewResult,
@@ -16,6 +17,9 @@ type FeedbackCardLike = {
   confirmed_at: string | null;
   sent_at: string | null;
   viewed_at: string | null;
+  employee_reply_status?: ContentFeedbackReplyStatus | null;
+  employee_reply_text?: string | null;
+  employee_replied_at?: string | null;
 };
 
 type ConfirmOverrides = {
@@ -38,6 +42,17 @@ function getWorkflowLabel(status: ContentFeedbackCardView["workflow_status"]) {
   }
 }
 
+function getEmployeeReplyStatusLabel(status: ContentFeedbackReplyStatus) {
+  switch (status) {
+    case "acknowledged":
+      return "员工已确认";
+    case "disputed":
+      return "员工有异议";
+    default:
+      return "待员工回传";
+  }
+}
+
 export function buildContentFeedbackCardView(
   videoId: string,
   card: FeedbackCardLike | null,
@@ -54,6 +69,10 @@ export function buildContentFeedbackCardView(
     confirmed_at: card?.confirmed_at ?? null,
     sent_at: card?.sent_at ?? null,
     viewed_at: card?.viewed_at ?? null,
+    employee_reply_status: card?.employee_reply_status ?? "pending",
+    employee_reply_status_label: getEmployeeReplyStatusLabel(card?.employee_reply_status ?? "pending"),
+    employee_reply_text: card?.employee_reply_text ?? null,
+    employee_replied_at: card?.employee_replied_at ?? null,
     manager_note: card?.manager_note ?? null,
   };
 }
@@ -172,4 +191,4 @@ export function isFeedbackCardDelivered(status: ContentFeedbackCardView["workflo
 }
 
 export const CONTENT_FEEDBACK_CARD_SELECT =
-  "id, video_id, target_user_id, target_account_id, source_result_id, card_status, manager_note, draft_payload, confirmed_payload, draft_generated_at, confirmed_by, confirmed_at, sent_by, sent_at, viewed_at, created_at, updated_at";
+  "id, video_id, target_user_id, target_account_id, source_result_id, card_status, manager_note, draft_payload, confirmed_payload, draft_generated_at, confirmed_by, confirmed_at, sent_by, sent_at, viewed_at, employee_reply_status, employee_reply_text, employee_replied_at, employee_replied_by, created_at, updated_at";

@@ -188,6 +188,7 @@ export type VideoAssetMissingField =
   | "video_tags"
   | "content_segments";
 export type ContentFeedbackCardStatus = "draft" | "confirmed" | "sent" | "viewed";
+export type ContentFeedbackReplyStatus = "pending" | "acknowledged" | "disputed";
 export type ContentFeedbackWorkflowStatus = "not_started" | ContentFeedbackCardStatus;
 export type ContentReviewReadinessStatus =
   | "missing_snapshot"
@@ -472,6 +473,10 @@ export interface ContentFeedbackCard {
   sent_by: string | null;
   sent_at: string | null;
   viewed_at: string | null;
+  employee_reply_status?: ContentFeedbackReplyStatus | null;
+  employee_reply_text?: string | null;
+  employee_replied_at?: string | null;
+  employee_replied_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -486,6 +491,10 @@ export interface ContentFeedbackCardView {
   confirmed_at: string | null;
   sent_at: string | null;
   viewed_at: string | null;
+  employee_reply_status: ContentFeedbackReplyStatus;
+  employee_reply_status_label: string;
+  employee_reply_text: string | null;
+  employee_replied_at: string | null;
   manager_note: string | null;
 }
 

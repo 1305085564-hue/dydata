@@ -4,6 +4,10 @@ import { requireCaseLibraryServiceClient, unwrapCaseLibraryRpc } from "../_share
 
 type CaseLibraryInboxPayload = {
   pending_review?: unknown[];
+  violation_pending_review?: unknown[];
+  knowledge_pending_enrichment?: unknown[];
+  knowledge_needs_revision?: unknown[];
+  pending_review_conversion?: unknown[];
   missing_data?: unknown[];
   high_risk_pending?: unknown[];
   promotion_candidates?: unknown[];
@@ -55,6 +59,10 @@ export async function buildCaseLibraryInboxResponse(
 
   return NextResponse.json(unwrapped.data ?? {
     pending_review: [],
+    violation_pending_review: [],
+    knowledge_pending_enrichment: [],
+    knowledge_needs_revision: [],
+    pending_review_conversion: [],
     missing_data: [],
     high_risk_pending: [],
     promotion_candidates: [],

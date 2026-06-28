@@ -4,6 +4,10 @@ import { requireCaseLibraryServiceClient, unwrapCaseLibraryRpc } from "../../_sh
 
 type CaseLibraryInboxCounts = {
   pending_review?: number;
+  violation_pending_review?: number;
+  knowledge_pending_enrichment?: number;
+  knowledge_needs_revision?: number;
+  pending_review_conversion?: number;
   missing_data?: number;
   high_risk_pending?: number;
   promotion_candidates?: number;
@@ -55,6 +59,10 @@ export async function buildCaseLibraryInboxCountsResponse(
 
   return NextResponse.json(unwrapped.data ?? {
     pending_review: 0,
+    violation_pending_review: 0,
+    knowledge_pending_enrichment: 0,
+    knowledge_needs_revision: 0,
+    pending_review_conversion: 0,
     missing_data: 0,
     high_risk_pending: 0,
     promotion_candidates: 0,
