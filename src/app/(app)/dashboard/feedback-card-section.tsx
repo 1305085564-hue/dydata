@@ -62,15 +62,45 @@ function CardRow({
   expanded,
   onToggle,
   onMarkViewed,
+  onReplySubmitted,
 }: {
   item: FeedbackCardItem;
   expanded: boolean;
   onToggle: () => void;
   onMarkViewed: () => void;
+  onReplySubmitted: (cardId: string, replyStatus: "acknowledged" | "disputed", replyText: string) => void;
 }) {
   const reduceMotion = useReducedMotion();
   const isUnread = item.feedback_card.workflow_status === "sent";
   const confirmed = item.feedback_card.confirmed;
+
+  const [replyText, setReplyText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmitReply(status: "acknowledged" | "disputed") {
+    if (!replyText.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/content/feedback/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardId: item.feedback_card.card_id,
+          replyStatus: status,
+          replyText: replyText.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "回传失败");
+      feedbackToast.success("复盘已成功回传");
+      onReplySubmitted(item.feedback_card.card_id, status, replyText.trim());
+      setReplyText("");
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "提交失败");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   function handleClick() {
     onToggle();
@@ -185,6 +215,60 @@ function CardRow({
               {item.account?.name && (
                 <div className="text-[11px] text-zinc-400">账号：{item.account.name}</div>
               )}
+
+              {/* Employee reply section */}
+              {item.feedback_card.employee_reply_status && item.feedback_card.employee_reply_status !== "pending" ? (
+                <div className={cn(
+                  "rounded-xl border p-3 mt-2 text-xs space-y-1",
+                  item.feedback_card.employee_reply_status === "acknowledged"
+                    ? "border-green-200 bg-green-50/40 text-green-950"
+                    : "border-amber-200 bg-amber-50/40 text-amber-950"
+                )}>
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <span className={cn(
+                      "size-1.5 rounded-full",
+                      item.feedback_card.employee_reply_status === "acknowledged" ? "bg-green-500" : "bg-amber-500"
+                    )} />
+                    我的复盘：{item.feedback_card.employee_reply_status === "acknowledged" ? "已认可并采纳" : "已提出申诉/解释"}
+                  </div>
+                  {item.feedback_card.employee_reply_text && (
+                    <p className="leading-relaxed text-zinc-700 font-medium pl-3 border-l border-zinc-300">
+                      {item.feedback_card.employee_reply_text}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-4 pt-3 border-t border-zinc-100 space-y-3">
+                  <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                    复盘回传
+                  </div>
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    disabled={submitting}
+                    className="w-full min-h-[64px] rounded-xl border border-zinc-200 p-2.5 text-[12px] leading-relaxed text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-[#D97757] disabled:bg-zinc-50"
+                    placeholder="在此输入你对本条视频数据波动的复盘分析、客观原因或下一步改进方案..."
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={submitting || !replyText.trim()}
+                      onClick={() => handleSubmitReply("acknowledged")}
+                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-green-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {submitting ? "提交中..." : "认可并采纳"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={submitting || !replyText.trim()}
+                      onClick={() => handleSubmitReply("disputed")}
+                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-zinc-950 px-4 text-xs font-semibold text-white transition-colors hover:bg-zinc-900 disabled:opacity-50"
+                    >
+                      {submitting ? "提交中..." : "申诉/解释复盘"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -263,6 +347,27 @@ export function FeedbackCardSection() {
 
   const displayItems = data.items.slice(0, 8);
 
+  const handleReplySubmitted = useCallback((cardId: string, replyStatus: 'acknowledged' | 'disputed', replyText: string) => {
+    setData((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        items: prev.items.map((item) =>
+          item.feedback_card.card_id === cardId
+            ? {
+                ...item,
+                feedback_card: {
+                  ...item.feedback_card,
+                  employee_reply_status: replyStatus,
+                  employee_reply_text: replyText,
+                },
+              }
+            : item
+        ),
+      };
+    });
+  }, []);
+
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
@@ -289,6 +394,7 @@ export function FeedbackCardSection() {
               expanded={expandedId === cardId}
               onToggle={() => setExpandedId(expandedId === cardId ? null : cardId)}
               onMarkViewed={() => handleMarkViewed(cardId)}
+              onReplySubmitted={handleReplySubmitted}
             />
           );
         })}

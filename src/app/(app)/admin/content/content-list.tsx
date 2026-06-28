@@ -14,7 +14,6 @@ import {
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getShanghaiDateString } from "@/lib/remind-submission";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
-import { ContentDetailDialog } from "./content-detail-dialog";
 import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -40,6 +39,8 @@ interface ContentListProps {
   onLoadDeferredData?: () => Promise<void>;
   onFeedbackCardChanged?: (videoId: string, card: ContentFeedbackCardView) => void;
   onFeedbackCardsChanged?: (cards: Record<string, ContentFeedbackCardView>) => void;
+  selectedVideoId: string | null;
+  onSelectVideoId: (id: string | null) => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -290,6 +291,8 @@ export function ContentList({
   onLoadDeferredData,
   onFeedbackCardChanged,
   onFeedbackCardsChanged,
+  selectedVideoId,
+  onSelectVideoId,
 }: ContentListProps) {
   const [filters, setFilters] = useState<ContentFilterValue>({
     profileId: "all",
@@ -303,7 +306,6 @@ export function ContentList({
     rankScope: "all",
     sortMode: "latest",
   });
-  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
@@ -628,7 +630,7 @@ export function ContentList({
                         <TableRow
                           data-video-id={video.id}
                           className={[
-                            "border-b border-zinc-100 hover:bg-zinc-50",
+                            "group border-b border-zinc-100 hover:bg-zinc-50",
                             isNewBatch && "animate-fade-in-up",
                           ].filter(Boolean).join(" ")}
                           style={
@@ -666,8 +668,8 @@ export function ContentList({
                                 return (
                                   <Button
                                     size="sm"
-                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0"
-                                    onClick={() => setSelectedVideoId(video.id)}
+                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:translate-y-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    onClick={() => onSelectVideoId(video.id)}
                                   >
                                     批改
                                   </Button>
@@ -678,8 +680,8 @@ export function ContentList({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800"
-                                    onClick={() => setSelectedVideoId(video.id)}
+                                    className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800 transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    onClick={() => onSelectVideoId(video.id)}
                                   >
                                     查看
                                   </Button>
@@ -689,8 +691,8 @@ export function ContentList({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
-                                  onClick={() => setSelectedVideoId(video.id)}
+                                  className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                  onClick={() => onSelectVideoId(video.id)}
                                 >
                                   批改
                                 </Button>
@@ -727,12 +729,26 @@ export function ContentList({
                           </TableCell>
                           <TableCell>
                             {cardStatus !== "not_started" && card ? (
-                              <Badge
-                                variant="outline"
-                                className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
-                              >
-                                {card.workflow_label}
-                              </Badge>
+                              <div className="flex flex-col gap-1 items-start">
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                                >
+                                  {card.workflow_label}
+                                </Badge>
+                                {card.employee_reply_status && card.employee_reply_status !== "pending" && (
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-[10px] scale-90 -translate-x-1 ${
+                                      card.employee_reply_status === "acknowledged"
+                                        ? "border-green-200 bg-green-50 text-green-700 font-medium"
+                                        : "border-amber-200 bg-amber-50 text-amber-700 font-medium"
+                                    }`}
+                                  >
+                                    {card.employee_reply_status === "acknowledged" ? "已回传：采纳" : "已回传：申诉"}
+                                  </Badge>
+                                )}
+                              </div>
                             ) : readiness ? (
                               <Badge
                                 variant="outline"
@@ -763,12 +779,11 @@ export function ContentList({
           </div>
 
           {/* Load more button (manual fallback + visual anchor) */}
-          {hasMore && (
-            <div className="mt-4 flex justify-center">
+          {hasMore && !isLoadingMore && (
+            <div className="mt-2 flex justify-center">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="h-10 gap-1.5 rounded-xl border-zinc-200 px-6 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
                 onClick={() => {
                   if (hasDeferredData && onLoadDeferredData) {
                     void onLoadDeferredData();

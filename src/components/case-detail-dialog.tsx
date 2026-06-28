@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { Check, Copy, X } from "lucide-react";
+import { AlertTriangle, Check, Copy, X } from "lucide-react";
 
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ReviewDecisionPanel } from "@/app/(app)/violations/[id]/components/review-decision-panel";
+import { DataEnrichmentPanel } from "@/app/(app)/violations/[id]/components/data-enrichment-panel";
 import { UsageStateBadge } from "@/app/(app)/violations/components/case-state-badge";
 import { PassRateBadge } from "@/app/(app)/violations/components/pass-rate-badge";
 import {
@@ -162,7 +163,16 @@ export function CaseDetailDialog({
             </div>
           ) : data ? (
             <>
-            <div className="space-y-6 pt-5">
+              {data.status === "needs_revision" && (
+                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-xs text-amber-800 flex items-start gap-2.5">
+                  <AlertTriangle className="size-4.5 text-[#D99E55] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-amber-900">缺失凭证打回中</p>
+                    {data.revision_note && <p className="mt-1 text-zinc-600">{data.revision_note}</p>}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-6 pt-5">
               {/* 标签行 */}
               <div className="flex flex-wrap items-center gap-2">
                 {!isConversion && <UsageStateBadge usageState={data.usage_state} size="md" />}
@@ -369,25 +379,39 @@ export function CaseDetailDialog({
             {/* 审核决策 — 仅管理工作台，独立于详情内容 */}
             {showReviewPanel ? (
               <div className="-mx-6 mt-6 border-t border-zinc-200 bg-zinc-50/60 px-6 py-5">
-                <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
-                  审核决策
-                </p>
-                <ReviewDecisionPanel
-                  caseId={data.id}
-                  purpose={isConversion ? "conversion" : "violation"}
-                  initialStatus={data.status}
-                  initialUsageState={data.usage_state}
-                  initialRiskLevel={data.risk_level}
-                  initialPromotionLevel={data.promotion_level}
-                  initialAdminConclusion={data.admin_conclusion}
-                  initialSuggestedAction={data.suggested_action}
-                  initialReasonTagIds={[]}
-                  isOwner={isOwner}
-                  onSuccess={() => {
-                    onReviewSuccess?.();
-                    onOpenChange(false);
-                  }}
-                />
+                {isConversion ? (
+                  <DataEnrichmentPanel
+                    caseId={data.id}
+                    caseDetail={data}
+                    onProcessed={() => {
+                      onReviewSuccess?.();
+                      onOpenChange(false);
+                    }}
+                    onClose={() => onOpenChange(false)}
+                  />
+                ) : (
+                  <>
+                    <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                      审核决策
+                    </p>
+                    <ReviewDecisionPanel
+                      caseId={data.id}
+                      purpose="violation"
+                      initialStatus={data.status}
+                      initialUsageState={data.usage_state}
+                      initialRiskLevel={data.risk_level}
+                      initialPromotionLevel={data.promotion_level}
+                      initialAdminConclusion={data.admin_conclusion}
+                      initialSuggestedAction={data.suggested_action}
+                      initialReasonTagIds={[]}
+                      isOwner={isOwner}
+                      onSuccess={() => {
+                        onReviewSuccess?.();
+                        onOpenChange(false);
+                      }}
+                    />
+                  </>
+                )}
               </div>
             ) : null}
             </>

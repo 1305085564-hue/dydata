@@ -317,6 +317,7 @@ export async function loadViolationsList({
   guidanceMethod,
   visualTagIds,
   loadCaseIdsByVisualTagIds,
+  purpose = "violation",
 }: {
   supabase: QueryClientLike;
   view: ViolationsListView;
@@ -333,6 +334,7 @@ export async function loadViolationsList({
   guidanceMethod?: string | null;
   visualTagIds?: string[];
   loadCaseIdsByVisualTagIds?: LoadCaseIdsByVisualTagIds;
+  purpose?: "violation" | "conversion" | null;
 }): Promise<{ payload: ViolationsListPayload | null; errorMessage: string | null }> {
   const visualTagIdList = visualTagIds?.map((item) => item.trim()).filter(Boolean) ?? [];
   let visualTagCaseIds: string[] | null = null;
@@ -365,7 +367,7 @@ export async function loadViolationsList({
       usesInMemoryPassRateSort ? undefined : { count: "exact" },
     )
     .eq("is_deleted", false)
-    .eq("purpose", "violation");
+    .eq("purpose", purpose || "violation");
 
   if (status) {
     query = applyStatusFilter(query, status);
@@ -479,7 +481,7 @@ export async function loadViolationCaseDetail({
   supabase: DetailClientLike;
   id: string;
   fallbackDetailClient?: DetailClientLike;
-}): Promise<{ data: ViolationCaseDetailRow | null; errorMessage: string | null }> {
+}): Promise<{ data: any | null; errorMessage: string | null }> {
   const primary = await runDetailLookup(supabase, id);
   if (primary.data) {
     return { data: primary.data, errorMessage: null };
@@ -490,9 +492,59 @@ export async function loadViolationCaseDetail({
     if (fallback.data) {
       return { data: fallback.data, errorMessage: null };
     }
-    if (fallback.error) {
-      return { data: null, errorMessage: "加载案例失败" };
+  }
+
+  // Fallback to query knowledge_cases directly
+  try {
+    const { data: kcData, error: kcError } = await supabase
+      .from("knowledge_cases")
+      .select(`
+        id,
+        created_at,
+        submitted_by,
+        source_script_text,
+        account_id,
+        account_name_snapshot,
+        team_id,
+        source_notes,
+        screenshot_paths,
+        status,
+        hook_text,
+        body_text,
+        cta_text,
+        admin_insight,
+        usage_count,
+        actual_completion_rate,
+        actual_conversion_rate,
+        verified_by,
+        verified_at,
+        revision_requested_by,
+        revision_requested_at,
+        revision_note,
+        revision_missing_fields,
+        submitter:profiles!submitted_by(id, name),
+        team:teams!team_id(id, name)
+      `)
+      .eq("id", id)
+      .maybeSingle();
+
+    if (kcData) {
+      const mapped: any = {
+        ...kcData,
+        script_text: kcData.source_script_text,
+        scene_description: kcData.source_notes,
+        admin_conclusion: kcData.admin_insight,
+        weighted_conversion_rate: kcData.actual_conversion_rate ? parseFloat(kcData.actual_conversion_rate) : null,
+        reviewed_at: kcData.verified_at,
+        purpose: "conversion",
+        is_violation: false,
+        missing_fields: kcData.revision_missing_fields,
+        revision_note: kcData.revision_note,
+      };
+      return { data: mapped, errorMessage: null };
     }
+  } catch (err) {
+    // Ignore and fallback to client-side error
   }
 
   if (primary.error) {
