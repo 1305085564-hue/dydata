@@ -68,15 +68,16 @@ export function ContentPageClient({
   }
 
   const anomalyVideos = useMemo(() => {
+    if (!data?.videos) return [];
     return data.videos
       .map((video) => {
         const score = calculatePriorityScore(video);
         return { video, score };
       })
-      .filter((item) => item.score >= 200 && (view === "all" || data.feedbackCards[item.video.id]?.workflow_status !== "sent"))
+      .filter((item) => item.score >= 200 && (view === "all" || data?.feedbackCards?.[item.video.id]?.workflow_status !== "sent"))
       .sort((a, b) => b.score - a.score)
       .map((item) => item.video);
-  }, [data.videos, data.feedbackCards, view]);
+  }, [data?.videos, data?.feedbackCards, view]);
 
   const loadData = useCallback(async (
     nextView: ContentView,
@@ -234,9 +235,9 @@ export function ContentPageClient({
   }, []);
 
   if (selectedVideoId) {
-    const selectedVideo = data.videos.find((v) => v.id === selectedVideoId) ?? null;
-    const selectedSnapshot = data.snapshots.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
-    const selectedFeedbackCard = data.feedbackCards[selectedVideoId] ?? null;
+    const selectedVideo = data?.videos?.find((v) => v.id === selectedVideoId) ?? null;
+    const selectedSnapshot = data?.snapshots?.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
+    const selectedFeedbackCard = data?.feedbackCards?.[selectedVideoId] ?? null;
 
     return (
       <ContentDiagnosisWorkbench
@@ -266,7 +267,7 @@ export function ContentPageClient({
           </h2>
           <div className="flex gap-4 overflow-x-auto pb-2 pt-1 -mx-5 px-5 scrollbar-thin scrollbar-thumb-zinc-200">
             {anomalyVideos.map((v) => {
-              const snap = data.snapshots.find((s) => s.video_id === v.id && s.snapshot_type === "24h");
+              const snap = data?.snapshots?.find((s) => s.video_id === v.id && s.snapshot_type === "24h");
               return (
                 <div
                   key={v.id}
@@ -275,7 +276,7 @@ export function ContentPageClient({
                   <div className="space-y-1.5 text-left">
                     <div className="flex items-center justify-between">
                       <span className="text-[9px] text-zinc-400 font-medium truncate max-w-[120px]">
-                        {v.profiles.name} · {v.accounts.name}
+                        {(v.profiles?.name || "未知")} · {(v.accounts?.name || "未知")}
                       </span>
                       <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium scale-90 ${
                         v.anomaly_status === "限流" || v.anomaly_status === "删稿"

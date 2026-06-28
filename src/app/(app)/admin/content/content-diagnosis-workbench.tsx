@@ -627,7 +627,7 @@ export function ContentDiagnosisWorkbench({
               {video?.video_title || "诊断舱"}
             </h1>
             <p className="text-[11px] text-zinc-400 mt-0.5">
-              成员：{video?.profiles.name} · 账号：{video?.accounts.name}
+              成员：{video?.profiles?.name || "未知"} · 账号：{video?.accounts?.name || "未知"}
             </p>
           </div>
         </div>
