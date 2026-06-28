@@ -172,7 +172,7 @@ export function ExceptionQueue({
                 <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                   发布率
                 </th>
-                <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 min-w-[200px]">
                   操作
                 </th>
               </tr>
@@ -187,7 +187,7 @@ export function ExceptionQueue({
                 return (
                   <tr
                     key={member.userId}
-                    className="border-b border-zinc-100 last:border-b-0 transition-colors duration-150 hover:bg-zinc-50/30"
+                    className="group border-b border-zinc-100 last:border-b-0 transition-colors duration-150 odd:bg-white even:bg-zinc-50/20 hover:bg-zinc-50/60!"
                   >
                     <td className="px-3 py-2.5">
                       <Checkbox
@@ -199,9 +199,9 @@ export function ExceptionQueue({
                       <button
                         type="button"
                         onClick={() => onMemberClick(member)}
-                        className="text-left group"
+                        className="text-left group/btn"
                       >
-                        <p className="font-medium text-zinc-800 group-hover:text-[#D97757] transition-colors">
+                        <p className="font-medium text-zinc-800 group-hover/btn:text-[#D97757] transition-colors">
                           {member.userName}
                         </p>
                         <p className="text-[11px] text-zinc-400">
@@ -245,7 +245,7 @@ export function ExceptionQueue({
                       </span>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200">
                         <Button
                           variant="outline"
                           size="sm"

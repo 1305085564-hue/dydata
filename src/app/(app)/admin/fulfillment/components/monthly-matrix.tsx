@@ -28,23 +28,23 @@ function formatDateKey(year: number, month: number, day: number) {
 }
 
 function getStatusColor(status: FulfillmentStatus | undefined): string {
-  if (!status) return "bg-zinc-100";
+  if (!status) return "bg-zinc-50 border-zinc-100";
   switch (status) {
     case "published":
     case "confirmed_published":
-      return "bg-[#6FAA7D]";
+      return "bg-[#6FAA7D] border-[#5d946a]";
     case "leave":
-      return "bg-[#8AA8C7]";
+      return "bg-[#8AA8C7] border-[#7a9ab8]";
     case "waived":
     case "exempted":
-      return "bg-[#8AA8C7]/50";
+      return "bg-[#8AA8C7]/30 border-[#8AA8C7]/20";
     case "absent":
-      return "bg-[#C9604D]";
+      return "bg-[#C9604D] border-[#b5503e]";
     case "unconfirmed":
-      return "bg-zinc-300";
+      return "bg-zinc-200 border-zinc-300";
     default:
-      return "bg-zinc-100";
-    }
+      return "bg-zinc-50 border-zinc-100";
+  }
 }
 
 function getStatusLabel(status: FulfillmentStatus | undefined): string {
@@ -74,7 +74,7 @@ export function MonthlyMatrix({
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
   const dayNumbers = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
 
-  // 构建申诉缓存映射以供快速查找
+  // 构建申诉缓存映射
   const appealMap = useMemo(() => {
     const map = new Map<string, any>();
     if (Array.isArray(appeals)) {
@@ -118,7 +118,7 @@ export function MonthlyMatrix({
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="flex w-full items-center justify-between rounded-xl border border-zinc-200/50 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-zinc-50/30"
+          className="flex w-full items-center justify-between rounded-xl border border-zinc-200/60 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-zinc-50/50"
         >
           <div className="flex items-center gap-3">
             <h2 className="text-[14px] font-semibold text-zinc-700">月度矩阵</h2>
@@ -156,11 +156,11 @@ export function MonthlyMatrix({
         {/* 展开内容 */}
         {expanded && (
           <div className="space-y-3">
-            <div className="overflow-x-auto rounded-2xl border border-zinc-200/50 bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-2xl border border-zinc-200/60 bg-white shadow-sm">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-200/50">
-                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200/50 bg-white px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                  <tr className="border-b border-zinc-200/60">
+                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200/60 bg-white px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400">
                       成员
                     </th>
                     {dayNumbers.map((day) => {
@@ -170,14 +170,14 @@ export function MonthlyMatrix({
                         <th
                           key={day}
                           className={`min-w-[28px] px-0.5 py-2 text-center text-[11px] font-medium tabular-nums ${
-                            isToday ? "text-[#D97757]" : "text-zinc-400"
+                            isToday ? "text-[#D97757] font-semibold" : "text-zinc-400"
                           }`}
                         >
                           {day}
                         </th>
                       );
                     })}
-                    <th className="min-w-[72px] border-l border-zinc-200/50 px-3 py-2 text-right text-[11px] font-medium text-zinc-400">
+                    <th className="min-w-[72px] border-l border-zinc-200/60 px-3 py-2 text-right text-[11px] font-medium text-zinc-400">
                       实发/应发
                     </th>
                   </tr>
@@ -185,8 +185,8 @@ export function MonthlyMatrix({
 
                 <tbody>
                   {members.map((member) => (
-                    <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0">
-                      <td className="sticky left-0 z-10 border-r border-zinc-200/50 bg-white px-3 py-2 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                    <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/10 transition-colors">
+                      <td className="sticky left-0 z-10 border-r border-zinc-200/60 bg-white px-3 py-2 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
                         <div className="flex flex-col">
                           <span className="text-[13px] font-medium text-zinc-800">{member.userName}</span>
                           <span className="text-[11px] text-zinc-400">{member.groupName ?? member.teamName ?? ""}</span>
@@ -207,9 +207,9 @@ export function MonthlyMatrix({
                                   <button
                                     type="button"
                                     onClick={() => onCellClick(member, dateKey)}
-                                    className={`mx-auto block size-[18px] rounded-sm transition-transform duration-150 hover:scale-125 ${getStatusColor(status)} ${
-                                      isToday ? "ring-1 ring-[#D97757] ring-offset-1" : ""
-                                    } ${appeal ? "ring-2 ring-amber-500 ring-offset-0.5 animate-pulse" : ""}`}
+                                    className={`mx-auto block size-[16px] rounded-[3px] border transition-all duration-150 hover:scale-125 hover:shadow-sm hover:z-10 ${getStatusColor(status)} ${
+                                      isToday ? "ring-1 ring-[#D97757] ring-offset-1 z-10" : ""
+                                    } ${appeal ? "ring-1.5 ring-amber-500 ring-offset-0.5 animate-pulse" : ""}`}
                                   />
                                 }
                               />
@@ -218,7 +218,7 @@ export function MonthlyMatrix({
                                 align="center"
                                 side="top"
                               >
-                                <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
+                                <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-850 pb-1.5">
                                   <span className="font-semibold text-zinc-200">{dateKey}</span>
                                   <span className="font-medium text-zinc-400">{member.userName}</span>
                                 </div>
@@ -259,9 +259,9 @@ export function MonthlyMatrix({
                           </td>
                         );
                       })}
-                      <td className="border-l border-zinc-200/50 px-3 py-2 text-right">
+                      <td className="border-l border-zinc-200/60 px-3 py-2 text-right">
                         <span
-                          className={`font-mono text-[12px] tabular-nums font-medium ${
+                          className={`font-mono text-[12px] tabular-nums font-semibold ${
                             member.publishedDays >= member.totalDays
                               ? "text-[#6FAA7D]"
                               : member.publishedDays / member.totalDays >= 0.6
@@ -283,30 +283,30 @@ export function MonthlyMatrix({
             </div>
 
             {/* 图例 */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500 bg-zinc-50/50 p-2.5 rounded-lg border border-zinc-200/30">
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#6FAA7D]" />
+                <span className="inline-block size-[10px] rounded-sm bg-[#6FAA7D] border border-[#5d946a]" />
                 已发布 / 已确认
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]" />
+                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7] border border-[#7a9ab8]" />
                 请假
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]/50" />
-                豁免
+                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]/30 border border-[#8AA8C7]/20" />
+                豁免 / 豁免期
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#C9604D]" />
+                <span className="inline-block size-[10px] rounded-sm bg-[#C9604D] border border-[#b5503e]" />
                 缺勤
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-zinc-300" />
+                <span className="inline-block size-[10px] rounded-sm bg-zinc-200 border border-zinc-300" />
                 待确认
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm border-2 border-amber-500" />
-                有申诉
+                <span className="inline-block size-[10px] rounded-sm border border-amber-500 bg-white" />
+                有待处理申诉
               </span>
             </div>
           </div>

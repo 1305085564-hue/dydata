@@ -6,93 +6,95 @@ interface StatsBarProps {
   stats: FulfillmentCalendarData["stats"];
 }
 
-function BigStat({
-  label,
-  value,
-  sub,
-  color,
-}: {
-  label: string;
-  value: number;
-  sub?: string;
-  color?: string;
-}) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-[12px] text-zinc-400">{label}</span>
-      <div className="mt-1 flex items-baseline gap-1.5">
-        <span
-          className="font-mono text-[32px] font-semibold tabular-nums tracking-tight leading-none"
-          style={{ color: color || "#18181b" }}
-        >
-          {value}
-        </span>
-        {sub ? <span className="text-[12px] font-medium text-zinc-400">{sub}</span> : null}
-      </div>
-    </div>
-  );
-}
-
-function SmallStat({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number | string;
-  color?: string;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="text-[11px] text-zinc-400">{label}</span>
-      <span
-        className="font-mono text-[16px] font-semibold tabular-nums tracking-tight"
-        style={{ color: color || "#3f3f46" }}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
 export function StatsBar({ stats }: StatsBarProps) {
+  const hasPending = stats.pendingToday > 0;
+
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
-      {/* 左侧大数字 */}
-      <div className="flex gap-8">
-        <BigStat
-          label="今日待处理"
-          value={stats.pendingToday}
-          color={stats.pendingToday > 0 ? "#C9604D" : "#6FAA7D"}
-        />
-        <BigStat
-          label="连续未发"
-          value={stats.consecutiveMissingMembers}
-          color={stats.consecutiveMissingMembers > 0 ? "#D99E55" : undefined}
-        />
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* 核心焦点卡片 - 今日待处理 (深色反差特权 / 一页一魂) */}
+      <div className="relative overflow-hidden rounded-xl bg-zinc-950 p-5 text-white shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:shadow-xl">
+        {/* 背景微网格渐变 */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-850/20 via-zinc-950 to-zinc-950 opacity-40 pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col justify-between h-full min-h-[80px]">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-medium tracking-wider text-zinc-400 uppercase">今日待处理</span>
+            {hasPending ? (
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+            ) : (
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+            )}
+          </div>
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className="font-mono text-[36px] font-bold tabular-nums tracking-tight leading-none text-white">
+              {stats.pendingToday}
+            </span>
+            <span className="text-[12px] font-medium text-zinc-400">人未处理</span>
+          </div>
+        </div>
       </div>
 
-      {/* 分隔线 */}
-      <div className="hidden h-10 w-px bg-zinc-200 sm:block" />
+      {/* 连续未发警示卡片 */}
+      <div className="rounded-xl border border-zinc-200/60 bg-white p-5 shadow-sm transition-all duration-200 hover:border-zinc-300">
+        <div className="flex flex-col justify-between h-full min-h-[80px]">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-medium tracking-wider text-zinc-500 uppercase">连续未发人数</span>
+            {stats.consecutiveMissingMembers > 0 ? (
+              <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 ring-1 ring-amber-600/10">
+                需要关注
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className={`font-mono text-[36px] font-bold tabular-nums tracking-tight leading-none ${
+              stats.consecutiveMissingMembers > 0 ? "text-[#D99E55]" : "text-zinc-800"
+            }`}>
+              {stats.consecutiveMissingMembers}
+            </span>
+            <span className="text-[12px] font-medium text-zinc-400">人连续未发视频</span>
+          </div>
+        </div>
+      </div>
 
-      {/* 右侧小数字 */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <SmallStat label="总成员" value={stats.totalMembers} />
-        <SmallStat label="今日已发布" value={stats.publishedToday} color="#6FAA7D" />
-        <SmallStat label="请假" value={stats.leaveToday} color="#8AA8C7" />
-        <SmallStat label="豁免" value={stats.waivedToday} color="#8AA8C7" />
-        <SmallStat label="缺勤" value={stats.absentToday} color="#C9604D" />
-        <SmallStat
-          label="发布率"
-          value={`${stats.periodFulfillmentRate}%`}
-          color={
-            stats.periodFulfillmentRate >= 80
-              ? "#6FAA7D"
-              : stats.periodFulfillmentRate >= 60
-                ? "#D99E55"
-                : "#C9604D"
-          }
-        />
+      {/* 基础大盘统计卡片 - 高密精细排版 */}
+      <div className="rounded-xl border border-zinc-200/60 bg-white p-5 shadow-sm lg:col-span-1 transition-all duration-200 hover:border-zinc-300">
+        <div className="flex flex-col justify-between h-full min-h-[80px]">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-medium tracking-wider text-zinc-500 uppercase">履约周期大盘</span>
+            <span className={`text-[12px] font-semibold font-mono ${
+              stats.periodFulfillmentRate >= 80
+                ? "text-[#6FAA7D]"
+                : stats.periodFulfillmentRate >= 60
+                  ? "text-[#D99E55]"
+                  : "text-[#C9604D]"
+            }`}>
+              发布率 {stats.periodFulfillmentRate}%
+            </span>
+          </div>
+          <div className="mt-4 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-3">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-zinc-400 font-medium">总成员</span>
+              <span className="mt-1 font-mono text-[14px] font-bold text-zinc-700">{stats.totalMembers}</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-[#6FAA7D] font-medium">今日已发</span>
+              <span className="mt-1 font-mono text-[14px] font-bold text-[#6FAA7D]">{stats.publishedToday}</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-[#8AA8C7] font-medium">请假/豁免</span>
+              <span className="mt-1 font-mono text-[14px] font-bold text-[#8AA8C7]">
+                {stats.leaveToday + stats.waivedToday}
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] text-[#C9604D] font-medium">缺勤</span>
+              <span className="mt-1 font-mono text-[14px] font-bold text-[#C9604D]">{stats.absentToday}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

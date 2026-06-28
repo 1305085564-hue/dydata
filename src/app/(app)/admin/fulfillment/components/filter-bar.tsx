@@ -106,16 +106,16 @@ export function FilterBar({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* 时间预设按钮 */}
-          <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+          <div className="flex items-center gap-1 rounded-lg border border-zinc-200/60 bg-zinc-50/50 p-1">
             {PRESET_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => handlePresetChange(opt.value)}
-                className={`rounded-md px-2.5 py-1 text-[13px] transition-colors duration-150 ${
+                className={`rounded-md px-2.5 py-1 text-[13px] transition-all duration-150 ${
                   range === opt.value
-                    ? "bg-zinc-100 font-medium text-zinc-800"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-white shadow-sm font-semibold text-zinc-900 ring-1 ring-zinc-200/5"
+                    : "text-zinc-500 hover:text-zinc-800"
                 }`}
               >
                 {opt.label}

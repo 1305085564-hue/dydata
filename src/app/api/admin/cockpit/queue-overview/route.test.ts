@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildQueueOverviewResponse } from "./route";
+import { buildQueueOverviewResponse } from "./handler";
 
 test("queue-overview 返回完整抽屉数据和底部指标", async () => {
   const response = await buildQueueOverviewResponse(
