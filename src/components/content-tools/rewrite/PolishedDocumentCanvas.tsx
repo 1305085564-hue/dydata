@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, Copy, Eye, Edit3, Save, FileText, Lock, Unlock, X } from 'lucide-react';
+import { Check, Copy, Eye, Edit3, Save, FileText, Lock, Unlock, X, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DocumentParagraph } from './useRewriteLogic';
 
@@ -11,13 +12,78 @@ interface PolishedDocumentCanvasProps {
   isSending: boolean;
   paragraphs?: DocumentParagraph[];
   traceabilityMode?: boolean;
-  selectedParagraphIds?: Set<string>;
+  generatingParagraphIds?: string[];
+  streamingPatchText?: string;
   onTextChange: (text: string) => void;
-  onToggleParagraphLock?: (paragraph: DocumentParagraph) => void;
-  onToggleParagraphSelect?: (paragraphId: string) => void;
-  onClearParagraphSelect?: () => void;
   onInlinePatchSubmit?: (prompt: string) => void;
+  onParagraphEdit?: (paragraphId: string, newContent: string) => void | Promise<void>;
 }
+
+const renderSyntaxFadedBase = (text: string) => {
+  const parts = text.split(/(\*\*|### |> |---|\* |`)/g);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (['**', '### ', '> ', '---', '* ', '`'].includes(part)) {
+          return <span key={index} className="text-zinc-300/60 font-light select-none">{part}</span>;
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+};
+
+const renderParagraphRichText = (content: string) => {
+  const text = content.trim();
+  
+  if (text.startsWith('### ')) {
+    return <div className="text-[20px] font-black tracking-tight text-zinc-900 mt-8 mb-3">{text.replace(/^###\s*/, '')}</div>;
+  }
+  
+  if (text.startsWith('## ')) {
+    return <div className="text-[24px] font-black tracking-tight text-zinc-900 mt-10 mb-5 border-b border-zinc-100 pb-3">{text.replace(/^##\s*/, '')}</div>;
+  }
+
+  if (/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/.test(text)) {
+    const cleanContent = text.replace(/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/, '').trim();
+    return (
+      <div className="p-6 my-6 bg-[#F9F5F0] rounded-xl text-zinc-700 leading-[1.75]">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1 h-3 bg-[#D97757]/40 rounded-full" />
+          <div className="text-[12px] font-bold text-[#D97757] tracking-widest uppercase">原版内容</div>
+        </div>
+        <div className="text-[14.5px] whitespace-pre-wrap opacity-90">{renderSyntaxFadedBase(cleanContent)}</div>
+      </div>
+    );
+  }
+  
+  // Card for "修改后/润色后"
+  if (/^(\*\*|【|### |## )?(修改后|润色后|现版|修改后：|润色后：)(:|：|\*\*|】)?\s*/.test(text)) {
+    const cleanContent = text.replace(/^(\*\*|【|### |## )?(修改后|润色后|现版|修改后：|润色后：)(:|：|\*\*|】)?\s*/, '').trim();
+    return (
+      <div className="relative p-6 my-6 bg-white border-l-[4px] border-[#4F7F5E] rounded-r-xl rounded-l-sm text-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)] leading-[1.75] transform -translate-y-1">
+        <div className="text-[12px] font-bold text-[#4F7F5E] mb-3 tracking-widest uppercase flex items-center gap-1.5">
+          <Check className="w-3.5 h-3.5" /> 修改后
+        </div>
+        <div className="text-[15px] whitespace-pre-wrap font-medium">{renderSyntaxFadedBase(cleanContent)}</div>
+      </div>
+    );
+  }
+
+  // Numbered lists (1. xxx or 1、xxx)
+  const listMatch = text.match(/^(\d+)([\.、])\s*([\s\S]*)/);
+  if (listMatch) {
+    return (
+      <div className="flex gap-4 my-6 leading-[1.75] group">
+        <span className="text-[28px] font-serif font-black text-[#D97757] shrink-0 mt-[-6px] opacity-80 group-hover:opacity-100 transition-opacity">{listMatch[1]}.</span>
+        <div className="text-zinc-800 flex-1 whitespace-pre-wrap text-[15px] pt-1">{renderSyntaxFadedBase(listMatch[3])}</div>
+      </div>
+    );
+  }
+
+  // Normal text
+  return <div className="text-zinc-800 leading-[1.75] my-3 text-[15px]">{renderSyntaxFadedBase(text)}</div>;
+};
 
 // DP-based sentence-level diff algorithm
 function diffSentences(oldText: string, newText: string) {
@@ -69,27 +135,56 @@ export function PolishedDocumentCanvas({
   isSending,
   paragraphs = [],
   traceabilityMode = false,
-  selectedParagraphIds = new Set(),
   onTextChange,
-  onToggleParagraphLock,
-  onToggleParagraphSelect,
-  onClearParagraphSelect,
   onInlinePatchSubmit,
+  onParagraphEdit,
+  generatingParagraphIds = [],
+  streamingPatchText = '',
 }: PolishedDocumentCanvasProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(polishedText);
   const [showDiff, setShowDiff] = useState(false);
   const [copied, setCopied] = useState(false);
   const [inlinePrompt, setInlinePrompt] = useState('');
-  const [ghostText, setGhostText] = useState('');
+  const [editingParagraphId, setEditingParagraphId] = useState<string | null>(null);
   const [microMenuState, setMicroMenuState] = useState<{
     show: boolean;
     x: number;
     y: number;
     text: string;
   } | null>(null);
+  const [isPeeking, setIsPeeking] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const ghostDebounceRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt' || e.key === 'Option') {
+        setIsPeeking(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt' || e.key === 'Option') {
+        setIsPeeking(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  const paragraphRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  useEffect(() => {
+    if (generatingParagraphIds.length > 0) {
+      const firstId = generatingParagraphIds[0];
+      const el = paragraphRefs.current.get(firstId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [generatingParagraphIds]);
 
   // Sync editText when polishedText updates (e.g. streaming or conversation switch)
   useEffect(() => {
@@ -116,43 +211,19 @@ export function PolishedDocumentCanvas({
   const handleSaveEdit = () => {
     onTextChange(editText);
     setIsEditing(false);
-    setGhostText('');
   };
 
   const handleCancelEdit = () => {
     setEditText(polishedText);
     setIsEditing(false);
-    setGhostText('');
   };
 
   const handleEditTextChange = (val: string) => {
     setEditText(val);
-    setGhostText('');
-    window.clearTimeout(ghostDebounceRef.current);
-    
-    // Mock fast completion API (Debounce 600ms)
-    ghostDebounceRef.current = window.setTimeout(() => {
-      if (val.trim().length === 0) return;
-      const lastChar = val.slice(-1);
-      if (['。', '！', '？', '\n'].includes(lastChar)) {
-        setGhostText('此外，我们还做了更多体验优化，期待您的探索。');
-      } else if (['，', '、'].includes(lastChar)) {
-        setGhostText('带来更流畅的心流体验');
-      } else if (val.length > 5 && Math.random() > 0.5) {
-        // random completion mock
-        setGhostText('，极大地提升了内容生产的效率。');
-      }
-    }, 600);
   };
 
-  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (ghostText && e.key === 'Tab') {
-      e.preventDefault();
-      setEditText((prev) => prev + ghostText);
-      setGhostText('');
-    } else if (ghostText && !['Shift', 'Meta', 'Alt', 'Control'].includes(e.key)) {
-      setGhostText('');
-    }
+  const handleEditKeyDown = () => {
+    // Left for future keyboard shortcuts if needed
   };
 
   const handleDiffAction = (
@@ -222,36 +293,60 @@ export function PolishedDocumentCanvas({
   const hasParagraphs = paragraphs.length > 0;
 
   return (
-    <div className="flex h-full flex-col bg-zinc-50/20 p-4">
+    <div className="flex h-full flex-col bg-white">
       {/* Canvas Header */}
-      <div className="mb-3 flex shrink-0 items-center justify-between">
-        <div className="flex items-center gap-1.5 pl-1">
-          <FileText className="h-4 w-4 text-zinc-400" />
-          <span className="text-[12px] font-semibold uppercase tracking-[0.1em] text-zinc-500">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-200 px-6 bg-white/80 backdrop-blur-md z-20">
+        <div className="flex items-center gap-2 pl-1">
+          <FileText className="h-4.5 w-4.5 text-[#D97757]" />
+          <span className="text-[14px] font-bold tracking-[0.05em] text-zinc-800 border-b-2 border-zinc-200 pb-[1px]">
             润色终稿画布
           </span>
         </div>
 
         {/* Toolbar Buttons */}
         {hasText && (
-          <div className="flex items-center gap-1 bg-white border border-zinc-200 rounded-lg p-0.5 shadow-sm">
+          <div className="flex items-center gap-0.5 bg-transparent p-0.5">
+            {/* Peek Button */}
+            {!isEditing && (
+              <button
+                type="button"
+                onMouseDown={() => setIsPeeking(true)}
+                onMouseUp={() => setIsPeeking(false)}
+                onMouseLeave={() => setIsPeeking(false)}
+                onTouchStart={() => setIsPeeking(true)}
+                onTouchEnd={() => setIsPeeking(false)}
+                className={cn(
+                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all cursor-pointer select-none',
+                  isPeeking
+                    ? 'bg-zinc-100/80 text-zinc-900'
+                    : 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700'
+                )}
+                title="按住看原稿 (快捷键: Alt/Option)"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                <span>对比</span>
+              </button>
+            )}
+
             {/* Diff Toggler */}
             {!isEditing && (
               <button
                 type="button"
                 onClick={() => setShowDiff(!showDiff)}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[11px] font-medium transition-colors',
+                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all',
                   showDiff
-                    ? 'bg-zinc-100 text-zinc-900 font-semibold'
-                    : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'
+                    ? 'bg-zinc-100/80 text-zinc-900'
+                    : 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700'
                 )}
-                title={showDiff ? '关闭对比' : '显示修改对比'}
+                title={showDiff ? '关闭差异' : '显示修改差异'}
               >
                 <Eye className="h-3.5 w-3.5" />
-                <span>对比</span>
+                <span>差异</span>
               </button>
             )}
+
+            <div className="w-px h-3.5 bg-zinc-200 mx-1" />
 
             {/* Copy Button */}
             {!isEditing && (
@@ -259,10 +354,10 @@ export function PolishedDocumentCanvas({
                 type="button"
                 onClick={handleCopy}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[11px] font-medium transition-colors',
+                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all',
                   copied
-                    ? 'bg-[#6FAA7D]/10 text-[#4F7F5E]'
-                    : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'
+                    ? 'text-[#4F7F5E] bg-[#6FAA7D]/10'
+                    : 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700'
                 )}
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -272,11 +367,11 @@ export function PolishedDocumentCanvas({
 
             {/* Edit Toggler */}
             {isEditing ? (
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={handleSaveEdit}
-                  className="inline-flex h-7 items-center gap-1 rounded-md bg-[#D97757] px-2.5 text-[11px] font-medium text-white shadow-sm hover:bg-[#C96442] transition-colors"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[#D97757] px-3 text-[12px] font-medium text-white shadow-[0_2px_8px_rgba(217,119,87,0.25)] hover:bg-[#C96442] active:scale-95 transition-all"
                 >
                   <Save className="h-3.5 w-3.5" />
                   <span>保存</span>
@@ -284,7 +379,7 @@ export function PolishedDocumentCanvas({
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[11px] font-medium text-zinc-400 hover:bg-zinc-50 hover:text-zinc-800 transition-colors"
+                  className="inline-flex h-7 items-center justify-center rounded-md px-2.5 text-[12px] font-medium text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700 transition-all"
                 >
                   取消
                 </button>
@@ -293,39 +388,157 @@ export function PolishedDocumentCanvas({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-colors"
-                title="编辑终稿"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all"
               >
                 <Edit3 className="h-3.5 w-3.5" />
-                <span>编辑</span>
+                <span>进入编辑</span>
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Document Sheet Area */}
       <div 
-        className="relative flex-1 min-h-0 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-[border-color,box-shadow] duration-200 focus-within:border-zinc-300"
+        className="relative flex-1 min-h-0 overflow-y-auto bg-white"
         onClick={(e) => {
-          // Clear selection if clicking outside blocks
-          if (e.target === e.currentTarget && selectedParagraphIds.size > 0 && onClearParagraphSelect) {
-            onClearParagraphSelect();
-          }
           if (window.getSelection()?.toString().trim() === '') {
             setMicroMenuState(null);
           }
         }}
       >
         {!hasText && !isSending ? (
-          <div className="flex h-full flex-col items-center justify-center text-center px-4">
-            <div className="h-8 w-8 rounded-full border border-dashed border-zinc-300 flex items-center justify-center mb-2">
-              <FileText className="h-4 w-4 text-zinc-300" />
+          <div className="relative flex h-full w-full flex-col items-center justify-center text-center overflow-hidden">
+            {/* 仪器卡尺感背景 */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-px h-full bg-zinc-100 absolute left-1/2 -translate-x-1/2" />
+              <div className="h-px w-full bg-zinc-100 absolute top-1/2 -translate-y-1/2" />
+              <div className="w-[320px] h-[320px] rounded-full border border-dashed border-zinc-200/50 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
-            <p className="text-[12px] font-medium text-zinc-400">终稿画布</p>
-            <p className="text-[11px] text-zinc-400 mt-1 leading-[1.5] max-w-[200px]">
-              左侧输入并润色后，最终修改文本将在此处呈现与对比。
-            </p>
+            {/* 中心微动几何体与克制文案 */}
+            <div className="relative z-10 flex flex-col items-center gap-4">
+              <div className="w-2 h-2 rounded-sm bg-zinc-300/50 rotate-45 animate-pulse" />
+              <div className="space-y-1">
+                <p className="text-[12px] uppercase tracking-[0.15em] font-medium text-zinc-500">
+                  画布静默
+                </p>
+                <p className="text-[11px] text-zinc-400 tracking-wider">
+                  左侧输入指令，即刻重塑文本
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : hasParagraphs ? (
+          <div className="space-y-4 relative pb-32 w-full px-6 md:px-10 py-12">
+            {paragraphs.map((paragraph) => {
+              const isEditingCurrent = editingParagraphId === paragraph.paragraphId;
+              const isGenerating = generatingParagraphIds.includes(paragraph.paragraphId);
+              const traceColorClass =
+                paragraph.sourceType === 'ai'
+                  ? 'bg-[#6FAA7D]'
+                  : paragraph.sourceType === 'user'
+                    ? 'bg-[#D97757]'
+                    : 'bg-zinc-300';
+              return (
+                <div
+                  key={paragraph.id}
+                  ref={(el) => {
+                    if (el) paragraphRefs.current.set(paragraph.paragraphId, el);
+                    else paragraphRefs.current.delete(paragraph.paragraphId);
+                  }}
+                  className={cn(
+                    'group relative rounded-r-lg px-4 -mx-4 py-2 transition-colors duration-200 hover:bg-zinc-50/50',
+                    isEditingCurrent ? 'bg-zinc-50/50' : '',
+                    isGenerating ? 'animate-pulse bg-orange-50/30' : ''
+                  )}
+                >
+                  {/* Active/Editing Anchor Line */}
+                  {isEditingCurrent && (
+                    <div className="absolute left-[-16px] top-3 bottom-3 w-[2px] rounded-full bg-[#D97757]" />
+                  )}
+
+                  {/* Traceability Indicator */}
+                  {traceabilityMode && (
+                    <div className={cn('absolute left-[-16px] top-3 bottom-3 w-[2px] rounded-full', traceColorClass)} title={`来源: ${paragraph.sourceType}`} />
+                  )}
+
+                  <div 
+                    className="whitespace-pre-wrap text-[15px] leading-[1.85] tracking-[0.02em] relative group/editor"
+                    onDoubleClick={(e) => {
+                      if (paragraph.isLocked) return;
+                      e.stopPropagation();
+                      setEditingParagraphId(paragraph.paragraphId);
+                    }}
+                    onMouseUp={() => {
+                      if (isEditingCurrent) return;
+                      const selection = window.getSelection();
+                      const text = selection?.toString().trim();
+                      if (text && text.length > 0) {
+                        const rect = selection?.getRangeAt(0).getBoundingClientRect();
+                        if (rect) {
+                          setMicroMenuState({
+                            show: true,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top - 8,
+                            text,
+                          });
+                        }
+                      } else {
+                        setMicroMenuState(null);
+                      }
+                    }}
+                  >
+                    {isEditingCurrent ? (
+                      <div
+                        contentEditable
+                        suppressContentEditableWarning
+                        className="w-full outline-none min-h-[1.8em] text-zinc-800"
+                        onBlur={(e) => {
+                          const newContent = e.currentTarget.innerText || '';
+                          if (newContent.trim() !== '' && newContent !== paragraph.content) {
+                            onParagraphEdit?.(paragraph.paragraphId, newContent);
+                          }
+                          setEditingParagraphId(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setEditingParagraphId(null);
+                          }
+                        }}
+                        ref={(el) => {
+                          if (el && document.activeElement !== el) {
+                            el.innerText = paragraph.content;
+                            el.focus();
+                            // Move cursor to end
+                            if (typeof window.getSelection !== 'undefined' && typeof document.createRange !== 'undefined') {
+                              const range = document.createRange();
+                              range.selectNodeContents(el);
+                              range.collapse(false);
+                              const sel = window.getSelection();
+                              sel?.removeAllRanges();
+                              sel?.addRange(range);
+                            }
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className={cn(paragraph.isLocked ? 'text-zinc-500' : 'text-zinc-800')}>
+                        {isGenerating && generatingParagraphIds[0] === paragraph.paragraphId ? (
+                          streamingPatchText
+                            ? renderSyntaxFadedBase(streamingPatchText)
+                            : <span className="text-zinc-300">正在改写这一段...</span>
+                        ) : isGenerating && generatingParagraphIds[0] !== paragraph.paragraphId ? (
+                          null // Hide other generating paragraphs as the first one will show the combined stream
+                        ) : (
+                          renderParagraphRichText(paragraph.content)
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+
           </div>
         ) : isSending && !polishedText ? (
           <div className="flex h-full flex-col items-center justify-center gap-2">
@@ -348,177 +561,78 @@ export function PolishedDocumentCanvas({
               className="absolute inset-0 h-full w-full resize-none border-0 bg-transparent p-0 text-[14px] leading-[1.8] text-zinc-800 outline-none placeholder:text-zinc-300 focus:ring-0 focus-visible:outline-none z-10"
               placeholder="在此处编辑润色后的文案内容..."
             />
-            {ghostText && (
-              <div 
-                className="pointer-events-none absolute inset-0 h-full w-full p-0 text-[14px] leading-[1.8] whitespace-pre-wrap break-words z-0 overflow-hidden"
-              >
-                <span className="text-transparent">{editText}</span>
-                <span className="text-zinc-400 italic">
-                  {ghostText}
-                  <span className="ml-2 inline-flex items-center rounded border border-zinc-200 bg-zinc-50 px-1 py-0.5 text-[10px] font-sans not-italic text-zinc-400">Tab 采纳</span>
-                </span>
-              </div>
-            )}
+          </div>
+        ) : isPeeking ? (
+          <div className="whitespace-pre-wrap text-[14px] leading-[1.8] text-zinc-800 tracking-wide font-normal select-text opacity-70 transition-opacity">
+            {originalDraft || '暂无原稿'}
           </div>
         ) : showDiff ? (
           renderDiffContent()
-        ) : hasParagraphs ? (
-          <div className="space-y-3 relative pb-20">
-            {paragraphs.map((paragraph) => {
-              const isSelected = selectedParagraphIds.has(paragraph.paragraphId);
-              let sourceColorClass = '';
-              if (traceabilityMode) {
-                if (paragraph.sourceType === 'ai') sourceColorClass = 'border-l-4 border-l-[#6FAA7D] pl-3';
-                else if (paragraph.sourceType === 'user') sourceColorClass = 'border-l-4 border-l-[#5C89C7] pl-3';
-                else sourceColorClass = 'border-l-4 border-l-zinc-300 pl-3';
-              }
-
-              return (
-                <div
-                  key={paragraph.id}
-                  onClick={() => {
-                    onToggleParagraphSelect?.(paragraph.paragraphId);
-                  }}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    onToggleParagraphLock?.(paragraph);
-                  }}
-                  className={cn(
-                    'group relative rounded-xl border px-4 py-3 transition-[border-color,background-color,box-shadow]',
-                    sourceColorClass,
-                    isSelected ? 'ring-2 ring-zinc-950 bg-zinc-50 border-transparent' : '',
-                    paragraph.isLocked && !isSelected
-                      ? 'border-[#D99E55]/40 bg-[#D99E55]/5'
-                      : !isSelected ? 'border-transparent bg-transparent hover:border-zinc-200 hover:bg-zinc-50' : '',
-                  )}
-                >
-                  {/* Hover Handles */}
-                  <div className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100 flex flex-col gap-1 items-center justify-center h-full cursor-pointer"
-                       onClick={(e) => { e.stopPropagation(); onToggleParagraphSelect?.(paragraph.paragraphId); }}
-                  >
-                    <div className="flex flex-col gap-0.5 text-zinc-300 hover:text-zinc-500">
-                      <div className="flex gap-0.5"><div className="w-1 h-1 rounded-full bg-current"/><div className="w-1 h-1 rounded-full bg-current"/></div>
-                      <div className="flex gap-0.5"><div className="w-1 h-1 rounded-full bg-current"/><div className="w-1 h-1 rounded-full bg-current"/></div>
-                      <div className="flex gap-0.5"><div className="w-1 h-1 rounded-full bg-current"/><div className="w-1 h-1 rounded-full bg-current"/></div>
-                    </div>
-                  </div>
-
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
-                      段落 {paragraph.position + 1} {traceabilityMode && `(${paragraph.sourceType})`}
-                    </span>
-                    {onToggleParagraphLock && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onToggleParagraphLock(paragraph); }}
-                        className={cn(
-                          'inline-flex h-6 items-center gap-1 rounded-md px-2 text-[10px] font-medium transition-colors',
-                          paragraph.isLocked
-                            ? 'bg-[#D99E55]/10 text-[#A96F2F] opacity-100'
-                            : 'text-zinc-400 opacity-0 hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100',
-                        )}
-                        title={paragraph.isLocked ? '解除锁定' : '锁定段落'}
-                      >
-                        {paragraph.isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-                        <span>{paragraph.isLocked ? '已锁定' : '锁定'}</span>
-                      </button>
-                    )}
-                  </div>
-                  <div 
-                    className="whitespace-pre-wrap text-[14px] leading-[1.8] tracking-wide text-zinc-800"
-                    onMouseUp={() => {
-                      const selection = window.getSelection();
-                      const text = selection?.toString().trim();
-                      if (text && text.length > 0) {
-                        const rect = selection?.getRangeAt(0).getBoundingClientRect();
-                        if (rect) {
-                          setMicroMenuState({
-                            show: true,
-                            x: rect.left + rect.width / 2,
-                            y: rect.top - 8,
-                            text,
-                          });
-                        }
-                      } else {
-                        setMicroMenuState(null);
-                      }
-                    }}
-                  >
-                    {paragraph.content}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Floating Inline Prompt Bar */}
-            {selectedParagraphIds.size > 0 && (
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[80%] max-w-[500px] bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 p-2 flex items-center gap-2 animate-in slide-in-from-bottom-4 fade-in duration-200">
-                <div className="pl-3 pr-1 text-[12px] font-medium text-zinc-300 border-r border-zinc-700">
-                  已选 {selectedParagraphIds.size} 段
-                </div>
-                <input
-                  type="text"
-                  value={inlinePrompt}
-                  onChange={(e) => setInlinePrompt(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      onInlinePatchSubmit?.(inlinePrompt);
-                      setInlinePrompt('');
-                    }
-                  }}
-                  placeholder="要求 AI 局部重写 (Enter确认)..."
-                  className="flex-1 bg-transparent border-none text-[13px] text-zinc-100 placeholder:text-zinc-500 px-2 py-1 outline-none focus:ring-0"
-                />
-                <button
-                  onClick={() => {
-                    onInlinePatchSubmit?.(inlinePrompt);
-                    setInlinePrompt('');
-                  }}
-                  className="shrink-0 h-7 px-3 bg-white text-zinc-900 rounded-md text-[12px] font-medium hover:bg-zinc-200 transition-colors"
-                >
-                  重写
-                </button>
-                <button
-                  onClick={onClearParagraphSelect}
-                  className="shrink-0 h-7 w-7 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-md transition-colors"
-                >
-                  <span className="sr-only">取消</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-              </div>
-            )}
-          </div>
         ) : (
-          <div className="whitespace-pre-wrap text-[14px] leading-[1.8] text-zinc-800 tracking-wide font-normal select-text">
-            {polishedText}
+          <div className="whitespace-pre-wrap text-[14.5px] leading-[1.75] text-zinc-800 tracking-wide font-normal select-text">
+            {renderParagraphRichText(polishedText)}
           </div>
         )}
       </div>
 
       {/* Micro-selection Toolbar */}
-      {microMenuState?.show && (
-        <div 
-          className="fixed z-50 flex items-center gap-1 rounded-lg border border-zinc-200 bg-white/80 backdrop-blur-xl p-1 shadow-xl animate-in fade-in zoom-in-95 duration-150"
-          style={{
-            left: microMenuState.x,
-            top: microMenuState.y,
-            transform: 'translate(-50%, -100%)',
-          }}
-        >
-          <button onClick={() => { onInlinePatchSubmit?.(`魔法润色：${microMenuState.text}`); setMicroMenuState(null); }} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 transition-colors">
-            🪄 润色
-          </button>
-          <div className="w-px h-3 bg-zinc-200" />
-          <button onClick={() => { onInlinePatchSubmit?.(`扩写缩写：${microMenuState.text}`); setMicroMenuState(null); }} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 transition-colors">
-            ↔️ 扩缩
-          </button>
-          <div className="w-px h-3 bg-zinc-200" />
-          <button onClick={() => { onInlinePatchSubmit?.(`换个语气：${microMenuState.text}`); setMicroMenuState(null); }} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 transition-colors">
-            🔄 语气
-          </button>
-        </div>
-      )}
+      <AnimatePresence>
+        {microMenuState?.show && (
+          <div
+            className="fixed z-50 pointer-events-none"
+            style={{
+              left: microMenuState.x,
+              top: microMenuState.y,
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 5 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 5 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+              className="pointer-events-auto flex flex-col gap-1 rounded-xl border border-white/20 bg-[#1A1A1A] p-1.5 shadow-2xl overflow-hidden min-w-[280px]"
+            >
+              {/* Top Input Area */}
+              <div className="flex items-center gap-1.5 px-2 py-1.5 bg-white/5 rounded-lg border border-white/10 focus-within:border-white/30 focus-within:bg-white/10 transition-colors">
+                <input
+                  type="text"
+                  value={inlinePrompt}
+                  onChange={(e) => setInlinePrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && inlinePrompt.trim()) {
+                      e.preventDefault();
+                      onInlinePatchSubmit?.(`${inlinePrompt}：${microMenuState.text}`);
+                      setMicroMenuState(null);
+                      setInlinePrompt('');
+                    }
+                  }}
+                  placeholder="针对选中文本提出要求..."
+                  className="flex-1 bg-transparent border-none text-[13px] text-zinc-200 placeholder:text-zinc-500 outline-none focus:ring-0 min-w-0"
+                />
+              </div>
+              {/* Bottom Quick Action Area */}
+              <div className="flex items-center gap-0.5 mt-0.5">
+                <button onClick={() => { onInlinePatchSubmit?.(`一键润色：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  ✨ 润色
+                </button>
+                <div className="w-px h-3 bg-white/10 mx-0.5" />
+                <button onClick={() => { onInlinePatchSubmit?.(`精简此段：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  ✂️ 精简
+                </button>
+                <div className="w-px h-3 bg-white/10 mx-0.5" />
+                <button onClick={() => { onInlinePatchSubmit?.(`换个语气：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  🎭 语气
+                </button>
+                <div className="w-px h-3 bg-white/10 mx-0.5" />
+                <button onClick={() => { onInlinePatchSubmit?.(`进行补充：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  ➕ 补充
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

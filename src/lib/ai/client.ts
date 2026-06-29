@@ -8,6 +8,7 @@ import {
   bumpProviderKeyFailure,
   getProviderKeyModelConfig,
   markProviderKeySuccess,
+  selectHealthyProviderKeyModel,
 } from "./provider-routing";
 
 type TextContent = string;
@@ -83,14 +84,23 @@ type FeatureConfig = {
   featureKey: string;
   channelId: string | null;
   model: string | null;
+  providerKeyModelId: string | null;
   systemPrompt: string | null;
   isEnabled: boolean;
+  source: "binding" | "legacy";
 };
 
 type AiFeatureConfigRow = {
   feature_key: string;
   channel_id: string | null;
   model: string | null;
+  system_prompt: string | null;
+  is_enabled: boolean;
+};
+
+type AiFeatureBindingRow = {
+  feature_key: string;
+  provider_key_model_id: string | null;
   system_prompt: string | null;
   is_enabled: boolean;
 };
@@ -210,8 +220,22 @@ function mapFeatureConfig(row: AiFeatureConfigRow): FeatureConfig {
     featureKey: row.feature_key,
     channelId: row.channel_id,
     model: row.model,
+    providerKeyModelId: null,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,
+    source: "legacy",
+  };
+}
+
+function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
+  return {
+    featureKey: row.feature_key,
+    channelId: null,
+    model: null,
+    providerKeyModelId: row.provider_key_model_id,
+    systemPrompt: row.system_prompt,
+    isEnabled: row.is_enabled,
+    source: "binding",
   };
 }
 
@@ -251,15 +275,28 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
     return null;
   }
 
+  const { data: bindingData, error: bindingError } = await supabase
+    .from("ai_feature_bindings")
+    .select("feature_key, provider_key_model_id, system_prompt, is_enabled");
+
+  const configs = new Map<string, FeatureConfig>();
+  if (!bindingError && bindingData?.length) {
+    for (const row of bindingData as AiFeatureBindingRow[]) {
+      const config = mapFeatureBinding(row);
+      configs.set(config.featureKey, config);
+    }
+  }
+
   const { data, error } = await supabase
     .from("ai_feature_config")
     .select("feature_key, channel_id, model, system_prompt, is_enabled");
 
-  const configs = new Map<string, FeatureConfig>();
   if (!error && data?.length) {
     for (const row of data as AiFeatureConfigRow[]) {
       const config = mapFeatureConfig(row);
-      configs.set(config.featureKey, config);
+      if (!configs.has(config.featureKey)) {
+        configs.set(config.featureKey, config);
+      }
     }
   }
 
@@ -269,6 +306,22 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
   };
 
   return configs.get(featureKey) ?? null;
+}
+
+async function getProviderKeyModelChannelByFeatureConfig(
+  featureConfig: FeatureConfig,
+): Promise<ChannelConfig | null> {
+  if (featureConfig.source !== "binding") return null;
+
+  if (featureConfig.providerKeyModelId) {
+    return getProviderKeyModelChannel(featureConfig.providerKeyModelId);
+  }
+
+  const supabase = getServiceSupabaseClient();
+  if (!supabase) return null;
+
+  const selected = await selectHealthyProviderKeyModel(supabase, undefined);
+  return selected ? getProviderKeyModelChannel(selected.providerKeyModelId) : null;
 }
 
 async function getDatabaseChannels(): Promise<ChannelConfig[]> {
@@ -736,10 +789,15 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   };
 
   let preferredChannelId: string | null = options.channelId?.trim() || null;
+  let preferredProviderChannel: ChannelConfig | null = null;
   if (options.featureKey) {
     const featureConfig = await getFeatureConfig(options.featureKey);
     if (featureConfig && !featureConfig.isEnabled) {
       throw new Error("该 AI 功能已禁用");
+    }
+
+    if (featureConfig?.source === "binding") {
+      preferredProviderChannel = await getProviderKeyModelChannelByFeatureConfig(featureConfig);
     }
 
     if (!preferredChannelId && featureConfig?.channelId) {
@@ -759,6 +817,12 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   }
 
   let configuredChannels = await getAvailableChannels(options);
+  if (preferredProviderChannel) {
+    configuredChannels = [
+      preferredProviderChannel,
+      ...configuredChannels.filter((channel) => channel.id !== preferredProviderChannel.id),
+    ];
+  }
   const providerKeyModelId = options.providerKeyModelId?.trim();
   if (providerKeyModelId) {
     const providerChannel = await getProviderKeyModelChannel(providerKeyModelId);
@@ -869,7 +933,14 @@ export const __internal = {
   resolveModel,
   normalizeResponseContent,
   describeMissingResponseContent,
+  getFeatureConfigForTests: getFeatureConfig,
   parseChatCompletionSse,
+  setServiceClientForTests(client: unknown) {
+    _serviceClient = client;
+    cachedChannels = null;
+    channelsPromise = null;
+    cachedFeatureConfigs = null;
+  },
   resetCache() {
     cachedChannels = null;
     channelsPromise = null;

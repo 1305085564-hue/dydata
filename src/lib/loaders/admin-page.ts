@@ -376,7 +376,7 @@ export async function loadAdminPageData({
     trendData,
     topSummaryCards: [],
     quickActions: [
-      perm.role === "owner" ? { label: "AI 配置中心", description: "管理渠道、功能绑定与文案改写", href: "/admin/ai-channels" } : null,
+      perm.role === "owner" ? { label: "AI 配置中心", description: "管理渠道、功能绑定与文案改写", href: "/admin/ai-config" } : null,
       hasPermission(perm.businessRole, perm.permissions, "use_ai_management")
         ? { label: "后台 AI 助手", description: "使用右下角浮窗处理操作与诊断" }
         : null,

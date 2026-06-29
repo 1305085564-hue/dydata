@@ -295,6 +295,8 @@ function providerKeyModelRow(input: {
   modelId: string;
   keyPriority?: number;
   providerPriority?: number;
+  unhealthyUntil?: string | null;
+  consecutiveFailures?: number;
 }) {
   return {
     id: input.id,
@@ -305,8 +307,8 @@ function providerKeyModelRow(input: {
       api_key: `secret-${input.id}`,
       is_enabled: true,
       priority: input.keyPriority ?? 10,
-      consecutive_failures: 0,
-      unhealthy_until: null,
+      consecutive_failures: input.consecutiveFailures ?? 0,
+      unhealthy_until: input.unhealthyUntil ?? null,
       provider: {
         id: `provider-${input.id}`,
         name: `provider-${input.id}`,
@@ -420,6 +422,7 @@ test("generation provider selection uses latest active skill default when no mod
     ],
     ai_provider_key_models: [
       providerKeyModelRow({ id: "pkm-a", modelId: "model-a-actual" }),
+      providerKeyModelRow({ id: "pkm-direct-b", modelId: "model-b-actual" }),
       providerKeyModelRow({ id: "pkm-fallback", modelId: "fallback-model" }),
     ],
     rewrite_skills: [
@@ -499,6 +502,120 @@ test("generation provider selection uses latest active skill default when no mod
   });
 
   assert.equal(selected, "pkm-direct-b");
+});
+
+test("generation provider selection skips unhealthy direct model route and uses next route", async () => {
+  const db: FakeDb = {
+    rewrite_model_routes: [
+      {
+        id: "route-unhealthy",
+        model_view_id: "model-default",
+        provider_key_model_id: "pkm-unhealthy",
+        actual_model: "model-unhealthy",
+        priority: 1,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "route-healthy",
+        model_view_id: "model-default",
+        provider_key_model_id: "pkm-healthy",
+        actual_model: "model-healthy",
+        priority: 2,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:01.000Z",
+      },
+    ],
+    ai_provider_key_models: [
+      providerKeyModelRow({
+        id: "pkm-unhealthy",
+        modelId: "model-unhealthy",
+        consecutiveFailures: 3,
+        unhealthyUntil: "2099-01-01T00:00:00.000Z",
+      }),
+      providerKeyModelRow({ id: "pkm-healthy", modelId: "model-healthy" }),
+    ],
+    rewrite_skills: [],
+    rewrite_skill_versions: [],
+    rewrite_conversation_skills: [],
+  };
+
+  const selected = await resolveGenerationProviderKeyModelId(createFakeService(db) as never, {
+    conversationId: "conv-1",
+    modelViewId: "model-default",
+  });
+
+  assert.equal(selected, "pkm-healthy");
+});
+
+test("generation provider selection falls back by rewrite model view sort order before global provider priority", async () => {
+  const db: FakeDb = {
+    rewrite_model_views: [
+      {
+        id: "model-first",
+        key: "first",
+        label: "第一模型",
+        description: null,
+        sort_order: 1,
+        is_enabled: true,
+        is_default: false,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "model-second",
+        key: "second",
+        label: "第二模型",
+        description: null,
+        sort_order: 2,
+        is_enabled: true,
+        is_default: false,
+        created_at: "2026-06-28T00:00:01.000Z",
+      },
+    ],
+    rewrite_model_routes: [
+      {
+        id: "route-first",
+        model_view_id: "model-first",
+        provider_key_model_id: "pkm-first-unhealthy",
+        actual_model: "first-model",
+        priority: 1,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "route-second",
+        model_view_id: "model-second",
+        provider_key_model_id: "pkm-second",
+        actual_model: "second-model",
+        priority: 1,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    ai_provider_key_models: [
+      providerKeyModelRow({
+        id: "pkm-first-unhealthy",
+        modelId: "first-model",
+        consecutiveFailures: 3,
+        unhealthyUntil: "2099-01-01T00:00:00.000Z",
+      }),
+      providerKeyModelRow({ id: "pkm-second", modelId: "second-model", keyPriority: 50 }),
+      providerKeyModelRow({ id: "pkm-global-priority", modelId: "global-model", keyPriority: 1 }),
+    ],
+    rewrite_skills: [],
+    rewrite_skill_versions: [],
+    rewrite_conversation_skills: [],
+  };
+
+  const selected = await resolveGenerationProviderKeyModelId(createFakeService(db) as never, {
+    conversationId: "conv-1",
+  });
+
+  assert.equal(selected, "pkm-second");
 });
 
 test("skill prompt edits create a new immutable version", async () => {

@@ -9,7 +9,10 @@ import {
 } from "./documents";
 import { listConversationSkills } from "./skills";
 import { callAi, type AiMessage, type AiResponse } from "@/lib/ai/client";
-import { selectHealthyProviderKeyModel } from "@/lib/ai/provider-routing";
+import {
+  getProviderKeyModelConfig,
+  selectHealthyProviderKeyModel,
+} from "@/lib/ai/provider-routing";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -265,19 +268,48 @@ async function resolveProviderKeyModelByModelView(
     throw new Error(error.message);
   }
 
-  const route = ((data ?? []) as Array<{
+  const routes = ((data ?? []) as Array<{
     provider_key_model_id?: string | null;
     actual_model?: string | null;
-  }>)[0];
+  }>);
 
-  if (!route) return null;
-  if (route.provider_key_model_id) return route.provider_key_model_id;
+  for (const route of routes) {
+    if (route.provider_key_model_id) {
+      const config = await getProviderKeyModelConfig(service, route.provider_key_model_id);
+      if (config) return route.provider_key_model_id;
+      continue;
+    }
 
-  const selected = await selectHealthyProviderKeyModel(
-    service,
-    route.actual_model?.trim() || undefined,
-  );
-  return selected?.providerKeyModelId ?? null;
+    const selected = await selectHealthyProviderKeyModel(
+      service,
+      route.actual_model?.trim() || undefined,
+    );
+    if (selected) return selected.providerKeyModelId;
+  }
+
+  return null;
+}
+
+async function resolveFirstHealthyProviderKeyModelBySortedModelViews(
+  service: MinimalClient,
+): Promise<string | null> {
+  const { data, error } = await service
+    .from("rewrite_model_views")
+    .select("id, sort_order, is_enabled, created_at")
+    .eq("is_enabled", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  for (const row of (data ?? []) as Array<{ id: string }>) {
+    const selected = await resolveProviderKeyModelByModelView(service, row.id);
+    if (selected) return selected;
+  }
+
+  return null;
 }
 
 export async function resolveGenerationProviderKeyModelId(
@@ -306,6 +338,9 @@ export async function resolveGenerationProviderKeyModelId(
     const selected = await resolveProviderKeyModelByModelView(service, skillDefaultModelViewId);
     if (selected) return selected;
   }
+
+  const sortedModelViewSelection = await resolveFirstHealthyProviderKeyModelBySortedModelViews(service);
+  if (sortedModelViewSelection) return sortedModelViewSelection;
 
   const selected = await selectHealthyProviderKeyModel(
     service,

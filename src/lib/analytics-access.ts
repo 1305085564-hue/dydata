@@ -123,8 +123,12 @@ export function canAccessAdminPath(pathname: string, role: UserRole | BusinessRo
     return canAccessMembersSettings(role, permissions);
   }
   if (
+    pathname === "/admin/ai-config" ||
+    pathname.startsWith("/admin/ai-config/") ||
     pathname === "/admin/ai-channels" ||
-    pathname.startsWith("/admin/ai-channels/")
+    pathname.startsWith("/admin/ai-channels/") ||
+    pathname === "/admin/ai-rewrite" ||
+    pathname.startsWith("/admin/ai-rewrite/")
   ) {
     return canAccessAiSettings(role);
   }

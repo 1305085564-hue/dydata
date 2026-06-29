@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { PanelLeftClose, PanelLeft, Plus, Sliders, Layout, FileText } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Plus, Sliders, Layout } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRewriteLogic } from './useRewriteLogic';
 import { RewriteHistory } from './RewriteHistory';
@@ -163,19 +163,10 @@ export function RewriteWorkbench() {
           <button
             onClick={actions.handleNewConversation}
             className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
-            title="开启新对话"
+            title="开启新文案"
           >
             <Plus className="h-3 w-3" />
             <span className="tracking-wide">新对话</span>
-          </button>
-
-          <button
-            onClick={actions.handleNewV2Conversation}
-            className="inline-flex items-center gap-1.5 rounded-[10px] border border-[#D97757]/30 bg-[#D97757]/5 px-2.5 py-1 text-[11px] font-medium text-[#B85F42] shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/50 hover:bg-[#D97757]/10 active:translate-y-0"
-            title="开启 v2 文档画布"
-          >
-            <FileText className="h-3 w-3" />
-            <span className="tracking-wide">v2 画布</span>
           </button>
           {/* Top-right Actions */}
           <div className="flex items-center gap-1.5 ml-2 border-l border-zinc-200 pl-2">
@@ -191,7 +182,7 @@ export function RewriteWorkbench() {
             </button>
             <button
               onClick={() => actions.setPresentationMode(true)}
-              className="inline-flex h-7 items-center justify-center rounded-md bg-zinc-900 px-3 text-[11px] font-medium text-white shadow-sm hover:bg-zinc-800 transition-colors"
+              className="inline-flex h-7 items-center justify-center rounded-md bg-[#D97757] px-3.5 text-[11px] font-bold text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] transition-all"
             >
               定稿导出
             </button>
@@ -252,11 +243,11 @@ export function RewriteWorkbench() {
         </aside>
 
         {/* Double-column Studio Content Area */}
-        <div className="flex-1 flex min-w-0 overflow-hidden divide-x divide-zinc-200 bg-white">
-          {/* Left Column (45%): Dialog & Controls */}
-          <div className="w-[45%] min-w-[360px] flex flex-col min-h-0 relative">
+        <div className="flex-1 flex min-w-0 overflow-hidden bg-zinc-100">
+          {/* Left Column (40%): Dialog & Controls */}
+          <div className="w-[40%] min-w-[360px] flex flex-col min-h-0 relative bg-zinc-50/80 backdrop-blur-xl border-r border-zinc-200 shadow-[2px_0_12px_rgba(0,0,0,0.03)] z-20">
             {/* Collapsible Skill Settings Header */}
-            <div className="shrink-0 border-b border-zinc-200 bg-zinc-50/50 px-4 py-3">
+            <div className="shrink-0 border-b border-zinc-200/50 bg-transparent px-5 min-h-[56px] flex flex-col justify-center py-3 z-10 relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-bold text-zinc-800">
@@ -376,21 +367,24 @@ export function RewriteWorkbench() {
             />
 
             {/* Prompt Textarea */}
-            <ChatInputBar
-              inputText={state.inputText}
-              isSending={state.isSending}
-              isChatStage={state.isV2Conversation}
-              activeFixedModeName={
-                state.bootstrap.fixedModes.find((mode) => mode.id === state.selectedFixedModeId)?.name || null
-              }
-              activeSkills={state.activeSkills}
-              activeMentions={state.activeMentions}
-              availableSkills={state.isV2Conversation ? state.availableV2Skills : state.bootstrap?.fixedModes || []}
-              onInputChange={actions.setInputText}
-              onSend={actions.handleSend}
-              onToggleSkill={actions.handleToggleSkill}
-              onToggleMention={actions.handleToggleMention}
-            />
+            <div className="relative shrink-0">
+              {/* 渐变遮罩: 物理流体感悬浮融合 */}
+              <div className="pointer-events-none absolute bottom-full left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent z-10" />
+              <ChatInputBar
+                inputText={state.inputText}
+                isSending={state.isSending}
+                isChatStage={state.isV2Conversation}
+                activeFixedModeName={
+                  state.bootstrap.fixedModes.find((mode) => mode.id === state.selectedFixedModeId)?.name || null
+                }
+                activeSkills={state.activeSkills}
+                availableSkills={state.isV2Conversation ? state.availableV2Skills : state.bootstrap?.fixedModes || []}
+                onInputChange={actions.setInputText}
+                onSend={actions.handleSend}
+                onAbort={actions.handleAbortGeneration}
+                onToggleSkill={actions.handleToggleSkill}
+              />
+            </div>
           </div>
 
           {/* Right Column (55%): Polishing Document Sheet & Diff */}
@@ -401,12 +395,11 @@ export function RewriteWorkbench() {
               isSending={state.isSending}
               paragraphs={state.documentParagraphs}
               traceabilityMode={state.traceabilityMode}
-              selectedParagraphIds={state.selectedParagraphIds}
+              generatingParagraphIds={state.generatingParagraphIds}
+              streamingPatchText={state.streamingPatchText}
               onTextChange={actions.handleUpdateLastAssistantMessage}
-              onToggleParagraphLock={actions.handleToggleParagraphLock}
-              onToggleParagraphSelect={actions.handleToggleParagraphSelect}
-              onClearParagraphSelect={actions.handleClearParagraphSelect}
               onInlinePatchSubmit={actions.handleInlinePatchSubmit}
+              onParagraphEdit={actions.handleUserEdit}
             />
           </div>
         </div>

@@ -514,3 +514,132 @@ export async function getCurrentDocumentSnapshot(
     paragraphs,
   };
 }
+
+export async function createUserEditRevision(
+  service: MinimalClient,
+  input: {
+    conversationId: string;
+    userId: string; // Used for potential audit or auth
+    paragraphId: string;
+    newContent: string;
+  },
+): Promise<DocumentRevision> {
+  const snapshot = await getCurrentDocumentSnapshot(service, input.conversationId);
+  if (!snapshot || !snapshot.revision) {
+    throw new Error("找不到可供修改的当前文档版本");
+  }
+
+  const targetIndex = snapshot.paragraphs.findIndex(p => p.paragraphId === input.paragraphId);
+  if (targetIndex === -1) {
+    throw new Error("未找到目标段落");
+  }
+
+  const newRevision = await createRevision(service, {
+    documentId: snapshot.document.id,
+    parentRevisionId: snapshot.revision.id,
+    sourceType: "user_edit",
+    status: "pending",
+  });
+
+  const newParagraphs = snapshot.paragraphs.map((p) => {
+    if (p.paragraphId === input.paragraphId) {
+      return {
+        paragraphId: p.paragraphId,
+        position: p.position,
+        content: input.newContent,
+        isLocked: p.isLocked,
+        sourceType: "user" as ParagraphSourceType,
+      };
+    }
+    return {
+      paragraphId: p.paragraphId,
+      position: p.position,
+      content: p.content,
+      isLocked: p.isLocked,
+      sourceType: p.sourceType,
+    };
+  });
+
+  await createParagraphs(service, {
+    revisionId: newRevision.id,
+    paragraphs: newParagraphs,
+  });
+
+  const fullContent = newParagraphs.map(p => p.content).join("\n\n");
+  await updateRevisionStatus(service, newRevision.id, "completed", fullContent);
+  await setCurrentRevision(service, snapshot.document.id, newRevision.id);
+
+  return {
+    ...newRevision,
+    status: "completed",
+    fullContent,
+  };
+}
+
+export async function createParagraphUndoRevision(
+  service: MinimalClient,
+  input: {
+    conversationId: string;
+    paragraphId: string;
+  },
+): Promise<DocumentRevision> {
+  const snapshot = await getCurrentDocumentSnapshot(service, input.conversationId);
+  if (!snapshot || !snapshot.revision || !snapshot.revision.parentRevisionId) {
+    throw new Error("找不到可供撤销的历史版本");
+  }
+
+  const parentParagraphs = await getParagraphsByRevisionId(service, snapshot.revision.parentRevisionId);
+  
+  const currentTarget = snapshot.paragraphs.find(p => p.paragraphId === input.paragraphId);
+  if (!currentTarget) {
+    throw new Error("当前版本未找到目标段落");
+  }
+
+  const parentTarget = parentParagraphs.find(p => p.paragraphId === input.paragraphId) || 
+                       parentParagraphs.find(p => p.position === currentTarget.position);
+
+  if (!parentTarget) {
+    throw new Error("无法追溯该段落的上一版本");
+  }
+
+  const newRevision = await createRevision(service, {
+    documentId: snapshot.document.id,
+    parentRevisionId: snapshot.revision.id,
+    sourceType: "user_edit",
+    status: "pending",
+  });
+
+  const newParagraphs = snapshot.paragraphs.map((p) => {
+    if (p.paragraphId === input.paragraphId) {
+      return {
+        paragraphId: p.paragraphId,
+        position: p.position,
+        content: parentTarget.content,
+        isLocked: p.isLocked,
+        sourceType: "user" as ParagraphSourceType,
+      };
+    }
+    return {
+      paragraphId: p.paragraphId,
+      position: p.position,
+      content: p.content,
+      isLocked: p.isLocked,
+      sourceType: p.sourceType,
+    };
+  });
+
+  await createParagraphs(service, {
+    revisionId: newRevision.id,
+    paragraphs: newParagraphs,
+  });
+
+  const fullContent = newParagraphs.map(p => p.content).join("\n\n");
+  await updateRevisionStatus(service, newRevision.id, "completed", fullContent);
+  await setCurrentRevision(service, snapshot.document.id, newRevision.id);
+
+  return {
+    ...newRevision,
+    status: "completed",
+    fullContent,
+  };
+}

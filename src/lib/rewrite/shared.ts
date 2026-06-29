@@ -1,6 +1,7 @@
 import { createClient as createServiceRoleClient } from "@supabase/supabase-js";
 
 import { callAi, extractJsonString, type AiMessage } from "@/lib/ai/client";
+import { getProviderKeyModelConfig } from "@/lib/ai/provider-routing";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
@@ -95,7 +96,8 @@ type RewriteModelRouteRow = {
   id: string;
   model_view_id: string;
   workflow_step_id: string | null;
-  channel_id: string;
+  channel_id: string | null;
+  provider_key_model_id?: string | null;
   actual_model: string;
   priority: number;
   weight: number;
@@ -537,7 +539,11 @@ function getRouteChannel(route: RewriteModelRouteRow) {
 
 function isUsableModelRoute(route: RewriteModelRouteRow) {
   const channel = getRouteChannel(route);
-  return route.is_enabled && Boolean(route.actual_model.trim()) && channel?.is_enabled !== false;
+  return (
+    route.is_enabled &&
+    Boolean(route.actual_model.trim()) &&
+    (Boolean(route.provider_key_model_id) || channel?.is_enabled !== false)
+  );
 }
 
 function pickPrimaryModelRoute(
@@ -553,6 +559,37 @@ function pickPrimaryModelRoute(
   );
 
   return matches[0] ?? routes.find((route) => route.model_view_id === modelViewId && isUsableModelRoute(route)) ?? null;
+}
+
+async function hasHealthyModelRoute(
+  service: MinimalClient,
+  routes: RewriteModelRouteRow[],
+  modelViewId: string,
+) {
+  const candidates = routes.filter((route) => route.model_view_id === modelViewId && isUsableModelRoute(route));
+
+  for (const route of candidates) {
+    if (!route.provider_key_model_id) return true;
+
+    const config = await getProviderKeyModelConfig(service, route.provider_key_model_id);
+    if (config) return true;
+  }
+
+  return false;
+}
+
+async function pickFirstHealthyModelView(
+  service: MinimalClient,
+  modelViews: RewriteModelViewRow[],
+  modelRoutes: RewriteModelRouteRow[],
+) {
+  for (const modelView of modelViews) {
+    if (await hasHealthyModelRoute(service, modelRoutes, modelView.id)) {
+      return modelView;
+    }
+  }
+
+  return null;
 }
 
 function toModelOption(row: RewriteModelViewRow, routes: RewriteModelRouteRow[] = []): RewriteModelOption {
@@ -1182,7 +1219,7 @@ async function loadRewriteConfig(service: MinimalClient): Promise<RewriteConfigB
     service
       .from("rewrite_model_routes")
       .select(
-        "id, model_view_id, workflow_step_id, channel_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
+        "id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
       )
       .eq("is_enabled", true)
       .order("priority", { ascending: true })
@@ -1300,9 +1337,15 @@ export async function getRewriteBootstrapPayload(service: MinimalClient): Promis
   const config = await loadRewriteConfig(service);
   const outputTokenLimit = clampRewriteOutputTokenLimit(config.feature?.output_token_limit);
   const contextMessageLimit = clampRewriteContextMessageLimit(config.feature?.context_message_limit);
-  const availableModelViews = config.modelViews.filter((row) => pickPrimaryModelRoute(config.modelRoutes, row.id));
+  const availableModelViews: RewriteModelViewRow[] = [];
+  for (const row of config.modelViews) {
+    if (await hasHealthyModelRoute(service, config.modelRoutes, row.id)) {
+      availableModelViews.push(row);
+    }
+  }
   const modelViews = availableModelViews.length > 0 ? availableModelViews : config.modelViews;
   const availableModelViewIds = new Set(modelViews.map((row) => row.id));
+  const defaultModelView = await pickFirstHealthyModelView(service, modelViews, config.modelRoutes);
 
   return {
     feature: {
@@ -1319,7 +1362,7 @@ export async function getRewriteBootstrapPayload(service: MinimalClient): Promis
     defaults: {
       autoModeEnabled: false,
       fixedModeId: null,
-      modelViewId: pickDefaultRow(modelViews)?.id ?? null,
+      modelViewId: defaultModelView?.id ?? null,
       modeId: null,
       lengthPresetId: pickDefaultRow(config.lengthPresets)?.id ?? null,
       workflowId: null,
@@ -1382,11 +1425,14 @@ export async function resolveRewriteSelections(
   if (fixedMode && !fixedModeModelView) {
     throw new Error("固定模式绑定的真实模型不存在");
   }
-  const modelView = fixedModeModelView ?? explicitModelView ?? pickDefaultRow(config.modelViews);
+  const modelView =
+    fixedModeModelView ??
+    explicitModelView ??
+    (await pickFirstHealthyModelView(service, config.modelViews, config.modelRoutes));
   if (!modelView) {
     throw new Error("真实模型不存在");
   }
-  if (!pickPrimaryModelRoute(config.modelRoutes, modelView.id)) {
+  if (!(await hasHealthyModelRoute(service, config.modelRoutes, modelView.id))) {
     throw new Error("当前真实模型未配置可用执行渠道");
   }
 
@@ -1482,7 +1528,7 @@ async function loadOptionMaps(
       ? service
           .from("rewrite_model_routes")
           .select(
-            "id, model_view_id, workflow_step_id, channel_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
+            "id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
           )
           .in("model_view_id", input.modelViewIds)
           .eq("is_enabled", true)
@@ -1962,7 +2008,7 @@ async function loadRoutesForStep(
     let query = service
       .from("rewrite_model_routes")
       .select(
-        "id, model_view_id, workflow_step_id, channel_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
+        "id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
       )
       .eq("model_view_id", input.modelViewId)
       .eq("is_enabled", true)
@@ -1987,7 +2033,7 @@ async function loadRoutesForStep(
       ? ((await service
           .from("rewrite_model_routes")
           .select(
-            "id, model_view_id, workflow_step_id, channel_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
+            "id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, channel:ai_channels(id, name, is_enabled)",
           )
           .eq("model_view_id", input.modelViewId)
           .eq("is_enabled", true)
@@ -2075,7 +2121,8 @@ async function executeRewriteStep(input: {
 
     try {
       const aiResult = await rewriteAiCaller({
-        channelId: route.channel_id,
+        channelId: route.channel_id ?? undefined,
+        providerKeyModelId: route.provider_key_model_id ?? undefined,
         model: route.actual_model,
         databaseOnly: true,
         jsonMode: useJsonMode,

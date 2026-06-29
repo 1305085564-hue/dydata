@@ -64,7 +64,7 @@ export default async function AdminSettingsPage() {
         />
         {isOwner ? (
         <SettingCard
-          href="/admin/ai-channels"
+          href="/admin/ai-config"
           title="AI 配置"
           description="模型渠道、功能绑定、文案改写和执行路线管理。"
           icon={<Sparkles className="size-5" />}

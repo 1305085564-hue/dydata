@@ -92,9 +92,12 @@ export async function middleware(request: NextRequest) {
   const allSupabaseAuthCookieNames = listSupabaseAuthCookieNames(request.cookies.getAll());
   const hasLegacySupabaseAuthCookie = !hasAuthCookie && allSupabaseAuthCookieNames.length > 0;
 
-  // AI 配置中心统一由渠道页承载，旧链接继续重定向
-  if (pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/")) {
-    return NextResponse.redirect(new URL("/admin/ai-channels", request.url));
+  // AI 配置中心统一由 ai-config 承载，旧链接继续重定向
+  if (
+    pathname === "/admin/ai-features" || pathname.startsWith("/admin/ai-features/") ||
+    pathname === "/admin/ai-channels" || pathname.startsWith("/admin/ai-channels/")
+  ) {
+    return NextResponse.redirect(new URL("/admin/ai-config", request.url));
   }
 
   // 首页已改为落地页，不再自动跳转；已登录用户通过页面内逻辑跳转

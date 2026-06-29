@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { BootstrapPayload, Conversation, Message } from '../types';
+import { resolveLocalTargetPlan, type TargetPlan } from './target-plan';
 
 export type RewriteStreamEvent =
   | { type: 'meta'; responseMode: 'chat' | 'versions'; conversationId: string | null }
@@ -13,7 +14,13 @@ export type RewriteStreamEvent =
   | { type: 'error'; error: string };
 
 export type RewriteV2StreamEvent =
-  | { type: 'generation_start'; runId: string }
+  | { type: 'generation_start'; runId: string; conversationId: string }
+  | {
+      type: 'target_plan';
+      scope: 'paragraphs' | 'full_document';
+      targetParagraphIds: string[];
+      runType: 'full_rewrite' | 'paragraph_patch' | 'variant_generate' | 'chat_reply';
+    }
   | { type: 'content_delta'; delta: string }
   | { type: 'generation_complete'; runId: string; revisionId: string; fullContent: string }
   | { type: 'error'; error: string };
@@ -70,33 +77,6 @@ function upsertConversation(items: Conversation[], next: Conversation) {
   return sortConversations([next, ...filtered]);
 }
 
-function buildV2Conversation(input: {
-  conversationId: string;
-  bootstrap: BootstrapPayload;
-  title?: string;
-}): Conversation {
-  const now = new Date().toISOString();
-  return {
-    id: input.conversationId,
-    title: input.title || '新文案画布',
-    schemaVersion: 2,
-    selected: {
-      autoModeEnabled: false,
-      fixedModeId: null,
-      modelViewId: null,
-      modeId: null,
-      lengthPresetId: input.bootstrap.defaults.lengthPresetId,
-      fixedMode: null,
-      modelView: null,
-      mode: null,
-      lengthPreset: null,
-    },
-    lastMessageAt: now,
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
 function isTransientFetchError(error: unknown) {
   if (!(error instanceof Error)) return false;
   const message = error.message.toLowerCase();
@@ -106,6 +86,10 @@ function isTransientFetchError(error: unknown) {
     message.includes('networkerror') ||
     message.includes('network request failed')
   );
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 function sleep(ms: number) {
@@ -210,16 +194,17 @@ export function useRewriteLogic() {
   const [documentParagraphs, setDocumentParagraphs] = useState<DocumentParagraph[]>([]);
 
   // Advanced UX States
+  const [generatingParagraphIds, setGeneratingParagraphIds] = useState<string[]>([]);
+  const [streamingPatchText, setStreamingPatchText] = useState('');
   const [availableV2Skills, setAvailableV2Skills] = useState<RewriteSkillSummary[]>([]);
   const [activeSkills, setActiveSkills] = useState<RewriteSkillSummary[]>([]);
-  const [activeMentions, setActiveMentions] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedParagraphIds, setSelectedParagraphIds] = useState<Set<string>>(new Set());
   const [traceabilityMode, setTraceabilityMode] = useState(false);
   const [presentationMode, setPresentationMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentConversationIdRef = useRef<string | null>(null);
   const messageCacheRef = useRef(new Map<string, Message[]>());
   const pendingFetchRef = useRef(new Map<string, Promise<void>>());
+  const activeGenerationAbortRef = useRef<AbortController | null>(null);
   const hasAssistantMessages = messages.some(
     (item) => item.role === 'assistant' && !item.id.startsWith('stream-')
   );
@@ -233,7 +218,35 @@ export function useRewriteLogic() {
     ? conversations.find((item) => item.id === currentConversationId) ?? null
     : null;
   const currentSchemaVersion = currentConversation?.schemaVersion ?? 1;
-  const isV2Conversation = currentSchemaVersion === 2;
+  const isV2Conversation = currentConversation ? currentSchemaVersion === 2 : true;
+
+  function addV2SystemNote(content: string) {
+    const conversationId = currentConversationIdRef.current || currentConversationId || '';
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `note-v2-${Date.now()}`,
+        conversationId,
+        role: 'system_note',
+        content,
+        createdAt: new Date().toISOString(),
+        generationMode: null,
+        status: 'success',
+        requestSnapshot: null,
+        errorMessage: null,
+        structuredResult: null,
+      },
+    ]);
+  }
+
+  function resolveV2TargetPlan(textToSend: string, explicitTargetParagraphIds?: string[]): TargetPlan {
+    return resolveLocalTargetPlan({
+      prompt: textToSend,
+      paragraphs: documentParagraphs,
+      selectedParagraphIds: new Set(explicitTargetParagraphIds ?? []),
+      lastSelectedParagraphId: null,
+    });
+  }
   
   function applySelections(selected?: Conversation['selected'] | null) {
     if (!selected) return;
@@ -270,8 +283,10 @@ export function useRewriteLogic() {
   useEffect(() => {
     if (messages.length === 0) {
       setActiveOriginalDraft('');
-      setPolishedText('');
-      setDocumentParagraphs([]);
+      if (!isV2Conversation) {
+        setPolishedText('');
+        setDocumentParagraphs([]);
+      }
       return;
     }
 
@@ -281,6 +296,10 @@ export function useRewriteLogic() {
       setActiveOriginalDraft(firstUserMsg.content);
     } else {
       setActiveOriginalDraft('');
+    }
+
+    if (isV2Conversation && documentParagraphs.length > 0) {
+      return;
     }
 
     // 2. Find the last Assistant message content (including currently streaming ones)
@@ -293,7 +312,7 @@ export function useRewriteLogic() {
     } else {
       setPolishedText('');
     }
-  }, [messages]);
+  }, [messages, isV2Conversation, documentParagraphs.length]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -342,8 +361,6 @@ export function useRewriteLogic() {
     void fetchData();
     void fetchConversations();
     void fetchV2Skills();
-    // fetchConversations 只在首屏初始化使用一次，这里保持稳定首屏行为。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function cacheConversationMessages(conversationId: string, nextMessages: Message[]) {
@@ -352,17 +369,16 @@ export function useRewriteLogic() {
 
   async function fetchConversations() {
     try {
-      const res = await fetch('/api/content-tools/rewrite/conversations?limit=30', { cache: 'no-store' });
+      const res = await fetch('/api/rewrite/conversations?limit=30', { cache: 'no-store' });
       if (!res.ok) {
         throw new Error(await readApiError(res, '会话列表加载失败'));
       }
       const data = await res.json();
       if (data?.conversations) {
-        const nextConversations = sortConversations(data.conversations);
+        const nextConversations = sortConversations(
+          ((data.conversations ?? []) as Conversation[]).filter((conversation) => conversation.schemaVersion === 2),
+        );
         setConversations(nextConversations);
-        nextConversations.slice(0, 3).forEach((conversation) => {
-          void prefetchConversation(conversation.id);
-        });
       }
     } catch (error) {
       console.warn('⚠️ 获取会话列表失败', error);
@@ -512,6 +528,7 @@ export function useRewriteLogic() {
       const paragraphs = (data?.paragraphs ?? []) as DocumentParagraph[];
       setDocumentParagraphs(paragraphs);
       setPolishedText(paragraphs.map((paragraph) => paragraph.content).join('\n\n'));
+      setStreamingPatchText('');
     } catch (error) {
       console.warn('⚠️ v2 文档段落加载失败', error);
       setDocumentParagraphs([]);
@@ -519,26 +536,16 @@ export function useRewriteLogic() {
   }
 
   function handleSelectConversation(conversation: Conversation) {
+    if ((conversation.schemaVersion ?? 1) !== 2) {
+      addV2SystemNote('旧版文案会话已下架，请开启新的文档画布继续使用。');
+      return;
+    }
     currentConversationIdRef.current = conversation.id;
     setCurrentConversationId(conversation.id);
     applySelections(conversation.selected);
-    if ((conversation.schemaVersion ?? 1) === 2) {
-      setMessages([]);
-      setActiveMentions([]);
-      void fetchV2Paragraphs(conversation.id);
-      void fetchV2ConversationSkills(conversation.id);
-      return;
-    }
-    const cached = messageCacheRef.current.get(conversation.id);
-    if (cached) {
-      setMessages(cached);
-      setMessagesLoading(false);
-      void fetchMessages(conversation.id, { silent: true, applyToView: true });
-      return;
-    }
-
     setMessages([]);
-    void fetchMessages(conversation.id, { applyToView: true });
+    void fetchV2Paragraphs(conversation.id);
+    void fetchV2ConversationSkills(conversation.id);
   }
 
   function handleNewConversation() {
@@ -547,8 +554,6 @@ export function useRewriteLogic() {
     setMessages([]);
     setDocumentParagraphs([]);
     setActiveSkills([]);
-    setActiveMentions([]);
-    setSelectedParagraphIds(new Set());
     setMessagesLoading(false);
     setInputText('');
     if (bootstrap) {
@@ -556,48 +561,32 @@ export function useRewriteLogic() {
     }
   }
 
-  async function handleNewV2Conversation() {
-    if (!bootstrap || isSending) return;
+  async function createV2ConversationOnDemand(title = '新文案画布') {
+    if (!bootstrap) return null;
 
-    setIsSending(true);
-    try {
-      const res = await fetch('/api/rewrite/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: '新文案画布' }),
-      });
+    const res = await fetch('/api/rewrite/conversations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
 
-      if (!res.ok) {
-        throw new Error(await readApiError(res, '创建 v2 会话失败'));
-      }
-
-      const payload = await res.json();
-      const conversationId = payload?.data?.conversationId as string | undefined;
-      if (!conversationId) {
-        throw new Error('创建 v2 会话失败：未返回 conversationId');
-      }
-
-      const conversation = buildV2Conversation({ conversationId, bootstrap });
-      currentConversationIdRef.current = conversationId;
-      setCurrentConversationId(conversationId);
-      setConversations((prev) => upsertConversation(prev, conversation));
-      setMessages([]);
-      setDocumentParagraphs([]);
-      setActiveSkills([]);
-      setActiveMentions([]);
-      setSelectedParagraphIds(new Set());
-      setPolishedText('');
-      setActiveOriginalDraft('');
-      setInputText('');
-      setSelectedModelViewId('');
-    } catch (error) {
-      setErrorState({
-        title: '创建 v2 会话失败',
-        message: error instanceof Error ? error.message : '创建失败，请稍后重试',
-      });
-    } finally {
-      setIsSending(false);
+    if (!res.ok) {
+      throw new Error(await readApiError(res, '创建 v2 会话失败'));
     }
+
+    const payload = await res.json();
+    const conversationId = payload?.data?.conversationId as string | undefined;
+    if (!conversationId) {
+      throw new Error('创建 v2 会话失败：未返回 conversationId');
+    }
+
+    currentConversationIdRef.current = conversationId;
+    setCurrentConversationId(conversationId);
+    return conversationId;
+  }
+
+  function handleNewV2Conversation() {
+    handleNewConversation();
   }
 
   async function prefetchConversation(conversationIdOrItem: string | Conversation) {
@@ -727,8 +716,7 @@ export function useRewriteLogic() {
   ) {
     let conversationId = currentConversationId;
     if (!conversationId) {
-      await handleNewV2Conversation();
-      conversationId = currentConversationIdRef.current;
+      conversationId = await createV2ConversationOnDemand();
     }
     if (!conversationId) {
       throw new Error('未能创建 v2 会话');
@@ -742,6 +730,17 @@ export function useRewriteLogic() {
       modeId: null,
       lengthPresetId: null,
     });
+
+    const targetPlan = resolveV2TargetPlan(textToSend, options?.targetParagraphIds);
+    if (targetPlan.scope === 'need_confirmation') {
+      setInputText(textToSend);
+      addV2SystemNote(targetPlan.question);
+      return;
+    }
+
+    const targetParagraphIds = targetPlan.scope === 'paragraphs' ? targetPlan.paragraphIds : [];
+    setGeneratingParagraphIds(targetParagraphIds);
+    setStreamingPatchText('');
 
     setMessages((prev) => [
       ...prev,
@@ -771,14 +770,17 @@ export function useRewriteLogic() {
       },
     ]);
 
+    const abortController = new AbortController();
+    activeGenerationAbortRef.current = abortController;
+
     const res = await fetch('/api/rewrite/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: abortController.signal,
       body: JSON.stringify({
         conversationId,
         userPrompt: textToSend,
-        targetParagraphIds: options?.targetParagraphIds ?? [],
-        assetMentions: activeMentions,
+        targetParagraphIds,
         modelViewId: selectedModelViewId || null,
       }),
     });
@@ -806,9 +808,25 @@ export function useRewriteLogic() {
           const event = parseV2SseEvent(block);
           if (!event) continue;
 
+          if (event.type === 'generation_start') {
+            if (event.conversationId && event.conversationId !== currentConversationIdRef.current) {
+              currentConversationIdRef.current = event.conversationId;
+              setCurrentConversationId(event.conversationId);
+            }
+          }
+
+          if (event.type === 'target_plan') {
+            setGeneratingParagraphIds(event.scope === 'paragraphs' ? event.targetParagraphIds : []);
+          }
+
           if (event.type === 'content_delta') {
             streamedText += event.delta;
-            setPolishedText(streamedText);
+            if (targetParagraphIds.length > 0) {
+              setStreamingPatchText(streamedText);
+              setPolishedText((prev) => prev || documentParagraphs.map((paragraph) => paragraph.content).join('\n\n'));
+            } else if (documentParagraphs.length === 0) {
+              setPolishedText(streamedText);
+            }
             setMessages((prev) =>
               prev.map((item) =>
                 item.id === tempAssistantId
@@ -825,7 +843,9 @@ export function useRewriteLogic() {
           if (event.type === 'generation_complete') {
             streamedText = event.fullContent;
             setPolishedText(event.fullContent);
+            setStreamingPatchText('');
             void fetchV2Paragraphs(conversationId);
+            void fetchConversations();
           }
 
           if (event.type === 'error') {
@@ -835,6 +855,12 @@ export function useRewriteLogic() {
       }
 
       if (done) break;
+    }
+    
+    setGeneratingParagraphIds([]);
+    setStreamingPatchText('');
+    if (activeGenerationAbortRef.current === abortController) {
+      activeGenerationAbortRef.current = null;
     }
   }
 
@@ -851,6 +877,11 @@ export function useRewriteLogic() {
       try {
         await handleSendV2(textToSend, options);
       } catch (error) {
+        if (isAbortError(error)) {
+          setGeneratingParagraphIds([]);
+          setStreamingPatchText('');
+          return;
+        }
         const errorMessage = error instanceof Error ? error.message : '发送失败，请稍后重试';
         setMessages((prev) => [
           ...prev.filter((item) => !item.id.startsWith('temp-v2-') && !item.id.startsWith('stream-v2-')),
@@ -868,7 +899,11 @@ export function useRewriteLogic() {
           },
         ]);
         setInputText(textToSend);
+        if (currentConversationId) {
+          void fetchV2Paragraphs(currentConversationId);
+        }
       } finally {
+        activeGenerationAbortRef.current = null;
         setIsSending(false);
       }
       return;
@@ -1019,8 +1054,13 @@ export function useRewriteLogic() {
       });
       setInputText(textToSend);
     } finally {
+      activeGenerationAbortRef.current = null;
       setIsSending(false);
     }
+  }
+
+  function handleAbortGeneration() {
+    activeGenerationAbortRef.current?.abort();
   }
 
   function handleUpdateLastAssistantMessage(newText: string) {
@@ -1056,29 +1096,6 @@ export function useRewriteLogic() {
       }
       return next;
     });
-  }
-
-  async function handleToggleParagraphLock(paragraph: DocumentParagraph) {
-    const nextLocked = !paragraph.isLocked;
-    setDocumentParagraphs((prev) =>
-      prev.map((item) => (item.id === paragraph.id ? { ...item, isLocked: nextLocked } : item)),
-    );
-
-    try {
-      const res = await fetch(`/api/rewrite/paragraphs/${paragraph.id}/lock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isLocked: nextLocked }),
-      });
-      if (!res.ok) {
-        throw new Error(await readApiError(res, '段落锁定失败'));
-      }
-    } catch (error) {
-      setDocumentParagraphs((prev) =>
-        prev.map((item) => (item.id === paragraph.id ? { ...item, isLocked: paragraph.isLocked } : item)),
-      );
-      console.warn('⚠️ 段落锁定更新失败', error);
-    }
   }
 
   function handleCopy(key: string, text: string) {
@@ -1118,32 +1135,38 @@ export function useRewriteLogic() {
     }
   }
 
-  function handleToggleMention(mention: { id: string; name: string }) {
-    setActiveMentions((prev) => {
-      const exists = prev.find((m) => m.id === mention.id);
-      if (exists) return prev.filter((m) => m.id !== mention.id);
-      return [...prev, mention];
-    });
+  async function handleUserEdit(paragraphId: string, newContent: string) {
+    if (!isV2Conversation || !currentConversationIdRef.current) return;
+    
+    // Optimistically update
+    setDocumentParagraphs((prev) =>
+      prev.map((item) => (item.id === paragraphId ? { ...item, content: newContent } : item))
+    );
+    
+    try {
+      const res = await fetch(`/api/rewrite/paragraphs/user-edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId: currentConversationIdRef.current,
+          paragraphId,
+          newContent,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(await readApiError(res, '保存修改失败'));
+      }
+      void fetchV2Paragraphs(currentConversationIdRef.current);
+    } catch (error) {
+      console.warn('⚠️ 手工存盘失败', error);
+      void fetchV2Paragraphs(currentConversationIdRef.current);
+    }
   }
 
-  function handleToggleParagraphSelect(paragraphId: string) {
-    setSelectedParagraphIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(paragraphId)) next.delete(paragraphId);
-      else next.add(paragraphId);
-      return next;
-    });
-  }
-
-  function handleClearParagraphSelect() {
-    setSelectedParagraphIds(new Set());
-  }
 
   function handleInlinePatchSubmit(prompt: string) {
-    const targetParagraphIds = Array.from(selectedParagraphIds);
-    if (!prompt.trim() || targetParagraphIds.length === 0) return;
-    void handleSend(prompt, { targetParagraphIds });
-    setSelectedParagraphIds(new Set());
+    if (!prompt.trim()) return;
+    void handleSend(prompt);
   }
 
   return {
@@ -1174,8 +1197,8 @@ export function useRewriteLogic() {
       isV2Conversation,
       availableV2Skills,
       activeSkills,
-      activeMentions,
-      selectedParagraphIds,
+      generatingParagraphIds,
+      streamingPatchText,
       traceabilityMode,
       presentationMode,
     },
@@ -1193,16 +1216,13 @@ export function useRewriteLogic() {
       prefetchConversation,
       handleUpdateLastAssistantMessage,
       handleNewV2Conversation,
-      handleToggleParagraphLock,
       setActiveSkills,
-      setActiveMentions,
       setTraceabilityMode,
       setPresentationMode,
       handleToggleSkill,
-      handleToggleMention,
-      handleToggleParagraphSelect,
-      handleClearParagraphSelect,
       handleInlinePatchSubmit,
+      handleUserEdit,
+      handleAbortGeneration,
     }
   };
 }
