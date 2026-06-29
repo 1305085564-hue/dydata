@@ -29,6 +29,15 @@ export type DocumentParagraph = {
   createdAt: string;
 };
 
+type RewriteSkillScope = 'platform' | 'private' | 'public_user';
+
+type RewriteSkillSummary = {
+  id: string;
+  name: string;
+  scope?: RewriteSkillScope;
+  defaultModelViewId?: string | null;
+};
+
 export function readApiError(response: Response, fallback: string): Promise<string> {
   return response.json().then(
     (data) => {
@@ -201,8 +210,8 @@ export function useRewriteLogic() {
   const [documentParagraphs, setDocumentParagraphs] = useState<DocumentParagraph[]>([]);
 
   // Advanced UX States
-  const [availableV2Skills, setAvailableV2Skills] = useState<Array<{ id: string; name: string }>>([]);
-  const [activeSkills, setActiveSkills] = useState<Array<{ id: string; name: string }>>([]);
+  const [availableV2Skills, setAvailableV2Skills] = useState<RewriteSkillSummary[]>([]);
+  const [activeSkills, setActiveSkills] = useState<RewriteSkillSummary[]>([]);
   const [activeMentions, setActiveMentions] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedParagraphIds, setSelectedParagraphIds] = useState<Set<string>>(new Set());
   const [traceabilityMode, setTraceabilityMode] = useState(false);
@@ -367,8 +376,18 @@ export function useRewriteLogic() {
         throw new Error(await readApiError(res, '技能列表加载失败'));
       }
       const data = await res.json();
-      const skills = (data?.skills ?? []) as Array<{ id: string; name: string }>;
-      setAvailableV2Skills(skills.map((skill) => ({ id: skill.id, name: skill.name })));
+      const skills = (data?.skills ?? []) as Array<{
+        id: string;
+        name: string;
+        scope?: RewriteSkillScope;
+        defaultModelViewId?: string | null;
+      }>;
+      setAvailableV2Skills(skills.map((skill) => ({
+        id: skill.id,
+        name: skill.name,
+        scope: skill.scope ?? 'platform',
+        defaultModelViewId: skill.defaultModelViewId ?? null,
+      })));
     } catch (error) {
       console.warn('⚠️ v2 技能列表加载失败', error);
       setAvailableV2Skills([]);
@@ -382,11 +401,24 @@ export function useRewriteLogic() {
         throw new Error(await readApiError(res, '会话技能加载失败'));
       }
       const data = await res.json();
-      const skills = (data?.skills ?? []) as Array<{ skill: { id: string; name: string }; isActive: boolean }>;
+      const skills = (data?.skills ?? []) as Array<{
+        skill: {
+          id: string;
+          name: string;
+          scope?: RewriteSkillScope;
+          defaultModelViewId?: string | null;
+        };
+        isActive: boolean;
+      }>;
       setActiveSkills(
         skills
           .filter((item) => item.isActive)
-          .map((item) => ({ id: item.skill.id, name: item.skill.name })),
+          .map((item) => ({
+            id: item.skill.id,
+            name: item.skill.name,
+            scope: item.skill.scope ?? 'platform',
+            defaultModelViewId: item.skill.defaultModelViewId ?? null,
+          })),
       );
     } catch (error) {
       console.warn('⚠️ v2 会话技能加载失败', error);
@@ -557,6 +589,7 @@ export function useRewriteLogic() {
       setPolishedText('');
       setActiveOriginalDraft('');
       setInputText('');
+      setSelectedModelViewId('');
     } catch (error) {
       setErrorState({
         title: '创建 v2 会话失败',
@@ -705,9 +738,9 @@ export function useRewriteLogic() {
     const tempAssistantId = `stream-v2-${Date.now()}`;
     const requestSnapshot = buildRequestSnapshot({
       fixedModeId: null,
-      modelViewId: null,
+      modelViewId: selectedModelViewId || null,
       modeId: null,
-      lengthPresetId: selectedLengthId || bootstrap?.defaults.lengthPresetId || null,
+      lengthPresetId: null,
     });
 
     setMessages((prev) => [
@@ -746,6 +779,7 @@ export function useRewriteLogic() {
         userPrompt: textToSend,
         targetParagraphIds: options?.targetParagraphIds ?? [],
         assetMentions: activeMentions,
+        modelViewId: selectedModelViewId || null,
       }),
     });
 
@@ -989,12 +1023,6 @@ export function useRewriteLogic() {
     }
   }
 
-  function handleReloadAsInput(text: string) {
-    handleNewConversation();
-    setInputText(text);
-    setActiveOriginalDraft(text);
-  }
-
   function handleUpdateLastAssistantMessage(newText: string) {
     setMessages((prev) => {
       const next = [...prev];
@@ -1059,7 +1087,7 @@ export function useRewriteLogic() {
     window.setTimeout(() => setCopiedKey(null), 1600);
   }
 
-  async function handleToggleSkill(skill: { id: string; name: string }) {
+  async function handleToggleSkill(skill: RewriteSkillSummary) {
     const conversationId = currentConversationIdRef.current;
     const exists = activeSkills.some((item) => item.id === skill.id);
     const previousSkills = activeSkills;
@@ -1163,7 +1191,6 @@ export function useRewriteLogic() {
       handleSend,
       handleCopy,
       prefetchConversation,
-      handleReloadAsInput,
       handleUpdateLastAssistantMessage,
       handleNewV2Conversation,
       handleToggleParagraphLock,

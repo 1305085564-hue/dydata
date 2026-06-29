@@ -14,7 +14,7 @@ import {
   setCurrentRevision,
   splitIntoParagraphs,
 } from "./documents";
-import { streamGeneration } from "./generation";
+import { resolveGenerationProviderKeyModelId, streamGeneration } from "./generation";
 
 type Row = Record<string, unknown>;
 type FakeDb = Record<string, Row[]>;
@@ -290,6 +290,217 @@ function createFakeService(db: FakeDb) {
   };
 }
 
+function providerKeyModelRow(input: {
+  id: string;
+  modelId: string;
+  keyPriority?: number;
+  providerPriority?: number;
+}) {
+  return {
+    id: input.id,
+    model_id: input.modelId,
+    is_enabled: true,
+    key: {
+      id: `key-${input.id}`,
+      api_key: `secret-${input.id}`,
+      is_enabled: true,
+      priority: input.keyPriority ?? 10,
+      consecutive_failures: 0,
+      unhealthy_until: null,
+      provider: {
+        id: `provider-${input.id}`,
+        name: `provider-${input.id}`,
+        base_url: `https://provider-${input.id}.test`,
+        priority: input.providerPriority ?? 10,
+        is_enabled: true,
+      },
+    },
+  };
+}
+
+test("generation provider selection prefers explicit model view over skill default", async () => {
+  const db: FakeDb = {
+    rewrite_model_routes: [
+      {
+        id: "route-skill",
+        model_view_id: "model-skill",
+        provider_key_model_id: null,
+        actual_model: "skill-model",
+        priority: 10,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "route-manual",
+        model_view_id: "model-manual",
+        provider_key_model_id: null,
+        actual_model: "manual-model",
+        priority: 10,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    ai_provider_key_models: [
+      providerKeyModelRow({ id: "pkm-skill", modelId: "skill-model" }),
+      providerKeyModelRow({ id: "pkm-manual", modelId: "manual-model" }),
+    ],
+    rewrite_skills: [
+      {
+        id: "skill-1",
+        scope: "platform",
+        owner_id: null,
+        key: "skill-1",
+        name: "平台技能",
+        description: null,
+        icon: null,
+        default_model_view_id: "model-skill",
+        sort_order: 1,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+        updated_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    rewrite_skill_versions: [
+      {
+        id: "skill-version-1",
+        skill_id: "skill-1",
+        version: 1,
+        system_prompt: "技能提示词",
+        meta: null,
+        published_at: "2026-06-28T00:00:00.000Z",
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    rewrite_conversation_skills: [
+      {
+        id: "conv-skill-1",
+        conversation_id: "conv-1",
+        skill_id: "skill-1",
+        skill_version_id: "skill-version-1",
+        position: 1,
+        is_active: true,
+        injected_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+  };
+
+  const selected = await resolveGenerationProviderKeyModelId(createFakeService(db) as never, {
+    conversationId: "conv-1",
+    modelViewId: "model-manual",
+  });
+
+  assert.equal(selected, "pkm-manual");
+});
+
+test("generation provider selection uses latest active skill default when no model is selected", async () => {
+  const db: FakeDb = {
+    rewrite_model_routes: [
+      {
+        id: "route-a",
+        model_view_id: "model-a",
+        provider_key_model_id: null,
+        actual_model: "model-a-actual",
+        priority: 10,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "route-b",
+        model_view_id: "model-b",
+        provider_key_model_id: "pkm-direct-b",
+        actual_model: "model-b-actual",
+        priority: 10,
+        weight: 100,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    ai_provider_key_models: [
+      providerKeyModelRow({ id: "pkm-a", modelId: "model-a-actual" }),
+      providerKeyModelRow({ id: "pkm-fallback", modelId: "fallback-model" }),
+    ],
+    rewrite_skills: [
+      {
+        id: "skill-a",
+        scope: "platform",
+        owner_id: null,
+        key: "skill-a",
+        name: "平台技能",
+        description: null,
+        icon: null,
+        default_model_view_id: "model-a",
+        sort_order: 1,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:00.000Z",
+        updated_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "skill-b",
+        scope: "private",
+        owner_id: "user-1",
+        key: "skill-b",
+        name: "个人技能",
+        description: null,
+        icon: null,
+        default_model_view_id: "model-b",
+        sort_order: 2,
+        is_enabled: true,
+        created_at: "2026-06-28T00:00:01.000Z",
+        updated_at: "2026-06-28T00:00:01.000Z",
+      },
+    ],
+    rewrite_skill_versions: [
+      {
+        id: "skill-version-a",
+        skill_id: "skill-a",
+        version: 1,
+        system_prompt: "A",
+        meta: null,
+        published_at: "2026-06-28T00:00:00.000Z",
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "skill-version-b",
+        skill_id: "skill-b",
+        version: 1,
+        system_prompt: "B",
+        meta: null,
+        published_at: "2026-06-28T00:00:00.000Z",
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    rewrite_conversation_skills: [
+      {
+        id: "conv-skill-a",
+        conversation_id: "conv-1",
+        skill_id: "skill-a",
+        skill_version_id: "skill-version-a",
+        position: 1,
+        is_active: true,
+        injected_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "conv-skill-b",
+        conversation_id: "conv-1",
+        skill_id: "skill-b",
+        skill_version_id: "skill-version-b",
+        position: 2,
+        is_active: true,
+        injected_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+  };
+
+  const selected = await resolveGenerationProviderKeyModelId(createFakeService(db) as never, {
+    conversationId: "conv-1",
+  });
+
+  assert.equal(selected, "pkm-direct-b");
+});
+
 test("skill prompt edits create a new immutable version", async () => {
   const db: FakeDb = {};
   const service = createFakeService(db);
@@ -450,7 +661,7 @@ test("paragraph patch generation replaces only selected unlocked paragraphs and 
   };
   const service = createFakeService(db);
 
-  for await (const _event of streamGeneration(service as never, {
+  for await (const event of streamGeneration(service as never, {
     conversationId: "conv-1",
     userId: "user-1",
     userPrompt: "只把第二段改口语化",
@@ -462,7 +673,7 @@ test("paragraph patch generation replaces only selected unlocked paragraphs and 
       },
     },
   })) {
-    // drain stream
+    assert.ok(event.type);
   }
 
   const run = db.rewrite_generation_runs[0];

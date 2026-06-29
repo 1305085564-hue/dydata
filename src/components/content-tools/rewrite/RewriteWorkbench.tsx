@@ -267,7 +267,25 @@ export function RewriteWorkbench() {
                   </span>
                 </div>
 
-                {!state.isV2Conversation && (
+                {state.isV2Conversation ? (
+                  <label className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">模型</span>
+                    <select
+                      aria-label="模型"
+                      value={state.selectedModelViewId}
+                      onChange={(e) => actions.setSelectedModelViewId(e.target.value)}
+                      disabled={state.isSending}
+                      className="h-7 rounded-lg border border-zinc-200 bg-white px-2 text-[11px] text-zinc-700 outline-none hover:border-zinc-300 disabled:opacity-50"
+                    >
+                      <option value="">自动模型</option>
+                      {state.bootstrap.modelViews.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
                   <button
                     type="button"
                     onClick={() => setSettingsOpen(!settingsOpen)}
@@ -346,10 +364,14 @@ export function RewriteWorkbench() {
               messages={state.messages}
               messagesLoading={state.messagesLoading}
               isSending={state.isSending}
+              isV2Conversation={state.isV2Conversation}
               activeFixedMode={state.activeFixedMode}
+              availableSkills={state.availableV2Skills}
+              activeSkills={state.activeSkills}
               messagesEndRef={state.messagesEndRef}
               onSendOverride={(text) => actions.handleSend(text)}
               onSelectFixedMode={(id) => actions.handleToggleFixedMode(id)}
+              onToggleSkill={actions.handleToggleSkill}
               selectedFixedModeId={state.selectedFixedModeId}
             />
 
@@ -381,7 +403,6 @@ export function RewriteWorkbench() {
               traceabilityMode={state.traceabilityMode}
               selectedParagraphIds={state.selectedParagraphIds}
               onTextChange={actions.handleUpdateLastAssistantMessage}
-              onReloadAsInput={actions.handleReloadAsInput}
               onToggleParagraphLock={actions.handleToggleParagraphLock}
               onToggleParagraphSelect={actions.handleToggleParagraphSelect}
               onClearParagraphSelect={actions.handleClearParagraphSelect}

@@ -9,6 +9,7 @@ import {
 } from "./documents";
 import { listConversationSkills } from "./skills";
 import { callAi, type AiMessage, type AiResponse } from "@/lib/ai/client";
+import { selectHealthyProviderKeyModel } from "@/lib/ai/provider-routing";
 
 // Dynamic v2 tables are not in the generated Supabase type map yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -247,6 +248,72 @@ export type GenerationContext = {
   userPrompt: string;
 };
 
+async function resolveProviderKeyModelByModelView(
+  service: MinimalClient,
+  modelViewId: string,
+): Promise<string | null> {
+  const { data, error } = await service
+    .from("rewrite_model_routes")
+    .select("id, model_view_id, provider_key_model_id, actual_model, priority, weight, is_enabled, created_at")
+    .eq("model_view_id", modelViewId)
+    .eq("is_enabled", true)
+    .order("priority", { ascending: true })
+    .order("weight", { ascending: false })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const route = ((data ?? []) as Array<{
+    provider_key_model_id?: string | null;
+    actual_model?: string | null;
+  }>)[0];
+
+  if (!route) return null;
+  if (route.provider_key_model_id) return route.provider_key_model_id;
+
+  const selected = await selectHealthyProviderKeyModel(
+    service,
+    route.actual_model?.trim() || undefined,
+  );
+  return selected?.providerKeyModelId ?? null;
+}
+
+export async function resolveGenerationProviderKeyModelId(
+  service: MinimalClient,
+  input: {
+    conversationId: string;
+    providerKeyModelId?: string | null;
+    modelViewId?: string | null;
+  },
+): Promise<string | null> {
+  const explicitProviderKeyModelId = input.providerKeyModelId?.trim();
+  if (explicitProviderKeyModelId) return explicitProviderKeyModelId;
+
+  const explicitModelViewId = input.modelViewId?.trim();
+  if (explicitModelViewId) {
+    const selected = await resolveProviderKeyModelByModelView(service, explicitModelViewId);
+    if (selected) return selected;
+  }
+
+  const skills = await listConversationSkills(service, input.conversationId);
+  const skillDefaultModelViewId = [...skills]
+    .reverse()
+    .find((skill) => skill.isActive && skill.skill.defaultModelViewId)?.skill.defaultModelViewId;
+
+  if (skillDefaultModelViewId) {
+    const selected = await resolveProviderKeyModelByModelView(service, skillDefaultModelViewId);
+    if (selected) return selected;
+  }
+
+  const selected = await selectHealthyProviderKeyModel(
+    service,
+    process.env.AI_MODEL?.trim() || undefined,
+  );
+  return selected?.providerKeyModelId ?? null;
+}
+
 export async function buildGenerationContext(
   service: MinimalClient,
   input: {
@@ -458,6 +525,7 @@ export async function* streamGeneration(
     assetMentions?: GenerationAssetMention[];
     runType?: GenerationRunType;
     providerKeyModelId?: string | null;
+    modelViewId?: string | null;
     aiClient?: {
       streamChat: (params: {
         systemPrompt: string;
@@ -469,6 +537,14 @@ export async function* streamGeneration(
   const targetParagraphIds = (input.targetParagraphIds ?? []).filter(Boolean);
   const assetMentions = (input.assetMentions ?? []).filter(
     (asset) => asset.id.trim() && asset.name.trim(),
+  );
+  const providerKeyModelId = input.providerKeyModelId ?? (
+    input.aiClient
+      ? null
+      : await resolveGenerationProviderKeyModelId(service, {
+          conversationId: input.conversationId,
+          modelViewId: input.modelViewId,
+        })
   );
   const runType = input.runType ?? (targetParagraphIds.length > 0 ? "paragraph_patch" : "full_rewrite");
   const context = await buildGenerationContext(service, {
@@ -483,7 +559,7 @@ export async function* streamGeneration(
     conversationId: input.conversationId,
     userId: input.userId,
     runType,
-    providerKeyModelId: input.providerKeyModelId,
+    providerKeyModelId,
     skillVersionIds: context.skillVersionIds,
     inputSnapshot: {
       userPrompt: input.userPrompt,
@@ -493,7 +569,8 @@ export async function* streamGeneration(
       recentMessages: context.recentMessages,
       targetParagraphIds,
       assetMentions,
-      providerKeyModelId: input.providerKeyModelId ?? null,
+      modelViewId: input.modelViewId ?? null,
+      providerKeyModelId,
     },
   });
 
@@ -514,7 +591,7 @@ export async function* streamGeneration(
         messages: Array<{ role: "user" | "assistant"; content: string }>;
       }) => streamChatWithCallAi({
         ...params,
-        providerKeyModelId: input.providerKeyModelId,
+        providerKeyModelId,
       }),
     };
 
@@ -602,7 +679,7 @@ export async function* streamGeneration(
           : undefined,
       actualModel: aiResponse?.model ?? null,
       providerName: aiResponse?.channelName ?? null,
-      providerKeyModelId: aiResponse?.providerKeyModelId ?? input.providerKeyModelId ?? null,
+      providerKeyModelId: aiResponse?.providerKeyModelId ?? providerKeyModelId,
       elapsedMs: aiResponse?.elapsedMs,
       outputSnapshot: {
         fullContent: protectedFullContent,

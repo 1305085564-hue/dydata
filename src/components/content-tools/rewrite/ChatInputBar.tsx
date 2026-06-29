@@ -4,17 +4,26 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowUp, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+export type RewriteSkillScope = 'platform' | 'private' | 'public_user';
+
+export type RewriteSkillSummary = {
+  id: string;
+  name: string;
+  scope?: RewriteSkillScope;
+  defaultModelViewId?: string | null;
+};
+
 interface ChatInputBarProps {
   inputText: string;
   isSending: boolean;
   isChatStage: boolean;
   activeFixedModeName: string | null;
-  activeSkills: Array<{ id: string; name: string }>;
+  activeSkills: RewriteSkillSummary[];
   activeMentions: Array<{ id: string; name: string }>;
-  availableSkills: Array<{ id: string; name: string }>;
+  availableSkills: RewriteSkillSummary[];
   onInputChange: (text: string) => void;
   onSend: () => void;
-  onToggleSkill: (skill: { id: string; name: string }) => void;
+  onToggleSkill: (skill: RewriteSkillSummary) => void;
   onToggleMention: (mention: { id: string; name: string }) => void;
 }
 
@@ -22,6 +31,12 @@ const MOCK_ASSETS = [
   { id: 'asset-1', name: '2026产品参数' },
   { id: 'asset-2', name: '抖音电商违禁词库' },
   { id: 'asset-3', name: '竞品分析数据' },
+];
+
+const SKILL_GROUPS: Array<{ scope: RewriteSkillScope; label: string }> = [
+  { scope: 'platform', label: '平台技能' },
+  { scope: 'private', label: '个人技能' },
+  { scope: 'public_user', label: '共享技能' },
 ];
 
 export function ChatInputBar({
@@ -62,6 +77,10 @@ export function ChatInputBar({
   const filteredSkills = availableSkills.filter((s) =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const groupedSkills = SKILL_GROUPS.map((group) => ({
+    ...group,
+    items: filteredSkills.filter((skill) => (skill.scope ?? 'platform') === group.scope),
+  })).filter((group) => group.items.length > 0);
   
   const filteredAssets = MOCK_ASSETS.filter((a) =>
     a.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -147,7 +166,8 @@ export function ChatInputBar({
                 className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-700 shadow-sm"
               >
                 <Sparkles className="h-3 w-3 text-[#D97757]" />
-                {skill.name}
+                <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-400">已激活</span>
+                <span>{skill.name}</span>
                 <button
                   type="button"
                   aria-label={`移除技能 ${skill.name}`}
@@ -187,6 +207,41 @@ export function ChatInputBar({
             <div className="max-h-[200px] overflow-y-auto">
               {(showSkillPopover ? filteredSkills : filteredAssets).length === 0 ? (
                 <div className="px-2 py-3 text-center text-[12px] text-zinc-500">无匹配项</div>
+              ) : showSkillPopover ? (
+                <div className="space-y-1">
+                  {groupedSkills.map((group) => (
+                    <div key={group.scope}>
+                      <div className="px-2 pb-1 pt-1.5 text-[10px] font-semibold tracking-[0.18em] text-zinc-400">
+                        {group.label}
+                      </div>
+                      {group.items.map((item) => {
+                        const idx = filteredSkills.findIndex((skill) => skill.id === item.id);
+                        const active = activeSkills.some((skill) => skill.id === item.id);
+                        return (
+                          <button
+                            key={item.id}
+                            className={cn(
+                              'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] transition-colors',
+                              idx === selectedIndex ? 'bg-zinc-100 font-medium text-zinc-900' : 'text-zinc-600 hover:bg-zinc-50'
+                            )}
+                            onMouseEnter={() => setSelectedIndex(idx)}
+                            onClick={() => {
+                              onToggleSkill(item);
+                              const textBeforeSlash = inputText.slice(0, inputText.lastIndexOf('/'));
+                              onInputChange(textBeforeSlash);
+                              setShowSkillPopover(false);
+                              setShowMentionPopover(false);
+                            }}
+                          >
+                            <Sparkles className={cn('h-3.5 w-3.5 shrink-0', idx === selectedIndex ? 'text-[#D97757]' : 'text-zinc-400')} />
+                            <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                            {active && <span className="text-[10px] font-medium text-[#4F7F5E]">已激活</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               ) : (
                 (showSkillPopover ? filteredSkills : filteredAssets).map((item, idx) => (
                   <button
@@ -197,24 +252,14 @@ export function ChatInputBar({
                     )}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     onClick={() => {
-                      if (showSkillPopover) {
-                        onToggleSkill(item);
-                        const textBeforeSlash = inputText.slice(0, inputText.lastIndexOf('/'));
-                        onInputChange(textBeforeSlash);
-                      } else {
-                        onToggleMention(item);
-                        const textBeforeAt = inputText.slice(0, inputText.lastIndexOf('@'));
-                        onInputChange(textBeforeAt);
-                      }
+                      onToggleMention(item);
+                      const textBeforeAt = inputText.slice(0, inputText.lastIndexOf('@'));
+                      onInputChange(textBeforeAt);
                       setShowSkillPopover(false);
                       setShowMentionPopover(false);
                     }}
                   >
-                    {showSkillPopover ? (
-                      <Sparkles className={cn('h-3.5 w-3.5 shrink-0', idx === selectedIndex ? 'text-[#D97757]' : 'text-zinc-400')} />
-                    ) : (
-                      <span className={cn('font-mono', idx === selectedIndex ? 'text-blue-500' : 'text-zinc-400')}>@</span>
-                    )}
+                    <span className={cn('font-mono', idx === selectedIndex ? 'text-blue-500' : 'text-zinc-400')}>@</span>
                     <span className="truncate">{item.name}</span>
                   </button>
                 ))

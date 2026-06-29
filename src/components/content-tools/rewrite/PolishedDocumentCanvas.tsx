@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, Copy, RefreshCw, Eye, Edit3, Save, FileText, Lock, Unlock, X } from 'lucide-react';
+import { Check, Copy, Eye, Edit3, Save, FileText, Lock, Unlock, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DocumentParagraph } from './useRewriteLogic';
 
@@ -13,7 +13,6 @@ interface PolishedDocumentCanvasProps {
   traceabilityMode?: boolean;
   selectedParagraphIds?: Set<string>;
   onTextChange: (text: string) => void;
-  onReloadAsInput: (text: string) => void;
   onToggleParagraphLock?: (paragraph: DocumentParagraph) => void;
   onToggleParagraphSelect?: (paragraphId: string) => void;
   onClearParagraphSelect?: () => void;
@@ -72,7 +71,6 @@ export function PolishedDocumentCanvas({
   traceabilityMode = false,
   selectedParagraphIds = new Set(),
   onTextChange,
-  onReloadAsInput,
   onToggleParagraphLock,
   onToggleParagraphSelect,
   onClearParagraphSelect,
@@ -269,19 +267,6 @@ export function PolishedDocumentCanvas({
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 <span>{copied ? '已复制' : '复制'}</span>
-              </button>
-            )}
-
-            {/* Reload/Return to Input Button */}
-            {!isEditing && (
-              <button
-                type="button"
-                onClick={() => onReloadAsInput(polishedText)}
-                className="inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 transition-colors"
-                title="将当前文案回填为新原文重新修改"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span>回填新会话</span>
               </button>
             )}
 

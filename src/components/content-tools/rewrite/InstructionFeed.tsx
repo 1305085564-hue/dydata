@@ -10,10 +10,14 @@ interface InstructionFeedProps {
   messages: Message[];
   messagesLoading: boolean;
   isSending: boolean;
+  isV2Conversation: boolean;
   activeFixedMode: BootstrapPayload['fixedModes'][0] | null;
+  availableSkills: Array<{ id: string; name: string; scope?: 'platform' | 'private' | 'public_user' }>;
+  activeSkills: Array<{ id: string; name: string }>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onSendOverride: (text: string) => void;
   onSelectFixedMode: (id: string) => void;
+  onToggleSkill: (skill: { id: string; name: string; scope?: 'platform' | 'private' | 'public_user' }) => void;
   selectedFixedModeId: string | null;
 }
 
@@ -23,19 +27,33 @@ const SHORTCUTS = [
   { label: '口播更有力', hint: '加重语气节奏，提升完播率', text: '修改这段文案，使句子更短，适合重语气、强节奏的录制' },
 ];
 
+const SKILL_GROUPS = [
+  { scope: 'platform', label: '平台技能' },
+  { scope: 'private', label: '个人技能' },
+  { scope: 'public_user', label: '共享技能' },
+] as const;
+
 export function InstructionFeed({
   bootstrap,
   messages,
   messagesLoading,
   isSending,
+  isV2Conversation,
   activeFixedMode,
+  availableSkills,
+  activeSkills,
   messagesEndRef,
   onSendOverride,
   onSelectFixedMode,
+  onToggleSkill,
   selectedFixedModeId,
 }: InstructionFeedProps) {
   const lastAssistantMessage = [...messages].reverse().find((item) => item.role === 'assistant');
   const followUpSuggestions = lastAssistantMessage?.structuredResult?.final?.followUpSuggestions ?? [];
+  const groupedSkills = SKILL_GROUPS.map((group) => ({
+    ...group,
+    items: availableSkills.filter((skill) => (skill.scope ?? 'platform') === group.scope),
+  })).filter((group) => group.items.length > 0);
 
   const [hiddenAfterIndex, setHiddenAfterIndex] = useState<number | null>(null);
 
@@ -74,15 +92,64 @@ export function InstructionFeed({
               <PenLine className="h-4 w-4 text-zinc-500" />
             </div>
             <h2 className="text-[20px] font-semibold tracking-tight text-zinc-800">
-              {activeFixedMode ? `${activeFixedMode.name} 已就绪` : '文案润色工作室'}
+              {isV2Conversation ? '选择技能开始写作' : activeFixedMode ? `${activeFixedMode.name} 已就绪` : '文案润色工作室'}
             </h2>
             <p className="text-[12px] leading-[1.6] text-zinc-400">
-              选择润色技能，贴入原文。系统将保持上下文持续修改，右侧画布始终展示最新终稿。
+              {isV2Conversation
+                ? '技能会作为提示词注入当前画布，可单选也可多选。'
+                : '选择润色技能，贴入原文。系统将保持上下文持续修改，右侧画布始终展示最新终稿。'}
             </p>
           </div>
 
-          {/* Fixed Modes/Skills Grid */}
-          {bootstrap.fixedModes.length > 0 && (
+          {isV2Conversation && (
+            <div className="space-y-3">
+              {groupedSkills.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3.5 py-4 text-center text-[12px] text-zinc-400">
+                  暂无可用技能
+                </div>
+              ) : groupedSkills.map((group) => (
+                <div key={group.scope} className="space-y-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 pl-1">
+                    {group.label}
+                  </span>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {group.items.map((skill) => {
+                      const isActive = activeSkills.some((item) => item.id === skill.id);
+                      return (
+                        <button
+                          key={skill.id}
+                          type="button"
+                          onClick={() => onToggleSkill(skill)}
+                          className={cn(
+                            'group relative overflow-hidden rounded-xl border p-3.5 text-left transition-[background-color,border-color,box-shadow] duration-150',
+                            isActive
+                              ? 'border-[#D97757] bg-white shadow-sm'
+                              : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/50'
+                          )}
+                        >
+                          {isActive && (
+                            <div className="absolute left-0 top-0 h-full w-[3px] bg-[#D97757]" />
+                          )}
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[13px] font-semibold text-zinc-800">
+                              {skill.name}
+                            </span>
+                            {isActive && (
+                              <span className="shrink-0 rounded-md bg-[#6FAA7D]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#4F7F5E]">
+                                已激活
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isV2Conversation && bootstrap.fixedModes.length > 0 && (
             <div className="space-y-2">
               <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 pl-1">
                 选择文案技能

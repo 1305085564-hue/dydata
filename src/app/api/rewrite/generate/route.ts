@@ -1,7 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { streamGeneration } from "@/lib/rewrite/generation";
 import { getOrCreateDocument } from "@/lib/rewrite/documents";
-import { selectHealthyProviderKeyModel } from "@/lib/ai/provider-routing";
 import {
   requireAuth,
   requireConversationOwner,
@@ -23,10 +22,11 @@ export async function POST(req: NextRequest) {
     targetParagraphIds?: unknown;
     assetMentions?: unknown;
     providerKeyModelId?: string;
+    modelViewId?: string;
   }>(req);
   if (bodyResult instanceof Response) return bodyResult;
 
-  const { conversationId, userPrompt, providerKeyModelId } = bodyResult;
+  const { conversationId, userPrompt, providerKeyModelId, modelViewId } = bodyResult;
   const targetParagraphIds = Array.isArray(bodyResult.targetParagraphIds)
     ? bodyResult.targetParagraphIds
         .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
@@ -58,11 +58,6 @@ export async function POST(req: NextRequest) {
 
   try {
     await getOrCreateDocument(service, conversationId);
-    const selectedProvider =
-      providerKeyModelId?.trim()
-        ? providerKeyModelId.trim()
-        : (await selectHealthyProviderKeyModel(service, process.env.AI_MODEL?.trim() || undefined))
-            ?.providerKeyModelId ?? null;
 
     const sse = createSSEStream();
 
@@ -74,7 +69,8 @@ export async function POST(req: NextRequest) {
           userPrompt,
           targetParagraphIds,
           assetMentions,
-          providerKeyModelId: selectedProvider,
+          providerKeyModelId: providerKeyModelId?.trim() || null,
+          modelViewId: modelViewId?.trim() || null,
         })) {
           sse.send(event.type, event);
         }
