@@ -80,7 +80,7 @@ function getErrorStatus(message: string) {
   if (message.includes("未授权")) return 401;
   if (message.includes("无权访问")) return 403;
   if (message.includes("格式错误") || message.includes("格式不正确")) return 400;
-  return 500;
+  return null;
 }
 
 export function errorResponse(error: string | Error, fallbackStatus = 500) {

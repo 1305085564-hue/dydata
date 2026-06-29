@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Sparkles, ArrowRight, PenLine } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, ArrowRight, PenLine, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BootstrapPayload, Message } from '../types';
 
@@ -36,6 +36,16 @@ export function InstructionFeed({
 }: InstructionFeedProps) {
   const lastAssistantMessage = [...messages].reverse().find((item) => item.role === 'assistant');
   const followUpSuggestions = lastAssistantMessage?.structuredResult?.final?.followUpSuggestions ?? [];
+
+  const [hiddenAfterIndex, setHiddenAfterIndex] = useState<number | null>(null);
+
+  // Reset hidden state when new messages arrive
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHiddenAfterIndex(null);
+  }, [messages.length]);
+
+  const visibleMessages = hiddenAfterIndex !== null ? messages.slice(0, hiddenAfterIndex + 1) : messages;
 
   if (messagesLoading) {
     return (
@@ -151,7 +161,7 @@ export function InstructionFeed({
   return (
     <div className="flex-1 overflow-y-auto px-4 py-4 bg-zinc-50/30">
       <div className="mx-auto w-full max-w-2xl space-y-4">
-        {messages.map((message) => {
+        {visibleMessages.map((message, idx) => {
           // 1. User Message (Render instruction only)
           if (message.role === 'user') {
             return (
@@ -178,6 +188,7 @@ export function InstructionFeed({
           // 3. Assistant Message (Render minimal status + notes feedback)
           const isStreaming = message.id.startsWith('stream-');
           const notes = message.structuredResult?.final?.notes ?? [];
+          const isLastVisibleAi = idx === visibleMessages.map(m => m.role).lastIndexOf('assistant');
 
           return (
             <div key={message.id} className="flex gap-2.5">
@@ -224,6 +235,20 @@ export function InstructionFeed({
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+
+                  {/* Revert Action */}
+                  {!isStreaming && !isLastVisibleAi && (
+                    <div className="pt-1">
+                      <button
+                        onClick={() => setHiddenAfterIndex(idx)}
+                        className="group inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800"
+                        title="废弃此节点之后的对话，直接基于当前版本继续润色"
+                      >
+                        <RotateCcw className="h-3 w-3 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
+                        <span>基于此版本继续</span>
+                      </button>
                     </div>
                   )}
                 </div>

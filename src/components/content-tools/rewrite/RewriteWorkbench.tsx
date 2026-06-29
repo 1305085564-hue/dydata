@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { PanelLeftClose, PanelLeft, Plus, Sliders, Layout } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Plus, Sliders, Layout, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRewriteLogic } from './useRewriteLogic';
 import { RewriteHistory } from './RewriteHistory';
@@ -101,6 +101,34 @@ export function RewriteWorkbench() {
   const activeModelLabel =
     state.bootstrap.modelViews.find((m) => m.id === state.selectedModelViewId)?.label ?? '默认模型';
 
+  if (state.presentationMode) {
+    return (
+      <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50">
+        <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] font-bold text-zinc-800">定稿阅览视图</span>
+            <span className="rounded bg-[#6FAA7D]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#4F7F5E]">已完成</span>
+          </div>
+          <button
+            onClick={() => actions.setPresentationMode(false)}
+            className="inline-flex h-7 items-center justify-center rounded-md border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+          >
+            退出阅览
+          </button>
+        </header>
+        <div className="flex-1 overflow-hidden bg-zinc-50/50 flex justify-center py-8">
+          <div className="w-full max-w-3xl flex-1 bg-white border border-zinc-200 rounded-xl shadow-sm p-8 overflow-y-auto">
+            <div className="prose prose-sm prose-zinc max-w-none leading-relaxed">
+              {state.polishedText.split('\n').map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50">
       {/* Top bar */}
@@ -141,10 +169,38 @@ export function RewriteWorkbench() {
             <span className="tracking-wide">新对话</span>
           </button>
 
+          <button
+            onClick={actions.handleNewV2Conversation}
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-[#D97757]/30 bg-[#D97757]/5 px-2.5 py-1 text-[11px] font-medium text-[#B85F42] shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/50 hover:bg-[#D97757]/10 active:translate-y-0"
+            title="开启 v2 文档画布"
+          >
+            <FileText className="h-3 w-3" />
+            <span className="tracking-wide">v2 画布</span>
+          </button>
+          {/* Top-right Actions */}
+          <div className="flex items-center gap-1.5 ml-2 border-l border-zinc-200 pl-2">
+            <button
+              onClick={() => actions.setTraceabilityMode(!state.traceabilityMode)}
+              className={cn(
+                'inline-flex h-7 items-center justify-center rounded-md px-2.5 text-[11px] font-medium transition-colors',
+                state.traceabilityMode ? 'bg-[#6FAA7D]/10 text-[#4F7F5E]' : 'text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900'
+              )}
+              title="溯源模式：高亮人工修改的段落"
+            >
+              溯源
+            </button>
+            <button
+              onClick={() => actions.setPresentationMode(true)}
+              className="inline-flex h-7 items-center justify-center rounded-md bg-zinc-900 px-3 text-[11px] font-medium text-white shadow-sm hover:bg-zinc-800 transition-colors"
+            >
+              定稿导出
+            </button>
+          </div>
+
           {/* Layout settings dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-200 hover:text-zinc-800"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-200 hover:text-zinc-800 ml-1"
               title="布局设置"
             >
               <Layout className="h-3.5 w-3.5" />
@@ -204,30 +260,32 @@ export function RewriteWorkbench() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-[13px] font-bold text-zinc-800">
-                    {state.activeFixedMode?.name || '自定义润色模式'}
+                    {state.isV2Conversation ? '文档画布模式' : state.activeFixedMode?.name || '自定义润色模式'}
                   </span>
                   <span className="rounded bg-zinc-150 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider font-mono">
-                    {activeModelLabel}
+                    {state.isV2Conversation ? 'V2' : activeModelLabel}
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setSettingsOpen(!settingsOpen)}
-                  className={cn(
-                    'inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[11px] font-medium transition-colors shadow-sm',
-                    settingsOpen
-                      ? 'border-[#D97757] bg-[#D97757]/5 text-[#D97757]'
-                      : 'border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800'
-                  )}
-                >
-                  <Sliders className="h-3.5 w-3.5" />
-                  <span>微调参数</span>
-                </button>
+                {!state.isV2Conversation && (
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen(!settingsOpen)}
+                    className={cn(
+                      'inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[11px] font-medium transition-colors shadow-sm',
+                      settingsOpen
+                        ? 'border-[#D97757] bg-[#D97757]/5 text-[#D97757]'
+                        : 'border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800'
+                    )}
+                  >
+                    <Sliders className="h-3.5 w-3.5" />
+                    <span>微调参数</span>
+                  </button>
+                )}
               </div>
 
               {/* Advanced Parameter Drawer */}
-              {settingsOpen && (
+              {settingsOpen && !state.isV2Conversation && (
                 <div className="mt-3 grid grid-cols-3 gap-2 border-t border-zinc-150 pt-3 animate-in slide-in-from-top-2 duration-200">
                   <label className="block space-y-1">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 pl-0.5">模型</span>
@@ -299,10 +357,17 @@ export function RewriteWorkbench() {
             <ChatInputBar
               inputText={state.inputText}
               isSending={state.isSending}
-              isChatStage={state.isChatStage}
-              activeFixedModeName={state.activeFixedMode?.name ?? null}
+              isChatStage={state.isV2Conversation}
+              activeFixedModeName={
+                state.bootstrap.fixedModes.find((mode) => mode.id === state.selectedFixedModeId)?.name || null
+              }
+              activeSkills={state.activeSkills}
+              activeMentions={state.activeMentions}
+              availableSkills={state.isV2Conversation ? state.availableV2Skills : state.bootstrap?.fixedModes || []}
               onInputChange={actions.setInputText}
-              onSend={() => actions.handleSend()}
+              onSend={actions.handleSend}
+              onToggleSkill={actions.handleToggleSkill}
+              onToggleMention={actions.handleToggleMention}
             />
           </div>
 
@@ -312,8 +377,15 @@ export function RewriteWorkbench() {
               originalDraft={state.activeOriginalDraft}
               polishedText={state.polishedText}
               isSending={state.isSending}
+              paragraphs={state.documentParagraphs}
+              traceabilityMode={state.traceabilityMode}
+              selectedParagraphIds={state.selectedParagraphIds}
               onTextChange={actions.handleUpdateLastAssistantMessage}
               onReloadAsInput={actions.handleReloadAsInput}
+              onToggleParagraphLock={actions.handleToggleParagraphLock}
+              onToggleParagraphSelect={actions.handleToggleParagraphSelect}
+              onClearParagraphSelect={actions.handleClearParagraphSelect}
+              onInlinePatchSubmit={actions.handleInlinePatchSubmit}
             />
           </div>
         </div>

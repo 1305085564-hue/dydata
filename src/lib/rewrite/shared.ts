@@ -107,6 +107,7 @@ type RewriteConversationRow = {
   id: string;
   user_id: string;
   title: string;
+  schema_version: number | null;
   auto_mode_enabled: boolean;
   selected_fixed_mode_id: string | null;
   selected_model_view_id: string | null;
@@ -344,6 +345,7 @@ export type RewriteAssistantPayload = {
 export type RewriteConversationItem = {
   id: string;
   title: string;
+  schemaVersion: number;
   selected: Omit<RewriteStructuredSelection, "workflowId" | "workflow">;
   lastMessageAt: string;
   createdAt: string;
@@ -364,7 +366,7 @@ export type RewriteMessageItem = {
 };
 
 const REWRITE_CONVERSATION_SELECT =
-  "id, user_id, title, auto_mode_enabled, selected_fixed_mode_id, selected_model_view_id, selected_mode_id, selected_length_preset_id, last_message_at, created_at, updated_at";
+  "id, user_id, title, schema_version, auto_mode_enabled, selected_fixed_mode_id, selected_model_view_id, selected_mode_id, selected_length_preset_id, last_message_at, created_at, updated_at";
 const REWRITE_MESSAGE_SELECT =
   "id, conversation_id, user_id, role, generation_mode, message_status, content, structured_result, request_snapshot, error_message, created_at";
 
@@ -1549,6 +1551,7 @@ function serializeConversationRow(
   return {
     id: row.id,
     title: row.title,
+    schemaVersion: row.schema_version ?? 1,
     selected: {
       autoModeEnabled: row.auto_mode_enabled,
       fixedModeId: fixedMode?.id ?? row.selected_fixed_mode_id,
@@ -1806,6 +1809,7 @@ export async function createRewriteConversation(
       selected_model_view_id: input.modelViewId,
       selected_mode_id: input.modeId ?? null,
       selected_length_preset_id: input.lengthPresetId,
+      schema_version: 1,
     })
     .select(REWRITE_CONVERSATION_SELECT)
     .single();

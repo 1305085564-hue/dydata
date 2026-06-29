@@ -67,6 +67,7 @@ export type BootstrapPayload = {
 export interface Conversation {
   id: string;
   title: string;
+  schemaVersion?: number;
   selected: {
     autoModeEnabled: boolean;
     fixedModeId: string | null;

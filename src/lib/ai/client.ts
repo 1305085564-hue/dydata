@@ -4,6 +4,11 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import {
+  bumpProviderKeyFailure,
+  getProviderKeyModelConfig,
+  markProviderKeySuccess,
+} from "./provider-routing";
 
 type TextContent = string;
 type MultimodalBlock =
@@ -24,6 +29,7 @@ export type AiRequestOptions = {
   jsonMode?: boolean;
   model?: string;
   channelId?: string;
+  providerKeyModelId?: string;
   featureKey?: string;
   databaseOnly?: boolean;
 };
@@ -33,6 +39,11 @@ export type AiResponse = {
   model: string;
   channelName: string;
   channelId?: string | null;
+  providerKeyModelId?: string | null;
+  providerKeyId?: string | null;
+  promptTokens?: number | null;
+  completionTokens?: number | null;
+  totalTokens?: number | null;
   elapsedMs: number;
 };
 
@@ -48,7 +59,9 @@ type ChannelConfig = {
   lastFailureAt?: string | null;
   lastSuccessAt?: string | null;
   lastErrorMessage?: string | null;
-  source: "env" | "database";
+  providerKeyModelId?: string | null;
+  providerKeyId?: string | null;
+  source: "env" | "database" | "provider_key_model";
 };
 
 type AiChannelRow = {
@@ -99,12 +112,22 @@ type UpstreamResponseBody = {
     native_finish_reason?: unknown;
   }>;
   model?: unknown;
+  usage?: {
+    prompt_tokens?: unknown;
+    completion_tokens?: unknown;
+    total_tokens?: unknown;
+  };
 };
 
 type StreamedChatCompletionResult = {
   content: string;
   reasoningContent: string;
   model: string | null;
+  usage: {
+    promptTokens: number | null;
+    completionTokens: number | null;
+    totalTokens: number | null;
+  };
   rawSnippet: string;
   diagnosticBody: UpstreamResponseBody;
 };
@@ -297,6 +320,25 @@ async function getAvailableChannels(options?: Pick<AiRequestOptions, "databaseOn
   return databaseChannels.length > 0 ? databaseChannels : envChannel ? [envChannel] : [];
 }
 
+async function getProviderKeyModelChannel(providerKeyModelId: string): Promise<ChannelConfig | null> {
+  const supabase = getServiceSupabaseClient();
+  if (!supabase) return null;
+
+  const config = await getProviderKeyModelConfig(supabase, providerKeyModelId);
+  if (!config) return null;
+
+  return {
+    id: config.providerKeyModelId,
+    name: config.providerName,
+    baseUrl: config.baseUrl,
+    apiKey: config.apiKey,
+    model: config.modelId,
+    providerKeyModelId: config.providerKeyModelId,
+    providerKeyId: config.providerKeyId,
+    source: "provider_key_model",
+  };
+}
+
 function normalizeResponseContent(content: unknown): string | null {
   if (typeof content === "string" && content.trim()) {
     return content.trim();
@@ -417,6 +459,9 @@ async function parseChatCompletionSse(response: Response, options?: AiRequestOpt
   let content = "";
   let reasoningContent = "";
   let upstreamModel: string | null = null;
+  let promptTokens: number | null = null;
+  let completionTokens: number | null = null;
+  let totalTokens: number | null = null;
   let lastChunk: UpstreamResponseBody | null = null;
   const rawParts: string[] = [];
 
@@ -448,6 +493,11 @@ async function parseChatCompletionSse(response: Response, options?: AiRequestOpt
     lastChunk = chunk;
     if (typeof chunk.model === "string" && chunk.model.trim()) {
       upstreamModel = chunk.model.trim();
+    }
+    if (chunk.usage) {
+      promptTokens = typeof chunk.usage.prompt_tokens === "number" ? chunk.usage.prompt_tokens : promptTokens;
+      completionTokens = typeof chunk.usage.completion_tokens === "number" ? chunk.usage.completion_tokens : completionTokens;
+      totalTokens = typeof chunk.usage.total_tokens === "number" ? chunk.usage.total_tokens : totalTokens;
     }
 
     const delta = chunk.choices?.[0]?.delta;
@@ -489,6 +539,11 @@ async function parseChatCompletionSse(response: Response, options?: AiRequestOpt
     content,
     reasoningContent,
     model: upstreamModel,
+    usage: {
+      promptTokens,
+      completionTokens,
+      totalTokens,
+    },
     rawSnippet: rawParts.join("\n").slice(0, 500),
     diagnosticBody:
       lastChunk ??
@@ -565,11 +620,23 @@ async function sendToChannel(
     model: streamed.model || model,
     channelName: channel.name,
     channelId: channel.id ?? null,
+    providerKeyModelId: channel.providerKeyModelId ?? null,
+    providerKeyId: channel.providerKeyId ?? null,
+    promptTokens: streamed.usage.promptTokens,
+    completionTokens: streamed.usage.completionTokens,
+    totalTokens: streamed.usage.totalTokens,
     elapsedMs: Date.now() - startedAt,
   };
 }
 
 async function markChannelSuccess(channel: ChannelConfig) {
+  if (channel.source === "provider_key_model" && channel.providerKeyId) {
+    const supabase = getServiceSupabaseClient();
+    if (!supabase) return;
+    await markProviderKeySuccess(supabase, channel.providerKeyId);
+    return;
+  }
+
   if (channel.source !== "database" || !channel.id) return;
 
   const hadFailures =
@@ -606,6 +673,17 @@ async function markChannelSuccess(channel: ChannelConfig) {
 }
 
 async function markChannelFailure(channel: ChannelConfig, message: string) {
+  if (channel.source === "provider_key_model" && channel.providerKeyId) {
+    const supabase = getServiceSupabaseClient();
+    if (!supabase) return;
+    try {
+      await bumpProviderKeyFailure(supabase, channel.providerKeyId, message);
+    } catch (error) {
+      console.warn("[ai-client] provider key failure marker skipped", error);
+    }
+    return;
+  }
+
   if (channel.source !== "database" || !channel.id) return;
 
   const supabase = getServiceSupabaseClient();
@@ -681,6 +759,16 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   }
 
   let configuredChannels = await getAvailableChannels(options);
+  const providerKeyModelId = options.providerKeyModelId?.trim();
+  if (providerKeyModelId) {
+    const providerChannel = await getProviderKeyModelChannel(providerKeyModelId);
+    if (providerChannel) {
+      configuredChannels = [
+        providerChannel,
+        ...configuredChannels.filter((channel) => channel.id !== providerChannel.id),
+      ];
+    }
+  }
   if (options.channelId?.trim()) {
     configuredChannels = configuredChannels.filter((channel) => channel.id === options.channelId?.trim());
   } else if (preferredChannelId) {
