@@ -17,6 +17,7 @@ interface PolishedDocumentCanvasProps {
   onTextChange: (text: string) => void;
   onInlinePatchSubmit?: (prompt: string) => void;
   onParagraphEdit?: (paragraphId: string, newContent: string) => void | Promise<void>;
+  onReferSelection?: (text: string | null) => void;
 }
 
 const renderSyntaxFadedBase = (text: string) => {
@@ -37,22 +38,22 @@ const renderParagraphRichText = (content: string) => {
   const text = content.trim();
   
   if (text.startsWith('### ')) {
-    return <div className="text-[20px] font-black tracking-tight text-zinc-900 mt-8 mb-3">{text.replace(/^###\s*/, '')}</div>;
+    return <div className="text-[18px] font-bold tracking-tight text-zinc-900 mt-4 mb-2">{text.replace(/^###\s*/, '')}</div>;
   }
   
   if (text.startsWith('## ')) {
-    return <div className="text-[24px] font-black tracking-tight text-zinc-900 mt-10 mb-5 border-b border-zinc-100 pb-3">{text.replace(/^##\s*/, '')}</div>;
+    return <div className="text-[20px] font-bold tracking-tight text-zinc-900 mt-6 mb-3 border-b border-zinc-100 pb-2">{text.replace(/^##\s*/, '')}</div>;
   }
-
+ 
   if (/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/.test(text)) {
     const cleanContent = text.replace(/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/, '').trim();
     return (
-      <div className="p-6 my-6 bg-[#F9F5F0] rounded-xl text-zinc-700 leading-[1.75]">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-3 bg-[#D97757]/40 rounded-full" />
-          <div className="text-[12px] font-bold text-[#D97757] tracking-widest uppercase">原版内容</div>
+      <div className="p-4 my-2 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-700 leading-[1.7]">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-[3px] h-3 bg-zinc-400 rounded-full" />
+          <div className="text-[11px] font-bold text-zinc-500 tracking-widest uppercase">原版内容</div>
         </div>
-        <div className="text-[14.5px] whitespace-pre-wrap opacity-90">{renderSyntaxFadedBase(cleanContent)}</div>
+        <div className="text-[14px] whitespace-pre-wrap opacity-90">{renderSyntaxFadedBase(cleanContent)}</div>
       </div>
     );
   }
@@ -61,26 +62,26 @@ const renderParagraphRichText = (content: string) => {
   if (/^(\*\*|【|### |## )?(修改后|润色后|现版|修改后：|润色后：)(:|：|\*\*|】)?\s*/.test(text)) {
     const cleanContent = text.replace(/^(\*\*|【|### |## )?(修改后|润色后|现版|修改后：|润色后：)(:|：|\*\*|】)?\s*/, '').trim();
     return (
-      <div className="relative p-6 my-6 bg-white border-l-[4px] border-[#4F7F5E] rounded-r-xl rounded-l-sm text-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)] leading-[1.75] transform -translate-y-1">
-        <div className="text-[12px] font-bold text-[#4F7F5E] mb-3 tracking-widest uppercase flex items-center gap-1.5">
+      <div className="relative p-4 my-2 bg-white border border-zinc-200 border-l-[3px] border-l-[#6FAA7D] rounded-r-xl rounded-l-sm text-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.04)] leading-[1.7]">
+        <div className="text-[11px] font-bold text-[#6FAA7D] mb-2 tracking-widest uppercase flex items-center gap-1.5">
           <Check className="w-3.5 h-3.5" /> 修改后
         </div>
-        <div className="text-[15px] whitespace-pre-wrap font-medium">{renderSyntaxFadedBase(cleanContent)}</div>
+        <div className="text-[14.5px] whitespace-pre-wrap font-medium">{renderSyntaxFadedBase(cleanContent)}</div>
       </div>
     );
   }
-
+ 
   // Numbered lists (1. xxx or 1、xxx)
   const listMatch = text.match(/^(\d+)([\.、])\s*([\s\S]*)/);
   if (listMatch) {
     return (
-      <div className="flex gap-4 my-6 leading-[1.75] group">
-        <span className="text-[28px] font-serif font-black text-[#D97757] shrink-0 mt-[-6px] opacity-80 group-hover:opacity-100 transition-opacity">{listMatch[1]}.</span>
-        <div className="text-zinc-800 flex-1 whitespace-pre-wrap text-[15px] pt-1">{renderSyntaxFadedBase(listMatch[3])}</div>
+      <div className="flex gap-3 my-2 leading-[1.7] group">
+        <span className="text-[24px] font-serif font-black text-[#8AA8C7] shrink-0 mt-[-4px] opacity-80 group-hover:opacity-100 transition-opacity">{listMatch[1]}.</span>
+        <div className="text-zinc-800 flex-1 whitespace-pre-wrap text-[14.5px] pt-0.5">{renderSyntaxFadedBase(listMatch[3])}</div>
       </div>
     );
   }
-
+ 
   // Normal text
   return <div className="text-zinc-800 leading-[1.75] my-3 text-[15px]">{renderSyntaxFadedBase(text)}</div>;
 };
@@ -140,6 +141,7 @@ export function PolishedDocumentCanvas({
   onParagraphEdit,
   generatingParagraphIds = [],
   streamingPatchText = '',
+  onReferSelection,
 }: PolishedDocumentCanvasProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(polishedText);
@@ -388,9 +390,9 @@ export function PolishedDocumentCanvas({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800 transition-all"
               >
-                <Edit3 className="h-3.5 w-3.5" />
+                <Edit3 className="h-3.5 w-3.5 text-zinc-400" />
                 <span>进入编辑</span>
               </button>
             )}
@@ -428,7 +430,7 @@ export function PolishedDocumentCanvas({
             </div>
           </div>
         ) : hasParagraphs ? (
-          <div className="space-y-4 relative pb-32 w-full px-6 md:px-10 py-12">
+          <div className="space-y-2 relative pb-32 w-full px-6 md:px-10 py-8">
             {paragraphs.map((paragraph) => {
               const isEditingCurrent = editingParagraphId === paragraph.paragraphId;
               const isGenerating = generatingParagraphIds.includes(paragraph.paragraphId);
@@ -446,7 +448,7 @@ export function PolishedDocumentCanvas({
                     else paragraphRefs.current.delete(paragraph.paragraphId);
                   }}
                   className={cn(
-                    'group relative rounded-r-lg px-4 -mx-4 py-2 transition-colors duration-200 hover:bg-zinc-50/50',
+                    'group relative rounded-r-lg px-3 -mx-3 py-1.5 transition-colors duration-200 hover:bg-zinc-50/50',
                     isEditingCurrent ? 'bg-zinc-50/50' : '',
                     isGenerating ? 'animate-pulse bg-orange-50/30' : ''
                   )}
@@ -462,7 +464,7 @@ export function PolishedDocumentCanvas({
                   )}
 
                   <div 
-                    className="whitespace-pre-wrap text-[15px] leading-[1.85] tracking-[0.02em] relative group/editor"
+                    className="whitespace-pre-wrap text-[14.5px] leading-[1.8] tracking-[0.02em] relative group/editor"
                     onDoubleClick={(e) => {
                       if (paragraph.isLocked) return;
                       e.stopPropagation();
@@ -481,6 +483,7 @@ export function PolishedDocumentCanvas({
                             y: rect.top - 8,
                             text,
                           });
+                          onReferSelection?.(text);
                         }
                       } else {
                         setMicroMenuState(null);
@@ -491,7 +494,7 @@ export function PolishedDocumentCanvas({
                       <div
                         contentEditable
                         suppressContentEditableWarning
-                        className="w-full outline-none min-h-[1.8em] text-zinc-800"
+                        className="w-full outline-none min-h-[1.8em] text-zinc-800 bg-white border border-zinc-200 rounded-xl p-3 shadow-sm focus:ring-1 focus:ring-zinc-950/5 animate-in fade-in zoom-in-95 duration-100"
                         onBlur={(e) => {
                           const newContent = e.currentTarget.innerText || '';
                           if (newContent.trim() !== '' && newContent !== paragraph.content) {
@@ -613,6 +616,18 @@ export function PolishedDocumentCanvas({
               </div>
               {/* Bottom Quick Action Area */}
               <div className="flex items-center gap-0.5 mt-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onReferSelection?.(microMenuState.text);
+                    setMicroMenuState(null);
+                    setInlinePrompt('');
+                  }}
+                  className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  📌 引用
+                </button>
+                <div className="w-px h-3 bg-white/10 mx-0.5" />
                 <button onClick={() => { onInlinePatchSubmit?.(`一键润色：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
                   ✨ 润色
                 </button>

@@ -192,6 +192,7 @@ export function useRewriteLogic() {
   const [activeOriginalDraft, setActiveOriginalDraft] = useState('');
   const [polishedText, setPolishedText] = useState('');
   const [documentParagraphs, setDocumentParagraphs] = useState<DocumentParagraph[]>([]);
+  const [referredText, setReferredText] = useState<string | null>(null);
 
   // Advanced UX States
   const [generatingParagraphIds, setGeneratingParagraphIds] = useState<string[]>([]);
@@ -742,13 +743,21 @@ export function useRewriteLogic() {
     setGeneratingParagraphIds(targetParagraphIds);
     setStreamingPatchText('');
 
+    const finalPrompt = referredText
+      ? `【针对选中的文本】\n"${referredText}"\n\n【我的要求】\n${textToSend}`
+      : textToSend;
+
+    const historyContent = referredText
+      ? `> ${referredText}\n\n${textToSend}`
+      : textToSend;
+
     setMessages((prev) => [
       ...prev,
       {
         id: tempMessageId,
         conversationId,
         role: 'user',
-        content: textToSend,
+        content: historyContent,
         createdAt: new Date().toISOString(),
         generationMode: 'single',
         status: 'success',
@@ -779,7 +788,7 @@ export function useRewriteLogic() {
       signal: abortController.signal,
       body: JSON.stringify({
         conversationId,
-        userPrompt: textToSend,
+        userPrompt: finalPrompt,
         targetParagraphIds,
         modelViewId: selectedModelViewId || null,
       }),
@@ -788,6 +797,8 @@ export function useRewriteLogic() {
     if (!res.ok) {
       throw new Error(await readApiError(res, '生成失败，请稍后重试'));
     }
+
+    setReferredText(null);
     if (!res.body) {
       throw new Error('流式响应为空');
     }
@@ -1201,6 +1212,7 @@ export function useRewriteLogic() {
       streamingPatchText,
       traceabilityMode,
       presentationMode,
+      referredText,
     },
     actions: {
       setSelectedFixedModeId,
@@ -1223,6 +1235,8 @@ export function useRewriteLogic() {
       handleInlinePatchSubmit,
       handleUserEdit,
       handleAbortGeneration,
+      setReferredText,
+      handleClearReferredText: () => setReferredText(null),
     }
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PanelLeftClose, PanelLeft, Plus, Sliders, Layout } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRewriteLogic } from './useRewriteLogic';
@@ -44,6 +44,67 @@ export function RewriteWorkbench() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyPinned, setHistoryPinned] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [leftWidthPercent, setLeftWidthPercent] = useState(40);
+  const [isResizing, setIsResizing] = useState(false);
+  const leftWidthPercentRef = useRef(leftWidthPercent);
+
+  useEffect(() => {
+    leftWidthPercentRef.current = leftWidthPercent;
+  }, [leftWidthPercent]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedRatio = window.localStorage.getItem('dydata-rewrite-split-ratio');
+      if (savedRatio) {
+        const parsed = parseFloat(savedRatio);
+        if (parsed >= 30 && parsed <= 60) {
+          setLeftWidthPercent(parsed);
+        }
+      }
+    }
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  const handleDoubleClick = useCallback(() => {
+    setLeftWidthPercent(40);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('dydata-rewrite-split-ratio');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - containerRect.left;
+      const percent = (relativeX / containerRect.width) * 100;
+      const boundedPercent = Math.max(30, Math.min(60, percent));
+      setLeftWidthPercent(boundedPercent);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('dydata-rewrite-split-ratio', leftWidthPercentRef.current.toFixed(2));
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   useEffect(() => {
     const historyDefault = getStoredDefault(STORAGE_KEY_HISTORY, false);
@@ -243,9 +304,18 @@ export function RewriteWorkbench() {
         </aside>
 
         {/* Double-column Studio Content Area */}
-        <div className="flex-1 flex min-w-0 overflow-hidden bg-zinc-100">
-          {/* Left Column (40%): Dialog & Controls */}
-          <div className="w-[40%] min-w-[360px] flex flex-col min-h-0 relative bg-zinc-50/80 backdrop-blur-xl border-r border-zinc-200 shadow-[2px_0_12px_rgba(0,0,0,0.03)] z-20">
+        <div
+          ref={containerRef}
+          className={cn(
+            "flex-1 flex min-w-0 overflow-hidden bg-zinc-100",
+            isResizing && "select-none cursor-col-resize"
+          )}
+        >
+          {/* Left Column: Dialog & Controls */}
+          <div
+            style={{ width: `${leftWidthPercent}%` }}
+            className="min-w-[360px] flex flex-col min-h-0 relative bg-zinc-50/80 backdrop-blur-xl shadow-[2px_0_12px_rgba(0,0,0,0.03)] z-20"
+          >
             {/* Collapsible Skill Settings Header */}
             <div className="shrink-0 border-b border-zinc-200/50 bg-transparent px-5 min-h-[56px] flex flex-col justify-center py-3 z-10 relative">
               <div className="flex items-center justify-between">
@@ -379,6 +449,8 @@ export function RewriteWorkbench() {
                 }
                 activeSkills={state.activeSkills}
                 availableSkills={state.isV2Conversation ? state.availableV2Skills : state.bootstrap?.fixedModes || []}
+                referredText={state.referredText}
+                onClearReferredText={actions.handleClearReferredText}
                 onInputChange={actions.setInputText}
                 onSend={actions.handleSend}
                 onAbort={actions.handleAbortGeneration}
@@ -387,8 +459,34 @@ export function RewriteWorkbench() {
             </div>
           </div>
 
-          {/* Right Column (55%): Polishing Document Sheet & Diff */}
-          <div className="w-[55%] min-w-[400px] flex flex-col min-h-0">
+          {/* Resizable Divider Splitter Handle */}
+          <div
+            onMouseDown={handleMouseDown}
+            onDoubleClick={handleDoubleClick}
+            className={cn(
+              "w-[6px] cursor-col-resize shrink-0 transition-colors z-30 relative ml-[-3px] mr-[-3px] flex items-center justify-center group/splitter",
+              isResizing 
+                ? "bg-[#8AA8C7]/30" 
+                : "bg-transparent hover:bg-[#8AA8C7]/20"
+            )}
+          >
+            <div className={cn(
+              "w-[1px] h-full transition-colors",
+              isResizing ? "bg-[#8AA8C7]" : "bg-zinc-200/80"
+            )} />
+
+            {/* Smart Micro Tooltip for Resizing & Double-click reset */}
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[10px] px-2 py-1 rounded-md shadow-md whitespace-nowrap">
+              拖拽调节宽度 · 双击还原默认
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-zinc-900" />
+            </div>
+          </div>
+
+          {/* Right Column: Polishing Document Sheet & Diff */}
+          <div
+            style={{ width: `${100 - leftWidthPercent}%` }}
+            className="min-w-[400px] flex flex-col min-h-0"
+          >
             <PolishedDocumentCanvas
               originalDraft={state.activeOriginalDraft}
               polishedText={state.polishedText}
@@ -400,6 +498,7 @@ export function RewriteWorkbench() {
               onTextChange={actions.handleUpdateLastAssistantMessage}
               onInlinePatchSubmit={actions.handleInlinePatchSubmit}
               onParagraphEdit={actions.handleUserEdit}
+              onReferSelection={actions.setReferredText}
             />
           </div>
         </div>

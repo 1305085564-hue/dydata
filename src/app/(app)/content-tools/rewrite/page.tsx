@@ -28,7 +28,7 @@ export default async function RewritePage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 h-[calc(100dvh-var(--app-top-offset))] w-full overflow-hidden">
+    <div className="mx-auto max-w-[1300px] h-[calc(100dvh-var(--app-top-offset)-1.25rem)] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] ml-[-1rem] sm:ml-[-1.5rem] mt-[-1.25rem] overflow-hidden bg-zinc-50 border-t border-zinc-200">
       <RewriteWorkbench />
     </div>
   )

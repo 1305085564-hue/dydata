@@ -335,10 +335,26 @@ export async function listRevisionsByDocumentId(
 }
 
 export function splitIntoParagraphs(content: string): string[] {
-  return content
+  const rawParagraphs = content
     .split(/\n\n+/)
     .map((p) => p.trim())
     .filter(Boolean);
+
+  const merged: string[] = [];
+  for (let i = 0; i < rawParagraphs.length; i++) {
+    const current = rawParagraphs[i];
+    if (
+      i < rawParagraphs.length - 1 &&
+      current.length <= 15 &&
+      (current.endsWith(':') || current.endsWith('：') || !/[。！？!?]/.test(current))
+    ) {
+      merged.push(current + '\n' + rawParagraphs[i + 1]);
+      i++;
+    } else {
+      merged.push(current);
+    }
+  }
+  return merged;
 }
 
 export async function createParagraphs(

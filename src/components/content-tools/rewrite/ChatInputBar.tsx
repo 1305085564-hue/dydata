@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Square, X, Sparkles } from 'lucide-react';
+import { ArrowUp, Square, X, Sparkles, Quote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type RewriteSkillScope = 'platform' | 'private' | 'public_user';
@@ -24,6 +24,8 @@ interface ChatInputBarProps {
   onToggleSkill: (skill: RewriteSkillSummary) => void;
   activeSkills: RewriteSkillSummary[];
   availableSkills: RewriteSkillSummary[];
+  referredText?: string | null;
+  onClearReferredText?: () => void;
 }
 
 
@@ -41,6 +43,8 @@ export function ChatInputBar({
   activeFixedModeName,
   activeSkills,
   availableSkills,
+  referredText,
+  onClearReferredText,
   onInputChange,
   onSend,
   onAbort,
@@ -131,13 +135,13 @@ export function ChatInputBar({
       <div className="mx-auto max-w-3xl relative">
         {/* Active Skills Bar */}
         {activeSkills.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2 px-1">
+          <div className="flex flex-wrap gap-1.5 mb-2 px-1">
             {activeSkills.map((skill) => (
               <div
                 key={skill.id}
-                className="flex items-center gap-1.5 rounded-full border border-zinc-200/60 bg-white/80 backdrop-blur-md px-2.5 py-1 text-[11px] font-medium text-zinc-700 shadow-[0_2px_8px_rgb(0,0,0,0.04)] transition-all"
+                className="flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/95 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all"
               >
-                <Sparkles className="h-3 w-3 text-[#D97757]" />
+                <Sparkles className="h-3 w-3 text-[#8AA8C7]" />
                 <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-400">已激活</span>
                 <span>{skill.name}</span>
                 <button
@@ -150,6 +154,29 @@ export function ChatInputBar({
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Referenced Text Bar (ChatGPT style) */}
+        {referredText && (
+          <div className="flex items-start justify-between gap-3 border border-zinc-200 bg-zinc-100/90 hover:bg-zinc-150 px-3 py-2 rounded-xl text-zinc-700 text-[12.5px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] mb-2.5 animate-in slide-in-from-bottom-2 duration-200">
+            <div className="flex items-start gap-2.5 min-w-0">
+              <Quote className="h-3.5 w-3.5 text-zinc-400 mt-1 shrink-0 rotate-180" />
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-0.5">引用选中文本</span>
+                <p className="line-clamp-2 text-zinc-600 font-medium leading-relaxed">"{referredText}"</p>
+              </div>
+            </div>
+            {onClearReferredText && (
+              <button
+                type="button"
+                onClick={onClearReferredText}
+                className="shrink-0 rounded-full p-1 hover:bg-zinc-200/80 text-zinc-400 hover:text-zinc-600 transition-colors mt-0.5"
+                title="清除引用"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
         )}
 
@@ -203,9 +230,11 @@ export function ChatInputBar({
 
         <div
           className={cn(
-            'group relative flex items-end gap-2 rounded-2xl border bg-white/90 backdrop-blur-md px-3 py-2.5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]',
-            'focus-within:border-zinc-300 focus-within:bg-white focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.06)] focus-within:-translate-y-0.5',
-            isSending ? 'border-zinc-200 bg-white/50' : 'border-zinc-200/80 hover:border-zinc-300 hover:shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:bg-white'
+            'group relative flex items-end gap-2 rounded-2xl border transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]',
+            'focus-within:border-zinc-300 focus-within:bg-white focus-within:shadow-sm focus-within:-translate-y-[1px]',
+            isSending
+              ? 'border-zinc-200 bg-zinc-100/50'
+              : 'border-transparent bg-zinc-100/70 hover:bg-zinc-100/90 hover:border-zinc-200/30'
           )}
         >
           <textarea
@@ -230,11 +259,11 @@ export function ChatInputBar({
             }}
             disabled={!isSending && !canSend}
             className={cn(
-              'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-[background-color,transform,box-shadow] duration-200',
+              'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] transition-[background-color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
               isSending
-                ? 'bg-zinc-800 text-white shadow-[0_2px_8px_rgba(39,39,42,0.22)] hover:bg-zinc-700 active:scale-95'
+                ? 'bg-zinc-800 text-white shadow-[0_2px_8px_rgba(39,39,42,0.22)] hover:bg-zinc-700 active:scale-[0.98]'
                 : canSend
-                ? 'bg-[#D97757] text-white hover:bg-[#C96442] shadow-[0_2px_8px_rgba(217,119,87,0.3)] active:scale-95'
+                ? 'bg-[#D97757] text-white hover:bg-[#C96442] shadow-[0_2px_8px_rgba(217,119,87,0.3)] active:scale-[0.98]'
                 : 'bg-zinc-100 text-zinc-400'
             )}
             title={isSending ? '停止生成' : canSend ? '发送' : '输入内容后可发送'}

@@ -91,10 +91,10 @@ export function InstructionFeed({
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-sm">
               <PenLine className="h-4 w-4 text-zinc-500" />
             </div>
-            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-900">
+            <h2 className="text-[18px] font-semibold tracking-tight text-zinc-900">
               {isV2Conversation ? '选择技能开始写作' : activeFixedMode ? `${activeFixedMode.name} 已就绪` : '文案润色工作室'}
             </h2>
-            <p className="text-[13px] leading-[1.6] text-zinc-400">
+            <p className="text-[12px] leading-[1.6] text-zinc-400">
               {isV2Conversation
                 ? '技能会作为提示词注入当前画布，可单选也可多选。'
                 : '选择润色技能，贴入原文。系统将保持上下文持续修改，右侧画布始终展示最新终稿。'}
@@ -123,18 +123,18 @@ export function InstructionFeed({
                           className={cn(
                             'group relative flex items-center justify-between gap-2 rounded-xl p-3.5 text-left transition-all duration-200 border bg-white',
                             isActive
-                              ? 'border-[#D97757] shadow-[0_4px_12px_rgba(217,119,87,0.15)] -translate-y-0.5'
-                              : 'border-zinc-200 hover:shadow-md hover:border-zinc-300 hover:-translate-y-0.5'
+                              ? 'border-[#8AA8C7]/50 bg-[#8AA8C7]/5 shadow-sm -translate-y-0.5'
+                              : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300 hover:translate-y-[-1px]'
                           )}
                         >
                           <div className="flex items-center gap-2.5">
-                            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#D97757]" />}
-                            <span className={cn('text-[13.5px]', isActive ? 'font-black text-zinc-900 tracking-tight' : 'font-medium text-zinc-700')}>
+                            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#8AA8C7]" />}
+                            <span className={cn('text-[12.5px]', isActive ? 'font-semibold text-zinc-800 tracking-tight' : 'font-medium text-zinc-700')}>
                               {skill.name}
                             </span>
                           </div>
                           {isActive && (
-                            <span className="shrink-0 rounded-md bg-[#D97757]/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#D97757]">
+                            <span className="shrink-0 rounded-md bg-[#8AA8C7]/10 px-2 py-0.5 text-[9.5px] font-medium tracking-wider text-zinc-800">
                               已激活
                             </span>
                           )}
@@ -163,19 +163,19 @@ export function InstructionFeed({
                       className={cn(
                         'group relative flex flex-col items-start gap-1 rounded-xl p-3.5 text-left transition-all duration-200 border bg-white',
                         isActive
-                          ? 'border-[#D97757] shadow-[0_4px_12px_rgba(217,119,87,0.15)] -translate-y-0.5'
-                          : 'border-zinc-200 hover:shadow-md hover:border-zinc-300 hover:-translate-y-0.5'
+                          ? 'border-[#8AA8C7]/50 bg-[#8AA8C7]/5 shadow-sm -translate-y-0.5'
+                          : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300 hover:translate-y-[-1px]'
                       )}
                     >
                       <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#D97757]" />}
-                          <span className={cn('text-[13.5px]', isActive ? 'font-black text-zinc-900 tracking-tight' : 'font-medium text-zinc-700')}>
+                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#8AA8C7]" />}
+                          <span className={cn('text-[12.5px]', isActive ? 'font-semibold text-zinc-800 tracking-tight' : 'font-medium text-zinc-700')}>
                             {mode.name}
                           </span>
                         </div>
                       </div>
-                      <p className={cn("text-[11.5px] leading-[1.5] transition-colors pl-4", isActive ? 'text-zinc-500 font-medium' : 'text-zinc-400 group-hover:text-zinc-500')}>
+                      <p className={cn("text-[11px] leading-[1.5] transition-colors pl-4", isActive ? 'text-zinc-500 font-medium' : 'text-zinc-400 group-hover:text-zinc-500')}>
                         {mode.description || '内置定制润色指令'}
                       </p>
                     </button>
@@ -200,10 +200,10 @@ export function InstructionFeed({
                 >
                   <div className="min-w-0 flex-1 pr-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-medium text-zinc-700 group-hover:text-zinc-900 transition-colors">
+                      <span className="text-[12px] font-medium text-zinc-700 group-hover:text-zinc-900 transition-colors">
                         {shortcut.label}
                       </span>
-                      <span className="text-[11px] text-zinc-400 group-hover:text-zinc-500 transition-colors truncate">
+                      <span className="text-[10.5px] text-zinc-400 group-hover:text-zinc-500 transition-colors truncate">
                         {shortcut.hint}
                       </span>
                     </div>
@@ -227,8 +227,8 @@ export function InstructionFeed({
           if (message.role === 'user') {
             return (
               <div key={message.id} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-zinc-950 px-3.5 py-2.5 text-[13px] leading-[1.6] text-white">
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-zinc-100/80 px-3.5 py-2 text-[12.5px] leading-[1.6] text-zinc-800 border border-zinc-200/50">
+                  <p className="whitespace-pre-wrap font-medium">{message.content}</p>
                 </div>
               </div>
             );
@@ -253,28 +253,28 @@ export function InstructionFeed({
 
           return (
             <div key={message.id} className="flex gap-2.5">
-              <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white">
+              <div className="mt-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
                 <Sparkles className="h-3 w-3 text-[#D97757]" />
               </div>
 
-              <div className="min-w-0 flex-1 space-y-2">
+              <div className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-semibold text-zinc-800">
+                  <span className="text-[11px] font-bold text-zinc-900">
                     AI 润色反馈
                   </span>
                   {isStreaming ? (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] text-[#D99E55] font-medium">
+                    <span className="inline-flex items-center gap-1.5 text-[10.5px] text-[#D99E55] font-medium">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55] animate-pulse" />
                       <span>收到，正在为你重塑...</span>
                     </span>
                   ) : (
-                    <span className="text-[11px] text-zinc-400">已重构完毕</span>
+                    <span className="text-[10px] text-zinc-400">已重构完毕</span>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   {/* Status Indicator Bubble */}
-                  <div className="text-[12px] text-zinc-500 pb-1">
+                  <div className="text-[11px] text-zinc-400 pb-1">
                     {isStreaming ? (
                       <span className="text-zinc-400">正在重写内容，右侧画布实时更新...</span>
                     ) : (
@@ -285,10 +285,10 @@ export function InstructionFeed({
                   {/* Notes / Edit Explanations */}
                   {!isStreaming && notes.length > 0 && (
                     <div className="relative pl-3 space-y-1.5 border-l-2 border-zinc-200/60">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 block">
+                      <span className="text-[9.5px] font-semibold uppercase tracking-[0.2em] text-zinc-400 block">
                         修改要点
                       </span>
-                      <ul className="space-y-1.5 text-[12px] leading-[1.6] text-zinc-500">
+                      <ul className="space-y-1.5 text-[11.5px] leading-[1.55] text-zinc-500">
                         {notes.map((note, index) => (
                           <li key={`${message.id}-note-${index}`} className="flex items-start gap-1.5">
                             <span className="mt-1.5 inline-flex h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
@@ -304,7 +304,7 @@ export function InstructionFeed({
                     <div className="pt-1">
                       <button
                         onClick={() => setHiddenAfterIndex(idx)}
-                        className="group inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800"
+                        className="group inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[10.5px] font-medium text-zinc-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800"
                         title="废弃此节点之后的对话，直接基于当前版本继续润色"
                       >
                         <RotateCcw className="h-3 w-3 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
@@ -326,7 +326,7 @@ export function InstructionFeed({
                 key={`${suggestion}-${index}`}
                 type="button"
                 onClick={() => onSendOverride(suggestion)}
-                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11.5px] font-medium text-zinc-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
               >
                 <span>{suggestion}</span>
                 <ArrowRight className="h-3 w-3 text-zinc-400" />
