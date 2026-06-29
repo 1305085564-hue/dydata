@@ -38,7 +38,7 @@ function LoadingPlaceholder() {
 
 export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
   return (
-    <div className="space-y-5">
+    <div className="w-full space-y-5">
       <div className="flex flex-wrap items-center gap-2">
         {TAB_ITEMS.map((tab) => {
           const isActive = tab.key === initialTab;
@@ -59,7 +59,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
         })}
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-[12px] text-zinc-500">
+      <div className="text-[12px] text-zinc-500 mt-1 px-1 font-normal">
         {TAB_ITEMS.find((tab) => tab.key === initialTab)?.description}
       </div>
 

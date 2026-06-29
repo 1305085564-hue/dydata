@@ -45,15 +45,15 @@ export function ProviderDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{provider?.id ? "编辑供应商" : "添加供应商"}</DialogTitle>
+          <DialogTitle>{provider?.id ? "编辑渠道" : "新建渠道"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>供应商名称</Label>
+            <Label>渠道名称</Label>
             <Input
               value={formData.name || ""}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="例如: OpenAI"
+              placeholder="例如: api7"
             />
           </div>
           <div className="space-y-2">
@@ -139,15 +139,15 @@ export function KeyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{apiKey?.id ? "编辑 API Key" : "添加 API Key"}</DialogTitle>
+          <DialogTitle>{apiKey?.id ? "编辑 API 分组" : "新建 API 分组"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>渠道名称</Label>
+            <Label>分组名称</Label>
             <Input
               value={formData.label || ""}
               onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-              placeholder="例如: 默认通道"
+              placeholder="例如: default"
             />
           </div>
           <div className="space-y-2">
