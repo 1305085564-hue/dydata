@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { streamGeneration } from "@/lib/rewrite/generation";
 import { getOrCreateDocument } from "@/lib/rewrite/documents";
+import { insertRewriteMessage } from "@/lib/rewrite/shared";
 import {
   requireAuth,
   requireConversationOwner,
@@ -63,6 +64,24 @@ export async function POST(req: NextRequest) {
 
     (async () => {
       try {
+        await insertRewriteMessage(service as never, {
+          conversationId,
+          userId: user.id,
+          role: "user",
+          content: userPrompt,
+          generationMode: "single",
+          messageStatus: "success",
+          requestSnapshot: {
+            autoModeEnabled: false,
+            modelViewId: modelViewId?.trim() || null,
+            modeId: null,
+            lengthPresetId: null,
+            workflowId: null,
+          },
+        });
+
+        let completedContent = "";
+        let generationError = "";
         for await (const event of streamGeneration(service, {
           conversationId,
           userId: user.id,
@@ -72,11 +91,69 @@ export async function POST(req: NextRequest) {
           providerKeyModelId: providerKeyModelId?.trim() || null,
           modelViewId: modelViewId?.trim() || null,
         })) {
+          if (event.type === "generation_complete") {
+            completedContent = event.fullContent;
+          }
+          if (event.type === "error") {
+            generationError = event.error;
+          }
+
           sse.send(event.type, event);
+        }
+
+        if (generationError) {
+          await insertRewriteMessage(service as never, {
+            conversationId,
+            userId: user.id,
+            role: "assistant",
+            content: generationError,
+            generationMode: "single",
+            messageStatus: "failed",
+            errorMessage: generationError,
+            requestSnapshot: {
+              autoModeEnabled: false,
+              modelViewId: modelViewId?.trim() || null,
+              modeId: null,
+              lengthPresetId: null,
+              workflowId: null,
+            },
+          });
+        } else if (completedContent.trim()) {
+          await insertRewriteMessage(service as never, {
+            conversationId,
+            userId: user.id,
+            role: "assistant",
+            content: completedContent,
+            generationMode: "single",
+            messageStatus: "success",
+            requestSnapshot: {
+              autoModeEnabled: false,
+              modelViewId: modelViewId?.trim() || null,
+              modeId: null,
+              lengthPresetId: null,
+              workflowId: null,
+            },
+          });
         }
 
         sse.close();
       } catch (error) {
+        await insertRewriteMessage(service as never, {
+          conversationId,
+          userId: user.id,
+          role: "assistant",
+          content: error instanceof Error ? error.message : "生成失败",
+          generationMode: "single",
+          messageStatus: "failed",
+          errorMessage: error instanceof Error ? error.message : "生成失败",
+          requestSnapshot: {
+            autoModeEnabled: false,
+            modelViewId: modelViewId?.trim() || null,
+            modeId: null,
+            lengthPresetId: null,
+            workflowId: null,
+          },
+        }).catch(() => {});
         sse.send("error", { error: error instanceof Error ? error.message : "生成失败" });
         sse.close();
       }

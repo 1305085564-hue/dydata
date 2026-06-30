@@ -1798,6 +1798,92 @@ export async function listUserConversations(service: MinimalClient, input: { use
   return serializeConversationRows(rows, optionMaps);
 }
 
+type RewriteGenerationRunMessageRow = {
+  id: string;
+  run_type: string;
+  status: "started" | "streaming" | "completed" | "failed" | "aborted";
+  input_snapshot: Record<string, unknown> | null;
+  output_snapshot: Record<string, unknown> | null;
+  error_message: string | null;
+  started_at: string;
+  completed_at: string | null;
+};
+
+async function listSyntheticV2MessagesFromGenerationRuns(
+  service: MinimalClient,
+  input: { userId: string; conversation: RewriteConversationRow },
+): Promise<RewriteMessageItem[]> {
+  const { data, error } = await service
+    .from("rewrite_generation_runs")
+    .select("id, run_type, status, input_snapshot, output_snapshot, error_message, started_at, completed_at")
+    .eq("conversation_id", input.conversation.id)
+    .eq("user_id", input.userId)
+    .order("started_at", { ascending: true })
+    .limit(20);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const messages: RewriteMessageItem[] = [];
+  for (const run of (data ?? []) as RewriteGenerationRunMessageRow[]) {
+    const inputSnapshot = isRecord(run.input_snapshot) ? run.input_snapshot : null;
+    const outputSnapshot = isRecord(run.output_snapshot) ? run.output_snapshot : null;
+    const userPrompt = typeof inputSnapshot?.userPrompt === "string" ? inputSnapshot.userPrompt.trim() : "";
+    const fullContent = typeof outputSnapshot?.fullContent === "string" ? outputSnapshot.fullContent.trim() : "";
+
+    if (userPrompt) {
+      messages.push(
+        serializeMessageRow({
+          id: `run-${run.id}-user`,
+          conversation_id: input.conversation.id,
+          user_id: input.userId,
+          role: "user",
+          generation_mode: "single",
+          message_status: "success",
+          content: userPrompt,
+          structured_result: null,
+          request_snapshot: {
+            autoModeEnabled: false,
+            modelViewId: input.conversation.selected_model_view_id,
+            modeId: null,
+            lengthPresetId: input.conversation.selected_length_preset_id,
+            workflowId: null,
+          },
+          error_message: null,
+          created_at: run.started_at,
+        }),
+      );
+    }
+
+    if (fullContent || run.status === "failed") {
+      messages.push(
+        serializeMessageRow({
+          id: `run-${run.id}-assistant`,
+          conversation_id: input.conversation.id,
+          user_id: input.userId,
+          role: "assistant",
+          generation_mode: "single",
+          message_status: run.status === "failed" ? "failed" : "success",
+          content: fullContent || run.error_message || "生成失败",
+          structured_result: null,
+          request_snapshot: {
+            autoModeEnabled: false,
+            modelViewId: input.conversation.selected_model_view_id,
+            modeId: null,
+            lengthPresetId: input.conversation.selected_length_preset_id,
+            workflowId: null,
+          },
+          error_message: run.status === "failed" ? run.error_message : null,
+          created_at: run.completed_at ?? run.started_at,
+        }),
+      );
+    }
+  }
+
+  return messages;
+}
+
 export async function listConversationMessages(
   service: MinimalClient,
   input: { userId: string; conversationId: string },
@@ -1825,9 +1911,17 @@ export async function listConversationMessages(
     lengthPresetIds: conversation.selected_length_preset_id ? [conversation.selected_length_preset_id] : [],
   });
 
+  let messages = ((data ?? []) as RewriteMessageRow[]).map((row) => serializeMessageRow(row));
+  if (messages.length === 0 && (conversation.schema_version ?? 1) === 2) {
+    messages = await listSyntheticV2MessagesFromGenerationRuns(service, {
+      userId: input.userId,
+      conversation,
+    });
+  }
+
   return {
     conversation: serializeConversationRow(conversation, optionMaps),
-    messages: ((data ?? []) as RewriteMessageRow[]).map((row) => serializeMessageRow(row)),
+    messages,
   };
 }
 
@@ -1934,7 +2028,7 @@ async function updateConversationSelections(
   }
 }
 
-async function insertRewriteMessage(
+export async function insertRewriteMessage(
   service: MinimalClient,
   input: {
     conversationId: string;

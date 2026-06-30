@@ -782,6 +782,51 @@ test("messages 只返回当前用户自己的消息，并统一 assistant struct
   assert.equal(payload.messages[0]?.structuredResult?.steps[0]?.stepKey, "single");
 });
 
+test("v2 历史会话缺少消息时从 generation run 补回原稿和终稿", async () => {
+  const db = buildBaseDb();
+  db.rewrite_conversations.push({
+    id: "conv-v2",
+    user_id: "user-1",
+    title: "V2 画布",
+    schema_version: 2,
+    auto_mode_enabled: false,
+    selected_fixed_mode_id: null,
+    selected_model_view_id: "model-alt",
+    selected_mode_id: null,
+    selected_length_preset_id: "length-long",
+    last_message_at: "2026-04-14T12:00:00.000Z",
+    created_at: "2026-04-14T11:00:00.000Z",
+    updated_at: "2026-04-14T12:00:00.000Z",
+  });
+  db.rewrite_generation_runs = [
+    {
+      id: "run-1",
+      conversation_id: "conv-v2",
+      user_id: "user-1",
+      run_type: "full_rewrite",
+      status: "completed",
+      input_snapshot: { userPrompt: "原稿：第一段\n\n要求：更口语" },
+      output_snapshot: { fullContent: "第一段口语版" },
+      error_message: null,
+      started_at: "2026-04-14T12:01:00.000Z",
+      completed_at: "2026-04-14T12:01:10.000Z",
+    },
+  ];
+  const service = createFakeService(db);
+
+  const payload = await rewrite.listConversationMessages(service as never, {
+    userId: "user-1",
+    conversationId: "conv-v2",
+  });
+
+  assert.equal(payload.messages.length, 2);
+  assert.equal(payload.messages[0]?.role, "user");
+  assert.equal(payload.messages[0]?.content, "原稿：第一段\n\n要求：更口语");
+  assert.equal(payload.messages[1]?.role, "assistant");
+  assert.equal(payload.messages[1]?.content, "第一段口语版");
+  assert.equal(payload.messages[1]?.structuredResult?.selected.modelViewId, "model-alt");
+});
+
 test("chat 在固定模式下会锁定套餐配置并返回 structuredResult", async () => {
   const db = buildBaseDb();
   const service = createFakeService(db);
