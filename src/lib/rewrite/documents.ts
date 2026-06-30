@@ -96,6 +96,18 @@ export type Variant = {
   createdAt: string;
 };
 
+export type DocumentHistoryState = {
+  document: Document;
+  revision: DocumentRevision | null;
+  paragraphs: DocumentParagraph[];
+  fullContent: string;
+  saved: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  undoRevisionId: string | null;
+  redoRevisionId: string | null;
+};
+
 function toDocument(row: DocumentRow): Document {
   return {
     id: row.id,
@@ -306,6 +318,30 @@ export async function getRevisionById(
     .from("rewrite_document_revisions")
     .select("id, document_id, parent_revision_id, source_type, status, generation_run_id, full_content, message_id, meta, created_at")
     .eq("id", revisionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data ? toDocumentRevision(data as DocumentRevisionRow) : null;
+}
+
+async function getLatestChildRevision(
+  service: MinimalClient,
+  input: {
+    documentId: string;
+    parentRevisionId: string;
+  },
+): Promise<DocumentRevision | null> {
+  const { data, error } = await service
+    .from("rewrite_document_revisions")
+    .select("id, document_id, parent_revision_id, source_type, status, generation_run_id, full_content, message_id, meta, created_at")
+    .eq("document_id", input.documentId)
+    .eq("parent_revision_id", input.parentRevisionId)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (error) {
@@ -529,6 +565,63 @@ export async function getCurrentDocumentSnapshot(
     revision,
     paragraphs,
   };
+}
+
+export async function getDocumentHistoryState(
+  service: MinimalClient,
+  conversationId: string,
+): Promise<DocumentHistoryState | null> {
+  const snapshot = await getCurrentDocumentSnapshot(service, conversationId);
+  if (!snapshot) return null;
+
+  const redoRevision = snapshot.revision
+    ? await getLatestChildRevision(service, {
+        documentId: snapshot.document.id,
+        parentRevisionId: snapshot.revision.id,
+      })
+    : null;
+  const undoRevisionId =
+    snapshot.revision?.parentRevisionId && (await getRevisionById(service, snapshot.revision.parentRevisionId))?.documentId === snapshot.document.id
+      ? snapshot.revision.parentRevisionId
+      : null;
+
+  return {
+    document: snapshot.document,
+    revision: snapshot.revision,
+    paragraphs: snapshot.paragraphs,
+    fullContent: snapshot.revision?.fullContent ?? snapshot.paragraphs.map((paragraph) => paragraph.content).join("\n\n"),
+    saved: true,
+    canUndo: Boolean(undoRevisionId),
+    canRedo: Boolean(redoRevision),
+    undoRevisionId,
+    redoRevisionId: redoRevision?.id ?? null,
+  };
+}
+
+export async function moveDocumentHistoryPointer(
+  service: MinimalClient,
+  input: {
+    conversationId: string;
+    direction: "undo" | "redo";
+  },
+): Promise<DocumentHistoryState> {
+  const state = await getDocumentHistoryState(service, input.conversationId);
+  if (!state?.revision) {
+    throw new Error("找不到可操作的当前文档版本");
+  }
+
+  const targetRevisionId = input.direction === "undo" ? state.undoRevisionId : state.redoRevisionId;
+  if (!targetRevisionId) {
+    throw new Error(input.direction === "undo" ? "没有可撤回的上一步" : "没有可前进的下一步");
+  }
+
+  await setCurrentRevision(service, state.document.id, targetRevisionId);
+  const nextState = await getDocumentHistoryState(service, input.conversationId);
+  if (!nextState) {
+    throw new Error("切换历史版本后未找到文档");
+  }
+
+  return nextState;
 }
 
 export async function createUserEditRevision(

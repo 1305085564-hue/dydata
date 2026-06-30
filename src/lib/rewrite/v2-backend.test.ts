@@ -9,8 +9,10 @@ import {
 } from "./skills";
 import {
   createParagraphs,
+  getDocumentHistoryState,
   createRevision,
   getDocumentByConversationId,
+  moveDocumentHistoryPointer,
   setCurrentRevision,
   splitIntoParagraphs,
 } from "./documents";
@@ -713,6 +715,124 @@ test("manual completed revision can become current, pending revision cannot", as
   );
   const document = await getDocumentByConversationId(service as never, "conv-1");
   assert.equal(document?.currentRevisionId, completed.id);
+});
+
+test("document history state supports undo and redo by moving current revision", async () => {
+  const db: FakeDb = {
+    rewrite_documents: [
+      {
+        id: "doc-1",
+        conversation_id: "conv-1",
+        title: "画布",
+        current_revision_id: "rev-3",
+        created_at: "2026-06-28T00:00:00.000Z",
+        updated_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    rewrite_document_revisions: [
+      {
+        id: "rev-1",
+        document_id: "doc-1",
+        parent_revision_id: null,
+        source_type: "user_edit",
+        status: "completed",
+        generation_run_id: null,
+        full_content: "第一版",
+        message_id: null,
+        meta: null,
+        created_at: "2026-06-28T00:00:01.000Z",
+      },
+      {
+        id: "rev-2",
+        document_id: "doc-1",
+        parent_revision_id: "rev-1",
+        source_type: "user_edit",
+        status: "completed",
+        generation_run_id: null,
+        full_content: "第二版",
+        message_id: null,
+        meta: null,
+        created_at: "2026-06-28T00:00:02.000Z",
+      },
+      {
+        id: "rev-3",
+        document_id: "doc-1",
+        parent_revision_id: "rev-2",
+        source_type: "paragraph_patch",
+        status: "completed",
+        generation_run_id: null,
+        full_content: "第三版",
+        message_id: null,
+        meta: null,
+        created_at: "2026-06-28T00:00:03.000Z",
+      },
+    ],
+    rewrite_document_paragraphs: [
+      {
+        id: "para-row-1",
+        revision_id: "rev-1",
+        paragraph_id: "p-1",
+        position: 0,
+        content: "第一版",
+        is_locked: false,
+        source_type: "user",
+        created_at: "2026-06-28T00:00:01.000Z",
+      },
+      {
+        id: "para-row-2",
+        revision_id: "rev-2",
+        paragraph_id: "p-1",
+        position: 0,
+        content: "第二版",
+        is_locked: false,
+        source_type: "user",
+        created_at: "2026-06-28T00:00:02.000Z",
+      },
+      {
+        id: "para-row-3",
+        revision_id: "rev-3",
+        paragraph_id: "p-1",
+        position: 0,
+        content: "第三版",
+        is_locked: false,
+        source_type: "ai",
+        created_at: "2026-06-28T00:00:03.000Z",
+      },
+    ],
+  };
+  const service = createFakeService(db);
+
+  const initial = await getDocumentHistoryState(service as never, "conv-1");
+  assert.equal(initial?.saved, true);
+  assert.equal(initial?.canUndo, true);
+  assert.equal(initial?.canRedo, false);
+  assert.equal(initial?.fullContent, "第三版");
+
+  const afterUndo = await moveDocumentHistoryPointer(service as never, {
+    conversationId: "conv-1",
+    direction: "undo",
+  });
+  assert.equal(afterUndo.revision?.id, "rev-2");
+  assert.equal(afterUndo.fullContent, "第二版");
+  assert.equal(afterUndo.canUndo, true);
+  assert.equal(afterUndo.canRedo, true);
+  assert.equal(db.rewrite_documents[0]?.current_revision_id, "rev-2");
+
+  const afterSecondUndo = await moveDocumentHistoryPointer(service as never, {
+    conversationId: "conv-1",
+    direction: "undo",
+  });
+  assert.equal(afterSecondUndo.revision?.id, "rev-1");
+  assert.equal(afterSecondUndo.canUndo, false);
+  assert.equal(afterSecondUndo.canRedo, true);
+
+  const afterRedo = await moveDocumentHistoryPointer(service as never, {
+    conversationId: "conv-1",
+    direction: "redo",
+  });
+  assert.equal(afterRedo.revision?.id, "rev-2");
+  assert.equal(afterRedo.fullContent, "第二版");
+  assert.equal(db.rewrite_documents[0]?.current_revision_id, "rev-2");
 });
 
 test("paragraph patch generation replaces only selected unlocked paragraphs and records asset mentions", async () => {
