@@ -40,6 +40,9 @@ create table if not exists public.sop_checkpoint_submissions (
   unique (user_id, status_date, checkpoint)
 );
 
+-- 历史遗留表，未接入业务代码（2026-07-01 确认）。
+-- 早期设计用于 6 维度审核评分，但批改台已改用 content_feedback_cards 的「主要问题 + 改进反馈」模型。
+-- 该表目前没有前后端调用，保留仅作历史记录；如后续产品方向确认不再使用，可通过新增 migration 删除。
 create table if not exists public.sop_review_scores (
   id uuid primary key default gen_random_uuid(),
   submission_id uuid not null references public.sop_checkpoint_submissions(id) on delete cascade,
