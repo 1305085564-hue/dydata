@@ -63,6 +63,7 @@ interface ContentDetailDialogProps {
   snapshot: VideoMetricsSnapshot | null;
   feedbackCard: ContentFeedbackCardView | null;
   onFeedbackCardChanged: (videoId: string, view: ContentFeedbackCardView) => void;
+  onNavigateToNext?: () => void;
 }
 
 type DetailTab = "analysis" | "feedback";
@@ -511,6 +512,7 @@ export function ContentDetailDialog({
   snapshot,
   feedbackCard: feedbackCardProp,
   onFeedbackCardChanged,
+  onNavigateToNext,
 }: ContentDetailDialogProps) {
   const reduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<DetailTab>("analysis");
@@ -803,6 +805,11 @@ export function ContentDetailDialog({
         onFeedbackCardChanged(video.id, data.feedback_card);
       }
       feedbackToast.success("已确认并下发给员工");
+      if (onNavigateToNext) {
+        setTimeout(() => {
+          onNavigateToNext();
+        }, 500);
+      }
     } catch (e) {
       feedbackToast.error(e instanceof Error ? e.message : "确认下发失败");
     } finally {

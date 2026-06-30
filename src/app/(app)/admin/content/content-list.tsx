@@ -512,6 +512,17 @@ export function ContentList({
     [filtered]
   );
 
+  const handleNavigateToNext = useCallback(() => {
+    if (!selectedVideoId) return;
+    const currentIndex = filtered.findIndex((v) => v.id === selectedVideoId);
+    if (currentIndex !== -1 && currentIndex + 1 < filtered.length) {
+      const nextVideo = filtered[currentIndex + 1];
+      onSelectVideoId(nextVideo.id);
+    } else {
+      onSelectVideoId(null);
+    }
+  }, [selectedVideoId, filtered, onSelectVideoId]);
+
   const selectedVideo = selectedVideoId ? (videos.find((v) => v.id === selectedVideoId) ?? null) : null;
   const selectedSnapshot = selectedVideoId ? (snapshotMap.get(selectedVideoId) ?? null) : null;
   const batchCandidates = useMemo(
@@ -855,6 +866,7 @@ export function ContentList({
         onFeedbackCardChanged={(videoId, card) => {
           onFeedbackCardChanged?.(videoId, card);
         }}
+        onNavigateToNext={handleNavigateToNext}
       />
 
       {/* Keyframe animation for new batch */}

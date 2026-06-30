@@ -497,6 +497,12 @@ export function RewriteWorkbench() {
               onReferSelection={actions.setReferredText}
               selectedParagraphIds={state.selectedParagraphIds}
               onParagraphSelectionChange={actions.handleParagraphSelectionChange}
+              conversationId={state.currentConversationId}
+              isV2Conversation={state.isV2Conversation}
+              historyState={state.historyState}
+              historyLoading={state.historyLoading}
+              onUndo={actions.handleUndo}
+              onRedo={actions.handleRedo}
             />
           </div>
         </div>

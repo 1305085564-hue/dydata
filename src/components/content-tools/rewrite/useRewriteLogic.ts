@@ -220,6 +220,20 @@ export function useRewriteLogic() {
   const [activeSkills, setActiveSkills] = useState<RewriteSkillSummary[]>([]);
   const [traceabilityMode, setTraceabilityMode] = useState(false);
   const [presentationMode, setPresentationMode] = useState(false);
+  const [historyState, setHistoryState] = useState<{
+    saved: boolean;
+    canUndo: boolean;
+    canRedo: boolean;
+    undoRevisionId: string | null;
+    redoRevisionId: string | null;
+  }>({
+    saved: true,
+    canUndo: false,
+    canRedo: false,
+    undoRevisionId: null,
+    redoRevisionId: null,
+  });
+  const [historyLoading, setHistoryLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentConversationIdRef = useRef<string | null>(null);
   const messageCacheRef = useRef(new Map<string, Message[]>());
@@ -591,6 +605,69 @@ export function useRewriteLogic() {
     }
     void fetchV2Paragraphs(conversation.id);
     void fetchV2ConversationSkills(conversation.id);
+    void fetchHistoryState(conversation.id);
+  }
+
+  async function fetchHistoryState(conversationId: string) {
+    if (!conversationId) return;
+    try {
+      const res = await fetch(`/api/rewrite/documents/${conversationId}/history`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('获取历史版本状态失败');
+      const data = await res.json();
+      setHistoryState({
+        saved: data.saved ?? true,
+        canUndo: data.canUndo ?? false,
+        canRedo: data.canRedo ?? false,
+        undoRevisionId: data.undoRevisionId ?? null,
+        redoRevisionId: data.redoRevisionId ?? null,
+      });
+    } catch (error) {
+      console.warn('⚠️ 获取历史版本状态失败', error);
+    }
+  }
+
+  async function handleUndoRedo(action: 'undo' | 'redo') {
+    const conversationId = currentConversationIdRef.current || currentConversationId;
+    if (!conversationId || historyLoading) return;
+
+    setHistoryLoading(true);
+    setHistoryState((prev) => ({ ...prev, saved: false }));
+
+    try {
+      const res = await fetch(`/api/rewrite/documents/${conversationId}/history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) {
+        throw new Error(await readApiError(res, `${action === 'undo' ? '撤销' : '重做'}失败`));
+      }
+      const data = await res.json();
+      
+      const paragraphs = (data.paragraphs ?? []) as DocumentParagraph[];
+      setDocumentParagraphs(paragraphs);
+      setPolishedText(data.fullContent ?? '');
+      
+      setSelectedParagraphIds([]);
+      setLastSelectedParagraphId(null);
+      setStreamingPatchText('');
+      setGeneratingParagraphIds([]);
+
+      setHistoryState({
+        saved: data.saved ?? true,
+        canUndo: data.canUndo ?? false,
+        canRedo: data.canRedo ?? false,
+        undoRevisionId: data.undoRevisionId ?? null,
+        redoRevisionId: data.redoRevisionId ?? null,
+      });
+    } catch (error) {
+      console.warn(`⚠️ 执行 ${action} 失败`, error);
+      if (conversationId) {
+        void fetchHistoryState(conversationId);
+      }
+    } finally {
+      setHistoryLoading(false);
+    }
   }
 
   function handleNewConversation() {
@@ -605,6 +682,13 @@ export function useRewriteLogic() {
     setMessagesLoading(false);
     setInputText('');
     rememberLastOpenConversationId(null);
+    setHistoryState({
+      saved: true,
+      canUndo: false,
+      canRedo: false,
+      undoRevisionId: null,
+      redoRevisionId: null,
+    });
     if (bootstrap) {
       resetToBootstrapDefaults(bootstrap);
     }
@@ -907,6 +991,7 @@ export function useRewriteLogic() {
             setSelectedParagraphIds([]);
             void fetchV2Paragraphs(conversationId);
             void fetchConversations();
+            void fetchHistoryState(conversationId);
           }
 
           if (event.type === 'error') {
@@ -1206,6 +1291,8 @@ export function useRewriteLogic() {
       prev.map((item) => (item.paragraphId === paragraphId ? { ...item, content: normalizedContent } : item))
     );
     
+    setHistoryState((prev) => ({ ...prev, saved: false }));
+    
     try {
       const res = await fetch(`/api/rewrite/paragraphs/user-edit`, {
         method: 'POST',
@@ -1220,9 +1307,11 @@ export function useRewriteLogic() {
         throw new Error(await readApiError(res, '保存修改失败'));
       }
       void fetchV2Paragraphs(currentConversationIdRef.current);
+      void fetchHistoryState(currentConversationIdRef.current);
     } catch (error) {
       console.warn('⚠️ 手工存盘失败', error);
       void fetchV2Paragraphs(currentConversationIdRef.current);
+      void fetchHistoryState(currentConversationIdRef.current);
     }
   }
 
@@ -1277,6 +1366,8 @@ export function useRewriteLogic() {
       referredText,
       selectedParagraphIds,
       lastSelectedParagraphId,
+      historyState,
+      historyLoading,
     },
     actions: {
       setSelectedFixedModeId,
@@ -1303,6 +1394,9 @@ export function useRewriteLogic() {
       setReferredText,
       handleClearReferredText: () => setReferredText(null),
       handleParagraphSelectionChange,
+      handleUndo: () => handleUndoRedo('undo'),
+      handleRedo: () => handleUndoRedo('redo'),
+      fetchHistoryState,
     }
   };
 }

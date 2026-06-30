@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, Copy, Eye, Edit3, Save, FileText, X, Quote, Sparkles, Scissors, MessageCircle, Plus } from 'lucide-react';
+import { Check, Copy, Eye, Edit3, Save, FileText, X, Quote, Sparkles, Scissors, MessageCircle, Plus, Undo2, Redo2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DocumentParagraph } from './useRewriteLogic';
 import { normalizeParagraphEditContent } from './paragraph-edit';
+import ReactMarkdown from 'react-markdown';
 
 interface PolishedDocumentCanvasProps {
   originalDraft: string;
@@ -21,6 +22,18 @@ interface PolishedDocumentCanvasProps {
   onReferSelection?: (text: string | null) => void;
   selectedParagraphIds?: string[];
   onParagraphSelectionChange?: (paragraphIds: string[], lastParagraphId: string | null) => void;
+  conversationId: string | null;
+  isV2Conversation?: boolean;
+  historyState?: {
+    saved: boolean;
+    canUndo: boolean;
+    canRedo: boolean;
+    undoRevisionId: string | null;
+    redoRevisionId: string | null;
+  };
+  historyLoading?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 const renderSyntaxFadedBase = (text: string) => {
@@ -37,17 +50,41 @@ const renderSyntaxFadedBase = (text: string) => {
   );
 };
 
+const DocumentMarkdown = ({ content }: { content: string }) => {
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ node, ...props }) => <span className="m-0 inline" {...props} />,
+        strong: ({ node, ...props }) => <strong className="font-bold text-zinc-950" {...props} />,
+        em: ({ node, ...props }) => <em className="italic text-zinc-800" {...props} />,
+        h1: ({ node, ...props }) => <h1 className="text-xl font-bold tracking-tight text-zinc-950 mt-4 mb-2" {...props} />,
+        h2: ({ node, ...props }) => <h2 className="text-lg font-bold tracking-tight text-zinc-950 mt-3 mb-2" {...props} />,
+        h3: ({ node, ...props }) => <h3 className="text-base font-bold tracking-tight text-zinc-900 mt-2 mb-1" {...props} />,
+        blockquote: ({ node, ...props }) => (
+          <blockquote className="border-l-2 border-zinc-200 pl-3 my-1.5 text-zinc-500 italic bg-zinc-50/50 py-1 pr-2 rounded-r" {...props} />
+        ),
+        ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-1 text-zinc-800" {...props} />,
+        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-1 text-zinc-800" {...props} />,
+        li: ({ node, ...props }) => <li className="my-0.5" {...props} />,
+        code: ({ node, ...props }) => (
+          <code className="bg-zinc-100 text-zinc-900 px-1 rounded font-mono text-[0.9em]" {...props} />
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+};
+
 const renderParagraphRichText = (content: string) => {
   const text = content.trim();
-  
-  if (text.startsWith('### ')) {
-    return <div className="text-[18px] font-bold tracking-tight text-zinc-900 mt-4 mb-2">{text.replace(/^###\s*/, '')}</div>;
+
+  // 1. Title format overrides
+  if (text.startsWith('### ') || text.startsWith('## ') || text.startsWith('# ')) {
+    return <DocumentMarkdown content={content} />;
   }
-  
-  if (text.startsWith('## ')) {
-    return <div className="text-[20px] font-bold tracking-tight text-zinc-900 mt-6 mb-3 border-b border-zinc-100 pb-2">{text.replace(/^##\s*/, '')}</div>;
-  }
- 
+
+  // 2. Card for "修改前/原版"
   if (/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/.test(text)) {
     const cleanContent = text.replace(/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/, '').trim();
     return (
@@ -56,12 +93,14 @@ const renderParagraphRichText = (content: string) => {
           <div className="w-[3px] h-3 bg-zinc-400 rounded-full" />
           <div className="text-[11px] font-bold text-zinc-500 tracking-widest uppercase">原版内容</div>
         </div>
-        <div className="text-[14px] whitespace-pre-wrap opacity-90">{renderSyntaxFadedBase(cleanContent)}</div>
+        <div className="text-[14.5px] whitespace-pre-wrap opacity-90">
+          <DocumentMarkdown content={cleanContent} />
+        </div>
       </div>
     );
   }
   
-  // Card for "修改后/润色后"
+  // 3. Card for "修改后/润色后"
   if (/^(\*\*|【|### |## )?(修改后|润色后|现版|修改后：|润色后：)(:|：|\*\*|】)?\s*/.test(text)) {
     const cleanContent = text.replace(/^(\*\*|【|### |## )?(修改后|润色后|现版|修改后：|润色后：)(:|：|\*\*|】)?\s*/, '').trim();
     return (
@@ -69,24 +108,32 @@ const renderParagraphRichText = (content: string) => {
         <div className="text-[11px] font-bold text-[#6FAA7D] mb-2 tracking-widest uppercase flex items-center gap-1.5">
           <Check className="w-3.5 h-3.5" /> 修改后
         </div>
-        <div className="text-[14.5px] whitespace-pre-wrap font-medium">{renderSyntaxFadedBase(cleanContent)}</div>
+        <div className="text-[14.5px] whitespace-pre-wrap font-medium">
+          <DocumentMarkdown content={cleanContent} />
+        </div>
       </div>
     );
   }
- 
-  // Numbered lists (1. xxx or 1、xxx)
+
+  // 4. Numbered lists
   const listMatch = text.match(/^(\d+)([\.、])\s*([\s\S]*)/);
   if (listMatch) {
     return (
       <div className="flex gap-3 my-2 leading-[1.7] group">
         <span className="text-[24px] font-serif font-black text-[#8AA8C7] shrink-0 mt-[-4px] opacity-80 group-hover:opacity-100 transition-opacity">{listMatch[1]}.</span>
-        <div className="text-zinc-800 flex-1 whitespace-pre-wrap text-[14.5px] pt-0.5">{renderSyntaxFadedBase(listMatch[3])}</div>
+        <div className="text-zinc-800 flex-1 whitespace-pre-wrap text-[14.5px] pt-0.5">
+          <DocumentMarkdown content={listMatch[3]} />
+        </div>
       </div>
     );
   }
- 
-  // Normal text
-  return <div className="text-zinc-800 leading-[1.75] my-3 text-[15px]">{renderSyntaxFadedBase(text)}</div>;
+
+  // 5. Normal markdown text
+  return (
+    <div className="text-zinc-800 leading-[1.75] my-3 text-[15px]">
+      <DocumentMarkdown content={content} />
+    </div>
+  );
 };
 
 // DP-based sentence-level diff algorithm
@@ -147,6 +194,12 @@ export function PolishedDocumentCanvas({
   onReferSelection,
   selectedParagraphIds = [],
   onParagraphSelectionChange,
+  conversationId,
+  isV2Conversation = true,
+  historyState,
+  historyLoading = false,
+  onUndo,
+  onRedo,
 }: PolishedDocumentCanvasProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(polishedText);
@@ -217,10 +270,11 @@ export function PolishedDocumentCanvas({
     if (editingParagraphId && paragraphEditRef.current) {
       const editor = paragraphEditRef.current;
       editor.focus();
-      editor.selectionStart = editor.value.length;
-      editor.selectionEnd = editor.value.length;
+      // Auto growing height
+      editor.style.height = 'auto';
+      editor.style.height = `${editor.scrollHeight}px`;
     }
-  }, [editingParagraphId]);
+  }, [editingParagraphId, editingParagraphText]);
 
   const handleCopy = () => {
     if (!polishedText) return;
@@ -379,6 +433,59 @@ export function PolishedDocumentCanvas({
         {/* Toolbar Buttons */}
         {hasText && (
           <div className="flex items-center gap-0.5 bg-transparent p-0.5">
+            {isV2Conversation && conversationId && historyState && (
+              <>
+                {/* 保存状态 */}
+                <div className="flex items-center gap-1 px-2 text-zinc-400 select-none">
+                  {historyState.saved ? (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] text-[#4F7F5E]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+                      已保存
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] text-zinc-500">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      自动保存中
+                    </span>
+                  )}
+                </div>
+
+                {/* Undo 按钮 */}
+                <button
+                  type="button"
+                  onClick={onUndo}
+                  disabled={!historyState.canUndo || historyLoading}
+                  className={cn(
+                    'inline-flex h-7 w-7 items-center justify-center rounded-md transition-all',
+                    historyState.canUndo && !historyLoading
+                      ? 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700 cursor-pointer'
+                      : 'text-zinc-300 cursor-not-allowed'
+                  )}
+                  title="撤销"
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Redo 按钮 */}
+                <button
+                  type="button"
+                  onClick={onRedo}
+                  disabled={!historyState.canRedo || historyLoading}
+                  className={cn(
+                    'inline-flex h-7 w-7 items-center justify-center rounded-md transition-all',
+                    historyState.canRedo && !historyLoading
+                      ? 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700 cursor-pointer'
+                      : 'text-zinc-300 cursor-not-allowed'
+                  )}
+                  title="重做"
+                >
+                  <Redo2 className="h-3.5 w-3.5" />
+                </button>
+
+                <div className="w-px h-3.5 bg-zinc-200 mx-1" />
+              </>
+            )}
+
             {/* Peek Button */}
             {!isEditing && (
               <button
@@ -500,6 +607,14 @@ export function PolishedDocumentCanvas({
               </div>
             </div>
           </div>
+        ) : isPeeking ? (
+          <div className="whitespace-pre-wrap text-[14.5px] leading-[1.8] text-zinc-800 tracking-wide font-normal select-text opacity-70 transition-opacity px-6 md:px-10 py-8">
+            {originalDraft || '暂无原稿'}
+          </div>
+        ) : showDiff ? (
+          <div className="px-6 md:px-10 py-8">
+            {renderDiffContent()}
+          </div>
         ) : hasParagraphs ? (
           <div className="space-y-2 relative pb-32 w-full px-6 md:px-10 py-8">
             {paragraphs.map((paragraph) => {
@@ -563,8 +678,7 @@ export function PolishedDocumentCanvas({
                       <textarea
                         ref={paragraphEditRef}
                         value={editingParagraphText}
-                        rows={Math.max(3, Math.min(12, editingParagraphText.split('\n').length + 1))}
-                        className="w-full resize-y outline-none min-h-[120px] text-zinc-800 bg-white border border-zinc-200 rounded-xl p-3 shadow-sm focus:ring-1 focus:ring-zinc-950/5 animate-in fade-in zoom-in-95 duration-100"
+                        className="w-full bg-transparent border-0 outline-none p-0 m-0 resize-none overflow-hidden text-[14.5px] leading-[1.8] tracking-[0.02em] text-zinc-800 focus:ring-0 focus-visible:outline-none"
                         onChange={(e) => setEditingParagraphText(e.target.value)}
                         onBlur={() => finishParagraphEdit(paragraph)}
                         onKeyDown={(e) => {
@@ -576,7 +690,10 @@ export function PolishedDocumentCanvas({
                             setEditingParagraphText('');
                           }
 
-                          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                          if (
+                            ((e.metaKey || e.ctrlKey) && e.key === 'Enter') ||
+                            (e.key === 'Enter' && !e.shiftKey)
+                          ) {
                             e.preventDefault();
                             finishParagraphEdit(paragraph);
                           }
@@ -630,12 +747,6 @@ export function PolishedDocumentCanvas({
               placeholder="在此处编辑润色后的文案内容..."
             />
           </div>
-        ) : isPeeking ? (
-          <div className="whitespace-pre-wrap text-[14px] leading-[1.8] text-zinc-800 tracking-wide font-normal select-text opacity-70 transition-opacity">
-            {originalDraft || '暂无原稿'}
-          </div>
-        ) : showDiff ? (
-          renderDiffContent()
         ) : (
           <div className="whitespace-pre-wrap text-[14.5px] leading-[1.75] text-zinc-800 tracking-wide font-normal select-text">
             {renderParagraphRichText(polishedText)}
