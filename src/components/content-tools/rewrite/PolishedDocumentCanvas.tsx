@@ -5,6 +5,7 @@ import { Check, Copy, Eye, Edit3, Save, FileText, X, Quote, Sparkles, Scissors, 
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DocumentParagraph } from './useRewriteLogic';
+import { normalizeParagraphEditContent } from './paragraph-edit';
 
 interface PolishedDocumentCanvasProps {
   originalDraft: string;
@@ -153,6 +154,7 @@ export function PolishedDocumentCanvas({
   const [copied, setCopied] = useState(false);
   const [inlinePrompt, setInlinePrompt] = useState('');
   const [editingParagraphId, setEditingParagraphId] = useState<string | null>(null);
+  const [editingParagraphText, setEditingParagraphText] = useState('');
   const [microMenuState, setMicroMenuState] = useState<{
     show: boolean;
     x: number;
@@ -162,6 +164,9 @@ export function PolishedDocumentCanvas({
   } | null>(null);
   const [isPeeking, setIsPeeking] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const paragraphEditRef = useRef<HTMLTextAreaElement>(null);
+  const cancelParagraphEditRef = useRef(false);
+  const activeParagraphEditIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -208,6 +213,15 @@ export function PolishedDocumentCanvas({
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    if (editingParagraphId && paragraphEditRef.current) {
+      const editor = paragraphEditRef.current;
+      editor.focus();
+      editor.selectionStart = editor.value.length;
+      editor.selectionEnd = editor.value.length;
+    }
+  }, [editingParagraphId]);
+
   const handleCopy = () => {
     if (!polishedText) return;
     navigator.clipboard.writeText(polishedText).catch(() => {});
@@ -253,6 +267,30 @@ export function PolishedDocumentCanvas({
       : [paragraphId];
 
     onParagraphSelectionChange?.(nextIds, paragraphId);
+  };
+
+  const startParagraphEdit = (paragraph: DocumentParagraph) => {
+    if (paragraph.isLocked) return;
+    cancelParagraphEditRef.current = false;
+    activeParagraphEditIdRef.current = paragraph.paragraphId;
+    setEditingParagraphText(paragraph.content);
+    setEditingParagraphId(paragraph.paragraphId);
+    setMicroMenuState(null);
+  };
+
+  const finishParagraphEdit = (paragraph: DocumentParagraph) => {
+    if (activeParagraphEditIdRef.current !== paragraph.paragraphId) return;
+    activeParagraphEditIdRef.current = null;
+
+    const nextContent = normalizeParagraphEditContent(editingParagraphText);
+
+    if (!cancelParagraphEditRef.current && nextContent && nextContent !== paragraph.content) {
+      onParagraphEdit?.(paragraph.paragraphId, nextContent);
+    }
+
+    cancelParagraphEditRef.current = false;
+    setEditingParagraphId(null);
+    setEditingParagraphText('');
   };
 
   const submitParagraphPatch = (prompt: string, paragraphId: string) => {
@@ -468,6 +506,7 @@ export function PolishedDocumentCanvas({
               const isEditingCurrent = editingParagraphId === paragraph.paragraphId;
               const isGenerating = generatingParagraphIds.includes(paragraph.paragraphId);
               const isSelected = selectedParagraphIds.includes(paragraph.paragraphId);
+              const hasActiveLine = isSelected || isEditingCurrent;
               const traceColorClass =
                 paragraph.sourceType === 'ai'
                   ? 'bg-[#6FAA7D]'
@@ -483,19 +522,13 @@ export function PolishedDocumentCanvas({
                   }}
                   className={cn(
                     'group relative rounded-r-lg px-3 -mx-3 py-1.5 transition-[background-color,box-shadow] duration-150 hover:bg-zinc-50/70',
-                    isSelected ? 'bg-[#8AA8C7]/10 shadow-[inset_2px_0_0_#8AA8C7]' : '',
-                    isEditingCurrent ? 'bg-zinc-50/50' : '',
+                    hasActiveLine ? 'bg-[#8AA8C7]/10 shadow-[inset_2px_0_0_#8AA8C7]' : '',
                     isGenerating ? 'animate-pulse bg-orange-50/30' : ''
                   )}
                   onClick={(event) => handleParagraphClick(event, paragraph.paragraphId)}
                 >
-                  {/* Active/Editing Anchor Line */}
-                  {(isEditingCurrent || isSelected) && (
-                    <div className="absolute left-[-16px] top-3 bottom-3 w-[2px] rounded-full bg-[#D97757]" />
-                  )}
-
                   {/* Traceability Indicator */}
-                  {traceabilityMode && (
+                  {traceabilityMode && !hasActiveLine && (
                     <div className={cn('absolute left-[-16px] top-3 bottom-3 w-[2px] rounded-full', traceColorClass)} title={`来源: ${paragraph.sourceType}`} />
                   )}
 
@@ -504,7 +537,7 @@ export function PolishedDocumentCanvas({
                     onDoubleClick={(e) => {
                       if (paragraph.isLocked) return;
                       e.stopPropagation();
-                      setEditingParagraphId(paragraph.paragraphId);
+                      startParagraphEdit(paragraph);
                     }}
                     onMouseUp={() => {
                       if (isEditingCurrent) return;
@@ -527,35 +560,25 @@ export function PolishedDocumentCanvas({
                     }}
                   >
                     {isEditingCurrent ? (
-                      <div
-                        contentEditable
-                        suppressContentEditableWarning
-                        className="w-full outline-none min-h-[1.8em] text-zinc-800 bg-white border border-zinc-200 rounded-xl p-3 shadow-sm focus:ring-1 focus:ring-zinc-950/5 animate-in fade-in zoom-in-95 duration-100"
-                        onBlur={(e) => {
-                          const newContent = e.currentTarget.innerText || '';
-                          if (newContent.trim() !== '' && newContent !== paragraph.content) {
-                            onParagraphEdit?.(paragraph.paragraphId, newContent);
-                          }
-                          setEditingParagraphId(null);
-                        }}
+                      <textarea
+                        ref={paragraphEditRef}
+                        value={editingParagraphText}
+                        rows={Math.max(3, Math.min(12, editingParagraphText.split('\n').length + 1))}
+                        className="w-full resize-y outline-none min-h-[120px] text-zinc-800 bg-white border border-zinc-200 rounded-xl p-3 shadow-sm focus:ring-1 focus:ring-zinc-950/5 animate-in fade-in zoom-in-95 duration-100"
+                        onChange={(e) => setEditingParagraphText(e.target.value)}
+                        onBlur={() => finishParagraphEdit(paragraph)}
                         onKeyDown={(e) => {
                           if (e.key === 'Escape') {
+                            e.preventDefault();
+                            cancelParagraphEditRef.current = true;
+                            activeParagraphEditIdRef.current = null;
                             setEditingParagraphId(null);
+                            setEditingParagraphText('');
                           }
-                        }}
-                        ref={(el) => {
-                          if (el && document.activeElement !== el) {
-                            el.innerText = paragraph.content;
-                            el.focus();
-                            // Move cursor to end
-                            if (typeof window.getSelection !== 'undefined' && typeof document.createRange !== 'undefined') {
-                              const range = document.createRange();
-                              range.selectNodeContents(el);
-                              range.collapse(false);
-                              const sel = window.getSelection();
-                              sel?.removeAllRanges();
-                              sel?.addRange(range);
-                            }
+
+                          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                            e.preventDefault();
+                            finishParagraphEdit(paragraph);
                           }
                         }}
                       />

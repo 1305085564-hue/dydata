@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { BootstrapPayload, Conversation, Message } from '../types';
 import { resolveLocalTargetPlan, type TargetPlan } from './target-plan';
+import { normalizeParagraphEditContent } from './paragraph-edit';
 
 const LAST_OPEN_CONVERSATION_KEY = 'dydata-rewrite-last-open-conversation-id';
 
@@ -1197,10 +1198,12 @@ export function useRewriteLogic() {
 
   async function handleUserEdit(paragraphId: string, newContent: string) {
     if (!isV2Conversation || !currentConversationIdRef.current) return;
+    const normalizedContent = normalizeParagraphEditContent(newContent);
+    if (!normalizedContent) return;
     
     // Optimistically update
     setDocumentParagraphs((prev) =>
-      prev.map((item) => (item.paragraphId === paragraphId ? { ...item, content: newContent } : item))
+      prev.map((item) => (item.paragraphId === paragraphId ? { ...item, content: normalizedContent } : item))
     );
     
     try {
@@ -1210,7 +1213,7 @@ export function useRewriteLogic() {
         body: JSON.stringify({
           conversationId: currentConversationIdRef.current,
           paragraphId,
-          newContent,
+          newContent: normalizedContent,
         }),
       });
       if (!res.ok) {
