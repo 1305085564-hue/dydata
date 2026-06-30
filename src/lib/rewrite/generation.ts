@@ -2,7 +2,6 @@ import {
   getCurrentDocumentSnapshot,
   createRevision,
   createParagraphs,
-  splitIntoParagraphs,
   updateRevisionStatus,
   setCurrentRevision,
   type DocumentParagraph,
@@ -251,6 +250,82 @@ export type GenerationContext = {
   userPrompt: string;
 };
 
+const CANVAS_OUTPUT_PROTOCOL = [
+  "最高输出协议：你正在为右侧文案画布生成内容。",
+  "只输出可以直接放进画布的最终文案正文。",
+  "禁止输出解释、寒暄、修改说明、标题包装、原文/修改后对照、Markdown 引导语。",
+  "禁止出现“以下是”“我已帮你”“修改后：”“润色后：”“原文：”等对话性或包装性文字。",
+  "保持自然段落，不要为了说明修改而额外分段。",
+].join("\n");
+
+const WRAPPER_LINE_PATTERN =
+  /^(?:#{1,3}\s*)?(?:\*\*)?(?:【)?(?:修改后|润色后|终稿|最终文案|文案终稿|改写后|结果|版本|主版本)(?:】)?(?:\*\*)?\s*[:：]?\s*$/u;
+
+const WRAPPER_PREFIX_PATTERN =
+  /^(?:#{1,3}\s*)?(?:\*\*)?(?:【)?(?:修改后|润色后|终稿|最终文案|文案终稿|改写后|结果|版本|主版本)(?:】)?(?:\*\*)?\s*[:：]\s*/u;
+
+const CONVERSATIONAL_PREFIX_PATTERN =
+  /^(?:好的|可以|没问题|已根据.*|根据.*要求|我已.*|以下是.*|下面是.*|这里是.*|这是.*)(?:[:：，,。])?\s*$/u;
+
+const EXPLICIT_SPLIT_PATTERN = /(拆成|分成|拆为|分为|分段|两段|2段|多段|展开成)/u;
+
+export function sanitizeCanvasOutput(content: string) {
+  const normalized = content.replace(/\r\n/g, "\n").trim();
+  if (!normalized) return "";
+
+  return normalized
+    .split(/\n\n+/)
+    .map((block) => {
+      const lines = block
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      while (lines.length > 0 && (WRAPPER_LINE_PATTERN.test(lines[0]) || CONVERSATIONAL_PREFIX_PATTERN.test(lines[0]))) {
+        lines.shift();
+      }
+
+      if (lines[0]) {
+        lines[0] = lines[0].replace(WRAPPER_PREFIX_PATTERN, "").trim();
+      }
+
+      return lines.join("\n").trim();
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function userExplicitlyAllowsSplit(prompt: string) {
+  return EXPLICIT_SPLIT_PATTERN.test(prompt);
+}
+
+function splitCanvasParagraphs(content: string) {
+  return content
+    .replace(/\r\n/g, "\n")
+    .split(/\n\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
+function normalizePatchParagraphs(input: {
+  patchedContent: string;
+  targetParagraphs: DocumentParagraph[];
+  userPrompt?: string;
+}) {
+  const sanitized = sanitizeCanvasOutput(input.patchedContent);
+  const nextParagraphs = splitCanvasParagraphs(sanitized);
+
+  if (
+    input.targetParagraphs.length === 1 &&
+    nextParagraphs.length > 1 &&
+    !userExplicitlyAllowsSplit(input.userPrompt ?? "")
+  ) {
+    return [nextParagraphs.join("\n")];
+  }
+
+  return nextParagraphs;
+}
+
 async function resolveProviderKeyModelByModelView(
   service: MinimalClient,
   modelViewId: string,
@@ -424,6 +499,12 @@ export async function buildGenerationContext(
     parts.push(`当前文档内容：\n${documentSnapshot}`);
   }
 
+  parts.push(
+    input.targetParagraphIds && input.targetParagraphIds.length > 0
+      ? `${CANVAS_OUTPUT_PROTOCOL}\n局部修改时，只输出目标段落的新正文；没有明确要求拆分时，输出段落数量必须和目标段落数量一致。`
+      : CANVAS_OUTPUT_PROTOCOL,
+  );
+
   const recentMessages = await getRecentMessages(service, input.conversationId);
 
   return {
@@ -442,6 +523,12 @@ export async function buildGenerationContext(
 
 export type StreamEvent =
   | { type: "generation_start"; runId: string }
+  | {
+      type: "target_plan";
+      scope: "paragraphs" | "full_document";
+      targetParagraphIds: string[];
+      runType: GenerationRunType;
+    }
   | { type: "content_delta"; delta: string }
   | { type: "generation_complete"; runId: string; revisionId: string; fullContent: string }
   | { type: "error"; error: string };
@@ -610,6 +697,12 @@ export async function* streamGeneration(
   });
 
   yield { type: "generation_start", runId: run.id };
+  yield {
+    type: "target_plan",
+    scope: targetParagraphIds.length > 0 ? "paragraphs" : "full_document",
+    targetParagraphIds,
+    runType,
+  };
 
   try {
     await updateGenerationRunStatus(service, run.id, "streaming", {
@@ -660,12 +753,13 @@ export async function* streamGeneration(
         generationRunId: run.id,
         targetParagraphIds,
         patchedContent: fullContent,
+        userPrompt: input.userPrompt,
       });
       revisionId = patchResult.revisionId;
       protectedFullContent = patchResult.fullContent;
       paragraphCount = patchResult.paragraphCount;
     } else {
-      const paragraphContents = mergeLockedParagraphs(document.paragraphs, splitIntoParagraphs(fullContent));
+      const paragraphContents = mergeLockedParagraphs(document.paragraphs, splitCanvasParagraphs(sanitizeCanvasOutput(fullContent)));
       protectedFullContent = paragraphContents.join("\n\n");
 
       const revision = await createRevision(service, {
@@ -751,6 +845,7 @@ export async function createParagraphPatchRevision(
     generationRunId: string;
     targetParagraphIds: string[];
     patchedContent: string;
+    userPrompt?: string;
   },
 ): Promise<{ revisionId: string; fullContent: string; paragraphCount: number }> {
   const snapshot = await getCurrentDocumentSnapshot(service, input.conversationId);
@@ -776,9 +871,13 @@ export async function createParagraphPatchRevision(
   const unlockedTargetIds = new Set(unlockedTargetParagraphs.map((p) => p.paragraphId));
   const existingParagraphs = snapshot.paragraphs.filter((p) => !unlockedTargetIds.has(p.paragraphId));
 
-  const patchedParagraphContents = splitIntoParagraphs(input.patchedContent);
+  const patchedParagraphContents = normalizePatchParagraphs({
+    patchedContent: input.patchedContent,
+    targetParagraphs: unlockedTargetParagraphs,
+    userPrompt: input.userPrompt,
+  });
   const patchedParagraphs = patchedParagraphContents.map((content, index) => ({
-    paragraphId: `patch-${Date.now()}-${index}`,
+    paragraphId: unlockedTargetParagraphs[index]?.paragraphId ?? `patch-${Date.now()}-${index}`,
     content,
     sourceType: "ai" as const,
   }));

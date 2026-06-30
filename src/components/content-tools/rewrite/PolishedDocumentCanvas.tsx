@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, Copy, Eye, Edit3, Save, FileText, Lock, Unlock, X, RotateCcw } from 'lucide-react';
+import { Check, Copy, Eye, Edit3, Save, FileText, X, Quote, Sparkles, Scissors, MessageCircle, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { DocumentParagraph } from './useRewriteLogic';
@@ -15,9 +15,11 @@ interface PolishedDocumentCanvasProps {
   generatingParagraphIds?: string[];
   streamingPatchText?: string;
   onTextChange: (text: string) => void;
-  onInlinePatchSubmit?: (prompt: string) => void;
+  onInlinePatchSubmit?: (prompt: string, targetParagraphIds?: string[]) => void;
   onParagraphEdit?: (paragraphId: string, newContent: string) => void | Promise<void>;
   onReferSelection?: (text: string | null) => void;
+  selectedParagraphIds?: string[];
+  onParagraphSelectionChange?: (paragraphIds: string[], lastParagraphId: string | null) => void;
 }
 
 const renderSyntaxFadedBase = (text: string) => {
@@ -142,6 +144,8 @@ export function PolishedDocumentCanvas({
   generatingParagraphIds = [],
   streamingPatchText = '',
   onReferSelection,
+  selectedParagraphIds = [],
+  onParagraphSelectionChange,
 }: PolishedDocumentCanvasProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(polishedText);
@@ -154,6 +158,7 @@ export function PolishedDocumentCanvas({
     x: number;
     y: number;
     text: string;
+    paragraphId: string;
   } | null>(null);
   const [isPeeking, setIsPeeking] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -226,6 +231,34 @@ export function PolishedDocumentCanvas({
 
   const handleEditKeyDown = () => {
     // Left for future keyboard shortcuts if needed
+  };
+
+  const handleParagraphClick = (
+    event: React.MouseEvent,
+    paragraphId: string,
+  ) => {
+    if (editingParagraphId) return;
+    const selectionText = window.getSelection()?.toString().trim();
+    if (selectionText) return;
+
+    event.stopPropagation();
+    setMicroMenuState(null);
+
+    const alreadySelected = selectedParagraphIds.includes(paragraphId);
+    const shouldToggle = event.metaKey || event.ctrlKey;
+    const nextIds = shouldToggle
+      ? alreadySelected
+        ? selectedParagraphIds.filter((id) => id !== paragraphId)
+        : [...selectedParagraphIds, paragraphId]
+      : [paragraphId];
+
+    onParagraphSelectionChange?.(nextIds, paragraphId);
+  };
+
+  const submitParagraphPatch = (prompt: string, paragraphId: string) => {
+    onInlinePatchSubmit?.(prompt, [paragraphId]);
+    setMicroMenuState(null);
+    setInlinePrompt('');
   };
 
   const handleDiffAction = (
@@ -402,7 +435,7 @@ export function PolishedDocumentCanvas({
 
       <div 
         className="relative flex-1 min-h-0 overflow-y-auto bg-white"
-        onClick={(e) => {
+        onClick={() => {
           if (window.getSelection()?.toString().trim() === '') {
             setMicroMenuState(null);
           }
@@ -434,6 +467,7 @@ export function PolishedDocumentCanvas({
             {paragraphs.map((paragraph) => {
               const isEditingCurrent = editingParagraphId === paragraph.paragraphId;
               const isGenerating = generatingParagraphIds.includes(paragraph.paragraphId);
+              const isSelected = selectedParagraphIds.includes(paragraph.paragraphId);
               const traceColorClass =
                 paragraph.sourceType === 'ai'
                   ? 'bg-[#6FAA7D]'
@@ -448,13 +482,15 @@ export function PolishedDocumentCanvas({
                     else paragraphRefs.current.delete(paragraph.paragraphId);
                   }}
                   className={cn(
-                    'group relative rounded-r-lg px-3 -mx-3 py-1.5 transition-colors duration-200 hover:bg-zinc-50/50',
+                    'group relative rounded-r-lg px-3 -mx-3 py-1.5 transition-[background-color,box-shadow] duration-150 hover:bg-zinc-50/70',
+                    isSelected ? 'bg-[#8AA8C7]/10 shadow-[inset_2px_0_0_#8AA8C7]' : '',
                     isEditingCurrent ? 'bg-zinc-50/50' : '',
                     isGenerating ? 'animate-pulse bg-orange-50/30' : ''
                   )}
+                  onClick={(event) => handleParagraphClick(event, paragraph.paragraphId)}
                 >
                   {/* Active/Editing Anchor Line */}
-                  {isEditingCurrent && (
+                  {(isEditingCurrent || isSelected) && (
                     <div className="absolute left-[-16px] top-3 bottom-3 w-[2px] rounded-full bg-[#D97757]" />
                   )}
 
@@ -482,8 +518,8 @@ export function PolishedDocumentCanvas({
                             x: rect.left + rect.width / 2,
                             y: rect.top - 8,
                             text,
+                            paragraphId: paragraph.paragraphId,
                           });
-                          onReferSelection?.(text);
                         }
                       } else {
                         setMicroMenuState(null);
@@ -525,6 +561,12 @@ export function PolishedDocumentCanvas({
                       />
                     ) : (
                       <div className={cn(paragraph.isLocked ? 'text-zinc-500' : 'text-zinc-800')}>
+                        {isSelected && !isGenerating && (
+                          <div className="mb-1.5 inline-flex items-center gap-1 rounded-md border border-[#8AA8C7]/30 bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#4F6F8D]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#8AA8C7]" />
+                            {paragraph.isLocked ? '已选中 · 段落锁定' : '已选中'}
+                          </div>
+                        )}
                         {isGenerating && generatingParagraphIds[0] === paragraph.paragraphId ? (
                           streamingPatchText
                             ? renderSyntaxFadedBase(streamingPatchText)
@@ -605,9 +647,7 @@ export function PolishedDocumentCanvas({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && inlinePrompt.trim()) {
                       e.preventDefault();
-                      onInlinePatchSubmit?.(`${inlinePrompt}：${microMenuState.text}`);
-                      setMicroMenuState(null);
-                      setInlinePrompt('');
+                      submitParagraphPatch(`${inlinePrompt}：${microMenuState.text}`, microMenuState.paragraphId);
                     }
                   }}
                   placeholder="针对选中文本提出要求..."
@@ -625,23 +665,28 @@ export function PolishedDocumentCanvas({
                   }}
                   className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors"
                 >
-                  📌 引用
+                  <Quote className="h-3.5 w-3.5" />
+                  引用
                 </button>
                 <div className="w-px h-3 bg-white/10 mx-0.5" />
-                <button onClick={() => { onInlinePatchSubmit?.(`一键润色：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
-                  ✨ 润色
+                <button onClick={() => submitParagraphPatch(`一键润色：${microMenuState.text}`, microMenuState.paragraphId)} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  润色
                 </button>
                 <div className="w-px h-3 bg-white/10 mx-0.5" />
-                <button onClick={() => { onInlinePatchSubmit?.(`精简此段：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
-                  ✂️ 精简
+                <button onClick={() => submitParagraphPatch(`精简此段：${microMenuState.text}`, microMenuState.paragraphId)} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  <Scissors className="h-3.5 w-3.5" />
+                  精简
                 </button>
                 <div className="w-px h-3 bg-white/10 mx-0.5" />
-                <button onClick={() => { onInlinePatchSubmit?.(`换个语气：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
-                  🎭 语气
+                <button onClick={() => submitParagraphPatch(`换个语气：${microMenuState.text}`, microMenuState.paragraphId)} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  语气
                 </button>
                 <div className="w-px h-3 bg-white/10 mx-0.5" />
-                <button onClick={() => { onInlinePatchSubmit?.(`进行补充：${microMenuState.text}`); setMicroMenuState(null); setInlinePrompt(''); }} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
-                  ➕ 补充
+                <button onClick={() => submitParagraphPatch(`进行补充：${microMenuState.text}`, microMenuState.paragraphId)} className="flex-1 flex justify-center items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors">
+                  <Plus className="h-3.5 w-3.5" />
+                  补充
                 </button>
               </div>
             </motion.div>

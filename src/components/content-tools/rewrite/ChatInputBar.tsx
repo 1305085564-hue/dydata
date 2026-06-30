@@ -164,7 +164,7 @@ export function ChatInputBar({
               <Quote className="h-3.5 w-3.5 text-zinc-400 mt-1 shrink-0 rotate-180" />
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-0.5">引用选中文本</span>
-                <p className="line-clamp-2 text-zinc-600 font-medium leading-relaxed">"{referredText}"</p>
+                <p className="line-clamp-2 text-zinc-600 font-medium leading-relaxed">&quot;{referredText}&quot;</p>
               </div>
             </div>
             {onClearReferredText && (

@@ -96,3 +96,24 @@ test('锁定目标段落不会进入局部生成', () => {
 
   assert.equal(plan.scope, 'need_confirmation');
 });
+
+test('最近聚焦段落可作为弱兜底，但不会覆盖明确全文指令', () => {
+  const localPlan = resolveLocalTargetPlan({
+    prompt: '更口语一点',
+    paragraphs,
+    lastSelectedParagraphId: 'p-3',
+  });
+
+  assert.equal(localPlan.scope, 'paragraphs');
+  if (localPlan.scope === 'paragraphs') {
+    assert.deepEqual(localPlan.paragraphIds, ['p-3']);
+  }
+
+  const fullPlan = resolveLocalTargetPlan({
+    prompt: '整篇重新润色一遍',
+    paragraphs,
+    lastSelectedParagraphId: 'p-3',
+  });
+
+  assert.equal(fullPlan.scope, 'full_document');
+});

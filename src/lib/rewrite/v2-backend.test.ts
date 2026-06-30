@@ -14,7 +14,7 @@ import {
   setCurrentRevision,
   splitIntoParagraphs,
 } from "./documents";
-import { resolveGenerationProviderKeyModelId, streamGeneration } from "./generation";
+import { resolveGenerationProviderKeyModelId, sanitizeCanvasOutput, streamGeneration } from "./generation";
 
 type Row = Record<string, unknown>;
 type FakeDb = Record<string, Row[]>;
@@ -801,6 +801,117 @@ test("paragraph patch generation replaces only selected unlocked paragraphs and 
   assert.equal(outputSnapshot.fullContent, "第一段\n\n新的第二段\n\n第三段");
   assert.equal(db.rewrite_document_revisions.at(-1)?.source_type, "paragraph_patch");
   assert.equal(db.rewrite_document_revisions.at(-1)?.full_content, "第一段\n\n新的第二段\n\n第三段");
+});
+
+test("canvas generation strips conversational wrappers before saving", async () => {
+  assert.equal(sanitizeCanvasOutput("修改后：新的第二段"), "新的第二段");
+  assert.equal(
+    sanitizeCanvasOutput("以下是优化后的文案：\n\n润色后：\n新的第一段\n\n新的第二段"),
+    "新的第一段\n\n新的第二段",
+  );
+});
+
+test("single paragraph patch keeps one paragraph unless user asks to split", async () => {
+  const createDb = (): FakeDb => ({
+    rewrite_messages: [],
+    rewrite_conversation_skills: [],
+    rewrite_documents: [
+      {
+        id: "doc-1",
+        conversation_id: "conv-1",
+        title: "画布",
+        current_revision_id: "rev-current",
+        created_at: "2026-06-28T00:00:00.000Z",
+        updated_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    rewrite_document_revisions: [
+      {
+        id: "rev-current",
+        document_id: "doc-1",
+        parent_revision_id: null,
+        source_type: "user_edit",
+        status: "completed",
+        generation_run_id: null,
+        full_content: "第一段\n\n第二段\n\n第三段",
+        message_id: null,
+        meta: null,
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+    rewrite_document_paragraphs: [
+      {
+        id: "para-row-1",
+        revision_id: "rev-current",
+        paragraph_id: "p-1",
+        position: 0,
+        content: "第一段",
+        is_locked: false,
+        source_type: "user",
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "para-row-2",
+        revision_id: "rev-current",
+        paragraph_id: "p-2",
+        position: 1,
+        content: "第二段",
+        is_locked: false,
+        source_type: "user",
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+      {
+        id: "para-row-3",
+        revision_id: "rev-current",
+        paragraph_id: "p-3",
+        position: 2,
+        content: "第三段",
+        is_locked: false,
+        source_type: "user",
+        created_at: "2026-06-28T00:00:00.000Z",
+      },
+    ],
+  });
+
+  const db = createDb();
+  const service = createFakeService(db);
+  for await (const event of streamGeneration(service as never, {
+    conversationId: "conv-1",
+    userId: "user-1",
+    userPrompt: "第二段更口语",
+    targetParagraphIds: ["p-2"],
+    aiClient: {
+      streamChat: async function* () {
+        yield { delta: "修改后：第一句\n\n第二句" };
+      },
+    },
+  })) {
+    assert.ok(event.type);
+  }
+
+  assert.equal(db.rewrite_document_revisions.at(-1)?.full_content, "第一段\n\n第一句\n第二句\n\n第三段");
+  assert.equal(
+    db.rewrite_document_paragraphs.filter((row) => row.revision_id === db.rewrite_document_revisions.at(-1)?.id).length,
+    3,
+  );
+
+  const splitDb = createDb();
+  const splitService = createFakeService(splitDb);
+  for await (const event of streamGeneration(splitService as never, {
+    conversationId: "conv-1",
+    userId: "user-1",
+    userPrompt: "把第二段拆成两段",
+    targetParagraphIds: ["p-2"],
+    aiClient: {
+      streamChat: async function* () {
+        yield { delta: "第一句\n\n第二句" };
+      },
+    },
+  })) {
+    assert.ok(event.type);
+  }
+
+  assert.equal(splitDb.rewrite_document_revisions.at(-1)?.full_content, "第一段\n\n第一句\n\n第二句\n\n第三段");
 });
 
 test("generation run records skill/input/output snapshots and preserves locked paragraphs", async () => {

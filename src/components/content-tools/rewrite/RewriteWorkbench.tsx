@@ -32,6 +32,14 @@ function setStoredDefault(key: string, value: boolean) {
   window.localStorage.setItem(key, String(value));
 }
 
+function getStoredSplitRatio() {
+  if (typeof window === 'undefined') return 40;
+  const savedRatio = window.localStorage.getItem('dydata-rewrite-split-ratio');
+  if (!savedRatio) return 40;
+  const parsed = parseFloat(savedRatio);
+  return parsed >= 30 && parsed <= 60 ? parsed : 40;
+}
+
 function getConversationTag(conversation: Conversation) {
   if (conversation.selected.fixedMode) return conversation.selected.fixedMode.name;
   if (conversation.selected.mode) return conversation.selected.mode.name;
@@ -46,25 +54,13 @@ export function RewriteWorkbench() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [leftWidthPercent, setLeftWidthPercent] = useState(40);
+  const [leftWidthPercent, setLeftWidthPercent] = useState(getStoredSplitRatio);
   const [isResizing, setIsResizing] = useState(false);
   const leftWidthPercentRef = useRef(leftWidthPercent);
 
   useEffect(() => {
     leftWidthPercentRef.current = leftWidthPercent;
   }, [leftWidthPercent]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedRatio = window.localStorage.getItem('dydata-rewrite-split-ratio');
-      if (savedRatio) {
-        const parsed = parseFloat(savedRatio);
-        if (parsed >= 30 && parsed <= 60) {
-          setLeftWidthPercent(parsed);
-        }
-      }
-    }
-  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -496,9 +492,11 @@ export function RewriteWorkbench() {
               generatingParagraphIds={state.generatingParagraphIds}
               streamingPatchText={state.streamingPatchText}
               onTextChange={actions.handleUpdateLastAssistantMessage}
-              onInlinePatchSubmit={actions.handleInlinePatchSubmit}
+              onInlinePatchSubmit={actions.handleInlinePatchSubmitForParagraphs}
               onParagraphEdit={actions.handleUserEdit}
               onReferSelection={actions.setReferredText}
+              selectedParagraphIds={state.selectedParagraphIds}
+              onParagraphSelectionChange={actions.handleParagraphSelectionChange}
             />
           </div>
         </div>

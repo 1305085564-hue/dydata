@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { BootstrapPayload, Conversation, Message } from '../types';
 import { resolveLocalTargetPlan, type TargetPlan } from './target-plan';
 
+const LAST_OPEN_CONVERSATION_KEY = 'dydata-rewrite-last-open-conversation-id';
+
 export type RewriteStreamEvent =
   | { type: 'meta'; responseMode: 'chat' | 'versions'; conversationId: string | null }
   | { type: 'preview'; preview: string; responseMode: 'chat' | 'versions' }
@@ -94,6 +96,20 @@ function isAbortError(error: unknown) {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function readLastOpenConversationId() {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(LAST_OPEN_CONVERSATION_KEY);
+}
+
+function rememberLastOpenConversationId(conversationId: string | null) {
+  if (typeof window === 'undefined') return;
+  if (conversationId) {
+    window.localStorage.setItem(LAST_OPEN_CONVERSATION_KEY, conversationId);
+    return;
+  }
+  window.localStorage.removeItem(LAST_OPEN_CONVERSATION_KEY);
 }
 
 export function buildRequestSnapshot(input: {
@@ -193,6 +209,8 @@ export function useRewriteLogic() {
   const [polishedText, setPolishedText] = useState('');
   const [documentParagraphs, setDocumentParagraphs] = useState<DocumentParagraph[]>([]);
   const [referredText, setReferredText] = useState<string | null>(null);
+  const [selectedParagraphIds, setSelectedParagraphIds] = useState<string[]>([]);
+  const [lastSelectedParagraphId, setLastSelectedParagraphId] = useState<string | null>(null);
 
   // Advanced UX States
   const [generatingParagraphIds, setGeneratingParagraphIds] = useState<string[]>([]);
@@ -241,11 +259,14 @@ export function useRewriteLogic() {
   }
 
   function resolveV2TargetPlan(textToSend: string, explicitTargetParagraphIds?: string[]): TargetPlan {
+    const manualTargetIds = explicitTargetParagraphIds?.length
+      ? explicitTargetParagraphIds
+      : selectedParagraphIds;
     return resolveLocalTargetPlan({
       prompt: textToSend,
       paragraphs: documentParagraphs,
-      selectedParagraphIds: new Set(explicitTargetParagraphIds ?? []),
-      lastSelectedParagraphId: null,
+      selectedParagraphIds: new Set(manualTargetIds),
+      lastSelectedParagraphId,
     });
   }
   
@@ -362,6 +383,7 @@ export function useRewriteLogic() {
     void fetchData();
     void fetchConversations();
     void fetchV2Skills();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function cacheConversationMessages(conversationId: string, nextMessages: Message[]) {
@@ -380,6 +402,14 @@ export function useRewriteLogic() {
           ((data.conversations ?? []) as Conversation[]).filter((conversation) => conversation.schemaVersion === 2),
         );
         setConversations(nextConversations);
+        const lastOpenConversationId = readLastOpenConversationId();
+        const conversationToRestore =
+          nextConversations.find((conversation) => conversation.id === lastOpenConversationId) ??
+          nextConversations[0] ??
+          null;
+        if (conversationToRestore && !currentConversationIdRef.current) {
+          handleSelectConversation(conversationToRestore);
+        }
       }
     } catch (error) {
       console.warn('⚠️ 获取会话列表失败', error);
@@ -530,6 +560,12 @@ export function useRewriteLogic() {
       setDocumentParagraphs(paragraphs);
       setPolishedText(paragraphs.map((paragraph) => paragraph.content).join('\n\n'));
       setStreamingPatchText('');
+      setSelectedParagraphIds((prev) =>
+        prev.filter((paragraphId) => paragraphs.some((paragraph) => paragraph.paragraphId === paragraphId))
+      );
+      setLastSelectedParagraphId((prev) =>
+        prev && paragraphs.some((paragraph) => paragraph.paragraphId === prev) ? prev : null
+      );
     } catch (error) {
       console.warn('⚠️ v2 文档段落加载失败', error);
       setDocumentParagraphs([]);
@@ -543,8 +579,15 @@ export function useRewriteLogic() {
     }
     currentConversationIdRef.current = conversation.id;
     setCurrentConversationId(conversation.id);
+    rememberLastOpenConversationId(conversation.id);
     applySelections(conversation.selected);
     setMessages([]);
+    const cachedMessages = messageCacheRef.current.get(conversation.id);
+    if (cachedMessages) {
+      setMessages(cachedMessages);
+    } else {
+      void fetchMessages(conversation.id, { applyToView: true });
+    }
     void fetchV2Paragraphs(conversation.id);
     void fetchV2ConversationSkills(conversation.id);
   }
@@ -555,8 +598,12 @@ export function useRewriteLogic() {
     setMessages([]);
     setDocumentParagraphs([]);
     setActiveSkills([]);
+    setSelectedParagraphIds([]);
+    setLastSelectedParagraphId(null);
+    setReferredText(null);
     setMessagesLoading(false);
     setInputText('');
+    rememberLastOpenConversationId(null);
     if (bootstrap) {
       resetToBootstrapDefaults(bootstrap);
     }
@@ -583,6 +630,7 @@ export function useRewriteLogic() {
 
     currentConversationIdRef.current = conversationId;
     setCurrentConversationId(conversationId);
+    rememberLastOpenConversationId(conversationId);
     return conversationId;
   }
 
@@ -855,6 +903,7 @@ export function useRewriteLogic() {
             streamedText = event.fullContent;
             setPolishedText(event.fullContent);
             setStreamingPatchText('');
+            setSelectedParagraphIds([]);
             void fetchV2Paragraphs(conversationId);
             void fetchConversations();
           }
@@ -1151,7 +1200,7 @@ export function useRewriteLogic() {
     
     // Optimistically update
     setDocumentParagraphs((prev) =>
-      prev.map((item) => (item.id === paragraphId ? { ...item, content: newContent } : item))
+      prev.map((item) => (item.paragraphId === paragraphId ? { ...item, content: newContent } : item))
     );
     
     try {
@@ -1178,6 +1227,16 @@ export function useRewriteLogic() {
   function handleInlinePatchSubmit(prompt: string) {
     if (!prompt.trim()) return;
     void handleSend(prompt);
+  }
+
+  function handleParagraphSelectionChange(nextIds: string[], lastId: string | null) {
+    setSelectedParagraphIds(nextIds);
+    setLastSelectedParagraphId(lastId);
+  }
+
+  function handleInlinePatchSubmitForParagraphs(prompt: string, targetParagraphIds?: string[]) {
+    if (!prompt.trim()) return;
+    void handleSend(prompt, { targetParagraphIds });
   }
 
   return {
@@ -1213,6 +1272,8 @@ export function useRewriteLogic() {
       traceabilityMode,
       presentationMode,
       referredText,
+      selectedParagraphIds,
+      lastSelectedParagraphId,
     },
     actions: {
       setSelectedFixedModeId,
@@ -1233,10 +1294,12 @@ export function useRewriteLogic() {
       setPresentationMode,
       handleToggleSkill,
       handleInlinePatchSubmit,
+      handleInlinePatchSubmitForParagraphs,
       handleUserEdit,
       handleAbortGeneration,
       setReferredText,
       handleClearReferredText: () => setReferredText(null),
+      handleParagraphSelectionChange,
     }
   };
 }
