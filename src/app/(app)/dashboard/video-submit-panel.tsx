@@ -635,7 +635,7 @@ export function VideoSubmitPanel({
           "mx-auto overflow-hidden",
           embeddedChrome
             ? "max-w-3xl rounded-none border-none bg-transparent shadow-none"
-            : "max-w-6xl rounded-2xl border border-zinc-200/60 bg-zinc-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+            : "max-w-[1360px] rounded-2xl border border-zinc-200/60 bg-zinc-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
         )}>
           {!embeddedChrome ? (
           <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
@@ -466,12 +466,60 @@ export function VideoSubmitForm({
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
 
+  const [leftTab, setLeftTab] = useState<"screenshot" | "metrics">("screenshot");
+  const isAbnormalStatus = meta.anomalyStatus === "限流" || meta.anomalyStatus === "删稿";
+
+  // Synchronize Tab with abnormal status selection
+  useEffect(() => {
+    if (isAbnormalStatus) {
+      setLeftTab("metrics");
+    } else {
+      setLeftTab("screenshot");
+    }
+  }, [isAbnormalStatus]);
+
+  // Auto-switch left Tab to metrics on successful OCR recognition of screenshots
+  const hasAutoSwitchedRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoSwitchedRef.current) return;
+    if (isAbnormalStatus) {
+      hasAutoSwitchedRef.current = true;
+      return;
+    }
+    const slot1 = slots.screenshot_1;
+    const slot2 = slots.screenshot_2;
+    if (!slot1 || !slot2) return;
+    const bothConfirmed = slot1.status === "confirmed" && slot2.status === "confirmed";
+    const anyPending =
+      slot1.status === "pending_confirm" ||
+      slot2.status === "pending_confirm" ||
+      slot1.status === "uploading" ||
+      slot2.status === "uploading" ||
+      slot1.status === "recognizing" ||
+      slot2.status === "recognizing";
+    if (bothConfirmed && !anyPending) {
+      setLeftTab("metrics");
+      hasAutoSwitchedRef.current = true;
+    }
+  }, [slots, isAbnormalStatus]);
+
+  // Reset auto-switch flag if any screenshot is deleted/cleared
+  useEffect(() => {
+    const slot1 = slots.screenshot_1;
+    const slot2 = slots.screenshot_2;
+    const anyEmpty = slot1?.status === "empty" || slot2?.status === "empty";
+    if (anyEmpty && !isAbnormalStatus) {
+      hasAutoSwitchedRef.current = false;
+    }
+  }, [slots, isAbnormalStatus]);
+
   // Set uploadedAt on client only to avoid hydration mismatch
   useEffect(() => {
     setMeta((prev) => prev.uploadedAt ? prev : { ...prev, uploadedAt: new Date().toLocaleString("zh-CN") });
   }, []);
 
   const draftKey = useMemo(() => `dydata.draft.videoSubmit.${userId}`, [userId]);
+
 
   type DraftData = {
     meta: FormMetaState;
@@ -609,6 +657,8 @@ export function VideoSubmitForm({
     setKeywordInput("");
     setScriptText("");
     setFocusedRole(null);
+    setLeftTab(nextMeta.anomalyStatus === "限流" || nextMeta.anomalyStatus === "删稿" ? "metrics" : "screenshot");
+    hasAutoSwitchedRef.current = false;
   }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today, submittedViewActive]);
 
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
@@ -1079,7 +1129,7 @@ export function VideoSubmitForm({
 
 
   // 异常状态(删稿/限流)下截图必填解除
-  const isAbnormalStatus = meta.anomalyStatus === "限流" || meta.anomalyStatus === "删稿";
+
 
   // 提交：触发 form 的提交事件，复用现有 handleSubmit
   const triggerSubmit = useCallback(() => {
@@ -1308,49 +1358,122 @@ export function VideoSubmitForm({
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="grid gap-6 md:grid-cols-[1.1fr_1.9fr] lg:gap-8">
-              {/* Left Column: Screenshots Upload slots */}
-              <div ref={slotsSectionRef} className="space-y-4">
-                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-                  <h3 className="text-[14px] font-semibold text-zinc-800">1. 上传截图</h3>
+              {/* Left Column: Tabbed Screenshots / Metrics */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setLeftTab("screenshot")}
+                      className={cn(
+                        "pb-1.5 text-[13px] font-semibold transition-colors duration-150 relative focus-visible:outline-none",
+                        leftTab === "screenshot"
+                          ? "text-[#D97757]"
+                          : "text-zinc-400 hover:text-zinc-800"
+                      )}
+                    >
+                      1. 上传截图
+                      {leftTab === "screenshot" && (
+                        <motion.div layoutId="leftTabLine" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#D97757]" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLeftTab("metrics")}
+                      className={cn(
+                        "pb-1.5 text-[13px] font-semibold transition-colors duration-150 relative focus-visible:outline-none",
+                        leftTab === "metrics"
+                          ? "text-[#D97757]"
+                          : "text-zinc-400 hover:text-zinc-800"
+                      )}
+                    >
+                      2. 数据指标
+                      {leftTab === "metrics" && (
+                        <motion.div layoutId="leftTabLine" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#D97757]" />
+                      )}
+                    </button>
+                  </div>
                   {!screenshotsRequired && (
                     <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-500">免传</span>
                   )}
                 </div>
-                <截图槽位区
-                  slots={slots}
-                  onSelectFile={handleSlotUpload}
-                  onDelete={(role) => setDeleteTargetRole(role)}
-                  onRetry={handleSlotRetry}
-                  onManualFill={(role) => {
-                    setSlots((current) => ({
-                      ...current,
-                      [role]: {
-                        ...current[role],
-                        status: "empty",
-                        confirmed: false,
-                        error: null,
-                        assetUrl: null,
-                        previewUrl: null,
-                        file: null,
-                        fileName: undefined,
-                        recognizedFields: null,
-                        ocrSummary: undefined,
-                      },
-                    }));
-                  }}
-                  screenshotsRequired={screenshotsRequired}
-                  focusedRole={focusedRole}
-                  highlightedOcrIndex={highlightedOcrIndex}
-                />
+
+                <AnimatePresence mode="wait">
+                  {leftTab === "screenshot" ? (
+                    <motion.div
+                      key="screenshot-tab"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ duration: 0.15 }}
+                      ref={slotsSectionRef}
+                      className="space-y-4"
+                    >
+                      <截图槽位区
+                        slots={slots}
+                        onSelectFile={handleSlotUpload}
+                        onDelete={(role) => setDeleteTargetRole(role)}
+                        onRetry={handleSlotRetry}
+                        onManualFill={(role) => {
+                          setSlots((current) => ({
+                            ...current,
+                            [role]: {
+                              ...current[role],
+                              status: "empty",
+                              confirmed: false,
+                              error: null,
+                              assetUrl: null,
+                              previewUrl: null,
+                              file: null,
+                              fileName: undefined,
+                              recognizedFields: null,
+                              ocrSummary: undefined,
+                            },
+                          }));
+                        }}
+                        screenshotsRequired={screenshotsRequired}
+                        focusedRole={focusedRole}
+                        highlightedOcrIndex={highlightedOcrIndex}
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="metrics-tab"
+                      initial={{ opacity: 0, x: 8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -8 }}
+                      transition={{ duration: 0.15 }}
+                      ref={metricsSectionRef}
+                      className="space-y-5 rounded-2xl border border-zinc-100 bg-zinc-50/20 p-5"
+                    >
+                      <指标分组区
+                        fields={fields}
+                        onFieldChange={updateField}
+                        onFocusField={handleFieldFocus}
+                        onBlurField={handleFieldBlur}
+                        anomalyStatus={meta.anomalyStatus}
+                      />
+
+                      <导粉话术采集区
+                        visible={parseMetric(fields.follower_convert.value) > 0}
+                        value={scriptText}
+                        onChange={setScriptText}
+                        hasAttemptedSubmit={hasAttemptedSubmit}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* Right Column: Form inputs */}
+              {/* Right Column: Steady Form inputs (Video metadata) */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-                  <h3 className="text-[14px] font-semibold text-zinc-800">2. 视频与数据信息</h3>
+                  <h3 className="text-[14px] font-semibold text-zinc-800">视频详情与状态</h3>
                   <VideoStatusSegmented
                     value={meta.anomalyStatus}
-                    onChange={(value) => updateMeta("anomalyStatus", value)}
+                    onChange={(nextStatus) => {
+                      updateMeta("anomalyStatus", nextStatus);
+                    }}
                   />
                 </div>
 
@@ -1480,25 +1603,6 @@ export function VideoSubmitForm({
                       <p className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
                     ) : null}
                   </div>
-                </div>
-
-                {/* Form fields: Data metrics */}
-                <div ref={metricsSectionRef} className="space-y-5 rounded-2xl border border-zinc-100 bg-zinc-50/20 p-5">
-                  <h4 className="text-[12px] font-semibold uppercase tracking-[0.15em] text-zinc-400">数据指标</h4>
-                  <指标分组区
-                    fields={fields}
-                    onFieldChange={updateField}
-                    onFocusField={handleFieldFocus}
-                    onBlurField={handleFieldBlur}
-                    anomalyStatus={meta.anomalyStatus}
-                  />
-
-                  <导粉话术采集区
-                    visible={parseMetric(fields.follower_convert.value) > 0}
-                    value={scriptText}
-                    onChange={setScriptText}
-                    hasAttemptedSubmit={hasAttemptedSubmit}
-                  />
                 </div>
 
                 {/* Form Action Buttons */}
