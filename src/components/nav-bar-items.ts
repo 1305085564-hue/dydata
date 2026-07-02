@@ -1,3 +1,4 @@
+import { LayoutDashboard, Compass, ShieldAlert, Video, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type NavItem = {
@@ -16,21 +17,25 @@ export function getNavItems(input: {
     {
       href: "/dashboard",
       label: "今日工作台",
+      icon: LayoutDashboard,
       match: (pathname) => pathname === "/dashboard",
     },
     {
       href: "/growth",
       label: "个人成长",
+      icon: Compass,
       match: (pathname) => pathname === "/growth",
     },
     {
       href: "/violations",
       label: "导粉中心",
+      icon: ShieldAlert,
       match: (pathname) => pathname.startsWith("/violations"),
     },
     {
       href: "/video-review",
       label: "视频审核",
+      icon: Video,
       match: (pathname) => pathname.startsWith("/video-review"),
     },
   ];
@@ -39,6 +44,7 @@ export function getNavItems(input: {
     items.push({
       href: "/content-tools/rewrite",
       label: "文案助手",
+      icon: Sparkles,
       match: (pathname) => pathname === "/content-tools/rewrite",
     });
   }

@@ -9,9 +9,13 @@ import type { BusinessRole } from "@/lib/business-role";
 import { hasPermission } from "@/lib/permission-utils";
 import { cn } from "@/lib/utils";
 
+import { FileEdit, Library, LineChart, CalendarDays } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
 interface NavItem {
   href: string;
   label: string;
+  icon: LucideIcon;
   badgeKey?: keyof CenterNavBadges;
   requiresOwner?: boolean;
   requiresManageMembers?: boolean;
@@ -27,10 +31,10 @@ type CenterNavBadges = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin/content", label: "批改台", badgeKey: "content" },
-  { href: "/admin/videos", label: "素材库", badgeKey: "videos" },
-  { href: "/admin/analytics", label: "经营分析" },
-  { href: "/admin/fulfillment", label: "发布履约" },
+  { href: "/admin/content", label: "批改台", icon: FileEdit, badgeKey: "content" },
+  { href: "/admin/videos", label: "素材库", icon: Library, badgeKey: "videos" },
+  { href: "/admin/analytics", label: "经营分析", icon: LineChart },
+  { href: "/admin/fulfillment", label: "发布履约", icon: CalendarDays },
 ];
 
 export function getVisibleNavItems(input: {
@@ -114,18 +118,26 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
                 prefetch={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[14px] font-medium tracking-tight transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
+                  "inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[13px] font-semibold tracking-tight transition-all duration-200 ease-out active:translate-y-0",
                   active
-                    ? "bg-zinc-100 text-zinc-800 font-semibold"
-                    : "text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700",
+                    ? "bg-zinc-150 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+                    : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
                 )}
               >
+                <item.icon
+                  className={cn(
+                    "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors",
+                    active ? "text-[#D97757]" : "text-zinc-400"
+                  )}
+                />
                 <span className="whitespace-nowrap">{item.label}</span>
                 {badgeValue > 0 ? (
                   <span
                     className={cn(
-                      "text-[11px] tabular-nums transition-[color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                      active ? "font-semibold text-[#D97757]" : "font-medium text-zinc-400 group-hover:text-zinc-500",
+                      "inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[9px] font-black tabular-nums transition-colors duration-150 ml-1.5",
+                      active
+                        ? "bg-[#D97757] text-white"
+                        : "bg-zinc-200/60 text-zinc-500 dark:bg-zinc-850 dark:text-zinc-400",
                     )}
                     aria-label={`${badgeValue} 项`}
                   >

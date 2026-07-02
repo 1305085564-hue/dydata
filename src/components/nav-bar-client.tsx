@@ -101,7 +101,7 @@ export function NavBarClient({
 
   const primaryLinkClass = (active: boolean) =>
     cn(
-      "inline-flex h-9 shrink-0 items-center rounded-lg px-3 text-[14px] font-semibold tracking-tight transition-all duration-200 ease-out",
+      "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-semibold tracking-tight transition-all duration-200 ease-out",
       active ? "bg-zinc-150 text-zinc-900 dark:bg-zinc-800 dark:text-white" : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
     );
 
@@ -119,7 +119,7 @@ export function NavBarClient({
           <div className="flex items-center justify-between gap-4">
             
             {/* LEFT: Branding & Navigation links */}
-            <div className="flex items-center gap-4 lg:gap-6 min-w-0">
+            <div className="flex items-center gap-2.5 lg:gap-3.5 min-w-0">
               <Link
                 href="/dashboard"
                 prefetch={false}
@@ -131,10 +131,10 @@ export function NavBarClient({
                 </div>
                 <div className="hidden sm:block">
                   <div className="text-xs font-black tracking-tight text-zinc-950 dark:text-white uppercase leading-none">
-                    DYData <span className="text-[#D97757] font-semibold text-[10px]">CNSL</span>
+                    DYData <span className="text-[#D97757] font-semibold text-[10px]">PREMIUM</span>
                   </div>
                   <div className="text-[9px] font-medium tracking-[0.18em] text-zinc-400 dark:text-zinc-500 uppercase leading-none mt-1">
-                    短视频团队管理系统
+                    短视频管理控制台
                   </div>
                 </div>
               </Link>
@@ -156,17 +156,24 @@ export function NavBarClient({
                   className="hidden min-w-0 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex"
                   aria-label="主导航"
                 >
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      prefetch={false}
-                      onMouseEnter={() => prefetchOnHover(item.href)}
-                      className={primaryLinkClass(item.match(pathname))}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                  {navItems.map((item) => {
+                    const active = item.match(pathname);
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        prefetch={false}
+                        onMouseEnter={() => prefetchOnHover(item.href)}
+                        className={primaryLinkClass(active)}
+                      >
+                        {Icon && (
+                          <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors", active ? "text-[#D97757]" : "text-zinc-400")} />
+                        )}
+                        <span className="whitespace-nowrap">{item.label}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
