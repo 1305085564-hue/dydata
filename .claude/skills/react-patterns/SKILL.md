@@ -1,5 +1,5 @@
 ---
-name: react-patterns
+name: "09-React 架构模式"
 description: Modern React patterns and principles. Hooks, composition, performance, TypeScript best practices.
 allowed-tools: Read, Write, Edit, Glob, Grep
 ---

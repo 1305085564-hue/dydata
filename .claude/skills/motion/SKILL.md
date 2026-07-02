@@ -1,5 +1,5 @@
 ---
-name: motion
+name: "12-动效实现"
 description: Motion（前身为 framer-motion）React 动画库。适用于拖拽、滚动动画、手势、SVG 形变，或遇到包体积、复杂过渡、弹簧物理报错等场景。
 
 license: MIT

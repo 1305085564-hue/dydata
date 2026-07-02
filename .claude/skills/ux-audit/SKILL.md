@@ -1,5 +1,5 @@
 ---
-name: ux-audit
+name: "29-体验全链路审计"
 description: "Exhaustive UX audit of a web app. Walks every thread a real user would follow, tests every interactive element, runs scenario battery (keyboard-only, heavy data, destructive actions, second user, interrupted workflow, wrong turn, returning user, first contact), produces ranked findings with screenshots, then offers a fix-and-verify loop. Requires a persona. Trigger with 'ux audit', 'dogfood this', 'audit the app', 'qa sweep', 'exhaustive test', 'check all pages'."
 compatibility: claude-code-only
 ---

@@ -1,5 +1,5 @@
 ---
-name: interaction-design
+name: "11-交互体验设计"
 description: 通过反馈模式、微交互和可访问的交互设计创建直观的用户体验。适用于设计加载状态、错误处理 UX、动画规范或触摸交互时。
 license: MIT
 ---

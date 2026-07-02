@@ -758,7 +758,6 @@ export function VideoSubmitPanel({
                   activeId={activeCheckpointId}
                   onCheckpointClick={(id) => {
                     setActiveCheckpointId(id);
-                    if (id === 1) setActiveBizDate(today);
                   }}
                 />
               </div>
@@ -942,7 +941,6 @@ export function VideoSubmitPanel({
                 onCancel={() => {
                   setSubmittedViewActive(false);
                   setRequestedMode(null);
-                  setActiveBizDate(today);
                 }}
                 onRequestEdit={() => {
                   setSubmittedViewActive(false);

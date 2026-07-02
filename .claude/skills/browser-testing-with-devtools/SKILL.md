@@ -1,5 +1,5 @@
 ---
-name: browser-testing-with-devtools
+name: "13-浏览器调试"
 description: 在真实浏览器中进行测试。用于构建或调试任何在浏览器中运行的内容。当你需要检查 DOM、捕获控制台错误、分析网络请求、分析性能，或通过 Chrome DevTools MCP 使用真实运行时数据验证视觉输出时使用。
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: supabase-postgres-best-practices
+name: "24-Supabase 数据库优化"
 description: Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.
 license: MIT
 metadata:

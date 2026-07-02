@@ -3,5 +3,10 @@
     {
       "path": "../.claude/skills"
     }
+  ],
+  "inherits": [
+    {
+      "path": "/Users/mac/.cc-switch/skills.json"
+    }
   ]
 }

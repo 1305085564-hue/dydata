@@ -1,5 +1,5 @@
 ---
-name: responsiveness-check
+name: "16-响应式检查"
 description: "使用浏览器自动化测试网站在不同视口宽度下的响应式表现。在单个会话中依次调整视口尺寸、截图、检测布局变化（列数切换、导航模式切换、溢出）。生成对比报告，精确定位布局断裂的位置。触发词：'responsiveness check'、'check responsive'、'breakpoint test'、'viewport test'、'responsive sweep'、'check breakpoints'、'test at mobile'。"
 compatibility: claude-code-only
 ---

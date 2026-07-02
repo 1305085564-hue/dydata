@@ -2,25 +2,26 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
-import { loadAdminModulesFirstScreenData } from "@/lib/loaders/admin-modules";
+import { loadAdminModulesData } from "@/lib/loaders/admin-modules";
+import { listPendingRequestsForAdmin } from "@/lib/team-join/service";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 
-import { AdminModulesContent } from "./modules-content";
+import { AdminModulesContentV2 } from "./modules-content-v2";
+import { TeamV2Skeleton } from "./modules-skeleton-v2";
 
 interface AdminModulesPageProps {
   searchParams: Promise<{ date?: string; focus?: string }>;
 }
 
-function normalizeFocus(value: string | undefined): "members" | "teams" {
-  return value === "teams" || value === "team" ? "teams" : "members";
-}
-
 export default async function AdminModulesPage({ searchParams }: AdminModulesPageProps) {
   const permission = await getUserPermissions();
   if (!permission) redirect("/login");
-  if (!canAccessAdminPath("/admin/modules", permission.businessRole, permission.permissions)) redirect("/admin");
+  
+  // 沿用与 modules 相同的权限守卫，确保符合系统的角色授权规定
+  if (!canAccessAdminPath("/admin/modules", permission.businessRole, permission.permissions)) {
+    redirect("/admin");
+  }
 
   const supabase = await createClient();
   const {
@@ -35,38 +36,40 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="成员与权限"
-      title="团队与成员"
-      description="成员权限管理、团队与分组维护"
+      eyebrow="团队与成员"
+      title="团队管理工作台"
+      description="系统团队架构、分组归属维护及成员权限审批"
       indexItems={[
-        { id: "members", label: "成员权限" },
-        { id: "teams", label: "团队与分组" },
+        { id: "workspace", label: "全景工作台" }
       ]}
     >
-      <Suspense fallback={
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 mt-4">
-          <TableSkeleton columnCount={4} rowCount={6} showHeader={true} />
-        </div>
-      }>
-        <ModulesDataContainer searchDate={params.date} focus={params.focus} />
+      <Suspense fallback={<TeamV2Skeleton />}>
+        <ModulesDataContainer searchDate={params.date} />
       </Suspense>
     </AdminWorkspaceLayout>
   );
 }
 
-async function ModulesDataContainer({ searchDate, focus }: { searchDate?: string, focus?: string }) {
+async function ModulesDataContainer({ searchDate }: { searchDate?: string }) {
   const supabase = await createClient();
-  const data = await loadAdminModulesFirstScreenData({
-    supabase,
-    searchDate: searchDate,
-  });
+  
+  // 并发加载完整的团队管理上下文和入团审批请求
+  const [data, pendingJoinRequestsResult] = await Promise.all([
+    loadAdminModulesData({
+      supabase,
+      searchDate,
+    }),
+    listPendingRequestsForAdmin(),
+  ]);
 
   if (!data) {
     redirect("/login");
   }
 
+  const pendingJoinRequests = pendingJoinRequestsResult.ok ? pendingJoinRequestsResult.data : [];
+
   return (
-    <AdminModulesContent
+    <AdminModulesContentV2
       currentUserId={data.currentUserId}
       currentUserRole={data.perm.role}
       currentUserBusinessRole={data.perm.businessRole}
@@ -74,8 +77,9 @@ async function ModulesDataContainer({ searchDate, focus }: { searchDate?: string
       permissionManagerCapabilities={data.permissionManagerCapabilities}
       allProfiles={data.allProfiles}
       teams={data.teams}
+      teamManagement={data.teamManagement}
+      pendingRequests={pendingJoinRequests}
       defaultDate={data.queryDate}
-      defaultTab={normalizeFocus(focus)}
     />
   );
 }

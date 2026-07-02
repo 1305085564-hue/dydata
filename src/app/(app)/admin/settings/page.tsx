@@ -52,21 +52,15 @@ export default async function AdminSettingsPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <SettingCard
           href="/admin/modules"
-          title="成员权限"
-          description="成员审批、角色分配、权限开关和邀请码管理。"
-          icon={<UsersRound className="size-5" />}
-        />
-        <SettingCard
-          href="/admin/modules?focus=teams"
-          title="团队分组"
-          description="团队结构、分组维护和成员归属调整。"
-          icon={<ShieldCheck className="size-5" />}
+          title="团队与成员"
+          description="系统团队架构、分组归属维护、一键入团审批及成员精细化授权。"
+          icon={<UsersRound className="size-5 text-[#D97757]" />}
         />
         {isOwner ? (
         <SettingCard
           href="/admin/ai-config"
           title="AI 配置"
-          description="模型渠道、功能绑定、文案改写和执行路线管理。"
+          description="模型渠道、功能绑定、文案改写和执行路线管理."
           icon={<Sparkles className="size-5" />}
         />
         ) : null}
