@@ -142,6 +142,7 @@ export function buildSubmissionFingerprint(input: {
   biz_date: string;
   anomaly_status: string;
   topic_tag: string | null;
+  video_form?: string | null;
   content_keywords: string[];
   assets: SubmissionAssetMeta[];
   metrics: NormalizedVideoSubmitMetrics;
@@ -167,6 +168,7 @@ export function buildSubmissionFingerprint(input: {
     published_at_text: input.published_at_text,
     video_url: input.video_url,
     topic_tag: input.topic_tag,
+    video_form: input.video_form ?? null,
     video_id: input.video_id,
     video_title: input.video_title,
   };
@@ -185,6 +187,7 @@ export function buildSubmissionRecordId(input: {
   biz_date: string;
   anomaly_status: string;
   topic_tag: string | null;
+  video_form?: string | null;
   content_keywords: string[];
   assets: SubmissionAssetMeta[];
   metrics: NormalizedVideoSubmitMetrics;

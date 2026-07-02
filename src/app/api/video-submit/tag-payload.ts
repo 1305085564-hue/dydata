@@ -33,6 +33,7 @@ export function dedupeTagPayloads<T extends { tag_dimension: string; tag_value: 
 export function buildManualTagPayload(input: {
   videoId: string;
   topicTag: string | null;
+  videoForm?: string | null;
   contentKeywords: string[];
 }) {
   const tags: TagPayload[] = [];
@@ -42,6 +43,18 @@ export function buildManualTagPayload(input: {
       video_id: input.videoId,
       tag_dimension: "话题",
       tag_value: input.topicTag,
+      source: "manual",
+      confidence: null,
+      reason: null,
+      reviewed_by: null,
+    });
+  }
+
+  if (input.videoForm) {
+    tags.push({
+      video_id: input.videoId,
+      tag_dimension: "表达形式",
+      tag_value: input.videoForm,
       source: "manual",
       confidence: null,
       reason: null,

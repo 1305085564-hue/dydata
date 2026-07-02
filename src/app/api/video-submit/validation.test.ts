@@ -52,6 +52,7 @@ test("提交校验会返回规范化后的写入数据", () => {
     biz_date: "2025-04-08",
     anomaly_status: " 正常 ",
     topic_tag: " 干货 ",
+    video_form: " 出镜 ",
     content_keywords: [" 复盘 ", "热点"],
     script_text: "  关注公众号领取复盘表  ",
     script_format: "mixed",
@@ -84,6 +85,7 @@ test("提交校验会返回规范化后的写入数据", () => {
   assert.equal(result.normalized.published_at_text, "2025-04-08 12:00");
   assert.equal(result.normalized.anomaly_status, "正常");
   assert.equal(result.normalized.topic_tag, "干货");
+  assert.equal(result.normalized.video_form, "出镜");
   assert.equal(result.normalized.script_text, "关注公众号领取复盘表");
   assert.equal(result.normalized.script_format, "mixed");
   assert.equal(result.normalized.metrics.play_count, 10);
@@ -122,6 +124,7 @@ test("提交幂等 id 对同一份规范化数据保持稳定", () => {
     biz_date: "2025-04-08",
     anomaly_status: "正常",
     topic_tag: "干货",
+    video_form: null,
     content_keywords: ["复盘", "热点"],
     assets: [],
     metrics: {

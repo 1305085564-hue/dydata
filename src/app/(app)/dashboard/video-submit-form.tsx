@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 
@@ -146,6 +146,7 @@ type FormMetaState = {
   anomalyStatus: AnomalyStatus;
   uploadedAt: string;
   topicTag: string;
+  videoForm: string;
   contentKeywords: string[];
 };
 
@@ -190,6 +191,7 @@ function createInitialMeta(today: string): FormMetaState {
     anomalyStatus: "正常",
     uploadedAt: "",
     topicTag: "复盘",
+    videoForm: "出镜",
     contentKeywords: [],
   };
 }
@@ -954,6 +956,20 @@ export function VideoSubmitForm({
 
   useEffect(() => clearCancelTimeout, [clearCancelTimeout]);
 
+  async function handlePasteContent() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        updateMeta("content", text);
+        feedbackToast.success("文案已从剪贴板粘贴");
+      } else {
+        feedbackToast.error("剪贴板内容为空");
+      }
+    } catch {
+      feedbackToast.error("无法读取剪贴板，请手动粘贴");
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setHasAttemptedSubmit(true);
@@ -1004,6 +1020,7 @@ export function VideoSubmitForm({
           published_at_text: normalizeOptionalText(meta.publishedAtText),
           anomaly_status: meta.anomalyStatus,
           topic_tag: meta.topicTag || null,
+          video_form: meta.videoForm || null,
           content_keywords: meta.contentKeywords,
           assets: buildAssets(slots),
           script_text: parseMetric(fields.follower_convert.value) > 0 ? scriptText.trim() || null : null,
@@ -1510,16 +1527,6 @@ export function VideoSubmitForm({
 
               {stepIndex === 2 ? (
                 <motion.div ref={metaSectionRef} initial={false} className="space-y-6">
-                  <div className="space-y-1">
-                    <Label htmlFor="video_url" className="text-[13px] font-medium text-zinc-500">抖音视频链接</Label>
-                    <Input
-                      id="video_url"
-                      value={meta.videoUrl}
-                      onChange={(event) => updateMeta("videoUrl", event.target.value)}
-                      placeholder="https://www.douyin.com/video/..."
-                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
-                    />
-                  </div>
                   <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle")}>
                     <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-500">视频标题 <span className="text-[#C9604D]">*</span></Label>
                     <Input
@@ -1536,8 +1543,8 @@ export function VideoSubmitForm({
 
                   <div ref={topicTagSectionRef} className="space-y-2 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
                     <Label className="text-[13px] font-medium text-zinc-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-                      {(["干货", "复盘", "复盘干货", "视频转推"] as const).map((tag) => (
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      {(["干货", "复盘"] as const).map((tag) => (
                         <button
                           key={tag}
                           type="button"
@@ -1556,6 +1563,27 @@ export function VideoSubmitForm({
                     {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
                       <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未选择话题标签</p>
                     ) : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[13px] font-medium text-zinc-500">视频形式 <span className="text-[#C9604D]">*</span></Label>
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      {(["出镜", "图文"] as const).map((form) => (
+                        <button
+                          key={form}
+                          type="button"
+                          onClick={() => updateMeta("videoForm", form)}
+                          className={cn(
+                            "flex-1 h-10 rounded-lg border text-[13px] font-medium transition-colors duration-150",
+                            meta.videoForm === form
+                              ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
+                              : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50"
+                          )}
+                        >
+                          {form}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* 内容标签：前端暂隐藏（保留后端字段，重做后再上线） */}
@@ -1595,7 +1623,17 @@ export function VideoSubmitForm({
                   </div>
 
                   <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
-                    <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
+                      <button
+                        type="button"
+                        onClick={handlePasteContent}
+                        className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors duration-150 focus-visible:outline-none"
+                      >
+                        <ClipboardPaste size={14} className="stroke-[1.5]" />
+                        一键粘贴
+                      </button>
+                    </div>
                     <textarea
                       id="content"
                       value={meta.content}

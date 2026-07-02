@@ -40,6 +40,7 @@ export interface VideoSubmitValidationResult {
     biz_date: string;
     anomaly_status: string;
     topic_tag: string | null;
+    video_form: string | null;
     content_keywords: string[];
     script_text: string | null;
     script_format: ScriptFormat;
@@ -175,6 +176,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       biz_date: normalizeDateOnly(payload.biz_date),
       anomaly_status: normalizeOptionalText(payload.anomaly_status) ?? "正常",
       topic_tag: normalizeOptionalText(payload.topic_tag),
+      video_form: normalizeOptionalText(payload.video_form),
       content_keywords: keywords,
       script_text: normalizeOptionalText(payload.script_text),
       script_format: normalizeScriptFormat(payload.script_format),

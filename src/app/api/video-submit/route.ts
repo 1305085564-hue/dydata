@@ -377,6 +377,7 @@ export async function POST(request: NextRequest) {
   const manualTags = buildManualTagPayload({
     videoId: persistedVideo.id,
     topicTag: normalized.topic_tag,
+    videoForm: normalized.video_form,
     contentKeywords: normalized.content_keywords,
   });
 
@@ -385,7 +386,7 @@ export async function POST(request: NextRequest) {
       .from("video_tags")
       .delete()
       .eq("video_id", persistedVideo.id)
-      .in("tag_dimension", ["话题", "关键词"]);
+      .in("tag_dimension", ["话题", "表达形式", "关键词"]);
 
     if (deleteManualTagError) {
       await rollbackSafely(rollbackActions);
