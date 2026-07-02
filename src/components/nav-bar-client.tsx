@@ -261,17 +261,21 @@ export function NavBarClient({
               </button>
 
               {/* Settings gear trigger */}
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(true)}
-                className={cn(
-                  "relative flex h-8 w-8 items-center justify-center rounded-xl border transition-all duration-200",
-                  "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 active:scale-95"
-                )}
-                title="个人与账号设置"
-              >
-                <Settings className="size-4 stroke-[1.8] text-zinc-500 dark:text-zinc-400" />
-              </button>
+              {showSystemSettings && (
+                <Link
+                  href="/admin/settings"
+                  prefetch={false}
+                  onMouseEnter={() => prefetchOnHover("/admin/settings")}
+                  className={cn(
+                    "relative flex h-8 w-8 items-center justify-center rounded-xl border transition-all duration-200",
+                    "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 active:scale-95",
+                    pathname.startsWith("/admin/settings") && "border-zinc-400 bg-zinc-50 dark:border-zinc-650"
+                  )}
+                  title="网站参数设置"
+                >
+                  <Settings className="size-4 stroke-[1.8] text-zinc-500 dark:text-zinc-400" />
+                </Link>
+              )}
 
               {/* User profile avatar info */}
               <div className="h-5 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
