@@ -122,7 +122,7 @@ export function RewriteWorkbench() {
   if (state.errorState) {
     return (
       <div className="flex h-full items-center justify-center bg-zinc-50">
-        <div className="relative max-w-sm overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <div className="relative max-w-sm overflow-hidden rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
           <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
             系统错误
@@ -168,13 +168,13 @@ export function RewriteWorkbench() {
           </div>
           <button
             onClick={() => actions.setPresentationMode(false)}
-            className="inline-flex h-7 items-center justify-center rounded-md border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+            className="inline-flex h-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
           >
             退出阅览
           </button>
         </header>
         <div className="flex-1 overflow-hidden bg-zinc-50/50 flex justify-center py-8">
-          <div className="w-full max-w-3xl flex-1 bg-white border border-zinc-200 rounded-xl shadow-sm p-8 overflow-y-auto">
+          <div className="w-full max-w-3xl flex-1 bg-white border border-zinc-200 rounded-lg shadow-sm p-8 overflow-y-auto">
             <div className="prose prose-sm prose-zinc max-w-none leading-relaxed">
               {state.polishedText.split('\n').map((para, i) => (
                 <p key={i}>{para}</p>
@@ -219,7 +219,7 @@ export function RewriteWorkbench() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={actions.handleNewConversation}
-            className="inline-flex items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
             title="开启新文案"
           >
             <Plus className="h-3 w-3" />
@@ -230,7 +230,7 @@ export function RewriteWorkbench() {
             <button
               onClick={() => actions.setTraceabilityMode(!state.traceabilityMode)}
               className={cn(
-                'inline-flex h-7 items-center justify-center rounded-md px-2.5 text-[11px] font-medium transition-colors',
+                'inline-flex h-7 items-center justify-center rounded-lg px-2.5 text-[11px] font-medium transition-colors',
                 state.traceabilityMode ? 'bg-[#6FAA7D]/10 text-[#4F7F5E]' : 'text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900'
               )}
               title="溯源模式：高亮人工修改的段落"
@@ -239,7 +239,7 @@ export function RewriteWorkbench() {
             </button>
             <button
               onClick={() => actions.setPresentationMode(true)}
-              className="inline-flex h-7 items-center justify-center rounded-md bg-[#D97757] px-3.5 text-[11px] font-bold text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] transition-all"
+              className="inline-flex h-7 items-center justify-center rounded-lg bg-[#D97757] px-3.5 text-[11px] font-bold text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] transition-all"
             >
               定稿导出
             </button>
@@ -472,7 +472,7 @@ export function RewriteWorkbench() {
             )} />
 
             {/* Smart Micro Tooltip for Resizing & Double-click reset */}
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[10px] px-2 py-1 rounded-md shadow-md whitespace-nowrap">
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[10px] px-2 py-1 rounded-lg shadow-md whitespace-nowrap">
               拖拽调节宽度 · 双击还原默认
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-zinc-900" />
             </div>

@@ -160,10 +160,10 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onConfirmFailed
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline" className="h-11 rounded-[10px] px-6" onClick={onSkipped} disabled={isSaving}>
+          <Button type="button" variant="outline" className="h-11 px-6" onClick={onSkipped} disabled={isSaving}>
             跳过
           </Button>
-          <Button type="button" className="h-11 rounded-[10px] px-6" onClick={handleConfirm} disabled={isSaving}>
+          <Button type="button" className="h-11 px-6" onClick={handleConfirm} disabled={isSaving}>
             {isSaving ? "确认中..." : "一键确认标签"}
           </Button>
         </div>

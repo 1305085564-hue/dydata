@@ -7,7 +7,7 @@ test("cardClass 默认返回可悬停玻璃卡片 class", () => {
   const result = cardClass();
 
   assert.match(result, /glass-card/);
-  assert.match(result, /rounded-\[var\(--radius-card\)\]/);
+  assert.match(result, /rounded-2xl/);
 });
 
 test("cardClass 可切换为静态卡片", () => {
@@ -28,16 +28,16 @@ test("buttonClass 复用现有按钮 variants", () => {
   const primary = buttonClass("default", "lg");
   const ghost = buttonClass("ghost", "sm");
 
-  assert.match(primary, /bg-primary/);
+  assert.match(primary, /bg-\[#D97757\]/);
   assert.match(primary, /h-9/);
-  assert.match(ghost, /hover:bg-muted/);
+  assert.match(ghost, /hover:bg-zinc-100/);
   assert.match(ghost, /h-7/);
 });
 
 test("badgeClass 根据语义色返回对应 badge class", () => {
   assert.match(badgeClass("primary"), /bg-primary/);
-  assert.match(badgeClass("success"), /text-emerald-700/);
-  assert.match(badgeClass("warning"), /text-amber-700/);
-  assert.match(badgeClass("danger"), /text-red-700/);
+  assert.match(badgeClass("success"), /text-\[#6FAA7D\]/);
+  assert.match(badgeClass("warning"), /text-\[#D99E55\]/);
+  assert.match(badgeClass("danger"), /text-\[#C9604D\]/);
   assert.match(badgeClass("neutral"), /border-border/);
 });

@@ -745,7 +745,7 @@ export function VideoSubmitPanel({
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 rounded-full border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                        className="h-9 border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
                       >
                         <ShieldAlert className="size-4 stroke-[1.5] text-[#D99E55]" />
                         收录违规
@@ -793,7 +793,7 @@ export function VideoSubmitPanel({
                   <button
                     type="button"
                     onClick={dismissPendingExemption}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                   >
                     <X className="size-3.5 stroke-[1.5]" />
                     关闭
@@ -1065,7 +1065,7 @@ export function VideoSubmitPanel({
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 rounded-[10px] bg-white"
+                        className="h-11 bg-white"
                         onClick={() => setEditingReport(activeDateReport)}
                       >
                         <PencilLine className="size-4 stroke-[1.5]" />
@@ -1125,7 +1125,7 @@ export function VideoSubmitPanel({
                     </div>
                     <Button
                       type="button"
-                      className="h-11 rounded-[10px]"
+                      className="h-11"
                       onClick={() => openBackfillForDate(activeBizDate)}
                     >
                       <PencilLine className="size-4 stroke-[1.5]" />

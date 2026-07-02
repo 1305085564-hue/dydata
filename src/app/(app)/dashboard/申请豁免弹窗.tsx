@@ -261,14 +261,14 @@ function ExemptionModal({
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending} className="h-11 rounded-[10px] px-6">
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending} className="h-11 px-6">
                   取消
                 </Button>
                 <Button
                   type="button"
                   onClick={handleSubmit}
                   disabled={isPending}
-                  className="h-11 rounded-[10px] bg-[#D97757] px-8 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
+                  className="h-11 bg-[#D97757] px-8 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
                 >
                   {isPending ? "提交中..." : "提交申请"}
                 </Button>

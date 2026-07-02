@@ -59,10 +59,10 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <p className="text-[13px] leading-[1.7] text-zinc-500">基于业务数据自动生成的分析结论与建议行动。</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 rounded-[10px] border border-zinc-200 bg-white p-1 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
           <button
             className={cn(
-              "rounded-[10px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              "rounded-lg px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
               type === "week" ? "bg-white shadow-sm text-zinc-800 border border-zinc-200" : "text-zinc-600 hover:bg-zinc-100"
             )}
             onClick={() => setType("week")}
@@ -71,7 +71,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           </button>
           <button
             className={cn(
-              "rounded-[10px] px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              "rounded-lg px-4 py-1.5 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
               type === "month" ? "bg-white shadow-sm text-zinc-800 border border-zinc-200" : "text-zinc-600 hover:bg-zinc-100"
             )}
             onClick={() => setType("month")}
@@ -81,7 +81,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <div className="h-4 w-px bg-zinc-200 mx-1" />
           <Button
             size="sm"
-            className="rounded-[10px] bg-[#D97757] text-white px-5 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] hover:-translate-y-[1px] active:translate-y-0"
+            className="bg-[#D97757] text-white px-5 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] hover:-translate-y-[1px] active:translate-y-0"
             onClick={generate}
             disabled={loading}
           >

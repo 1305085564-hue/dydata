@@ -126,7 +126,7 @@ export function NavBarClient({
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
                 className="flex items-center gap-2.5 shrink-0"
               >
-                <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#D97757] to-[#C9503B] text-white shadow-md shadow-[#D97757]/20">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#D97757] to-[#C9503B] text-white shadow-md shadow-[#D97757]/20">
                   <Zap className="size-[18px] stroke-[2] fill-current" />
                 </div>
                 <div className="hidden sm:block">
@@ -247,7 +247,7 @@ export function NavBarClient({
                   setCommandHubOpen(true);
                 }}
                 className={cn(
-                  "relative flex h-8 w-8 items-center justify-center rounded-xl border transition-all duration-200",
+                  "relative flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-200",
                   "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 active:scale-95"
                 )}
                 title="待办与通知中心"
@@ -267,7 +267,7 @@ export function NavBarClient({
                   prefetch={false}
                   onMouseEnter={() => prefetchOnHover("/admin/settings")}
                   className={cn(
-                    "relative flex h-8 w-8 items-center justify-center rounded-xl border transition-all duration-200",
+                    "relative flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-200",
                     "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 active:scale-95",
                     pathname.startsWith("/admin/settings") && "border-zinc-400 bg-zinc-50 dark:border-zinc-650"
                   )}
@@ -284,7 +284,7 @@ export function NavBarClient({
                 onClick={() => setSettingsOpen(true)}
                 className="flex items-center gap-2 text-left rounded-lg hover:opacity-85 focus:outline-none"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-[11px] font-black text-white dark:bg-zinc-800 shadow-sm border border-zinc-200/10">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-[11px] font-black text-white dark:bg-zinc-800 shadow-sm border border-zinc-200/10">
                   {name.trim().slice(0, 1).toUpperCase() || "?"}
                 </div>
                 <div className="hidden lg:flex flex-col">

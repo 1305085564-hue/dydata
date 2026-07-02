@@ -43,7 +43,7 @@ export function WeaknessBenchmarkGrid({ items }: { items: WeakBenchmarkCard[] })
                   <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">历史 Top3</div>
                   <div className="grid gap-2">
                     {item.historyTopSamples.map((sample) => (
-                      <div key={sample.id} className="flex items-center justify-between rounded-[10px] border border-zinc-200 px-3 py-2 text-[13px]">
+                      <div key={sample.id} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2 text-[13px]">
                         <span className="text-zinc-800">{sample.title}</span>
                         <span className="font-semibold font-mono tabular-nums text-zinc-500">{sample.metricText}</span>
                       </div>

@@ -203,7 +203,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                       size="sm"
                       disabled={page <= 1 || loading}
                       onClick={() => setPage((p) => p - 1)}
-                      className="h-8 rounded-[10px] border-zinc-200 px-3 text-[12px]"
+                      className="h-8 border-zinc-200 px-3 text-[12px]"
                     >
                       上一页
                     </Button>
@@ -213,7 +213,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                       size="sm"
                       disabled={page >= totalPages || loading}
                       onClick={() => setPage((p) => p + 1)}
-                      className="h-8 rounded-[10px] border-zinc-200 px-3 text-[12px]"
+                      className="h-8 border-zinc-200 px-3 text-[12px]"
                     >
                       下一页
                     </Button>

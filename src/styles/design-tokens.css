@@ -19,12 +19,13 @@
   --color-border: #E4E4E7;         /* zinc-200 极冷 分隔/卡片/表格 */
   --color-border-warm: #D4D4D8;    /* zinc-300 微温 可交互元素 */
 
-  /* 法典五 圆角阶梯 */
-  --radius-xs: 8px;       /* 小按钮/标签 */
-  --radius-sm: 10px;      /* 按钮默认 */
-  --radius-md: 12px;      /* 内层卡片、数据块 */
-  --radius-lg: 16px;      /* 主面板、对话区 */
-  --radius-xl: 20px;      /* 输入框外壳（仅对话输入框） */
+  /* 法典五 圆角阶梯（与 Tailwind 档位对齐） */
+  --radius-xs: 4px;       /* rounded-sm：极小控件 */
+  --radius-sm: 6px;       /* rounded-md：小按钮 / 分类标签 */
+  --radius-md: 8px;       /* rounded-lg：标准按钮 / 输入框 */
+  --radius-lg: 12px;      /* rounded-xl：内层卡片 / 面板 */
+  --radius-xl: 16px;      /* rounded-2xl：页面级容器 / Modal */
+  --radius-full: 9999px;  /* rounded-full：头像 / 状态点 / 徽章 / 状态贴片 */
 
   /* 法典八 动效 150ms cubic-bezier(0.4, 0, 0.2, 1) */
   --duration-micro: 150ms;

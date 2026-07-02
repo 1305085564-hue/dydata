@@ -54,7 +54,7 @@ export default async function HomePage() {
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center rounded-[10px] bg-[#D97757] px-6 py-2.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+                className="inline-flex items-center justify-center rounded-lg bg-[#D97757] px-6 py-2.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
               >
                 登录工作台
               </Link>

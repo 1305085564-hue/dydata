@@ -174,7 +174,7 @@ export function PKBattle({
             </p>
           </div>
           {total > 0 && (
-            <div className="shrink-0 rounded-[10px] bg-[#8AA8C7]/10 px-3 py-1.5 text-center">
+            <div className="shrink-0 rounded-full bg-[#8AA8C7]/10 px-3 py-1.5 text-center">
               <div className="text-base font-semibold font-mono tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
               <div className="text-[12px] text-[#8AA8C7]/70">项领先</div>
             </div>
@@ -191,7 +191,7 @@ export function PKBattle({
             <motion.div
               key={row.key}
               variants={itemVariants}
-              className="rounded-[12px] border border-zinc-200 bg-[rgba(255,255,255,0.76)] p-4"
+              className="rounded-xl border border-zinc-200 bg-[rgba(255,255,255,0.76)] p-4"
             >
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-sm font-medium text-zinc-800">{row.label}</span>

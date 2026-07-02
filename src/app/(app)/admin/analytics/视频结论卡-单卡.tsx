@@ -43,7 +43,7 @@ export function 视频结论卡单卡({
         <header className="flex items-start justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="inline-block rounded-[10px] bg-zinc-100 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+              <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
                 {card.eyebrow}
               </span>
             </div>
@@ -52,7 +52,7 @@ export function 视频结论卡单卡({
           <Badge
             variant="outline"
             className={cn(
-              "shrink-0 rounded-[10px] border px-2.5 py-0.5 text-[12px] font-medium",
+              "shrink-0 border px-2.5 py-0.5 text-[12px] font-medium",
               signalTone(card.confidence),
             )}
           >
@@ -104,7 +104,7 @@ export function 视频结论卡单卡({
 
         {onClick ? (
           <div className="pt-4">
-            <Button type="button" variant="outline" className="w-full rounded-[10px]" onClick={onClick}>
+            <Button type="button" variant="outline" className="w-full" onClick={onClick}>
               {actionLabel ?? "查看对应分析"}
             </Button>
           </div>
@@ -150,7 +150,7 @@ export function 干预结论单卡({
         <header className="flex items-start justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="inline-block rounded-[10px] bg-[#C9604D]/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
+              <span className="inline-block rounded-full bg-[#C9604D]/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
                 {card.eyebrow}
               </span>
             </div>
@@ -159,7 +159,7 @@ export function 干预结论单卡({
           <Badge
             variant="outline"
             className={cn(
-              "shrink-0 rounded-[10px] border px-2.5 py-0.5 text-[12px] font-medium",
+              "shrink-0 border px-2.5 py-0.5 text-[12px] font-medium",
               signalTone(card.confidence),
             )}
           >

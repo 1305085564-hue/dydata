@@ -107,7 +107,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
             </Select>
           </div>
 
-          <Button className="h-11 rounded-[10px]" onClick={() => void loadSuggestions()} disabled={loading}>
+          <Button className="h-11" onClick={() => void loadSuggestions()} disabled={loading}>
             <Sparkles className="size-4" />
             {loading ? "生成中" : "重新生成"}
           </Button>

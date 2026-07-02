@@ -59,7 +59,7 @@ export function PKSelector({
   return (
     <div
       className={cn(
-        "rounded-[16px] border border-zinc-200 bg-white p-4 shadow-sm",
+        "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm",
         className
       )}
     >

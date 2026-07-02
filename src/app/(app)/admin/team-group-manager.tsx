@@ -521,7 +521,7 @@ export function TeamGroupManager({
                         type="button"
                         size="sm"
                         variant="outline"
- className="bg-white border-zinc-300 text-zinc-800 rounded-[10px] hover:bg-zinc-50 active:translate-y-0 "
+ className="bg-white border-zinc-300 text-zinc-800 hover:bg-zinc-50 active:translate-y-0 "
                         onClick={handleAssignMembers}
                         disabled={isPending || checkedMemberIds.length === 0}
                       >

@@ -51,7 +51,7 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
             <span className="text-[18px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{value}</span>
             {trend && (
               <span className={cn(
-                "text-[12px] font-medium px-1.5 py-0.5 rounded-[10px]",
+                "text-[12px] font-medium px-1.5 py-0.5 rounded-full",
                 trend.isPositive ? "text-[#6FAA7D] bg-[#6FAA7D]/10" : "text-[#C9604D] bg-[#C9604D]/10"
               )}>
                 {trend.isPositive ? "+" : ""}{trend.value}%

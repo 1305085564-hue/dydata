@@ -186,7 +186,7 @@ export function SubmissionCalendar({
         {WEEK_LABELS.map((label) => (
           <div
             key={label}
-            className="flex h-8 items-center justify-center rounded-[10px] bg-zinc-100 text-[11px] font-semibold text-[var(--color-text-secondary)] sm:text-xs"
+            className="flex h-8 items-center justify-center rounded-md bg-zinc-100 text-[11px] font-semibold text-[var(--color-text-secondary)] sm:text-xs"
           >
             {label}
           </div>
@@ -199,7 +199,7 @@ export function SubmissionCalendar({
               type="button"
               onClick={() => onDateSelect?.(cell.key, submittedDateSet.has(cell.key))}
               className={cn(
-                "flex aspect-square flex-col items-center justify-center rounded-[12px] border text-sm font-semibold shadow-[var(--shadow-light)] transition-colors sm:aspect-auto sm:min-h-[4rem]",
+                "flex aspect-square flex-col items-center justify-center rounded-xl border text-sm font-semibold shadow-[var(--shadow-light)] transition-colors sm:aspect-auto sm:min-h-[4rem]",
                 onDateSelect && "cursor-pointer",
                 cell.state === "submitted" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
                 cell.state === "waive" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
@@ -220,7 +220,7 @@ export function SubmissionCalendar({
               </span>
             </button>
           ) : (
-            <div key={cell.key} className="aspect-square rounded-[12px] sm:aspect-auto sm:min-h-[4rem]" aria-hidden="true" />
+            <div key={cell.key} className="aspect-square rounded-xl sm:aspect-auto sm:min-h-[4rem]" aria-hidden="true" />
           ),
         )}
       </div>

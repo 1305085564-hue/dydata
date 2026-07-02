@@ -20,7 +20,7 @@ export function TeamManager({ teams }: TeamManagerProps) {
           <Badge
             key={team.id}
             variant="outline"
-            className="rounded-[10px] px-3 py-1"
+            className="px-3 py-1"
           >
             {team.name}
           </Badge>

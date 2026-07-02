@@ -433,6 +433,7 @@ export async function buildGenerationContext(
     assetMentions?: GenerationAssetMention[];
     includeSkillStack?: boolean;
     includeDocumentSnapshot?: boolean;
+    contextLimit?: number | null;
   },
 ): Promise<GenerationContext> {
   const parts: string[] = [];
@@ -505,7 +506,10 @@ export async function buildGenerationContext(
       : CANVAS_OUTPUT_PROTOCOL,
   );
 
-  const recentMessages = await getRecentMessages(service, input.conversationId);
+  let recentMessages = await getRecentMessages(service, input.conversationId);
+  if (typeof input.contextLimit === "number" && input.contextLimit > 0) {
+    recentMessages = recentMessages.slice(-input.contextLimit);
+  }
 
   return {
     systemPrompt: parts.join("\n\n"),
@@ -648,6 +652,7 @@ export async function* streamGeneration(
     runType?: GenerationRunType;
     providerKeyModelId?: string | null;
     modelViewId?: string | null;
+    contextLimit?: number | null;
     aiClient?: {
       streamChat: (params: {
         systemPrompt: string;
@@ -674,6 +679,7 @@ export async function* streamGeneration(
     userPrompt: input.userPrompt,
     targetParagraphIds,
     assetMentions,
+    contextLimit: input.contextLimit,
   });
   const messages = [...context.recentMessages, { role: "user" as const, content: input.userPrompt }];
 

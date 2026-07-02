@@ -296,7 +296,7 @@ export function ExemptionDialog({
                 variant="outline"
                 onClick={handleClearClick}
                 disabled={isPending}
-                className="rounded-[10px] border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                className="border-zinc-200 text-zinc-700 hover:bg-zinc-50"
               >
                 清除豁免
               </Button>
@@ -307,14 +307,14 @@ export function ExemptionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="rounded-[10px] border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50"
             >
               取消
             </Button>
             <Button
               onClick={handleSaveClick}
               disabled={isPending}
-              className="rounded-[10px] bg-[#D97757] text-white hover:bg-[#C96442]"
+              className="bg-[#D97757] text-white hover:bg-[#C96442]"
             >
               保存
             </Button>

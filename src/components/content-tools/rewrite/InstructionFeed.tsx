@@ -88,7 +88,7 @@ export function InstructionFeed({
       <div className="flex h-full flex-col justify-start px-4 py-8 overflow-y-auto bg-transparent">
         <div className="mx-auto w-full max-w-xl space-y-6">
           <div className="text-center space-y-2">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200 bg-white shadow-sm">
               <PenLine className="h-4 w-4 text-zinc-500" />
             </div>
             <h2 className="text-[18px] font-semibold tracking-tight text-zinc-900">
@@ -104,7 +104,7 @@ export function InstructionFeed({
           {isV2Conversation && (
             <div className="space-y-3">
               {groupedSkills.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3.5 py-4 text-center text-[12px] text-zinc-400">
+                <div className="rounded-lg border border-dashed border-zinc-200 bg-white px-3.5 py-4 text-center text-[12px] text-zinc-400">
                   暂无可用技能
                 </div>
               ) : groupedSkills.map((group) => (
@@ -121,7 +121,7 @@ export function InstructionFeed({
                           type="button"
                           onClick={() => onToggleSkill(skill)}
                           className={cn(
-                            'group relative flex items-center justify-between gap-2 rounded-xl p-3.5 text-left transition-all duration-200 border bg-white',
+                            'group relative flex items-center justify-between gap-2 rounded-lg p-3.5 text-left transition-all duration-200 border bg-white',
                             isActive
                               ? 'border-[#8AA8C7]/50 bg-[#8AA8C7]/5 shadow-sm -translate-y-0.5'
                               : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300 hover:translate-y-[-1px]'
@@ -134,7 +134,7 @@ export function InstructionFeed({
                             </span>
                           </div>
                           {isActive && (
-                            <span className="shrink-0 rounded-md bg-[#8AA8C7]/10 px-2 py-0.5 text-[9.5px] font-medium tracking-wider text-zinc-800">
+                            <span className="shrink-0 rounded-lg bg-[#8AA8C7]/10 px-2 py-0.5 text-[9.5px] font-medium tracking-wider text-zinc-800">
                               已激活
                             </span>
                           )}
@@ -161,7 +161,7 @@ export function InstructionFeed({
                       type="button"
                       onClick={() => onSelectFixedMode(mode.id)}
                       className={cn(
-                        'group relative flex flex-col items-start gap-1 rounded-xl p-3.5 text-left transition-all duration-200 border bg-white',
+                        'group relative flex flex-col items-start gap-1 rounded-lg p-3.5 text-left transition-all duration-200 border bg-white',
                         isActive
                           ? 'border-[#8AA8C7]/50 bg-[#8AA8C7]/5 shadow-sm -translate-y-0.5'
                           : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300 hover:translate-y-[-1px]'
@@ -227,7 +227,7 @@ export function InstructionFeed({
           if (message.role === 'user') {
             return (
               <div key={message.id} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-zinc-100/80 px-3.5 py-2 text-[12.5px] leading-[1.6] text-zinc-800 border border-zinc-200/50">
+                <div className="max-w-[85%] rounded-lg rounded-tr-md bg-zinc-100/80 px-3.5 py-2 text-[12.5px] leading-[1.6] text-zinc-800 border border-zinc-200/50">
                   <p className="whitespace-pre-wrap font-medium">{message.content}</p>
                 </div>
               </div>
@@ -238,7 +238,7 @@ export function InstructionFeed({
           if (message.role === 'system_note') {
             return (
               <div key={message.id} className="flex justify-center">
-                <div className="relative max-w-md overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-center text-[11px] leading-[1.6] text-zinc-500 shadow-sm">
+                <div className="relative max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-center text-[11px] leading-[1.6] text-zinc-500 shadow-sm">
                   <div className="absolute left-0 top-0 h-full w-[2px] bg-[#D99E55]" />
                   <span>{message.content}</span>
                 </div>
@@ -257,7 +257,7 @@ export function InstructionFeed({
                 <Sparkles className="h-3 w-3 text-[#D97757]" />
               </div>
 
-              <div className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-2">
+              <div className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold text-zinc-900">
                     AI 润色反馈
@@ -304,7 +304,7 @@ export function InstructionFeed({
                     <div className="pt-1">
                       <button
                         onClick={() => setHiddenAfterIndex(idx)}
-                        className="group inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[10.5px] font-medium text-zinc-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800"
+                        className="group inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-[10.5px] font-medium text-zinc-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-zinc-300 hover:text-zinc-800"
                         title="废弃此节点之后的对话，直接基于当前版本继续润色"
                       >
                         <RotateCcw className="h-3 w-3 text-zinc-400 group-hover:text-zinc-600 transition-colors" />

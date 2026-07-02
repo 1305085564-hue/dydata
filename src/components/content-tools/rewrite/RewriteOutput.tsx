@@ -61,7 +61,7 @@ export function RewriteOutput({
       <div className="flex h-full flex-col items-center justify-center px-6 pb-24">
         <div className="w-full max-w-2xl">
           <div className="text-center">
-            <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-white shadow-sm">
+            <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200 bg-white shadow-sm">
               <PenLine className="h-4 w-4 text-zinc-500" />
             </div>
             <h2 className="text-[24px] font-semibold leading-tight tracking-tight text-zinc-800">
@@ -80,7 +80,7 @@ export function RewriteOutput({
                 key={shortcut.label}
                 type="button"
                 onClick={() => onSendOverride(shortcut.text)}
- className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-100 active:translate-y-0"
+ className="group relative overflow-hidden rounded-lg border border-zinc-200 bg-white px-4 py-3 text-left shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-100 active:translate-y-0"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -124,7 +124,7 @@ export function RewriteOutput({
             if (message.role === 'system_note') {
               return (
                 <div key={message.id} className="flex justify-center">
-                  <div className="relative max-w-lg overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-center text-[12px] leading-[1.7] text-zinc-500">
+                  <div className="relative max-w-lg overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-center text-[12px] leading-[1.7] text-zinc-500">
                     <div className="absolute left-0 top-0 h-full w-[3px] bg-[#D99E55]" />
                     <span className="pl-1">{message.content}</span>
                   </div>
@@ -141,7 +141,7 @@ export function RewriteOutput({
 
             return (
               <div key={message.id} className="flex gap-3">
-                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] border border-zinc-200 bg-white">
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white">
                   <Sparkles className="h-3.5 w-3.5 text-[#D97757]" />
                 </div>
 
@@ -150,7 +150,7 @@ export function RewriteOutput({
                     <span className="text-[12px] font-semibold tracking-tight text-zinc-800">
                       {responseMode === 'chat' ? '继续对话' : '改写结果'}
                     </span>
-                    <span className="rounded-md bg-zinc-50 px-1.5 py-0.5 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
+                    <span className="rounded-lg bg-zinc-50 px-1.5 py-0.5 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500 ring-1 ring-zinc-200">
                       {displayMeta.badge}
                     </span>
                     {isStreaming && (
@@ -171,7 +171,7 @@ export function RewriteOutput({
                         return (
                           <div
                             key={copyKey}
-                            className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300"
+                            className="group relative overflow-hidden rounded-lg border border-zinc-200 bg-white transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300"
                           >
                             <div className="flex items-center justify-between border-b border-zinc-100 px-3.5 py-2">
                               <h3 className="text-[12px] font-semibold tracking-tight text-zinc-800">
@@ -200,7 +200,7 @@ export function RewriteOutput({
                     </div>
                   ) : (
                     /* Chat mode */
-                    <div className="group relative rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5">
+                    <div className="group relative rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5">
                       <button
                         type="button"
                         onClick={() => onCopy(message.id, chatText || '')}
@@ -222,7 +222,7 @@ export function RewriteOutput({
 
                   {/* Notes */}
                   {responseMode === 'versions' && message.structuredResult?.final?.notes?.length ? (
-                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
                       <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-400">
                         备注
                       </p>

@@ -24,10 +24,11 @@ export async function POST(req: NextRequest) {
     assetMentions?: unknown;
     providerKeyModelId?: string;
     modelViewId?: string;
+    contextLimit?: number;
   }>(req);
   if (bodyResult instanceof Response) return bodyResult;
 
-  const { conversationId, userPrompt, providerKeyModelId, modelViewId } = bodyResult;
+  const { conversationId, userPrompt, providerKeyModelId, modelViewId, contextLimit } = bodyResult;
   const targetParagraphIds = Array.isArray(bodyResult.targetParagraphIds)
     ? bodyResult.targetParagraphIds
         .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
@@ -90,6 +91,7 @@ export async function POST(req: NextRequest) {
           assetMentions,
           providerKeyModelId: providerKeyModelId?.trim() || null,
           modelViewId: modelViewId?.trim() || null,
+          contextLimit: typeof contextLimit === "number" ? contextLimit : null,
         })) {
           if (event.type === "generation_complete") {
             completedContent = event.fullContent;

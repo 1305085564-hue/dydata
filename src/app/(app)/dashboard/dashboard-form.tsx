@@ -177,7 +177,7 @@ export function DashboardForm({
 
                   <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
                     <DialogTrigger
-                      render={<Button type="button" className="h-12 w-full rounded-[10px] px-5 text-[14px] font-medium sm:w-auto" />}
+                      render={<Button type="button" className="h-12 w-full px-5 text-[14px] font-medium sm:w-auto" />}
                     >
                       <ScanSearch className="size-4 stroke-[1.5]" />
                       截图识别导入
@@ -542,7 +542,7 @@ export function DashboardForm({
                     type="submit"
                     disabled={isPending}
                     data-success={showSuccess || undefined}
-                    className="h-11 w-full rounded-[10px] px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
+                    className="h-11 w-full px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
                   >
                     {submitButtonLabel}
                   </Button>
@@ -556,7 +556,7 @@ export function DashboardForm({
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-12 w-full rounded-[10px] text-[14px] font-medium font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200"
+                  className="h-12 w-full text-[14px] font-medium font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200"
                 >
                   {submitButtonLabel}
                 </Button>
@@ -575,7 +575,7 @@ export function DashboardForm({
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-11 w-full rounded-[10px] px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
+                  className="h-11 w-full px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
                 >
                   {submitButtonLabel}
                 </Button>

@@ -195,7 +195,7 @@ export function PersonnelAnalysis({
           <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">{title}</h3>
           <p className="text-sm text-zinc-500">改为双列紧凑卡片后，桌面端能同时看到更多成员对比。</p>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] border border-zinc-200 bg-zinc-50 p-1">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
           {([
             ["avgPlay", "均播表现"],
             ["hitRate", "爆款能力"],
@@ -206,7 +206,7 @@ export function PersonnelAnalysis({
               key={key}
               onClick={() => setSortBy(key)}
               className={cn(
-                "rounded-[10px] px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                "rounded-lg px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 sortBy === key ? "bg-white text-zinc-800 shadow-sm" : "text-zinc-500 hover:text-zinc-700",
               )}
             >
@@ -353,7 +353,7 @@ function PersonRankCard({
             <button
               type="button"
               onClick={() => onSelectPerson(person.name)}
-              className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100"
+              className="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-700 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100"
             >
               查看该成员样本
             </button>
@@ -375,7 +375,7 @@ function TrendBadge({ trend }: { trend: number }) {
     );
 
   return (
-    <div className="flex h-6 items-center gap-1 rounded-[10px] bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-600">
+    <div className="flex h-6 items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-600">
       {icon}
       <span>{formatSignedPercent(trend)}</span>
     </div>

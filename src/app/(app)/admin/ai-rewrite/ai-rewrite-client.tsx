@@ -1405,7 +1405,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                       variant="ghost"
                       size="icon"
                       onClick={() => setActiveSection(null)}
-                      className="size-8 rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+                      className="size-8 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
                     >
                       <X className="size-4" />
                       <span className="sr-only">关闭</span>

@@ -110,7 +110,7 @@ export function DashboardWorkspaceHeader({
                     key={action.key}
                     type="button"
                     onClick={() => onDashboardAction(action.key)}
-                    className="group inline-flex items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-[13px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800 focus-visible:bg-zinc-100 focus-visible:text-zinc-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800 focus-visible:bg-zinc-100 focus-visible:text-zinc-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
                     style={{ transitionDelay: "50ms" }}
                   >
                     <Icon
@@ -142,7 +142,7 @@ export function DashboardWorkspaceHeader({
                 aria-haspopup="listbox"
                 aria-label="切换账号"
                 className={cn(
-                  "group inline-flex h-10 items-center gap-2 rounded-full border bg-white pl-1.5 pr-3 text-[13px] font-medium tracking-tight transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  "group inline-flex h-10 items-center gap-2 rounded-lg border bg-white pl-1.5 pr-3 text-[13px] font-medium tracking-tight transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   isAccountMenuOpen
                     ? "border-[#D97757]/45 bg-[#FDF9F7] text-[#C96442]"
                     : "border-zinc-200 text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50",
@@ -249,7 +249,7 @@ export function DashboardWorkspaceHeader({
           <button
             type="button"
             onClick={openDatePicker}
-            className="group inline-flex h-10 items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 text-[13px] font-medium tracking-tight text-zinc-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/40 hover:bg-[#FDF9F7] hover:text-[#C96442] focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="group inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3.5 text-[13px] font-medium tracking-tight text-zinc-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/40 hover:bg-[#FDF9F7] hover:text-[#C96442] focus-visible:ring-1 focus-visible:ring-zinc-950/5"
             aria-label="选择填报日期"
           >
             <CalendarDays className="size-4 stroke-[1.6] text-zinc-400 transition-colors duration-150 group-hover:text-[#D97757]" />

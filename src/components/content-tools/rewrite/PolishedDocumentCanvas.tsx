@@ -88,7 +88,7 @@ const renderParagraphRichText = (content: string) => {
   if (/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/.test(text)) {
     const cleanContent = text.replace(/^(\*\*|【|### |## )?(原版|修改前|原文|修改前：|原文：)(:|：|\*\*|】)?\s*/, '').trim();
     return (
-      <div className="p-4 my-2 bg-zinc-50 border border-zinc-200 rounded-xl text-zinc-700 leading-[1.7]">
+      <div className="p-4 my-2 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-700 leading-[1.7]">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-[3px] h-3 bg-zinc-400 rounded-full" />
           <div className="text-[11px] font-bold text-zinc-500 tracking-widest uppercase">原版内容</div>
@@ -456,7 +456,7 @@ export function PolishedDocumentCanvas({
                   onClick={onUndo}
                   disabled={!historyState.canUndo || historyLoading}
                   className={cn(
-                    'inline-flex h-7 w-7 items-center justify-center rounded-md transition-all',
+                    'inline-flex h-7 w-7 items-center justify-center rounded-lg transition-all',
                     historyState.canUndo && !historyLoading
                       ? 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700 cursor-pointer'
                       : 'text-zinc-300 cursor-not-allowed'
@@ -472,7 +472,7 @@ export function PolishedDocumentCanvas({
                   onClick={onRedo}
                   disabled={!historyState.canRedo || historyLoading}
                   className={cn(
-                    'inline-flex h-7 w-7 items-center justify-center rounded-md transition-all',
+                    'inline-flex h-7 w-7 items-center justify-center rounded-lg transition-all',
                     historyState.canRedo && !historyLoading
                       ? 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700 cursor-pointer'
                       : 'text-zinc-300 cursor-not-allowed'
@@ -496,7 +496,7 @@ export function PolishedDocumentCanvas({
                 onTouchStart={() => setIsPeeking(true)}
                 onTouchEnd={() => setIsPeeking(false)}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all cursor-pointer select-none',
+                  'inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all cursor-pointer select-none',
                   isPeeking
                     ? 'bg-zinc-100/80 text-zinc-900'
                     : 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700'
@@ -514,7 +514,7 @@ export function PolishedDocumentCanvas({
                 type="button"
                 onClick={() => setShowDiff(!showDiff)}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all',
+                  'inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all',
                   showDiff
                     ? 'bg-zinc-100/80 text-zinc-900'
                     : 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700'
@@ -534,7 +534,7 @@ export function PolishedDocumentCanvas({
                 type="button"
                 onClick={handleCopy}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-all',
+                  'inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all',
                   copied
                     ? 'text-[#4F7F5E] bg-[#6FAA7D]/10'
                     : 'text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700'
@@ -551,7 +551,7 @@ export function PolishedDocumentCanvas({
                 <button
                   type="button"
                   onClick={handleSaveEdit}
-                  className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[#D97757] px-3 text-[12px] font-medium text-white shadow-[0_2px_8px_rgba(217,119,87,0.25)] hover:bg-[#C96442] active:scale-95 transition-all"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white shadow-[0_2px_8px_rgba(217,119,87,0.25)] hover:bg-[#C96442] active:scale-95 transition-all"
                 >
                   <Save className="h-3.5 w-3.5" />
                   <span>保存</span>
@@ -559,7 +559,7 @@ export function PolishedDocumentCanvas({
                 <button
                   type="button"
                   onClick={handleCancelEdit}
-                  className="inline-flex h-7 items-center justify-center rounded-md px-2.5 text-[12px] font-medium text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700 transition-all"
+                  className="inline-flex h-7 items-center justify-center rounded-lg px-2.5 text-[12px] font-medium text-zinc-400 hover:bg-zinc-100/50 hover:text-zinc-700 transition-all"
                 >
                   取消
                 </button>
@@ -568,7 +568,7 @@ export function PolishedDocumentCanvas({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800 transition-all"
+                className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800 transition-all"
               >
                 <Edit3 className="h-3.5 w-3.5 text-zinc-400" />
                 <span>进入编辑</span>
@@ -702,7 +702,7 @@ export function PolishedDocumentCanvas({
                     ) : (
                       <div className={cn(paragraph.isLocked ? 'text-zinc-500' : 'text-zinc-800')}>
                         {isSelected && !isGenerating && (
-                          <div className="mb-1.5 inline-flex items-center gap-1 rounded-md border border-[#8AA8C7]/30 bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#4F6F8D]">
+                          <div className="mb-1.5 inline-flex items-center gap-1 rounded-lg border border-[#8AA8C7]/30 bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#4F6F8D]">
                             <span className="h-1.5 w-1.5 rounded-full bg-[#8AA8C7]" />
                             {paragraph.isLocked ? '已选中 · 段落锁定' : '已选中'}
                           </div>
@@ -770,7 +770,7 @@ export function PolishedDocumentCanvas({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 5 }}
               transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-              className="pointer-events-auto flex flex-col gap-1 rounded-xl border border-white/20 bg-[#1A1A1A] p-1.5 shadow-2xl overflow-hidden min-w-[280px]"
+              className="pointer-events-auto flex flex-col gap-1 rounded-lg border border-white/20 bg-[#1A1A1A] p-1.5 shadow-2xl overflow-hidden min-w-[280px]"
             >
               {/* Top Input Area */}
               <div className="flex items-center gap-1.5 px-2 py-1.5 bg-white/5 rounded-lg border border-white/10 focus-within:border-white/30 focus-within:bg-white/10 transition-colors">

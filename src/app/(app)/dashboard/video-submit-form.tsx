@@ -814,7 +814,7 @@ export function VideoSubmitForm({
       feedbackToast.success("截图已保存，正在识别", {
         duration: 2000,
         className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-sm",
       });
 
       const formData = new FormData();
@@ -917,7 +917,7 @@ export function VideoSubmitForm({
       feedbackToast.success("识别完成", {
         duration: 2200,
         className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-sm",
       });
     } catch (error) {
       const message = toSlotUploadErrorMessage(error);
@@ -1050,7 +1050,7 @@ export function VideoSubmitForm({
       feedbackToast.success("数据提交成功", {
         duration: 2000,
         className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
+          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-sm",
       });
       clearDraft();
     } catch (error) {
@@ -1415,7 +1415,7 @@ export function VideoSubmitForm({
                     feedbackToast.success("删除成功", {
                       duration: 2000,
                       className:
-                        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-[16px] shadow-sm",
+                        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-sm",
                     });
                   }}
                 >

@@ -440,7 +440,7 @@ function ScreenshotPreview({
         <button
           type="button"
           aria-label="关闭预览"
-          className="active:translate-y-0 absolute top-5 right-5 inline-flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
+          className="active:translate-y-0 absolute top-5 right-5 inline-flex size-9 items-center justify-center rounded-lg bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
           onClick={(event) => {
             event.stopPropagation();
             onClose();
@@ -453,7 +453,7 @@ function ScreenshotPreview({
             <button
               type="button"
               aria-label="上一张"
-              className="active:translate-y-0 absolute left-5 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
+              className="active:translate-y-0 absolute left-5 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-lg bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
               onClick={(event) => {
                 event.stopPropagation();
                 onPrev();
@@ -464,7 +464,7 @@ function ScreenshotPreview({
             <button
               type="button"
               aria-label="下一张"
-              className="active:translate-y-0 absolute right-5 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
+              className="active:translate-y-0 absolute right-5 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-lg bg-white/10 text-white transition-[background-color] duration-150 hover:bg-white/20"
               onClick={(event) => {
                 event.stopPropagation();
                 onNext();

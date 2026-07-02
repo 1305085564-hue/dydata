@@ -108,7 +108,7 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
             </Select>
           </div>
 
-          <Button className="h-11 rounded-[10px]" onClick={() => void loadRecommendations()} disabled={loading}>
+          <Button className="h-11" onClick={() => void loadRecommendations()} disabled={loading}>
             <Clock3 className="size-4" />
             {loading ? "刷新中" : "刷新推荐"}
           </Button>

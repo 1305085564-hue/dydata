@@ -146,7 +146,7 @@ export function ScriptBreakdown({
 
             {hasMoreSegments ? (
               <div className="flex justify-center">
-                <Button type="button" variant="outline" size="sm" className="h-9 rounded-[10px] px-4" onClick={() => setExpanded((prev) => !prev)}>
+                <Button type="button" variant="outline" size="sm" className="h-9 px-4" onClick={() => setExpanded((prev) => !prev)}>
                   {expanded ? (
                     <>
                       <ChevronUp className="size-4 stroke-[1.5]" />

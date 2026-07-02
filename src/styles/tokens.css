@@ -40,8 +40,7 @@
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
   /* 法典五 圆角阶梯 */
   --radius-card: 16px;                   /* 主面板 rounded-2xl */
-  --radius-dialog: 16px;                 /* Modal */
-  --radius-button: 10px;                 /* 按钮 */
+  --radius-dialog: 16px;                 /* Modal rounded-2xl */
 }
 
 .dark {

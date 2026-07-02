@@ -83,7 +83,7 @@ export function ConfigBar({
                     onClick={() => onToggleFixedMode(fixedMode.id)}
                     disabled={interactionControlsDisabled}
                     className={cn(
-                      'group relative w-full overflow-hidden rounded-xl border p-3 text-left transition-colors',
+                      'group relative w-full overflow-hidden rounded-lg border p-3 text-left transition-colors',
                       interactionControlsDisabled && 'cursor-not-allowed opacity-50',
                       active
                         ? 'border-[#D97757] bg-zinc-100'
@@ -112,7 +112,7 @@ export function ConfigBar({
                 onClick={() => selectedFixedModeId && onToggleFixedMode(selectedFixedModeId)}
                 disabled={interactionControlsDisabled || !selectedFixedModeId}
                 className={cn(
-                  'w-full rounded-xl border border-dashed px-3 py-2 text-[11px] font-medium transition-colors',
+                  'w-full rounded-lg border border-dashed px-3 py-2 text-[11px] font-medium transition-colors',
                   !selectedFixedModeId
                     ? 'border-zinc-300 bg-zinc-50 text-zinc-500'
                     : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700'
@@ -131,7 +131,7 @@ export function ConfigBar({
               </span>
               <div className="h-px flex-1 bg-zinc-200" />
               {customControlsLocked && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-50 px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 ring-1 ring-zinc-200">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-zinc-50 px-1.5 py-0.5 text-[12px] font-medium text-zinc-500 ring-1 ring-zinc-200">
                   <Lock className="h-2.5 w-2.5" />
                   已锁定
                 </span>
@@ -207,7 +207,7 @@ export function ConfigBar({
           </div>
 
           {isChatStage && (
-            <div className="rounded-xl border border-zinc-200 bg-white p-3">
+            <div className="rounded-lg border border-zinc-200 bg-white p-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
                 会话状态
               </p>

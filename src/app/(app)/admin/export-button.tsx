@@ -69,7 +69,7 @@ export function ExportButton() {
       <Button
         onClick={handleExport}
         disabled={loading}
-        className="h-9 bg-white border border-zinc-200 text-zinc-800 rounded-[10px] hover:bg-zinc-50"
+        className="h-9 bg-white border border-zinc-200 text-zinc-800 hover:bg-zinc-50"
       >
         {loading ? "导出中..." : "导出 Excel"}
       </Button>

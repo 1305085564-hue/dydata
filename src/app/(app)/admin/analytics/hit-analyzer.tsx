@@ -1054,7 +1054,7 @@ export function HitAnalyzer({
                     <button
                       type="button"
                       onClick={() => onLockedSubmitterChange(leadInsight.submitter)}
-                      className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] font-medium text-zinc-700 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100"
+                      className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] font-medium text-zinc-700 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100"
                     >
                       查看该作者全量样本
                     </button>

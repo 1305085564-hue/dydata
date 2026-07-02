@@ -82,7 +82,7 @@ function ConversationItem({
       onClick={() => onSelect(conversation)}
       onMouseEnter={() => onPrefetch?.(conversation)}
       className={cn(
-        'group relative w-full rounded-md border border-transparent px-3 py-2 text-left transition-colors',
+        'group relative w-full rounded-lg border border-transparent px-3 py-2 text-left transition-colors',
         active
           ? 'bg-zinc-200/95'
           : 'hover:bg-zinc-100'

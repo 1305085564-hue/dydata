@@ -1,10 +1,18 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { Outfit } from "next/font/google";
 
-import { RewriteWorkbench } from "@/components/content-tools/rewrite";
+import { RewriteWorkbenchV3 } from "@/components/content-tools/rewrite-v3";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: 'AI 文案改写 | 抖音数据平台',
@@ -28,8 +36,8 @@ export default async function RewritePage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1300px] h-[calc(100dvh-var(--app-top-offset)-1.25rem)] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] ml-[-1rem] sm:ml-[-1.5rem] mt-[-1.25rem] overflow-hidden bg-zinc-50 border-t border-zinc-200">
-      <RewriteWorkbench />
+    <div className={`${outfit.variable} font-sans mx-auto max-w-[1400px] h-[calc(100dvh-var(--app-top-offset)-1.25rem)] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] ml-[-1rem] sm:ml-[-1.5rem] mt-[-1.25rem] overflow-hidden bg-zinc-50 border-t border-zinc-200`}>
+      <RewriteWorkbenchV3 />
     </div>
   )
 }

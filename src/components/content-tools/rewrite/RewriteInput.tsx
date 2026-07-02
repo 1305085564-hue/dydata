@@ -82,7 +82,7 @@ export function RewriteInput({
                     onClick={() => onToggleFixedMode(fixedMode.id)}
                     disabled={interactionControlsDisabled}
                     className={cn(
-                      'rounded-xl border px-5 py-4 text-left transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                      'rounded-lg border px-5 py-4 text-left transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                       interactionControlsDisabled
                         ? 'cursor-not-allowed border-zinc-200 bg-zinc-50 text-zinc-400'
                         : active
@@ -110,7 +110,7 @@ export function RewriteInput({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
             <div className="mb-4 flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
               <SlidersHorizontal className="h-4 w-4" />
               普通自定义区
@@ -201,7 +201,7 @@ export function RewriteInput({
       </div>
 
       <div className="border-t border-zinc-200 bg-white p-4">
-        <div className="relative rounded-xl border border-zinc-200 bg-zinc-50 p-1 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-within:border-zinc-300 focus-within:bg-white focus-within:ring-1 focus-within:ring-zinc-950/5">
+        <div className="relative rounded-lg border border-zinc-200 bg-zinc-50 p-1 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-within:border-zinc-300 focus-within:bg-white focus-within:ring-1 focus-within:ring-zinc-950/5">
           <textarea
             ref={textareaRef}
             value={inputText}
@@ -234,7 +234,7 @@ export function RewriteInput({
               onClick={() => onSend()}
               disabled={!inputText.trim() || isSending}
               className={cn(
-                'flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-medium transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
                 !inputText.trim() || isSending
                   ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
                   : 'bg-[#D97757] text-white hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0 motion-reduce:transition-none'

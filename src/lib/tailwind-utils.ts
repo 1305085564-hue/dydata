@@ -11,7 +11,7 @@ type BadgeColor = "primary" | "success" | "warning" | "danger" | "neutral";
 
 export function cardClass(hover = true) {
   return cn(
-    "rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--glass-bg)] shadow-[var(--shadow-card)] backdrop-blur-xl",
+    "rounded-2xl border border-[var(--color-border)] bg-[var(--glass-bg)] shadow-[var(--shadow-card)] backdrop-blur-xl",
     hover ? "glass-card" : "glass-card-static",
   );
 }

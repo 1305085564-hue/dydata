@@ -213,7 +213,7 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-auto rounded-[10px] px-0 text-[13px] font-medium text-zinc-800 hover:bg-transparent hover:opacity-70"
+                          className="h-auto px-0 text-[13px] font-medium text-zinc-800 hover:bg-transparent hover:opacity-70"
                           onClick={() =>
                             onReferenceClick?.({
                               personName: referenceMeta?.personName,

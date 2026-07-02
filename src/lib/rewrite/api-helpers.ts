@@ -102,20 +102,37 @@ export async function parseJsonBody<T>(req: NextRequest): Promise<T | NextRespon
 export function createSSEStream() {
   const encoder = new TextEncoder();
   let controller: ReadableStreamDefaultController<Uint8Array>;
+  let closed = false;
 
   const stream = new ReadableStream({
     start(c) {
       controller = c;
     },
+    cancel() {
+      closed = true;
+    }
   });
 
   function send(event: string, data: unknown) {
-    const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    controller.enqueue(encoder.encode(message));
+    if (closed) return;
+    try {
+      const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+      controller.enqueue(encoder.encode(message));
+    } catch (e) {
+      console.warn("SSE send failed, stream probably closed:", e);
+      closed = true;
+    }
   }
 
   function close() {
-    controller.close();
+    if (closed) return;
+    try {
+      controller.close();
+    } catch (e) {
+      console.warn("SSE close failed:", e);
+    } finally {
+      closed = true;
+    }
   }
 
   return {

@@ -103,7 +103,7 @@ function RequestRow({
             size="sm"
             disabled={isPending}
             onClick={() => handle("approved")}
-            className="rounded-[10px] bg-[#D97757] text-white hover:bg-[#C96442]"
+            className="bg-[#D97757] text-white hover:bg-[#C96442]"
           >
             批准
           </Button>
@@ -112,7 +112,7 @@ function RequestRow({
             variant="outline"
             disabled={isPending}
             onClick={() => handle("rejected")}
-            className="rounded-[10px] border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+            className="border-zinc-200 text-zinc-700 hover:bg-zinc-50"
           >
             拒绝
           </Button>

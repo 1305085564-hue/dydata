@@ -153,12 +153,12 @@ export function AdminPanelLauncher({
                       </DialogDescription>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] font-medium text-zinc-500">
+                      <span className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] font-medium text-zinc-500">
                         当前模块：{activeItem.label}
                       </span>
                       <Link
                         href={activeItem.href}
-                        className="inline-flex items-center rounded-[10px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0"
+                        className="inline-flex items-center rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0"
                       >
                         打开独立页面
                       </Link>

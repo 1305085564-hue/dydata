@@ -49,7 +49,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center justify-between gap-3 rounded-xl border px-3 py-1.5 text-left transition-all duration-200",
+          "flex items-center justify-between gap-3 rounded-lg border px-3 py-1.5 text-left transition-all duration-200",
           "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:scale-[0.98]",
           "dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900",
           isOpen && "border-zinc-400 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900"
@@ -122,7 +122,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                         setIsOpen(false);
                       }}
                       className={cn(
-                        "flex w-full items-start justify-between gap-2.5 rounded-xl p-2.5 text-left transition-all duration-200",
+                        "flex w-full items-start justify-between gap-2.5 rounded-lg p-2.5 text-left transition-all duration-200",
                         isSelected
                           ? "bg-zinc-50 dark:bg-zinc-900/60"
                           : "hover:bg-zinc-50/70 dark:hover:bg-zinc-900/30"

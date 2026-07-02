@@ -47,7 +47,7 @@ export function AddAccountDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button type="button" variant="outline" size="sm" className="h-10 rounded-[10px]" />
+          <Button type="button" variant="outline" size="sm" className="h-10" />
         }
       >
         <Plus className="size-4 stroke-[1.5]" />

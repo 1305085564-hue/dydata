@@ -41,7 +41,7 @@ export function CapabilityGrid({ items }: { items: GrowthDimensionCard[] }) {
           <p className="text-[13px] leading-[1.7] text-zinc-500">数据不足，先连续提交数据后再看能力分布。</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="rounded-[10px] border border-dashed border-zinc-200 px-3 py-2 text-[13px] text-zinc-400">
+              <div key={index} className="rounded-lg border border-dashed border-zinc-200 px-3 py-2 text-[13px] text-zinc-400">
                 --
               </div>
             ))}

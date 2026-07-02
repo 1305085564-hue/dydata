@@ -109,7 +109,7 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
             </Select>
           </div>
 
-          <Button className="h-11 rounded-[10px]" onClick={() => void loadTemplates()} disabled={loading}>
+          <Button className="h-11" onClick={() => void loadTemplates()} disabled={loading}>
             <BookCopy className="size-4" />
             {loading ? "刷新中" : "刷新模板"}
           </Button>
