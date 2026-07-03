@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Check, ChevronDown, Clock, FilePenLine, History, Lock, PencilLine, ShieldAlert, X } from "lucide-react";
+import { CalendarDays, Clock, FilePenLine, History, Lock, PencilLine, ShieldAlert, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
@@ -160,7 +160,6 @@ function toOverrideReport(summaryOverride: TodaySubmissionReportLike): MonthRepo
 export function VideoSubmitPanel({
   accounts,
   userId,
-  userDisplayName,
   today,
   todayReports,
   monthReports,
@@ -179,7 +178,6 @@ export function VideoSubmitPanel({
 }: VideoSubmitPanelProps) {
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
@@ -362,24 +360,6 @@ export function VideoSubmitPanel({
     [today, userExemptionGrants, userExemptionProfile],
   );
 
-  const accountCards = useMemo(
-    () =>
-      accounts.map((account) => {
-        const summary = getTodaySubmissionSummary(mergedTodayReports, account.id);
-        const todayStatus = resolveSubmissionDayStatus({
-          date: today,
-          today,
-          report: summary,
-          exemption: getExemptionStateForDate(userExemptionProfile, today, userExemptionGrants),
-        });
-        return {
-          account,
-          summary,
-          todayStatus,
-        };
-      }),
-    [accounts, mergedTodayReports, today, userExemptionGrants, userExemptionProfile],
-  );
 
   const activeDateReport = useMemo(
     () =>
@@ -459,14 +439,6 @@ export function VideoSubmitPanel({
     return () => window.clearTimeout(timeoutId);
   }, [activeBizDate, isDataViewOpen, pendingFocusDate]);
 
-  function resetPanelForAccount(accountId: string) {
-    setSelectedAccountId(accountId);
-    setIsAccountMenuOpen(false);
-    setRequestedMode(null);
-    setActiveBizDate(today);
-    setLastSubmittedVideoId(null);
-    setLastAiTags([]);
-  }
 
   function selectBizDate(date: string) {
     if (!date) return;
@@ -639,77 +611,8 @@ export function VideoSubmitPanel({
         )}>
           {!embeddedChrome ? (
           <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
-            <div className="space-y-6 px-6 py-7 sm:px-8 sm:py-8">
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-                <div className="min-w-0">
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
-                    今日工作台
-                  </div>
-                  <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">今日提交</h2>
-                  <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
-                    以 5 个关键时间卡点推进今日内容生产，第一步先完成昨日数据上报。
-                  </p>
-                </div>
-
-                <div className="flex min-w-0 items-start justify-start lg:justify-end">
-                  <div className={cn("relative", embeddedChrome && "hidden")}>
-                    <button
-                      type="button"
-                      onClick={() => setIsAccountMenuOpen((open) => !open)}
-                      className="group flex min-w-[178px] items-center gap-3 rounded-full border border-zinc-200/60 bg-white px-3 py-2 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 active:translate-y-0"
-                      aria-expanded={isAccountMenuOpen}
-                      aria-haspopup="listbox"
-                    >
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-800">
-                        {userDisplayName.slice(0, 1) || "用"}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-semibold leading-tight text-zinc-800">{userDisplayName}</span>
-                        <span className="mt-0.5 block truncate text-[12px] font-medium text-zinc-400">
-                          {selectedAccount?.display_name ?? "未选择账号"}
-                        </span>
-                      </span>
-                      <ChevronDown className={cn("size-4 stroke-[1.5] shrink-0 text-zinc-400 transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]", isAccountMenuOpen && "rotate-180")} />
-                    </button>
-
-                    {isAccountMenuOpen ? (
-                      <div
-                        role="listbox"
-                        className="absolute right-0 top-[calc(100%+8px)] z-40 w-64 overflow-hidden rounded-2xl border border-zinc-200/60 bg-white p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
-                      >
-                        <div className="px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.2em] text-zinc-400">切换账号</div>
-                        <div className="max-h-72 space-y-1 overflow-y-auto">
-                          {accountCards.map(({ account }) => {
-                            const isSelected = account.id === selectedAccountId;
-
-                            return (
-                              <button
-                                key={account.id}
-                                type="button"
-                                role="option"
-                                aria-selected={isSelected}
-                                onClick={() => resetPanelForAccount(account.id)}
-                                className={cn(
-                                  "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                                  isSelected ? "bg-[#D97757] text-white" : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800",
-                                )}
-                              >
-                                <span className="min-w-0">
-                                  <span className="block truncate text-[13px] font-semibold">{account.display_name}</span>
-                                  <span className={cn("mt-0.5 block truncate text-[12px] font-medium", isSelected ? "text-white/70" : "text-zinc-400")}>
-                                    {account.content_direction ?? "未设置方向"}
-                                  </span>
-                                </span>
-                                {isSelected ? <Check className="size-4 stroke-[1.5] shrink-0" /> : null}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+            <div className="space-y-4 px-6 py-6 sm:px-8 sm:py-6">
+              <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">今日提交</h2>
 
               <div className="rounded-2xl border border-zinc-200 bg-[var(--color-bg)] px-4 py-4">
                 <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>

@@ -58,12 +58,10 @@ function getStatusVisual(status: SubmissionSlotStatus, isWarning: boolean): Stat
 export function SubmissionSlotCard({
   title,
   description,
-  required,
   status,
   fileName,
   error,
   assetUrl,
-  isHighlighted,
   confidenceScore,
   ocrSummary,
   highlightedOcrIndex,
@@ -78,7 +76,6 @@ export function SubmissionSlotCard({
   const isWarning = status === "pending_confirm" || ((confidenceScore ?? 1) < 0.7 && status !== "failed");
   const isError = status === "failed";
   const isSuccess = status === "confirmed" && !isWarning;
-  const isEmpty = status === "empty";
 
   const visual = getStatusVisual(status, isWarning);
 
@@ -93,6 +90,7 @@ export function SubmissionSlotCard({
   }, [isProcessing]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
@@ -177,23 +175,16 @@ export function SubmissionSlotCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border bg-white px-2 py-[3px] text-[11px] font-medium transition-colors duration-150",
-              visual.borderClass,
-              visual.textClass,
-            )}
-          >
-            <span className={cn("size-1.5 rounded-full", visual.dotClass)} />
-            {visual.label}
-          </span>
-          {required ? (
-            <span className="inline-flex items-center rounded-full border border-[#D97757]/30 bg-white px-2 py-[3px] text-[11px] font-medium text-[#D97757]">
-              必传
-            </span>
-          ) : (
-            <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2 py-[3px] text-[11px] font-medium text-zinc-500">
-              选传
+          {status !== "empty" && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border bg-white px-2 py-[3px] text-[11px] font-medium transition-colors duration-150",
+                visual.borderClass,
+                visual.textClass,
+              )}
+            >
+              <span className={cn("size-1.5 rounded-full", visual.dotClass)} />
+              {visual.label}
             </span>
           )}
         </div>

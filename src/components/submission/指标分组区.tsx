@@ -125,7 +125,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           <div className="mb-4">
             <h3 className="text-[13px] font-medium text-zinc-800">核心数据</h3>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
