@@ -1544,8 +1544,32 @@ export function VideoSubmitForm({
                     ) : null}
                   </div>
 
+                  <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
+                      <button
+                        type="button"
+                        onClick={handlePasteContent}
+                        className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors duration-150 focus-visible:outline-none"
+                      >
+                        <ClipboardPaste size={14} className="stroke-[1.5]" />
+                        一键粘贴
+                      </button>
+                    </div>
+                    <textarea
+                      id="content"
+                      value={meta.content}
+                      onChange={(event) => updateMeta("content", event.target.value)}
+                      placeholder="粘贴视频文案"
+                      className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
+                    />
+                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
+                      <p className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
+                    ) : null}
+                  </div>
+
                   {/* Topic tag & Video form (Memory layer) */}
-                  <div className="rounded-lg">
+                  <div className="rounded-lg border-t border-zinc-100 pt-4">
                     {!isMemoryExpanded ? (
                       <div className="flex items-center justify-between py-1">
                         <div className="flex items-center gap-2">
@@ -1682,30 +1706,6 @@ export function VideoSubmitForm({
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </div>
-
-                  <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
-                      <button
-                        type="button"
-                        onClick={handlePasteContent}
-                        className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors duration-150 focus-visible:outline-none"
-                      >
-                        <ClipboardPaste size={14} className="stroke-[1.5]" />
-                        一键粘贴
-                      </button>
-                    </div>
-                    <textarea
-                      id="content"
-                      value={meta.content}
-                      onChange={(event) => updateMeta("content", event.target.value)}
-                      placeholder="粘贴视频文案"
-                      className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
-                    />
-                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                      <p className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
-                    ) : null}
                   </div>
                 </motion.div>
               ) : null}
