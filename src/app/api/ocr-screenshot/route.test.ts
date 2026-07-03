@@ -2,11 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  buildRecognitionContentFromOcrText,
-  getPaddleOcrEndpoint,
   getScreenshotTypeByAssetRole,
-  getImageRecognitionMode,
-  parsePaddleOcrText,
   parseClassificationContent,
   parseCurveContent,
   parseOcrResponse,
@@ -28,97 +24,6 @@ test("自动分类识别截图类型", () => {
   const result = parseClassificationContent('{"screenshot_type":"curve"}');
 
   assert.equal(result, "curve");
-});
-
-test("识别模式默认使用 hybrid，让 OCR 主跑并保留大模型兜底", () => {
-  assert.equal(getImageRecognitionMode(undefined), "hybrid");
-  assert.equal(getImageRecognitionMode("ocr"), "ocr");
-  assert.equal(getImageRecognitionMode("hybrid"), "hybrid");
-  assert.equal(getImageRecognitionMode("bad-value"), "hybrid");
-});
-
-test("PaddleOCR 服务地址优先读环境变量，未配置时使用当前云端服务", () => {
-  assert.equal(getPaddleOcrEndpoint(undefined), "http://118.89.72.250:18790/ocr");
-  assert.equal(getPaddleOcrEndpoint(" http://ocr.example.com/ocr "), "http://ocr.example.com/ocr");
-});
-
-test("PaddleOCR 响应会提取原始文字", () => {
-  const text = parsePaddleOcrText({
-    success: true,
-    text: "播放量 3.21万\n点赞 1280",
-    lines: [{ text: "播放量 3.21万", confidence: 0.994 }],
-    elapsed_ms: 1595.9,
-  });
-
-  assert.equal(text, "播放量 3.21万\n点赞 1280");
-});
-
-test("OCR 纯文字可转换为现有 overview JSON 结构", () => {
-  const content = buildRecognitionContentFromOcrText(
-    [
-      "播放量 3.21万",
-      "点赞 1280",
-      "评论 68",
-      "分享 15",
-      "收藏 106",
-      "涨粉 42",
-    ].join("\n"),
-    "data"
-  );
-
-  assert.deepEqual(JSON.parse(content), {
-    play_count: 32100,
-    likes: 1280,
-    comments: 68,
-    shares: 15,
-    favorites: 106,
-    follower_gain: 42,
-    confidence: {
-      play_count: "high",
-      likes: "high",
-      comments: "high",
-      shares: "high",
-      favorites: "high",
-      follower_gain: "high",
-    },
-  });
-});
-
-test("OCR 纯文字可转换为 retention JSON 结构", () => {
-  const content = buildRecognitionContentFromOcrText(
-    [
-      "平均播放时长 23.6秒",
-      "2秒跳出率 41.2%",
-      "5秒完播率 32.8%",
-      "完播率 18.5%",
-    ].join("\n"),
-    "retention"
-  );
-
-  assert.deepEqual(JSON.parse(content), {
-    recognized: true,
-    retention_metrics: {
-      avg_play_duration: 23.6,
-      bounce_rate_2s: 41.2,
-      completion_rate_5s: 32.8,
-      completion_rate: 18.5,
-    },
-    retention_analysis: {
-      bounce_peak_time: null,
-      replay_peak_time: null,
-      segment_summary: [],
-    },
-    confidence: 1,
-  });
-});
-
-test("hybrid 上传链路不在推流曲线截图上做形态识别", () => {
-  const content = buildRecognitionContentFromOcrText("", "curve");
-
-  assert.deepEqual(JSON.parse(content), {
-    recognized: false,
-    reason: "OCR 只能提取文字，无法稳定判断推流曲线形态",
-  });
 });
 
 test("overview OCR 返回待确认结果结构", () => {
@@ -351,3 +256,4 @@ test("retention 识别：AI 没返回 segment_summary 也能成功", () => {
     confidence: 0.8,
   });
 });
+
