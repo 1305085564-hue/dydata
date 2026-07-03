@@ -123,6 +123,13 @@ type OcrApiPayload = {
     error_code?: string;
   };
   error?: string;
+  timings?: {
+    download_ms?: number;
+    classify_ms?: number;
+    ocr_ms?: number;
+    parse_ms?: number;
+    total_ms: number;
+  };
 };
 
 type OcrData = NonNullable<OcrApiPayload["data"]>;
@@ -356,7 +363,7 @@ async function uploadSubmissionScreenshot(input: {
     throw new Error(payload.error || "截图上传失败，请稍后重试");
   }
 
-  return payload.data.url;
+  return payload.data;
 }
 
 function createSummaryOverride(
@@ -808,11 +815,13 @@ export function VideoSubmitForm({
         },
       }));
 
-      const assetUrl = await uploadSubmissionScreenshot({
+      const uploadStart = performance.now();
+      const { url: assetUrl, bucket, path } = await uploadSubmissionScreenshot({
         accountId: account.id,
         role,
         file,
       });
+      const uploadMs = Math.round(performance.now() - uploadStart);
       const previewUrl = URL.createObjectURL(file);
       blobUrlsRef.current.add(previewUrl);
 
@@ -822,16 +831,33 @@ export function VideoSubmitForm({
           "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-sm",
       });
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("asset_role", role);
-
+      const ocrRequestStart = performance.now();
       const response = await fetch("/api/ocr-screenshot", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bucket,
+          path,
+          asset_role: role,
+        }),
       });
+      const ocrRequestMs = Math.round(performance.now() - ocrRequestStart);
 
       const payload = (await response.json()) as OcrApiPayload;
+      const totalMs = Math.round(performance.now() - uploadStart);
+      const serverTimings = payload.timings;
+      console.log("[OCR 耗时]", {
+        role,
+        upload_ms: uploadMs,
+        ocr_request_ms: ocrRequestMs,
+        server_download_ms: serverTimings?.download_ms,
+        server_classify_ms: serverTimings?.classify_ms,
+        server_ocr_ms: serverTimings?.ocr_ms,
+        server_parse_ms: serverTimings?.parse_ms,
+        server_total_ms: serverTimings?.total_ms,
+        total_ms: totalMs,
+      });
+
       if (!response.ok || !payload.data) {
         throw new Error(toSlotUploadErrorMessage(payload.error));
       }

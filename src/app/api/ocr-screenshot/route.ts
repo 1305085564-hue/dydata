@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { callAi } from "@/lib/ai/client";
 import type { AiMessage } from "@/lib/ai/client";
 
@@ -106,6 +107,7 @@ type ImagePayloadSuccess = {
   dataUrl: string;
   screenshotType: ScreenshotType | null;
   assetRole: ScreenshotAssetRole | null;
+  downloadMs?: number;
 };
 
 type ImagePayloadError = {
@@ -120,6 +122,14 @@ export type ParsedScreenshotResponse = {
   recognized_fields: JsonObject | null;
   confidence?: Record<OcrFieldKey, ConfidenceLevel>;
   error?: string;
+};
+
+type OcrTimings = {
+  download_ms?: number;
+  classify_ms?: number;
+  ocr_ms?: number;
+  parse_ms?: number;
+  total_ms: number;
 };
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
@@ -142,6 +152,7 @@ function buildOcrParseErrorMessage(content: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
   const supabase = await createClient();
 
   const {
@@ -152,11 +163,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
+  const timings: Partial<OcrTimings> = {};
+
   try {
     const contentType = request.headers.get("content-type") || "";
     const imagePayload = contentType.includes("multipart/form-data")
       ? await parseMultipartPayload(request)
-      : await parseJsonPayload(request);
+      : await parseJsonPayload(request, user.id);
 
     if ("error" in imagePayload) {
       return NextResponse.json({ error: imagePayload.error }, { status: 400 });
@@ -166,12 +179,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "图片为空、损坏或请求格式不正确" }, { status: 400 });
     }
 
+    timings.download_ms = imagePayload.downloadMs ?? 0;
     const dataUrl = imagePayload.dataUrl;
     const forcedScreenshotType = getScreenshotTypeByAssetRole(imagePayload.assetRole);
     const screenshotType =
       forcedScreenshotType ??
       imagePayload.screenshotType ??
-      (await detectScreenshotType(dataUrl));
+      (await detectScreenshotType(dataUrl, timings));
     const prompt = buildPromptByType(screenshotType);
 
     try {
@@ -183,6 +197,7 @@ export async function POST(request: NextRequest) {
         ],
       }];
 
+      const ocrStart = Date.now();
       const aiResult = await callAi({
         messages,
         maxTokens: 1000,
@@ -191,37 +206,46 @@ export async function POST(request: NextRequest) {
         featureKey: "ocr_screenshot",
         databaseOnly: true,
       });
+      timings.ocr_ms = Date.now() - ocrStart;
 
       const content = aiResult.content;
+      const parseStart = Date.now();
 
       if (screenshotType === "curve") {
         const parsed = parseOcrResponse(content, "curve");
+        timings.parse_ms = Date.now() - parseStart;
+        timings.total_ms = Date.now() - startTime;
         if (!parsed) {
-          return NextResponse.json({ error: buildOcrParseErrorMessage(content) }, { status: 500 });
+          return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
         }
-        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type });
+        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, timings });
       }
 
       if (screenshotType === "retention") {
         const parsed = parseOcrResponse(content, "retention");
+        timings.parse_ms = Date.now() - parseStart;
+        timings.total_ms = Date.now() - startTime;
         if (!parsed) {
-          return NextResponse.json({ error: buildOcrParseErrorMessage(content) }, { status: 500 });
+          return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
         }
-        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type });
+        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, timings });
       }
 
       const parsed = parseOcrResponse(content, "data");
+      timings.parse_ms = Date.now() - parseStart;
+      timings.total_ms = Date.now() - startTime;
 
       if (!parsed) {
-        return NextResponse.json({ error: buildOcrParseErrorMessage(content) }, { status: 500 });
+        return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
       }
 
       if (parsed.slot_status === "failed") {
-        return NextResponse.json({ data: parsed, screenshot_type: screenshotType }, { status: 200 });
+        return NextResponse.json({ data: parsed, screenshot_type: screenshotType, timings }, { status: 200 });
       }
 
-      return NextResponse.json({ data: parsed, screenshot_type: screenshotType });
+      return NextResponse.json({ data: parsed, screenshot_type: screenshotType, timings });
     } catch (error) {
+      timings.total_ms = Date.now() - startTime;
       const message = error instanceof Error ? error.message : "截图识别出错，请稍后重试或手动输入";
       return NextResponse.json(
         {
@@ -229,6 +253,7 @@ export async function POST(request: NextRequest) {
             message === "该 AI 功能已禁用"
               ? "截图识别功能已禁用，请先在后台启用"
               : message,
+          timings,
         },
         { status: 500 }
       );
@@ -258,8 +283,51 @@ async function parseMultipartPayload(request: NextRequest): Promise<ImagePayload
   };
 }
 
-async function parseJsonPayload(request: NextRequest): Promise<ImagePayloadSuccess | ImagePayloadError> {
+async function parseJsonPayload(
+  request: NextRequest,
+  userId: string
+): Promise<ImagePayloadSuccess | ImagePayloadError> {
   const body = await request.json();
+
+  // 优先支持已上传到 storage 的图片：{ bucket, path, asset_role, screenshot_type }
+  const bucket = typeof body?.bucket === "string" ? body.bucket.trim() : "";
+  const path = typeof body?.path === "string" ? body.path.trim() : "";
+  if (bucket && path) {
+    if (!path.startsWith(`${userId}/`)) {
+      return { error: "无权限访问该图片" };
+    }
+    const downloadStart = Date.now();
+    const downloaded = await downloadImageFromStorage(bucket, path);
+    const downloadMs = Date.now() - downloadStart;
+    if ("error" in downloaded) {
+      return downloaded;
+    }
+    return {
+      ...downloaded,
+      downloadMs,
+      screenshotType: normalizeScreenshotType(body?.screenshot_type),
+      assetRole: normalizeAssetRole(body?.asset_role),
+    };
+  }
+
+  // 兼容公开 URL：{ url, asset_role, screenshot_type }
+  const url = typeof body?.url === "string" ? body.url.trim() : "";
+  if (url) {
+    const downloadStart = Date.now();
+    const fetched = await fetchImageAsDataUrl(url);
+    const downloadMs = Date.now() - downloadStart;
+    if ("error" in fetched) {
+      return fetched;
+    }
+    return {
+      ...fetched,
+      downloadMs,
+      screenshotType: normalizeScreenshotType(body?.screenshot_type),
+      assetRole: normalizeAssetRole(body?.asset_role),
+    };
+  }
+
+  // 保留旧版 JSON data URL 兼容
   const image = typeof body?.image === "string" ? body.image.trim() : "";
 
   if (!image) {
@@ -282,7 +350,7 @@ async function parseJsonPayload(request: NextRequest): Promise<ImagePayloadSucce
     };
   }
 
-  return { error: "JSON 请求需提供 data URL 格式图片" };
+  return { error: "JSON 请求需提供 bucket+path、url 或 data URL 格式图片" };
 }
 
 async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error: string }> {
@@ -304,7 +372,83 @@ async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error:
   };
 }
 
-async function detectScreenshotType(dataUrl: string): Promise<ScreenshotType> {
+async function downloadImageFromStorage(
+  bucket: string,
+  path: string
+): Promise<{ dataUrl: string } | { error: string }> {
+  try {
+    const adminSupabase = createAdminClient();
+    const { data, error } = await adminSupabase.storage.from(bucket).download(path);
+
+    if (error || !data) {
+      return { error: error?.message || "无法从存储读取图片" };
+    }
+
+    const arrayBuffer = await data.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    if (buffer.length > MAX_FILE_SIZE) {
+      return { error: "图片不能超过 8MB" };
+    }
+
+    const mimeType = data.type || inferMimeTypeFromPath(path);
+    if (!ACCEPTED_TYPES.has(mimeType)) {
+      return { error: "仅支持 jpg、png、webp 图片" };
+    }
+
+    return {
+      dataUrl: `data:${mimeType};base64,${buffer.toString("base64")}`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "读取存储图片失败";
+    return { error: message };
+  }
+}
+
+async function fetchImageAsDataUrl(url: string): Promise<{ dataUrl: string } | { error: string }> {
+  try {
+    const response = await fetch(url, { method: "GET" });
+    if (!response.ok) {
+      return { error: `无法下载图片：${response.status}` };
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!ACCEPTED_TYPES.has(contentType)) {
+      return { error: "仅支持 jpg、png、webp 图片" };
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    if (buffer.length > MAX_FILE_SIZE) {
+      return { error: "图片不能超过 8MB" };
+    }
+
+    return {
+      dataUrl: `data:${contentType};base64,${buffer.toString("base64")}`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "下载图片失败";
+    return { error: message };
+  }
+}
+
+function inferMimeTypeFromPath(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "png":
+      return "image/png";
+    case "webp":
+      return "image/webp";
+    case "jpg":
+    case "jpeg":
+    default:
+      return "image/jpeg";
+  }
+}
+
+async function detectScreenshotType(
+  dataUrl: string,
+  timings?: Partial<OcrTimings>
+): Promise<ScreenshotType> {
   try {
     const messages: AiMessage[] = [{
       role: "user",
@@ -314,6 +458,7 @@ async function detectScreenshotType(dataUrl: string): Promise<ScreenshotType> {
       ],
     }];
 
+    const classifyStart = Date.now();
     const result = await callAi({
       messages,
       maxTokens: 300,
@@ -322,6 +467,9 @@ async function detectScreenshotType(dataUrl: string): Promise<ScreenshotType> {
       featureKey: "ocr_screenshot",
       databaseOnly: true,
     });
+    if (timings) {
+      timings.classify_ms = Date.now() - classifyStart;
+    }
 
     return parseClassificationContent(result.content) ?? "data";
   } catch {
