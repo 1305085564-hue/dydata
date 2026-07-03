@@ -152,7 +152,8 @@ export function summarizeSubmissionIssues(
     )
     .map((slot) => slot.role);
 
-  const topicTagMissing = meta.topicTag !== undefined ? !meta.topicTag.trim() : false;
+  const isAbnormal = meta.anomalyStatus === "限流" || meta.anomalyStatus === "删稿";
+  const topicTagMissing = meta.topicTag !== undefined && !isAbnormal ? !meta.topicTag.trim() : false;
   const missingRequiredMeta: RequiredMetaKey[] = [];
 
   if (meta.videoTitle !== undefined && !meta.videoTitle.trim()) {

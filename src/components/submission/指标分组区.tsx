@@ -120,10 +120,9 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
       <div className="flex flex-1 flex-col gap-8">
         {/* 核心数据 */}
-        <div className="relative pl-4">
-          <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D97757]/70" />
-          <div className="mb-4">
-            <h3 className="text-[13px] font-medium text-zinc-800">核心数据</h3>
+        <div>
+          <div className="mb-3">
+            <h3 className="text-[13px] font-semibold text-zinc-800">核心数据</h3>
           </div>
           <div className="grid grid-cols-3 gap-4">
             {CORE_ITEMS.map((item, index) => (
@@ -147,17 +146,16 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         </div>
 
         {/* 互动数据 */}
-        <div className="relative pl-4">
-          <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D99E55]/70" />
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[13px] font-medium text-zinc-800">互动数据</h3>
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-zinc-800">互动数据</h3>
             <AnimatePresence>
               {showInteractionWarning && (
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="text-[12px] text-[#D99E55]"
+                  className="text-[12px] font-medium text-[#D99E55]"
                 >
                   互动总数大于播放量，请核对
                 </motion.span>
@@ -183,18 +181,14 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         </div>
 
         {/* 完播留存 */}
-        <div className="relative pl-4">
-          <div className={cn(
-            "absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full",
-            retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]/70",
-          )} />
-          <div className="mb-4 space-y-1">
-            <h3 className="text-[13px] font-medium text-zinc-800">
-              完播留存{retentionOptional && <span className="ml-1 font-normal text-zinc-500">（可选）</span>}
+        <div>
+          <div className="mb-3 space-y-1">
+            <h3 className="text-[13px] font-semibold text-zinc-800">
+              完播留存{retentionOptional && <span className="ml-1 text-[12px] font-normal text-zinc-400">（可选）</span>}
             </h3>
             {retentionOptional ? (
               <p className="text-[12px] leading-[1.6] text-zinc-400">
-                {anomalyStatus === "限流" ? "限流" : "删稿"}状态下完播留存数据不可得,× 必填,有则补
+                {anomalyStatus === "限流" ? "限流" : "删稿"}状态下完播留存数据不可得，免除必填，若有数据可补充填写
               </p>
             ) : null}
           </div>

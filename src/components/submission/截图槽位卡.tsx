@@ -188,11 +188,11 @@ export function SubmissionSlotCard({
             {visual.label}
           </span>
           {required ? (
-            <span className="inline-flex items-center rounded-full border border-[#D97757]/30 bg-white px-2 py-[3px] text-[11px] font-medium text-[#D97757]">
+            <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-[2px] text-[11px] font-medium text-zinc-500">
               必传
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2 py-[3px] text-[11px] font-medium text-zinc-500">
+            <span className="inline-flex items-center rounded-md bg-zinc-100/50 px-2 py-[2px] text-[11px] font-medium text-zinc-400">
               选传
             </span>
           )}

@@ -6,10 +6,10 @@ import {
   normalizePublishedAtInputValue,
 } from "./日报";
 
-test("新建日报时发布时间默认昨天同一时分", () => {
+test("新建日报时发布时间默认昨天 19:00", () => {
   const now = new Date(2026, 2, 17, 9, 30, 0);
 
-  assert.equal(getDefaultPublishedAtValue(now), "2026-03-16T09:30");
+  assert.equal(getDefaultPublishedAtValue(now), "2026-03-16T19:00");
 });
 
 test("已有发布时间会被格式化为 datetime-local 可回填值", () => {

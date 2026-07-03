@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, Check, ChevronDown, Clock, FilePenLine, History, Lock, PencilLine, ShieldAlert, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Clock, Eye, FilePenLine, History, Lock, PencilLine, ShieldAlert, TrendingUp, Trophy, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
@@ -634,7 +634,7 @@ export function VideoSubmitPanel({
         <Card className={cn(
           "mx-auto overflow-hidden",
           embeddedChrome
-            ? "max-w-3xl rounded-none border-none bg-transparent shadow-none"
+            ? "max-w-6xl rounded-none border-none bg-transparent shadow-none"
             : "max-w-6xl rounded-2xl border border-zinc-200/60 bg-zinc-50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
         )}>
           {!embeddedChrome ? (
@@ -811,10 +811,10 @@ export function VideoSubmitPanel({
                   opacity: { duration: 0.2 },
                   backgroundColor: { duration: 1.5, delay: 0.2 }
                 }}
-                className="relative overflow-hidden rounded-2xl border border-zinc-200/60 p-6 text-[13px] text-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+                className="relative overflow-hidden rounded-2xl border border-zinc-200 p-6 text-[13px] text-zinc-800"
               >
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between relative z-10">
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
                         <FilePenLine className="size-3.5 stroke-[1.5]" />
@@ -855,7 +855,7 @@ export function VideoSubmitPanel({
                       </div>
                     </div>
                   </div>
-
+ 
                   <div className="flex shrink-0 flex-col gap-3 lg:w-[190px]">
                     <a href={violationSubmitHref}>
                       <Button
@@ -877,6 +877,47 @@ export function VideoSubmitPanel({
                       修改今日数据
                     </Button>
                   </div>
+                </div>
+
+                {/* 下一步建议 (Next Steps) */}
+                <div className="mt-5 border-t border-zinc-200/60 pt-4 flex flex-wrap items-center gap-1 text-zinc-500">
+                  <span className="text-[12px] font-medium text-zinc-400 mr-2">下一步建议：</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsDataViewOpen(true)}
+                    className="h-8 rounded-lg px-2.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none"
+                  >
+                    <Eye className="size-3.5 mr-1 text-zinc-400" />
+                    数据查看
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsTrendViewOpen(true)}
+                    className="h-8 rounded-lg px-2.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none"
+                  >
+                    <TrendingUp className="size-3.5 mr-1 text-zinc-400" />
+                    趋势查看
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsLeaderboardOpen(true)}
+                    className="h-8 rounded-lg px-2.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none"
+                  >
+                    <Trophy className="size-3.5 mr-1 text-zinc-400" />
+                    排行榜
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsHistoryOpen(true)}
+                    className="h-8 rounded-lg px-2.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none"
+                  >
+                    <History className="size-3.5 mr-1 text-zinc-400" />
+                    历史记录
+                  </Button>
                 </div>
               </motion.div>
             ) : null}
