@@ -84,43 +84,6 @@ test("OCR 纯文字可转换为现有 overview JSON 结构", () => {
   });
 });
 
-test("OCR 文字标签和数字分行时也能转换 overview JSON", () => {
-  const content = buildRecognitionContentFromOcrText(
-    [
-      "播放量",
-      "点赞数",
-      "评论数",
-      "分享数",
-      "收藏数",
-      "涨粉数",
-      "3.21万",
-      "1280",
-      "68",
-      "15",
-      "106",
-      "42",
-    ].join("\n"),
-    "data"
-  );
-
-  assert.deepEqual(JSON.parse(content), {
-    play_count: 32100,
-    likes: 1280,
-    comments: 68,
-    shares: 15,
-    favorites: 106,
-    follower_gain: 42,
-    confidence: {
-      play_count: "medium",
-      likes: "medium",
-      comments: "medium",
-      shares: "medium",
-      favorites: "medium",
-      follower_gain: "medium",
-    },
-  });
-});
-
 test("OCR 纯文字可转换为 retention JSON 结构", () => {
   const content = buildRecognitionContentFromOcrText(
     [
@@ -128,38 +91,6 @@ test("OCR 纯文字可转换为 retention JSON 结构", () => {
       "2秒跳出率 41.2%",
       "5秒完播率 32.8%",
       "完播率 18.5%",
-    ].join("\n"),
-    "retention"
-  );
-
-  assert.deepEqual(JSON.parse(content), {
-    recognized: true,
-    retention_metrics: {
-      avg_play_duration: 23.6,
-      bounce_rate_2s: 41.2,
-      completion_rate_5s: 32.8,
-      completion_rate: 18.5,
-    },
-    retention_analysis: {
-      bounce_peak_time: null,
-      replay_peak_time: null,
-      segment_summary: [],
-    },
-    confidence: 1,
-  });
-});
-
-test("OCR 文字标签和数字分行时也能转换 retention JSON", () => {
-  const content = buildRecognitionContentFromOcrText(
-    [
-      "均播时长",
-      "2s跳出率",
-      "5s完播率",
-      "整体完播率",
-      "23.6秒",
-      "41.2%",
-      "32.8%",
-      "18.5%",
     ].join("\n"),
     "retention"
   );

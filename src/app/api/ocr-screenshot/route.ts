@@ -253,14 +253,12 @@ async function recognizeScreenshotContent(dataUrl: string, screenshotType: Scree
 
   if (mode === "ocr") {
     const text = await recognizeTextWithPaddleOcr(dataUrl);
-    console.info("ocr_screenshot engine=ocr_only screenshot_type=%s text_length=%d", screenshotType, text.length);
     return buildRecognitionContentFromOcrText(text, screenshotType);
   }
 
   // Hybrid is the default test-run mode: cheap OCR extracts text first, existing visual LLM remains the fallback.
   // Curve shape is intentionally skipped in upload flow; admin diagnosis can run visual LLM later when it is actually needed.
   if (screenshotType === "curve") {
-    console.info("ocr_screenshot engine=ocr_skip_curve screenshot_type=%s", screenshotType);
     return buildRecognitionContentFromOcrText("", screenshotType);
   }
 
@@ -269,22 +267,12 @@ async function recognizeScreenshotContent(dataUrl: string, screenshotType: Scree
     const content = buildRecognitionContentFromOcrText(text, screenshotType);
     const parsed = parseOcrResponse(content, screenshotType);
     if (parsed && parsed.slot_status !== "failed") {
-      console.info(
-        "ocr_screenshot engine=ocr_success screenshot_type=%s confidence=%d text_length=%d",
-        screenshotType,
-        parsed.confidence_score,
-        text.length
-      );
       return content;
     }
-    console.warn("ocr_screenshot engine=llm_fallback reason=ocr_parsed_failed screenshot_type=%s text_length=%d", screenshotType, text.length);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "unknown";
-    console.warn("ocr_screenshot engine=llm_fallback reason=%s screenshot_type=%s", message, screenshotType);
+  } catch {
     // Hybrid mode keeps the existing visual LLM path as the safety net.
   }
 
-  console.info("ocr_screenshot engine=llm screenshot_type=%s", screenshotType);
   return recognizeScreenshotWithLlm(dataUrl, screenshotType);
 }
 
@@ -610,21 +598,12 @@ export function buildRecognitionContentFromOcrText(text: string, screenshotType:
 }
 
 function buildDataRecognitionFromText(text: string): ParsedOcrResult {
-  const labelGroups = [
-    ["播放量", "播放次数", "播放"],
-    ["点赞量", "点赞数", "点赞", "获赞"],
-    ["评论量", "评论数", "评论"],
-    ["分享量", "分享数", "分享", "转发"],
-    ["收藏量", "收藏数", "收藏"],
-    ["涨粉数", "涨粉", "新增粉丝", "粉丝增量", "净增粉丝", "吸粉"],
-  ];
-  const orderedValues = findOrderedMetricValues(text, labelGroups);
-  const playCount = orderedValues?.[0] ?? findMetricValue(text, labelGroups[0]);
-  const likes = orderedValues?.[1] ?? findMetricValue(text, labelGroups[1]);
-  const comments = orderedValues?.[2] ?? findMetricValue(text, labelGroups[2]);
-  const shares = orderedValues?.[3] ?? findMetricValue(text, labelGroups[3]);
-  const favorites = orderedValues?.[4] ?? findMetricValue(text, labelGroups[4]);
-  const followerGain = orderedValues?.[5] ?? findMetricValue(text, labelGroups[5]);
+  const playCount = findMetricValue(text, ["播放量", "播放次数", "播放"]);
+  const likes = findMetricValue(text, ["点赞量", "点赞", "获赞"]);
+  const comments = findMetricValue(text, ["评论量", "评论"]);
+  const shares = findMetricValue(text, ["分享量", "分享", "转发"]);
+  const favorites = findMetricValue(text, ["收藏量", "收藏"]);
+  const followerGain = findMetricValue(text, ["涨粉数", "涨粉", "新增粉丝", "粉丝增量", "净增粉丝", "吸粉"]);
 
   return {
     play_count: playCount.value,
@@ -645,17 +624,10 @@ function buildDataRecognitionFromText(text: string): ParsedOcrResult {
 }
 
 function buildRetentionRecognitionFromText(text: string): RetentionRecognitionResult {
-  const labelGroups = [
-    ["平均播放时长", "平均观看时长", "均播时长", "均播", "平均播放"],
-    ["2秒跳出率", "2s跳出率", "2 秒跳出率", "两秒跳出率"],
-    ["5秒完播率", "5s完播率", "5 秒完播率", "五秒完播率"],
-    ["整体完播率", "总完播率", "完播率"],
-  ];
-  const orderedValues = findOrderedMetricValues(text, labelGroups);
-  const avgPlayDuration = orderedValues?.[0] ?? findMetricValue(text, labelGroups[0]);
-  const bounceRate2s = orderedValues?.[1] ?? findMetricValue(text, labelGroups[1]);
-  const completionRate5s = orderedValues?.[2] ?? findMetricValue(text, labelGroups[2]);
-  const completionRate = orderedValues?.[3] ?? findMetricValue(removeFiveSecondCompletionRate(text), labelGroups[3]);
+  const avgPlayDuration = findMetricValue(text, ["平均播放时长", "平均观看时长", "均播", "平均播放"]);
+  const bounceRate2s = findMetricValue(text, ["2秒跳出率", "2s跳出率", "2 秒跳出率", "两秒跳出率"]);
+  const completionRate5s = findMetricValue(text, ["5秒完播率", "5s完播率", "5 秒完播率", "五秒完播率"]);
+  const completionRate = findMetricValue(removeFiveSecondCompletionRate(text), ["整体完播率", "总完播率", "完播率"]);
   const metrics: RetentionMetrics = {
     avg_play_duration: avgPlayDuration.value,
     bounce_rate_2s: bounceRate2s.value,
@@ -690,46 +662,6 @@ function findMetricValue(text: string, labels: string[]): { value: number | null
   }
 
   return { value: null, confidence: "low" };
-}
-
-function findOrderedMetricValues(text: string, labelGroups: string[][]): Array<{ value: number | null; confidence: ConfidenceLevel }> | null {
-  const lines = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines.length === 0) {
-    return null;
-  }
-
-  const allLabels = labelGroups.flat();
-  const labelLineIndexes = labelGroups.map((labels) =>
-    lines.findIndex((line) => labels.some((label) => line.includes(label)))
-  );
-  if (labelLineIndexes.some((index) => index < 0)) {
-    return null;
-  }
-
-  const firstLabelIndex = Math.min(...labelLineIndexes);
-  const lastLabelIndex = Math.max(...labelLineIndexes);
-  const labelLinesAreClustered = labelLineIndexes.every((index) => index >= firstLabelIndex && index <= lastLabelIndex);
-  if (!labelLinesAreClustered) {
-    return null;
-  }
-
-  const numericValues = lines
-    .slice(lastLabelIndex + 1)
-    .filter((line) => !allLabels.some((label) => line.includes(label)))
-    .map((line) => normalizeOcrNumber(line))
-    .filter((value): value is number => value !== null);
-
-  if (numericValues.length < labelGroups.length) {
-    return null;
-  }
-
-  return labelGroups.map((_, index) => ({
-    value: numericValues[index] ?? null,
-    confidence: numericValues[index] == null ? "low" : "medium",
-  }));
 }
 
 function findNumberNearLabel(text: string, label: string): number | null {
