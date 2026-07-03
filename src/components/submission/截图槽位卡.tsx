@@ -188,11 +188,11 @@ export function SubmissionSlotCard({
             {visual.label}
           </span>
           {required ? (
-            <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-[2px] text-[11px] font-medium text-zinc-500">
+            <span className="inline-flex items-center rounded-full border border-[#D97757]/30 bg-white px-2 py-[3px] text-[11px] font-medium text-[#D97757]">
               必传
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-md bg-zinc-100/50 px-2 py-[2px] text-[11px] font-medium text-zinc-400">
+            <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2 py-[3px] text-[11px] font-medium text-zinc-500">
               选传
             </span>
           )}
@@ -353,7 +353,7 @@ export function SubmissionSlotCard({
                     onClick={onRetry}
                     className="inline-flex h-7 items-center rounded-lg border border-[#C9604D]/35 bg-white px-2.5 text-[11px] font-medium text-[#C9604D] transition-[background-color,border-color] duration-150 hover:bg-[#C9604D] hover:text-white"
                   >
-                    {error === NETWORK_RETRY_MESSAGE ? "重新识别" : "重新识别"}
+                    {error === NETWORK_RETRY_MESSAGE ? "重试" : "重新识别"}
                   </button>
                 ) : null}
                 {onManualFill ? (

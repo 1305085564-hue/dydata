@@ -6,7 +6,11 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  Eye,
+  History,
   Settings2,
+  TrendingUp,
+  Trophy,
   UserCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,7 +43,7 @@ export function DashboardWorkspaceHeader({
   today,
   activeBizDate,
   onDateChange,
-  onDashboardAction: _onDashboardAction,
+  onDashboardAction,
   hasPendingExemption,
   submittedDates,
   accounts,
@@ -51,6 +55,13 @@ export function DashboardWorkspaceHeader({
   const dateInputRef = useRef<HTMLInputElement | null>(null);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+
+  const utilityActions = [
+    { key: "data-view", label: "数据查看", icon: Eye },
+    { key: "trend-view", label: "趋势查看", icon: TrendingUp },
+    { key: "leaderboard", label: "排行榜", icon: Trophy },
+    { key: "history", label: "历史记录", icon: History },
+  ];
 
   const selectedAccount = accounts?.find((account) => account.id === selectedAccountId) ?? accounts?.[0] ?? null;
   const showAccountControl = Boolean(accounts && accounts.length > 0);
@@ -92,6 +103,24 @@ export function DashboardWorkspaceHeader({
               className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
               aria-label="数据快捷入口"
             >
+              {utilityActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.key}
+                    type="button"
+                    onClick={() => onDashboardAction(action.key)}
+                    className="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-800 focus-visible:bg-zinc-100 focus-visible:text-zinc-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    style={{ transitionDelay: "50ms" }}
+                  >
+                    <Icon
+                      size={14}
+                      className="stroke-[1.5] text-zinc-400 transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:text-zinc-700"
+                    />
+                    {action.label}
+                  </button>
+                );
+              })}
               <QuickExemptionButton
                 hasPending={hasPendingExemption}
                 today={today}
