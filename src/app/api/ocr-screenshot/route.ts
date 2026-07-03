@@ -5,6 +5,7 @@ import type { AiMessage } from "@/lib/ai/client";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
+type ImageRecognitionMode = "llm" | "ocr" | "hybrid";
 type ScreenshotTypeInput =
   | ScreenshotType
   | "overview"
@@ -99,6 +100,19 @@ type OpenAICompatibleMessageContentBlock = {
   text?: string;
 };
 
+type PaddleOcrLine = {
+  text?: unknown;
+  confidence?: unknown;
+};
+
+type PaddleOcrResponse = {
+  success?: unknown;
+  text?: unknown;
+  lines?: PaddleOcrLine[];
+  elapsed_ms?: unknown;
+  error?: unknown;
+};
+
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 
@@ -135,10 +149,20 @@ const OCR_FIELDS: OcrFieldKey[] = [
 const SCREENSHOT_TYPES: ScreenshotType[] = ["data", "curve", "retention"];
 const CURVE_PATTERNS: CurvePattern[] = ["前高后低", "平稳增长", "二次起量", "低开高走", "断崖式"];
 const QUALITATIVE_LEVELS: Array<"high" | "medium" | "low"> = ["high", "medium", "low"];
+const DEFAULT_PADDLE_OCR_ENDPOINT = "http://118.89.72.250:18790/ocr";
+const DEFAULT_PADDLE_OCR_TIMEOUT_MS = 15000;
 
 function buildOcrParseErrorMessage(content: string) {
   const preview = content.replace(/\s+/g, " ").trim().slice(0, 120);
   return preview ? `AI 返回格式无法识别：${preview}` : "AI 返回格式无法识别";
+}
+
+export function getImageRecognitionMode(value = process.env.IMAGE_RECOGNITION_PROVIDER): ImageRecognitionMode {
+  return value === "ocr" || value === "hybrid" || value === "llm" ? value : "hybrid";
+}
+
+export function getPaddleOcrEndpoint(value = process.env.PADDLE_OCR_ENDPOINT): string {
+  return value?.trim() || DEFAULT_PADDLE_OCR_ENDPOINT;
 }
 
 export async function POST(request: NextRequest) {
@@ -172,27 +196,9 @@ export async function POST(request: NextRequest) {
       forcedScreenshotType ??
       imagePayload.screenshotType ??
       (await detectScreenshotType(dataUrl));
-    const prompt = buildPromptByType(screenshotType);
 
     try {
-      const messages: AiMessage[] = [{
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      }];
-
-      const aiResult = await callAi({
-        messages,
-        maxTokens: 1000,
-        jsonMode: true,
-        timeoutMs: 25000,
-        featureKey: "ocr_screenshot",
-        databaseOnly: true,
-      });
-
-      const content = aiResult.content;
+      const content = await recognizeScreenshotContent(dataUrl, screenshotType);
 
       if (screenshotType === "curve") {
         const parsed = parseOcrResponse(content, "curve");
@@ -236,6 +242,137 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "图片为空、损坏或请求格式不正确" }, { status: 400 });
   }
+}
+
+async function recognizeScreenshotContent(dataUrl: string, screenshotType: ScreenshotType): Promise<string> {
+  const mode = getImageRecognitionMode();
+
+  if (mode === "llm") {
+    return recognizeScreenshotWithLlm(dataUrl, screenshotType);
+  }
+
+  if (mode === "ocr") {
+    const text = await recognizeTextWithPaddleOcr(dataUrl);
+    return buildRecognitionContentFromOcrText(text, screenshotType);
+  }
+
+  // Hybrid is the default test-run mode: cheap OCR extracts text first, existing visual LLM remains the fallback.
+  // Curve shape is intentionally skipped in upload flow; admin diagnosis can run visual LLM later when it is actually needed.
+  if (screenshotType === "curve") {
+    return buildRecognitionContentFromOcrText("", screenshotType);
+  }
+
+  try {
+    const text = await recognizeTextWithPaddleOcr(dataUrl);
+    const content = buildRecognitionContentFromOcrText(text, screenshotType);
+    const parsed = parseOcrResponse(content, screenshotType);
+    if (parsed && parsed.slot_status !== "failed") {
+      return content;
+    }
+  } catch {
+    // Hybrid mode keeps the existing visual LLM path as the safety net.
+  }
+
+  return recognizeScreenshotWithLlm(dataUrl, screenshotType);
+}
+
+async function recognizeScreenshotWithLlm(dataUrl: string, screenshotType: ScreenshotType): Promise<string> {
+  const messages: AiMessage[] = [{
+    role: "user",
+    content: [
+      { type: "text", text: buildPromptByType(screenshotType) },
+      { type: "image_url", image_url: { url: dataUrl } },
+    ],
+  }];
+
+  const aiResult = await callAi({
+    messages,
+    maxTokens: 1000,
+    jsonMode: true,
+    timeoutMs: 25000,
+    featureKey: "ocr_screenshot",
+    databaseOnly: true,
+  });
+
+  return aiResult.content;
+}
+
+async function recognizeTextWithPaddleOcr(dataUrl: string): Promise<string> {
+  const imagePayload = dataUrlToImageUpload(dataUrl);
+  if (!imagePayload) {
+    throw new Error("图片为空、损坏或请求格式不正确");
+  }
+
+  const formData = new FormData();
+  formData.append("image", imagePayload.blob, `screenshot.${imagePayload.extension}`);
+  const timeoutMs = getPaddleOcrTimeoutMs();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(getPaddleOcrEndpoint(), {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`OCR 服务请求失败：${response.status}`);
+    }
+
+    const payload = await response.json() as PaddleOcrResponse;
+    const text = parsePaddleOcrText(payload);
+
+    if (!text) {
+      const error = typeof payload.error === "string" && payload.error.trim() ? payload.error.trim() : "未识别到文字内容";
+      throw new Error(error);
+    }
+
+    return text;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export function parsePaddleOcrText(payload: PaddleOcrResponse): string | null {
+  if (payload.success !== true) {
+    return null;
+  }
+
+  if (typeof payload.text === "string" && payload.text.trim()) {
+    return payload.text.trim();
+  }
+
+  if (Array.isArray(payload.lines)) {
+    const text = payload.lines
+      .map((line) => typeof line.text === "string" ? line.text.trim() : "")
+      .filter(Boolean)
+      .join("\n");
+    return text || null;
+  }
+
+  return null;
+}
+
+function dataUrlToImageUpload(dataUrl: string): { blob: Blob; extension: string } | null {
+  const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+  if (!match) {
+    return null;
+  }
+
+  const mimeType = match[1];
+  const base64Content = match[2];
+  const extension = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+
+  return {
+    blob: new Blob([Buffer.from(base64Content, "base64")], { type: mimeType }),
+    extension,
+  };
+}
+
+function getPaddleOcrTimeoutMs() {
+  const parsed = Number(process.env.PADDLE_OCR_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_PADDLE_OCR_TIMEOUT_MS;
 }
 
 async function parseMultipartPayload(request: NextRequest): Promise<ImagePayloadSuccess | ImagePayloadError> {
@@ -441,6 +578,137 @@ function buildRetentionPrompt(): string {
       confidence: 0.78,
     }),
   ].join("\n");
+}
+
+export function buildRecognitionContentFromOcrText(text: string, screenshotType: ScreenshotTypeInput): string {
+  const normalizedType = normalizeScreenshotTypeInput(screenshotType);
+
+  if (normalizedType === "retention") {
+    return JSON.stringify(buildRetentionRecognitionFromText(text));
+  }
+
+  if (normalizedType === "curve") {
+    return JSON.stringify({
+      recognized: false,
+      reason: "OCR 只能提取文字，无法稳定判断推流曲线形态",
+    });
+  }
+
+  return JSON.stringify(buildDataRecognitionFromText(text));
+}
+
+function buildDataRecognitionFromText(text: string): ParsedOcrResult {
+  const playCount = findMetricValue(text, ["播放量", "播放次数", "播放"]);
+  const likes = findMetricValue(text, ["点赞量", "点赞", "获赞"]);
+  const comments = findMetricValue(text, ["评论量", "评论"]);
+  const shares = findMetricValue(text, ["分享量", "分享", "转发"]);
+  const favorites = findMetricValue(text, ["收藏量", "收藏"]);
+  const followerGain = findMetricValue(text, ["涨粉数", "涨粉", "新增粉丝", "粉丝增量", "净增粉丝", "吸粉"]);
+
+  return {
+    play_count: playCount.value,
+    likes: likes.value,
+    comments: comments.value,
+    shares: shares.value,
+    favorites: favorites.value,
+    follower_gain: followerGain.value,
+    confidence: {
+      play_count: playCount.confidence,
+      likes: likes.confidence,
+      comments: comments.confidence,
+      shares: shares.confidence,
+      favorites: favorites.confidence,
+      follower_gain: followerGain.confidence,
+    },
+  };
+}
+
+function buildRetentionRecognitionFromText(text: string): RetentionRecognitionResult {
+  const avgPlayDuration = findMetricValue(text, ["平均播放时长", "平均观看时长", "均播", "平均播放"]);
+  const bounceRate2s = findMetricValue(text, ["2秒跳出率", "2s跳出率", "2 秒跳出率", "两秒跳出率"]);
+  const completionRate5s = findMetricValue(text, ["5秒完播率", "5s完播率", "5 秒完播率", "五秒完播率"]);
+  const completionRate = findMetricValue(removeFiveSecondCompletionRate(text), ["整体完播率", "总完播率", "完播率"]);
+  const metrics: RetentionMetrics = {
+    avg_play_duration: avgPlayDuration.value,
+    bounce_rate_2s: bounceRate2s.value,
+    completion_rate_5s: completionRate5s.value,
+    completion_rate: completionRate.value,
+  };
+  const hitCount = [avgPlayDuration, bounceRate2s, completionRate5s, completionRate]
+    .filter((item) => item.value !== null).length;
+
+  if (hitCount === 0) {
+    return { recognized: false, reason: "图片不清晰或未识别到留存数据" };
+  }
+
+  return {
+    recognized: true,
+    retention_metrics: metrics,
+    retention_analysis: {
+      bounce_peak_time: null,
+      replay_peak_time: null,
+      segment_summary: [],
+    },
+    confidence: Math.round((hitCount / 4) * 100) / 100,
+  };
+}
+
+function findMetricValue(text: string, labels: string[]): { value: number | null; confidence: ConfidenceLevel } {
+  for (const label of labels) {
+    const value = findNumberNearLabel(text, label);
+    if (value !== null) {
+      return { value, confidence: "high" };
+    }
+  }
+
+  return { value: null, confidence: "low" };
+}
+
+function findNumberNearLabel(text: string, label: string): number | null {
+  const escapedLabel = escapeRegExp(label);
+  const numberPattern = "([+-]?\\d+(?:,\\d{3})*(?:\\.\\d+)?\\s*(?:万|w|W|k|K|%|秒|s|S)?)";
+  const labelBeforeValue = new RegExp(`${escapedLabel}\\s*[:：]?\\s*${numberPattern}`, "i");
+  const valueBeforeLabel = new RegExp(`${numberPattern}\\s*${escapedLabel}`, "i");
+  const beforeMatch = text.match(labelBeforeValue);
+  if (beforeMatch?.[1]) {
+    return normalizeOcrNumber(beforeMatch[1]);
+  }
+
+  const afterMatch = text.match(valueBeforeLabel);
+  if (afterMatch?.[1]) {
+    return normalizeOcrNumber(afterMatch[1]);
+  }
+
+  return null;
+}
+
+function normalizeOcrNumber(value: string): number | null {
+  const compact = value.replace(/\s+/g, "");
+  const hasWan = /万$/i.test(compact);
+  const hasThousand = /k$/i.test(compact);
+  const normalized = compact.replace(/[,%秒sS万wWkK]/g, "");
+  if (!normalized) {
+    return null;
+  }
+
+  let parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  if (hasWan || /w$/i.test(compact)) parsed *= 10000;
+  if (hasThousand) parsed *= 1000;
+
+  return Math.round(parsed * 100) / 100;
+}
+
+function removeFiveSecondCompletionRate(text: string) {
+  const valuePattern = "[+-]?\\d+(?:,\\d{3})*(?:\\.\\d+)?\\s*(?:%|万|w|W|k|K)?";
+  return text.replace(new RegExp(`(?:5|五)\\s*(?:秒|s)\\s*完播率\\s*[:：]?\\s*${valuePattern}`, "gi"), "");
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function parseClassificationContent(content: unknown): ScreenshotType | null {
