@@ -113,6 +113,11 @@ type PaddleOcrResponse = {
   error?: unknown;
 };
 
+type PaddleOcrTextResult = {
+  text: string;
+  elapsedMs: number | null;
+};
+
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
 type JsonObject = { [key: string]: JsonValue };
 
@@ -246,46 +251,64 @@ export async function POST(request: NextRequest) {
 
 async function recognizeScreenshotContent(dataUrl: string, screenshotType: ScreenshotType): Promise<string> {
   const mode = getImageRecognitionMode();
+  const startedAt = Date.now();
 
   if (mode === "llm") {
-    return recognizeScreenshotWithLlm(dataUrl, screenshotType);
+    const content = await recognizeScreenshotWithLlm(dataUrl, screenshotType);
+    console.info("ocr_screenshot engine=llm_only screenshot_type=%s total_ms=%d", screenshotType, Date.now() - startedAt);
+    return content;
   }
 
   if (mode === "ocr") {
-    const text = await recognizeTextWithPaddleOcr(dataUrl);
-    console.info("ocr_screenshot engine=ocr_only screenshot_type=%s text_length=%d", screenshotType, text.length);
-    return buildRecognitionContentFromOcrText(text, screenshotType);
+    const result = await recognizeTextWithPaddleOcr(dataUrl);
+    console.info(
+      "ocr_screenshot engine=ocr_only screenshot_type=%s text_length=%d ocr_ms=%s total_ms=%d",
+      screenshotType,
+      result.text.length,
+      result.elapsedMs ?? "unknown",
+      Date.now() - startedAt
+    );
+    return buildRecognitionContentFromOcrText(result.text, screenshotType);
   }
 
   // Hybrid is the default test-run mode: cheap OCR extracts text first, existing visual LLM remains the fallback.
   // Curve shape is intentionally skipped in upload flow; admin diagnosis can run visual LLM later when it is actually needed.
   if (screenshotType === "curve") {
-    console.info("ocr_screenshot engine=ocr_skip_curve screenshot_type=%s", screenshotType);
+    console.info("ocr_screenshot engine=ocr_skip_curve screenshot_type=%s total_ms=%d", screenshotType, Date.now() - startedAt);
     return buildRecognitionContentFromOcrText("", screenshotType);
   }
 
   try {
-    const text = await recognizeTextWithPaddleOcr(dataUrl);
-    const content = buildRecognitionContentFromOcrText(text, screenshotType);
+    const result = await recognizeTextWithPaddleOcr(dataUrl);
+    const content = buildRecognitionContentFromOcrText(result.text, screenshotType);
     const parsed = parseOcrResponse(content, screenshotType);
     if (parsed && parsed.slot_status !== "failed") {
       console.info(
-        "ocr_screenshot engine=ocr_success screenshot_type=%s confidence=%d text_length=%d",
+        "ocr_screenshot engine=ocr_success screenshot_type=%s confidence=%d text_length=%d ocr_ms=%s total_ms=%d",
         screenshotType,
         parsed.confidence_score,
-        text.length
+        result.text.length,
+        result.elapsedMs ?? "unknown",
+        Date.now() - startedAt
       );
       return content;
     }
-    console.warn("ocr_screenshot engine=llm_fallback reason=ocr_parsed_failed screenshot_type=%s text_length=%d", screenshotType, text.length);
+    console.warn(
+      "ocr_screenshot engine=llm_fallback reason=ocr_parsed_failed screenshot_type=%s text_length=%d ocr_ms=%s before_fallback_ms=%d",
+      screenshotType,
+      result.text.length,
+      result.elapsedMs ?? "unknown",
+      Date.now() - startedAt
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown";
-    console.warn("ocr_screenshot engine=llm_fallback reason=%s screenshot_type=%s", message, screenshotType);
+    console.warn("ocr_screenshot engine=llm_fallback reason=%s screenshot_type=%s before_fallback_ms=%d", message, screenshotType, Date.now() - startedAt);
     // Hybrid mode keeps the existing visual LLM path as the safety net.
   }
 
-  console.info("ocr_screenshot engine=llm screenshot_type=%s", screenshotType);
-  return recognizeScreenshotWithLlm(dataUrl, screenshotType);
+  const content = await recognizeScreenshotWithLlm(dataUrl, screenshotType);
+  console.info("ocr_screenshot engine=llm screenshot_type=%s total_ms=%d", screenshotType, Date.now() - startedAt);
+  return content;
 }
 
 async function recognizeScreenshotWithLlm(dataUrl: string, screenshotType: ScreenshotType): Promise<string> {
@@ -309,7 +332,7 @@ async function recognizeScreenshotWithLlm(dataUrl: string, screenshotType: Scree
   return aiResult.content;
 }
 
-async function recognizeTextWithPaddleOcr(dataUrl: string): Promise<string> {
+async function recognizeTextWithPaddleOcr(dataUrl: string): Promise<PaddleOcrTextResult> {
   const imagePayload = dataUrlToImageUpload(dataUrl);
   if (!imagePayload) {
     throw new Error("图片为空、损坏或请求格式不正确");
@@ -340,7 +363,10 @@ async function recognizeTextWithPaddleOcr(dataUrl: string): Promise<string> {
       throw new Error(error);
     }
 
-    return text;
+    return {
+      text,
+      elapsedMs: normalizeElapsedMs(payload.elapsed_ms),
+    };
   } finally {
     clearTimeout(timeout);
   }
@@ -364,6 +390,10 @@ export function parsePaddleOcrText(payload: PaddleOcrResponse): string | null {
   }
 
   return null;
+}
+
+function normalizeElapsedMs(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? Math.round(value) : null;
 }
 
 function dataUrlToImageUpload(dataUrl: string): { blob: Blob; extension: string } | null {
