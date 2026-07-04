@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
@@ -38,7 +38,6 @@ const RETENTION_ITEMS: MetricItem[] = [
   { key: "completion_rate", label: "整体完播率", step: "0.01", suffix: "%" },
 ];
 
-// Tab 顺序：播放量 → 涨粉数 → 导粉数 → 点赞数 → 评论数 → 分享数 → 收藏数 → 均播时长 → 2s跳出率 → 5s完播率 → 整体完播率
 const TAB_ORDER: EditableMetricKey[] = [
   "play_count",
   "follower_gain",
@@ -55,6 +54,15 @@ const TAB_ORDER: EditableMetricKey[] = [
 
 export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlurField, anomalyStatus }: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
+  const [isRetentionExpanded, setIsRetentionExpanded] = useState(!retentionOptional);
+  const [prevOptional, setPrevOptional] = useState(retentionOptional);
+
+  // 同步重置折叠状态：当异常状态变化时自动切换折叠表现
+  if (retentionOptional !== prevOptional) {
+    setPrevOptional(retentionOptional);
+    setIsRetentionExpanded(!retentionOptional);
+  }
+
   const inputRefs = useRef<Record<EditableMetricKey, HTMLInputElement | null>>({
     play_count: null,
     follower_gain: null,
@@ -109,22 +117,12 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
   return (
     <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-[13px] font-semibold tracking-tight text-zinc-800">指标录入</h3>
-          <p className="text-[12px] leading-[1.7] text-zinc-500">
-            填写核心业务数据、互动数据和留存转化数据。
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col gap-8">
-        {/* 核心数据 */}
-        <div className="relative pl-4">
+      {/* 彻底去除最上方的“指标录入”标题和描述段落，直接平铺核心和互动数据 */}
+      <div className="flex flex-1 flex-col gap-6">
+        
+        {/* 1. 核心数据网格 (移除标题占行) */}
+        <div className="relative pl-3.5">
           <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D97757]/70" />
-          <div className="mb-4">
-            <h3 className="text-[13px] font-medium text-zinc-800">核心数据</h3>
-          </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
@@ -138,7 +136,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onChange={(value) => onFieldChange(item.key, value)}
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
-                animationDelay={index * 150}
+                animationDelay={index * 120}
                 inputRef={setRef(item.key)}
                 onKeyDown={handleKeyDown(item.key)}
               />
@@ -146,24 +144,9 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           </div>
         </div>
 
-        {/* 互动数据 */}
-        <div className="relative pl-4">
+        {/* 2. 互动数据网格 (移除标题占行，警告提示改为底部紧凑漂浮) */}
+        <div className="relative pl-3.5">
           <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D99E55]/70" />
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[13px] font-medium text-zinc-800">互动数据</h3>
-            <AnimatePresence>
-              {showInteractionWarning && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-[12px] text-[#D99E55]"
-                >
-                  互动总数大于播放量，请核对
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
@@ -174,49 +157,76 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 onChange={(value) => onFieldChange(item.key, value)}
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
-                animationDelay={(CORE_ITEMS.length + index) * 150}
+                animationDelay={(CORE_ITEMS.length + index) * 120}
                 inputRef={setRef(item.key)}
                 onKeyDown={handleKeyDown(item.key)}
               />
             ))}
           </div>
+          {showInteractionWarning && (
+            <div className="mt-2 pl-1 text-[11px] font-semibold text-[#D99E55] transition-opacity duration-150">
+              ⚠️ 互动数据总和已超过播放量，请核对输入
+            </div>
+          )}
         </div>
 
-        {/* 完播留存 */}
-        <div className="relative pl-4">
-          <div className={cn(
-            "absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full",
-            retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]/70",
-          )} />
-          <div className="mb-4 space-y-1">
-            <h3 className="text-[13px] font-medium text-zinc-800">
-              完播留存{retentionOptional && <span className="ml-1 font-normal text-zinc-500">（可选）</span>}
-            </h3>
-            {retentionOptional ? (
-              <p className="text-[12px] leading-[1.6] text-zinc-400">
-                {anomalyStatus === "限流" ? "限流" : "删稿"}状态下完播留存数据不可得,× 必填,有则补
-              </p>
-            ) : null}
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {RETENTION_ITEMS.map((item, index) => (
-              <指标输入卡
-                key={item.key}
-                label={item.label}
-                field={fields[item.key]}
-                step={item.step}
-                suffix={item.suffix}
-                size="secondary"
-                optional={retentionOptional}
-                onChange={(value) => onFieldChange(item.key, value)}
-                onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
-                onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
-                animationDelay={index * 150}
-                inputRef={setRef(item.key)}
-                onKeyDown={handleKeyDown(item.key)}
-              />
-            ))}
-          </div>
+        {/* 3. 完播留存网格 (支持限流状态折叠，且完全移除标题及说明占行) */}
+        <div className="relative pl-3.5">
+          <div
+            className={cn(
+              "absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full transition-colors duration-150",
+              retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]/70"
+            )}
+          />
+          
+          {/* 折叠触发条：仅在异常状态且未展开时显示 */}
+          {retentionOptional && !isRetentionExpanded && (
+            <button
+              type="button"
+              onClick={() => setIsRetentionExpanded(true)}
+              className="flex items-center gap-1.5 py-1 text-[11px] font-semibold text-zinc-400 hover:text-[#D97757] transition-colors focus:outline-none"
+            >
+              <span>[+] 展开完播留存指标录入 (可选)</span>
+            </button>
+          )}
+
+          {/* 完播内容呈现区 */}
+          {isRetentionExpanded && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {RETENTION_ITEMS.map((item, index) => (
+                  <指标输入卡
+                    key={item.key}
+                    label={item.label}
+                    field={fields[item.key]}
+                    step={item.step}
+                    suffix={item.suffix}
+                    size="secondary"
+                    optional={retentionOptional}
+                    onChange={(value) => onFieldChange(item.key, value)}
+                    onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
+                    onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                    animationDelay={index * 120}
+                    inputRef={setRef(item.key)}
+                    onKeyDown={handleKeyDown(item.key)}
+                  />
+                ))}
+              </div>
+              
+              {/* 收起按钮：仅在异常状态已展开时可见 */}
+              {retentionOptional && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsRetentionExpanded(false)}
+                    className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 transition-colors focus:outline-none"
+                  >
+                    [-] 收起完播指标
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

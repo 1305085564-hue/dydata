@@ -1,18 +1,30 @@
 "use client";
 
+import { useRef, useState } from "react";
+import { UploadCloud, Trash2, Eye, RefreshCw, FileText, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { SubmissionSlotRole, SubmissionSlotState } from "./提交状态机";
-import { SubmissionSlotCard } from "./截图槽位卡";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface SubmissionSlotsProps {
-  slots: Record<SubmissionSlotRole, SubmissionSlotState & { fileName?: string; error?: string | null; assetUrl?: string | null; ocrSummary?: string[]; errorCode?: string | null }>;
+  slots: Record<
+    SubmissionSlotRole,
+    SubmissionSlotState & {
+      fileName?: string;
+      error?: string | null;
+      assetUrl?: string | null;
+      ocrSummary?: string[];
+      errorCode?: string | null;
+    }
+  >;
   onSelectFile: (role: SubmissionSlotRole, file: File) => void;
+  onUploadFiles: (files: File[]) => void;
   onDelete: (role: SubmissionSlotRole) => void;
   onRetry?: (role: SubmissionSlotRole) => void;
   onManualFill?: (role: SubmissionSlotRole) => void;
   issueCount?: number;
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
-  highlightedOcrIndex?: number | null;
 }
 
 const SLOT_META: Array<{
@@ -21,70 +33,227 @@ const SLOT_META: Array<{
   description: string;
   required: boolean;
 }> = [
-  { role: "screenshot_1", title: "互动截图", description: "播放数据 + 互动数据 + 推流曲线", required: true },
-  { role: "screenshot_2", title: "完播截图", description: "完播/均播/2s跳出/5s完播 + 跳出率/回看率曲线", required: true },
+  { role: "screenshot_1", title: "互动截图", description: "播放量 + 互动数据 + 曲线", required: true },
+  { role: "screenshot_2", title: "完播截图", description: "均播/完播/跳出/留存率", required: true },
 ];
 
 export function SubmissionSlotsSection({
   slots,
   onSelectFile,
+  onUploadFiles,
   onDelete,
   onRetry,
   onManualFill,
-  issueCount = 0,
   screenshotsRequired = true,
-  focusedRole = null,
-  highlightedOcrIndex = null,
 }: SubmissionSlotsProps) {
-  const showStatusBar = !screenshotsRequired || issueCount > 0;
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
+    const files: File[] = [];
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      if (file.type.startsWith("image/")) {
+        files.push(file);
+      }
+    }
+    if (files.length > 0) {
+      onUploadFiles(files);
+    }
+  };
+
+  const handlePaste = (event: React.ClipboardEvent) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length > 0) {
+      event.preventDefault();
+      onUploadFiles(files);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {showStatusBar ? (
-        <div className="flex items-center justify-between gap-3">
-          {!screenshotsRequired ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500">
-              <span className="size-1.5 rounded-full bg-zinc-300" />
-              当前视频状态下截图改为可选
-            </span>
-          ) : (
-            <span />
-          )}
-          {issueCount > 0 ? (
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#D99E55]/40 bg-white px-2.5 py-1 text-[11px] font-medium text-[#D99E55]">
-              <span className="size-1.5 rounded-full bg-[#D99E55]" />
-              待处理 {issueCount}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="flex flex-col gap-5">
-        {SLOT_META.map((item) => {
-          const slot = slots[item.role];
-          return (
-            <SubmissionSlotCard
-              key={item.role}
-              role={item.role}
-              title={item.title}
-              description={item.description}
-              required={screenshotsRequired && item.required}
-              status={slot.status}
-              fileName={slot.fileName}
-              error={slot.error}
-              assetUrl={slot.assetUrl}
-              isHighlighted={focusedRole === item.role}
-              confidenceScore={slot.confidenceScore}
-              ocrSummary={slot.ocrSummary}
-              highlightedOcrIndex={highlightedOcrIndex}
-              onSelectFile={(file) => onSelectFile(item.role, file)}
-              onDelete={() => onDelete(item.role)}
-              onRetry={onRetry ? () => onRetry(item.role) : undefined}
-              onManualFill={onManualFill ? () => onManualFill(item.role) : undefined}
-              errorCode={slot.errorCode}
+      {/* 左右对齐结构：固定 h-[260px] 保证视觉饱满，杜绝上下留白被挤压的局促感 */}
+      <div className={cn("grid gap-4 h-[260px]", screenshotsRequired ? "md:grid-cols-[1fr_280px]" : "grid-cols-1")}>
+        {/* 左侧：多选上传区域 (h-full 纵向填满) */}
+        {screenshotsRequired ? (
+          <div
+            onPaste={handlePaste}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+              handleFiles(e.dataTransfer.files);
+            }}
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              "group relative flex h-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/40 px-6 py-5 text-center transition-all duration-150",
+              isDragOver
+                ? "border-[#D97757] bg-[#FDF9F7] text-[#D97757] shadow-[0_0_15px_rgba(217,119,87,0.08)]"
+                : "hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/30 hover:text-[#D97757]"
+            )}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.webp"
+              className="hidden"
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                e.target.value = "";
+              }}
             />
-          );
-        })}
+            <div className="flex flex-col items-center gap-2">
+              <UploadCloud className="size-6 stroke-[1.5] text-zinc-400 group-hover:text-[#D97757] transition-colors" />
+              <p className="text-[13px] font-medium leading-snug">
+                {isDragOver ? "松开投放到此" : "拖入、选择多张截图，亦可在此 Ctrl+V 粘贴"}
+              </p>
+              <div className="flex flex-col gap-0.5 text-[10px] leading-relaxed text-zinc-400">
+                <p>1. 互动截图 (包含播放量/数据/曲线)</p>
+                <p>2. 完播截图 (包含均播/留存率/完播数据)</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* 右侧：微缩 Slot 垂直堆叠卡片 (等分高度平摊，对齐左侧上下沿) */}
+        <div className="flex flex-col gap-3 h-full">
+          {SLOT_META.map((item) => {
+            const slot = slots[item.role];
+            const isProcessing = slot.status === "uploading" || slot.status === "recognizing";
+            const isWarning = slot.status === "pending_confirm" || ((slot.confidenceScore ?? 1) < 0.7 && slot.status !== "failed");
+            const isError = slot.status === "failed";
+            const isSuccess = slot.status === "confirmed" && !isWarning;
+
+            return (
+              <div
+                key={item.role}
+                className={cn(
+                  "relative flex flex-col justify-between flex-1 rounded-xl border bg-white p-3 transition-[border-color,box-shadow] duration-150",
+                  slot.status === "empty" ? "border-zinc-200 border-dashed bg-zinc-50/20" : "border-zinc-200 shadow-sm",
+                  isError && "border-[#C9604D]/35 bg-[#FFF8F7]"
+                )}
+              >
+                {/* 上半部：图片 + 名称状态 */}
+                <div className="flex min-w-0 items-start justify-between gap-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {/* 缩略图 */}
+                    {slot.status === "empty" ? (
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-zinc-300">
+                        <FileText className="size-4.5 stroke-[1.5]" />
+                      </div>
+                    ) : isProcessing ? (
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#D97757]">
+                        <Loader2 className="size-4.5 animate-spin stroke-[1.6]" />
+                      </div>
+                    ) : slot.assetUrl ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <div className="group/preview relative size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-zinc-200">
+                            <img
+                              src={slot.assetUrl}
+                              alt={item.title}
+                              className="h-full w-full object-cover transition-transform duration-200 group-hover/preview:scale-105"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                              <Eye className="size-3 text-white" />
+                            </div>
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="w-auto max-w-4xl overflow-hidden border-none bg-transparent p-0 shadow-none">
+                          <DialogTitle className="sr-only">放大预览</DialogTitle>
+                          <img src={slot.assetUrl} alt="放大预览" className="h-auto max-h-[85vh] w-full rounded-xl object-contain" />
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400">
+                        <FileText className="size-4.5 stroke-[1.5]" />
+                      </div>
+                    )}
+
+                    {/* 文字描述 */}
+                    <div className="min-w-0">
+                      <span className="text-[12px] font-semibold text-zinc-700 block leading-none">{item.title}</span>
+                      {slot.status !== "empty" && (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-none mt-1.5",
+                            isProcessing && "bg-[#D97757]/10 text-[#D97757]",
+                            isSuccess && "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+                            isWarning && "bg-[#D99E55]/10 text-[#D99E55]",
+                            isError && "bg-[#C9604D]/10 text-[#C9604D]"
+                          )}
+                        >
+                          {isProcessing ? "读取中" : isSuccess ? "已识别" : isWarning ? "待核对" : "失败"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 操作按钮组 */}
+                  <div className="flex shrink-0 items-center gap-1">
+                    {isError && (
+                      <>
+                        {onRetry && (
+                          <button
+                            type="button"
+                            onClick={() => onRetry(item.role)}
+                            className="inline-flex size-6 items-center justify-center rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border border-zinc-200 transition-colors"
+                            title="重新识别"
+                          >
+                            <RefreshCw className="size-3" />
+                          </button>
+                        )}
+                        {onManualFill && (
+                          <button
+                            type="button"
+                            onClick={() => onManualFill(item.role)}
+                            className="inline-flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-[9px] font-medium text-zinc-600 hover:bg-zinc-50 border border-zinc-200 transition-colors"
+                          >
+                            手输
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {slot.status !== "empty" && !isProcessing && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(item.role)}
+                        className="inline-flex size-6 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-50 hover:text-[#C9604D] transition-colors"
+                        title="删除"
+                      >
+                        <Trash2 className="size-3 stroke-[1.6]" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 下半部：文件名或解析结果 */}
+                <div className="text-[10px] text-zinc-400 truncate mt-1">
+                  {slot.status === "empty"
+                    ? `待上传${item.required ? " (必传)" : ""}`
+                    : isProcessing
+                      ? "AI 正在分析图片数据..."
+                      : slot.fileName || (slot.screenshotType === "data" ? "流量指标图已读取" : "留存完播图已读取")}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

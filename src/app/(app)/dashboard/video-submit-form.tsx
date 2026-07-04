@@ -53,7 +53,6 @@ import {
   toManualFieldState,
 } from "@/components/submission/填报表单状态";
 import { normalizeOptionalText } from "./video-submit-form-state";
-import { DataReportWizard, type WizardMissingItem } from "./components/data-report-wizard";
 
 import type {
   SubmitPanelMode,
@@ -872,9 +871,16 @@ export function VideoSubmitForm({
           ? toSlotUploadErrorMessage(data.error)
           : null;
 
-      setSlots((current) => ({
-        ...current,
-        [role]: {
+      // 智能对调逻辑：如果识别出的是流量数据，分流到 screenshot_1；若是留存完播数据，分流到 screenshot_2
+      let targetRole: SubmissionSlotRole = role;
+      if (detectedType === "data") {
+        targetRole = "screenshot_1";
+      } else if (detectedType === "retention") {
+        targetRole = "screenshot_2";
+      }
+
+      setSlots((current) => {
+        const newSlotData = {
           ...current[role],
           status: data.slot_status,
           confirmed: data.slot_status === "confirmed",
@@ -886,8 +892,38 @@ export function VideoSubmitForm({
           screenshotType: detectedType,
           recognizedFields: data.recognized_fields,
           ocrSummary,
-        },
-      }));
+        };
+
+        if (role !== targetRole && (current[targetRole].status === "empty" || current[targetRole].status === "failed")) {
+          return {
+            ...current,
+            [targetRole]: {
+              ...newSlotData,
+              role: targetRole,
+            },
+            [role]: {
+              role: role,
+              required: current[role].required,
+              status: "empty",
+              confidenceScore: null,
+              requiresManualConfirmation: false,
+              confirmed: false,
+              fileName: undefined,
+              error: null,
+              assetUrl: null,
+              previewUrl: null,
+              file: null,
+              recognizedFields: null,
+              ocrSummary: undefined,
+            },
+          };
+        }
+
+        return {
+          ...current,
+          [role]: newSlotData,
+        };
+      });
 
       if (data.slot_status === "failed") {
         feedbackToast.error(resolvedError || OCR_FAIL_MESSAGE);
@@ -1108,61 +1144,91 @@ export function VideoSubmitForm({
 
 
   /* ---------------------------------------------------------------- */
-  /*  Step Wizard 状态                                                 */
-  /*  step 0 = 截图与识别                                              */
-  /*  step 1 = 数据指标                                                */
-  /*  step 2 = 视频信息（含提交按钮）                                  */
+  /*  双态面板状态及队列上传                                            */
   /* ---------------------------------------------------------------- */
-  const [stepIndex, setStepIndex] = useState(0);
-  const [stepDirection, setStepDirection] = useState<1 | -1>(1);
-
-  // 异常状态(删稿/限流)下 step0 视为已跳过:截图必填解除、step1 仅播放量必填
+  const [activePanelTab, setActivePanelTab] = useState<"upload" | "confirm">("upload");
   const isAbnormalStatus = meta.anomalyStatus === "限流" || meta.anomalyStatus === "删稿";
-  const playCountFilled = parseMetric(fields.play_count.value) > 0;
 
-  const stepCanAdvance = useMemo(() => {
-    if (stepIndex === 0) {
-      return (
-        issueSummary.missingRequiredSlots.length === 0 &&
-        issueSummary.failedRequiredSlots.length === 0 &&
-        issueSummary.pendingSlotConfirmations.length === 0
-      );
+  // 统一的多图指派与上传
+  const handleUnifiedUpload = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+    const roles: SubmissionSlotRole[] = ["screenshot_1", "screenshot_2", "screenshot_3"];
+    const uploadsToStart: { role: SubmissionSlotRole; file: File }[] = [];
+
+    let fileIndex = 0;
+    for (const role of roles) {
+      if (fileIndex >= files.length) break;
+      const slot = slots[role];
+      if (slot.status === "empty" || slot.status === "failed") {
+        uploadsToStart.push({ role, file: files[fileIndex] });
+        fileIndex++;
+      }
     }
-    if (stepIndex === 1) {
-      // 异常路径：仅播放量必填；正常路径：保持向前推进
-      if (isAbnormalStatus) return playCountFilled;
-      return true;
+
+    await Promise.all(
+      uploadsToStart.map(({ role, file }) => handleSlotUpload(role, file))
+    );
+
+    if (fileIndex < files.length) {
+      toast.warning(`槽位已满，仅上传了前 ${uploadsToStart.length} 张图片`);
     }
-    return canActuallySubmit;
-  }, [
-    stepIndex,
-    issueSummary.missingRequiredSlots.length,
-    issueSummary.failedRequiredSlots.length,
-    issueSummary.pendingSlotConfirmations.length,
-    canActuallySubmit,
-    isAbnormalStatus,
-    playCountFilled,
-  ]);
+  }, [slots, handleSlotUpload]);
 
-  const goNextStep = useCallback(() => {
-    setStepDirection(1);
-    setStepIndex((s) => Math.min(2, s + 1));
-  }, []);
+  // 1. OCR 识别完成自动切 Tab 逻辑
+  const autoAdvancedRef = useRef(false);
+  useEffect(() => {
+    if (autoAdvancedRef.current) return;
+    if (isAbnormalStatus) return;
+    const slot1 = slots.screenshot_1;
+    const slot2 = slots.screenshot_2;
+    if (!slot1 || !slot2) return;
+    
+    const bothConfirmed = slot1.status === "confirmed" && slot2.status === "confirmed";
+    const anyPending =
+      slot1.status === "pending_confirm" ||
+      slot2.status === "pending_confirm" ||
+      slot1.status === "uploading" ||
+      slot2.status === "uploading" ||
+      slot1.status === "recognizing" ||
+      slot2.status === "recognizing";
 
-  const goPrevStep = useCallback(() => {
-    setStepDirection(-1);
-    setStepIndex((s) => Math.max(0, s - 1));
-  }, []);
+    if (bothConfirmed && !anyPending) {
+      autoAdvancedRef.current = true;
+      const timer = window.setTimeout(() => {
+        setActivePanelTab("confirm");
+      }, 350);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [slots, isAbnormalStatus]);
 
-  const markStepAttempted = useCallback(() => {
-    if (stepIndex === 2) setHasAttemptedSubmit(true);
-  }, [stepIndex]);
+  // 当用户主动清空/重置截图槽位时，重置自动切换标志，并且如果无任何上传图片，强制回切 upload 面板
+  useEffect(() => {
+    const slot1 = slots.screenshot_1;
+    const slot2 = slots.screenshot_2;
+    const anyEmpty = slot1?.status === "empty" || slot2?.status === "empty";
+    if (anyEmpty) {
+      autoAdvancedRef.current = false;
+    }
 
-  // Wizard 跳转到指定步骤（用于"待完善"项点击）
-  const jumpToStep = useCallback((target: number) => {
-    setStepDirection(target > stepIndex ? 1 : -1);
-    setStepIndex(target);
-  }, [stepIndex]);
+    const hasAnyUpload = Object.values(slots).some((slot) => slot.status !== "empty");
+    if (!hasAnyUpload && !isAbnormalStatus) {
+      setActivePanelTab("upload");
+    }
+  }, [slots, isAbnormalStatus]);
+
+  // 异常状态(限流/删稿)下强行锁死为 confirm 态并隐藏上传
+  useEffect(() => {
+    if (isAbnormalStatus) {
+      setActivePanelTab("confirm");
+    }
+  }, [isAbnormalStatus]);
+
+  // 2. 快捷键：Ctrl+Enter 快捷提交，Esc 切换 Tab 面板
+  const isSubmittingRef = useRef(isSubmitting);
+  const canSubmitRef = useRef(canActuallySubmit);
+  useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
+  useEffect(() => { canSubmitRef.current = canActuallySubmit; }, [canActuallySubmit]);
 
   // 提交：触发 form 的提交事件，复用现有 handleSubmit
   const triggerSubmit = useCallback(() => {
@@ -1177,123 +1243,36 @@ export function VideoSubmitForm({
     }
   }, []);
 
-  // 异常状态切换 → 自动跳过 step0 进入 step1；切回正常时若仍在 step1+ 不强制回退
-  const prevAbnormalRef = useRef(isAbnormalStatus);
-  useEffect(() => {
-    if (prevAbnormalRef.current !== isAbnormalStatus) {
-      prevAbnormalRef.current = isAbnormalStatus;
-      if (isAbnormalStatus && stepIndex === 0) {
-        toast.info("已跳过截图识别，请直接补全播放量和必要信息", { duration: 2400 });
-        setStepDirection(1);
-        setStepIndex(1);
-      }
-    }
-  }, [isAbnormalStatus, stepIndex]);
-
-  // OCR 双成功自动推进：仅在 step0、正常状态、首次满足条件时触发
-  const autoAdvancedRef = useRef(false);
-  useEffect(() => {
-    if (autoAdvancedRef.current) return;
-    if (stepIndex !== 0 || isAbnormalStatus) return;
-    const slot1 = slots.screenshot_1;
-    const slot2 = slots.screenshot_2;
-    if (!slot1 || !slot2) return;
-    const bothConfirmed = slot1.status === "confirmed" && slot2.status === "confirmed";
-    const anyPending =
-      slot1.status === "pending_confirm" ||
-      slot2.status === "pending_confirm" ||
-      slot1.status === "uploading" ||
-      slot2.status === "uploading" ||
-      slot1.status === "recognizing" ||
-      slot2.status === "recognizing";
-    if (bothConfirmed && !anyPending) {
-      autoAdvancedRef.current = true;
-      const timer = window.setTimeout(() => {
-        setStepDirection(1);
-        setStepIndex(1);
-      }, 350);
-      return () => window.clearTimeout(timer);
-    }
-    return undefined;
-  }, [slots, stepIndex, isAbnormalStatus]);
-
-  // 当用户主动回到 step0 重新上传时，允许再次自动推进
-  useEffect(() => {
-    if (stepIndex === 0) {
-      const slot1 = slots.screenshot_1;
-      const slot2 = slots.screenshot_2;
-      const anyEmpty = slot1?.status === "empty" || slot2?.status === "empty";
-      if (anyEmpty) autoAdvancedRef.current = false;
-    }
-  }, [stepIndex, slots]);
-
-  // 快捷键：Esc 上一步，Cmd/Ctrl+Enter 推进 / 提交
-  const stepIndexRef = useRef(stepIndex);
-  const stepCanAdvanceRef = useRef(stepCanAdvance);
-  const isSubmittingRef = useRef(isSubmitting);
-  const canSubmitRef = useRef(canActuallySubmit);
-  useEffect(() => { stepIndexRef.current = stepIndex; }, [stepIndex]);
-  useEffect(() => { stepCanAdvanceRef.current = stepCanAdvance; }, [stepCanAdvance]);
-  useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
-  useEffect(() => { canSubmitRef.current = canActuallySubmit; }, [canActuallySubmit]);
-
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (isSubmittingRef.current) return;
       const target = event.target as HTMLElement | null;
-      // 在 input/textarea 内的 Esc 不抢，避免抢走 IME 关闭
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
-        if (event.key === "Escape") return;
-      }
+
       const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
       const cmdEnter = event.key === "Enter" && (isMac ? event.metaKey : event.ctrlKey);
-      if (cmdEnter) {
-        event.preventDefault();
-        if (stepIndexRef.current === 2) {
+
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        if (cmdEnter) {
+          event.preventDefault();
           if (canSubmitRef.current) triggerSubmit();
-        } else if (stepCanAdvanceRef.current) {
-          goNextStep();
         }
         return;
       }
-      if (event.key === "Escape") {
-        if (stepIndexRef.current === 0) return;
+
+      if (cmdEnter) {
         event.preventDefault();
-        goPrevStep();
+        if (canSubmitRef.current) triggerSubmit();
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setActivePanelTab((tab) => (tab === "upload" ? "confirm" : "upload"));
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [goNextStep, goPrevStep, triggerSubmit]);
-
-  /* ---------------------------------------------------------------- */
-  /*  待完善项映射 → wizard 待完善 popover                              */
-  /* ---------------------------------------------------------------- */
-  const missingItemsForWizard: WizardMissingItem[] = useMemo(() => {
-    const items: WizardMissingItem[] = [];
-    if (issueSummary.missingRequiredSlots.length > 0) {
-      items.push({ label: "必传截图未上传", onClick: () => jumpToStep(0) });
-    }
-    if (issueSummary.failedRequiredSlots.length > 0) {
-      items.push({ label: "截图识别失败", onClick: () => jumpToStep(0) });
-    }
-    if (issueSummary.pendingSlotConfirmations.length > 0) {
-      items.push({ label: "截图待确认", onClick: () => jumpToStep(0) });
-    }
-    if (issueSummary.missingRequiredMeta.includes("videoTitle")) {
-      items.push({ label: "视频标题", onClick: () => jumpToStep(2) });
-    }
-    if (issueSummary.missingRequiredMeta.includes("content")) {
-      items.push({ label: "文案", onClick: () => jumpToStep(2) });
-    }
-    if (issueSummary.topicTagMissing) {
-      items.push({ label: "话题标签", onClick: () => jumpToStep(2) });
-    }
-    if (isAbnormalStatus && !playCountFilled) {
-      items.push({ label: "播放量", onClick: () => jumpToStep(1) });
-    }
-    return items;
-  }, [issueSummary, jumpToStep, isAbnormalStatus, playCountFilled]);
+  }, [triggerSubmit]);
 
 
 
@@ -1478,264 +1457,328 @@ export function VideoSubmitForm({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <DataReportWizard
-              visibleSteps={WIZARD_STEPS}
-              visibleStep={stepIndex}
-              contentKey={stepIndex}
-              direction={stepDirection}
-              stepStateOverrides={isAbnormalStatus ? { 0: "skipped" } : undefined}
-              leadingActionSlot={
-                <VideoStatusSegmented
-                  value={meta.anomalyStatus}
-                  onChange={(value) => updateMeta("anomalyStatus", value)}
-                />
-              }
-              showActions
-              isLastStep={stepIndex === 2}
-              canGoNext={stepCanAdvance}
-              canSubmit={canActuallySubmit}
-              isSubmitting={isSubmitting}
-              submitLabel={submitButtonLabel}
-              status={stepIndex === 2 ? (canActuallySubmit ? "ready" : "incomplete") : null}
-              missingItems={stepIndex === 2 && !canActuallySubmit ? missingItemsForWizard : undefined}
-              onPrev={goPrevStep}
-              onNext={goNextStep}
-              onSubmit={triggerSubmit}
-              onCancel={isBackfillMode || submittedViewActive ? onCancel : undefined}
-              onAttemptNext={markStepAttempted}
-            >
-              {stepIndex === 0 ? (
-                <div ref={slotsSectionRef} className="space-y-4">
-                  <截图槽位区
-                    slots={slots}
-                    onSelectFile={handleSlotUpload}
-                    onDelete={(role) => setDeleteTargetRole(role)}
-                    onRetry={handleSlotRetry}
-                    onManualFill={(role) => {
-                      setSlots((current) => ({
-                        ...current,
-                        [role]: {
-                          ...current[role],
-                          status: "empty",
-                          confirmed: false,
-                          error: null,
-                          assetUrl: null,
-                          previewUrl: null,
-                          file: null,
-                          fileName: undefined,
-                          recognizedFields: null,
-                          ocrSummary: undefined,
-                        },
-                      }));
-                    }}
-                    screenshotsRequired={screenshotsRequired}
-                    focusedRole={focusedRole}
-                    highlightedOcrIndex={highlightedOcrIndex}
-                  />
-                </div>
-              ) : null}
-
-              {stepIndex === 1 ? (
-                <motion.div ref={metricsSectionRef} initial={false} className="space-y-8">
-                  <指标分组区
-                    fields={fields}
-                    onFieldChange={updateField}
-                    onFocusField={handleFieldFocus}
-                    onBlurField={handleFieldBlur}
-                    anomalyStatus={meta.anomalyStatus}
-                  />
-
-                  <导粉话术采集区
-                    visible={parseMetric(fields.follower_convert.value) > 0}
-                    value={scriptText}
-                    onChange={setScriptText}
-                    hasAttemptedSubmit={hasAttemptedSubmit}
-                  />
-                </motion.div>
-              ) : null}
-
-              {stepIndex === 2 ? (
-                <motion.div ref={metaSectionRef} initial={false} className="space-y-6">
-                  <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle")}>
-                    <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-500">视频标题 <span className="text-[#C9604D]">*</span></Label>
-                    <Input
-                      id="video_title"
-                      value={meta.videoTitle}
-                      onChange={(event) => updateMeta("videoTitle", event.target.value)}
-                      placeholder="输入视频标题"
-                      className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
+            <div className="mx-auto max-w-3xl space-y-6 py-2">
+              {/* 1. 局部双态自管理容器 */}
+              <div className="relative overflow-hidden rounded-xl border border-zinc-200/60 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6">
+                <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[14px] font-semibold text-zinc-800">核心指标与截图</span>
+                    <VideoStatusSegmented
+                      value={meta.anomalyStatus}
+                      onChange={(value) => updateMeta("anomalyStatus", value)}
                     />
-                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
-                      <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
-                    ) : null}
                   </div>
-
-                  <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
+                  {/* 仅当有已上传图片时且处于正常状态下显示 Tab 切换 */}
+                  {!isAbnormalStatus && Object.values(slots).some((slot) => slot.status !== "empty") && (
+                    <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5">
                       <button
                         type="button"
-                        onClick={handlePasteContent}
-                        className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors duration-150 focus-visible:outline-none"
+                        onClick={() => setActivePanelTab("upload")}
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-[11px] font-medium transition-all duration-150",
+                          activePanelTab === "upload"
+                            ? "bg-white text-zinc-800 shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-800"
+                        )}
                       >
-                        <ClipboardPaste size={14} className="stroke-[1.5]" />
-                        一键粘贴
+                        截图列表
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActivePanelTab("confirm")}
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-[11px] font-medium transition-all duration-150",
+                          activePanelTab === "confirm"
+                            ? "bg-white text-zinc-800 shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-800"
+                        )}
+                      >
+                        指标核对
                       </button>
                     </div>
-                    <textarea
-                      id="content"
-                      value={meta.content}
-                      onChange={(event) => updateMeta("content", event.target.value)}
-                      placeholder="粘贴视频文案"
-                      className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
-                    />
-                    {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                      <p className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
-                    ) : null}
-                  </div>
+                  )}
+                </div>
 
-                  {/* Topic tag & Video form (Memory layer) */}
-                  <div className="rounded-lg border-t border-zinc-100 pt-4">
-                    {!isMemoryExpanded ? (
-                      <div className="flex items-center justify-between py-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[13px] text-zinc-500 font-medium">已记配置：</span>
-                          <span className="bg-zinc-100 text-zinc-600 rounded-lg px-2 py-1 text-[13px]">
-                            {meta.topicTag}
-                          </span>
-                          <span className="bg-zinc-100 text-zinc-600 rounded-lg px-2 py-1 text-[13px]">
-                            {meta.videoForm}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setIsMemoryExpanded(true)}
-                          className="text-[13px] font-medium text-[#D97757] hover:text-[#C96442] transition-colors"
-                        >
-                          修改
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4 rounded-lg bg-zinc-50/50 p-4 border border-zinc-200/40">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div ref={topicTagSectionRef} className="space-y-2 rounded-lg border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
-                            <Label className="text-[13px] font-medium text-zinc-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
-                            <div className="grid grid-cols-2 gap-2">
-                              {(["干货", "复盘"] as const).map((tag) => (
-                                <button
-                                  key={tag}
-                                  type="button"
-                                  onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
-                                  className={cn(
-                                    "h-10 rounded-lg border transition-all duration-150 text-[13px] font-semibold",
-                                    meta.topicTag === tag
-                                      ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
-                                      : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50"
-                                  )}
-                                >
-                                  {tag}
-                                </button>
-                              ))}
-                            </div>
-                            {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
-                              <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未选择话题标签</p>
-                            ) : null}
-                          </div>
+                {/* 局部面板过渡内容：锁定高度，防抖，支持 smooth scroll/overflow */}
+                <div className="min-h-[290px] max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+                  {activePanelTab === "upload" ? (
+                    <div ref={slotsSectionRef} className="space-y-4">
+                      <截图槽位区
+                        slots={slots}
+                        onSelectFile={handleSlotUpload}
+                        onUploadFiles={handleUnifiedUpload}
+                        onDelete={(role) => setDeleteTargetRole(role)}
+                        onRetry={handleSlotRetry}
+                        onManualFill={(role) => {
+                          setSlots((current) => ({
+                            ...current,
+                            [role]: {
+                              ...current[role],
+                              status: "empty",
+                              confirmed: false,
+                              error: null,
+                              assetUrl: null,
+                              previewUrl: null,
+                              file: null,
+                              fileName: undefined,
+                              recognizedFields: null,
+                              ocrSummary: undefined,
+                            },
+                          }));
+                        }}
+                        screenshotsRequired={screenshotsRequired}
+                        focusedRole={focusedRole}
+                        highlightedOcrIndex={highlightedOcrIndex}
+                      />
+                    </div>
+                  ) : (
+                    <motion.div
+                      ref={metricsSectionRef}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-6"
+                    >
+                      <指标分组区
+                        fields={fields}
+                        onFieldChange={updateField}
+                        onFocusField={handleFieldFocus}
+                        onBlurField={handleFieldBlur}
+                        anomalyStatus={meta.anomalyStatus}
+                      />
+                      <导粉话术采集区
+                        visible={parseMetric(fields.follower_convert.value) > 0}
+                        value={scriptText}
+                        onChange={setScriptText}
+                        hasAttemptedSubmit={hasAttemptedSubmit}
+                      />
+                    </motion.div>
+                  )}
+                </div>
+              </div>
 
-                          <div className="space-y-2">
-                            <Label className="text-[13px] font-medium text-zinc-500">视频形式 <span className="text-[#C9604D]">*</span></Label>
-                            <div className="grid grid-cols-2 gap-2">
-                              {(["出镜", "图文"] as const).map((form) => (
-                                <button
-                                  key={form}
-                                  type="button"
-                                  onClick={() => updateMeta("videoForm", form)}
-                                  className={cn(
-                                    "h-10 rounded-lg border transition-all duration-150 text-[13px] font-semibold",
-                                    meta.videoForm === form
-                                      ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
-                                      : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50"
-                                  )}
-                                >
-                                  {form}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        {meta.topicTag && meta.videoForm && (
-                          <div className="flex justify-end pt-1">
-                            <button
-                              type="button"
-                              onClick={() => setIsMemoryExpanded(false)}
-                              className="text-[12px] font-semibold text-zinc-500 hover:text-zinc-800 transition-colors"
-                            >
-                              收起选项
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+              {/* 2. 视频信息及基础元数据表单（常驻底层，防焦点丢失） */}
+              <div
+                ref={metaSectionRef}
+                className="relative overflow-hidden rounded-xl border border-zinc-200/60 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 space-y-6"
+              >
+                <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle")}>
+                  <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-500">视频标题 <span className="text-[#C9604D]">*</span></Label>
+                  <Input
+                    id="video_title"
+                    value={meta.videoTitle}
+                    onChange={(event) => updateMeta("videoTitle", event.target.value)}
+                    placeholder="输入视频标题"
+                    className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
+                  />
+                  {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
+                    <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
+                  ) : null}
+                </div>
 
-                  {/* Publish & Upload time accordion (Default settings) */}
-                  <div className="space-y-3 pt-2">
+                <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
                     <button
                       type="button"
-                      onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
-                      className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors focus-visible:outline-none"
+                      onClick={handlePasteContent}
+                      className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors duration-150 focus-visible:outline-none"
                     >
-                      <ChevronDown className={cn("size-4 stroke-[1.5] transition-transform duration-150", isMoreSettingsExpanded && "rotate-180")} />
-                      {isMoreSettingsExpanded ? "收起更多设置" : "展开更多设置"}
+                      <ClipboardPaste size={14} className="stroke-[1.5]" />
+                      一键粘贴
                     </button>
-                    
-                    <AnimatePresence initial={false}>
-                      {isMoreSettingsExpanded && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ duration: 0.15 }}
-                          className="grid gap-4 sm:grid-cols-2 pt-1"
-                        >
-                          <div className="space-y-1">
-                            <Label htmlFor="published_at" className="text-[13px] font-medium text-zinc-500">发布时间</Label>
-                            <Input
-                              id="published_at"
-                              type="datetime-local"
-                              step={3600}
-                              value={meta.publishedAt}
-                              onChange={(event) => {
-                                const nextPublishedAt = event.target.value;
-                                const synced = syncPublishedAtAndText({
-                                  nextPublishedAt,
-                                  nextPublishedAtText: meta.publishedAtText,
-                                  changedField: "published_at",
-                                });
-                                const nextBizDate = !isBackfillMode && !initialSummary ? getDatePartFromDateTimeLocal(nextPublishedAt) : null;
-                                setMeta((current) => ({
-                                  ...current,
-                                  bizDate: nextBizDate ?? current.bizDate,
-                                  publishedAt: synced.publishedAt,
-                                  publishedAtText: synced.publishedAtText,
-                                }));
-                              }}
-                              className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-[13px] font-medium text-zinc-500">上传时间</Label>
-                            <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-zinc-100/70 px-3 text-[13px] text-zinc-500">
-                              {meta.uploadedAt || "--"}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
-                </motion.div>
-              ) : null}
-            </DataReportWizard>
+                  <textarea
+                    id="content"
+                    value={meta.content}
+                    onChange={(event) => updateMeta("content", event.target.value)}
+                    placeholder="粘贴视频文案"
+                    className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
+                  />
+                  {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
+                    <p className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
+                  ) : null}
+                </div>
+
+                {/* Topic tag & Video form (Memory layer) */}
+                <div className="rounded-lg border-t border-zinc-100 pt-4">
+                  {!isMemoryExpanded ? (
+                    <div className="flex items-center justify-between py-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] text-zinc-500 font-medium">已记配置：</span>
+                        <span className="bg-zinc-100 text-zinc-600 rounded-lg px-2 py-1 text-[13px]">
+                          {meta.topicTag}
+                        </span>
+                        <span className="bg-zinc-100 text-zinc-600 rounded-lg px-2 py-1 text-[13px]">
+                          {meta.videoForm}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsMemoryExpanded(true)}
+                        className="text-[13px] font-medium text-[#D97757] hover:text-[#C96442] transition-colors"
+                      >
+                        修改
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 rounded-lg bg-zinc-50/50 p-4 border border-zinc-200/40">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div ref={topicTagSectionRef} className="space-y-2 rounded-lg border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
+                          <Label className="text-[13px] font-medium text-zinc-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(["干货", "复盘"] as const).map((tag) => (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
+                                className={cn(
+                                  "h-10 rounded-lg border transition-all duration-150 text-[13px] font-semibold",
+                                  meta.topicTag === tag
+                                    ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
+                                    : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50"
+                                )}
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                          {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
+                            <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未选择话题标签</p>
+                          ) : null}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[13px] font-medium text-zinc-500">视频形式 <span className="text-[#C9604D]">*</span></Label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(["出镜", "图文"] as const).map((form) => (
+                              <button
+                                key={form}
+                                type="button"
+                                onClick={() => updateMeta("videoForm", form)}
+                                className={cn(
+                                  "h-10 rounded-lg border transition-all duration-150 text-[13px] font-semibold",
+                                  meta.videoForm === form
+                                    ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
+                                    : "border-zinc-200 bg-white text-zinc-800 hover:border-zinc-300 hover:bg-zinc-50"
+                                )}
+                              >
+                                {form}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      {meta.topicTag && meta.videoForm && (
+                        <div className="flex justify-end pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setIsMemoryExpanded(false)}
+                            className="text-[12px] font-semibold text-zinc-500 hover:text-zinc-800 transition-colors"
+                          >
+                            收起选项
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Publish & Upload time accordion (Default settings) */}
+                <div className="space-y-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
+                    className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors focus-visible:outline-none"
+                  >
+                    <ChevronDown className={cn("size-4 stroke-[1.5] transition-transform duration-150", isMoreSettingsExpanded && "rotate-180")} />
+                    {isMoreSettingsExpanded ? "收起更多设置" : "展开更多设置"}
+                  </button>
+                  
+                  <AnimatePresence initial={false}>
+                    {isMoreSettingsExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                        className="grid gap-4 sm:grid-cols-2 pt-1"
+                      >
+                        <div className="space-y-1">
+                          <Label htmlFor="published_at" className="text-[13px] font-medium text-zinc-500">发布时间</Label>
+                          <Input
+                            id="published_at"
+                            type="datetime-local"
+                            step={3600}
+                            value={meta.publishedAt}
+                            onChange={(event) => {
+                              const nextPublishedAt = event.target.value;
+                              const synced = syncPublishedAtAndText({
+                                nextPublishedAt,
+                                nextPublishedAtText: meta.publishedAtText,
+                                changedField: "published_at",
+                              });
+                              const nextBizDate = !isBackfillMode && !initialSummary ? getDatePartFromDateTimeLocal(nextPublishedAt) : null;
+                              setMeta((current) => ({
+                                ...current,
+                                bizDate: nextBizDate ?? current.bizDate,
+                                publishedAt: synced.publishedAt,
+                                publishedAtText: synced.publishedAtText,
+                              }));
+                            }}
+                            className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-800 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[13px] font-medium text-zinc-500">上传时间</Label>
+                          <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-zinc-100/70 px-3 text-[13px] text-zinc-500">
+                            {meta.uploadedAt || "--"}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* 3. 底部主操作栏 */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
+                <div className="flex items-center gap-3">
+                  {!canActuallySubmit ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[12px] font-medium text-[#D99E55]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55]" />
+                      <span>{issueSummary.reason || "请补全必要信息"}</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+                      <span>已就绪,可提交</span>
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  {isBackfillMode || submittedViewActive ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={onCancel}
+                      className="h-10 rounded-xl px-5 text-[13px] font-medium"
+                    >
+                      取消
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    onClick={triggerSubmit}
+                    disabled={isSubmitting || !canActuallySubmit}
+                    className="h-10 rounded-xl px-6 text-[13px] font-semibold bg-[#D97757] hover:bg-[#C96442] text-white disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {submitButtonLabel}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </motion.form>
         </>
       )}
