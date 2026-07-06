@@ -52,7 +52,7 @@ function getStatusVisual(status: SubmissionSlotStatus, isWarning: boolean): Stat
     return { label: "已识别", dotClass: "bg-[#6FAA7D]", textClass: "text-[#6FAA7D]", borderClass: "border-[#6FAA7D]/40" };
   if (isWarning || status === "pending_confirm")
     return { label: "待确认", dotClass: "bg-[#D99E55]", textClass: "text-[#D99E55]", borderClass: "border-[#D99E55]/40" };
-  return { label: "待上传", dotClass: "bg-zinc-300", textClass: "text-zinc-500", borderClass: "border-zinc-200" };
+  return { label: "待上传", dotClass: "bg-stone-300", textClass: "text-stone-600", borderClass: "border-stone-300" };
 }
 
 export function SubmissionSlotCard({
@@ -163,11 +163,11 @@ export function SubmissionSlotCard({
       <header className="flex items-center justify-between gap-3 pb-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-[14px] font-medium leading-tight tracking-tight text-zinc-800">
+            <span className="text-[14px] font-medium leading-tight tracking-tight text-stone-800">
               {title}
             </span>
             {description ? (
-              <span className="truncate text-[12px] leading-tight text-zinc-400">
+              <span className="truncate text-[12px] leading-tight text-stone-500">
                 {description}
               </span>
             ) : null}
@@ -211,15 +211,15 @@ export function SubmissionSlotCard({
           <motion.div 
             animate={{ 
               scale: isDragOver ? 1.02 : 1,
-              borderColor: isDragOver ? "#D97757" : (assetUrl || isProcessing ? "transparent" : "#e4e4e7") 
+              borderColor: isDragOver ? "#D97757" : (assetUrl || isProcessing ? "transparent" : "#E7E5E4") 
             }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className={cn(
-              "group/drop relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border bg-zinc-50/60 text-zinc-400 transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              !assetUrl && !isProcessing && !isDragOver && (isTouchDevice ? "border-solid border-zinc-200 bg-white active:scale-[0.98]" : "border-dashed hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/60 hover:text-[#D97757]"),
+              "group/drop relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border bg-stone-100/60 text-stone-500 transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              !assetUrl && !isProcessing && !isDragOver && (isTouchDevice ? "border-solid border-stone-300 bg-white active:scale-[0.98]" : "border-dashed hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/60 hover:text-[#D97757]"),
               !assetUrl && isDragOver && "border-solid border-[#D97757] bg-[#FDF9F7] text-[#D97757] shadow-[0_0_20px_rgba(217,119,87,0.15)] ring-2 ring-[#D97757]/20",
-              isProcessing && "bg-white border-zinc-100",
-              assetUrl && !isProcessing && "bg-white p-0 border-zinc-200",
+              isProcessing && "bg-white border-stone-100",
+              assetUrl && !isProcessing && "bg-white p-0 border-stone-300",
               isError && !assetUrl && "border-dashed border-[#C9604D]/40 bg-white",
             )}
           >
@@ -234,7 +234,7 @@ export function SubmissionSlotCard({
                     <div className="group/img relative h-full w-full cursor-zoom-in">
                       <img src={assetUrl} alt="截图预览" className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-[1.02]" />
                       <div className="pointer-events-none absolute inset-0 flex items-end justify-end bg-gradient-to-t from-black/35 via-transparent to-transparent p-2 opacity-0 transition-opacity duration-150 group-hover/img:opacity-100">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-zinc-700 backdrop-blur">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-stone-700 backdrop-blur">
                           <Eye className="size-3 stroke-[1.6]" /> 放大
                         </span>
                       </div>
@@ -246,7 +246,7 @@ export function SubmissionSlotCard({
                   showCloseButton={false}
                 >
                   <DialogTitle className="sr-only">截图预览放大</DialogTitle>
-                  <img src={assetUrl} alt="截图放大" className="h-auto max-h-[85vh] w-full rounded-2xl object-contain" />
+                  <img src={assetUrl} alt="截图放大" className="h-auto max-h-[85vh] w-full rounded-xl object-contain" />
                 </DialogContent>
               </Dialog>
             </div>
@@ -254,7 +254,7 @@ export function SubmissionSlotCard({
 
           {isProcessing ? (
             <div className="relative z-10 flex w-full max-w-[180px] flex-col items-center gap-2.5 px-4">
-              <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-stone-200">
                 <motion.div
                   className="h-full rounded-full bg-[#D97757]"
                   initial={false}
@@ -279,7 +279,7 @@ export function SubmissionSlotCard({
               <span className="text-[13px] font-medium leading-snug">
                 {isDragOver ? "松开以上传截图" : (isTouchDevice ? "点击从相册选择" : "点击或拖入截图")}
               </span>
-              <span className="text-[10px] tracking-wide text-zinc-400">
+              <span className="text-[10px] tracking-wide text-stone-500">
                 JPG / PNG / WEBP · ≤ {formatSizeLimit(UPLOAD_LIMITS.screenshot)}
               </span>
             </div>
@@ -303,14 +303,14 @@ export function SubmissionSlotCard({
 
         <div className="flex min-h-[150px] flex-col gap-2.5">
           {ocrSummary && ocrSummary.length > 0 ? (
-            <div className="flex min-h-0 flex-1 flex-col rounded-xl bg-zinc-50/80 p-3">
+            <div className="flex min-h-0 flex-1 flex-col rounded-xl bg-stone-100/80 p-3">
               <div className="mb-1.5 flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-400">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-stone-500">
                   <span className="size-1 rounded-full bg-[#D97757]" />
                   AI 识别结果
                 </span>
                 {fileName ? (
-                  <span className="max-w-[140px] truncate font-mono text-[10px] tracking-wide text-zinc-400">
+                  <span className="max-w-[140px] truncate font-mono text-[10px] tracking-wide text-stone-500">
                     {fileName}
                   </span>
                 ) : null}
@@ -323,7 +323,7 @@ export function SubmissionSlotCard({
                       "rounded-md px-1.5 py-0.5 text-[12px] leading-snug transition-[color,background-color] duration-150",
                       highlightedOcrIndex === idx
                         ? "bg-[#D97757]/10 font-medium text-[#C96442]"
-                        : "text-zinc-700",
+                        : "text-stone-700",
                     )}
                   >
                     {item}
@@ -351,7 +351,7 @@ export function SubmissionSlotCard({
                   <button
                     type="button"
                     onClick={onManualFill}
-                    className="inline-flex h-7 items-center rounded-lg border border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-600 transition-[background-color,border-color,color] duration-150 hover:bg-zinc-50 hover:text-zinc-800"
+                    className="inline-flex h-7 items-center rounded-lg border border-stone-300 bg-white px-2.5 text-[11px] font-medium text-stone-600 transition-[background-color,border-color,color] duration-150 hover:bg-stone-200 hover:text-stone-800"
                   >
                     手动填写
                   </button>
@@ -359,25 +359,25 @@ export function SubmissionSlotCard({
               </div>
             </div>
           ) : isProcessing ? (
-            <div className="flex flex-1 items-center justify-center rounded-xl bg-zinc-50/80 p-4">
+            <div className="flex flex-1 items-center justify-center rounded-xl bg-stone-100/80 p-4">
               <div className="flex flex-col items-center gap-1.5">
                 <div className="flex items-center gap-1">
                   <span className="size-1 animate-pulse rounded-full bg-[#D97757]" style={{ animationDelay: "0ms" }} />
                   <span className="size-1 animate-pulse rounded-full bg-[#D97757]" style={{ animationDelay: "120ms" }} />
                   <span className="size-1 animate-pulse rounded-full bg-[#D97757]" style={{ animationDelay: "240ms" }} />
                 </div>
-                <span className="font-mono text-[10px] tracking-[0.18em] text-zinc-400">PARSING METRICS</span>
+                <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500">PARSING METRICS</span>
               </div>
             </div>
           ) : (
-            <div className="flex flex-1 items-center justify-center rounded-xl bg-zinc-50/60 p-4">
+            <div className="flex flex-1 items-center justify-center rounded-xl bg-stone-100/60 p-4">
               <div className="relative flex size-12 items-center justify-center">
-                <div className="absolute inset-0 rounded-full border border-dashed border-zinc-200" />
-                <div className="absolute left-1/2 top-1/2 h-px w-8 -translate-x-1/2 -translate-y-1/2 bg-zinc-200" />
-                <div className="absolute left-1/2 top-1/2 h-8 w-px -translate-x-1/2 -translate-y-1/2 bg-zinc-200" />
-                <span className="relative size-1 rounded-full bg-zinc-300" />
+                <div className="absolute inset-0 rounded-full border border-dashed border-stone-300" />
+                <div className="absolute left-1/2 top-1/2 h-px w-8 -translate-x-1/2 -translate-y-1/2 bg-stone-200" />
+                <div className="absolute left-1/2 top-1/2 h-8 w-px -translate-x-1/2 -translate-y-1/2 bg-stone-200" />
+                <span className="relative size-1 rounded-full bg-stone-300" />
               </div>
-              <span className="ml-3 text-[11px] tracking-wide text-zinc-400">等待识别结果</span>
+              <span className="ml-3 text-[11px] tracking-wide text-stone-500">等待识别结果</span>
             </div>
           )}
         </div>
@@ -388,7 +388,7 @@ export function SubmissionSlotCard({
           type="button"
           onClick={onDelete}
           aria-label="删除截图"
-          className="absolute right-0 top-0 inline-flex size-7 items-center justify-center rounded-full text-zinc-300 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-[#C9604D]"
+          className="absolute right-0 top-0 inline-flex size-7 items-center justify-center rounded-full text-stone-500 transition-[background-color,color] duration-150 hover:bg-stone-200 hover:text-[#C9604D]"
         >
           <Trash2 className="size-3.5 stroke-[1.6]" />
         </button>

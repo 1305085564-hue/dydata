@@ -25,6 +25,7 @@ interface SubmissionSlotsProps {
   issueCount?: number;
   screenshotsRequired?: boolean;
   focusedRole?: SubmissionSlotRole | null;
+  highlightedOcrIndex?: number | null;
 }
 
 const SLOT_META: Array<{
@@ -100,10 +101,10 @@ export function SubmissionSlotsSection({
             }}
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "group relative flex h-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/40 px-6 py-5 text-center transition-all duration-150",
+              "group relative flex h-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-6 py-5 text-center transition-all duration-150",
               isDragOver
-                ? "border-[#D97757] bg-[#FDF9F7] text-[#D97757] shadow-[0_0_15px_rgba(217,119,87,0.08)]"
-                : "hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/30 hover:text-[#D97757]"
+                ? "border-[#D97757] bg-[#FDF9F7] shadow-[0_0_15px_rgba(217,119,87,0.08)]"
+                : "border-[#D97757]/40 bg-[#FDF9F7]/20 hover:border-[#D97757]/70 hover:bg-[#FDF9F7]/40"
             )}
           >
             <input
@@ -118,11 +119,11 @@ export function SubmissionSlotsSection({
               }}
             />
             <div className="flex flex-col items-center gap-2">
-              <UploadCloud className="size-6 stroke-[1.5] text-zinc-400 group-hover:text-[#D97757] transition-colors" />
-              <p className="text-[13px] font-medium leading-snug">
+              <UploadCloud className="size-6 stroke-[1.5] text-[#D97757] transition-colors" />
+              <p className="text-[13px] font-bold leading-snug text-[#D97757]">
                 {isDragOver ? "松开投放到此" : "拖入、选择多张截图，亦可在此 Ctrl+V 粘贴"}
               </p>
-              <div className="flex flex-col gap-0.5 text-[10px] leading-relaxed text-zinc-400">
+              <div className="flex flex-col gap-0.5 text-[10px] leading-relaxed text-stone-500">
                 <p>1. 互动截图 (包含播放量/数据/曲线)</p>
                 <p>2. 完播截图 (包含均播/留存率/完播数据)</p>
               </div>
@@ -144,7 +145,7 @@ export function SubmissionSlotsSection({
                 key={item.role}
                 className={cn(
                   "relative flex flex-col justify-between flex-1 rounded-xl border bg-white p-3 transition-[border-color,box-shadow] duration-150",
-                  slot.status === "empty" ? "border-zinc-200 border-dashed bg-zinc-50/20" : "border-zinc-200 shadow-sm",
+                  slot.status === "empty" ? "border-stone-300 border-dashed bg-stone-100/20" : "border-stone-300 shadow-sm",
                   isError && "border-[#C9604D]/35 bg-[#FFF8F7]"
                 )}
               >
@@ -153,41 +154,43 @@ export function SubmissionSlotsSection({
                   <div className="flex min-w-0 items-center gap-2.5">
                     {/* 缩略图 */}
                     {slot.status === "empty" ? (
-                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50 text-zinc-300">
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-dashed border-stone-300 bg-stone-100 text-stone-500">
                         <FileText className="size-4.5 stroke-[1.5]" />
                       </div>
                     ) : isProcessing ? (
-                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#D97757]">
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-[#D97757]">
                         <Loader2 className="size-4.5 animate-spin stroke-[1.6]" />
                       </div>
                     ) : slot.assetUrl ? (
                       <Dialog>
-                        <DialogTrigger asChild>
-                          <div className="group/preview relative size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-zinc-200">
-                            <img
-                              src={slot.assetUrl}
-                              alt={item.title}
-                              className="h-full w-full object-cover transition-transform duration-200 group-hover/preview:scale-105"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover/preview:opacity-100 transition-opacity">
-                              <Eye className="size-3 text-white" />
+                        <DialogTrigger
+                          render={
+                            <div className="group/preview relative size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-stone-300">
+                              <img
+                                src={slot.assetUrl}
+                                alt={item.title}
+                                className="h-full w-full object-cover transition-transform duration-200 group-hover/preview:scale-105"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover/preview:opacity-100 transition-opacity">
+                                <Eye className="size-3 text-white" />
+                              </div>
                             </div>
-                          </div>
-                        </DialogTrigger>
+                          }
+                        />
                         <DialogContent className="w-auto max-w-4xl overflow-hidden border-none bg-transparent p-0 shadow-none">
                           <DialogTitle className="sr-only">放大预览</DialogTitle>
                           <img src={slot.assetUrl} alt="放大预览" className="h-auto max-h-[85vh] w-full rounded-xl object-contain" />
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400">
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-stone-200 text-stone-500">
                         <FileText className="size-4.5 stroke-[1.5]" />
                       </div>
                     )}
 
                     {/* 文字描述 */}
                     <div className="min-w-0">
-                      <span className="text-[12px] font-semibold text-zinc-700 block leading-none">{item.title}</span>
+                      <span className="text-[12px] font-semibold text-stone-700 block leading-none">{item.title}</span>
                       {slot.status !== "empty" && (
                         <span
                           className={cn(
@@ -212,7 +215,7 @@ export function SubmissionSlotsSection({
                           <button
                             type="button"
                             onClick={() => onRetry(item.role)}
-                            className="inline-flex size-6 items-center justify-center rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border border-zinc-200 transition-colors"
+                            className="inline-flex size-6 items-center justify-center rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 border border-stone-300 transition-colors"
                             title="重新识别"
                           >
                             <RefreshCw className="size-3" />
@@ -222,7 +225,7 @@ export function SubmissionSlotsSection({
                           <button
                             type="button"
                             onClick={() => onManualFill(item.role)}
-                            className="inline-flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-[9px] font-medium text-zinc-600 hover:bg-zinc-50 border border-zinc-200 transition-colors"
+                            className="inline-flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-[9px] font-medium text-stone-600 hover:bg-stone-200 border border-stone-300 transition-colors"
                           >
                             手输
                           </button>
@@ -233,7 +236,7 @@ export function SubmissionSlotsSection({
                       <button
                         type="button"
                         onClick={() => onDelete(item.role)}
-                        className="inline-flex size-6 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-50 hover:text-[#C9604D] transition-colors"
+                        className="inline-flex size-6 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200 hover:text-[#C9604D] transition-colors"
                         title="删除"
                       >
                         <Trash2 className="size-3 stroke-[1.6]" />
@@ -243,12 +246,12 @@ export function SubmissionSlotsSection({
                 </div>
 
                 {/* 下半部：文件名或解析结果 */}
-                <div className="text-[10px] text-zinc-400 truncate mt-1">
+                <div className="text-[10px] text-stone-500 truncate mt-1">
                   {slot.status === "empty"
                     ? `待上传${item.required ? " (必传)" : ""}`
                     : isProcessing
                       ? "AI 正在分析图片数据..."
-                      : slot.fileName || (slot.screenshotType === "data" ? "流量指标图已读取" : "留存完播图已读取")}
+                      : slot.fileName || (item.role === "screenshot_1" ? "流量指标图已读取" : "留存完播图已读取")}
                 </div>
               </div>
             );
