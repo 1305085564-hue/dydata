@@ -34,7 +34,11 @@ export function getSafeAccountDisplayName(input: {
   contentDirection: string | null | undefined;
   index: number;
   total: number;
+  remark?: string | null | undefined;
 }) {
+  const remark = input.remark?.trim();
+  if (remark) return remark;
+
   const rawName = input.rawName?.trim();
   const direction = input.contentDirection?.trim();
   const baseName = input.userDisplayName;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Settings, Zap } from "lucide-react";
+import { Bell, Wrench, Zap } from "lucide-react";
 import { getNavItems } from "@/components/nav-bar-items";
 import { AdminCenterNav } from "@/components/admin-layout/admin-top-nav";
 import { WorkspacePicker } from "@/components/workspace-picker";
@@ -12,7 +12,7 @@ import { PremiumSettingsModal } from "@/components/premium-settings-modal";
 import { cn } from "@/lib/utils";
 import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions, UserRole } from "@/types";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNotifications } from "@/components/notifications/notification-store";
 import {
   initDashboardStore,
@@ -25,6 +25,7 @@ interface Account {
   name: string;
   display_name: string;
   content_direction: string | null;
+  remark: string | null;
 }
 
 interface NavBarClientProps {
@@ -59,6 +60,7 @@ export function NavBarClient({
   const [commandHubOpen, setCommandHubOpen] = useState(false);
   const [commandHubTab, setCommandHubTab] = useState<"todos" | "notifications">("todos");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [wrenchOpen, setWrenchOpen] = useState(false);
 
   // Monitor scroll for header shrink effect
   useEffect(() => {
@@ -90,7 +92,12 @@ export function NavBarClient({
   const totalAlertsCount = activeTodos.length + unreadAlerts.length;
 
   const showAdminCenter = showAdmin;
-  const isAdminPath = pathname.startsWith("/admin");
+  const isAdminPath =
+    pathname.startsWith("/admin") &&
+    !["/admin/settings", "/admin/modules", "/admin/ai-config"].some((p) =>
+      pathname.startsWith(p)
+    );
+  const isOwner = role === "owner" || businessRole === "owner";
 
   const prefetchOnHover = useCallback(
     (href: string) => {
@@ -102,7 +109,7 @@ export function NavBarClient({
   const primaryLinkClass = (active: boolean) =>
     cn(
       "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-semibold tracking-tight transition-all duration-200 ease-out",
-      active ? "bg-zinc-150 text-zinc-900 dark:bg-zinc-800 dark:text-white" : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
+      active ? "bg-stone-150 text-stone-900 dark:bg-stone-800 dark:text-white" : "text-stone-500 hover:text-stone-700 dark:hover:text-stone-300",
     );
 
   return (
@@ -111,8 +118,8 @@ export function NavBarClient({
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "py-2 bg-white/75 dark:bg-zinc-950/75 backdrop-blur-xl border-zinc-200/60 dark:border-zinc-800/50 shadow-sm"
-            : "py-4 bg-zinc-50/50 dark:bg-zinc-950/20 border-transparent"
+            ? "py-2 bg-white/75 dark:bg-stone-950/75 backdrop-blur-xl border-stone-300/60 dark:border-stone-800/50 shadow-sm"
+            : "py-4 bg-stone-100/50 dark:bg-stone-950/20 border-transparent"
         )}
       >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -130,17 +137,17 @@ export function NavBarClient({
                   <Zap className="size-[18px] stroke-[2] fill-current" />
                 </div>
                 <div className="hidden sm:block">
-                  <div className="text-xs font-black tracking-tight text-zinc-950 dark:text-white uppercase leading-none">
+                  <div className="text-xs font-black tracking-tight text-stone-950 dark:text-white uppercase leading-none">
                     DYData <span className="text-[#D97757] font-semibold text-[10px]">PREMIUM</span>
                   </div>
-                  <div className="text-[9px] font-medium tracking-[0.18em] text-zinc-400 dark:text-zinc-500 uppercase leading-none mt-1">
+                  <div className="text-[9px] font-medium tracking-[0.18em] text-stone-500 dark:text-stone-600 uppercase leading-none mt-1">
                     短视频管理控制台
                   </div>
                 </div>
               </Link>
 
               {/* Separator */}
-              <div className="hidden lg:block h-5 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
+              <div className="hidden lg:block h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />
 
               {/* Primary Navigation links / Admin secondary links depending on page url */}
               {isAdminPath ? (
@@ -168,7 +175,7 @@ export function NavBarClient({
                         className={primaryLinkClass(active)}
                       >
                         {Icon && (
-                          <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors", active ? "text-[#D97757]" : "text-zinc-400")} />
+                          <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors", active ? "text-[#D97757]" : "text-stone-500")} />
                         )}
                         <span className="whitespace-nowrap">{item.label}</span>
                       </Link>
@@ -183,7 +190,7 @@ export function NavBarClient({
               
               {/* Perspective Switcher (Visible only if user has admin permission context) */}
               {showAdminCenter && (
-                <div className="relative flex items-center bg-zinc-100 dark:bg-zinc-900 p-0.5 rounded-xl border border-zinc-200/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                <div className="relative flex items-center bg-stone-200 dark:bg-stone-900 p-0.5 rounded-xl border border-stone-300/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
                   <button
                     type="button"
                     onClick={() => {
@@ -191,14 +198,14 @@ export function NavBarClient({
                     }}
                     className={cn(
                       "relative z-10 px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200",
-                      !isAdminPath ? "text-zinc-900 dark:text-white" : "text-zinc-500 hover:text-zinc-700"
+                      !isAdminPath ? "text-stone-900 dark:text-white" : "text-stone-600 hover:text-stone-700"
                     )}
                   >
                     {!isAdminPath && (
                       <motion.div
                         layoutId="activePerspectivePill"
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        className="absolute inset-0 bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200/10"
+                        className="absolute inset-0 bg-white dark:bg-stone-800 rounded-lg shadow-sm border border-stone-300/10"
                       />
                     )}
                     <span className="relative z-10">员工</span>
@@ -211,14 +218,14 @@ export function NavBarClient({
                     }}
                     className={cn(
                       "relative z-10 px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200",
-                      isAdminPath ? "text-zinc-900 dark:text-white" : "text-zinc-500 hover:text-zinc-700"
+                      isAdminPath ? "text-stone-900 dark:text-white" : "text-stone-600 hover:text-stone-700"
                     )}
                   >
                     {isAdminPath && (
                       <motion.div
                         layoutId="activePerspectivePill"
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        className="absolute inset-0 bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200/10"
+                        className="absolute inset-0 bg-white dark:bg-stone-800 rounded-lg shadow-sm border border-stone-300/10"
                       />
                     )}
                     <span className="relative z-10">管理</span>
@@ -227,7 +234,7 @@ export function NavBarClient({
               )}
 
               {/* Separator */}
-              {showAdminCenter && <div className="hidden md:block h-5 w-[1px] bg-zinc-200 dark:bg-zinc-800" />}
+              {showAdminCenter && <div className="hidden md:block h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />}
 
               {/* Workspace Selector (Visible only if accounts are loaded) */}
               {accounts.length > 0 && (
@@ -237,7 +244,75 @@ export function NavBarClient({
               )}
 
               {/* Separator */}
-              <div className="hidden sm:block h-5 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
+              <div className="hidden sm:block h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />
+
+              {/* System Maintenance (Wrench dropdown) */}
+              {showSystemSettings && (
+                <div
+                  className="relative"
+                  onMouseEnter={() => setWrenchOpen(true)}
+                  onMouseLeave={() => setWrenchOpen(false)}
+                >
+                  <button
+                    type="button"
+                    className={cn(
+                      "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200",
+                      "text-stone-500 hover:text-[#D97757] dark:text-stone-400 dark:hover:text-[#D97757] active:scale-95",
+                      (wrenchOpen || pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/modules") || pathname.startsWith("/admin/ai-config")) &&
+                        "text-[#D97757] dark:text-[#D97757]"
+                    )}
+                    title="系统维护"
+                  >
+                    <Wrench className="size-4 stroke-[1.8]" />
+                  </button>
+
+                  <AnimatePresence>
+                    {wrenchOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                        transition={{ duration: 0.15, ease: [0, 0, 0.2, 1] }}
+                        className={cn(
+                          "absolute right-0 mt-2 z-50 w-56 origin-top-right overflow-hidden rounded-2xl border bg-white p-2 shadow-xl",
+                          "border-stone-200/80 dark:border-stone-800/80 dark:bg-stone-950 backdrop-blur-xl bg-white/95 dark:bg-stone-950/95"
+                        )}
+                      >
+                        <div className="px-2.5 py-2 border-b border-stone-100 dark:border-stone-900 mb-1.5">
+                          <div className="text-[12px] font-bold text-stone-900 dark:text-stone-100">
+                            系统运行维护
+                          </div>
+                          <div className="text-[11px] text-stone-500 dark:text-stone-600 mt-1 leading-normal">
+                            管理团队架构与 AI 模块
+                          </div>
+                        </div>
+
+                        <div className="space-y-0.5">
+                          <Link
+                            href="/admin/modules"
+                            prefetch={false}
+                            onClick={() => setWrenchOpen(false)}
+                            className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-900/40 transition-colors"
+                          >
+                            <span>团队与成员</span>
+                          </Link>
+
+                          {isOwner && (
+                            <Link
+                              href="/admin/ai-config"
+                              prefetch={false}
+                              onClick={() => setWrenchOpen(false)}
+                              className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-900/40 transition-colors"
+                            >
+                              <span>AI 配置</span>
+                            </Link>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
               {/* Bell alert drawer button */}
               <button
@@ -247,51 +322,34 @@ export function NavBarClient({
                   setCommandHubOpen(true);
                 }}
                 className={cn(
-                  "relative flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-200",
-                  "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 active:scale-95"
+                  "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200",
+                  "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 active:scale-95"
                 )}
                 title="待办与通知中心"
               >
-                <Bell className="size-4 stroke-[1.8] text-zinc-500 dark:text-zinc-400" />
+                <Bell className="size-4 stroke-[1.8]" />
                 {totalAlertsCount > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-zinc-950 tabular-nums">
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-stone-950 tabular-nums">
                     {totalAlertsCount > 99 ? "99+" : totalAlertsCount}
                   </span>
                 )}
               </button>
 
-              {/* Settings gear trigger */}
-              {showSystemSettings && (
-                <Link
-                  href="/admin/settings"
-                  prefetch={false}
-                  onMouseEnter={() => prefetchOnHover("/admin/settings")}
-                  className={cn(
-                    "relative flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-200",
-                    "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 active:scale-95",
-                    pathname.startsWith("/admin/settings") && "border-zinc-400 bg-zinc-50 dark:border-zinc-650"
-                  )}
-                  title="网站参数设置"
-                >
-                  <Settings className="size-4 stroke-[1.8] text-zinc-500 dark:text-zinc-400" />
-                </Link>
-              )}
-
               {/* User profile avatar info */}
-              <div className="h-5 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
                 className="flex items-center gap-2 text-left rounded-lg hover:opacity-85 focus:outline-none"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-[11px] font-black text-white dark:bg-zinc-800 shadow-sm border border-zinc-200/10">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-950 text-[11px] font-black text-white dark:bg-stone-800 shadow-sm border border-stone-300/10">
                   {name.trim().slice(0, 1).toUpperCase() || "?"}
                 </div>
                 <div className="hidden lg:flex flex-col">
-                  <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-200 leading-tight">
+                  <span className="text-[10px] font-bold text-stone-800 dark:text-stone-200 leading-tight">
                     {name.split(" ")[0]}
                   </span>
-                  <span className="text-[8px] font-semibold text-zinc-400 leading-none mt-0.5 tracking-wider uppercase">
+                  <span className="text-[8px] font-semibold text-stone-500 leading-none mt-0.5 tracking-wider uppercase">
                     {role === "owner" ? "创始人" : role === "admin" ? "管理员" : "成员"}
                   </span>
                 </div>

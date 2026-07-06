@@ -29,7 +29,7 @@ export async function NavBar() {
 
   const { data: accounts } = await supabase
     .from("accounts")
-    .select("id, name, content_direction")
+    .select("id, name, content_direction, remark")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true });
 
@@ -42,8 +42,10 @@ export async function NavBar() {
       contentDirection: account.content_direction,
       index,
       total: list.length,
+      remark: account.remark,
     }),
     content_direction: account.content_direction,
+    remark: account.remark,
   }));
 
   return (
