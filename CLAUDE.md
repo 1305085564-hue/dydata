@@ -1,81 +1,142 @@
 # DYData 项目规则
 
-## 基本信息
-- 名称：抖音数据日报平台
-- 域名：dydata.cc / dydata.vercel.app
-- Supabase：gcrhhxaopomtposmahsw.supabase.co（新加坡正式主库）
-- 技术栈：Next.js App Router + Tailwind CSS + shadcn/ui + Supabase + Vercel
-- 部署平台：Vercel（push main 自动部署），× Cloudflare Workers
-- 域名 DNS 在 Cloudflare，但部署 × 走 Cloudflare Workers
+## 一、元约束与行为准则
 
-## 角色权限
-- 代码 role 只有三种：owner / admin / member
-- 代码统一用 businessRole 表达四级：owner / team_admin / group_leader / member
-- owner 全局全权限；负责人 = admin + manage_members=true，团队内管理等同 owner；组长 = admin + groups.leader_user_id，负责本组内容和数据；组员 = member
-- 权限开关看 permissions，范围看 team_id / group_id / groups.leader_user_id
-- 默认值：owner 永远全权限；负责人缺失权限默认 true、显式 false 保留；组长默认内容/数据/文案能力；组员默认无权限
-- admin 和 member 可授权范围相同，都是 PERMISSION_KEYS
-- 区别只在默认值，不在可授权范围
-- 首个 owner：1305085564@qq.com（profiles.id = a689874f-12f1-43e1-8e20-87e2195fe041）
+### 元约束（最高优先级，覆盖所有代理，冲突时以此为准）
 
-## 环境变量
-- NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
-- SUPABASE_SERVICE_ROLE_KEY
-- FEISHU_WEBHOOK_URL / CRON_SECRET / REMIND_SECRET
-- AI_BASE_URL=https://www.aiapikey.net / AI_API_KEY / AI_MODEL=claude-sonnet-4-6
+一、先思后答。收到需求先在思考区推演：定位真实核心问题、识别隐含假设、标出信息缺口，禁止顺字面直接执行。关键节点显式输出中文思考过程。
 
-## 页面结构
-| 路径 | 说明 | 权限 |
-|------|------|------|
-| /login, /register | 登录/注册 | 公开 |
-| /dashboard | 员工填报 + 趋势图 + 排行榜 | 登录 |
-| /growth | 成长分析（诊断+标杆+PK+AI建议） | 登录 |
-| /analytics | 数据分析（member只看自己） | 登录 |
-| /admin | 管理后台（豁免+权限+踢人） | 按 businessRole + permissions |
-| /admin/analytics | 经营分析（趋势+爆款+AI洞察） | 按 businessRole + permissions |
+二、先校准后执行。执行前逐条复述校准后的全部关键需求点（非一句概括），确认与用户真实目标一致。将用户可能失准的表达翻译为精准、无歧义、可落地执行的目标，并主动补全与完善。
 
-## 定时任务
-| 任务 | 时间 | 来源 |
-|------|------|------|
-| 每日催交 | 每天 11:15 | Vercel cron |
-| 周报 | 每周一 9:00 | OpenClaw cron |
-| 月报 | 每月1号 9:00 | OpenClaw cron |
+三、纠偏不迎合。发现用户判断、假设或表达存在逻辑或事实缺陷时直接指出并给出理由；只依据逻辑与事实，不做心理分析、不谈情绪、不软化结论。
 
-## 排查方法论
-1. 先确认线上版本（Vercel 最近部署是否成功）
-2. 区分代码问题 vs 数据库问题（migration 执行了吗？RLS？）
-3. RLS 三板斧：查 helper 函数 → 查 policy USING → 用 service_role 绕过验证
-4. select 只查实际用到的字段，× 查未执行 migration 的列
-5. × 反复改代码碰运气 → 先定位根因再动手
+四、带答案确认，必要时提问。凡需用户裁决处，附上己方推定答案供其判断，而非空手索取内容。若信息仍不足以做对，可提问，单轮不超过 5 个，问题须具体、锋利、能推进判断；能不问则不问。
 
-## 前端协作
-- **美学规范权威文件**：`docs/美学规范.md`（项目内唯一版本）。所有前端改造前必读。
-- 分工（2026-05-10 锁定）：
-  - 前端改造 → Claude Opus 4.7 直接做
-  - 后端（Service / RPC / migration 逻辑层） → 固定委托 Codex（`mcp__codex__codex`）
-  - SQL migration 执行 → Claude 直接跑（Supabase service_role 连接）
-  - Gemini → 仅用于出方案和思路，× 执行改造
+五、术语零门槛。用户不懂编程。面向用户的一切输出中，凡出现专业术语、英文缩写或技术黑话，必须就地用大白话解释清楚，并说明它对用户的实际影响；不得默认用户理解。仅供 AI 内部使用、用户不阅读的内容不受此限。
 
-## 日志规则
-- 每次完成一个任务/修复/功能后，追加记录到 `~/.claude/memory/日志/YYYY-MM-DD.md`
-- 格式：`- [HH:MM] 简述做了什么（一行，关键改动+结果）`
-- 当天文件不存在就新建，已存在就追加
-- 遇到坑/踩雷也记一条，方便复盘
-- 这是硬规则，不能省略
+### 核心原则
 
-## Skill 优先
-- 执行任何任务前，强制对照可用 skill 列表匹配最佳 skill；匹配成功必须先调用 skill 再行动，未匹配或不确定时暂停询问，禁止绕过 skill 直接编码。
+- 项目规则以本文件和当前代码为准；旧设计文档、历史记忆、任务摘要只能当线索。
+- 阿禅不写代码。回复要中文、简短、直接；必要术语要顺手解释。
+- 需求明确就直接做；涉及大改、配置、规则、部署链路、线上数据时，先给方案和风险，再等确认。
+- 信息不足会导致做错时，先一次性问清；进入执行后独立排查到结果。
 
-## 关键规则
-- git config user.email = 1305085564@qq.com（Vercel Hobby 要求）
-- git remote：git@github.com:1305085564-hue/dydata.git
-- 日常代码修复、小功能、明确验收闭环默认推送到 main；如果未推送，收尾必须明确说明。规则、配置、大改按确认后再推。
-- 服务端接口用 SUPABASE_SERVICE_ROLE_KEY，× 用 anon key
-- cron 接口兼容 CRON_SECRET ?? REMIND_SECRET
-- 中文组件名内部用英文 PascalCase，导出时再用中文别名
-- 表单切换用 key 重建组件，× 用 useEffect 同步 props
+------
 
-## 踩坑记录
-- **组件 API 误用**：使用项目封装的 UI 组件（如 Dialog）前，必须点进源码查看 Props 定义，本项目 DialogTrigger 接收 `render={...}` 透传，而不是标准的 Radix `asChild`。
-- **UI 联动遗漏**：实现交互联动（如 Focus 高亮）时，必须覆盖组件的所有渲染形态。如果组件处于折叠态或空状态，外层的占位按钮同样需要响应高亮逻辑。
-- **重构机械复制**：在将相邻的表单字段解耦成不同 DOM 时，极易机械复制 `data-missing` 或错误文本验证逻辑（例如将 `videoTitle` 的校验条件误绑给非必填的 `videoUrl`）。提取时需逐行确认字段专属条件。
+## 二、项目事实
+
+### 产品信息
+
+- 产品：抖音数据日报平台。
+- 域名：`dydata.cc` / `dydata.vercel.app`。
+
+### 技术栈与部署
+
+- 技术栈：Next.js App Router + Tailwind CSS + shadcn/ui + Supabase + Vercel。
+- 部署：Vercel 是唯一正式部署平台；`main` 分支 push 会触发线上部署。仓库里的 OpenNext/Cloudflare 配置只按历史残留或实验配置处理，不能改成正式部署方案。
+- 主库：Supabase `gcrhhxaopomtposmahsw`，新加坡区。
+
+### 环境变量
+
+- 公开：`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`。
+- 服务端：`SUPABASE_SERVICE_ROLE_KEY`、`FEISHU_WEBHOOK_URL`、`CRON_SECRET`、`REMIND_SECRET`、`AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL`、`DYDATA_PERF_LOG`。
+- 数据库/CLI：`SUPABASE_DB_URL`、`SUPABASE_ACCESS_TOKEN` 只用于迁移或临时 SQL，不进代码。
+- 默认值以 `.env.example` 和实际 `.env.local` 为准，不从旧记忆抄。
+
+### 权限模型
+
+- 数据库 `role` 只有三种：`owner` / `admin` / `member`。
+- 业务统一看 `businessRole`：`owner` / `team_admin` / `group_leader` / `member`。
+- `owner` 全局权限；`team_admin` = `admin` + `manage_members=true`；`group_leader` = `admin` + 是某组 `leader_user_id`；其他为 `member`。
+- 权限开关统一来自 `PERMISSION_KEYS`。`admin` 和 `member` 可授权范围相同，区别在默认值。
+- 首个 `owner`：`1305085564@qq.com`。
+
+------
+
+## 三、页面与路由
+
+### 公开页面
+
+- `/`、登录注册、找回/重置密码。
+
+### 登录后页面
+
+- `/dashboard`、`/growth`、`/violations`、`/video-review`、`/content-tools`。
+
+### 管理后台
+
+- `/admin` 重定向到 `/admin/content`；核心顶部入口是 `/admin/content`、`/admin/videos`、`/admin/analytics`、`/admin/fulfillment`。
+- 仍存在但不是核心顶部入口：`/admin/settings`、`/admin/modules`、`/admin/ai-config`、`/admin/guidance`、`/admin/advice`。
+- `/content-tools/rewrite-v3` 只做兼容重定向到 `/content-tools/rewrite`。
+- `/playground/navigation` 是开发预览页，不当正式业务入口。
+
+### 定时任务
+
+- Vercel 当前只注册两个 cron：`/api/supabase-keepalive` 每天 14:30（北京时间），`/api/notifications/cleanup` 每天 02:00（北京时间）。
+- cron 鉴权兼容 `CRON_SECRET` 和 `REMIND_SECRET`，实现看 `src/lib/cron-auth.ts`。
+- `/api/remind`、`/api/report`、`/api/smart-alert`、`/api/admin/first-screen-monitor` 等接口有 cron 鉴权，但没有出现在 `vercel.json` 时，只能当手动或外部触发，不能说 Vercel 正在自动跑。
+
+------
+
+## 四、开发规范
+
+### Skill 优先
+
+- 执行任何任务前，强制对照可用 skill 列表匹配最佳 skill；匹配成功必须先调用 skill 再行动。
+- 未匹配或不确定时暂停询问，禁止绕过 skill 直接编码。
+
+### 前端规则
+
+- 前端改造先读 `docs/美学规范.md`；需要具体参数时再读补充文档。
+- 页面、布局、交互、动效类任务先说明 skill 路由，再执行。
+- 改完前端必须做真实浏览器验收；页面重构要补响应式检查。
+
+### 编码规范
+
+- 中文组件名内部用英文 PascalCase，导出时再用中文别名。
+- 表单切换用 `key` 重建组件，禁止用 `useEffect` 同步 props。
+
+### 排查顺序
+
+- 线上问题先看 Vercel 最近部署，再区分代码、数据库、权限、缓存。
+- 数据库问题先查真实字段和已执行 migration；`select` 只写线上已存在字段。
+- RLS/权限问题先查 helper、policy、service role 调用链路。
+- 前端传给后端的字段，如果后端没有接收逻辑，直接删或补后端，不能留幽灵字段。
+- 使用项目封装 UI 组件前，先看 `components/ui/*` 的真实 Props，不能套原版 shadcn/Radix 写法。
+- UI 联动要覆盖加载、空状态、折叠、选中、hover/focus 分支。
+
+### 废弃机制
+
+- 不从旧设计文档里恢复功能，必须先用当前代码验证是否上线。
+- `sop_review_scores` 六维评分不参与当前批改台主流程；当前批改台以 `content_feedback_cards` 为主。
+- SOP 5 卡点状态追踪、审核中心、全域矩阵未作为当前 dashboard 入口上线。
+- 旧 AI 配置入口 `/admin/ai-channels`、`/admin/ai-features` 统一重定向到 `/admin/ai-config`。
+
+------
+
+## 五、部署与 Git
+
+### 禁止误操作
+
+- 禁止自动或私自 push `main`。需要 push 时，先提醒阿禅确认。
+- 禁止改线上 `.env`。
+- 禁止改旧 migration；数据库结构变更只能新增 migration。
+- 禁止把 Git remote 改成 HTTPS；本仓库默认 SSH remote：`git@github.com:1305085564-hue/dydata.git`。
+- `git config user.email` 必须是 `1305085564@qq.com`。
+
+### Git 收尾
+
+- push / pull / fetch 前先检查 `git remote -v`、`ssh -T git@github.com`、`git ls-remote origin`。
+- SSH 失败先修 SSH，不改 HTTPS 兜底。
+- 任务完成只汇报本次改动、验证结果、是否还没 push。
+
+------
+
+## 六、协作分工
+
+### 三方代理
+
+- Claude Code（约 20%）：总览与统筹，负责架构设计与 0→1 需求探索；与用户交互最多，负责阶段总结与对齐。
+- Codex（约 40%）：任务落地与 1→10 执行。禁止触碰前端；遇前端需求，产出提示词交用户转给 Antigravity。
+- Antigravity（约 40%）：仅负责前端 UI/UX；遇复杂逻辑或业务，产出提示词交用户转给 Codex。
+- 跨领域任务不互相直接调用，一律产出可移交的提示词交用户转派。
