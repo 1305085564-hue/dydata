@@ -55,8 +55,8 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex items-center justify-between gap-3 rounded-lg px-1 py-1 text-left transition-all duration-200",
-          "text-stone-500 hover:text-[#D97757] dark:text-stone-400 dark:hover:text-[#D97757] active:scale-[0.98]",
-          isOpen && "text-[#D97757]"
+          "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 active:scale-[0.98]",
+          isOpen && "text-stone-800 dark:text-stone-200"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -64,10 +64,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
             <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           </div>
           <div className="min-w-0 flex flex-col">
-            <span className={cn(
-              "truncate text-xs font-semibold leading-tight max-w-[110px] transition-colors",
-              isOpen ? "text-[#D97757]" : "text-stone-850 dark:text-stone-200"
-            )}>
+            <span className="truncate text-xs font-semibold leading-tight text-stone-850 dark:text-stone-200 max-w-[110px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
             <span className="truncate text-[10px] font-medium leading-none text-stone-500 mt-0.5 max-w-[115px] tracking-tight">
@@ -79,7 +76,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
           size={14}
           className={cn(
             "text-stone-500 transition-transform shrink-0 duration-200",
-            isOpen && "rotate-180 text-[#D97757]"
+            isOpen && "rotate-180 text-stone-800 dark:text-stone-200"
           )}
         />
       </button>

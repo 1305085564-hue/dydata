@@ -1772,7 +1772,7 @@ export function VideoSubmitForm({
                     type="button"
                     onClick={triggerSubmit}
                     disabled={isSubmitting || !canActuallySubmit}
-                    className="h-10 rounded-xl px-6 text-[13px] font-semibold bg-[#D97757] hover:bg-[#C96442] text-white disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed transition-colors"
+                    className="h-10 rounded-xl px-6 text-[13px] font-semibold bg-[#D97757] hover:bg-[#C96442] text-white disabled:bg-[#D97757]/40 disabled:text-white/70 disabled:cursor-not-allowed transition-all duration-150"
                   >
                     {submitButtonLabel}
                   </Button>
