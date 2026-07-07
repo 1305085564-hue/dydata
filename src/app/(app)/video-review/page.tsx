@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { getShanghaiDate } from "@/app/api/production/_shared";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { VideoReviewTabs } from "./components/video-review-tabs";
-import { ProductionDashboard } from "./components/production-dashboard";
+import { VideoReviewWorkbench } from "./components/video-review-workbench";
+import { loadAdminExemptionList } from "@/app/api/exemptions/_admin-list";
+import { loadApprovedList } from "@/lib/publish-drafts/read-model";
 
 export default async function VideoReviewDashboardPage({
   searchParams,
@@ -20,12 +21,7 @@ export default async function VideoReviewDashboardPage({
   const permInfo = await getUserPermissions();
   if (!permInfo) redirect("/login");
   const { businessRole, role } = permInfo;
-  const isOwner = role === "owner";
   const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole);
-
-  if (!isAdmin) {
-    redirect("/video-review/submit");
-  }
 
   const resolved = await searchParams;
   const rawDate = resolved.date;
@@ -37,69 +33,90 @@ export default async function VideoReviewDashboardPage({
   const rawGroupId = resolved.group_id;
   const selectedGroupId = typeof rawGroupId === "string" && rawGroupId !== "all" ? rawGroupId : "";
 
-  const { data: dashboardData, error: dashboardError } = await supabase.rpc(
-    "get_production_dashboard",
-    {
+  const queryRaw = resolved.q;
+  const searchQuery = typeof queryRaw === "string" ? queryRaw.trim() : "";
+
+  // 1. 获取已发案例列表（首页主卡片网格流）
+  const { data: approvedData } = await loadApprovedList({
+    limit: 100,
+    search: searchQuery || null,
+  });
+  const approvedItems = approvedData ?? [];
+
+  // 2. 获取今日对账指标（当前用户的今日计划指标数与已交凭证数）
+  const { data: quotaTarget } = await supabase.rpc("get_daily_quota", { p_date: selectedDate });
+  const target = typeof quotaTarget === "number" ? quotaTarget : 4;
+
+  const { data: submissionsData } = await supabase
+    .from("work_submissions")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("submit_date", selectedDate);
+  const submittedCount = submissionsData?.length ?? 0;
+
+  // 3. 获取待审批数（管理特权，展示顶部铃铛红点徽章）
+  let pendingExemptionsCount = 0;
+  if (isAdmin) {
+    const pendingResult = await loadAdminExemptionList({
+      supabase,
+      statuses: ["pending"],
+      limit: 100,
+    });
+    const pendingData = "response" in pendingResult ? [] : (pendingResult.data ?? []);
+    pendingExemptionsCount = pendingData.length;
+  }
+
+  // 4. 获取产量看板数据（管理特权，提供对账看板大弹窗使用）
+  let dashboardData: any[] = [];
+  let teams: Array<{ id: string; name: string }> = [];
+  let groups: Array<{ id: string; name: string }> = [];
+
+  if (isAdmin) {
+    const { data: dbData } = await supabase.rpc("get_production_dashboard", {
       p_date: selectedDate,
       p_team_id: selectedTeamId || null,
       p_group_id: selectedGroupId || null,
-    }
-  );
+    });
+    dashboardData = dbData ?? [];
 
-  const { data: teamsData } = await supabase
-    .from("teams")
-    .select("id, name")
-    .order("name", { ascending: true });
+    const { data: teamsData } = await supabase
+      .from("teams")
+      .select("id, name")
+      .order("name", { ascending: true });
 
-  const { data: groupsData } = await supabase
-    .from("groups")
-    .select("id, name")
-    .order("name", { ascending: true });
+    const { data: groupsData } = await supabase
+      .from("groups")
+      .select("id, name")
+      .order("name", { ascending: true });
 
-  const teams = (teamsData ?? []) as Array<{ id: string; name: string }>;
-  const groups = (groupsData ?? []) as Array<{ id: string; name: string }>;
+    teams = (teamsData ?? []) as Array<{ id: string; name: string }>;
+    groups = (groupsData ?? []) as Array<{ id: string; name: string }>;
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">
       <Breadcrumb
         items={[
           { label: "视频审核", href: "/video-review" },
-          { label: "产量看板" },
+          { label: "产量对账" },
         ]}
       />
 
-      <header className="rounded-2xl border border-zinc-200 bg-white px-6 py-5 sm:px-8 sm:py-6 space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 font-mono">
-              Fulfillment & Quota
-            </p>
-            <h1 className="mt-2 text-[24px] font-semibold leading-[1.33] tracking-tight text-zinc-800">
-              产量对账看板
-            </h1>
-            <p className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
-              统计并对账全队每日视频发布履约。红灯亮起表示未达标且无豁免。
-            </p>
-          </div>
-        </div>
-
-        <VideoReviewTabs isAdmin={isAdmin} />
-      </header>
-
-      {dashboardError ? (
-        <div className="rounded-xl border border-[#C9604D] bg-[#C9604D]/5 p-5 text-[13px] leading-[1.7] text-[#C9604D]">
-          读取产量对账数据失败: {dashboardError.message}
-        </div>
-      ) : (
-        <ProductionDashboard
-          initialData={dashboardData ?? []}
-          teams={teams}
-          groups={groups}
-          selectedDate={selectedDate}
-          selectedTeamId={selectedTeamId || "all"}
-          selectedGroupId={selectedGroupId || "all"}
-        />
-      )}
+      <VideoReviewWorkbench
+        isAdmin={isAdmin}
+        userId={user.id}
+        todayDate={selectedDate}
+        initialTarget={target}
+        initialSubmittedCount={submittedCount}
+        pendingExemptionsCount={pendingExemptionsCount}
+        initialDashboardData={dashboardData}
+        teams={teams}
+        groups={groups}
+        approvedItems={approvedItems}
+        searchQuery={searchQuery}
+        selectedTeamId={selectedTeamId || "all"}
+        selectedGroupId={selectedGroupId || "all"}
+      />
     </div>
   );
 }
