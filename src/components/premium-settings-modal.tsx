@@ -192,7 +192,7 @@ export function PremiumSettingsModal({
           {/* Close button */}
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-stone-150 hover:bg-stone-200 dark:border-stone-800 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-600 hover:text-stone-700 dark:hover:text-white transition-colors"
+            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-stone-200 hover:bg-stone-200 dark:border-stone-800 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-600 hover:text-stone-700 dark:hover:text-white transition-colors"
           >
             <X className="size-4" />
           </button>
@@ -369,7 +369,7 @@ export function PremiumSettingsModal({
                   </div>
                   <button
                     onClick={() => setIsAddingAccount(!isAddingAccount)}
-                    className="inline-flex items-center gap-1 bg-stone-200 dark:bg-stone-900 hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-250 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors"
+                    className="inline-flex items-center gap-1 bg-stone-200 dark:bg-stone-900 hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-800 dark:text-stone-200 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-colors"
                   >
                     <Plus className="size-3" />
                     添加新账号
@@ -418,7 +418,7 @@ export function PremiumSettingsModal({
                         <button
                           onClick={handleAddAccount}
                           disabled={accountActionPending === "add"}
-                          className="inline-flex items-center justify-center bg-stone-900 hover:bg-stone-850 dark:bg-stone-800 dark:hover:bg-stone-700 text-white px-3 py-1 rounded-lg text-[10px] font-bold min-w-[60px]"
+                          className="inline-flex items-center justify-center bg-stone-900 hover:bg-stone-950 dark:bg-stone-800 dark:hover:bg-stone-700 text-white px-3 py-1 rounded-lg text-[10px] font-bold min-w-[60px]"
                         >
                           {accountActionPending === "add" ? (
                             <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -487,7 +487,7 @@ export function PremiumSettingsModal({
                             type="button"
                             onClick={() => handleEditAccountRemark(acc.id, acc.remark || "")}
                             disabled={isRemarkPending}
-                            className="text-[10px] font-bold text-stone-600 hover:text-stone-850"
+                            className="text-[10px] font-bold text-stone-600 hover:text-stone-900"
                           >
                             {isRemarkPending ? "正在保存..." : "修改备注"}
                           </button>

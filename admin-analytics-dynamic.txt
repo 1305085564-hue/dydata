@@ -1,0 +1,3 @@
+30. [GET] https://dydata.cc/api/admin/sidebar-badges => [200] 
+
+Note: 30 static requests not shown, run with "static" option to see them.

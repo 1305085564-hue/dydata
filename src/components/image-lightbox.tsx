@@ -29,12 +29,16 @@ export function ImageLightbox({
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "ArrowRight") handleNext();
     }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
   }, [onClose, handlePrev, handleNext]);
 
   useEffect(() => {
@@ -49,7 +53,15 @@ export function ImageLightbox({
   const src = `/api/violations/screenshot/${encodeURI(currentPath)}`;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/80">
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/80"
+    >
       {/* Close */}
       <button
         type="button"

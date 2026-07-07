@@ -67,11 +67,13 @@ export function DashboardDialog({
   const [date, setDate] = useState(selectedDate);
   const [teamId, setTeamId] = useState(selectedTeamId);
   const [groupId, setGroupId] = useState(selectedGroupId);
+  const [onlyRedAlert, setOnlyRedAlert] = useState(false);
 
   // Expanded member state for screenshot loading
   const [expandedUser, setExpandedUser] = useState<{ id: string; name: string } | null>(null);
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [userSubmissionsError, setUserSubmissionsError] = useState<string | null>(null);
 
   // Group accordion state
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
@@ -89,6 +91,9 @@ export function DashboardDialog({
 
   // Group data by Group
   const groupedData = initialData.reduce((acc, row) => {
+    if (onlyRedAlert && row.alert_level !== "red") {
+      return acc;
+    }
     const key = row.group_name || "未分类小组";
     if (!acc[key]) acc[key] = [];
     acc[key].push(row);
@@ -103,23 +108,31 @@ export function DashboardDialog({
   const fulfillmentRate = totalTarget > 0 ? Math.round((totalSubmitted / totalTarget) * 100) : 100;
 
   // View member submissions
-  const handleToggleUser = async (user_id: string, user_name: string) => {
-    if (expandedUser?.id === user_id) {
+  const handleToggleUser = async (user_id: string, user_name: string, isRetry = false) => {
+    if (expandedUser?.id === user_id && !isRetry) {
       setExpandedUser(null);
       setUserSubmissions([]);
+      setUserSubmissionsError(null);
       return;
     }
 
     setExpandedUser({ id: user_id, name: user_name });
     setLoadingSubmissions(true);
+    setUserSubmissionsError(null);
     try {
       const data = await getUserSubmissions(user_id, date);
       setUserSubmissions(data);
     } catch (err: any) {
-      toast.error("获取提交记录失败", {
-        description: err.message || "未知错误",
-      });
-      setExpandedUser(null);
+      const errMsg = err.message || "";
+      if (errMsg.includes("无权") || errMsg.includes("权限")) {
+        toast.error("权限不足", { description: "您没有权限执行此操作" });
+        setUserSubmissionsError("权限不足，无法查看");
+      } else {
+        toast.error("获取提交记录失败", {
+          description: errMsg || "未知错误",
+        });
+        setUserSubmissionsError("获取今日凭证失败");
+      }
     } finally {
       setLoadingSubmissions(false);
     }
@@ -134,21 +147,21 @@ export function DashboardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[95vw] bg-white p-6 rounded-2xl border border-stone-200 overflow-y-auto max-h-[90vh]">
+      <DialogContent style={{ maxWidth: "min(1100px, calc(100vw - 32px))" }} className="w-[95vw] bg-white p-4 sm:p-6 rounded-2xl border border-stone-200 overflow-y-auto max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-[16px] font-bold text-stone-800">
+          <DialogTitle className="text-[18px] font-bold text-stone-950">
             团队产量对账看板
           </DialogTitle>
         </DialogHeader>
 
-        {/* 顶部三枚通透无框指标块 */}
+        {/* 顶部三枚通透无框指标块 (去掉 border 和 bg, 直接三列布局) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <div className="rounded-xl border border-stone-100 bg-stone-50/30 p-4 space-y-1">
-            <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-              全队总目标达成度
+          <div className="p-4 space-y-1">
+            <span className="text-[12px] font-medium text-stone-500">
+              全队已交 / 目标
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[28px] font-bold font-mono tabular-nums text-stone-800">
+              <span className="text-[32px] font-bold font-mono tabular-nums text-stone-950">
                 {totalSubmitted} / {totalTarget}
               </span>
               <span className="text-[12px] font-semibold text-[#6FAA7D] font-mono tabular-nums">
@@ -157,33 +170,32 @@ export function DashboardDialog({
             </div>
           </div>
 
-          <div className="rounded-xl border border-stone-100 bg-stone-50/30 p-4 space-y-1">
-            <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-              豁免待审人数
+          <div className="p-4 space-y-1">
+            <span className="text-[12px] font-medium text-stone-500">
+              待审请假
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[28px] font-bold font-mono tabular-nums text-[#8AA8C7]">
+              <span className="text-[32px] font-bold font-mono tabular-nums text-[#8AA8C7]">
                 {pendingExemptionsCount}
               </span>
               <span className="text-[11px] text-stone-400">人申请请假</span>
             </div>
           </div>
 
-          <div className="rounded-xl border border-stone-100 bg-stone-50/30 p-4 space-y-1">
-            <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-              异常红灯人数
+          <div className="p-4 space-y-1">
+            <span className="text-[12px] font-medium text-stone-500">
+              红灯未达标
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[28px] font-bold font-mono tabular-nums text-[#C9604D]">
+              <span className="text-[32px] font-bold font-mono tabular-nums text-[#C9604D]">
                 {redAlertCount}
               </span>
               <span className="text-[11px] text-stone-400">人未达标且无豁免</span>
             </div>
           </div>
         </div>
-
-        {/* 筛选过滤条 (L1 卡片上，依靠底色差 white 容器，无粗框) */}
-        <div className="flex flex-wrap items-center gap-3 mt-4 rounded-xl border border-stone-100 bg-stone-50/20 p-3.5">
+        {/* 筛选过滤条 (靠 24px 留白与上下分隔，内部输入框用 bg-stone-100) */}
+        <div className="flex flex-wrap items-center gap-4 py-2 mt-6 mb-6">
           {/* 日期选择 */}
           <div className="flex items-center gap-2">
             <Calendar className="size-4 text-stone-400" />
@@ -194,7 +206,7 @@ export function DashboardDialog({
                 setDate(e.target.value);
                 handleFilterChange(e.target.value, teamId, groupId);
               }}
-              className="h-8 rounded-lg border-0 bg-stone-100 px-3 text-[12px] font-mono font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-[background-color,box-shadow]"
+              className="h-8 w-32 rounded-lg border-0 bg-stone-100 px-3 text-[12px] font-mono font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-[background-color,box-shadow]"
             />
           </div>
 
@@ -207,7 +219,7 @@ export function DashboardDialog({
                 setTeamId(e.target.value);
                 handleFilterChange(date, e.target.value, groupId);
               }}
-              className="h-8 rounded-lg border-0 bg-stone-100 px-3 text-[12px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-[background-color,box-shadow]"
+              className="h-8 w-36 rounded-lg border-0 bg-stone-100 px-3 text-[12px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-[background-color,box-shadow]"
             >
               <option value="all">所有团队</option>
               {teams.map((t) => (
@@ -227,7 +239,7 @@ export function DashboardDialog({
                 setGroupId(e.target.value);
                 handleFilterChange(date, teamId, e.target.value);
               }}
-              className="h-8 rounded-lg border-0 bg-stone-100 px-3 text-[12px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-[background-color,box-shadow]"
+              className="h-8 w-36 rounded-lg border-0 bg-stone-100 px-3 text-[12px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-[background-color,box-shadow]"
             >
               <option value="all">所有小组</option>
               {groups.map((g) => (
@@ -237,6 +249,20 @@ export function DashboardDialog({
               ))}
             </select>
           </div>
+
+          {/* 只看红灯 */}
+          <button
+            type="button"
+            onClick={() => setOnlyRedAlert(!onlyRedAlert)}
+            className={cn(
+              "h-8 rounded-lg border px-3 text-[12px] font-semibold transition-colors ml-auto active:scale-95",
+              onlyRedAlert
+                ? "border-[#C9604D] text-[#C9604D] bg-[#C9604D]/5"
+                : "border-stone-200 text-stone-600 bg-white hover:border-stone-300 hover:bg-stone-50"
+            )}
+          >
+            只看红灯
+          </button>
 
           {isPending && (
             <span className="flex items-center text-[11px] text-stone-400">
@@ -250,7 +276,7 @@ export function DashboardDialog({
         <div className="mt-6 space-y-5">
           {Object.keys(groupedData).length === 0 ? (
             <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-stone-200 text-[12px] text-stone-400">
-              当前筛选条件下无团队成员对账数据
+              {onlyRedAlert ? "当前没有红灯未达标成员" : "当前筛选条件下无团队成员对账数据"}
             </div>
           ) : (
             Object.entries(groupedData).map(([groupName, members]) => {
@@ -285,14 +311,17 @@ export function DashboardDialog({
 
                   {/* 小组组员行列表 */}
                   {!isCollapsed && (
-                    <div className="space-y-1.5 pl-2">
+                    <div className="overflow-hidden rounded-xl border border-stone-100 bg-white">
                       {members.map((member) => {
                         const isUserExpanded = expandedUser?.id === member.user_id;
                         
                         return (
                           <div
                             key={member.user_id}
-                            className="rounded-xl border border-stone-100 bg-white p-3 hover:border-stone-300 transition-colors"
+                            className={cn(
+                              "bg-white p-3 hover:bg-stone-50 transition-colors border-b border-stone-100 last:border-0",
+                              member.alert_level === "red" && "border-l-2 border-l-[#C9604D] pl-3"
+                            )}
                           >
                             <div
                               onClick={() => handleToggleUser(member.user_id, member.user_name)}
@@ -347,11 +376,29 @@ export function DashboardDialog({
 
                             {/* 折叠区：该成员今日提交的截图列表 (懒加载) */}
                             {isUserExpanded && (
-                              <div className="mt-3 border-t border-stone-100 pt-3 space-y-2">
+                              <div className="mt-2 pt-1 space-y-2">
                                 {loadingSubmissions ? (
                                   <div className="flex items-center justify-center py-4 text-stone-400 text-[11px]">
                                     <Loader2 className="mr-1.5 size-4 animate-spin" />
                                     正在获取提交明细...
+                                  </div>
+                                ) : userSubmissionsError ? (
+                                  <div className="flex flex-col items-center justify-center py-3 text-stone-400 text-[11px] gap-2">
+                                    <span className="flex items-center gap-1 text-[#D97757]">
+                                      <AlertTriangle className="size-3.5" />
+                                      {userSubmissionsError}
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleUser(member.user_id, member.user_name, true);
+                                      }}
+                                      className="h-7 rounded-lg border-[#D97757] text-[#D97757] hover:bg-[#D97757]/5 text-[10px] font-semibold"
+                                    >
+                                      重新加载
+                                    </Button>
                                   </div>
                                 ) : userSubmissions.length === 0 ? (
                                   <p className="text-[11px] text-stone-400 text-center py-2">

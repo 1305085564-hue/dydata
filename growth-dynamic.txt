@@ -1,0 +1,4 @@
+25. [POST] https://dydata.cc/api/growth/ai-insight => [200] 
+26. [GET] https://dydata.cc/api/growth/page-data?mode=full => [200] 
+
+Note: 24 static requests not shown, run with "static" option to see them.

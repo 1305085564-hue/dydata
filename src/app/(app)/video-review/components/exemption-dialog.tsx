@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, X, Loader2 } from "lucide-react";
+import { CalendarDays, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogClose,
 } from "@/components/ui/dialog";
 
 const EXEMPTION_TYPES = [
@@ -98,7 +97,7 @@ export function ExemptionDialog({
         <DialogHeader className="px-7 pt-6 pb-4 border-b border-stone-100">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-[18px] font-bold text-stone-800 flex items-center gap-2">
+              <DialogTitle className="text-[18px] font-bold text-stone-950 flex items-center gap-2">
                 <CalendarDays className="size-5 text-[#D97757]" />
                 申请产量豁免
               </DialogTitle>
@@ -106,9 +105,6 @@ export function ExemptionDialog({
                 如因请假、出差等原因无法完成当日产量，可申请豁免。审批通过后当日状态转为绿灯。
               </p>
             </div>
-            <DialogClose className="rounded-lg p-1.5 hover:bg-stone-100 transition-colors mt-0.5">
-              <X className="size-4 text-stone-500" />
-            </DialogClose>
           </div>
         </DialogHeader>
 
@@ -143,7 +139,7 @@ export function ExemptionDialog({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-9 rounded-xl border border-stone-200 bg-stone-50/60 px-3 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
               />
             </div>
             <div className="space-y-1.5">
@@ -153,7 +149,7 @@ export function ExemptionDialog({
                 value={endDate}
                 min={startDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full h-9 rounded-xl border border-stone-200 bg-stone-50/60 px-3 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
               />
             </div>
           </div>
@@ -166,7 +162,7 @@ export function ExemptionDialog({
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               placeholder="简要说明请假或豁免原因..."
-              className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
             />
           </div>
 
@@ -176,14 +172,14 @@ export function ExemptionDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
-              className="h-9 rounded-xl border border-stone-200 px-4 text-[13px] font-medium text-stone-600 hover:bg-stone-50 transition-colors"
+              className="h-9 rounded-lg border border-stone-200 px-4 text-[13px] font-medium text-stone-600 hover:bg-stone-50 transition-colors"
             >
               取消
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex h-9 items-center gap-2 rounded-xl bg-[#D97757] px-5 text-[13px] font-semibold text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
+              className="flex h-9 items-center gap-2 rounded-lg bg-[#D97757] px-5 text-[13px] font-semibold text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
             >
               {submitting ? (
                 <>

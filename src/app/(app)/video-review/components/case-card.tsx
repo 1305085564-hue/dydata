@@ -40,7 +40,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
     <div
       onClick={() => onOpenDetail(item)}
       className={cn(
-        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer",
+        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-px hover:shadow-sm cursor-pointer",
         isMine && "ring-1 ring-[#D97757]/30 border-[#D97757]/40"
       )}
     >

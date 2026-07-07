@@ -1,0 +1,4 @@
+31. [GET] https://dydata.cc/api/admin/sidebar-badges => [200] 
+32. [GET] https://dydata.cc/api/admin/content/list?view=pending&scope=company&mode=full => [200] 
+
+Note: 30 static requests not shown, run with "static" option to see them.

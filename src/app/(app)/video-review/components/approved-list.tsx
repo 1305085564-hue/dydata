@@ -97,7 +97,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder="搜已发文案内容..."
-                  className="h-9 w-48 rounded-lg border border-transparent bg-stone-100/70 pl-8 pr-3 text-[12px] text-stone-800 placeholder:text-stone-400 transition-colors focus:border-stone-200 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900/5 sm:w-64"
+                  className="h-9 w-48 rounded-lg border border-transparent bg-stone-100/70 pl-8 pr-3 text-[12px] text-stone-800 placeholder:text-stone-400 transition-all focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 sm:w-64"
                 />
               </div>
             </form>
@@ -106,8 +106,22 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
 
         {/* 卡片网格瀑布流/网格布局 (L1 容器，bg-stone-100 上自然浮现，间距 24px/16px) */}
         {filteredItems.length === 0 ? (
-          <div className="flex h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-white text-[13px] text-stone-400">
-            没有符合条件的已发案例
+          <div className="flex h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-white p-6 text-center">
+            <div className="flex size-10 items-center justify-center rounded-full bg-stone-50 text-stone-400">
+              <Search className="size-5 stroke-[1.5]" />
+            </div>
+            <p className="mt-3 text-[13px] font-medium text-stone-700">没有符合条件的已发案例</p>
+            <p className="mt-1 text-[11px] text-stone-500">可能是查询条件有误，或者今日大家还没有登记过作品凭证</p>
+            <button
+              type="button"
+              onClick={() => {
+                const btn = document.getElementById("workbench-upload-btn");
+                if (btn) btn.click();
+              }}
+              className="mt-4 inline-flex h-8 items-center justify-center rounded-lg bg-[#D97757] px-4 text-[12px] font-semibold text-white hover:bg-[#C96442] active:scale-95 transition-transform"
+            >
+              去上传凭证
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

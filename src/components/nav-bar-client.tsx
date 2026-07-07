@@ -128,10 +128,10 @@ export function NavBarClient({
     [pathname, router],
   );
 
-  const primaryLinkClass = (active: boolean) =>
+   const primaryLinkClass = (active: boolean) =>
     cn(
       "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-semibold tracking-tight transition-all duration-200 ease-out",
-      active ? "bg-stone-150 text-stone-900 dark:bg-stone-800 dark:text-white" : "text-stone-500 hover:text-stone-700 dark:hover:text-stone-300",
+      active ? "bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-white" : "text-stone-500 hover:text-stone-700 dark:hover:text-stone-300",
     );
 
   return (

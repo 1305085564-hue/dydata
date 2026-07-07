@@ -64,7 +64,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
             <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           </div>
           <div className="min-w-0 flex flex-col">
-            <span className="truncate text-xs font-semibold leading-tight text-stone-850 dark:text-stone-200 max-w-[110px]">
+            <span className="truncate text-xs font-semibold leading-tight text-stone-950 dark:text-stone-200 max-w-[110px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
             <span className="truncate text-[10px] font-medium leading-none text-stone-500 mt-0.5 max-w-[115px] tracking-tight">
@@ -148,7 +148,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                           <div className="size-2 rounded-full bg-emerald-500" />
                         </div>
                         <div className="min-w-0">
-                          <span className="truncate text-xs font-semibold tracking-tight text-stone-955 dark:text-stone-50 block">
+                          <span className="truncate text-xs font-semibold tracking-tight text-stone-950 dark:text-stone-50 block">
                             {account.display_name}
                           </span>
                           <span className="block truncate text-[10px] text-stone-500 dark:text-stone-600 font-medium">
