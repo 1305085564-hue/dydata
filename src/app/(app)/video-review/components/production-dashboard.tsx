@@ -243,8 +243,8 @@ export function ProductionDashboard({
                   <h3 className="text-[14px] font-bold text-stone-800">
                     {groupName}
                   </h3>
-                  <span className="text-[12px] text-stone-500 font-medium font-mono tabular-nums">
-                    已交 {groupSubmitted} / 目标 {groupTarget} ({groupRate}%)
+                  <span className="text-[12px] text-stone-500 font-medium">
+                    已交 <span className="font-mono tabular-nums">{groupSubmitted}</span> / 目标 <span className="font-mono tabular-nums">{groupTarget}</span> (<span className="font-mono tabular-nums">{groupRate}%</span>)
                   </span>
                 </div>
 
@@ -281,8 +281,8 @@ export function ProductionDashboard({
                             <span className="text-[14px] font-medium text-stone-800">
                               {member.user_name}
                             </span>
-                            <span className="text-[12px] text-stone-400 ml-2 font-mono tabular-nums">
-                              目标: {member.daily_target} / 已交: {member.submitted_count}
+                            <span className="text-[12px] text-stone-400 ml-2">
+                              目标: <span className="font-mono tabular-nums">{member.daily_target}</span> / 已交: <span className="font-mono tabular-nums">{member.submitted_count}</span>
                             </span>
                           </div>
                         </div>
@@ -304,9 +304,9 @@ export function ProductionDashboard({
 
                           {/* 缺额警报 */}
                           {member.alert_level === "red" && member.gap > 0 && (
-                            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#C9604D] font-mono tabular-nums">
+                            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#C9604D]">
                               <AlertCircle className="size-3.5" />
-                              缺 {member.gap} 条
+                              缺 <span className="font-mono tabular-nums">{member.gap}</span> 条
                             </span>
                           )}
 

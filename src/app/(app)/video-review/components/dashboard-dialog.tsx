@@ -303,8 +303,8 @@ export function DashboardDialog({
                       <span className="text-[13px] font-bold text-stone-800">
                         {groupName}
                       </span>
-                      <span className="text-[11px] text-stone-500 font-mono tabular-nums">
-                        (达标率 {gSubmitted}/{gTarget} - {gRate}%)
+                      <span className="text-[11px] text-stone-500">
+                        (达标率 <span className="font-mono tabular-nums">{gSubmitted}/{gTarget}</span> - <span className="font-mono tabular-nums">{gRate}%</span>)
                       </span>
                     </div>
                   </div>

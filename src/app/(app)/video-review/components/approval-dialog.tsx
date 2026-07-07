@@ -299,8 +299,8 @@ export function ApprovalDialog({
             <DialogTitle className="text-[18px] font-bold text-stone-950">
               审批中心
             </DialogTitle>
-            <span className="font-mono text-[12px] tabular-nums text-stone-400">
-              共 {pending.length} 条待处理
+            <span className="text-[12px] text-stone-400">
+              共 <span className="font-mono font-bold tabular-nums">{pending.length}</span> 条待处理
             </span>
           </div>
 
@@ -530,12 +530,12 @@ export function ApprovalDialog({
                       )}
                     </div>
                     
-                    <div className="mt-1 flex items-center gap-2 text-stone-400 text-[11px] font-mono">
-                      <span>期限: {item.start_date}</span>
+                    <div className="mt-1 flex items-center gap-2 text-stone-400 text-[11px]">
+                      <span>期限: <span className="font-mono">{item.start_date}</span></span>
                       {item.end_date && (
                         <>
                           <span>至</span>
-                          <span>{item.end_date}</span>
+                          <span className="font-mono">{item.end_date}</span>
                         </>
                       )}
                     </div>
