@@ -1,17 +1,60 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
-import { X, CheckCircle2, Circle, AlertCircle, Bell, ArrowRight, Trash2, CalendarDays, Inbox } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  X,
+  Check,
+  CheckCircle2,
+  Circle,
+  ArrowRight,
+  Trash2,
+  CalendarDays,
+  Inbox,
+  Loader2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useNotifications, isLocalNotification, AnyNotificationRow } from "./notifications/notification-store";
+import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface ExemptionRequest {
+  id: string;
+  applicant_user_id: string;
+  applicant_name: string | null;
+  team_id: string | null;
+  team_name: string | null;
+  group_id: string | null;
+  group_name: string | null;
+  exemption_type: string;
+  start_date: string;
+  end_date: string | null;
+  reason: string;
+  request_status: "pending" | "approved" | "rejected";
+  reviewed_by_name: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+const EXEMPTION_LABELS: Record<string, string> = {
+  single: "请假1天",
+  yesterday: "补昨日请假",
+  "3days": "请假3天",
+  "4days": "请假4天",
+  "5days": "请假5天",
+  range: "自定义范围",
+  permanent: "永久豁免",
+};
 
 interface UnifiedCommandHubProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  activeTab: "todos" | "notifications";
-  onTabChange: (tab: "todos" | "notifications") => void;
+  activeTab: "todos" | "approvals" | "notifications";
+  onTabChange: (tab: "todos" | "approvals" | "notifications") => void;
+  isAdmin: boolean;
+  pendingApprovalsCount?: number;
+  onPendingCountChange?: (count: number) => void;
 }
 
 export function UnifiedCommandHub({
@@ -19,9 +62,138 @@ export function UnifiedCommandHub({
   onOpenChange,
   activeTab,
   onTabChange,
+  isAdmin,
+  pendingApprovalsCount = 0,
+  onPendingCountChange,
 }: UnifiedCommandHubProps) {
   const { notifications, loading, markRead, markAllRead, markDone } = useNotifications();
   const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Approvals State
+  const [approvalsLoading, setApprovalsLoading] = useState(false);
+  const [pendingApprovals, setPendingApprovals] = useState<ExemptionRequest[]>([]);
+  const [selectedApprovalIds, setSelectedApprovalIds] = useState<Set<string>>(new Set());
+  const [actionProcessing, setActionProcessing] = useState<{
+    id: string;
+    action: "approved" | "rejected";
+  } | null>(null);
+  const [batchProcessing, setBatchProcessing] = useState(false);
+
+  const fetchApprovals = useCallback(async () => {
+    if (!isAdmin) return;
+    setApprovalsLoading(true);
+    try {
+      const res = await fetch("/api/exemptions/pending", { cache: "no-store" });
+      if (!res.ok) throw new Error("pending approvals fetch failed");
+      const json = await res.json();
+      const data = json.data ?? [];
+      const count = typeof json.count === "number" ? json.count : data.length;
+      setPendingApprovals(data);
+      setSelectedApprovalIds((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(Array.from(prev).filter((id) => data.some((item: ExemptionRequest) => item.id === id)));
+        return next;
+      });
+      onPendingCountChange?.(count);
+    } catch (err) {
+      console.error("Failed to fetch approvals:", err);
+    } finally {
+      setApprovalsLoading(false);
+    }
+  }, [isAdmin, onPendingCountChange]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setPendingApprovals([]);
+      setSelectedApprovalIds(new Set());
+      onPendingCountChange?.(0);
+      return;
+    }
+    if (open && activeTab === "approvals") {
+      void fetchApprovals();
+    }
+  }, [activeTab, fetchApprovals, isAdmin, onPendingCountChange, open]);
+
+  const handleReviewApproval = async (id: string, action: "approved" | "rejected") => {
+    setActionProcessing({ id, action });
+    try {
+      const res = await fetch("/api/exemptions/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: id, action }),
+      });
+      if (res.ok) {
+        toast.success(action === "approved" ? "审批已通过" : "审批已拒绝");
+        await fetchApprovals();
+      } else {
+        const json = await res.json();
+        toast.error("操作失败", { description: json.error || "未知原因" });
+      }
+    } catch {
+      toast.error("网络异常，请重试");
+    } finally {
+      setActionProcessing(null);
+    }
+  };
+
+  const handleBatchApproveApprovals = async () => {
+    if (selectedApprovalIds.size === 0) return;
+    setBatchProcessing(true);
+    const idsArray = Array.from(selectedApprovalIds);
+    let successCount = 0;
+    let failCount = 0;
+    try {
+      await Promise.all(
+        idsArray.map(async (id) => {
+          try {
+            const res = await fetch("/api/exemptions/review", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ request_id: id, action: "approved" }),
+            });
+            if (res.ok) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch (e) {
+            console.error(e);
+            failCount++;
+          }
+        })
+      );
+      toast.success("批量通过完成", {
+        description:
+          failCount > 0
+            ? `成功 ${successCount} 条，失败 ${failCount} 条`
+            : `成功通过 ${successCount} 条申请`,
+      });
+      await fetchApprovals();
+    } catch {
+      toast.error("批量操作失败，请重试");
+    } finally {
+      setBatchProcessing(false);
+    }
+  };
+
+  const toggleApprovalSelection = (id: string, checked: boolean) => {
+    setSelectedApprovalIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  const allApprovalIds = pendingApprovals.map((item) => item.id);
+  const allSelected = allApprovalIds.length > 0 && allApprovalIds.every((id) => selectedApprovalIds.has(id));
+  const someSelected =
+    allApprovalIds.length > 0 &&
+    selectedApprovalIds.size > 0 &&
+    selectedApprovalIds.size < allApprovalIds.length;
   
   // Track recently completed todo IDs in the current session for smooth animations
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
@@ -171,6 +343,29 @@ export function UnifiedCommandHub({
                 )}
               </button>
 
+              {isAdmin && (
+                <button
+                  onClick={() => onTabChange("approvals")}
+                  className={cn(
+                    "relative py-3 text-xs font-bold transition-colors duration-200 mr-6",
+                    activeTab === "approvals" ? "text-zinc-950 dark:text-white" : "text-zinc-400 hover:text-zinc-700"
+                  )}
+                >
+                  豁免审批
+                  {pendingApprovalsCount > 0 && (
+                    <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[10px] font-extrabold">
+                      {pendingApprovalsCount}
+                    </span>
+                  )}
+                  {activeTab === "approvals" && (
+                    <motion.div
+                      layoutId="commandHubActiveTabIndicator"
+                      className="absolute bottom-0 inset-x-0 h-0.5 bg-[#D97757]"
+                    />
+                  )}
+                </button>
+              )}
+
               <button
                 onClick={() => onTabChange("notifications")}
                 className={cn(
@@ -195,7 +390,171 @@ export function UnifiedCommandHub({
 
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              
+
+              {/* APPROVALS TAB */}
+              {activeTab === "approvals" && isAdmin && (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-400">
+                          待审申请
+                        </div>
+                        <div className="mt-1 flex items-baseline gap-2">
+                          <span className="font-mono text-[30px] font-bold tabular-nums text-stone-900">
+                            {pendingApprovals.length}
+                          </span>
+                          <span className="text-[11px] font-medium text-stone-500">
+                            条待处理
+                          </span>
+                        </div>
+                      </div>
+
+                      {pendingApprovals.length > 0 && (
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5">
+                            <Checkbox
+                              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                              onCheckedChange={(checked) => {
+                                const nextChecked = Boolean(checked);
+                                setSelectedApprovalIds(nextChecked ? new Set(allApprovalIds) : new Set());
+                              }}
+                              className="border-stone-300"
+                            />
+                            <span className="text-[11px] font-medium text-stone-600">
+                              全选
+                            </span>
+                            <span className="font-mono text-[11px] font-semibold text-stone-900">
+                              {selectedApprovalIds.size}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={selectedApprovalIds.size === 0 || batchProcessing}
+                            onClick={() => void handleBatchApproveApprovals()}
+                            className={cn(
+                              "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold transition-colors",
+                              selectedApprovalIds.size === 0 || batchProcessing
+                                ? "cursor-not-allowed bg-stone-100 text-stone-400"
+                                : "bg-[#D97757] text-white hover:bg-[#C96442]"
+                            )}
+                          >
+                            {batchProcessing ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Check className="size-3.5 stroke-[2]" />
+                            )}
+                            批量通过
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {approvalsLoading && pendingApprovals.length === 0 ? (
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-xs text-stone-500">
+                      <Loader2 className="size-4 animate-spin text-[#D97757]" />
+                      正在加载待审批申请...
+                    </div>
+                  ) : pendingApprovals.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-center">
+                      <CheckCircle2 className="mb-2 size-8 text-[#6FAA7D]" />
+                      <h3 className="text-xs font-bold text-stone-800">
+                        暂无待审豁免
+                      </h3>
+                      <p className="mt-1 max-w-[220px] text-[10px] leading-relaxed text-stone-500">
+                        当前没有新的豁免申请，审批队列已经清空。
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {pendingApprovals.map((item) => {
+                        const isSelected = selectedApprovalIds.has(item.id);
+                        const isApproving =
+                          actionProcessing?.id === item.id && actionProcessing.action === "approved";
+                        const isRejecting =
+                          actionProcessing?.id === item.id && actionProcessing.action === "rejected";
+                        return (
+                          <div
+                            key={item.id}
+                            className={cn(
+                              "group rounded-2xl border border-stone-200 bg-white p-4 transition-colors",
+                              isSelected && "border-[#D97757]/50 bg-[#D97757]/[0.03]"
+                            )}
+                          >
+                            <div className="flex items-start gap-3">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => toggleApprovalSelection(item.id, Boolean(checked))}
+                                className="mt-0.5 border-stone-300"
+                              />
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="truncate text-[12px] font-bold text-stone-900">
+                                        {item.applicant_name || "未命名成员"}
+                                      </span>
+                                      <span className="inline-flex shrink-0 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[10px] font-medium text-[#D99E55]">
+                                        {EXEMPTION_LABELS[item.exemption_type] || item.exemption_type}
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 text-[10px] text-stone-500">
+                                      {item.group_name || item.team_name || "未分组"} ·{" "}
+                                      <span className="font-mono tabular-nums text-stone-400">
+                                        {item.start_date}
+                                        {item.end_date ? ` 至 ${item.end_date}` : ""}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <span className="shrink-0 font-mono text-[10px] text-stone-400">
+                                    {relativeTime(item.created_at)}
+                                  </span>
+                                </div>
+
+                                <p className="mt-2 line-clamp-1 rounded-lg bg-stone-50 px-2.5 py-2 text-[11px] text-stone-600">
+                                  原因：{item.reason}
+                                </p>
+                              </div>
+
+                              <div className="ml-3 flex shrink-0 flex-col items-end justify-center gap-1">
+                                <button
+                                  type="button"
+                                  disabled={batchProcessing || actionProcessing?.id === item.id}
+                                  onClick={() => void handleReviewApproval(item.id, "approved")}
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium text-[#6FAA7D] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-stone-400"
+                                >
+                                  {isApproving ? (
+                                    <Loader2 className="size-3.5 animate-spin" />
+                                  ) : (
+                                    <Check className="size-3.5 stroke-[2]" />
+                                  )}
+                                  通过
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={batchProcessing || actionProcessing?.id === item.id}
+                                  onClick={() => void handleReviewApproval(item.id, "rejected")}
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-stone-400"
+                                >
+                                  {isRejecting ? (
+                                    <Loader2 className="size-3.5 animate-spin" />
+                                  ) : null}
+                                  拒绝
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* TODOS TAB */}
               {activeTab === "todos" && (
                 <div className="space-y-4">

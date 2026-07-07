@@ -58,9 +58,12 @@ export function NavBarClient({
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [commandHubOpen, setCommandHubOpen] = useState(false);
-  const [commandHubTab, setCommandHubTab] = useState<"todos" | "notifications">("todos");
+  const [commandHubTab, setCommandHubTab] = useState<"todos" | "approvals" | "notifications">("todos");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [wrenchOpen, setWrenchOpen] = useState(false);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+
+  const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole || "");
 
   // Monitor scroll for header shrink effect
   useEffect(() => {
@@ -85,11 +88,30 @@ export function NavBarClient({
     }
   }, [accounts]);
 
+  // Fetch pending approvals count on mount (if admin)
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchPendingCount = async () => {
+      try {
+        const res = await fetch("/api/exemptions/pending", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          setPendingApprovalsCount(typeof json.count === "number" ? json.count : json.data?.length ?? 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch pending count:", err);
+      }
+    };
+    fetchPendingCount();
+  }, [isAdmin]);
+
   // Load real notification counts
   const { notifications: allNotifications } = useNotifications();
   const activeTodos = allNotifications.filter((n) => n.category === "todo" && n.status === "unread");
   const unreadAlerts = allNotifications.filter((n) => n.category !== "todo" && n.status === "unread");
   const totalAlertsCount = activeTodos.length + unreadAlerts.length;
+  const approvalBadgeCount = isAdmin ? pendingApprovalsCount : 0;
+  const bellBadgeCount = totalAlertsCount + approvalBadgeCount;
 
   const showAdminCenter = showAdmin;
   const isAdminPath =
@@ -318,7 +340,13 @@ export function NavBarClient({
               <button
                 type="button"
                 onClick={() => {
-                  setCommandHubTab(activeTodos.length > 0 ? "todos" : "notifications");
+                  if (activeTodos.length > 0) {
+                    setCommandHubTab("todos");
+                  } else if (isAdmin && approvalBadgeCount > 0) {
+                    setCommandHubTab("approvals");
+                  } else {
+                    setCommandHubTab("notifications");
+                  }
                   setCommandHubOpen(true);
                 }}
                 className={cn(
@@ -328,9 +356,9 @@ export function NavBarClient({
                 title="待办与通知中心"
               >
                 <Bell className="size-4 stroke-[1.8]" />
-                {totalAlertsCount > 0 && (
+                {bellBadgeCount > 0 && (
                   <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-stone-950 tabular-nums">
-                    {totalAlertsCount > 99 ? "99+" : totalAlertsCount}
+                    {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                   </span>
                 )}
               </button>
@@ -366,6 +394,9 @@ export function NavBarClient({
         onOpenChange={setCommandHubOpen}
         activeTab={commandHubTab}
         onTabChange={setCommandHubTab}
+        isAdmin={isAdmin}
+        pendingApprovalsCount={approvalBadgeCount}
+        onPendingCountChange={setPendingApprovalsCount}
       />
 
       <PremiumSettingsModal
