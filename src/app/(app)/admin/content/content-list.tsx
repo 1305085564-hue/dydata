@@ -438,9 +438,7 @@ export function ContentList({
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting && hasMore && !isLoadingMore) {
-          if (hasDeferredData && onLoadDeferredData) {
-            if (!hasUserScrolledList) return;
-            void onLoadDeferredData();
+          if (hasDeferredData) {
             return;
           }
           setIsLoadingMore(true);
