@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildDashboardAlertsResponse } from "./route";
+import { __internal, buildDashboardAlertsResponse } from "./route";
 
 test("dashboard-alerts GET 在 mock 聚合结果下返回非空数据", async () => {
+  __internal.resetDashboardAlertsCache();
   const response = await buildDashboardAlertsResponse({
     requireAdminActor: async () => ({
       supabase: {} as never,
@@ -104,4 +105,64 @@ test("dashboard-alerts GET 在 mock 聚合结果下返回非空数据", async ()
   assert.equal(Array.isArray(payload.alerts), true);
   assert.equal(payload.alerts.length, 1);
   assert.equal(payload.summary.total, 1);
+});
+
+test("dashboard-alerts GET 同 scope 60 秒内复用服务端缓存", async () => {
+  __internal.resetDashboardAlertsCache();
+  let calls = 0;
+
+  const deps = {
+    requireAdminActor: async () => ({
+      supabase: {} as never,
+      actor: {
+        userId: "owner-1",
+        role: "owner",
+        businessRole: "owner",
+        permissions: { view_analytics: true },
+        name: "阿禅",
+      },
+    }),
+    createAdminClient: () => ({}) as never,
+    buildDataAccessScope: async () => ({
+      userId: "owner-1",
+      role: "owner",
+      businessRole: "owner",
+      permissions: { view_analytics: true },
+      accessLevel: 4,
+      teamId: null,
+      groupId: null,
+      kind: "all",
+      visibleUserIds: ["user-1"],
+    }),
+    aggregateDashboardAlerts: async () => {
+      calls += 1;
+      return {
+        alerts: [],
+        groupedBySeverity: { critical: [], warning: [], info: [] },
+        summary: {
+          total: 0,
+          critical: 0,
+          warning: 0,
+          info: 0,
+          bySource: {
+            submission: 0,
+            playback: 0,
+            violation: 0,
+            conversion: 0,
+            upload: 0,
+            task: 0,
+          },
+        },
+      };
+    },
+  } as const;
+
+  const first = await buildDashboardAlertsResponse(deps);
+  const second = await buildDashboardAlertsResponse(deps);
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(calls, 1);
+  assert.equal(first.headers.get("cache-control"), "private, max-age=60");
+  assert.equal(second.headers.get("cache-control"), "private, max-age=60");
 });

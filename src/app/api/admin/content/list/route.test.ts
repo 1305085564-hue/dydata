@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 
-import { buildAdminContentListResponse } from "./route";
+import { __internal, buildAdminContentListResponse } from "./route";
 
 function buildRequest(url: string) {
   return new NextRequest(url);
@@ -119,4 +119,114 @@ test("content list route 拒绝 initial mode 误用", async () => {
 
   assert.equal(response.status, 400);
   assert.match(JSON.stringify(await response.json()), /mode/);
+});
+
+test("content list route 同 scope+参数 60 秒内复用服务端缓存", async () => {
+  __internal.resetAdminContentListCache();
+
+  let calls = 0;
+  const responseA = await buildAdminContentListResponse(
+    buildRequest("https://dydata.cc/api/admin/content/list?view=pending&scope=company&mode=full"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "owner-1",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_content_review: true },
+          name: "阿禅",
+          accessLevel: 4,
+          teamId: null,
+          groupId: null,
+          ledGroupIds: [],
+        },
+      }),
+      getTeamOptions: async () => [],
+      getCurrentPermissionContext: async () => ({
+        permissionInfo: {
+          userId: "owner-1",
+          name: "阿禅",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_content_review: true },
+          accessLevel: 4,
+          teamId: null,
+          groupId: null,
+          ledGroupIds: [],
+        },
+        scope: {
+          userId: "owner-1",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_content_review: true },
+          accessLevel: 4 as const,
+          teamId: null,
+          groupId: null,
+          kind: "all" as const,
+          visibleUserIds: ["user-1", "user-2"],
+        },
+      }),
+      createAdminClient: () => ({ kind: "cached" }) as never,
+      loadAdminContentFullData: async () => {
+        calls += 1;
+        return buildContentPayload();
+      },
+    },
+  );
+  const responseB = await buildAdminContentListResponse(
+    buildRequest("https://dydata.cc/api/admin/content/list?view=pending&scope=company&mode=full"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "owner-1",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_content_review: true },
+          name: "阿禅",
+          accessLevel: 4,
+          teamId: null,
+          groupId: null,
+          ledGroupIds: [],
+        },
+      }),
+      getTeamOptions: async () => [],
+      getCurrentPermissionContext: async () => ({
+        permissionInfo: {
+          userId: "owner-1",
+          name: "阿禅",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_content_review: true },
+          accessLevel: 4,
+          teamId: null,
+          groupId: null,
+          ledGroupIds: [],
+        },
+        scope: {
+          userId: "owner-1",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_content_review: true },
+          accessLevel: 4 as const,
+          teamId: null,
+          groupId: null,
+          kind: "all" as const,
+          visibleUserIds: ["user-1", "user-2"],
+        },
+      }),
+      createAdminClient: () => ({ kind: "cached" }) as never,
+      loadAdminContentFullData: async () => {
+        calls += 1;
+        return buildContentPayload();
+      },
+    },
+  );
+
+  assert.equal(responseA.status, 200);
+  assert.equal(responseB.status, 200);
+  assert.equal(calls, 1);
+  assert.equal(responseA.headers.get("cache-control"), "private, max-age=60");
+  assert.equal(responseB.headers.get("cache-control"), "private, max-age=60");
 });

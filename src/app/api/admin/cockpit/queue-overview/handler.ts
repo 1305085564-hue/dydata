@@ -30,6 +30,23 @@ export type QueueOverviewDeps = {
   loadQueueMetricSummary: (date: string, visibleUserIds: string[] | null) => Promise<QueueMetricSummary>;
 };
 
+const QUEUE_OVERVIEW_CACHE_TTL_MS = 60_000;
+const queueOverviewCache = new Map<string, { expiresAt: number; payload: QueueOverviewPayload }>();
+
+function buildQueueOverviewCacheKey(input: {
+  date: string;
+  userId: string;
+  scopeKind: string;
+  visibleUserIds: string[];
+}) {
+  return [
+    input.date,
+    input.userId,
+    input.scopeKind,
+    [...input.visibleUserIds].sort().join(","),
+  ].join("|");
+}
+
 export async function buildQueueOverviewResponse(
   request: NextRequest,
   deps: QueueOverviewDeps,
@@ -40,16 +57,31 @@ export async function buildQueueOverviewResponse(
   const auth = await deps.requireAdminServiceClient();
   if ("response" in auth) return auth.response;
 
-  const initial = await deps.loadAdminFirstScreenData(date, {
+  const cacheKey = buildQueueOverviewCacheKey({
+    date,
+    userId: auth.scope.userId,
+    scopeKind: auth.scope.kind,
+    visibleUserIds: auth.scope.visibleUserIds,
+  });
+  const cached = queueOverviewCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return NextResponse.json(cached.payload, {
+      headers: {
+        "Cache-Control": "private, max-age=60",
+      },
+    });
+  }
+
+  const initialPromise = deps.loadAdminFirstScreenData(date, {
     requireAdminServiceClient: async () => auth,
     listPendingRequestsForAdmin: deps.listPendingRequestsForAdmin,
     loadPendingExemptionRows: deps.loadPendingExemptionRows,
   });
-
-  const metrics = await deps.loadQueueMetricSummary(
+  const metricsPromise = deps.loadQueueMetricSummary(
     date,
     auth.scope.kind === "all" ? null : auth.scope.visibleUserIds,
   );
+  const [initial, metrics] = await Promise.all([initialPromise, metricsPromise]);
 
   const payload: QueueOverviewPayload = {
     summary: initial.summary,
@@ -60,5 +92,20 @@ export async function buildQueueOverviewResponse(
     metrics,
   };
 
-  return NextResponse.json(payload);
+  queueOverviewCache.set(cacheKey, {
+    expiresAt: Date.now() + QUEUE_OVERVIEW_CACHE_TTL_MS,
+    payload,
+  });
+
+  return NextResponse.json(payload, {
+    headers: {
+      "Cache-Control": "private, max-age=60",
+    },
+  });
 }
+
+export const __internal = {
+  resetQueueOverviewCache() {
+    queueOverviewCache.clear();
+  },
+};

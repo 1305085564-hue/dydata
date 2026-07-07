@@ -45,29 +45,29 @@ async function loadQueueMetricSummary(date: string, visibleUserIds: string[] | n
 
   let videoQuery = supabase
     .from("videos")
-    .select("id, user_id, created_at")
+    .select("id", { count: "exact", head: true })
     .gte("created_at", dayStart)
     .lt("created_at", nextDayStart);
 
   let reviewQuery = supabase
     .from("content_feedback_cards")
-    .select("id, target_user_id, sent_at, viewed_at, confirmed_at")
+    .select("id", { count: "exact", head: true })
     .gte("confirmed_at", `${weekStart}T00:00:00+08:00`);
 
   let caseLibraryQuery = supabase
     .from("violation_cases")
-    .select("id, submitted_by")
+    .select("id", { count: "exact", head: true })
     .eq("status", "submitted")
     .eq("is_deleted", false);
 
   let profilesQuery = supabase
     .from("profiles")
-    .select("id, status")
+    .select("id")
     .eq("status", "active");
 
   let reportsQuery = supabase
     .from("daily_reports")
-    .select("id, user_id, report_date")
+    .select("user_id, report_date")
     .in("report_date", weekDates);
 
   if (visibleUserIds && visibleUserIds.length > 0) {
@@ -81,9 +81,9 @@ async function loadQueueMetricSummary(date: string, visibleUserIds: string[] | n
   const [videosResult, reviewsResult, caseLibraryResult, profilesResult, reportsResult] =
     await Promise.all([videoQuery, reviewQuery, caseLibraryQuery, profilesQuery, reportsQuery]);
 
-  const videos = videosResult.data ?? [];
-  const reviews = reviewsResult.data ?? [];
-  const caseLibraryRows = caseLibraryResult.data ?? [];
+  const newVideosToday = videosResult.count ?? 0;
+  const weeklyReviewedCount = reviewsResult.count ?? 0;
+  const caseLibraryPendingCount = caseLibraryResult.count ?? 0;
   const activeProfiles = profilesResult.data ?? [];
   const reports = reportsResult.data ?? [];
 
@@ -102,10 +102,10 @@ async function loadQueueMetricSummary(date: string, visibleUserIds: string[] | n
     totalExpected > 0 ? Math.round((submittedCount / totalExpected) * 100) : 0;
 
   return {
-    newVideosToday: videos.length,
+    newVideosToday,
     weeklySubmissionRate,
-    weeklyReviewedCount: reviews.length,
-    caseLibraryPendingCount: caseLibraryRows.length,
+    weeklyReviewedCount,
+    caseLibraryPendingCount,
   } satisfies QueueMetricSummary;
 }
 

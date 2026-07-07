@@ -27,6 +27,53 @@ function formatServerTiming(parts: Array<{ name: string; duration: number }>) {
   return parts.map((part) => `${part.name};dur=${part.duration.toFixed(1)}`).join(", ");
 }
 
+const ADMIN_CONTENT_LIST_CACHE_TTL_MS = 60_000;
+const adminContentListCache = new Map<string, { expiresAt: number; payload: Awaited<ReturnType<typeof buildContentPayloadShape>> }>();
+
+function buildContentPayloadShape() {
+  return {
+    videos: [],
+    snapshots: [],
+    profiles: [],
+    accounts: [],
+    reviewedVideoIds: [],
+    feedbackCards: {},
+    reviewReadiness: {},
+    summary: {
+      totalVideos: 0,
+      reviewedCount: 0,
+      snapshotCount: 0,
+      pendingReviewCount: 0,
+    },
+    workflowSummary: {
+      notStarted: 0,
+      draft: 0,
+      confirmed: 0,
+      sent: 0,
+      viewed: 0,
+      pendingDelivery: 0,
+    },
+  };
+}
+
+function buildAdminContentCacheKey(input: {
+  view: "pending" | "all";
+  perspective: "company" | "team";
+  teamId: string | null;
+  userId: string;
+  scopeKind: string;
+  visibleUserIds: string[];
+}) {
+  return [
+    input.view,
+    input.perspective,
+    input.teamId ?? "",
+    input.userId,
+    input.scopeKind,
+    [...input.visibleUserIds].sort().join(","),
+  ].join("|");
+}
+
 export async function buildAdminContentListResponse(
   request: NextRequest,
   deps: {
@@ -83,6 +130,30 @@ export async function buildAdminContentListResponse(
     return NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 });
   }
 
+  const cacheKey = buildAdminContentCacheKey({
+    view,
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+    userId: permissionContext.permissionInfo.userId,
+    scopeKind: permissionContext.scope.kind,
+    visibleUserIds: permissionContext.scope.visibleUserIds,
+  });
+  const cached = adminContentListCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    const totalMs = nowMs() - totalStart;
+    return NextResponse.json(cached.payload, {
+      headers: {
+        "Cache-Control": "private, max-age=60",
+        "Server-Timing": formatServerTiming([
+          { name: "auth", duration: authMs },
+          { name: "context", duration: contextMs },
+          { name: "data", duration: 0 },
+          { name: "total", duration: totalMs },
+        ]),
+      },
+    });
+  }
+
   const dataStart = nowMs();
   const data = await deps.loadAdminContentFullData({
     supabase: deps.createAdminClient(),
@@ -94,9 +165,14 @@ export async function buildAdminContentListResponse(
   });
   const dataMs = nowMs() - dataStart;
   const totalMs = nowMs() - totalStart;
+  adminContentListCache.set(cacheKey, {
+    expiresAt: Date.now() + ADMIN_CONTENT_LIST_CACHE_TTL_MS,
+    payload: data,
+  });
 
   return NextResponse.json(data, {
     headers: {
+      "Cache-Control": "private, max-age=60",
       "Server-Timing": formatServerTiming([
         { name: "auth", duration: authMs },
         { name: "context", duration: contextMs },
@@ -110,3 +186,9 @@ export async function buildAdminContentListResponse(
 export async function GET(request: NextRequest) {
   return buildAdminContentListResponse(request);
 }
+
+export const __internal = {
+  resetAdminContentListCache() {
+    adminContentListCache.clear();
+  },
+};
