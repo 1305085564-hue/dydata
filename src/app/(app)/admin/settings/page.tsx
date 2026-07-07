@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getUserPermissions } from "@/lib/permissions";
-import { canAccessAdminPath } from "@/lib/analytics-access";
 import { Sparkles, UsersRound, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { createClient } from "@/lib/supabase/server";
+import { getUserPermissions } from "@/lib/permissions";
+import { canAccessAdminPath } from "@/lib/analytics-access";
+import { getShanghaiDate } from "@/app/api/production/_shared";
+
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
+import { QuotaConfigPanel } from "./components/quota-config-panel";
 
 interface SettingCardProps {
   href: string;
@@ -42,6 +46,29 @@ export default async function AdminSettingsPage() {
   if (!canAccessAdminPath("/admin/settings", permission.businessRole, permission.permissions)) redirect("/admin");
   const isOwner = permission.businessRole === "owner" || permission.role === "owner";
 
+  const supabase = await createClient();
+  const today = getShanghaiDate();
+
+  // Fetch current daily target
+  const { data: currentQuotaVal } = await supabase.rpc("get_daily_quota", { p_date: today });
+  
+  // Fetch history of quota rules
+  const { data: rawRules } = await supabase
+    .from("daily_quota_config")
+    .select(`
+      id,
+      effective_date,
+      daily_target,
+      created_by,
+      note,
+      created_at,
+      profiles:created_by ( name )
+    `)
+    .order("effective_date", { ascending: false })
+    .limit(30);
+
+  const rules = (rawRules ?? []) as any[];
+
   return (
     <AdminWorkspaceLayout
       eyebrow="系统设置"
@@ -49,21 +76,32 @@ export default async function AdminSettingsPage() {
       description="负责人处理成员权限和团队分组；owner 额外管理 AI 配置。"
       indexItems={[]}
     >
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <SettingCard
-          href="/admin/modules"
-          title="团队与成员"
-          description="系统团队架构、分组归属维护、一键入团审批及成员精细化授权。"
-          icon={<UsersRound className="size-5 text-[#D97757]" />}
+      <div className="space-y-10">
+        {/* 系统设置大卡片区 */}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <SettingCard
+            href="/admin/modules"
+            title="团队与成员"
+            description="系统团队架构、分组归属维护、一键入团审批及成员精细化授权。"
+            icon={<UsersRound className="size-5 text-[#D97757]" />}
+          />
+          {isOwner ? (
+            <SettingCard
+              href="/admin/ai-config"
+              title="AI 配置"
+              description="模型渠道、功能绑定、文案改写和执行路线管理."
+              icon={<Sparkles className="size-5 text-[#D97757]" />}
+            />
+          ) : null}
+        </div>
+
+        {/* 产量目标配置区块 */}
+        <QuotaConfigPanel
+          initialRules={rules}
+          currentDailyTarget={currentQuotaVal ?? 4}
+          isOwner={isOwner}
+          todayDate={today}
         />
-        {isOwner ? (
-        <SettingCard
-          href="/admin/ai-config"
-          title="AI 配置"
-          description="模型渠道、功能绑定、文案改写和执行路线管理."
-          icon={<Sparkles className="size-5" />}
-        />
-        ) : null}
       </div>
     </AdminWorkspaceLayout>
   );
