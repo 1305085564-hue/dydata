@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Wrench, Zap } from "lucide-react";
+import { ArrowLeftRight, Bell, Wrench, Zap } from "lucide-react";
 import { getNavItems } from "@/components/nav-bar-items";
 import { AdminCenterNav } from "@/components/admin-layout/admin-top-nav";
+import { isManagementPath, shouldShowAdminCenterNav } from "@/components/nav-mode";
 import { WorkspacePicker } from "@/components/workspace-picker";
 import { UnifiedCommandHub } from "@/components/unified-command-hub";
 import { PremiumSettingsModal } from "@/components/premium-settings-modal";
@@ -114,11 +115,8 @@ export function NavBarClient({
   const bellBadgeCount = totalAlertsCount + approvalBadgeCount;
 
   const showAdminCenter = showAdmin;
-  const isAdminPath =
-    pathname.startsWith("/admin") &&
-    !["/admin/settings", "/admin/modules", "/admin/ai-config"].some((p) =>
-      pathname.startsWith(p)
-    );
+  const isAdminPath = isManagementPath(pathname);
+  const showAdminCenterNav = shouldShowAdminCenterNav(pathname);
   const isOwner = role === "owner" || businessRole === "owner";
 
   const prefetchOnHover = useCallback(
@@ -172,7 +170,7 @@ export function NavBarClient({
               <div className="hidden lg:block h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />
 
               {/* Primary Navigation links / Admin secondary links depending on page url */}
-              {isAdminPath ? (
+              {showAdminCenterNav ? (
                 <div className="hidden min-w-0 items-center gap-1.5 md:flex">
                   <AdminCenterNav
                     userRole={role as UserRole}
@@ -212,47 +210,16 @@ export function NavBarClient({
               
               {/* Perspective Switcher (Visible only if user has admin permission context) */}
               {showAdminCenter && (
-                <div className="relative flex items-center bg-stone-200 dark:bg-stone-900 p-0.5 rounded-xl border border-stone-300/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isAdminPath) router.push("/dashboard");
-                    }}
-                    className={cn(
-                      "relative z-10 px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200",
-                      !isAdminPath ? "text-stone-900 dark:text-white" : "text-stone-600 hover:text-stone-700"
-                    )}
-                  >
-                    {!isAdminPath && (
-                      <motion.div
-                        layoutId="activePerspectivePill"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        className="absolute inset-0 bg-white dark:bg-stone-800 rounded-lg shadow-sm border border-stone-300/10"
-                      />
-                    )}
-                    <span className="relative z-10">员工</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isAdminPath) router.push("/admin/content");
-                    }}
-                    className={cn(
-                      "relative z-10 px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200",
-                      isAdminPath ? "text-stone-900 dark:text-white" : "text-stone-600 hover:text-stone-700"
-                    )}
-                  >
-                    {isAdminPath && (
-                      <motion.div
-                        layoutId="activePerspectivePill"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        className="absolute inset-0 bg-white dark:bg-stone-800 rounded-lg shadow-sm border border-stone-300/10"
-                      />
-                    )}
-                    <span className="relative z-10">管理</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(isAdminPath ? "/dashboard" : "/admin/content");
+                  }}
+                  className="group relative flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-lg bg-stone-100 hover:bg-stone-200/80 active:scale-[0.98] dark:bg-stone-900 dark:hover:bg-stone-800/80 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200 border border-stone-200 dark:border-stone-800/80 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-200"
+                >
+                  <ArrowLeftRight className="size-3 text-stone-400 group-hover:text-stone-600 dark:text-stone-500 dark:group-hover:text-stone-300 transition-colors duration-300 group-hover:rotate-180" />
+                  <span>{isAdminPath ? "组员视角" : "管理视角"}</span>
+                </button>
               )}
 
               {/* Separator */}
