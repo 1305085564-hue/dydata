@@ -46,9 +46,9 @@ export function CaseDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-white p-6 rounded-2xl border border-stone-200">
+      <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-2xl border border-stone-200">
         <DialogHeader>
-          <DialogTitle className="text-[16px] font-bold text-stone-800">
+          <DialogTitle className="text-[18px] font-bold text-stone-950">
             稿件案例详情
           </DialogTitle>
         </DialogHeader>
@@ -84,7 +84,7 @@ export function CaseDetailDialog({
           </div>
 
           {/* 属性元数据 */}
-          <div className="grid grid-cols-2 gap-4 rounded-xl border border-stone-100 p-3 bg-stone-50/20 text-[12px]">
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4 py-3.5 border-y border-stone-100 text-[12px]">
             <div className="flex items-center gap-2 text-stone-600">
               <User className="size-4 text-stone-400" />
               <span>提交成员：</span>
@@ -119,7 +119,7 @@ export function CaseDetailDialog({
                   <div
                     key={path}
                     onClick={() => handleViewScreenshot(idx)}
-                    className="group relative aspect-[16/10] overflow-hidden rounded-xl bg-stone-100 border border-stone-200 cursor-pointer"
+                    className="group relative aspect-[16/10] overflow-hidden rounded-lg bg-stone-100 border border-stone-200 cursor-pointer"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
