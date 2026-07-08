@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { getNavItems } from "./nav-bar-items";
 
-test("管理员导航包含团队管理和系统设置入口", () => {
+test("管理员主导航不再单独暴露内容中心入口", () => {
   const items = getNavItems({ showAdmin: true, showSystemSettings: true });
 
   assert.deepEqual(
@@ -14,7 +14,6 @@ test("管理员导航包含团队管理和系统设置入口", () => {
       { href: "/violations", label: "导粉中心" },
       { href: "/video-review", label: "视频审核" },
       { href: "/content-tools/rewrite", label: "文案助手" },
-      { href: "/admin/content", label: "内容中心" },
     ]
   );
 });
@@ -37,16 +36,12 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
   );
 });
 
-test("负责人和 owner 显示系统设置", () => {
+test("showAdmin 不再影响主导航项列表", () => {
   const withSettings = getNavItems({ showAdmin: true, showSystemSettings: true });
   const withoutSettings = getNavItems({ showAdmin: true, showSystemSettings: false });
 
-  assert.equal(
-    withSettings.some((item) => item.href === "/admin/content"),
-    true
-  );
-  assert.equal(
-    withoutSettings.some((item) => item.href === "/admin/content"),
-    true
+  assert.deepEqual(
+    withSettings.map((item) => item.href),
+    withoutSettings.map((item) => item.href),
   );
 });

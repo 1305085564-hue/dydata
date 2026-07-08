@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserPermissions } from "@/lib/permissions";
 import { getShanghaiDate } from "@/app/api/production/_shared";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { VideoReviewWorkbench } from "./components/video-review-workbench";
-import { loadAdminExemptionList } from "@/app/api/exemptions/_admin-list";
 import { loadApprovedList } from "@/lib/publish-drafts/read-model";
 
 export default async function VideoReviewDashboardPage({
@@ -20,7 +20,7 @@ export default async function VideoReviewDashboardPage({
 
   const permInfo = await getUserPermissions();
   if (!permInfo) redirect("/login");
-  const { businessRole, role } = permInfo;
+  const { businessRole } = permInfo;
   const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole);
 
   const resolved = await searchParams;
@@ -47,26 +47,37 @@ export default async function VideoReviewDashboardPage({
   const { data: quotaTarget } = await supabase.rpc("get_daily_quota", { p_date: selectedDate });
   const target = typeof quotaTarget === "number" ? quotaTarget : 4;
 
-  const { data: submissionsData } = await supabase
+  const { data: submissionsRaw } = await supabase
     .from("work_submissions")
-    .select("id")
+    .select("id, user_id, team_id, group_id, submit_date, content_text, screenshot_urls, note, created_at")
     .eq("user_id", user.id)
-    .eq("submit_date", selectedDate);
-  const submittedCount = submissionsData?.length ?? 0;
+    .eq("submit_date", selectedDate)
+    .order("created_at", { ascending: false });
 
-  // 3. 获取待审批数（管理特权，展示顶部铃铛红点徽章）
-  let pendingExemptionsCount = 0;
-  if (isAdmin) {
-    const pendingResult = await loadAdminExemptionList({
-      supabase,
-      statuses: ["pending"],
-      limit: 100,
-    });
-    const pendingData = "response" in pendingResult ? [] : (pendingResult.data ?? []);
-    pendingExemptionsCount = pendingData.length;
-  }
+  const adminSupabase = createAdminClient();
+  const initialSubmissions = await Promise.all(
+    (submissionsRaw ?? []).map(async (row) => {
+      const paths = (row.screenshot_urls ?? []) as string[];
+      if (paths.length === 0) return { ...row, screenshot_items: [] };
 
-  // 4. 获取产量看板数据（管理特权，提供对账看板大弹窗使用）
+      const { data: signedData } = await adminSupabase
+        .storage
+        .from("work-screenshots")
+        .createSignedUrls(paths, 60 * 10);
+
+      const byPath = new Map((signedData ?? []).map((item) => [item.path, item.signedUrl]));
+      return {
+        ...row,
+        screenshot_items: paths.map((path: string) => ({
+          path,
+          signed_url: byPath.get(path) ?? null,
+        })),
+      };
+    })
+  );
+  const submittedCount = initialSubmissions.length;
+
+  // 3. 获取产量看板数据（管理特权，提供对账看板大弹窗使用）
   let dashboardData: any[] = [];
   let teams: Array<{ id: string; name: string }> = [];
   let groups: Array<{ id: string; name: string }> = [];
@@ -108,7 +119,7 @@ export default async function VideoReviewDashboardPage({
         todayDate={selectedDate}
         initialTarget={target}
         initialSubmittedCount={submittedCount}
-        pendingExemptionsCount={pendingExemptionsCount}
+        initialSubmissions={initialSubmissions}
         initialDashboardData={dashboardData}
         teams={teams}
         groups={groups}

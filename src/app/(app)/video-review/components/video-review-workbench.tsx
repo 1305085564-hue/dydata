@@ -2,22 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, CalendarDays, BarChart3, Bell, CheckCircle2, AlertTriangle, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+  Upload,
+  CalendarDays,
+  BarChart3,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ApprovedList } from "./approved-list";
 import { SubmitDialog } from "./submit-dialog";
 import { ExemptionDialog } from "./exemption-dialog";
 import { DashboardDialog } from "./dashboard-dialog";
-import { ApprovalDialog } from "./approval-dialog";
 import { ImageLightbox } from "@/components/image-lightbox";
 import type { ApprovedDraftItem } from "./types";
+import { getVideoReviewAdminActions } from "./video-review-admin-actions";
 
 interface DashboardRecord {
   user_id: string;
@@ -44,7 +45,7 @@ interface VideoReviewWorkbenchProps {
   todayDate: string;
   initialTarget: number;
   initialSubmittedCount: number;
-  pendingExemptionsCount: number;
+  initialSubmissions: any[];
   initialDashboardData: DashboardRecord[];
   teams: TeamOrGroup[];
   groups: TeamOrGroup[];
@@ -60,7 +61,7 @@ export function VideoReviewWorkbench({
   todayDate,
   initialTarget,
   initialSubmittedCount,
-  pendingExemptionsCount,
+  initialSubmissions,
   initialDashboardData,
   teams,
   groups,
@@ -76,65 +77,92 @@ export function VideoReviewWorkbench({
   const [submitOpen, setSubmitOpen] = useState(false);
   const [exemptionOpen, setExemptionOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
-  const [approvalOpen, setApprovalOpen] = useState(false);
 
-  // Dynamic submitted count state (so submitting updates it immediately before page refresh completes)
-  const [submittedCount, setSubmittedCount] = useState(initialSubmittedCount);
+  // Dynamic submissions state
+  const [submissions, setSubmissions] = useState<any[]>(initialSubmissions);
+  const adminActions = getVideoReviewAdminActions();
 
-  // Refresh page data
+  // Refresh page data and update submissions state
   const handleRefreshData = async () => {
     startTransition(() => {
       router.refresh();
     });
-    
-    // Fetch count from api dynamically to sync client immediately
+
     try {
       const res = await fetch(`/api/work-submissions?date=${todayDate}`);
       const json = await res.json();
       if (json.data) {
-        setSubmittedCount(json.data.length);
+        setSubmissions(json.data);
       }
     } catch (e) {
       console.error(e);
     }
   };
 
+  // Delete submission
+  const handleDeleteSubmission = async (id: string) => {
+    try {
+      const res = await fetch(`/api/work-submissions/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setSubmissions((prev) => prev.filter((s) => s.id !== id));
+        toast.success("删除成功");
+        startTransition(() => {
+          router.refresh();
+        });
+      } else {
+        const json = await res.json();
+        toast.error(json.error || "删除失败");
+      }
+    } catch (e) {
+      toast.error("操作失败，请重试");
+    }
+  };
+
+  // Metrics calculation
+  const target = initialTarget;
+  const submittedCount = submissions.length;
+  const gap = Math.max(0, target - submittedCount);
+  const isTargetMet = submittedCount >= target;
+
+  const totalTarget = initialDashboardData.reduce((sum, r) => sum + r.daily_target, 0);
+  const totalSubmitted = initialDashboardData.reduce((sum, r) => sum + r.submitted_count, 0);
+  const redAlertCount = initialDashboardData.filter((r) => r.alert_level === "red").length;
+
   // Workbench level Lightbox (for DashboardDialog zoom shots)
   const [workbenchLightbox, setWorkbenchLightbox] = useState<{ paths: string[]; index: number } | null>(null);
 
   return (
     <div className="space-y-6">
-      {/* 顶部标题与全局操作面板 (L1 Card, bg-white, 24px/16px 留白, 去掉 shadow) */}
+      {/* 顶部标题与全局操作面板 */}
       <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6 space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-stone-500 font-mono">
-              Fulfillment & Quota
+            <p className="text-[12px] font-semibold text-stone-500">
+              产量对账
             </p>
-            <h1 className="mt-1 text-[24px] font-bold tracking-tight text-stone-950">
+            <h1 className="mt-1 text-[24px] font-bold text-stone-950">
               视频审核与产量对账
             </h1>
             <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.6] text-stone-500">
-              这里是全队视频凭证的工作台。绿灯达标，红灯表示未交齐。点击右上角快捷上传。
+              这里是全队视频凭证的工作台。绿色表示达标，红色表示还未交齐。支持点击右上角快捷上传。
             </p>
           </div>
 
-          {/* 全局操作按钮区 (唯一橙色 CTA) */}
+          {/* 全局操作按钮区 */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* 辅助操作: 申请豁免 (请假, 管理员视角下隐藏) */}
-            {!isAdmin && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setExemptionOpen(true)}
-                className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-semibold gap-1.5"
-              >
-                <CalendarDays className="size-4 text-stone-500" />
-                申请豁免
-              </Button>
-            )}
 
-            {/* 唯一主 CTA: 上传作品 (暖橙色 #D97757, rounded-lg) */}
+            {/* 辅助操作: 申请豁免 (请假) */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setExemptionOpen(true)}
+              className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-semibold gap-1.5"
+            >
+              <CalendarDays className="size-4 text-stone-500" />
+              申请豁免
+            </Button>
+
+            {/* 唯一主 CTA: 上传作品 */}
             <Button
               id="workbench-upload-btn"
               type="button"
@@ -145,78 +173,109 @@ export function VideoReviewWorkbench({
               上传作品凭证
             </Button>
 
-            {/* 管理员折叠管理入口 dropdown */}
+            {/* 管理员快捷入口 */}
             {isAdmin && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="relative h-9 rounded-lg border border-stone-200 bg-white px-3 text-[13px] font-semibold text-stone-700 hover:bg-stone-100 flex items-center gap-1.5 focus:outline-none"
-                  >
-                    <span>管理</span>
-                    <ChevronDown className="size-4 text-stone-500" />
-                    {pendingExemptionsCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-bold font-mono text-white ring-2 ring-white">
-                        {pendingExemptionsCount}
-                      </span>
-                    )}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40 bg-white">
-                  <DropdownMenuItem onClick={() => setDashboardOpen(true)} className="cursor-pointer">
-                    <BarChart3 className="size-4 mr-2 text-stone-500" />
-                    <span>产量看板</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setApprovalOpen(true)} className="cursor-pointer flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Bell className="size-4 mr-2 text-stone-500" />
-                      <span>审批</span>
-                    </div>
-                    {pendingExemptionsCount > 0 && (
-                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C9604D] px-1 text-[10px] font-bold font-mono text-white">
-                        {pendingExemptionsCount}
-                      </span>
-                    )}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDashboardOpen(true)}
+                className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-semibold gap-1.5"
+              >
+                <BarChart3 className="size-4 text-stone-500" />
+                {adminActions[0]?.label ?? "产量看板"}
+              </Button>
             )}
           </div>
         </div>
-
-        {/* 个人今日产量速览 (仅对普通组员更有用，放在顶部低调展示) */}
-        <div className="flex items-center gap-3 py-2 border-t border-stone-100 text-[12px] text-stone-500">
-          <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-stone-300" />
-            <span>今日指标：今天需要交 <span className="font-bold text-stone-700 font-mono">{initialTarget}</span> 条</span>
-          </div>
-          <span className="text-stone-300">•</span>
-          <div className="flex items-center gap-1.5">
-            <span>
-              已交凭证：<span className="font-bold text-stone-700 font-mono">{submittedCount}</span> 条
-            </span>
-          </div>
-          {submittedCount >= initialTarget ? (
-            <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#6FAA7D]">
-              <CheckCircle2 className="size-3.5 stroke-[2.5]" />
-              已达标
-            </span>
-          ) : (
-            <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#D97757]">
-              <AlertTriangle className="size-3.5" />
-              未交齐 (还差 {Math.max(0, initialTarget - submittedCount)} 条)
-            </span>
-          )}
-        </div>
       </header>
 
-      {/* 卡片网格流展示区 */}
-      <div className="space-y-4 relative">
-        <ApprovedList
-          items={approvedItems}
-          query={searchQuery}
-          currentUserId={userId}
-        />
+      {/* 核心指标条 */}
+      <div className="rounded-2xl border border-stone-200 bg-white p-5">
+        <div className="flex divide-x divide-stone-100">
+          {isAdmin ? (
+            <>
+              <div className="flex-1 flex flex-col justify-center min-w-0 pr-5">
+                <span className="text-[13px] font-medium text-stone-500">全队今日目标</span>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+                    {totalTarget}
+                  </span>
+                  <span className="text-[12px] text-stone-400 ml-1">条</span>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center min-w-0 px-5">
+                <span className="text-[13px] font-medium text-stone-500">全队已交</span>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+                    {totalSubmitted}
+                  </span>
+                  <span className="text-[12px] text-stone-400 ml-1">条</span>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center min-w-0 pl-5">
+                <span className="text-[13px] font-medium text-stone-500">未达标人数 (红灯)</span>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className={cn(
+                    "text-[32px] font-bold font-mono tabular-nums leading-none",
+                    redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-950"
+                  )}>
+                    {redAlertCount}
+                  </span>
+                  <span className="text-[12px] text-stone-400 ml-1">人</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex-1 flex flex-col justify-center min-w-0 pr-5">
+                <span className="text-[13px] font-medium text-stone-500">今日目标</span>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+                    {target}
+                  </span>
+                  <span className="text-[12px] text-stone-400 ml-1">个作品</span>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center min-w-0 px-5">
+                <span className="text-[13px] font-medium text-stone-500">已交凭证</span>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+                    {submittedCount}
+                  </span>
+                  <span className="text-[12px] text-stone-400 ml-1">个作品</span>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center min-w-0 pl-5">
+                <span className="text-[13px] font-medium text-stone-500">还差额</span>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className={cn(
+                    "text-[32px] font-bold font-mono tabular-nums leading-none",
+                    gap > 0 ? "text-[#C9604D]" : "text-[#6FAA7D]"
+                  )}>
+                    {gap}
+                  </span>
+                  <span className="text-[12px] text-stone-400 ml-1">个作品</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* 核心单栏布局展示区 */}
+      <div className="relative">
+        <div className="space-y-4">
+          <ApprovedList
+            items={approvedItems}
+            query={searchQuery}
+            currentUserId={userId}
+          />
+        </div>
+
         {isPending && (
           <div className="absolute inset-0 bg-white/40 backdrop-blur-[0.5px] z-10 rounded-2xl transition-opacity duration-300 pointer-events-none" />
         )}
@@ -253,14 +312,6 @@ export function VideoReviewWorkbench({
           onOpenLightbox={(paths, idx) => {
             setWorkbenchLightbox({ paths, index: idx });
           }}
-        />
-      )}
-
-      {isAdmin && (
-        <ApprovalDialog
-          open={approvalOpen}
-          onOpenChange={setApprovalOpen}
-          onSubmitSuccess={handleRefreshData}
         />
       )}
 

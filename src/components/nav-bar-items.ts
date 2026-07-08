@@ -49,14 +49,5 @@ export function getNavItems(input: {
     });
   }
 
-  if (input.showAdmin) {
-    items.push({
-      href: "/admin/content",
-      label: "内容中心",
-      icon: LayoutDashboard,
-      match: (pathname) => pathname.startsWith("/admin"),
-    });
-  }
-
   return items;
 }
