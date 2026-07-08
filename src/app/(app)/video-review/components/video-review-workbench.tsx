@@ -124,10 +124,6 @@ export function VideoReviewWorkbench({
   const gap = Math.max(0, target - submittedCount);
   const isTargetMet = submittedCount >= target;
 
-  const totalTarget = initialDashboardData.reduce((sum, r) => sum + r.daily_target, 0);
-  const totalSubmitted = initialDashboardData.reduce((sum, r) => sum + r.submitted_count, 0);
-  const redAlertCount = initialDashboardData.filter((r) => r.alert_level === "red").length;
-
   // Workbench level Lightbox (for DashboardDialog zoom shots)
   const [workbenchLightbox, setWorkbenchLightbox] = useState<{ paths: string[]; index: number } | null>(null);
 
@@ -189,80 +185,33 @@ export function VideoReviewWorkbench({
         </div>
       </header>
 
-      {/* 核心指标条 */}
-      <div className="rounded-2xl border border-stone-200 bg-white p-5">
-        <div className="flex divide-x divide-stone-100">
-          {isAdmin ? (
-            <>
-              <div className="flex-1 flex flex-col justify-center min-w-0 pr-5">
-                <span className="text-[13px] font-medium text-stone-500">全队今日目标</span>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
-                    {totalTarget}
-                  </span>
-                  <span className="text-[12px] text-stone-400 ml-1">条</span>
-                </div>
-              </div>
-
-              <div className="flex-1 flex flex-col justify-center min-w-0 px-5">
-                <span className="text-[13px] font-medium text-stone-500">全队已交</span>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
-                    {totalSubmitted}
-                  </span>
-                  <span className="text-[12px] text-stone-400 ml-1">条</span>
-                </div>
-              </div>
-
-              <div className="flex-1 flex flex-col justify-center min-w-0 pl-5">
-                <span className="text-[13px] font-medium text-stone-500">未达标人数 (红灯)</span>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className={cn(
-                    "text-[32px] font-bold font-mono tabular-nums leading-none",
-                    redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-950"
-                  )}>
-                    {redAlertCount}
-                  </span>
-                  <span className="text-[12px] text-stone-400 ml-1">人</span>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex-1 flex flex-col justify-center min-w-0 pr-5">
-                <span className="text-[13px] font-medium text-stone-500">今日目标</span>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
-                    {target}
-                  </span>
-                  <span className="text-[12px] text-stone-400 ml-1">个作品</span>
-                </div>
-              </div>
-
-              <div className="flex-1 flex flex-col justify-center min-w-0 px-5">
-                <span className="text-[13px] font-medium text-stone-500">已交凭证</span>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
-                    {submittedCount}
-                  </span>
-                  <span className="text-[12px] text-stone-400 ml-1">个作品</span>
-                </div>
-              </div>
-
-              <div className="flex-1 flex flex-col justify-center min-w-0 pl-5">
-                <span className="text-[13px] font-medium text-stone-500">还差额</span>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className={cn(
-                    "text-[32px] font-bold font-mono tabular-nums leading-none",
-                    gap > 0 ? "text-[#C9604D]" : "text-[#6FAA7D]"
-                  )}>
-                    {gap}
-                  </span>
-                  <span className="text-[12px] text-stone-400 ml-1">个作品</span>
-                </div>
-              </div>
-            </>
-          )}
+      {/* 核心指标条 - 紧凑轻量化设计 */}
+      <div className="inline-flex flex-wrap items-center gap-4 bg-stone-100/80 dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 rounded-xl px-4 py-2 text-[12px] text-stone-600 dark:text-stone-400 w-fit">
+        <div className="flex items-center gap-1">
+          <span className="font-medium text-stone-500">今日目标:</span>
+          <span className="font-bold font-mono tabular-nums text-stone-900 dark:text-stone-200">
+            {target}
+          </span>
+          <span className="text-stone-400">个作品</span>
+        </div>
+        <div className="w-[1px] h-3 bg-stone-300 dark:bg-stone-800" />
+        <div className="flex items-center gap-1">
+          <span className="font-medium text-stone-500">已交凭证:</span>
+          <span className="font-bold font-mono tabular-nums text-stone-900 dark:text-stone-200">
+            {submittedCount}
+          </span>
+          <span className="text-stone-400">个作品</span>
+        </div>
+        <div className="w-[1px] h-3 bg-stone-300 dark:bg-stone-800" />
+        <div className="flex items-center gap-1">
+          <span className="font-medium text-stone-500">还差额:</span>
+          <span className={cn(
+            "font-bold font-mono tabular-nums",
+            gap > 0 ? "text-[#C9604D]" : "text-[#6FAA7D]"
+          )}>
+            {gap}
+          </span>
+          <span className="text-stone-400">个作品</span>
         </div>
       </div>
 

@@ -40,8 +40,8 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
     <div
       onClick={() => onOpenDetail(item)}
       className={cn(
-        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-px hover:shadow-sm cursor-pointer",
-        isMine && "ring-1 ring-[#D97757]/30 border-[#D97757]/40"
+        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-px cursor-pointer",
+        isMine && "ring-1 ring-[#8AA8C7]/30 border-[#8AA8C7]/40"
       )}
     >
       {/* 截图区域 (16:10) */}
@@ -51,19 +51,19 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
           <img
             src={`/api/violations/screenshot/${encodeURI(firstScreenshot)}`}
             alt={item.script_text.slice(0, 20)}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-stone-400">
             <ImageIcon className="size-6 stroke-[1.5]" />
-            <span className="text-[11px]">无截图凭证</span>
+            <span className="text-[12px]">无截图凭证</span>
           </div>
         )}
 
         {/* 成员身份挂载标签 */}
         {isMine && (
-          <span className="absolute top-2 left-2 rounded-full bg-[#D97757] px-2 py-0.5 text-[10px] font-medium text-white shadow-sm">
+          <span className="absolute top-2 left-2 rounded-full bg-stone-100 px-2 py-0.5 text-[12px] font-medium text-stone-700 border border-stone-200">
             我的
           </span>
         )}
@@ -75,7 +75,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
             onClick={handleViewShots}
             disabled={screenshotCount === 0}
             className={cn(
-              "flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-800 shadow transition-colors active:scale-95",
+              "flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-800 transition-colors active:scale-95",
               screenshotCount === 0
                 ? "cursor-not-allowed opacity-50"
                 : "hover:bg-white"
@@ -87,7 +87,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
           <button
             type="button"
             onClick={handleCopy}
-            className="flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-800 shadow transition-colors hover:bg-white active:scale-95"
+            className="flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-800 transition-colors hover:bg-white active:scale-95"
             title="复制文案"
           >
             {copied ? (
@@ -105,7 +105,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
           {item.script_text}
         </p>
 
-        <div className="flex items-center justify-between pt-1 border-t border-stone-100 text-[11px] text-stone-500">
+        <div className="flex items-center justify-between pt-1 border-t border-stone-100 text-[12px] text-stone-500">
           <div className="min-w-0 flex-1 space-y-0.5">
             <p className="truncate font-semibold text-stone-700">
               {item.submitted_by_name}
