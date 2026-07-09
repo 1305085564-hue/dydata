@@ -18,7 +18,7 @@ export default function BindingsClient() {
   if (isLoading || !bundle) {
     return (
       <div className="space-y-4">
-        <div className="h-40 rounded-2xl bg-zinc-50 animate-pulse border border-zinc-200" />
+        <div className="h-40 rounded-2xl bg-stone-50 animate-pulse border border-stone-200" />
       </div>
     );
   }
@@ -52,15 +52,15 @@ export default function BindingsClient() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-zinc-800">业务功能绑定</h2>
+        <h2 className="text-lg font-semibold text-stone-800">业务功能绑定</h2>
         <Button size="sm" className="gap-1.5" onClick={() => setBindingModal({ open: true, data: null })}>
           <Plus className="size-4" /> 添加绑定
         </Button>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
+      <div className="rounded-xl border border-stone-200 bg-white overflow-hidden">
         <Table>
-          <TableHeader className="bg-zinc-50/50">
+          <TableHeader className="bg-stone-50/50">
             <TableRow>
               <TableHead className="w-[180px]">功能标识</TableHead>
               <TableHead className="w-[200px]">功能名称</TableHead>
@@ -73,35 +73,35 @@ export default function BindingsClient() {
           <TableBody>
             {bundle.featureBindings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-zinc-500">
+                <TableCell colSpan={6} className="h-24 text-center text-stone-500">
                   暂无功能绑定
                 </TableCell>
               </TableRow>
             ) : (
               bundle.featureBindings.map((binding) => (
                 <TableRow key={binding.id}>
-                  <TableCell className="font-mono text-xs text-zinc-600">
+                  <TableCell className="font-mono text-xs text-stone-600">
                     {binding.feature_key}
                   </TableCell>
-                  <TableCell className="font-medium text-zinc-800">
+                  <TableCell className="font-medium text-stone-800">
                     {binding.label}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="font-normal text-zinc-600 bg-zinc-50">
+                    <Badge variant="outline" className="font-normal text-stone-600 bg-stone-50">
                       {getModelName(binding.provider_key_model_id)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs text-zinc-500">
+                  <TableCell className="text-xs text-stone-500">
                     {binding.context_message_limit} 轮 / {binding.output_token_limit} tk
                   </TableCell>
                   <TableCell>
                     <Switch checked={binding.is_enabled} onCheckedChange={(c) => toggleStatus(binding, c)} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="size-8 text-zinc-400 hover:text-zinc-600" onClick={() => setBindingModal({ open: true, data: binding })}>
+                    <Button variant="ghost" size="icon" className="size-8 text-stone-400 hover:text-stone-600" onClick={() => setBindingModal({ open: true, data: binding })}>
                       <Pencil className="size-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-8 text-zinc-400 hover:text-rose-600" onClick={() => setDeleteConfirm({ open: true, id: binding.id, title: `删除功能绑定 ${binding.label}` })}>
+                    <Button variant="ghost" size="icon" className="size-8 text-stone-400 hover:text-rose-600" onClick={() => setDeleteConfirm({ open: true, id: binding.id, title: `删除功能绑定 ${binding.label}` })}>
                       <Trash2 className="size-4" />
                     </Button>
                   </TableCell>

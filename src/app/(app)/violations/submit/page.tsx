@@ -35,7 +35,7 @@ export default async function SubmitViolationPage({
         indexItems={[]}
         width="wide"
       >
-        <Suspense fallback={<div className="h-48 rounded-xl bg-zinc-50/50 animate-pulse border border-zinc-200" />}>
+        <Suspense fallback={<div className="h-48 rounded-xl bg-stone-50/50 animate-pulse border border-stone-200" />}>
           <SubmitContainer userId={user.id} userEmail={user.email} initialAccountId={initialAccountId} />
         </Suspense>
       </AdminWorkspaceLayout>

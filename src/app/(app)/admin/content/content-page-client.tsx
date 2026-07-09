@@ -215,30 +215,30 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-stone-200 bg-white p-5"
     >
       {anomalyVideos.length > 0 && (
-        <div className="mb-2 space-y-2 border-b border-zinc-100 pb-5">
-          <h2 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+        <div className="mb-2 space-y-2 border-b border-stone-100 pb-5">
+          <h2 className="text-[13px] font-medium text-stone-500 flex items-center gap-1.5">
             <span className="relative flex size-2">
               <span className="relative inline-flex size-2 rounded-full bg-[#C9604D]"></span>
             </span>
             异常预警雷达 (Anomaly Radar)
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 pt-1 -mx-5 px-5 scrollbar-thin scrollbar-thumb-zinc-200">
+          <div className="flex gap-4 overflow-x-auto pb-2 pt-1 -mx-5 px-5 scrollbar-thin scrollbar-thumb-stone-200">
             {anomalyVideos.map((v) => {
               const snap = data?.snapshots?.find((s) => s.video_id === v.id && s.snapshot_type === "24h");
               return (
                 <div
                   key={v.id}
-                  className="group relative flex flex-col justify-between w-[220px] shrink-0 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:border-zinc-300 hover:shadow transition-all duration-200"
+                  className="group relative flex flex-col justify-between w-[220px] shrink-0 rounded-xl border border-stone-200 bg-white p-4 shadow-sm hover:border-stone-300 hover:shadow transition-all duration-200"
                 >
                   <div className="space-y-1.5 text-left">
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] text-zinc-400 font-medium truncate max-w-[120px]">
+                      <span className="text-[12px] text-stone-500 font-medium truncate max-w-[120px]">
                         {(v.profiles?.name || "未知")} · {(v.accounts?.name || "未知")}
                       </span>
-                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium scale-90 ${
+                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[12px] font-medium ${
                         v.anomaly_status === "限流" || v.anomaly_status === "删稿"
                           ? "bg-[#C9604D]/0.04 text-[#C9604D] border border-[#C9604D]/15"
                           : "bg-[#D99E55]/0.04 text-[#D99E55] border border-[#D99E55]/15"
@@ -246,22 +246,22 @@ export function ContentPageClient({
                         {v.anomaly_status === "正常" ? "限流异常" : v.anomaly_status}
                       </span>
                     </div>
-                    <h3 className="text-[11px] font-semibold text-zinc-800 line-clamp-2 leading-relaxed" title={v.video_title || v.content || undefined}>
+                    <h3 className="text-[12px] font-medium text-stone-900 line-clamp-2 leading-relaxed" title={v.video_title || v.content || undefined}>
                       {v.video_title || v.content || "（无标题）"}
                     </h3>
                   </div>
 
-                  <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-center justify-between">
+                  <div className="mt-3 pt-2.5 border-t border-stone-100 flex items-center justify-between">
                     <div className="flex flex-col text-left">
-                      <span className="text-[8px] text-zinc-400">24h播放</span>
-                      <span className="text-[11px] font-mono font-bold text-zinc-700">
+                      <span className="text-[12px] text-stone-300">24h播放</span>
+                      <span className="text-[12px] font-mono font-bold text-stone-700">
                         {snap ? formatNumber(snap.play_count) : "—"}
                       </span>
                     </div>
                     <Button
                       size="sm"
                       onClick={() => setSelectedVideoId(v.id)}
-                      className="h-6 rounded-lg bg-[#D97757] px-2.5 text-[9px] text-white hover:bg-[#C96442] active:scale-[0.98] transition-all duration-155"
+                      className="h-6 rounded-lg bg-[#D97757] px-2.5 text-[12px] text-white hover:bg-[#C96442] active:scale-[0.98] transition-all duration-155"
                     >
                       去诊断
                     </Button>
@@ -275,7 +275,7 @@ export function ContentPageClient({
 
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+          <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-50 p-0.5">
             <button
               type="button"
               onClick={() => switchView("pending")}
@@ -283,12 +283,12 @@ export function ContentPageClient({
               className={[
                 "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                 view === "pending"
-                  ? "bg-white text-zinc-800 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700",
+                  ? "bg-white text-stone-800 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               未开始
-              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
+              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-stone-300">
                 {data.workflowSummary.notStarted}
               </span>
             </button>
@@ -299,12 +299,12 @@ export function ContentPageClient({
               className={[
                 "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                 view === "all"
-                  ? "bg-white text-zinc-800 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700",
+                  ? "bg-white text-stone-800 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               全部
-              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
+              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-stone-300">
                 {data.summary.totalVideos}
               </span>
             </button>
@@ -312,7 +312,7 @@ export function ContentPageClient({
 
           {canSwitchPerspective ? (
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+              <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-50 p-0.5">
                 <button
                   type="button"
                   onClick={() => switchPerspective("company")}
@@ -320,8 +320,8 @@ export function ContentPageClient({
                   className={[
                     "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                     perspective === "company"
-                      ? "bg-white text-zinc-800 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700",
+                      ? "bg-white text-stone-800 shadow-sm"
+                      : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
                   公司视角
@@ -333,8 +333,8 @@ export function ContentPageClient({
                   className={[
                     "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                     perspective === "team"
-                      ? "bg-white text-zinc-800 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700",
+                      ? "bg-white text-stone-800 shadow-sm"
+                      : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
                   团队视角
@@ -343,7 +343,7 @@ export function ContentPageClient({
 
               {perspective === "team" && teams.length > 0 ? (
                 <Select value={teamId ?? teams[0]?.id} onValueChange={switchTeam}>
-                  <SelectTrigger className="h-8 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700">
+                  <SelectTrigger className="h-8 min-w-36 rounded-lg border-stone-200 bg-white text-[12px] text-stone-700">
                     <SelectValue placeholder="选择团队">
                       {selectedTeamName ?? undefined}
                     </SelectValue>
@@ -361,7 +361,7 @@ export function ContentPageClient({
           ) : null}
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
+        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-stone-500">
           {data.workflowSummary.draft > 0 && (
             <span>
               待确认
@@ -394,7 +394,7 @@ export function ContentPageClient({
               </span>
             </span>
           )}
-          <span className="pl-2 text-[15px] font-medium tracking-tight text-zinc-400">批改台</span>
+          <span className="pl-2 text-[13px] font-medium text-stone-500">批改台</span>
         </div>
       </div>
 

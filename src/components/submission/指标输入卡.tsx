@@ -49,20 +49,20 @@ function getStatusBadge(field: SubmissionFieldState) {
   if (score >= 0.95) {
     return {
       label: "AI 已识别",
-      className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
+      className: "bg-stone-50 text-stone-700 border border-stone-200",
       dotClass: "bg-emerald-500",
     };
   }
   if (score >= 0.80) {
     return {
       label: "待确认",
-      className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
+      className: "bg-stone-50 text-stone-700 border border-stone-200",
       dotClass: "bg-amber-500",
     };
   }
   return {
     label: "请核对",
-    className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
+    className: "bg-stone-50 text-stone-700 border border-stone-200",
     dotClass: "bg-rose-500",
   };
 }
@@ -130,7 +130,7 @@ export function MetricInputCard({
       <div className="flex items-center justify-between gap-1">
         <Label
           className={cn(
-            "font-medium text-zinc-500 text-[13px]"
+            "font-medium text-stone-500 text-[13px]"
           )}
         >
           {label}
@@ -176,9 +176,9 @@ export function MetricInputCard({
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={cn(
-              "rounded-xl pr-8 font-mono tabular-nums text-zinc-800 transition-[background-color,border-color,box-shadow,color] duration-300",
-              "bg-zinc-100/70 border-transparent text-[13px]",
-              "focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757]",
+              "rounded-xl pr-8 font-mono tabular-nums text-stone-800 transition-[background-color,border-color,box-shadow,color] duration-300",
+              "bg-stone-100/70 border-transparent text-[13px]",
+              "focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-950/5 focus:border-b-2 focus:border-b-[#D97757]",
               "h-10",
               field.source === "ocr"
                 ? "border-b-2 border-b-[#D97757]/60 shadow-[0_1px_0_0_rgba(217,119,87,0.1)] bg-[#D97757]/[0.03] text-[#D97757]"
@@ -195,13 +195,13 @@ export function MetricInputCard({
           >
             <span className={cn("inline-block h-2 w-2 rounded-full ring-1 ring-white shadow-sm", confidenceProps.color)} />
             {showTooltip ? (
-              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-stone-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
                 {confidenceProps.tooltip}
               </span>
             ) : null}
           </span>
         ) : suffix ? (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-zinc-400">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-stone-400">
             {suffix}
           </span>
         ) : null}

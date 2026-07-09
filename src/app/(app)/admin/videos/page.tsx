@@ -45,7 +45,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
       <Suspense
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}`}
         fallback={
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 mt-4">
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 mt-4">
             <TableSkeleton columnCount={5} rowCount={6} showHeader={true} />
           </div>
         }

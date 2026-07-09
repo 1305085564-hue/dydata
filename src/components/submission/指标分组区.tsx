@@ -175,7 +175,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           <div
             className={cn(
               "absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full transition-colors duration-150",
-              retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]/70"
+              retentionOptional ? "bg-stone-200" : "bg-[#6FAA7D]/70"
             )}
           />
           
@@ -184,7 +184,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             <button
               type="button"
               onClick={() => setIsRetentionExpanded(true)}
-              className="flex items-center gap-1.5 py-1 text-[11px] font-semibold text-zinc-400 hover:text-[#D97757] transition-colors focus:outline-none"
+              className="flex items-center gap-1.5 py-1 text-[11px] font-semibold text-stone-400 hover:text-[#D97757] transition-colors focus:outline-none"
             >
               <span>[+] 展开完播留存指标录入 (可选)</span>
             </button>
@@ -219,7 +219,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                   <button
                     type="button"
                     onClick={() => setIsRetentionExpanded(false)}
-                    className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 transition-colors focus:outline-none"
+                    className="text-[11px] font-medium text-stone-400 hover:text-stone-600 transition-colors focus:outline-none"
                   >
                     [-] 收起完播指标
                   </button>

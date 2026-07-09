@@ -59,7 +59,7 @@ export function PKSelector({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm",
+        "rounded-2xl border border-stone-200 bg-white p-4 shadow-sm",
         className
       )}
     >
@@ -69,7 +69,7 @@ export function PKSelector({
           <p className="text-xs text-muted-foreground">在个人对个人与团队均值之间快速切换。</p>
         </div>
 
-        <div className="inline-flex rounded-full border border-zinc-200 bg-zinc-50 p-1">
+        <div className="inline-flex rounded-full border border-stone-200 bg-stone-50 p-1">
           <Button
             type="button"
             size="sm"
@@ -94,7 +94,7 @@ export function PKSelector({
       <div className={cn("mt-4", mode === "vsTeam" && "hidden sm:block")}>
         <div
           className={cn(
-            "rounded-2xl border border-zinc-200 bg-zinc-50 p-3",
+            "rounded-2xl border border-stone-200 bg-stone-50 p-3",
             mode === "vsTeam" && "hidden"
           )}
         >
@@ -108,7 +108,7 @@ export function PKSelector({
               label: member.label ? `${member.name} · ${member.label}` : member.name,
             }))}
           >
-            <SelectTrigger className="w-full rounded-xl border-zinc-200 bg-white px-3">
+            <SelectTrigger className="w-full rounded-xl border-stone-200 bg-white px-3">
               <SelectValue placeholder="选择一个对手" />
             </SelectTrigger>
             <SelectContent>

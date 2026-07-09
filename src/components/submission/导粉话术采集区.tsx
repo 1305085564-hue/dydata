@@ -36,8 +36,8 @@ export function ScriptCaptureSection({
             <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
 
             <div className="mb-4 flex items-center gap-2">
-              <h3 className="text-[13px] font-semibold text-zinc-800">导粉话术</h3>
-              <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-zinc-400">
+              <h3 className="text-[13px] font-semibold text-stone-800">导粉话术</h3>
+              <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-stone-400">
                 required
               </span>
             </div>
@@ -46,8 +46,8 @@ export function ScriptCaptureSection({
               className={cn(
                 "rounded-2xl border transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 showError
-                  ? "border-[#C9604D]/40 bg-zinc-50"
-                  : "border-zinc-200 bg-white",
+                  ? "border-[#C9604D]/40 bg-stone-50"
+                  : "border-stone-200 bg-white",
               )}
             >
               <textarea
@@ -57,14 +57,14 @@ export function ScriptCaptureSection({
                 rows={4}
                 className={cn(
                   "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
-                  "text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-800 placeholder:text-zinc-400",
-                  "outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5",
+                  "text-[13px] leading-[1.7] tracking-[0.005em] text-stone-800 placeholder:text-stone-400",
+                  "outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5",
                 )}
               />
 
               {/* Action bar slot for future extensions */}
               {children && (
-                <div className="border-t border-dashed border-zinc-200 px-4 py-2">
+                <div className="border-t border-dashed border-stone-200 px-4 py-2">
                   {children}
                 </div>
               )}

@@ -103,12 +103,12 @@ export function VideoPageClient({
   return (
     <section
       id="video-asset-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-5"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-3 rounded-2xl border border-stone-200 bg-white p-5"
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-3">
           <div
-            className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5"
+            className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-50 p-0.5"
             title="待处理 = 未打标 或 状态异常"
           >
             <button
@@ -118,12 +118,12 @@ export function VideoPageClient({
               className={[
                 "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                 view === "pending"
-                  ? "bg-white text-zinc-800 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700",
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               待处理
-              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-[#D97757]">
+              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-[#D97757]">
                 {data.summary.pendingCount}
               </span>
             </button>
@@ -134,12 +134,12 @@ export function VideoPageClient({
               className={[
                 "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                 view === "all"
-                  ? "bg-white text-zinc-800 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700",
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               全部
-              <span className="ml-1.5 font-mono text-[11px] tabular-nums text-zinc-400">
+              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-stone-300">
                 {data.summary.totalVideos}
               </span>
             </button>
@@ -147,7 +147,7 @@ export function VideoPageClient({
 
           {canSwitchPerspective ? (
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+              <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-50 p-0.5">
                 <button
                   type="button"
                   onClick={() => switchPerspective("company")}
@@ -155,8 +155,8 @@ export function VideoPageClient({
                   className={[
                     "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                     perspective === "company"
-                      ? "bg-white text-zinc-800 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700",
+                      ? "bg-white text-stone-900 shadow-sm"
+                      : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
                   公司视角
@@ -168,8 +168,8 @@ export function VideoPageClient({
                   className={[
                     "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                     perspective === "team"
-                      ? "bg-white text-zinc-800 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-700",
+                      ? "bg-white text-stone-900 shadow-sm"
+                      : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
                   团队视角
@@ -178,7 +178,7 @@ export function VideoPageClient({
 
               {perspective === "team" && teams.length > 0 ? (
                 <Select value={teamId ?? teams[0]?.id} onValueChange={switchTeam}>
-                  <SelectTrigger className="h-9 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700">
+                  <SelectTrigger className="h-9 min-w-36 rounded-lg border-stone-200 bg-white text-[12px] text-stone-700">
                     <SelectValue placeholder="选择团队">
                       {selectedTeamName ?? undefined}
                     </SelectValue>
@@ -196,7 +196,7 @@ export function VideoPageClient({
           ) : null}
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
+        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-stone-500">
           <span>
             已入库
             <span className="ml-0.5 font-mono tabular-nums text-[#6FAA7D]">
@@ -211,11 +211,11 @@ export function VideoPageClient({
           </span>
           <span>
             已评级
-            <span className="ml-0.5 font-mono tabular-nums text-zinc-700">
+            <span className="ml-0.5 font-mono tabular-nums text-stone-700">
               {data.assetSummary.gradedCount}
             </span>
           </span>
-          <span className="pl-2 text-[15px] font-medium tracking-tight text-zinc-400">素材库</span>
+          <span className="pl-2 text-[13px] font-medium text-stone-500">素材库</span>
         </div>
       </div>
 

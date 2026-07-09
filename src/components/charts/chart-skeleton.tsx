@@ -10,7 +10,7 @@ export function ChartSkeleton({ className }: ChartSkeletonProps) {
   return (
     <div
       className={cn(
-        "chart-skeleton relative flex h-full w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:p-5",
+        "chart-skeleton relative flex h-full w-full overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 p-4 sm:p-5",
         className
       )}
     >

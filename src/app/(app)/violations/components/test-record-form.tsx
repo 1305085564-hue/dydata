@@ -99,7 +99,7 @@ export function TestRecordForm({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" className="h-11 rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50" />}>
+      <DialogTrigger render={<Button variant="outline" className="h-11 rounded-lg border-stone-300 text-stone-700 hover:bg-stone-50" />}>
         <Plus className="size-4" />
         记录效果
       </DialogTrigger>

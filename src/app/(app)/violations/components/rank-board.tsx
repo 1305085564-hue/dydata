@@ -31,7 +31,7 @@ export function RankBoard({
   const isViolation = metricKey === "pass_rate";
 
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] text-left relative overflow-hidden">
+    <div className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] text-left relative overflow-hidden">
       {/* Title */}
       <div className="flex items-center gap-2">
         {isViolation ? (
@@ -42,11 +42,11 @@ export function RankBoard({
         ) : (
           <span className="size-2 rounded-full bg-[#6FAA7D] shrink-0" />
         )}
-        <h3 className="text-[13px] font-semibold text-zinc-800">
+        <h3 className="text-[13px] font-semibold text-stone-800">
           {title}
         </h3>
         {subtitle ? (
-          <span className="text-[11px] text-zinc-400">
+          <span className="text-[11px] text-stone-400">
             {subtitle}
           </span>
         ) : null}
@@ -59,10 +59,10 @@ export function RankBoard({
             {items.map((item, index) => {
               const inner = (
                 <>
-                  <span className="w-5 text-[12px] font-mono font-semibold text-zinc-400 tabular-nums">
+                  <span className="w-5 text-[12px] font-mono font-semibold text-stone-400 tabular-nums">
                     {index + 1}
                   </span>
-                  <span className="flex-1 truncate text-[13px] text-zinc-700">
+                  <span className="flex-1 truncate text-[13px] text-stone-700">
                     {item.script_text.slice(0, 20)}
                     {item.script_text.length > 20 ? "…" : ""}
                   </span>
@@ -78,7 +78,7 @@ export function RankBoard({
                 </>
               );
 
-              const btnClass = "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-all duration-150 hover:bg-zinc-50 active:scale-[0.98]";
+              const btnClass = "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-all duration-150 hover:bg-stone-50 active:scale-[0.98]";
 
               return (
                 <li key={item.id}>
@@ -104,17 +104,17 @@ export function RankBoard({
           </ul>
         ) : (
           <div className="py-6 text-center">
-            <p className="text-[12px] text-zinc-400">{emptyHint}</p>
+            <p className="text-[12px] text-stone-400">{emptyHint}</p>
           </div>
         )}
       </div>
 
       {/* View All */}
       {viewAllHref ? (
-        <div className="mt-2 border-t border-zinc-100 pt-2.5">
+        <div className="mt-2 border-t border-stone-100 pt-2.5">
           <Link
             href={viewAllHref}
-            className="inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-all duration-150 hover:text-zinc-800 active:scale-[0.98]"
+            className="inline-flex items-center gap-1 text-[12px] text-stone-500 transition-all duration-150 hover:text-stone-800 active:scale-[0.98]"
           >
             查看全部
             <ArrowRight className="size-3 stroke-[1.5]" />

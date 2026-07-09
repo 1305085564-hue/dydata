@@ -50,11 +50,11 @@ function StatusBadge({ status }: { status: FulfillmentStatus }) {
     waived: { label: "豁免", dot: "bg-[#8AA8C7]" },
     exempted: { label: "豁免期", dot: "bg-[#8AA8C7]/50" },
     absent: { label: "缺勤", dot: "bg-[#C9604D]" },
-    unconfirmed: { label: "待确认", dot: "bg-zinc-200" },
+    unconfirmed: { label: "待确认", dot: "bg-stone-200" },
   };
   const c = config[status] ?? config.unconfirmed;
   return (
-    <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600">
+    <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-stone-600">
       <span className={`size-1.5 rounded-full ${c.dot}`} />
       {c.label}
     </span>
@@ -123,7 +123,7 @@ export function ExceptionQueue({
 
   if (members.length === 0) {
     return (
-      <div className="rounded-2xl border border-zinc-200/50 bg-white py-12 shadow-sm">
+      <div className="rounded-2xl border border-stone-200/50 bg-white py-12 shadow-sm">
         <EmptyState
           title="当前范围内无人待处理"
           description="所有成员的发布状态已确认完毕"
@@ -137,42 +137,42 @@ export function ExceptionQueue({
       {/* 标题 */}
       <div className="flex items-center gap-2">
         <AlertCircle className="size-4 text-[#D99E55]" />
-        <h2 className="text-[14px] font-semibold text-zinc-700">
+        <h2 className="text-[14px] font-semibold text-stone-700">
           待处理异常
-          <span className="ml-1.5 font-mono text-[12px] tabular-nums text-zinc-400">
+          <span className="ml-1.5 font-mono text-[12px] tabular-nums text-stone-400">
             {members.length}
           </span>
         </h2>
       </div>
 
       {/* 列表 */}
-      <div className="rounded-2xl border border-zinc-200/50 bg-white overflow-hidden shadow-sm">
+      <div className="rounded-2xl border border-stone-200/50 bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b border-zinc-200/50 bg-zinc-50/50">
+              <tr className="border-b border-stone-200/50 bg-stone-50/50">
                 <th className="w-10 px-3 py-2.5 text-left">
                   <Checkbox
                     checked={allSelected}
                     onCheckedChange={() => onSelectAll(!allSelected)}
                   />
                 </th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                   成员
                 </th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                   今日状态
                 </th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                   连续未发
                 </th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                   上次发布
                 </th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                   发布率
                 </th>
-                <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400 min-w-[200px]">
+                <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400 min-w-[200px]">
                   操作
                 </th>
               </tr>
@@ -187,7 +187,7 @@ export function ExceptionQueue({
                 return (
                   <tr
                     key={member.userId}
-                    className="group border-b border-zinc-100 last:border-b-0 transition-colors duration-150 bg-white hover:bg-zinc-100"
+                    className="group border-b border-stone-100 last:border-b-0 transition-colors duration-150 bg-white hover:bg-stone-100"
                   >
                     <td className="px-3 py-2.5">
                       <Checkbox
@@ -201,10 +201,10 @@ export function ExceptionQueue({
                         onClick={() => onMemberClick(member)}
                         className="text-left group/btn"
                       >
-                        <p className="font-medium text-zinc-800 group-hover/btn:text-zinc-950 transition-colors">
+                        <p className="font-medium text-stone-800 group-hover/btn:text-stone-950 transition-colors">
                           {member.userName}
                         </p>
-                        <p className="text-[11px] text-zinc-400">
+                        <p className="text-[11px] text-stone-400">
                           {member.groupName ?? member.teamName ?? "—"}
                         </p>
                       </button>
@@ -213,7 +213,7 @@ export function ExceptionQueue({
                       {todayRecord ? (
                         <StatusBadge status={todayRecord.status} />
                       ) : (
-                        <span className="text-[12px] text-zinc-400">—</span>
+                        <span className="text-[12px] text-stone-400">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5">
@@ -223,11 +223,11 @@ export function ExceptionQueue({
                           {member.consecutiveMissing} 天
                         </span>
                       ) : (
-                        <span className="text-[12px] text-zinc-400">—</span>
+                        <span className="text-[12px] text-stone-400">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className="font-mono text-[12px] tabular-nums text-zinc-600">
+                      <span className="font-mono text-[12px] tabular-nums text-stone-600">
                         {lastPublished ? lastPublished.slice(5) : "—"}
                       </span>
                     </td>
@@ -249,7 +249,7 @@ export function ExceptionQueue({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 font-medium"
+                          className="h-8 border-stone-200 text-stone-700 hover:bg-stone-50 hover:text-stone-900 font-medium"
                           disabled={isMarking}
                           onClick={() => handleQuickMark(member.userId, "confirmed_published")}
                         >
@@ -261,21 +261,21 @@ export function ExceptionQueue({
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={
-                              <Button variant="outline" size="sm" className="h-8 text-zinc-600 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-800">
-                                异常打标 <ChevronDown className="size-3 ml-1 text-zinc-400" />
+                              <Button variant="outline" size="sm" className="h-8 text-stone-600 border-stone-200 hover:bg-stone-50 hover:text-stone-800">
+                                异常打标 <ChevronDown className="size-3 ml-1 text-stone-400" />
                               </Button>
                             }
                           />
                           <DropdownMenuContent align="end" className="w-32 bg-white">
                             <DropdownMenuItem
                               onClick={() => handleQuickMark(member.userId, "leave")}
-                              className="text-zinc-700 cursor-pointer hover:bg-zinc-50"
+                              className="text-stone-700 cursor-pointer hover:bg-stone-50"
                             >
                               请假
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleQuickMark(member.userId, "waived")}
-                              className="text-zinc-700 cursor-pointer hover:bg-zinc-50"
+                              className="text-stone-700 cursor-pointer hover:bg-stone-50"
                             >
                               豁免
                             </DropdownMenuItem>
@@ -300,15 +300,15 @@ export function ExceptionQueue({
 
       {/* 批量操作浮条 */}
       {someSelected && (
-        <div className="sticky bottom-4 z-30 flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-3 shadow-md">
+        <div className="sticky bottom-4 z-30 flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-3 shadow-md">
           <div className="flex items-center gap-3">
-            <span className="text-[13px] font-medium text-zinc-700">
+            <span className="text-[13px] font-medium text-stone-700">
               已选 <span className="font-mono tabular-nums text-[#D97757] font-semibold">{selectedIds.size}</span> 人
             </span>
             <button
               type="button"
               onClick={() => onSelectAll(false)}
-              className="text-[12px] text-zinc-400 hover:text-zinc-600 transition-colors"
+              className="text-[12px] text-stone-400 hover:text-stone-600 transition-colors"
             >
               清除
             </button>
@@ -317,7 +317,7 @@ export function ExceptionQueue({
             <Button
               variant="outline"
               size="sm"
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+              className="border-stone-200 text-stone-700 hover:bg-stone-50 hover:text-stone-900"
               onClick={() => openBatchConfirm("confirmed_published")}
             >
               批量确认已发
@@ -325,7 +325,7 @@ export function ExceptionQueue({
             <Button
               variant="outline"
               size="sm"
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+              className="border-stone-200 text-stone-700 hover:bg-stone-50 hover:text-stone-900"
               onClick={() => openBatchConfirm("leave")}
             >
               批量请假
@@ -333,7 +333,7 @@ export function ExceptionQueue({
             <Button
               variant="outline"
               size="sm"
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+              className="border-stone-200 text-stone-700 hover:bg-stone-50 hover:text-stone-900"
               onClick={() => openBatchConfirm("waived")}
             >
               批量豁免
@@ -361,7 +361,7 @@ export function ExceptionQueue({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <label className="block text-[12px] font-medium text-zinc-500">
+            <label className="block text-[12px] font-medium text-stone-500">
               统一原因（可选）
             </label>
             <input
@@ -369,7 +369,7 @@ export function ExceptionQueue({
               value={batchReason}
               onChange={(e) => setBatchReason(e.target.value)}
               placeholder="请输入批量操作原因..."
-              className="w-full rounded-lg border border-transparent bg-zinc-100/70 px-3 py-2 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5"
+              className="w-full rounded-lg border border-transparent bg-stone-100/70 px-3 py-2 text-[13px] text-stone-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-stone-400 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-950/5"
             />
           </div>
           <DialogFooter>

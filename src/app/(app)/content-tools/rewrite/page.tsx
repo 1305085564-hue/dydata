@@ -36,7 +36,7 @@ export default async function RewritePage() {
   }
 
   return (
-    <div className={`${outfit.variable} font-sans mx-auto max-w-[1400px] h-[calc(100dvh-var(--app-top-offset)-1.25rem)] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] ml-[-1rem] sm:ml-[-1.5rem] mt-[-1.25rem] overflow-hidden bg-zinc-50 border-t border-zinc-200`}>
+    <div className={`${outfit.variable} font-sans mx-auto max-w-[1400px] h-[calc(100dvh-var(--app-top-offset)-1.25rem)] w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] ml-[-1rem] sm:ml-[-1.5rem] mt-[-1.25rem] overflow-hidden bg-stone-50 border-t border-stone-200`}>
       <RewriteWorkbenchV3 />
     </div>
   )
