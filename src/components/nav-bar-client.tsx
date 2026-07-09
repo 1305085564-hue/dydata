@@ -14,12 +14,13 @@ import { cn } from "@/lib/utils";
 import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions, UserRole } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNotifications } from "@/components/notifications/notification-store";
+import { isLocalNotification, useNotifications } from "@/components/notifications/notification-store";
 import {
   initDashboardStore,
   getDashboardSnapshot,
   subscribeDashboardStore,
 } from "@/lib/dashboard-store";
+import { getCommandHubDefaultTab } from "@/lib/exemption-approvals";
 
 interface Account {
   id: string;
@@ -66,6 +67,19 @@ export function NavBarClient({
 
   const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole || "");
 
+  const loadPendingApprovalsCount = useCallback(async () => {
+    if (!isAdmin) return 0;
+    try {
+      const res = await fetch("/api/exemptions/pending", { cache: "no-store" });
+      if (!res.ok) return null;
+      const json = await res.json();
+      return typeof json.count === "number" ? json.count : json.data?.length ?? 0;
+    } catch (err) {
+      console.error("Failed to fetch pending count:", err);
+      return null;
+    }
+  }, [isAdmin]);
+
   // Monitor scroll for header shrink effect
   useEffect(() => {
     const handleScroll = () => {
@@ -92,22 +106,20 @@ export function NavBarClient({
   // Fetch pending approvals count on mount (if admin)
   useEffect(() => {
     if (!isAdmin) return;
-    const fetchPendingCount = async () => {
-      try {
-        const res = await fetch("/api/exemptions/pending", { cache: "no-store" });
-        if (res.ok) {
-          const json = await res.json();
-          setPendingApprovalsCount(typeof json.count === "number" ? json.count : json.data?.length ?? 0);
-        }
-      } catch (err) {
-        console.error("Failed to fetch pending count:", err);
+    let cancelled = false;
+    void (async () => {
+      const nextCount = await loadPendingApprovalsCount();
+      if (!cancelled && typeof nextCount === "number") {
+        setPendingApprovalsCount(nextCount);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    fetchPendingCount();
-  }, [isAdmin]);
+  }, [isAdmin, loadPendingApprovalsCount]);
 
   // Load real notification counts
-  const { notifications: allNotifications } = useNotifications();
+  const { notifications: allNotifications, activate } = useNotifications();
   const activeTodos = allNotifications.filter((n) => n.category === "todo" && n.status === "unread");
   const unreadAlerts = allNotifications.filter((n) => n.category !== "todo" && n.status === "unread");
   const totalAlertsCount = activeTodos.length + unreadAlerts.length;
@@ -125,6 +137,39 @@ export function NavBarClient({
     },
     [pathname, router],
   );
+
+  const handleCommandHubOpen = useCallback(async () => {
+    let nextApprovalCount = approvalBadgeCount;
+    const localTodoCount = allNotifications.filter(
+      (row) => isLocalNotification(row) && row.category === "todo" && row.status === "unread",
+    ).length;
+    let nextTodoCount = activeTodos.length;
+
+    const notificationSnapshot = await activate();
+    if (notificationSnapshot) {
+      const remoteTodoCount = notificationSnapshot.notifications.filter(
+        (row) => row.category === "todo" && row.status === "unread",
+      ).length;
+      nextTodoCount = localTodoCount + remoteTodoCount;
+    }
+
+    if (nextTodoCount === 0 && isAdmin) {
+      const latestApprovalCount = await loadPendingApprovalsCount();
+      if (typeof latestApprovalCount === "number") {
+        nextApprovalCount = latestApprovalCount;
+        setPendingApprovalsCount(latestApprovalCount);
+      }
+    }
+
+    setCommandHubTab(
+      getCommandHubDefaultTab({
+        todoCount: nextTodoCount,
+        approvalCount: nextApprovalCount,
+        isAdmin,
+      }),
+    );
+    setCommandHubOpen(true);
+  }, [activate, activeTodos.length, allNotifications, approvalBadgeCount, isAdmin, loadPendingApprovalsCount]);
 
    const primaryLinkClass = (active: boolean) =>
     cn(
@@ -306,16 +351,7 @@ export function NavBarClient({
               {/* Bell alert drawer button */}
               <button
                 type="button"
-                onClick={() => {
-                  if (activeTodos.length > 0) {
-                    setCommandHubTab("todos");
-                  } else if (isAdmin && approvalBadgeCount > 0) {
-                    setCommandHubTab("approvals");
-                  } else {
-                    setCommandHubTab("notifications");
-                  }
-                  setCommandHubOpen(true);
-                }}
+                onClick={() => void handleCommandHubOpen()}
                 className={cn(
                   "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200",
                   "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 active:scale-95"

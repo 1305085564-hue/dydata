@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { escapeCsvCell, isValidDate, parseLimit } from "./_shared";
+import { UUID_PATTERN, escapeCsvCell, isValidDate, parseLimit } from "./_shared";
+
+test("UUID_PATTERN accepts standard UUIDs", () => {
+  assert.equal(UUID_PATTERN.test("f130ee78-9d07-477e-a918-c7bbd43ff759"), true);
+  assert.equal(UUID_PATTERN.test("not-a-uuid"), false);
+});
 
 test("isValidDate rejects impossible calendar dates", () => {
   assert.equal(isValidDate("2026-07-07"), true);

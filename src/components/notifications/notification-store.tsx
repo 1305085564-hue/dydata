@@ -40,6 +40,11 @@ export interface LocalNotificationRow extends NotificationRow {
 
 export type AnyNotificationRow = NotificationRow | LocalNotificationRow;
 
+export interface RemoteNotificationSnapshot {
+  notifications: NotificationRow[];
+  counts: NotificationCounts;
+}
+
 export function isLocalNotification(row: AnyNotificationRow): row is LocalNotificationRow {
   return (row as LocalNotificationRow).__local === true;
 }
@@ -49,8 +54,8 @@ interface NotificationContextValue {
   counts: NotificationCounts;
   loading: boolean;
   activated: boolean;
-  activate: () => Promise<void>;
-  refresh: () => Promise<void>;
+  activate: () => Promise<RemoteNotificationSnapshot | null>;
+  refresh: () => Promise<RemoteNotificationSnapshot | null>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   markDone: (id: string, reason?: "done" | "ignored") => Promise<void>;
@@ -111,36 +116,47 @@ export function NotificationProvider({ enabled, children }: NotificationProvider
   }: {
     force?: boolean;
     requireActivated?: boolean;
-  } = {}) => {
-    if (!enabled) return;
-    if (!force && requireActivated && !activated) return;
-    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
-    if (inFlightRef.current) return;
-    if (!force && Date.now() - lastFetchedAtRef.current < CACHE_TTL_MS) return;
+  } = {}): Promise<RemoteNotificationSnapshot | null> => {
+    if (!enabled) return null;
+    if (!force && requireActivated && !activated) return null;
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return null;
+    if (inFlightRef.current) return null;
+    if (!force && Date.now() - lastFetchedAtRef.current < CACHE_TTL_MS) {
+      return {
+        notifications: remote,
+        counts: remoteCounts,
+      };
+    }
     inFlightRef.current = true;
     setLoading(true);
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
-      if (!res.ok) return;
+      if (!res.ok) return null;
       const data = (await res.json()) as {
         notifications: NotificationRow[];
         counts: NotificationCounts;
       };
-      setRemote(data.notifications ?? []);
-      setRemoteCounts(data.counts ?? { unread: 0, todoOpen: 0 });
+      const snapshot = {
+        notifications: data.notifications ?? [],
+        counts: data.counts ?? { unread: 0, todoOpen: 0 },
+      };
+      setRemote(snapshot.notifications);
+      setRemoteCounts(snapshot.counts);
       lastFetchedAtRef.current = Date.now();
+      return snapshot;
     } catch (err) {
       console.warn("[notifications] fetch failed", err);
+      return null;
     } finally {
       inFlightRef.current = false;
       setLoading(false);
     }
-  }, [activated, enabled]);
+  }, [activated, enabled, remote, remoteCounts]);
 
   const activate = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled) return null;
     setActivated(true);
-    await fetchAll({ requireActivated: false });
+    return fetchAll({ force: true, requireActivated: false });
   }, [enabled, fetchAll]);
 
   useEffect(() => {
@@ -293,8 +309,8 @@ const noopValue: NotificationContextValue = {
   counts: { unread: 0, todoOpen: 0 },
   loading: false,
   activated: false,
-  activate: async () => {},
-  refresh: async () => {},
+  activate: async () => null,
+  refresh: async () => null,
   markRead: async () => {},
   markAllRead: async () => {},
   markDone: async () => {},
