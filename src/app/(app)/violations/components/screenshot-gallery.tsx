@@ -10,7 +10,7 @@ export function ScreenshotGallery({
 }) {
   if (!paths.length) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 py-8">
+      <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/60 py-8">
         <EmptyState title="暂无截图" description="上传截图后会在这里展示" />
       </div>
     );
@@ -25,7 +25,7 @@ export function ScreenshotGallery({
             href={`/api/violations/screenshot/${encodeURI(path)}`}
             target="_blank"
             rel="noreferrer"
-            className="group relative size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 active:translate-y-0"
+            className="group relative size-20 shrink-0 overflow-hidden rounded-lg border border-stone-200 bg-stone-100 active:translate-y-0"
           >
             <Image
               src={`/api/violations/screenshot/${encodeURI(path)}`}
@@ -49,7 +49,7 @@ export function ScreenshotGallery({
           href={`/api/violations/screenshot/${encodeURI(path)}`}
           target="_blank"
           rel="noreferrer"
-          className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 active:translate-y-0"
+          className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-stone-200 bg-stone-100 active:translate-y-0"
         >
           <Image
             src={`/api/violations/screenshot/${encodeURI(path)}`}

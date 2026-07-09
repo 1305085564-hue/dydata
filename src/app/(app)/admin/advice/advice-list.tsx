@@ -33,12 +33,12 @@ const INITIAL_FILTERS: AdviceFilterValue = {
 };
 
 const STATUS_STYLES: Record<AdviceStatus, string> = {
-  待查看: "border-zinc-200 bg-zinc-100 text-zinc-700",
-  已查看: "border-zinc-200 bg-zinc-100 text-zinc-600",
-  待执行: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  已执行: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  已忽略: "border-zinc-200 bg-zinc-50 text-zinc-500",
-  已复核: "border-zinc-200 bg-zinc-100 text-zinc-700",
+  待查看: "border-stone-200 bg-stone-100 text-stone-700",
+  已查看: "border-stone-200 bg-stone-100 text-stone-600",
+  待执行: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  已执行: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  已忽略: "border-stone-200 bg-stone-50 text-stone-500",
+  已复核: "border-stone-200 bg-stone-100 text-stone-700",
 };
 
 const SOURCE_LABELS: Record<AdviceSource, string> = {
@@ -190,7 +190,7 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
+        <div className="flex flex-wrap items-center gap-4 text-[12px] text-stone-500">
           <span>共 {filteredRows.length} 条</span>
           <span>待查看 {stats.待查看}</span>
           <span>待执行 {stats.待执行}</span>
@@ -208,17 +208,17 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
 
       <AdviceFilters profiles={profiles} accounts={accounts} onFilter={setFilters} />
 
-      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
         <Table freezeFirst>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="h-9 px-4 text-[12px] font-medium text-zinc-500">目标员工</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">建议摘要</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">来源</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">状态</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">创建时间</TableHead>
-              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-zinc-500">操作</TableHead>
+              <TableHead className="h-9 px-4 text-[12px] font-medium text-stone-500">目标员工</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">账号</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">建议摘要</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">来源</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">状态</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">创建时间</TableHead>
+              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-stone-500">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -229,13 +229,13 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
 
                 return (
                   <TableRow key={item.id} className="group h-10">
-                    <TableCell className="px-4 text-[13px] font-medium text-zinc-800">{targetProfile?.name || "-"}</TableCell>
-                    <TableCell className="text-[13px] text-zinc-600">{targetAccount?.name || "-"}</TableCell>
+                    <TableCell className="px-4 text-[13px] font-medium text-stone-800">{targetProfile?.name || "-"}</TableCell>
+                    <TableCell className="text-[13px] text-stone-600">{targetAccount?.name || "-"}</TableCell>
                     <TableCell className="max-w-[360px] whitespace-normal align-top">
-                      <div className="line-clamp-2 text-[13px] text-zinc-700">{buildSummary(item.advice_content)}</div>
+                      <div className="line-clamp-2 text-[13px] text-stone-700">{buildSummary(item.advice_content)}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-[12px] text-zinc-600">
+                      <Badge variant="outline" className="border-stone-200 bg-stone-50 text-[12px] text-stone-600">
                         {SOURCE_LABELS[item.advice_source]}
                       </Badge>
                     </TableCell>
@@ -244,7 +244,7 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
                         {item.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-[12px] text-zinc-500">{formatDateTime(item.created_at)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-500">{formatDateTime(item.created_at)}</TableCell>
                     <TableCell className="px-4 text-right">
                       <button
                         type="button"
@@ -259,7 +259,7 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="px-4 py-16 text-center text-[13px] text-zinc-500">
+                <TableCell colSpan={7} className="px-4 py-16 text-center text-[13px] text-stone-500">
                   当前筛选条件下暂无建议数据。
                 </TableCell>
               </TableRow>

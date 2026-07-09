@@ -41,14 +41,14 @@ export function AiAlertRow({ alert, checked, onToggle }: AiAlertRowProps) {
   const content = (
     <>
       {checkbox}
-      <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-800">
+      <span className="min-w-[80px] truncate text-[13px] font-medium text-stone-800">
         {primaryEntity?.name ?? "—"}
       </span>
-      <span className="flex-1 truncate text-[12px] text-zinc-500">
+      <span className="flex-1 truncate text-[12px] text-stone-500">
         {alert.detail ?? alert.title}
       </span>
       {navigate && (
-        <ArrowRight className="size-3.5 text-zinc-400 opacity-0 transition duration-150 group-hover:opacity-100" />
+        <ArrowRight className="size-3.5 text-stone-400 opacity-0 transition duration-150 group-hover:opacity-100" />
       )}
     </>
   );
@@ -57,7 +57,7 @@ export function AiAlertRow({ alert, checked, onToggle }: AiAlertRowProps) {
     return (
       <Link
         href={navigate.href}
-        className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60"
+        className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition hover:bg-stone-50/60"
       >
         {content}
       </Link>
@@ -65,7 +65,7 @@ export function AiAlertRow({ alert, checked, onToggle }: AiAlertRowProps) {
   }
 
   return (
-    <div className="group flex h-9 items-center gap-3 px-4 transition hover:bg-zinc-50/60">
+    <div className="group flex h-9 items-center gap-3 px-4 transition hover:bg-stone-50/60">
       {content}
     </div>
   );

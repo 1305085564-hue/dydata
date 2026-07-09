@@ -62,10 +62,10 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
       {trigger ? <DialogTrigger render={<span>{trigger}</span>} /> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-800">
             申请加入团队
           </DialogTitle>
-          <DialogDescription className="text-[13px] text-zinc-500">
+          <DialogDescription className="text-[13px] text-stone-500">
             提交后由管理员审核，通过后你将正式归属该团队
           </DialogDescription>
         </DialogHeader>
@@ -74,7 +74,7 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
           <Label htmlFor="apply-team-id">目标团队</Label>
           <select
             id="apply-team-id"
-            className="flex h-8 w-full rounded-lg border border-transparent bg-zinc-50 px-3 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className="flex h-8 w-full rounded-lg border border-transparent bg-stone-50 px-3 text-[13px] text-stone-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-stone-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-950/5"
             value={teamId}
             onChange={(e) => setTeamId(e.target.value)}
             disabled={isPending}

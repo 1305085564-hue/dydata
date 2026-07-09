@@ -29,7 +29,7 @@ export default async function AdminAdvicePage() {
       className="pb-8"
     >
       <Suspense fallback={
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 mt-4">
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 mt-4">
           <TableSkeleton columnCount={5} rowCount={6} showHeader={true} />
         </div>
       }>
@@ -46,10 +46,10 @@ async function AdviceDataContainer({ currentUserId }: { currentUserId: string })
   return (
     <section
       id="advice-queue"
-      className="scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-6 mt-4"
+      className="scroll-mt-8 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 mt-4"
     >
       <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">建议队列</h2>
+        <h2 className="text-[24px] font-semibold tracking-tight text-stone-800">建议队列</h2>
       </div>
       <AdviceList
         advice={data.advice}

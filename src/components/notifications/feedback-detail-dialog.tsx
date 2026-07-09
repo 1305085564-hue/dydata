@@ -125,14 +125,14 @@ export function FeedbackDetailDialog({
         <SheetHeader className="gap-3">
           <SheetTitle>复盘反馈</SheetTitle>
           <div className="space-y-1.5">
-            <div className="text-[14px] font-medium leading-[1.5] text-zinc-800">
+            <div className="text-[14px] font-medium leading-[1.5] text-stone-800">
               {current.video?.video_title || "（无标题）"}
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-zinc-500">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-stone-500">
               {current.account?.name && <span>{current.account.name}</span>}
               {current.video?.video_url && (
                 <>
-                  <span className="text-zinc-300">·</span>
+                  <span className="text-stone-300">·</span>
                   <a
                     href={current.video.video_url}
                     target="_blank"
@@ -151,8 +151,8 @@ export function FeedbackDetailDialog({
         <SheetBody className="space-y-5">
           {/* 视频上下文小数据 */}
           {(snapshot || enriching) && (
-            <div className="rounded-xl bg-zinc-100/50 p-3">
-              <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+            <div className="rounded-xl bg-stone-100/50 p-3">
+              <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                 视频数据
               </div>
               {enriching && !snapshot ? (
@@ -162,16 +162,16 @@ export function FeedbackDetailDialog({
                   <Skeleton className="h-3 w-20" />
                 </div>
               ) : snapshot ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums text-zinc-600">
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums text-stone-600">
                   <span>
-                    播放 <span className="font-medium text-zinc-800">{formatNumber(snapshot.play_count)}</span>
+                    播放 <span className="font-medium text-stone-800">{formatNumber(snapshot.play_count)}</span>
                   </span>
                   {snapshot.completion_rate_5s != null && (
                     <>
-                      <span className="text-zinc-300">·</span>
+                      <span className="text-stone-300">·</span>
                       <span>
                         5s完播{" "}
-                        <span className="font-medium text-zinc-800">
+                        <span className="font-medium text-stone-800">
                           {formatRate(snapshot.completion_rate_5s)}
                         </span>
                       </span>
@@ -179,10 +179,10 @@ export function FeedbackDetailDialog({
                   )}
                   {snapshot.bounce_rate_2s != null && (
                     <>
-                      <span className="text-zinc-300">·</span>
+                      <span className="text-stone-300">·</span>
                       <span>
                         2s跳出{" "}
-                        <span className="font-medium text-zinc-800">
+                        <span className="font-medium text-stone-800">
                           {formatRate(snapshot.bounce_rate_2s)}
                         </span>
                       </span>
@@ -195,26 +195,26 @@ export function FeedbackDetailDialog({
 
           {mainProblem && (
             <div className="space-y-1.5">
-              <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+              <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                 主要问题
               </div>
-              <p className="text-[13px] leading-[1.7] text-zinc-700">{mainProblem}</p>
+              <p className="text-[13px] leading-[1.7] text-stone-700">{mainProblem}</p>
             </div>
           )}
 
           {improvement && (
             <div className="border-l-2 border-[#D97757] pl-3">
-              <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+              <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
                 建议下次
               </div>
-              <p className="mt-1 whitespace-pre-wrap text-[14px] font-medium leading-[1.7] text-zinc-800">
+              <p className="mt-1 whitespace-pre-wrap text-[14px] font-medium leading-[1.7] text-stone-800">
                 {improvement}
               </p>
             </div>
           )}
         </SheetBody>
 
-        <SheetFooter className="border-t border-zinc-200">
+        <SheetFooter className="border-t border-stone-200">
           <Button
             className="h-10 w-full rounded-lg bg-[#D97757] text-[13px] text-white hover:bg-[#C96442]"
             onClick={handleConfirm}

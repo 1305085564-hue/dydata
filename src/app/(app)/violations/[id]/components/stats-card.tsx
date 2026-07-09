@@ -11,8 +11,8 @@ interface StatsCardProps {
 
 const TONE_CLASS: Record<NonNullable<StatsCardProps["tone"]>, { value: string; hint: string }> = {
   default: {
-    value: "text-zinc-800",
-    hint: "text-zinc-500",
+    value: "text-stone-800",
+    hint: "text-stone-500",
   },
   positive: {
     value: "text-[#6FAA7D]",
@@ -45,10 +45,10 @@ export function StatsCard({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
           {label}
         </span>
-        {icon ? <span className="text-zinc-400">{icon}</span> : null}
+        {icon ? <span className="text-stone-400">{icon}</span> : null}
       </div>
       <div className={cn("mt-3 text-[24px] font-semibold leading-none tracking-tight tabular-nums", toneClass.value)}>
         {value}

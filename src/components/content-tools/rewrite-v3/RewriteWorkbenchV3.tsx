@@ -133,14 +133,14 @@ export function RewriteWorkbenchV3() {
   // Loading 状态
   if (state.loading || !state.bootstrap) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-zinc-50">
+      <div className="flex h-full w-full items-center justify-center bg-stone-50">
         <div className="flex flex-col items-center gap-3">
           <div className="flex space-x-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-pulse [animation-delay:0ms]" />
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-pulse [animation-delay:150ms]" />
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-pulse [animation-delay:300ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-stone-400 animate-pulse [animation-delay:0ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-stone-400 animate-pulse [animation-delay:150ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-stone-400 animate-pulse [animation-delay:300ms]" />
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-[0.25em] text-zinc-400">
+          <span className="text-[12px] uppercase font-bold tracking-[0.25em] text-stone-400">
             Calm Studio V3
           </span>
         </div>
@@ -151,11 +151,11 @@ export function RewriteWorkbenchV3() {
   // 错误状态
   if (state.errorState) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-zinc-50">
-        <div className="max-w-md bg-white border border-zinc-200 p-6 rounded-lg shadow-xl space-y-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-500">初始化异常</div>
-          <h3 className="text-lg font-bold text-zinc-800">{state.errorState.title}</h3>
-          <p className="text-[13px] text-zinc-500 leading-relaxed">{state.errorState.message}</p>
+      <div className="flex h-full w-full items-center justify-center bg-stone-50">
+        <div className="max-w-md bg-white border border-stone-200 p-6 rounded-lg shadow-xl space-y-4">
+          <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-rose-500">初始化异常</div>
+          <h3 className="text-lg font-bold text-stone-800">{state.errorState.title}</h3>
+          <p className="text-[13px] text-stone-500 leading-relaxed">{state.errorState.message}</p>
           <button
             onClick={() => window.location.reload()}
             className="w-full bg-[#D97757] text-white hover:bg-[#C96442] font-bold py-2 rounded-lg text-xs shadow-md transition-all active:scale-[0.98]"
@@ -170,10 +170,10 @@ export function RewriteWorkbenchV3() {
   // 定稿沉浸式阅览视图
   if (presentationMode) {
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50/50">
-        <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-5">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-stone-50/50">
+        <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-5">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold text-zinc-800">定稿阅览室</span>
+            <span className="text-[13px] font-bold text-stone-800">定稿阅览室</span>
             <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600 uppercase tracking-wide">
               沉浸模式
             </span>
@@ -183,43 +183,43 @@ export function RewriteWorkbenchV3() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportMarkdown}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[11px] font-semibold text-zinc-650 hover:bg-zinc-50 transition-all relative active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-semibold text-stone-700 hover:bg-stone-50 transition-all relative active:scale-[0.98]"
               title="下载 Markdown 文件 (.md)"
             >
-              <Download className="h-3.5 w-3.5 mr-1 text-zinc-400" />
+              <Download className="h-3.5 w-3.5 mr-1 text-stone-400" />
               <span>导出 Markdown</span>
             </button>
             <button
               onClick={handleExportWord}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[11px] font-semibold text-zinc-650 hover:bg-zinc-50 transition-all relative active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-semibold text-stone-700 hover:bg-stone-50 transition-all relative active:scale-[0.98]"
               title="下载 Word 兼容文件 (.doc)"
             >
-              <FileText className="h-3.5 w-3.5 mr-1 text-zinc-400" />
+              <FileText className="h-3.5 w-3.5 mr-1 text-stone-400" />
               <span>导出 Word</span>
             </button>
             <button
               onClick={handleCopyAll}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[11px] font-semibold text-zinc-650 hover:bg-zinc-50 transition-all relative active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-semibold text-stone-700 hover:bg-stone-50 transition-all relative active:scale-[0.98]"
             >
-              <Copy className="h-3.5 w-3.5 mr-1 text-zinc-400" />
+              <Copy className="h-3.5 w-3.5 mr-1 text-stone-400" />
               <span>{copiedAll ? '已复制' : '复制全文'}</span>
             </button>
             <button
               onClick={() => setPresentationMode(false)}
-              className="inline-flex h-8 items-center justify-center rounded-lg bg-[#D97757] text-white px-4.5 text-[11px] font-bold hover:bg-[#C96442] transition-all shadow-sm active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg bg-[#D97757] text-white px-4.5 text-[12px] font-bold hover:bg-[#C96442] transition-all shadow-sm active:scale-[0.98]"
             >
               退出阅览
             </button>
           </div>
         </header>
         <div className="flex-1 overflow-y-auto flex justify-center py-10 px-6">
-          <div className="w-full max-w-3xl bg-white border border-zinc-200/60 rounded-lg shadow-sm p-10 select-text">
-            <div className="prose prose-zinc max-w-none leading-relaxed text-[14.5px] space-y-6 text-zinc-800">
+          <div className="w-full max-w-3xl bg-white border border-stone-200/60 rounded-lg shadow-sm p-10 select-text">
+            <div className="prose prose-stone max-w-none leading-relaxed text-[13px] space-y-6 text-stone-700">
               {state.polishedText.split('\n\n').map((para, i) => (
                 <p key={i}>{para}</p>
               ))}
               {!state.polishedText && (
-                <p className="text-zinc-405 italic text-center py-12">暂无定稿内容</p>
+                <p className="py-12 text-center italic text-stone-300">暂无定稿内容</p>
               )}
             </div>
           </div>
@@ -229,17 +229,17 @@ export function RewriteWorkbenchV3() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-stone-50">
       {/* 极简顶栏 */}
-      <header className="relative z-35 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4">
+      <header className="relative z-35 flex h-12 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-4">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             {/* 产品标识 (单色灰阶) */}
             <div className="flex items-center gap-1.5 font-sans select-none mr-1">
               <span className="relative flex h-1 w-1">
-                <span className="relative inline-flex h-1 w-1 rounded-full bg-zinc-400" />
+                <span className="relative inline-flex h-1 w-1 rounded-full bg-stone-400" />
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 font-outfit">
+              <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-stone-500 font-outfit">
                 DYDATA WRITER V3
               </span>
             </div>
@@ -248,30 +248,30 @@ export function RewriteWorkbenchV3() {
             <button
               onClick={() => actions.setIsHistoryOpen(!state.isHistoryOpen)}
               className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[10px] font-bold shadow-sm transition-all active:scale-[0.98]",
+                "inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-bold shadow-sm transition-all active:scale-[0.98]",
                 state.isHistoryOpen
-                  ? "bg-zinc-100 border-zinc-400 text-zinc-900"
-                  : "bg-white border-zinc-300 text-zinc-650 hover:bg-zinc-50 hover:text-zinc-800"
+                  ? "bg-stone-100 border-stone-400 text-stone-900"
+                  : "bg-white border-stone-300 text-stone-700 hover:bg-stone-50 hover:text-stone-800"
               )}
               title={state.isHistoryOpen ? '收起历史对话' : '查看历史对话'}
             >
-              <History className="h-3 w-3 text-zinc-400" />
+              <History className="h-3 w-3 text-stone-400" />
               <span>历史记录</span>
             </button>
 
             {/* 新对话 (次按钮) */}
             <button
               onClick={actions.handleNewConversation}
-              className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 text-[10px] font-bold text-zinc-650 shadow-sm transition-all hover:bg-zinc-50 hover:text-zinc-800 active:scale-[0.98]"
+              className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 text-[12px] font-bold text-stone-700 shadow-sm transition-all hover:bg-stone-50 hover:text-stone-800 active:scale-[0.98]"
               title="新对话改写"
             >
-              <Plus className="h-3 w-3 text-zinc-400" />
+              <Plus className="h-3 w-3 text-stone-400" />
               <span>新对话</span>
             </button>
           </div>
 
           {/* 分隔线 */}
-          <div className="h-4 w-px bg-zinc-200" />
+          <div className="h-4 w-px bg-stone-200" />
 
           {/* 技能模式 */}
           <SkillCabin
@@ -285,11 +285,11 @@ export function RewriteWorkbenchV3() {
         {/* 右侧：顶栏操作组 */}
         <div className="flex items-center gap-3">
           {/* 撤销/重做 (渐进式显影) */}
-          <div className="flex items-center gap-0.5 mr-1 pr-2 border-r border-zinc-200">
+          <div className="flex items-center gap-0.5 mr-1 pr-2 border-r border-stone-200">
             <button
               onClick={actions.handleUndo}
               disabled={!state.historyState.canUndo || state.isSending}
-              className="p-1 rounded-lg text-zinc-800 opacity-40 hover:opacity-100 disabled:opacity-15 disabled:hover:bg-transparent hover:bg-zinc-100 transition-all active:scale-90"
+              className="p-1 rounded-lg text-stone-800 opacity-40 hover:opacity-100 disabled:opacity-15 disabled:hover:bg-transparent hover:bg-stone-100 transition-all active:scale-90"
               title="撤销最近修改"
             >
               <Undo2 className="h-3 w-3" />
@@ -297,7 +297,7 @@ export function RewriteWorkbenchV3() {
             <button
               onClick={actions.handleRedo}
               disabled={!state.historyState.canRedo || state.isSending}
-              className="p-1 rounded-lg text-zinc-800 opacity-40 hover:opacity-100 disabled:opacity-15 disabled:hover:bg-transparent hover:bg-zinc-100 transition-all active:scale-90"
+              className="p-1 rounded-lg text-stone-800 opacity-40 hover:opacity-100 disabled:opacity-15 disabled:hover:bg-transparent hover:bg-stone-100 transition-all active:scale-90"
               title="重做"
             >
               <Redo2 className="h-3 w-3" />
@@ -308,17 +308,17 @@ export function RewriteWorkbenchV3() {
           <button
             onClick={() => setShowDiffInLatest(!showDiffInLatest)}
             className={cn(
-              "inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[10px] font-bold shadow-sm transition-all active:scale-[0.98]",
+              "inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[12px] font-bold shadow-sm transition-all active:scale-[0.98]",
               showDiffInLatest
                 ? "bg-amber-500/[0.08] border-amber-500/30 text-amber-800 hover:bg-amber-500/[0.12]"
-                : "bg-white border-zinc-300 text-zinc-650 hover:bg-zinc-50 hover:text-zinc-800"
+                : "bg-white border-stone-300 text-stone-700 hover:bg-stone-50 hover:text-stone-800"
             )}
             title={showDiffInLatest ? '关闭修订模式' : '开启修订模式'}
           >
             {showDiffInLatest ? (
               <Eye className="h-3 w-3 text-amber-600" />
             ) : (
-              <EyeOff className="h-3 w-3 text-zinc-400" />
+              <EyeOff className="h-3 w-3 text-stone-400" />
             )}
             <span>修订模式</span>
           </button>
@@ -327,16 +327,16 @@ export function RewriteWorkbenchV3() {
           <button
             onClick={handleCopyAll}
             disabled={!state.polishedText}
-            className="inline-flex h-7 items-center gap-1 rounded-md border border-zinc-300 bg-white px-2.5 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800 shadow-sm transition-all active:scale-[0.98] disabled:opacity-40"
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-stone-300 bg-white px-2.5 text-[12px] font-bold text-stone-600 hover:bg-stone-50 hover:text-stone-800 shadow-sm transition-all active:scale-[0.98] disabled:opacity-40"
           >
-            <Copy className="h-3 w-3 text-zinc-400" />
+            <Copy className="h-3 w-3 text-stone-400" />
             <span>{copiedAll ? '已复制' : '复制'}</span>
           </button>
 
           {/* 定稿导出 (唯一主 CTA) */}
           <button
             onClick={() => setPresentationMode(true)}
-            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#D97757] text-white hover:bg-[#C96442] shadow-sm shadow-[#D97757]/20 px-3.5 py-0.5 text-[10.5px] font-bold active:scale-[0.98] transition-all"
+            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#D97757] text-white hover:bg-[#C96442] shadow-sm shadow-[#D97757]/20 px-3.5 py-0.5 text-[12px] font-bold active:scale-[0.98] transition-all"
             title="进入纯净全屏阅览室并支持导出"
           >
             <FileText className="h-3 w-3 text-white/90" />
@@ -364,7 +364,7 @@ export function RewriteWorkbenchV3() {
         {/* 左侧：操作控制区（宽度可动态拖拽调节，默认 35%） */}
         <aside
           style={{ width: `${leftWidthPercent}%` }}
-          className="shrink-0 min-w-[340px] flex flex-col border-r border-zinc-200 bg-zinc-100/70 relative z-20 shadow-[1px_0_4px_rgba(0,0,0,0.01)]"
+          className="shrink-0 min-w-[340px] flex flex-col border-r border-stone-200 bg-stone-100/70 relative z-20 shadow-[1px_0_4px_rgba(0,0,0,0.01)]"
         >
           {/* 核心对话控制台 */}
           <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
@@ -409,8 +409,8 @@ export function RewriteWorkbenchV3() {
             isResizing ? "bg-[#8AA8C7]/20" : "bg-transparent hover:bg-[#8AA8C7]/10"
           )}
         >
-          <div className={cn("w-[1px] h-full transition-colors", isResizing ? "bg-[#8AA8C7]" : "bg-zinc-200/80")} />
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[9px] px-2 py-1 rounded-lg shadow-md whitespace-nowrap font-sans font-semibold">
+          <div className={cn("w-[1px] h-full transition-colors", isResizing ? "bg-[#8AA8C7]" : "bg-stone-200/80")} />
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-stone-900 text-white text-[9px] px-2 py-1 rounded-lg shadow-md whitespace-nowrap font-sans font-semibold">
             双击重置为 35%
           </div>
         </div>

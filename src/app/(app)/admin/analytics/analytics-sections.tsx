@@ -61,7 +61,7 @@ export function AnalyticsSections({
           >
             <div
               className={cn(
-                "overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                "overflow-hidden rounded-2xl border border-stone-200 bg-white transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 !isExpanded && "hover:-translate-y-[1px] active:translate-y-0",
               )}
             >
@@ -72,21 +72,21 @@ export function AnalyticsSections({
                 <div className="flex items-center gap-4">
                   <div
                     className={cn(
-                      "flex size-10 items-center justify-center rounded-lg bg-zinc-100 text-[13px] font-medium text-zinc-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] font-mono tabular-nums",
-                      isExpanded && "bg-zinc-100 text-zinc-800",
+                      "flex size-10 items-center justify-center rounded-lg bg-stone-100 text-[13px] font-medium text-stone-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] font-mono tabular-nums",
+                      isExpanded && "bg-stone-100 text-stone-800",
                     )}
                   >
                     {index + 1}
                   </div>
-                  <h2 className="text-[18px] font-medium tracking-tight text-zinc-800">
+                  <h2 className="text-[18px] font-medium tracking-tight text-stone-800">
                     {section.title}
                   </h2>
                 </div>
 
                 <div
                   className={cn(
-                    "flex size-10 items-center justify-center rounded-full bg-zinc-50 text-zinc-400 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:bg-zinc-100",
-                    isExpanded && "rotate-180 bg-zinc-100 text-zinc-800 group-hover:bg-zinc-200",
+                    "flex size-10 items-center justify-center rounded-full bg-stone-50 text-stone-400 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:bg-stone-100",
+                    isExpanded && "rotate-180 bg-stone-100 text-stone-800 group-hover:bg-stone-200",
                   )}
                 >
                   <ChevronDown className="size-5 stroke-[1.5]" />
@@ -100,7 +100,7 @@ export function AnalyticsSections({
                 )}
               >
                 <div className="overflow-hidden">
-                  <div className="border-t border-zinc-100 px-6 pb-6 pt-5">{section.content}</div>
+                  <div className="border-t border-stone-100 px-6 pb-6 pt-5">{section.content}</div>
                 </div>
               </div>
             </div>

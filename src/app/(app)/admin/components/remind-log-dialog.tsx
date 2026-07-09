@@ -92,18 +92,18 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 shadow-sm sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-stone-200 bg-white p-0 shadow-sm sm:max-w-3xl">
         <DialogHeader className="px-6 pb-2 pt-6">
-          <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">
+          <DialogTitle className="text-[18px] font-semibold tracking-tight text-stone-800">
             催交记录
           </DialogTitle>
-          <p className="text-[13px] text-zinc-400">{date} 的催交历史</p>
+          <p className="text-[13px] text-stone-400">{date} 的催交历史</p>
         </DialogHeader>
 
         <div className="space-y-4 px-6 pb-6">
           {/* 搜索 */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 stroke-[1.5] text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 stroke-[1.5] text-stone-400" />
             <input
               type="text"
               value={search}
@@ -112,15 +112,15 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                 setPage(1);
               }}
               placeholder="搜索成员姓名..."
-              className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-4 text-[13px] text-zinc-800 shadow-sm transition-[border-color,box-shadow] duration-150 placeholder:text-zinc-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+              className="h-10 w-full rounded-lg border border-stone-200 bg-white pl-9 pr-4 text-[13px] text-stone-800 shadow-sm transition-[border-color,box-shadow] duration-150 placeholder:text-stone-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5"
             />
           </div>
 
           {loading && logs.length === 0 ? (
             <div className="space-y-2">
-              <div className="h-12 rounded-lg bg-zinc-100" />
-              <div className="h-12 rounded-lg bg-zinc-100" />
-              <div className="h-12 rounded-lg bg-zinc-100" />
+              <div className="h-12 rounded-lg bg-stone-100" />
+              <div className="h-12 rounded-lg bg-stone-100" />
+              <div className="h-12 rounded-lg bg-stone-100" />
             </div>
           ) : error ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2 text-[13px] text-[#C9604D]">
@@ -128,33 +128,33 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
               {error}
             </div>
           ) : logs.length === 0 ? (
-            <div className="flex h-40 flex-col items-center justify-center gap-2 text-[13px] text-zinc-400">
+            <div className="flex h-40 flex-col items-center justify-center gap-2 text-[13px] text-stone-400">
               <Bell className="size-5 stroke-[1.5]" />
               暂无催交记录
             </div>
           ) : (
             <>
-              <div className="rounded-xl border border-zinc-200 overflow-hidden">
+              <div className="rounded-xl border border-stone-200 overflow-hidden">
                 <table className="w-full text-left text-[13px]">
                   <thead className="bg-[#FAFAFB]">
-                    <tr className="border-b border-zinc-200">
-                      <th className="px-4 py-2.5 font-medium text-zinc-500">成员</th>
-                      <th className="px-4 py-2.5 font-medium text-zinc-500">日期</th>
-                      <th className="px-4 py-2.5 font-medium text-zinc-500">方式</th>
-                      <th className="px-4 py-2.5 font-medium text-zinc-500">状态</th>
-                      <th className="px-4 py-2.5 font-medium text-zinc-500">豁免</th>
+                    <tr className="border-b border-stone-200">
+                      <th className="px-4 py-2.5 font-medium text-stone-500">成员</th>
+                      <th className="px-4 py-2.5 font-medium text-stone-500">日期</th>
+                      <th className="px-4 py-2.5 font-medium text-stone-500">方式</th>
+                      <th className="px-4 py-2.5 font-medium text-stone-500">状态</th>
+                      <th className="px-4 py-2.5 font-medium text-stone-500">豁免</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-stone-100">
                     {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-zinc-50/50">
-                        <td className="px-4 py-2.5 text-zinc-800">
+                      <tr key={log.id} className="hover:bg-stone-50/50">
+                        <td className="px-4 py-2.5 text-stone-800">
                           {log.user_name ?? "未知成员"}
                         </td>
-                        <td className="px-4 py-2.5 font-mono tabular-nums text-zinc-500">
+                        <td className="px-4 py-2.5 font-mono tabular-nums text-stone-500">
                           {log.target_date}
                         </td>
-                        <td className="px-4 py-2.5 text-zinc-500">
+                        <td className="px-4 py-2.5 text-stone-500">
                           {log.channel === "feishu_webhook" ? "飞书" : log.channel}
                         </td>
                         <td className="px-4 py-2.5">
@@ -162,8 +162,8 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                             className={cn(
                               "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium",
                               log.status === "success"
-                                ? "bg-white text-zinc-700"
-                                : "bg-white text-zinc-700",
+                                ? "bg-white text-stone-700"
+                                : "bg-white text-stone-700",
                             )}
                           >
                             {log.status === "success" ? (
@@ -181,7 +181,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                               {log.exempt_reason ? ` · ${log.exempt_reason}` : ""}
                             </span>
                           ) : (
-                            <span className="text-zinc-400">—</span>
+                            <span className="text-stone-400">—</span>
                           )}
                         </td>
                       </tr>
@@ -193,7 +193,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
               {/* 分页 */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-zinc-400">
+                  <span className="text-[12px] text-stone-400">
                     共 {total} 条，第 {page} / {totalPages} 页
                   </span>
                   <div className="flex items-center gap-2">
@@ -203,7 +203,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                       size="sm"
                       disabled={page <= 1 || loading}
                       onClick={() => setPage((p) => p - 1)}
-                      className="h-8 border-zinc-200 px-3 text-[12px]"
+                      className="h-8 border-stone-200 px-3 text-[12px]"
                     >
                       上一页
                     </Button>
@@ -213,7 +213,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                       size="sm"
                       disabled={page >= totalPages || loading}
                       onClick={() => setPage((p) => p + 1)}
-                      className="h-8 border-zinc-200 px-3 text-[12px]"
+                      className="h-8 border-stone-200 px-3 text-[12px]"
                     >
                       下一页
                     </Button>

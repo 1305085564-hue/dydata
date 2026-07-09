@@ -66,15 +66,15 @@ export function TimelineDiff({
   }
 
   return (
-    <div className="shrink-0 bg-white/70 backdrop-blur-md border-b border-zinc-200 px-5 py-2.5 flex items-center justify-between z-30 h-[48px] select-none">
+    <div className="shrink-0 bg-white/70 backdrop-blur-md border-b border-stone-200 px-5 py-2.5 flex items-center justify-between z-30 h-[48px] select-none">
       <div className="flex items-center gap-4 max-w-[70%] min-w-0">
         {/* 中文化时光机眉题及引导说明 */}
         <div className="flex items-center gap-1.5 shrink-0 select-none">
-          <Calendar className="h-3.5 w-3.5 text-zinc-400" />
-          <span className="text-[11px] font-bold text-zinc-700 font-sans tracking-wide">
+          <Calendar className="h-3.5 w-3.5 text-stone-400" />
+          <span className="text-[12px] font-bold text-stone-700 font-sans tracking-wide">
             版本时光机
           </span>
-          <span className="text-[9.5px] font-medium text-zinc-400 hidden sm:inline">
+          <span className="text-[9.5px] font-medium text-stone-400 hidden sm:inline">
             (点击圆点回溯)
           </span>
         </div>
@@ -82,7 +82,7 @@ export function TimelineDiff({
         {/* 离散时间轴容器（底盘轨道线穿过珍珠） */}
         <div className="relative flex-1 flex items-center min-w-0 overflow-x-auto scrollbar-none py-1">
           {/* 底盘贯穿轨道线：纯色、无透明度 */}
-          <div className="absolute left-4 right-4 h-0 border-t border-dashed border-zinc-200 pointer-events-none z-0" />
+          <div className="absolute left-4 right-4 h-0 border-t border-dashed border-stone-200 pointer-events-none z-0" />
 
           {/* 珍珠节点列表：gap-3 物理隔离 */}
           <div className="relative flex items-center gap-3 z-10">
@@ -115,26 +115,26 @@ export function TimelineDiff({
                               'h-2.5 w-2.5',
                               isSelected
                                 ? 'bg-[#8AA8C7]'
-                                : 'bg-zinc-300 group-hover:bg-zinc-400'
+                                : 'bg-stone-300 group-hover:bg-stone-400'
                             )
                           : // 人手版本：空心环形态
                             cn(
                               'h-2.5 w-2.5 border-2 bg-white',
                               isSelected
                                 ? 'border-[#8AA8C7]'
-                                : 'border-zinc-300 group-hover:border-zinc-400'
+                                : 'border-stone-300 group-hover:border-stone-400'
                             )
                       )}
                     />
                   </span>
 
                   {/* 悬浮 CSS Tooltip 浮窗 */}
-                  <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-150 delay-150 z-50 bg-zinc-900/95 backdrop-blur text-white text-[9px] p-2 rounded-lg shadow-xl whitespace-nowrap leading-normal font-sans">
+                  <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-150 delay-150 z-50 bg-stone-900/95 backdrop-blur text-white text-[9px] p-2 rounded-lg shadow-xl whitespace-nowrap leading-normal font-sans">
                     <div className="flex items-center gap-1.5 font-bold">
                       <span className={cn('h-1.5 w-1.5 rounded-full', isAi ? 'bg-amber-400' : 'bg-sky-400')} />
                       <span>第 {index + 1} 版 {isSelected && '(当前预览)'}</span>
                     </div>
-                    <div className="text-[8.5px] text-zinc-300 mt-0.5 flex gap-2">
+                    <div className="text-[8.5px] text-stone-300 mt-0.5 flex gap-2">
                       <span>方式: {isAi ? 'AI 改写' : '手工编辑'}</span>
                       <span>时间: {createTime}</span>
                       <span>字数: {wordCount} 字</span>
@@ -150,14 +150,14 @@ export function TimelineDiff({
       {/* 右侧：微型模式切换器 + 基于此版本继续 */}
       <div className="flex items-center gap-3 shrink-0">
         {!isViewingLatest && (
-          <div className="flex items-center gap-1 bg-zinc-150/50 p-0.5 rounded-lg border border-zinc-200/50">
+          <div className="flex items-center gap-1 rounded-lg border border-stone-200/50 bg-stone-100/50 p-0.5">
             <button
               onClick={() => onSelectDiffMode('vs-latest')}
               className={cn(
                 'px-2 py-0.5 text-[9.5px] font-bold rounded-lg transition-all active:scale-[0.98]',
                 diffMode === 'vs-latest'
-                  ? 'bg-white text-zinc-800 shadow-sm border border-zinc-200/20'
-                  : 'text-zinc-550 hover:text-zinc-800'
+                  ? 'bg-white text-stone-800 shadow-sm border border-stone-200/20'
+                  : 'text-stone-500 hover:text-stone-800'
               )}
               title="对比所选版本与当前最新版本"
             >
@@ -168,8 +168,8 @@ export function TimelineDiff({
               className={cn(
                 'px-2 py-0.5 text-[9.5px] font-bold rounded-lg transition-all active:scale-[0.98]',
                 diffMode === 'vs-previous'
-                  ? 'bg-white text-zinc-800 shadow-sm border border-zinc-200/20'
-                  : 'text-zinc-550 hover:text-zinc-800'
+                  ? 'bg-white text-stone-800 shadow-sm border border-stone-200/20'
+                  : 'text-stone-500 hover:text-stone-800'
               )}
               title="对比所选版本与它的前一版 (按住 Alt / Option 临时切换)"
             >
@@ -182,7 +182,7 @@ export function TimelineDiff({
         {!isViewingLatest && currentSelectedRevision && (
           <button
             onClick={() => onAdoptRevision(currentSelectedRevision.id, currentSelectedRevision.fullContent || '')}
-            className="inline-flex items-center gap-1 bg-[#D97757] text-white hover:bg-[#C96442] font-bold text-[10.5px] px-2.5 py-1 rounded-lg shadow-sm shadow-[#D97757]/20 transition-all duration-200 active:scale-[0.98]"
+            className="inline-flex items-center gap-1 bg-[#D97757] text-white hover:bg-[#C96442] font-bold text-[12px] px-2.5 py-1 rounded-lg shadow-sm shadow-[#D97757]/20 transition-all duration-200 active:scale-[0.98]"
             title="以当前预览的历史版本文字为基准，拉出分支继续对话改写"
           >
             <RotateCcw className="h-3 w-3 shrink-0" />

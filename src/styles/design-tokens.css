@@ -1,33 +1,33 @@
-/* 阿禅美学标准 V1 法典 Token —— 全站唯一真源 */
+/* 美学规范 V2 Token —— 全站唯一真源 */
 :root {
-  /* 法典二 底色三层 + 微阴影辅助层级 */
-  --color-bg: #F0F0F1;           /* L0 页面背景（微加深，与白卡对比 ~15pt） */
-  --color-surface: #FAFAFB;      /* L1 zinc-50 卡片、主面板 */
+  /* 底色三层（stone 暖灰体系） */
+  --color-bg: #FAFAF9;           /* L0 页面背景 stone-50 */
+  --color-surface: #FAFAF9;      /* L1 stone-50 卡片、主面板 */
   --color-focus: #FFFFFF;        /* L2 焦点区、Modal、Focus 态输入、激活 Tab */
 
-  /* 法典四 统一光源色（饱和 25-60 / 亮度 55-60） */
-  --color-primary: #D97757;      /* 主 CTA H15 S60 L60 */
+  /* 统一光源色（饱和 25-60 / 亮度 55-60） */
+  --color-primary: #D97757;      /* 主 CTA 暖橙 */
   --color-primary-hover: #C96442;
-  --color-warning: #D99E55;      /* 待处理 H35 S60 L59 */
-  --color-success: #6FAA7D;      /* 在线/通过 H137 S25 L55 */
-  --color-danger: #C9604D;       /* 失败/异常 H8 S52 L55 */
+  --color-warning: #D99E55;      /* 待处理 琥珀 */
+  --color-success: #6FAA7D;      /* 在线/通过 矿物绿 */
+  --color-danger: #C9604D;       /* 失败/异常 矿物红 */
 
-  /* 法典三 文字灰阶 */
-  --color-text-primary: #27272A;   /* text-zinc-800 主文字 */
-  --color-text-secondary: #71717A; /* text-zinc-500 次要文字 */
-  --color-text-tertiary: #A1A1AA;  /* text-zinc-400 元数据/空状态/单位 */
-  --color-border: #E4E4E7;         /* zinc-200 极冷 分隔/卡片/表格 */
-  --color-border-warm: #D4D4D8;    /* zinc-300 微温 可交互元素 */
+  /* 文字灰阶（stone 暖灰） */
+  --color-text-primary: #1C1A17;   /* stone-900 标题 */
+  --color-text-secondary: #78716C; /* stone-500 辅助文字 */
+  --color-text-tertiary: #D6D3D1;  /* stone-300 元数据/空状态/单位 */
+  --color-border: #E7E5E4;         /* stone-200 分隔/卡片/表格 */
+  --color-border-warm: #D6D3D1;    /* stone-300 可交互元素 */
 
-  /* 法典五 圆角阶梯（与 Tailwind 档位对齐） */
-  --radius-xs: 4px;       /* rounded-sm：极小控件 */
-  --radius-sm: 6px;       /* rounded-md：小按钮 / 分类标签 */
-  --radius-md: 8px;       /* rounded-lg：标准按钮 / 输入框 */
-  --radius-lg: 12px;      /* rounded-xl：内层卡片 / 面板 */
+  /* 圆角阶梯 */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;      /* rounded-xl：内层卡片 */
   --radius-xl: 16px;      /* rounded-2xl：页面级容器 / Modal */
-  --radius-full: 9999px;  /* rounded-full：头像 / 状态点 / 徽章 / 状态贴片 */
+  --radius-full: 9999px;
 
-  /* 法典八 动效 150ms cubic-bezier(0.4, 0, 0.2, 1) */
+  /* 动效 */
   --duration-micro: 150ms;
   --duration-fast: 150ms;
   --duration-normal: 150ms;
@@ -36,12 +36,11 @@
   --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-enter: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-exit: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1); /* × 弹簧过冲，保留变量兼容 */
+  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-hover: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* 法典 8.4 主 CTA 弥散阴影（≤ 3% 透明度） */
+  /* 阴影 */
   --shadow-primary: 0 2px 8px rgba(217, 119, 87, 0.03);
-  /* 法典二 微阴影辅助层级（底色加深后，shadow 辅助白卡浮起） */
   --shadow-light: 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-medium: 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-heavy: 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -50,32 +49,31 @@
   --shadow-float: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.06);
 
-  /* 兼容变量 —— glass/nav 改为实色，avoid 大面积模糊 */
-  --glass-bg: #FAFAFB;
+  /* glass/nav 实色 */
+  --glass-bg: #FAFAF9;
   --glass-blur: none;
-  --nav-bg: #FAFAFB;
+  --nav-bg: #FAFAF9;
   --nav-blur: none;
 
-  /* Admin 专用 token —— 沿用法典色值 */
-  --admin-bg: #F0F0F1;
-  --admin-surface: #FAFAFB;
-  --admin-border: #E4E4E7;
-  --admin-text-primary: #27272A;
-  --admin-text-secondary: #71717A;
-  --admin-text-tertiary: #A1A1AA;
-  --admin-action: #27272A;
+  /* Admin 专用 token */
+  --admin-bg: #FAFAF9;
+  --admin-surface: #FAFAF9;
+  --admin-border: #E7E5E4;
+  --admin-text-primary: #1C1A17;
+  --admin-text-secondary: #78716C;
+  --admin-text-tertiary: #D6D3D1;
+  --admin-action: #1C1A17;
   --admin-success: #6FAA7D;
-  --admin-success-bg: #FAFAFB;
+  --admin-success-bg: #FAFAF9;
   --admin-warning: #D99E55;
-  --admin-warning-bg: #FAFAFB;
+  --admin-warning-bg: #FAFAF9;
   --admin-danger: #C9604D;
-  --admin-danger-bg: #FAFAFB;
+  --admin-danger-bg: #FAFAF9;
   --admin-info: #8AA8C7;
-  --admin-info-bg: #FAFAFB;
+  --admin-info-bg: #FAFAF9;
 }
 
 .dark {
-  /* 深色态暂沿用浅色基础变量，待后续阶段单独设计 */
   --color-bg: #18181B;
   --color-surface: #27272A;
   --color-focus: #27272A;
@@ -88,14 +86,12 @@
 }
 
 @layer utilities {
-  /* 法典 9.2 数字全站强制 tabular-nums */
   .num,
   .tabular {
     font-variant-numeric: tabular-nums;
     font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
-  /* 保留 glass-* 工具类兼容老代码，但去掉模糊，回到实色 */
   .glass-panel {
     background-color: var(--glass-bg);
     border: 1px solid var(--color-border);

@@ -6,18 +6,18 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center border border-transparent text-[13px] font-semibold tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:scale-[0.98] focus-visible:ring-1 focus-visible:ring-zinc-950/5 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+  "group/button inline-flex shrink-0 items-center justify-center border border-transparent text-[13px] font-semibold tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:scale-[0.98] focus-visible:ring-1 focus-visible:ring-stone-950/5 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
   {
     variants: {
       variant: {
         default:
           "bg-[#D97757] text-white hover:bg-[#C96442] hover:shadow-[0_2px_8px_rgba(217,119,87,0.03)]",
         outline:
-          "border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100",
+          "border-stone-200 bg-white text-stone-700 hover:bg-stone-100",
         secondary:
-          "bg-zinc-100 text-zinc-800 hover:bg-zinc-50",
+          "bg-stone-100 text-stone-700 hover:bg-stone-50",
         ghost:
-          "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
+          "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
         destructive:
           "bg-[#C9604D] text-white hover:bg-[#C9604D]/90",
         link: "text-[#D97757] underline-offset-4 hover:underline hover:translate-y-0",

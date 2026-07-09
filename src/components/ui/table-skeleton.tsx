@@ -19,7 +19,7 @@ export function TableSkeleton({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 shadow-sm",
+        "w-full overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900 shadow-sm",
         className
       )}
       {...props}
@@ -27,13 +27,13 @@ export function TableSkeleton({
       <table className="w-full border-collapse text-[13px]">
         {showHeader && (
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/10">
+            <tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/10">
               {Array.from({ length: columnCount }).map((_, i) => (
                 <th
                   key={i}
-                  className="h-9 px-3 text-left align-middle text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400"
+                  className="h-9 px-3 text-left align-middle text-[12px] font-medium text-stone-500"
                 >
-                  <div className="h-3 w-16 animate-pulse-soft rounded bg-zinc-200/60 dark:bg-zinc-700/60" />
+                  <div className="h-3 w-16 animate-pulse-soft rounded bg-stone-200/60 dark:bg-stone-700/60" />
                 </th>
               ))}
             </tr>
@@ -43,7 +43,7 @@ export function TableSkeleton({
           {Array.from({ length: rowCount }).map((_, rowIndex) => (
             <tr
               key={rowIndex}
-              className="border-b border-zinc-100 dark:border-zinc-800/50 last:border-b-0 [&:nth-child(even)]:bg-zinc-50/20 dark:[&:nth-child(even)]:bg-zinc-800/5"
+              className="border-b border-stone-100 dark:border-stone-800/50 last:border-b-0 [&:nth-child(even)]:bg-stone-50/20 dark:[&:nth-child(even)]:bg-stone-800/5"
             >
               {Array.from({ length: columnCount }).map((_, colIndex) => {
                 // Vary width for a more natural feel
@@ -54,7 +54,7 @@ export function TableSkeleton({
                   <td key={colIndex} className="px-3 py-2.5 align-middle">
                     <div
                       className={cn(
-                        "h-4 animate-pulse-soft rounded bg-zinc-100 dark:bg-zinc-800",
+                        "h-4 animate-pulse-soft rounded bg-stone-100 dark:bg-stone-800",
                         widthClass
                       )}
                     />

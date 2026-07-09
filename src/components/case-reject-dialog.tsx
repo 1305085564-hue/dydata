@@ -64,7 +64,7 @@ export function CaseRejectDialog({
           </DialogTitle>
           <DialogDescription>
             {subject ? (
-              <span className="block truncate text-zinc-500">{subject}</span>
+              <span className="block truncate text-stone-500">{subject}</span>
             ) : null}
             原因会写入审批记录，提交人可在话术详情中看到。
           </DialogDescription>
@@ -83,7 +83,7 @@ export function CaseRejectDialog({
                   "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                   reason === r
                     ? "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D]"
-                    : "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700",
+                    : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700",
                 )}
               >
                 {r}
@@ -96,7 +96,7 @@ export function CaseRejectDialog({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="也可以补充更具体的驳回原因（必填）"
-            className="min-h-[100px] resize-none rounded-xl border-zinc-200 bg-white text-[13px] leading-[1.7] focus:border-zinc-300 focus:ring-1 focus:ring-zinc-950/5"
+            className="min-h-[100px] resize-none rounded-xl border-stone-200 bg-white text-[13px] leading-[1.7] focus:border-stone-300 focus:ring-1 focus:ring-stone-950/5"
             autoFocus
             onKeyDown={(e) => {
               const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
@@ -106,7 +106,7 @@ export function CaseRejectDialog({
               }
             }}
           />
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-[11px] text-stone-400">
             Cmd / Ctrl + Enter 直接提交
           </p>
         </div>
@@ -116,7 +116,7 @@ export function CaseRejectDialog({
             type="button"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-9 rounded-lg border border-zinc-200 bg-white px-4 text-[12px] font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-60"
+            className="h-9 rounded-lg border border-stone-200 bg-white px-4 text-[12px] font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-60"
           >
             取消
           </button>

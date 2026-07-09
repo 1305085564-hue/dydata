@@ -30,7 +30,7 @@ test("buttonClass 复用现有按钮 variants", () => {
 
   assert.match(primary, /bg-\[#D97757\]/);
   assert.match(primary, /h-9/);
-  assert.match(ghost, /hover:bg-zinc-100/);
+  assert.match(ghost, /hover:bg-stone-100/);
   assert.match(ghost, /h-7/);
 });
 

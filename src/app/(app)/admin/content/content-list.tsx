@@ -50,7 +50,7 @@ const statusClassName: Record<Video["anomaly_status"], string> = {
   限流: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
   投流: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   活动干预: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
-  "未满24h": "border-zinc-200 bg-zinc-100/50 text-zinc-500",
+  "未满24h": "border-stone-200 bg-stone-100/50 text-stone-500",
 };
 
 const PAGE_SIZE = 30;
@@ -217,7 +217,7 @@ function MiniTimeline({
       {/* Track */}
       <div
         ref={trackRef}
-        className="relative w-[3px] rounded-full bg-zinc-200 cursor-pointer"
+        className="relative w-[3px] rounded-full bg-stone-200 cursor-pointer"
         style={{ height: 320 }}
         onClick={handleTrackClick}
         onMouseMove={handleMouseMove}
@@ -240,7 +240,7 @@ function MiniTimeline({
           return (
             <div
               key={g.label}
-              className="absolute left-1/2 -translate-x-1/2 size-1 rounded-full bg-zinc-300"
+              className="absolute left-1/2 -translate-x-1/2 size-1 rounded-full bg-stone-300"
               style={{ top: `${tickTop}%`, transform: "translate(-50%, -50%)" }}
             />
           );
@@ -250,7 +250,7 @@ function MiniTimeline({
       {/* Tooltip */}
       {hovered && tooltip && (
         <div
-          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] text-white shadow-md"
+          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-stone-700 bg-stone-700 px-2.5 py-1 text-[12px] text-white shadow-md"
           style={{ top: tooltip.y - 12 }}
         >
           {tooltip.label}
@@ -265,7 +265,7 @@ function MiniTimeline({
 /* ------------------------------------------------------------------ */
 
 const workflowStatusClass: Record<string, string> = {
-  not_started: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
+  not_started: "border-stone-200 bg-stone-100/50 text-stone-500",
   draft: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   confirmed: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   sent: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
@@ -273,7 +273,7 @@ const workflowStatusClass: Record<string, string> = {
 };
 
 const readinessClass: Record<string, string> = {
-  missing_snapshot: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
+  missing_snapshot: "border-stone-200 bg-stone-100/50 text-stone-500",
   missing_content: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
   missing_segments: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   ready: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
@@ -572,7 +572,7 @@ export function ContentList({
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-stone-500 hover:bg-stone-50 hover:text-stone-800"
           onClick={handleBatchGenerate}
           disabled={isBatchGenerating || batchCandidates.length === 0}
         >
@@ -586,29 +586,29 @@ export function ContentList({
         <div className="flex-1 min-w-0">
           <div
             ref={tableContainerRef}
-            className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
+            className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white shadow-sm"
             style={{ maxHeight: "calc(100vh - 280px)" }}
           >
             <Table>
               <TableHeader className="sticky top-0 z-10">
-                <TableRow className="border-b border-zinc-200 bg-zinc-100/50 hover:bg-zinc-100/50">
-                  <TableHead className="h-9 w-16 text-[12px] font-medium text-zinc-500">排名</TableHead>
-                  <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-zinc-500">标题</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500"></TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">人员</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
-                  <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">播放</TableHead>
-                  <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">2s跳出</TableHead>
-                  <TableHead className="h-9 text-right text-[12px] font-medium text-zinc-500">5s完播</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">异常状态</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">复盘状态</TableHead>
+                <TableRow className="border-b border-stone-200 bg-stone-100/50 hover:bg-stone-100/50">
+                  <TableHead className="h-9 w-16 text-[12px] font-medium text-stone-500">排名</TableHead>
+                  <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-stone-500">标题</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500"></TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">人员</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">账号</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">发布时间</TableHead>
+                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">播放</TableHead>
+                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">2s跳出</TableHead>
+                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">5s完播</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">异常状态</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">复盘状态</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visible.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-sm text-zinc-500">
+                    <TableCell colSpan={11} className="py-12 text-center text-sm text-stone-500">
                       暂无内容
                     </TableCell>
                   </TableRow>
@@ -630,9 +630,9 @@ export function ContentList({
                         {showTodayDivider ? (
                           <TableRow className="hover:bg-transparent">
                             <TableCell colSpan={11} className="px-4 py-2">
-                              <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                              <div className="flex items-center gap-3 text-[12px] text-stone-300">
                                 <span className="shrink-0 tracking-[0.18em]">历史</span>
-                                <span className="h-px flex-1 bg-zinc-200" />
+                                <span className="h-px flex-1 bg-stone-200" />
                               </div>
                             </TableCell>
                           </TableRow>
@@ -640,7 +640,7 @@ export function ContentList({
                         <TableRow
                           data-video-id={video.id}
                           className={[
-                            "group border-b border-zinc-100 hover:bg-zinc-100",
+                            "group border-b border-stone-100 hover:bg-stone-100",
                             isNewBatch && "animate-fade-in-up",
                           ].filter(Boolean).join(" ")}
                           style={
@@ -651,7 +651,7 @@ export function ContentList({
                               : undefined
                           }
                         >
-                          <TableCell className="py-2 text-[13px] font-medium font-mono tabular-nums text-zinc-400">
+                          <TableCell className="py-2 text-[13px] font-medium font-mono tabular-nums text-stone-400">
                             <span className="inline-flex items-center gap-1.5">
                               {filters.sortMode === "priority" &&
                               (priorityScoreMap.get(video.id) ?? 0) >= PRIORITY_HIGHLIGHT_THRESHOLD ? (
@@ -665,7 +665,7 @@ export function ContentList({
                             </span>
                           </TableCell>
                           <TableCell className="max-w-md py-2">
-                            <div className="line-clamp-2 text-sm font-medium text-zinc-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                            <div className="line-clamp-2 text-sm font-medium text-stone-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                               {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                             </div>
                           </TableCell>
@@ -690,7 +690,7 @@ export function ContentList({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-xs text-zinc-500 hover:text-zinc-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-xs text-stone-500 hover:text-stone-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     查看
@@ -701,7 +701,7 @@ export function ContentList({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 rounded-lg px-3 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                  className="h-7 rounded-lg px-3 text-xs text-stone-500 hover:bg-stone-50 hover:text-stone-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                   onClick={() => onSelectVideoId(video.id)}
                                 >
                                   批改
@@ -709,13 +709,13 @@ export function ContentList({
                               );
                             })()}
                           </TableCell>
-                          <TableCell className="text-sm text-zinc-500">
+                          <TableCell className="text-sm text-stone-500">
                             {video.profiles.name}
                           </TableCell>
-                          <TableCell className="text-sm text-zinc-500">
+                          <TableCell className="text-sm text-stone-500">
                             {video.accounts.name}
                           </TableCell>
-                          <TableCell className="text-sm text-zinc-500">
+                          <TableCell className="text-sm text-stone-500">
                             {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                           </TableCell>
                           <TableCell className="text-right text-sm">
@@ -742,14 +742,14 @@ export function ContentList({
                               <div className="flex flex-col gap-1 items-start">
                                 <Badge
                                   variant="outline"
-                                  className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                                  className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
                                 >
                                   {card.workflow_label}
                                 </Badge>
                                 {card.employee_reply_status && card.employee_reply_status !== "pending" && (
                                   <Badge
                                     variant="outline"
-                                    className={`text-[10px] scale-90 -translate-x-1 ${
+                                    className={`text-[12px] -translate-x-1 ${
                                       card.employee_reply_status === "acknowledged"
                                         ? "border-[#6FAA7D]/15 bg-[#6FAA7D]/[0.04] text-[#6FAA7D] font-medium"
                                         : "border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium"
@@ -762,12 +762,12 @@ export function ContentList({
                             ) : readiness ? (
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${readinessClass[readiness.status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
+                                className={`text-xs ${readinessClass[readiness.status] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
                               >
                                 {readiness.label}
                               </Badge>
                             ) : (
-                              <span className="text-xs text-zinc-500">未生成</span>
+                              <span className="text-xs text-stone-500">未生成</span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -817,7 +817,7 @@ export function ContentList({
                   <>
                     <ChevronDown className="size-3.5" />
                     加载更多
-                    <span className="ml-1 text-[11px] text-zinc-400">
+                    <span className="ml-1 text-[12px] text-stone-300">
                       (已加载 {Math.min(loadedCount, filtered.length)} / 共 {hasDeferredData ? totalCount ?? filtered.length : filtered.length} 条)
                     </span>
                   </>
@@ -828,7 +828,7 @@ export function ContentList({
 
           {/* End state */}
           {!hasMore && filtered.length > 0 && (
-            <div className="mt-4 text-center text-[12px] text-zinc-400">
+            <div className="mt-4 text-center text-[12px] text-stone-400">
               已加载全部 {filtered.length} 条内容
             </div>
           )}
@@ -837,7 +837,7 @@ export function ContentList({
         {/* Right sidebar: mini timeline */}
         {filtered.length > PAGE_SIZE && (
           <div className="hidden flex-col items-center gap-4 py-4 lg:flex">
-            <span className="text-[11px] text-zinc-400" style={{ writingMode: "vertical-rl" }}>
+            <span className="text-[12px] text-stone-300" style={{ writingMode: "vertical-rl" }}>
               时间轴
             </span>
             <MiniTimeline
@@ -846,7 +846,7 @@ export function ContentList({
               currentIndex={Math.min(currentIndex, filtered.length - 1)}
               onSeek={handleTimelineSeek}
             />
-            <span className="text-[11px] text-zinc-400" style={{ writingMode: "vertical-rl" }}>
+            <span className="text-[12px] text-stone-300" style={{ writingMode: "vertical-rl" }}>
               {filtered.length} 条
             </span>
           </div>

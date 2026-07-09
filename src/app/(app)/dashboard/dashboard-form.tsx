@@ -184,8 +184,8 @@ export function DashboardForm({
                     </DialogTrigger>
                     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
                       <DialogHeader>
-                        <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">截图识别导入</DialogTitle>
-                        <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">
+                        <DialogTitle className="text-[18px] font-semibold tracking-tight text-stone-800">截图识别导入</DialogTitle>
+                        <DialogDescription className="text-[13px] leading-[1.7] text-stone-500">
                           支持 jpg、png、webp。识别结果可以逐项修改，确认后才会写回主表单。
                         </DialogDescription>
                       </DialogHeader>
@@ -197,21 +197,21 @@ export function DashboardForm({
                 <div className="dashboard-summary-bar">
                   <div className="glass-chip">
                     账号
-                    <span className="font-medium text-zinc-800">
+                    <span className="font-medium text-stone-800">
                       {accounts.find((account) => account.id === selectedAccountId)?.name ?? "--"}
                     </span>
                   </div>
                   <div className="glass-chip">
                     日期
-                    <span className="font-medium font-mono tabular-nums text-zinc-800">{existingData?.report_date ?? today}</span>
+                    <span className="font-medium font-mono tabular-nums text-stone-800">{existingData?.report_date ?? today}</span>
                   </div>
                   <div className="glass-chip">
                     状态
                     <span
                       className={
                         existingData
-                          ? "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-800"
-                          : "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-800"
+                          ? "inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-stone-800"
+                          : "inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-stone-800"
                       }
                     >
                       <span
@@ -305,7 +305,7 @@ export function DashboardForm({
                     </p>
                   </div>
                   <div
-                    className={`${getDashboardMetricGridClass("primary")} rounded-xl border border-zinc-200 bg-[#FAFAFB] p-4 sm:p-5`}
+                    className={`${getDashboardMetricGridClass("primary")} rounded-xl border border-stone-200 bg-[#FAFAFB] p-4 sm:p-5`}
                   >
                     <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                       <Label htmlFor="play_count">播放量</Label>
@@ -317,7 +317,7 @@ export function DashboardForm({
                         min={0}
                         placeholder="32100"
                         required
-                        className="h-12 rounded-xl border-zinc-200 bg-background text-lg font-semibold"
+                        className="h-12 rounded-xl border-stone-200 bg-background text-lg font-semibold"
                         value={ocrValues.play_count}
                         onChange={(e) => updateOcrValue("play_count", e.target.value)}
                       />
@@ -330,7 +330,7 @@ export function DashboardForm({
                         type="number"
                         min={0}
                         required
-                        className="h-12 rounded-xl border-zinc-200 bg-background text-lg font-semibold"
+                        className="h-12 rounded-xl border-stone-200 bg-background text-lg font-semibold"
                         value={ocrValues.follower_gain}
                         onChange={(e) => updateOcrValue("follower_gain", e.target.value)}
                       />
@@ -530,11 +530,11 @@ export function DashboardForm({
               <div className="dashboard-form-floating-panel">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
-                    <div className="inline-flex items-center gap-2 text-[13px] text-zinc-500">
-                      <CheckCircle2 className="size-4 stroke-[1.5] text-zinc-800" />
+                    <div className="inline-flex items-center gap-2 text-[13px] text-stone-500">
+                      <CheckCircle2 className="size-4 stroke-[1.5] text-stone-800" />
                       <span>补充完成后再提交</span>
                     </div>
-                    <p className="text-[12px] leading-[1.7] text-zinc-500">
+                    <p className="text-[12px] leading-[1.7] text-stone-500">
                       这个操作面板会跟随当前视口底部，同时给表单底部预留留白，不会压住最后几项输入。
                     </p>
                   </div>
@@ -542,7 +542,7 @@ export function DashboardForm({
                     type="submit"
                     disabled={isPending}
                     data-success={showSuccess || undefined}
-                    className="h-11 w-full px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
+                    className="h-11 w-full px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
                   >
                     {submitButtonLabel}
                   </Button>
@@ -551,12 +551,12 @@ export function DashboardForm({
             </div>
 
             <div className="fixed inset-x-0 bottom-0 z-20 dashboard-mobile-submit-bar p-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:hidden">
-              <div className="mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">
+              <div className="mx-auto max-w-md rounded-2xl border border-stone-200 bg-white p-2 shadow-sm">
                 <Button
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-12 w-full text-[14px] font-medium font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200"
+                  className="h-12 w-full text-[14px] font-medium font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200"
                 >
                   {submitButtonLabel}
                 </Button>
@@ -565,17 +565,17 @@ export function DashboardForm({
           </>
         ) : (
           <div className="dashboard-form-inline-action">
-            <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
+            <div className="rounded-xl border border-stone-200 bg-white px-4 py-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="inline-flex items-center gap-2 text-[13px] text-zinc-500">
-                  <CheckCircle2 className="size-4 stroke-[1.5] text-zinc-800" />
+                <div className="inline-flex items-center gap-2 text-[13px] text-stone-500">
+                  <CheckCircle2 className="size-4 stroke-[1.5] text-stone-800" />
                   <span>检查完整数据后再提交，提交后可在历史记录继续修改</span>
                 </div>
                 <Button
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-11 w-full px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
+                  className="h-11 w-full px-6 text-[13px] font-mono tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
                 >
                   {submitButtonLabel}
                 </Button>

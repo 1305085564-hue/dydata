@@ -150,9 +150,9 @@ export function CaseList({
       {/* List header + Filter */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {showCount ? (
-          <h2 className="text-[13px] font-medium text-zinc-700">
+          <h2 className="text-[13px] font-medium text-stone-700">
             {query ? `「${query}」的搜索结果` : "话术列表"}
-            <span className="ml-2 font-mono text-[12px] text-zinc-400 tabular-nums">
+            <span className="ml-2 font-mono text-[12px] text-stone-400 tabular-nums">
               {totalCases}
             </span>
           </h2>
@@ -164,8 +164,8 @@ export function CaseList({
       {cases.length === 0 ? (
         emptyState
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-          <ul className="divide-y divide-zinc-100">
+        <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+          <ul className="divide-y divide-stone-100">
             {cases.map((caseItem) => (
               <li key={caseItem.id}>
                 <CaseRow caseItem={caseItem} onOpenDetail={handleOpenDetail} />

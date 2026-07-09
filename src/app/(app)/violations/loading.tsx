@@ -8,7 +8,7 @@ export default function ViolationsLoading() {
   return (
     <div className="space-y-6">
         {/* Hero header */}
-        <header className="rounded-2xl border border-zinc-200 bg-white px-6 py-5 sm:px-8 sm:py-6">
+        <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-2">
               <Skeleton className="h-3 w-20 rounded-md" />
@@ -17,7 +17,7 @@ export default function ViolationsLoading() {
             </div>
             <Skeleton className="h-10 w-28 rounded-xl" />
           </div>
-          <div className="mt-5 border-t border-zinc-100 pt-4">
+          <div className="mt-5 border-t border-stone-100 pt-4">
             <Skeleton className="h-9 w-72 rounded-xl" />
           </div>
         </header>
@@ -27,7 +27,7 @@ export default function ViolationsLoading() {
           {[0, 1].map((i) => (
             <div
               key={i}
-              className="rounded-xl border border-zinc-200 bg-white p-5"
+              className="rounded-xl border border-stone-200 bg-white p-5"
             >
               <div className="flex items-center gap-2">
                 <Skeleton className="size-1.5 rounded-full" />
@@ -54,7 +54,7 @@ export default function ViolationsLoading() {
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
+              className="overflow-hidden rounded-2xl border border-stone-200 bg-white"
             >
               <Skeleton className="h-36 w-full rounded-none" />
               <div className="space-y-2.5 px-4 py-3.5">
@@ -66,7 +66,7 @@ export default function ViolationsLoading() {
                 <Skeleton className="h-3.5 w-5/6 rounded-md" />
                 <Skeleton className="h-3.5 w-3/4 rounded-md" />
               </div>
-              <div className="flex items-center justify-between border-t border-zinc-100 px-4 py-2.5">
+              <div className="flex items-center justify-between border-t border-stone-100 px-4 py-2.5">
                 <Skeleton className="h-3 w-24 rounded-md" />
                 <Skeleton className="h-7 w-12 rounded-md" />
               </div>

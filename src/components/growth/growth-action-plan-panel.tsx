@@ -46,7 +46,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "conclusion",
         title: "一句话结论",
         content: DEMO_CONTENT.conclusion,
-        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D99E55]",
+        toneClass: "border-stone-200 border-l-[1.5px] border-l-[#D99E55]",
         badge: "示例内容",
         icon: Lightbulb,
       },
@@ -54,7 +54,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "evidence",
         title: "问题证据",
         content: DEMO_CONTENT.evidence,
-        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#C9604D]",
+        toneClass: "border-stone-200 border-l-[1.5px] border-l-[#C9604D]",
         badge: "示范数据",
         icon: Eye,
       },
@@ -62,7 +62,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "reference",
         title: "参考示例",
         content: DEMO_CONTENT.reference,
-        toneClass: "border-zinc-200",
+        toneClass: "border-stone-200",
         badge: "示例内容",
         icon: ClipboardList,
       },
@@ -70,7 +70,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "rewrite",
         title: "改写建议",
         content: DEMO_CONTENT.rewrite,
-        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#6FAA7D]",
+        toneClass: "border-stone-200 border-l-[1.5px] border-l-[#6FAA7D]",
         badge: "示例内容",
         icon: PencilLine,
       },
@@ -78,7 +78,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
         key: "action",
         title: "下一步动作",
         content: DEMO_CONTENT.action,
-        toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D97757] rounded-l-none",
+        toneClass: "border-stone-200 border-l-[1.5px] border-l-[#D97757] rounded-l-none",
         badge: "示例内容",
         icon: CheckCircle2,
       },
@@ -100,14 +100,14 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "conclusion",
       title: "一句话结论",
       content: conclusion,
-      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D99E55]",
+      toneClass: "border-stone-200 border-l-[1.5px] border-l-[#D99E55]",
       icon: Lightbulb,
     },
     {
       key: "evidence",
       title: "问题证据",
       content: evidence,
-      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#C9604D]",
+      toneClass: "border-stone-200 border-l-[1.5px] border-l-[#C9604D]",
       badge: insight ? undefined : "规则判断",
       icon: Eye,
     },
@@ -115,7 +115,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "reference",
       title: "参考示例",
       content: reference,
-      toneClass: "border-zinc-200",
+      toneClass: "border-stone-200",
       badge: advice.source === "error" ? "示例内容" : undefined,
       icon: ClipboardList,
     },
@@ -123,7 +123,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "rewrite",
       title: "改写建议",
       content: rewrite,
-      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#6FAA7D]",
+      toneClass: "border-stone-200 border-l-[1.5px] border-l-[#6FAA7D]",
       badge: insight ? undefined : "示例内容",
       icon: PencilLine,
     },
@@ -131,7 +131,7 @@ function buildBlocks({ insightState, advice, noData }: { insightState: InsightSt
       key: "action",
       title: "下一步动作",
       content: action,
-      toneClass: "border-zinc-200 border-l-[1.5px] border-l-[#D97757] rounded-l-none",
+      toneClass: "border-stone-200 border-l-[1.5px] border-l-[#D97757] rounded-l-none",
       badge: advice.source === "error" ? "示例内容" : undefined,
       icon: CheckCircle2,
     },
@@ -142,7 +142,7 @@ function ActionPlanSkeleton() {
   return (
     <div className="grid gap-3">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+        <div key={index} className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-4/5" />
@@ -159,12 +159,12 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
     <div className="space-y-4">
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-zinc-200" />
-            <span className="text-[12px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Action Plan</span>
-            <div className="h-px flex-1 bg-zinc-200" />
+            <div className="h-px flex-1 bg-stone-200" />
+            <span className="text-[12px] font-semibold uppercase tracking-[0.25em] text-stone-400">Action Plan</span>
+            <div className="h-px flex-1 bg-stone-200" />
           </div>
-          <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">下一轮先怎么改</h2>
-          <p className="text-[13px] leading-[1.7] text-zinc-500">
+          <h2 className="text-[24px] font-semibold tracking-tight text-stone-800">下一轮先怎么改</h2>
+          <p className="text-[13px] leading-[1.7] text-stone-500">
             {noData
               ? "当前没有真实数据，先看一次完整示例，知道这里以后会给你什么。"
               : insightState.status === "ok" && insightState.cached
@@ -182,17 +182,17 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
               return (
                 <div key={block.key} className={`rounded-xl border p-4 ${block.toneClass}`}>
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
+                    <div className="flex items-center gap-2 text-[13px] font-semibold text-stone-800">
                       <Icon className="size-4 stroke-[1.5]" />
                       {block.title}
                     </div>
                     {block.badge ? (
-                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+                      <span className="rounded-full border border-stone-200 bg-stone-50 px-2.5 py-1 text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">
                         {block.badge}
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">{block.content}</p>
+                  <p className="mt-3 whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-stone-800">{block.content}</p>
                 </div>
               );
             })}
@@ -200,7 +200,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
         ) : null}
 
         {insightState.status === "error" && !noData ? (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-[12px] text-zinc-500">
+          <div className="rounded-xl border border-dashed border-stone-200 bg-white px-3 py-2 text-[12px] text-stone-500">
             单条视频复盘请求失败：{insightState.message}
           </div>
         ) : null}

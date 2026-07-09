@@ -54,7 +54,7 @@ export function StepCoreContent({
     <div className="space-y-5">
       {/* Script text */}
       <div className="space-y-2">
-        <Label htmlFor="script_text" className="text-[13px] font-medium text-zinc-800">
+        <Label htmlFor="script_text" className="text-[13px] font-medium text-stone-800">
           话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
@@ -63,21 +63,21 @@ export function StepCoreContent({
           onChange={(e) => onChange({ script_text: e.target.value })}
           placeholder="原封不动粘贴话术内容"
           autoFocus
-          className="min-h-[170px] resize-none rounded-xl border-transparent bg-zinc-100/70 text-[14px] leading-7 focus:border-zinc-200 focus:bg-white focus:ring-1 focus:ring-zinc-950/5"
+          className="min-h-[170px] resize-none rounded-xl border-transparent bg-stone-100/70 text-[14px] leading-7 focus:border-stone-200 focus:bg-white focus:ring-1 focus:ring-stone-950/5"
         />
       </div>
 
       {/* Screenshots */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-[13px] font-medium text-zinc-800">
+          <Label className="text-[13px] font-medium text-stone-800">
             截图
-            <span className="ml-2 text-[11px] font-normal text-zinc-400">
+            <span className="ml-2 text-[11px] font-normal text-stone-400">
               {isViolation ? "建议" : "可选"} · 最多 5 张
             </span>
           </Label>
           {screenshots.length ? (
-            <span className="text-[11px] tabular-nums text-zinc-400">
+            <span className="text-[11px] tabular-nums text-stone-400">
               {screenshots.length} / 5
             </span>
           ) : null}
@@ -97,15 +97,15 @@ export function StepCoreContent({
           className={cn(
             "flex min-h-[110px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-5 py-8 text-center transition-colors",
             isUploading || screenshots.length >= 5
-              ? "cursor-not-allowed border-zinc-200 bg-zinc-50/40 opacity-70"
-              : "border-zinc-300 bg-zinc-50/70 hover:border-[#D97757]/40 hover:bg-zinc-50",
+              ? "cursor-not-allowed border-stone-200 bg-stone-50/40 opacity-70"
+              : "border-stone-300 bg-stone-50/70 hover:border-[#D97757]/40 hover:bg-stone-50",
           )}
         >
-          <Upload className="size-5 stroke-[1.5] text-zinc-400" />
-          <span className="text-[13px] font-medium text-zinc-700">
+          <Upload className="size-5 stroke-[1.5] text-stone-400" />
+          <span className="text-[13px] font-medium text-stone-700">
             {isUploading ? "上传中..." : "点击上传或拖拽截图到此"}
           </span>
-          <span className="text-[11px] text-zinc-400">
+          <span className="text-[11px] text-stone-400">
             JPG / PNG / WEBP · 单张最大 {formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)}
           </span>
         </label>
@@ -125,7 +125,7 @@ export function StepCoreContent({
 
         {screenshots.length ? (
           <div className="space-y-1.5">
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[11px] text-stone-400">
               拖动卡片可重排，第一张默认作为封面。
             </p>
             <div className="flex flex-wrap gap-2.5">
@@ -166,11 +166,11 @@ export function StepCoreContent({
                         setOverIndex(null);
                       }}
                       className={cn(
-                        "group/thumb relative h-[88px] w-[68px] cursor-grab overflow-hidden rounded-lg border bg-zinc-100 transition-all active:cursor-grabbing",
+                        "group/thumb relative h-[88px] w-[68px] cursor-grab overflow-hidden rounded-lg border bg-stone-100 transition-all active:cursor-grabbing",
                         isOver
                           ? "border-[#D97757] ring-2 ring-[#D97757]/40"
-                          : "border-zinc-200 hover:border-zinc-300",
-                        idx === 0 && "ring-1 ring-zinc-300",
+                          : "border-stone-200 hover:border-stone-300",
+                        idx === 0 && "ring-1 ring-stone-300",
                       )}
                     >
                       <button
@@ -190,7 +190,7 @@ export function StepCoreContent({
                       </button>
 
                       {idx === 0 ? (
-                        <span className="absolute left-1 top-1 inline-flex items-center rounded bg-zinc-900/70 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+                        <span className="absolute left-1 top-1 inline-flex items-center rounded bg-stone-900/70 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
                           封面
                         </span>
                       ) : null}

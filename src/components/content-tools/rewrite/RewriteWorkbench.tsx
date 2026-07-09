@@ -121,16 +121,16 @@ export function RewriteWorkbench() {
 
   if (state.errorState) {
     return (
-      <div className="flex h-full items-center justify-center bg-zinc-50">
-        <div className="relative max-w-sm overflow-hidden rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+      <div className="flex h-full items-center justify-center bg-stone-50">
+        <div className="relative max-w-sm overflow-hidden rounded-lg border border-stone-200 bg-white p-6 shadow-sm">
           <div className="absolute left-0 top-0 h-full w-[3px] bg-[#C9604D]" />
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#C9604D]">
             系统错误
           </p>
-          <h3 className="mt-2 text-[18px] font-medium tracking-tight text-zinc-800">
+          <h3 className="mt-2 text-[18px] font-medium tracking-tight text-stone-800">
             {state.errorState.title}
           </h3>
-          <p className="mt-1.5 text-[13px] leading-[1.7] text-zinc-500">
+          <p className="mt-1.5 text-[13px] leading-[1.7] text-stone-500">
             {state.errorState.message}
           </p>
         </div>
@@ -140,14 +140,14 @@ export function RewriteWorkbench() {
 
   if (state.loading || !state.bootstrap) {
     return (
-      <div className="flex h-full items-center justify-center bg-zinc-50">
+      <div className="flex h-full items-center justify-center bg-stone-50">
         <div className="flex flex-col items-center gap-3">
           <div className="flex space-x-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-pulse [animation-delay:0ms]" />
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-pulse [animation-delay:150ms]" />
-            <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 animate-pulse [animation-delay:300ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-stone-300 animate-pulse [animation-delay:0ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-stone-300 animate-pulse [animation-delay:150ms]" />
+            <div className="h-1.5 w-1.5 rounded-full bg-stone-300 animate-pulse [animation-delay:300ms]" />
           </div>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-zinc-400">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-stone-400">
             进入工作台
           </span>
         </div>
@@ -160,22 +160,22 @@ export function RewriteWorkbench() {
 
   if (state.presentationMode) {
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50">
-        <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-4">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-stone-50">
+        <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-4">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold text-zinc-800">定稿阅览视图</span>
+            <span className="text-[13px] font-bold text-stone-800">定稿阅览视图</span>
             <span className="rounded bg-[#6FAA7D]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#4F7F5E]">已完成</span>
           </div>
           <button
             onClick={() => actions.setPresentationMode(false)}
-            className="inline-flex h-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+            className="inline-flex h-7 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[11px] font-medium text-stone-600 hover:bg-stone-50 transition-colors"
           >
             退出阅览
           </button>
         </header>
-        <div className="flex-1 overflow-hidden bg-zinc-50/50 flex justify-center py-8">
-          <div className="w-full max-w-3xl flex-1 bg-white border border-zinc-200 rounded-lg shadow-sm p-8 overflow-y-auto">
-            <div className="prose prose-sm prose-zinc max-w-none leading-relaxed">
+        <div className="flex-1 overflow-hidden bg-stone-50/50 flex justify-center py-8">
+          <div className="w-full max-w-3xl flex-1 bg-white border border-stone-200 rounded-lg shadow-sm p-8 overflow-y-auto">
+            <div className="prose prose-sm prose-stone max-w-none leading-relaxed">
               {state.polishedText.split('\n').map((para, i) => (
                 <p key={i}>{para}</p>
               ))}
@@ -187,9 +187,9 @@ export function RewriteWorkbench() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-stone-50">
       {/* Top bar */}
-      <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-zinc-50 px-3">
+      <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-stone-200 bg-stone-50 px-3">
         <div className="flex items-center gap-2">
           {/* History toggle button */}
           <button
@@ -197,8 +197,8 @@ export function RewriteWorkbench() {
             className={cn(
               'hidden lg:inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
               historyOpen
-                ? 'bg-zinc-300 text-zinc-900'
-                : 'text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900'
+                ? 'bg-stone-300 text-stone-900'
+                : 'text-stone-400 hover:bg-stone-200 hover:text-stone-900'
             )}
             title={historyOpen ? '收起历史栏' : '展开历史栏'}
           >
@@ -210,7 +210,7 @@ export function RewriteWorkbench() {
             <span className="relative flex h-1.5 w-1.5">
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
               文案改写
             </span>
           </div>
@@ -219,19 +219,19 @@ export function RewriteWorkbench() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={actions.handleNewConversation}
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-500 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+            className="inline-flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-medium text-stone-500 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
             title="开启新文案"
           >
             <Plus className="h-3 w-3" />
             <span className="tracking-wide">新对话</span>
           </button>
           {/* Top-right Actions */}
-          <div className="flex items-center gap-1.5 ml-2 border-l border-zinc-200 pl-2">
+          <div className="flex items-center gap-1.5 ml-2 border-l border-stone-200 pl-2">
             <button
               onClick={() => actions.setTraceabilityMode(!state.traceabilityMode)}
               className={cn(
                 'inline-flex h-7 items-center justify-center rounded-lg px-2.5 text-[11px] font-medium transition-colors',
-                state.traceabilityMode ? 'bg-[#6FAA7D]/10 text-[#4F7F5E]' : 'text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900'
+                state.traceabilityMode ? 'bg-[#6FAA7D]/10 text-[#4F7F5E]' : 'text-stone-500 hover:bg-stone-200 hover:text-stone-900'
               )}
               title="溯源模式：高亮人工修改的段落"
             >
@@ -248,7 +248,7 @@ export function RewriteWorkbench() {
           {/* Layout settings dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-[background-color,color] duration-150 hover:bg-zinc-200 hover:text-zinc-800 ml-1"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-stone-400 transition-[background-color,color] duration-150 hover:bg-stone-200 hover:text-stone-800 ml-1"
               title="布局设置"
             >
               <Layout className="h-3.5 w-3.5" />
@@ -277,10 +277,10 @@ export function RewriteWorkbench() {
 
       {/* Main Workspace Layout */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Left: History Sidebar (L0 zinc-50) */}
+        {/* Left: History Sidebar (L0 stone-50) */}
         <aside
           className={cn(
-            'relative hidden shrink-0 flex-col border-r border-zinc-200 bg-zinc-50 lg:flex',
+            'relative hidden shrink-0 flex-col border-r border-stone-200 bg-stone-50 lg:flex',
             historyOpen ? 'w-[260px]' : 'w-0 overflow-hidden'
           )}
           style={{
@@ -303,36 +303,36 @@ export function RewriteWorkbench() {
         <div
           ref={containerRef}
           className={cn(
-            "flex-1 flex min-w-0 overflow-hidden bg-zinc-100",
+            "flex-1 flex min-w-0 overflow-hidden bg-stone-100",
             isResizing && "select-none cursor-col-resize"
           )}
         >
           {/* Left Column: Dialog & Controls */}
           <div
             style={{ width: `${leftWidthPercent}%` }}
-            className="min-w-[360px] flex flex-col min-h-0 relative bg-zinc-50/80 backdrop-blur-xl shadow-[2px_0_12px_rgba(0,0,0,0.03)] z-20"
+            className="min-w-[360px] flex flex-col min-h-0 relative bg-stone-50/80 backdrop-blur-xl shadow-[2px_0_12px_rgba(0,0,0,0.03)] z-20"
           >
             {/* Collapsible Skill Settings Header */}
-            <div className="shrink-0 border-b border-zinc-200/50 bg-transparent px-5 min-h-[56px] flex flex-col justify-center py-3 z-10 relative">
+            <div className="shrink-0 border-b border-stone-200/50 bg-transparent px-5 min-h-[56px] flex flex-col justify-center py-3 z-10 relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-bold text-zinc-800">
+                  <span className="text-[13px] font-bold text-stone-800">
                     {state.isV2Conversation ? '文档画布模式' : state.activeFixedMode?.name || '自定义润色模式'}
                   </span>
-                  <span className="rounded bg-zinc-150 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider font-mono">
+                  <span className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-semibold text-stone-500 uppercase tracking-wider font-mono">
                     {state.isV2Conversation ? 'V2' : activeModelLabel}
                   </span>
                 </div>
 
                 {state.isV2Conversation ? (
                   <label className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">模型</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-400">模型</span>
                     <select
                       aria-label="模型"
                       value={state.selectedModelViewId}
                       onChange={(e) => actions.setSelectedModelViewId(e.target.value)}
                       disabled={state.isSending}
-                      className="h-7 rounded-lg border border-zinc-200 bg-white px-2 text-[11px] text-zinc-700 outline-none hover:border-zinc-300 disabled:opacity-50"
+                      className="h-7 rounded-lg border border-stone-200 bg-white px-2 text-[11px] text-stone-700 outline-none hover:border-stone-300 disabled:opacity-50"
                     >
                       <option value="">自动模型</option>
                       {state.bootstrap.modelViews.map((item) => (
@@ -350,7 +350,7 @@ export function RewriteWorkbench() {
                       'inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[11px] font-medium transition-colors shadow-sm',
                       settingsOpen
                         ? 'border-[#D97757] bg-[#D97757]/5 text-[#D97757]'
-                        : 'border-zinc-200 bg-white text-zinc-500 hover:text-zinc-800'
+                        : 'border-stone-200 bg-white text-stone-500 hover:text-stone-800'
                     )}
                   >
                     <Sliders className="h-3.5 w-3.5" />
@@ -361,14 +361,14 @@ export function RewriteWorkbench() {
 
               {/* Advanced Parameter Drawer */}
               {settingsOpen && !state.isV2Conversation && (
-                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-zinc-150 pt-3 animate-in slide-in-from-top-2 duration-200">
+                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-stone-200 pt-3 animate-in slide-in-from-top-2 duration-200">
                   <label className="block space-y-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 pl-0.5">模型</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 pl-0.5">模型</span>
                     <select
                       value={state.selectedModelViewId}
                       onChange={(e) => actions.setSelectedModelViewId(e.target.value)}
                       disabled={state.customControlsLocked}
-                      className="w-full rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] outline-none hover:border-zinc-300 text-zinc-700 disabled:opacity-50"
+                      className="w-full rounded-lg border border-stone-200 bg-white px-2 py-1 text-[11px] outline-none hover:border-stone-300 text-stone-700 disabled:opacity-50"
                     >
                       <option value="">默认真实模型</option>
                       {state.bootstrap.modelViews.map((item) => (
@@ -380,12 +380,12 @@ export function RewriteWorkbench() {
                   </label>
 
                   <label className="block space-y-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 pl-0.5">模式</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 pl-0.5">模式</span>
                     <select
                       value={state.selectedModeId || ''}
                       onChange={(e) => actions.setSelectedModeId(e.target.value || null)}
                       disabled={state.customControlsLocked}
-                      className="w-full rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] outline-none hover:border-zinc-300 text-zinc-700 disabled:opacity-50"
+                      className="w-full rounded-lg border border-stone-200 bg-white px-2 py-1 text-[11px] outline-none hover:border-stone-300 text-stone-700 disabled:opacity-50"
                     >
                       <option value="">无附加模式</option>
                       {state.bootstrap.modes.map((item) => (
@@ -397,12 +397,12 @@ export function RewriteWorkbench() {
                   </label>
 
                   <label className="block space-y-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 pl-0.5">字数</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 pl-0.5">字数</span>
                     <select
                       value={state.selectedLengthId}
                       onChange={(e) => actions.setSelectedLengthId(e.target.value)}
                       disabled={state.customControlsLocked}
-                      className="w-full rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] outline-none hover:border-zinc-300 text-zinc-700 disabled:opacity-50"
+                      className="w-full rounded-lg border border-stone-200 bg-white px-2 py-1 text-[11px] outline-none hover:border-stone-300 text-stone-700 disabled:opacity-50"
                     >
                       {state.bootstrap.lengthPresets.map((item) => (
                         <option key={item.id} value={item.id}>
@@ -468,13 +468,13 @@ export function RewriteWorkbench() {
           >
             <div className={cn(
               "w-[1px] h-full transition-colors",
-              isResizing ? "bg-[#8AA8C7]" : "bg-zinc-200/80"
+              isResizing ? "bg-[#8AA8C7]" : "bg-stone-200/80"
             )} />
 
             {/* Smart Micro Tooltip for Resizing & Double-click reset */}
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[10px] px-2 py-1 rounded-lg shadow-md whitespace-nowrap">
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-stone-900 text-white text-[10px] px-2 py-1 rounded-lg shadow-md whitespace-nowrap">
               拖拽调节宽度 · 双击还原默认
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-zinc-900" />
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-stone-900" />
             </div>
           </div>
 

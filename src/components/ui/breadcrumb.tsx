@@ -20,14 +20,14 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
         return (
           <span key={item.label + index} className="flex items-center gap-1.5">
             {index > 0 ? (
-              <ChevronRight className="size-3 text-zinc-300" strokeWidth={1.5} />
+              <ChevronRight className="size-3 text-stone-300" strokeWidth={1.5} />
             ) : null}
             {isLast || !item.href ? (
-              <span className={isLast ? "text-zinc-800" : "text-zinc-400"}>{item.label}</span>
+              <span className={isLast ? "text-stone-900" : "text-stone-400"}>{item.label}</span>
             ) : (
               <Link
                 href={item.href}
-                className="text-zinc-400 transition-colors hover:text-zinc-600"
+                className="text-stone-400 transition-colors hover:text-stone-600"
               >
                 {item.label}
               </Link>

@@ -122,12 +122,12 @@ type AllComparisonData = {
 };
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
-  正常: "border-zinc-200 bg-white text-zinc-600",
+  正常: "border-stone-200 bg-white text-stone-600",
   删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   投流: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
   活动干预: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
-  未满24h: "border-zinc-200 bg-zinc-100 text-zinc-500",
+  未满24h: "border-stone-200 bg-stone-100 text-stone-500",
 };
 
 function formatNumber(v: number | null | undefined) {
@@ -182,7 +182,7 @@ function parseProblemTags(mainIssues: string): string[] {
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+    <div className="text-[12px] font-medium text-stone-400">
       {children}
     </div>
   );
@@ -190,7 +190,7 @@ function Eyebrow({ children }: { children: ReactNode }) {
 
 function EmptyBlock({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
+    <div className="rounded-xl border border-dashed border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-500">
       {children}
     </div>
   );
@@ -210,8 +210,8 @@ function ComparisonTableRow({
   isCurrent?: boolean;
 }) {
   return (
-    <tr className={cn("border-b border-zinc-100", isCurrent && "bg-zinc-50/50")}>
-      <td className="sticky left-0 bg-white py-2 pl-3 pr-2 text-[11px] font-medium text-zinc-500 whitespace-nowrap">
+    <tr className={cn("border-b border-stone-100", isCurrent && "bg-stone-50/50")}>
+      <td className="sticky left-0 bg-white py-2 pl-3 pr-2 text-[12px] font-medium text-stone-500 whitespace-nowrap">
         {label}
       </td>
       {comparisonMetrics.map((metric) => {
@@ -235,9 +235,9 @@ function ComparisonTableRow({
         }
         return (
           <td key={metric.key} className="whitespace-nowrap py-2 px-1.5 text-left tabular-nums text-[12px]">
-            <span className={cn("font-semibold", isCurrent ? "text-zinc-900" : "text-zinc-700")}>{formatted}</span>
+            <span className={cn("font-semibold", isCurrent ? "text-stone-900" : "text-stone-700")}>{formatted}</span>
             {diffStr && (
-              <span className={cn("ml-1 text-[10px] font-medium", diffColor)}>{diffStr}</span>
+              <span className={cn("ml-1 text-[12px] font-medium", diffColor)}>{diffStr}</span>
             )}
           </td>
         );
@@ -369,7 +369,7 @@ function SegmentedControl<T extends string>({
       role="radiogroup"
       aria-label={ariaLabel}
       className={cn(
-        "grid gap-1 rounded-lg bg-zinc-100/70 p-1",
+        "grid gap-1 rounded-lg bg-stone-100/70 p-1",
         `grid-cols-${options.length}`,
       )}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
@@ -387,7 +387,7 @@ function SegmentedControl<T extends string>({
               "active:translate-y-0 rounded-md px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
               active
                 ? "bg-white text-[#D97757] shadow-sm"
-                : "text-zinc-500 hover:text-zinc-800",
+                : "text-stone-500 hover:text-stone-800",
             )}
           >
             {label}
@@ -430,7 +430,7 @@ function ScreenshotPreview({
     <AnimatePresence>
       <motion.div
         key="screenshot-overlay"
-        className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-sm"
+        className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-stone-950/80 backdrop-blur-sm"
         onClick={onClose}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -957,17 +957,17 @@ export function ContentDetailDialog({
               {video?.video_title || "内容详情"}
             </SheetTitle>
             {video && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500">
-                <span className="text-zinc-700">{video.profiles.name}</span>
-                <span className="text-zinc-300">·</span>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-stone-500">
+                <span className="text-stone-700">{video.profiles.name}</span>
+                <span className="text-stone-300">·</span>
                 <span>{video.accounts.name}</span>
-                <span className="text-zinc-300">·</span>
+                <span className="text-stone-300">·</span>
                 <span>发布 {formatDateTime(video.published_at)}</span>
-                <span className="text-zinc-300">·</span>
+                <span className="text-stone-300">·</span>
                 <span>上传 {formatDateTime(video.uploaded_at ?? video.created_at)}</span>
                 {video.video_url && (
                   <>
-                    <span className="text-zinc-300">·</span>
+                    <span className="text-stone-300">·</span>
                     <a
                       href={video.video_url}
                       target="_blank"
@@ -981,7 +981,7 @@ export function ContentDetailDialog({
                 <Badge
                   variant="outline"
                   className={cn(
-                    "h-5 rounded-md border px-1.5 text-[11px] font-medium",
+                    "h-5 rounded-md border px-1.5 text-[12px] font-medium",
                     statusBadgeClass[video.anomaly_status],
                   )}
                 >
@@ -992,14 +992,14 @@ export function ContentDetailDialog({
           </div>
 
           {anomalyChips.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-zinc-100/50 px-3 py-2">
+            <div className="flex flex-wrap items-center gap-2 rounded-xl bg-stone-100/50 px-3 py-2">
               <Eyebrow>异常摘要</Eyebrow>
               <div className="flex flex-wrap items-center gap-1.5">
                 {anomalyChips.map((chip) => (
                   <span
                     key={chip.label}
                     className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium tabular-nums",
+                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[12px] font-medium tabular-nums",
                       chip.tone === "red" &&
                         "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
                       chip.tone === "amber" &&
@@ -1008,7 +1008,7 @@ export function ContentDetailDialog({
                         "border-[#2E7D32]/30 bg-[#2E7D32]/5 text-[#2E7D32]",
                     )}
                   >
-                    <span className="text-zinc-500">{chip.label}</span>
+                    <span className="text-stone-500">{chip.label}</span>
                     <span>{chip.value}</span>
                   </span>
                 ))}
@@ -1043,24 +1043,24 @@ export function ContentDetailDialog({
                           <Eyebrow>文案原文</Eyebrow>
                           <button
                             type="button"
-                            className="text-[12px] text-zinc-500 hover:text-zinc-800"
+                            className="text-[12px] text-stone-500 hover:text-stone-800"
                             onClick={() => setContentExpanded(false)}
                           >
                             收起
                           </button>
                         </div>
-                        <div className="rounded-xl bg-zinc-100/50 p-4">
-                          <div className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-700">
+                        <div className="rounded-xl bg-stone-100/50 p-4">
+                          <div className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-stone-700">
                             {video.content}
                           </div>
                         </div>
                       </>
                     ) : (
                       <div className="flex items-baseline gap-3">
-                        <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+                        <span className="shrink-0 text-[12px] font-medium text-stone-400">
                           文案
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-[13px] text-zinc-600">
+                        <span className="min-w-0 flex-1 truncate text-[13px] text-stone-600">
                           {video.content}
                         </span>
                         {video.content.length > 80 && (
@@ -1081,13 +1081,13 @@ export function ContentDetailDialog({
                 <section className="space-y-3">
                   <Eyebrow>数据对比</Eyebrow>
                   {snapshot ? (
-                    <div className="overflow-x-auto rounded-lg border border-zinc-200">
-                      <table className="w-full text-[11px]">
+                    <div className="overflow-x-auto rounded-lg border border-stone-200">
+                      <table className="w-full text-[12px]">
                         <thead>
-                          <tr className="border-b border-zinc-200 bg-zinc-50">
-                            <th className="sticky left-0 bg-zinc-50 py-1.5 pl-3 pr-2 text-left font-medium text-zinc-400 text-[10px]"></th>
+                          <tr className="border-b border-stone-200 bg-stone-50">
+                            <th className="sticky left-0 bg-stone-50 py-1.5 pl-3 pr-2 text-left font-medium text-stone-400 text-[12px]"></th>
                             {comparisonMetrics.map((m) => (
-                              <th key={m.key} className="whitespace-nowrap py-1.5 px-1.5 text-left font-medium text-zinc-400 text-[10px]">
+                              <th key={m.key} className="whitespace-nowrap py-1.5 px-1.5 text-left font-medium text-stone-400 text-[12px]">
                                 {m.label}
                               </th>
                             ))}
@@ -1101,9 +1101,9 @@ export function ContentDetailDialog({
                             isCurrent
                           />
                           {comparison.loading ? (
-                            <tr><td colSpan={11} className="py-3 text-center text-zinc-400">加载中...</td></tr>
+                            <tr><td colSpan={11} className="py-3 text-center text-stone-400">加载中...</td></tr>
                           ) : comparison.error ? (
-                            <tr><td colSpan={11} className="py-3 text-center text-zinc-400">{comparison.error}</td></tr>
+                            <tr><td colSpan={11} className="py-3 text-center text-stone-400">{comparison.error}</td></tr>
                           ) : (
                             <>
                               {comparison.previous && (
@@ -1121,7 +1121,7 @@ export function ContentDetailDialog({
                                 />
                               )}
                               {!comparison.previous && !comparison.recent3 && (
-                                <tr><td colSpan={11} className="py-3 text-center text-zinc-400">暂无对比数据</td></tr>
+                                <tr><td colSpan={11} className="py-3 text-center text-stone-400">暂无对比数据</td></tr>
                               )}
                             </>
                           )}
@@ -1142,7 +1142,7 @@ export function ContentDetailDialog({
                         <button
                           key={`${item.label}-${item.url}`}
                           type="button"
-                          className="group overflow-hidden rounded-xl border border-zinc-200 bg-white text-left transition-[box-shadow,border-color] duration-150 hover:border-zinc-300 hover:shadow-sm active:translate-y-0"
+                          className="group overflow-hidden rounded-xl border border-stone-200 bg-white text-left transition-[box-shadow,border-color] duration-150 hover:border-stone-300 hover:shadow-sm active:translate-y-0"
                           onClick={() => setPreviewIndex(index)}
                         >
                           <Image
@@ -1153,7 +1153,7 @@ export function ContentDetailDialog({
                             unoptimized
                             className="w-full object-cover transition-transform duration-200 group-hover:scale-[1.01] h-48"
                           />
-                          <div className="px-3 py-2 text-[11px] text-zinc-500">{item.label}</div>
+                          <div className="px-3 py-2 text-[12px] text-stone-500">{item.label}</div>
                         </button>
                       ))}
                     </div>
@@ -1175,9 +1175,9 @@ export function ContentDetailDialog({
                         return (
                           <span
                             key={chip.metric}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100/60 px-2 py-1 text-[11px]"
+                            className="inline-flex items-center gap-1.5 rounded-md bg-stone-100/60 px-2 py-1 text-[12px]"
                           >
-                            <span className="text-zinc-600">{chip.metric}</span>
+                            <span className="text-stone-600">{chip.metric}</span>
                             <span className={cn("font-medium", statusTone)}>
                               {chip.status}
                             </span>
@@ -1194,7 +1194,7 @@ export function ContentDetailDialog({
                   <div className="space-y-2.5">
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="space-y-1">
-                        <label className="text-[11px] text-zinc-500">推流峰值</label>
+                        <label className="text-[12px] text-stone-500">推流峰值</label>
                         <Select
                           value={observation.traffic_peak_level}
                           onValueChange={(v) =>
@@ -1217,7 +1217,7 @@ export function ContentDetailDialog({
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] text-zinc-500">峰值后走势</label>
+                        <label className="text-[12px] text-stone-500">峰值后走势</label>
                         <Select
                           value={observation.post_peak_trend}
                           onValueChange={(v) =>
@@ -1240,7 +1240,7 @@ export function ContentDetailDialog({
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] text-zinc-500">流量承接</label>
+                        <label className="text-[12px] text-stone-500">流量承接</label>
                         <Select
                           value={observation.traffic_retention_quality}
                           onValueChange={(v) =>
@@ -1265,7 +1265,7 @@ export function ContentDetailDialog({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] text-zinc-500">跳出集中阶段</label>
+                      <label className="text-[12px] text-stone-500">跳出集中阶段</label>
                       <SegmentedControl
                         value={observation.drop_off_stage}
                         options={dropOffStageOptions}
@@ -1277,7 +1277,7 @@ export function ContentDetailDialog({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[11px] text-zinc-500">疑似问题阶段</label>
+                      <label className="text-[12px] text-stone-500">疑似问题阶段</label>
                       <SegmentedControl
                         value={observation.suspected_problem_stage}
                         options={suspectedStageOptions}
@@ -1293,7 +1293,7 @@ export function ContentDetailDialog({
                       onChange={(event) =>
                         setObservation((prev) => ({ ...prev, note: event.target.value }))
                       }
-                      className="w-full resize-none rounded-lg border border-transparent bg-zinc-100/70 p-2.5 text-[12px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                      className="w-full resize-none rounded-lg border border-transparent bg-stone-100/70 p-2.5 text-[12px] leading-[1.7] text-stone-800 placeholder:text-stone-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5"
                       rows={2}
                       placeholder="观察备注（自动保存）"
                     />
@@ -1302,7 +1302,7 @@ export function ContentDetailDialog({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 gap-1.5 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.98] transition-all duration-150"
+                        className="h-8 gap-1.5 rounded-lg border-stone-200 bg-white text-[12px] text-stone-700 hover:bg-stone-50 hover:text-stone-900 active:scale-[0.98] transition-all duration-150"
                         onClick={handleGenerateAnalysis}
                         disabled={isGeneratingAnalysis}
                       >
@@ -1316,7 +1316,7 @@ export function ContentDetailDialog({
                 {/* AI 辅助分析（破格主角：次级盆地 + 2px左导轨） */}
                 {(isGeneratingAnalysis || analysisResult) && (
                   <section className="space-y-2">
-                    <div className="rounded-xl border border-zinc-200 border-l-2 border-l-[#D97757] bg-zinc-100/50 p-5">
+                    <div className="rounded-xl border border-stone-200 border-l-2 border-l-[#D97757] bg-stone-100/50 p-5">
                       <div className="flex items-center gap-1.5">
                         <SparklesIcon className="size-3.5 stroke-[1.5] text-[#D97757]" />
                         <Eyebrow>AI 辅助分析</Eyebrow>
@@ -1340,7 +1340,7 @@ export function ContentDetailDialog({
                           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
                           className="mt-3 space-y-4"
                         >
-                          <p className="text-[17px] font-semibold leading-[1.55] text-zinc-800">
+                          <p className="text-[18px] font-bold leading-[1.55] text-stone-900">
                             {analysisResult.data_summary}
                           </p>
 
@@ -1348,7 +1348,7 @@ export function ContentDetailDialog({
                             {analysisResult.suspected_stage.map((stage) => (
                               <span
                                 key={stage}
-                                className="inline-flex items-center rounded-full border border-zinc-200 bg-white/80 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
+                                className="inline-flex items-center rounded-full border border-stone-200 bg-white/80 px-2.5 py-0.5 text-[12px] font-medium text-stone-700"
                               >
                                 疑似 · {stage}
                               </span>
@@ -1356,7 +1356,7 @@ export function ContentDetailDialog({
                             {analysisResult.key_metric_evidence.slice(0, 3).map((ev) => (
                               <span
                                 key={ev}
-                                className="inline-flex items-center rounded-full border border-zinc-200 bg-white/80 px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-600"
+                                className="inline-flex items-center rounded-full border border-stone-200 bg-white/80 px-2.5 py-0.5 text-[12px] font-medium tabular-nums text-stone-600"
                               >
                                 {ev}
                               </span>
@@ -1364,8 +1364,8 @@ export function ContentDetailDialog({
                           </div>
 
                           {analysisResult.copywriting_reason && (
-                            <p className="text-[13px] leading-[1.7] text-zinc-600">
-                              <span className="text-zinc-400">文案：</span>
+                            <p className="text-[13px] leading-[1.7] text-stone-600">
+                              <span className="text-stone-400">文案：</span>
                               {analysisResult.copywriting_reason}
                             </p>
                           )}
@@ -1376,7 +1376,7 @@ export function ContentDetailDialog({
                                 render={
                                   <button
                                     type="button"
-                                    className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800"
+                                    className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] font-medium text-stone-500 hover:text-stone-800"
                                   >
                                     <ChevronRightIcon
                                       className={cn(
@@ -1389,7 +1389,7 @@ export function ContentDetailDialog({
                                 }
                               />
                               <CollapsibleContent className="data-[ending-style]:fade-out-0 data-[starting-style]:fade-in-0">
-                                <div className="mt-2 rounded-lg bg-white/70 border border-zinc-200 p-3 text-[13px] leading-[1.7] text-zinc-700">
+                                <div className="mt-2 rounded-lg bg-white/70 border border-stone-200 p-3 text-[13px] leading-[1.7] text-stone-700">
                                   {analysisResult.reusable_experience}
                                 </div>
                               </CollapsibleContent>
@@ -1397,7 +1397,7 @@ export function ContentDetailDialog({
                           )}
 
                           <div className="space-y-2 pt-2">
-                            <p className="text-[11px] text-zinc-400">
+                            <p className="text-[12px] text-stone-400">
                               引用后仅填入反馈字段，不会自动保存或下发
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -1411,7 +1411,7 @@ export function ContentDetailDialog({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-9 rounded-lg border-zinc-200 bg-white/80 text-[12px]"
+                                className="h-9 rounded-lg border-stone-200 bg-white/80 text-[12px]"
                                 onClick={() => handleMarkExperience("analysis", "hot_case")}
                                 disabled={isMarkingExperience}
                               >
@@ -1429,23 +1429,23 @@ export function ContentDetailDialog({
               <TabsContent value="feedback" className="space-y-4">
                 {/* 复盘依据 inline */}
                 {feedbackEvidence.length > 0 && (
-                  <div className="rounded-lg bg-zinc-100/50 px-3 py-2.5 text-[12px] leading-[1.7] text-zinc-600">
-                    <span className="text-zinc-400">依据 · </span>
+                  <div className="rounded-lg bg-stone-100/50 px-3 py-2.5 text-[12px] leading-[1.7] text-stone-600">
+                    <span className="text-stone-400">依据 · </span>
                     {feedbackEvidence.map((line, i) => (
                       <span key={line}>
-                        {i > 0 && <span className="text-zinc-300"> · </span>}
-                        <span className="text-zinc-700">{line}</span>
+                        {i > 0 && <span className="text-stone-300"> · </span>}
+                        <span className="text-stone-700">{line}</span>
                       </span>
                     ))}
                   </div>
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-zinc-700">主要问题</label>
+                  <label className="text-[12px] font-medium text-stone-700">主要问题</label>
                   <textarea
                     value={mainIssues}
                     onChange={(e) => setMainIssues(e.target.value)}
-                    className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    className="w-full resize-none rounded-xl border border-transparent bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5"
                     rows={2}
                     placeholder="例如：开头留人弱 / 选题不清 / 文案承接差"
                     disabled={!isEditable}
@@ -1453,11 +1453,11 @@ export function ContentDetailDialog({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-zinc-700">改进反馈</label>
+                  <label className="text-[12px] font-medium text-stone-700">改进反馈</label>
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 p-3 text-[13px] leading-[1.7] text-zinc-800 placeholder:text-zinc-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+                    className="w-full resize-none rounded-xl border border-transparent bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5"
                     rows={5}
                     placeholder="写给员工的具体改进建议"
                     disabled={!isEditable}
@@ -1468,16 +1468,16 @@ export function ContentDetailDialog({
           )}
         </SheetBody>
 
-        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-zinc-200 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-[12px] text-zinc-500">
+        <SheetFooter className="flex-row items-center justify-between gap-3 border-t border-stone-200 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-[12px] text-stone-500">
             {cardDetail && cardDetail.workflow_status !== "not_started" ? (
               <Badge
                 variant="outline"
                 className={cn(
-                  "h-6 gap-1.5 rounded-md border px-2 text-[11px] font-medium",
+                  "h-6 gap-1.5 rounded-md border px-2 text-[12px] font-medium",
                   cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
                     ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/5 text-[#3f6f4d]"
-                    : "border-zinc-200 bg-white text-zinc-600",
+                    : "border-stone-200 bg-white text-stone-600",
                 )}
               >
                 <span
@@ -1488,22 +1488,22 @@ export function ContentDetailDialog({
                       ? "bg-[#6FAA7D]"
                       : cardDetail.workflow_status === "draft"
                         ? "bg-[#D99E55]"
-                        : "bg-zinc-300",
+                        : "bg-stone-300",
                   )}
                 />
                 {cardDetail.workflow_label}
               </Badge>
             ) : (
-              <span className="text-zinc-400">未开始</span>
+              <span className="text-stone-400">未开始</span>
             )}
             {!isLocked &&
               (isSavingDraft ? (
-                <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                <span className="inline-flex items-center gap-1.5 text-stone-400">
                   <span className="size-1 rounded-full bg-[#D99E55]" />
                   保存中
                 </span>
               ) : submittedDraft && draftSavedAt ? (
-                <span className="text-zinc-400">{formatRelative(draftSavedAt)}</span>
+                <span className="text-stone-400">{formatRelative(draftSavedAt)}</span>
               ) : null)}
           </div>
 
@@ -1529,7 +1529,7 @@ export function ContentDetailDialog({
               </Button>
             )}
             {isLocked && (
-              <span className="text-[12px] text-zinc-500">已下发，不可编辑</span>
+              <span className="text-[12px] text-stone-500">已下发，不可编辑</span>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger

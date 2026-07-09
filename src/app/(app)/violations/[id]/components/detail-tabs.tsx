@@ -33,11 +33,11 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
   if (showTests) tabs.push({ key: "tests", label: "测试记录" });
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white">
+    <section className="rounded-xl border border-stone-200 bg-white">
       <div
         role="tablist"
         aria-label="详情切换"
-        className="flex items-center gap-1 border-b border-zinc-200 bg-zinc-50 px-2 py-2"
+        className="flex items-center gap-1 border-b border-stone-200 bg-stone-50 px-2 py-2"
       >
         {tabs.map((tab) => {
           const isActive = active === tab.key;
@@ -51,8 +51,8 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
               className={cn(
                 "relative inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors active:translate-y-0",
                 isActive
-                  ? "bg-white text-zinc-800"
-                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
+                  ? "bg-white text-stone-800"
+                  : "text-stone-500 hover:bg-stone-100 hover:text-stone-800",
               )}
             >
               {tab.label}
@@ -60,7 +60,7 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
                 <span
                   className={cn(
                     "rounded-full px-1.5 text-[11px] font-medium tabular-nums",
-                    isActive ? "bg-zinc-100 text-zinc-600" : "bg-zinc-100 text-zinc-500",
+                    isActive ? "bg-stone-100 text-stone-600" : "bg-stone-100 text-stone-500",
                   )}
                 >
                   {tab.count}

@@ -58,7 +58,7 @@ function SourceChip({ source }: { source: string }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+    <span className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-2 py-0.5 text-[11px] font-medium text-stone-600">
       手动补录
     </span>
   );
@@ -67,7 +67,7 @@ function SourceChip({ source }: { source: string }) {
 export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
   if (!records.length) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 py-8">
+      <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/60 py-8">
         <EmptyState
           title="还没有使用记录"
           description="日报同步或手动补录后会出现在这里"
@@ -78,7 +78,7 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
 
   return (
     <div className="relative">
-      <div className="absolute left-[13px] top-2 bottom-2 w-px bg-zinc-200" aria-hidden="true" />
+      <div className="absolute left-[13px] top-2 bottom-2 w-px bg-stone-200" aria-hidden="true" />
       <AnimatePresence initial={false}>
         <motion.ul
           key="timeline"
@@ -112,18 +112,18 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
                   className="absolute left-[7px] top-2 flex size-3 items-center justify-center rounded-full border-[3px] border-white bg-[#D97757] shadow-[0_0_0_1px_rgba(217,119,87,0.2)]"
                   aria-hidden="true"
                 />
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300">
+                <div className="rounded-xl border border-stone-200 bg-white p-4 transition-colors hover:border-stone-300">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-[13px] font-medium text-zinc-800">
-                      <Calendar className="size-3.5 text-zinc-400" strokeWidth={1.5} />
+                    <div className="flex items-center gap-2 text-[13px] font-medium text-stone-800">
+                      <Calendar className="size-3.5 text-stone-400" strokeWidth={1.5} />
                       {formatDate(record.used_at)}
-                      <span className="text-zinc-300">·</span>
+                      <span className="text-stone-300">·</span>
                       <span className="truncate">{accountName}</span>
                     </div>
                     <SourceChip source={record.source} />
                   </div>
-                  <div className="mt-2 flex items-center gap-1.5 text-[12px] text-zinc-500">
-                    <User2 className="size-3.5 text-zinc-400" strokeWidth={1.5} />
+                  <div className="mt-2 flex items-center gap-1.5 text-[12px] text-stone-500">
+                    <User2 className="size-3.5 text-stone-400" strokeWidth={1.5} />
                     记录人 {recorderName}
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2">
@@ -145,7 +145,7 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
                     />
                   </div>
                   {record.note ? (
-                    <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-zinc-600">
+                    <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-stone-600">
                       {record.note}
                     </p>
                   ) : null}
@@ -171,16 +171,16 @@ function MetricCell({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-lg bg-zinc-50 px-3 py-2">
-      <div className="flex items-center gap-1 text-[11px] font-medium text-zinc-500">
-        <span className={accent ? "text-[#6FAA7D]" : "text-zinc-400"}>{icon}</span>
+    <div className="rounded-lg bg-stone-50 px-3 py-2">
+      <div className="flex items-center gap-1 text-[11px] font-medium text-stone-500">
+        <span className={accent ? "text-[#6FAA7D]" : "text-stone-400"}>{icon}</span>
         {label}
       </div>
       <div
         className={
           accent
             ? "mt-0.5 text-[13px] font-medium tracking-tight text-[#6FAA7D] tabular-nums"
-            : "mt-0.5 text-[13px] font-medium tracking-tight text-zinc-800 tabular-nums"
+            : "mt-0.5 text-[13px] font-medium tracking-tight text-stone-800 tabular-nums"
         }
       >
         {value}

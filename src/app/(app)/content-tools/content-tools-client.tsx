@@ -36,7 +36,7 @@ export function ContentToolsClient({ accounts, summary }: ContentToolsClientProp
         title="内容工具台"
         description="基于近期爆款、标签分布、热点板块和发布时间数据，给出更直接的内容生产建议。"
         actions={
-          <div className="rounded-2xl border border-zinc-200 bg-white p-1 ring-1 ring-zinc-950/5">
+          <div className="rounded-2xl border border-stone-200 bg-white p-1 ring-1 ring-stone-950/5">
             <div className="grid grid-cols-3 gap-1">
               {TABS.map((item) => {
                 const Icon = item.icon;
@@ -49,8 +49,8 @@ export function ContentToolsClient({ accounts, summary }: ContentToolsClientProp
                     className={cn(
                       "flex min-w-[92px] flex-col items-center gap-1 rounded-md px-4 py-3 text-center text-xs transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:min-w-[132px]",
                       active
-                        ? "bg-zinc-50 text-zinc-800 shadow-sm ring-1 ring-zinc-950/5"
-                        : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+                        ? "bg-stone-50 text-stone-800 shadow-sm ring-1 ring-stone-950/5"
+                        : "text-stone-500 hover:bg-stone-50 hover:text-stone-800"
                     )}
                   >
                     <Icon className="size-4" />

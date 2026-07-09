@@ -45,12 +45,12 @@ interface VideoDetailDialogProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  删稿: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  限流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  投流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  "未满24h": "border-zinc-200 bg-zinc-100 text-zinc-600",
+  正常: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  删稿: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  限流: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  投流: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  "未满24h": "border-stone-200 bg-stone-100 text-stone-600",
 };
 
 function formatDateTime(value: string | null) {
@@ -81,16 +81,16 @@ function formatPercent(value: number | null | undefined) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-      <h3 className="text-[14px] font-medium tracking-tight text-zinc-800">{children}</h3>
+      <h3 className="text-[13px] font-medium text-stone-700">{children}</h3>
     </div>
   );
 }
 
 function MetricCard({ label, value, placeholder }: { label: string; value: string; placeholder?: boolean }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4">
-      <div className="text-[11px] text-zinc-400">{label}</div>
-      <div className={`mt-1 text-[13px] ${placeholder ? "text-zinc-400" : "text-zinc-700"}`}>{value}</div>
+    <div className="rounded-xl border border-stone-200 bg-white p-4">
+      <div className="text-[12px] text-stone-500">{label}</div>
+      <div className={`mt-1 text-[13px] ${placeholder ? "text-stone-300" : "text-stone-700"}`}>{value}</div>
     </div>
   );
 }
@@ -215,7 +215,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full max-w-3xl">
         <SheetHeader>
-          <SheetTitle className="text-[18px] font-medium tracking-tight">视频详情</SheetTitle>
+          <SheetTitle>视频详情</SheetTitle>
         </SheetHeader>
         <SheetBody>
 
@@ -224,10 +224,10 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="text-[18px] font-medium tracking-tight text-zinc-800">
+                  <div className="text-[18px] font-bold text-stone-900">
                     {video.video_title?.trim() || "未命名视频"}
                   </div>
-                  <div className="text-[12px] text-zinc-500">
+                  <div className="text-[12px] text-stone-500">
                     账号：{video.accounts.name} · 负责人：{video.profiles.name}
                   </div>
                 </div>
@@ -238,8 +238,8 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
 
               <div className="grid gap-2 sm:grid-cols-2">
                 <MetricCard label="发布时间" value={formatDateTime(video.published_at)} />
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[11px] text-zinc-400">视频链接</div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[12px] text-stone-500">视频链接</div>
                   <div className="mt-1 text-[13px]">
                     {video.video_url ? (
                       <a
@@ -251,12 +251,12 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                         {video.video_url}
                       </a>
                     ) : (
-                      <span className="text-zinc-500">-</span>
+                      <span className="text-stone-500">-</span>
                     )}
                   </div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[11px] text-zinc-400">素材等级</div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[12px] text-stone-500">素材等级</div>
                   <div className="mt-2 flex items-center gap-2">
                     <Select
                       value={assetLevel ?? "__null__"}
@@ -275,12 +275,12 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                     </Select>
                   </div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[11px] text-zinc-400">人工备注</div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[12px] text-stone-500">人工备注</div>
                   <textarea
                     value={assetNote}
                     onChange={(e) => setAssetNote(e.target.value)}
-                    className="mt-2 w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 p-2 text-[13px] leading-5 text-zinc-800 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+                    className="mt-2 w-full resize-none rounded-lg border border-stone-200 bg-stone-50 p-2 text-[13px] leading-[1.6] text-stone-700 placeholder:text-stone-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5"
                     rows={2}
                     placeholder="输入备注..."
                   />
@@ -299,9 +299,9 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <div className="text-[11px] text-zinc-400">内容文案</div>
-                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                <div className="text-[12px] text-stone-500">内容文案</div>
+                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-[1.6] text-stone-700">
                   {video.content?.trim() || "-"}
                 </div>
               </div>
@@ -336,15 +336,15 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                   const status = getTagReviewStatus(tag?.confidence ?? null);
                   const selectedValue = selection[dimension] || tag?.tag_value || "";
                   return (
-                    <div key={dimension} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+                    <div key={dimension} className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[12px] font-medium text-zinc-700">{dimension}</div>
+                        <div className="text-[12px] font-medium text-stone-700">{dimension}</div>
                         <Badge
                           variant="outline"
-                          className={`text-[11px] ${
+                          className={`text-[12px] ${
                             status === "可信"
-                              ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-                              : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+                              ? "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
+                              : "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
                           }`}
                         >
                           {status}
@@ -372,7 +372,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                         </SelectContent>
                       </Select>
 
-                      <div className="space-y-0.5 text-[11px] text-zinc-500">
+                      <div className="space-y-0.5 text-[12px] text-stone-500">
                         <div>来源：{tag?.source === "manual" ? "手动" : "AI"}</div>
                         <div>置信度：{tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}</div>
                         <div className="line-clamp-3">理由：{tag?.reason || "-"}</div>
@@ -390,7 +390,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                   {renderSnapshotFields(snapshot)}
                 </div>
               ) : (
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-300">
                   暂无快照数据。
                 </div>
               )}

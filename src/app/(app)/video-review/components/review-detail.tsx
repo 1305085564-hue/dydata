@@ -48,20 +48,20 @@ export function ReviewDetail({
   };
 
   return (
-    <section className="flex h-[calc(100vh-260px)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-      <header className="flex items-baseline justify-between border-b border-zinc-100 px-6 py-4">
+    <section className="flex h-auto md:h-[calc(100vh-260px)] md:min-h-[480px] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white">
+      <header className="flex items-baseline justify-between border-b border-stone-100 px-6 py-4">
         <div className="flex items-baseline gap-3">
-          <h2 className="text-[16px] font-semibold text-zinc-800">
+          <h2 className="text-[16px] font-semibold text-stone-800">
             {item.account_name_snapshot ?? "未关联账号"}
           </h2>
-          <span className="text-[12px] text-zinc-500">{item.submitted_by_name}</span>
+          <span className="text-[12px] text-stone-500">{item.submitted_by_name}</span>
           {isAmend ? (
-            <span className="rounded bg-[#D97757]/[0.06] px-2 py-0.5 text-[11px] font-medium text-[#D97757]">
+            <span className="rounded bg-[#D99E55]/[0.06] px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
               二改 · 第 {item.current_round} 轮
             </span>
           ) : null}
         </div>
-        <span className="font-mono text-[12px] tabular-nums text-zinc-400">
+        <span className="font-mono text-[12px] tabular-nums text-stone-400">
           已等 {formatWaitDuration(item.created_at)}
         </span>
       </header>
@@ -76,18 +76,18 @@ export function ReviewDetail({
         ) : null}
 
         <div className="mt-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          <p className="text-[12px] font-medium text-stone-400">
             话术原文
           </p>
-          <div className="mt-2 rounded-xl bg-zinc-100/50 p-4">
-            <p className="whitespace-pre-wrap text-[14px] leading-7 text-zinc-800">
+          <div className="mt-2 rounded-xl bg-stone-100/50 p-4">
+            <p className="whitespace-pre-wrap text-[13px] leading-7 text-stone-800">
               {item.script_text}
             </p>
           </div>
         </div>
 
         <div className="mt-5">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          <p className="text-[12px] font-medium text-stone-400">
             截图（{screenshotCount}）
           </p>
           {screenshotCount > 0 ? (
@@ -97,7 +97,7 @@ export function ReviewDetail({
                   key={path}
                   type="button"
                   onClick={() => onPreview(item.screenshot_paths, idx)}
-                  className="group relative aspect-square overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100"
+                  className="group relative aspect-square overflow-hidden rounded-lg border border-stone-200 bg-stone-100"
                 >
                   <Image
                     src={`/api/violations/screenshot/${encodeURI(path)}`}
@@ -111,24 +111,24 @@ export function ReviewDetail({
               ))}
             </div>
           ) : (
-            <p className="mt-2 rounded-lg border border-dashed border-zinc-200 px-4 py-3 text-[12px] text-zinc-400">
+            <p className="mt-2 rounded-lg border border-dashed border-stone-200 px-4 py-3 text-[12px] text-stone-400">
               本稿未上传截图
             </p>
           )}
         </div>
       </div>
 
-      <footer className="border-t border-zinc-100 px-6 py-4">
+      <footer className="border-t border-stone-100 px-6 py-4">
         {rejectMode ? (
           <div className="space-y-3">
             <div className="flex items-baseline justify-between">
-              <p className="text-[13px] font-medium text-zinc-800">
+              <p className="text-[13px] font-medium text-stone-800">
                 打回 · 给一句具体建议
               </p>
               <button
                 type="button"
                 onClick={cancelReject}
-                className="text-[12px] text-zinc-500 hover:text-zinc-800"
+                className="text-[12px] text-stone-500 hover:text-stone-800"
               >
                 取消
               </button>
@@ -139,7 +139,7 @@ export function ReviewDetail({
                   key={r}
                   type="button"
                   onClick={() => setFeedbackText(r)}
-                  className="inline-flex items-center rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-[11px] text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800 active:translate-y-0"
+                  className="inline-flex items-center rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[12px] text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
                 >
                   {r}
                 </button>
@@ -150,7 +150,7 @@ export function ReviewDetail({
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="可点上方常见理由直接填入，也可自行补充"
               autoFocus
-              className="block w-full resize-none rounded-xl border-transparent bg-zinc-100/70 p-3 text-[13px] leading-6 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-200 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5"
+              className="block w-full resize-none rounded-lg bg-stone-50 border border-stone-200 p-3 text-[13px] leading-6 text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40"
               rows={3}
               maxLength={1000}
             />
@@ -177,10 +177,10 @@ export function ReviewDetail({
               onClick={() => setRejectMode(true)}
               disabled={isProcessing}
               className={cn(
-                "inline-flex h-10 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-4 text-[13px] font-medium transition-colors active:translate-y-0",
+                "inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-4 text-[13px] font-medium transition-colors active:translate-y-0",
                 isProcessing
-                  ? "cursor-not-allowed text-zinc-300"
-                  : "text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
+                  ? "cursor-not-allowed text-stone-300"
+                  : "text-stone-700 hover:text-[#C9604D] hover:bg-[#C9604D]/10 hover:border-[#C9604D]/20",
               )}
             >
               <X className="size-3.5 stroke-[1.75]" />
@@ -191,10 +191,10 @@ export function ReviewDetail({
               onClick={onApprove}
               disabled={approveDisabled}
               className={cn(
-                "inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#D97757] px-5 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
+                "inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#6FAA7D] px-5 text-[13px] font-semibold text-white transition-all active:translate-y-[1px]",
                 approveDisabled
                   ? "cursor-not-allowed opacity-60"
-                  : "hover:bg-[#C96442] hover:shadow-sm",
+                  : "hover:bg-[#5E9A6C]",
               )}
             >
               <Check className="size-3.5 stroke-[2]" />
@@ -222,34 +222,34 @@ function FeedbackHistorySection({
     [history],
   );
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50/60">
+    <div className="border-t border-stone-100 mt-3 pt-2">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-left"
+        className="flex w-full items-center justify-between py-2 text-left"
       >
-        <span className="text-[12px] font-medium text-zinc-600">
+        <span className="text-[12px] font-medium text-stone-600">
           历史轮次 · {history.length} 条
         </span>
         <ChevronDown
           className={cn(
-            "size-4 stroke-[1.5] text-zinc-400 transition-transform",
+            "size-4 stroke-[1.5] text-stone-400 transition-transform",
             open ? "rotate-180" : "",
           )}
         />
       </button>
       {open ? (
-        <ul className="border-t border-zinc-200 px-4 py-3 space-y-2">
+        <ul className="py-2 space-y-2">
           {reverseSorted.map((h, i) => (
-            <li key={i} className="text-[12px] leading-[1.7] text-zinc-600">
-              <span className="font-medium text-zinc-700">
+            <li key={i} className="text-[12px] leading-[1.7] text-stone-600">
+              <span className="font-medium text-stone-700">
                 第 {h.round} 轮 · {h.action === "approve" ? "通过" : "打回"}
               </span>
               {h.feedback_text ? (
-                <span className="ml-2 text-zinc-500">— {h.feedback_text}</span>
+                <span className="ml-2 text-stone-500">— {h.feedback_text}</span>
               ) : null}
               {h.reviewer_name ? (
-                <span className="ml-2 text-zinc-400">@ {h.reviewer_name}</span>
+                <span className="ml-2 text-stone-400">@ {h.reviewer_name}</span>
               ) : null}
             </li>
           ))}

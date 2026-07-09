@@ -20,16 +20,16 @@ export function QueueList({
   onSelect,
 }: QueueListProps) {
   return (
-    <aside className="flex h-[calc(100vh-260px)] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-      <header className="flex items-baseline justify-between border-b border-zinc-100 px-4 py-3">
+    <aside className="flex h-[320px] md:h-[calc(100vh-260px)] md:min-h-[480px] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white">
+      <header className="flex items-baseline justify-between border-b border-stone-100 px-4 py-3">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-[14px] font-semibold text-zinc-800">待审队列</h2>
-          <span className="font-mono text-[13px] tabular-nums text-zinc-400">
+          <h2 className="text-[13px] font-semibold text-stone-800">待审队列</h2>
+          <span className="font-mono text-[13px] tabular-nums text-stone-400">
             {pendingCount}
           </span>
         </div>
         {todayProcessed > 0 ? (
-          <span className="text-[11px] text-zinc-400">
+          <span className="text-[12px] text-stone-400">
             今日已处理 {todayProcessed}
           </span>
         ) : null}
@@ -44,7 +44,7 @@ export function QueueList({
               {isActive ? (
                 <span
                   className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r"
-                  style={{ backgroundColor: "#D97757" }}
+                  style={{ backgroundColor: "#8AA8C7" }}
                   aria-hidden
                 />
               ) : null}
@@ -53,26 +53,26 @@ export function QueueList({
                 onClick={() => onSelect(item.id)}
                 className={cn(
                   "block w-full px-4 py-3 text-left transition-colors",
-                  isActive ? "bg-zinc-100" : "hover:bg-zinc-50",
+                  isActive ? "bg-stone-100" : "hover:bg-stone-50",
                 )}
               >
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[13px] font-medium text-zinc-800">
+                  <span className="truncate text-[13px] font-medium text-stone-800">
                     {item.account_name_snapshot ?? item.submitted_by_name}
                   </span>
-                  <span className="shrink-0 font-mono text-[11px] tabular-nums text-zinc-400">
+                  <span className="shrink-0 font-mono text-[12px] tabular-nums text-stone-400">
                     {formatWaitDuration(item.created_at)}
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-[12px] leading-[1.55] text-zinc-500">
+                <p className="mt-1 line-clamp-2 text-[12px] leading-[1.55] text-stone-500">
                   {getScriptOpening(item.script_text, 80)}
                 </p>
-                <div className="mt-1.5 flex items-center gap-2 text-[11px] text-zinc-400">
+                <div className="mt-1.5 flex items-center gap-2 text-[12px] text-stone-400">
                   <span>{item.submitted_by_name}</span>
                   {isAmend ? (
                     <>
-                      <span className="text-zinc-300">·</span>
-                      <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-medium text-zinc-600">
+                      <span className="text-stone-300">·</span>
+                      <span className="rounded bg-stone-100 px-1.5 py-0.5 font-medium text-stone-600">
                         二改 · 第 {item.current_round} 轮
                       </span>
                     </>
@@ -84,7 +84,7 @@ export function QueueList({
         })}
       </ul>
 
-      <footer className="border-t border-zinc-100 px-4 py-2 text-[11px] text-zinc-400">
+      <footer className="border-t border-stone-100 px-4 py-2 text-[12px] text-stone-400">
         快捷键 · J 下一条 · K 上一条
       </footer>
     </aside>

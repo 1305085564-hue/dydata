@@ -117,11 +117,11 @@ export function QuotaConfigPanel({
   return (
     <div className="border-t border-stone-200 pt-8 space-y-6">
       <div>
-        <h2 className="text-[18px] font-bold tracking-[-0.02em] text-zinc-800 flex items-center gap-2">
+        <h2 className="text-[18px] font-bold tracking-[-0.02em] text-stone-800 flex items-center gap-2">
           <Settings className="size-5 text-[#D97757]" />
           产量目标管理
         </h2>
-        <p className="text-sm leading-6 text-zinc-500 mt-1">
+        <p className="text-sm leading-6 text-stone-500 mt-1">
           设置团队每日视频发布产量额度目标。新规则到达生效日期后将自动覆盖旧规则。
         </p>
       </div>
@@ -130,7 +130,7 @@ export function QuotaConfigPanel({
         {/* 左侧：当前目标与添加表单 */}
         <div className="md:col-span-1 space-y-5">
           {/* 当前生效指标卡 (A.3/C.3) */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[105px]">
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[105px]">
             <span className="text-[13px] text-stone-500 font-medium">今日生效发片指标</span>
             <div className="flex items-baseline gap-1">
               <span className="text-[32px] font-bold font-mono tabular-nums text-[#D97757]">
@@ -142,7 +142,7 @@ export function QuotaConfigPanel({
 
           {/* 新增目标规则表单 (U1) */}
           {isOwner ? (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 space-y-4">
+            <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
               <h3 className="text-[14px] font-bold text-stone-800">
                 配置新发片目标
               </h3>
@@ -157,7 +157,7 @@ export function QuotaConfigPanel({
                     type="date"
                     value={effectiveDate}
                     onChange={(e) => setEffectiveDate(e.target.value)}
-                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-950/5 transition-[background-color,box-shadow]"
                   />
                 </div>
 
@@ -172,7 +172,7 @@ export function QuotaConfigPanel({
                     max="50"
                     value={dailyTarget}
                     onChange={(e) => setDailyTarget(e.target.value)}
-                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-950/5 transition-[background-color,box-shadow]"
                   />
                 </div>
 
@@ -186,7 +186,7 @@ export function QuotaConfigPanel({
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="如：夏季发片量调整..."
-                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-950/5 transition-[background-color,box-shadow]"
                   />
                 </div>
 
@@ -211,7 +211,7 @@ export function QuotaConfigPanel({
               </form>
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-zinc-200 bg-stone-50 p-4 text-[12px] text-stone-400 leading-[1.6]">
+            <div className="rounded-2xl border border-dashed border-stone-200 bg-stone-50 p-4 text-[12px] text-stone-400 leading-[1.6]">
               <AlertCircle className="size-4 text-[#D99E55] mb-1.5" />
               只有系统 Owner 拥有添加及编辑每日发片指标规则的写入权限。Admin 角色仅供查阅规则历史。
             </div>
@@ -230,11 +230,11 @@ export function QuotaConfigPanel({
           </div>
 
           {rules.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-zinc-200 bg-white py-12 text-center text-stone-400 text-[13px]">
+            <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 text-center text-stone-400 text-[13px]">
               暂无历史指标配置记录
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+            <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
               {rules.map((rule, idx) => {
                 const isLast = idx === rules.length - 1;
                 const isEffectiveToday = rule.effective_date <= todayDate && (idx === 0 || rules[idx - 1].effective_date > todayDate);

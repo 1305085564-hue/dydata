@@ -25,7 +25,7 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 function CultivationTable({ items }: { items: CultivationItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-200 bg-white py-10 text-center text-[13px] text-zinc-500">
+      <div className="rounded-xl border border-dashed border-stone-200 bg-white py-10 text-center text-[13px] text-stone-500">
         暂无符合条件的重点培养账号
       </div>
     );
@@ -33,15 +33,15 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
 
   return (
     <>
-      <div className="hidden overflow-x-auto rounded-xl border border-zinc-200 md:block">
+      <div className="hidden overflow-x-auto rounded-xl border border-stone-200 md:block">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">成员 / 账号</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">分组</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">爆款率</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">进步幅度</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">建议动作</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">成员 / 账号</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">分组</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">爆款率</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">进步幅度</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">建议动作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -49,8 +49,8 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
               <TableRow key={item.accountId} className="h-11">
                 <TableCell className="align-top">
                   <div className="space-y-0.5">
-                    <div className="text-[13px] font-medium text-zinc-800">{item.ownerName}</div>
-                    <div className="text-[12px] text-zinc-500">{item.accountName}</div>
+                    <div className="text-[13px] font-medium text-stone-800">{item.ownerName}</div>
+                    <div className="text-[12px] text-stone-500">{item.accountName}</div>
                   </div>
                 </TableCell>
                 <TableCell className="align-top">
@@ -60,9 +60,9 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
                     <Badge variant="outline" className="text-[12px]">{item.formatLabel}</Badge>
                   </div>
                 </TableCell>
-                <TableCell className="text-[13px] font-medium text-zinc-700">{item.metrics[0]?.value ?? "—"}</TableCell>
+                <TableCell className="text-[13px] font-medium text-stone-700">{item.metrics[0]?.value ?? "—"}</TableCell>
                 <TableCell className="text-[13px] font-medium text-[#6FAA7D]">{item.metrics[1]?.value ?? "—"}</TableCell>
-                <TableCell className="max-w-xs whitespace-normal text-[13px] text-zinc-600">{item.action}</TableCell>
+                <TableCell className="max-w-xs whitespace-normal text-[13px] text-stone-600">{item.action}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -71,10 +71,10 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
 
       <div className="space-y-2 md:hidden">
         {items.map((item) => (
-          <div key={item.accountId} className="space-y-4 rounded-xl border border-zinc-200 bg-white p-4">
+          <div key={item.accountId} className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
             <div className="space-y-0.5">
-              <div className="text-[14px] font-medium text-zinc-800">{item.ownerName}</div>
-              <div className="text-[12px] text-zinc-500">{item.accountName}</div>
+              <div className="text-[14px] font-medium text-stone-800">{item.ownerName}</div>
+              <div className="text-[12px] text-stone-500">{item.accountName}</div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Badge variant="outline" className="text-[12px]">{item.stageLabel}</Badge>
@@ -83,9 +83,9 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
             </div>
             <div className="grid grid-cols-2 gap-2 text-[13px]">
               {item.metrics.map((metric) => (
-                <div key={metric.label} className="rounded-xl bg-zinc-50 px-3 py-2">
-                  <p className="text-[11px] text-zinc-400">{metric.label}</p>
-                  <p className="mt-1 font-medium text-zinc-700">{metric.value}</p>
+                <div key={metric.label} className="rounded-xl bg-stone-50 px-3 py-2">
+                  <p className="text-[11px] text-stone-400">{metric.label}</p>
+                  <p className="mt-1 font-medium text-stone-700">{metric.value}</p>
                 </div>
               ))}
             </div>
@@ -111,14 +111,14 @@ export function CultivationList(props: GuidanceInput) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-500">
+      <div className="flex flex-wrap items-center gap-4 text-[12px] text-stone-500">
         <span>纳入账号 {result.accountCount}</span>
         <span>重点培养 {counts.cultivation}</span>
         <span>下滑干预 {counts.intervention}</span>
         <span>方向错配 {counts.mismatch}</span>
       </div>
 
-      <div className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 p-1">
+      <div className="inline-flex items-center gap-1 rounded-xl border border-stone-200 bg-stone-50 p-1">
         {TABS.map((tab) => {
           const count = counts[tab.key];
           const active = activeTab === tab.key;
@@ -129,15 +129,15 @@ export function CultivationList(props: GuidanceInput) {
               onClick={() => setActiveTab(tab.key)}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-[12px] transition-[background-color,color] duration-150 ${
                 active
-                  ? "bg-white text-zinc-800 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700"
+                  ? "bg-white text-stone-800 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700"
               }`}
             >
               {tab.label}
               <Badge
                 variant="outline"
                 className={`ml-0.5 text-[11px] ${
-                  active ? "border-zinc-200 bg-zinc-50" : "border-transparent bg-white/60"
+                  active ? "border-stone-200 bg-stone-50" : "border-transparent bg-white/60"
                 }`}
               >
                 {count}

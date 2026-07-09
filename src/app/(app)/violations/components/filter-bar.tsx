@@ -102,7 +102,7 @@ export function FilterBar() {
               className={`rounded-lg border px-2.5 py-1 text-[12px] font-medium transition-colors active:translate-y-0 ${
                 active
                   ? "border-[#D97757]/40 text-[#D97757]"
-                  : "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
+                  : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700"
               }`}
             >
               {GUIDANCE_METHOD_LABELS[method]}
@@ -115,7 +115,7 @@ export function FilterBar() {
       <select
         value={`${activeSort}:${activeOrder}`}
         onChange={(e) => handleSortChange(e.target.value)}
-        className="h-8 cursor-pointer rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-700 outline-none transition-colors focus:border-zinc-300"
+        className="h-8 cursor-pointer rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-700 outline-none transition-colors focus:border-stone-300"
       >
         {SORT_OPTIONS.map((opt) => (
           <optgroup key={opt.key} label={opt.label}>
@@ -130,7 +130,7 @@ export function FilterBar() {
         <button
           type="button"
           onClick={handleReset}
-          className="inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-colors hover:text-zinc-800 active:translate-y-0"
+          className="inline-flex items-center gap-1 text-[12px] text-stone-500 transition-colors hover:text-stone-800 active:translate-y-0"
         >
           <RotateCcw className="size-3 stroke-[1.5]" />
           重置

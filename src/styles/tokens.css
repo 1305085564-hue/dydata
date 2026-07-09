@@ -1,46 +1,43 @@
-/* shadcn token 映射 · 阿禅美学标准 V1 */
-/* 将 shadcn 组件库的 CSS 变量映射到法典 hex 色值 */
-
+/* shadcn token 映射 · 美学规范 V2 · stone 暖灰体系 */
 :root {
-  --background: #F0F0F1;                 /* L0 微加深背景 */
-  --foreground: #27272A;                 /* zinc-800 主文字 */
-  --card: #FAFAFB;                       /* L1 zinc-50 */
-  --card-foreground: #27272A;
+  --background: #FAFAF9;                 /* L0 stone-50 */
+  --foreground: #44403C;                 /* stone-700 正文 */
+  --card: #FAFAF9;                       /* L1 stone-50 */
+  --card-foreground: #44403C;            /* stone-700 */
   --popover: #FFFFFF;                    /* L2 white */
-  --popover-foreground: #27272A;
+  --popover-foreground: #44403C;
   --primary: #D97757;                    /* 暖橙 主 CTA */
   --primary-foreground: #FFFFFF;
-  --secondary: #F0F0F1;
-  --secondary-foreground: #27272A;
-  --muted: #FAFAFB;
-  --muted-foreground: #71717A;           /* zinc-500 次要文字 */
-  --accent: #F0F0F1;
-  --accent-foreground: #27272A;
-  --destructive: #C9604D;                /* 法典异常色 */
-  --border: #E4E4E7;                     /* zinc-200 */
-  --input: #E4E4E7;
-  --ring: rgba(9, 9, 11, 0.05);          /* 法典 focus:ring-zinc-950/5 */
-  /* 法典 4.4 数据可视化色板 */
-  --chart-1: #D97757;                    /* 主橙 */
-  --chart-2: #8AA8C7;                    /* 石青 */
-  --chart-3: #E3B15C;                    /* 琥珀 */
-  --chart-4: #7FA97E;                    /* 绿 */
-  --chart-5: #B08BB8;                    /* 雾紫 */
-  --radius: 12px;                        /* 法典内层卡片 12px */
-  --sidebar: #FAFAFB;
-  --sidebar-foreground: #27272A;
+  --secondary: #FAFAF9;
+  --secondary-foreground: #44403C;
+  --muted: #FAFAF9;
+  --muted-foreground: #78716C;           /* stone-500 辅助 */
+  --accent: #FAFAF9;
+  --accent-foreground: #44403C;
+  --destructive: #C9604D;                /* 异常色 */
+  --border: #E7E5E4;                     /* stone-200 */
+  --input: #E7E5E4;
+  --ring: rgba(12, 10, 9, 0.05);         /* stone-950/5 */
+  /* 数据可视化色板 */
+  --chart-1: #D97757;
+  --chart-2: #8AA8C7;
+  --chart-3: #E3B15C;
+  --chart-4: #7FA97E;
+  --chart-5: #B08BB8;
+  --radius: 12px;
+  --sidebar: #FAFAF9;
+  --sidebar-foreground: #44403C;
   --sidebar-primary: #D97757;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F0F0F1;
-  --sidebar-accent-foreground: #27272A;
-  --sidebar-border: #E4E4E7;
-  --sidebar-ring: rgba(9, 9, 11, 0.05);
+  --sidebar-accent: #FAFAF9;
+  --sidebar-accent-foreground: #44403C;
+  --sidebar-border: #E7E5E4;
+  --sidebar-ring: rgba(12, 10, 9, 0.05);
   --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
-  /* 法典五 圆角阶梯 */
-  --radius-card: 16px;                   /* 主面板 rounded-2xl */
-  --radius-dialog: 16px;                 /* Modal rounded-2xl */
+  --radius-card: 16px;
+  --radius-dialog: 16px;
 }
 
 .dark {

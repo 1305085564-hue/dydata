@@ -118,7 +118,7 @@ interface AdminSecondaryNavProps {
 
 function getCardClassName(active: boolean) {
   return cn(
-    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-[background-color,border-color] duration-150 ease-out hover:border-[#D97757]/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950/5 sm:min-w-[240px] xl:min-w-[200px]",
+    "admin-subnav-link dashboard-top-action-card group flex min-w-[220px] flex-1 shrink-0 flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-5 text-left transition-[background-color,border-color] duration-150 ease-out hover:border-[#D97757]/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5 sm:min-w-[240px] xl:min-w-[200px]",
     active && "admin-subnav-link-active border-[#D97757]/50 bg-[#D97757]/5",
   );
 }
@@ -155,14 +155,14 @@ export function AdminSecondaryNav({
         const content = (
           <>
             <div className="admin-subnav-link-head dashboard-top-action-card-head flex items-start gap-3">
-              <span className="admin-subnav-link-icon dashboard-top-action-icon flex size-11 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
+              <span className="admin-subnav-link-icon dashboard-top-action-icon flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
                 <Icon className="size-5" />
               </span>
-              <span className="admin-subnav-link-title dashboard-top-action-title flex-1 pt-1 text-[18px] font-semibold tracking-[-0.02em] text-zinc-800">
+              <span className="admin-subnav-link-title dashboard-top-action-title flex-1 pt-1 text-[18px] font-semibold tracking-[-0.02em] text-stone-800">
                 {item.label}
               </span>
             </div>
-            <span className="admin-subnav-link-description app-shell-metric-hint text-sm leading-6 text-zinc-500">
+            <span className="admin-subnav-link-description app-shell-metric-hint text-sm leading-6 text-stone-500">
               {item.description}
             </span>
           </>

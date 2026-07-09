@@ -253,8 +253,8 @@ export function Leaderboard({
                   <TableRow
                     key={item.accountId}
                     className={cn(
-                      "border-b border-zinc-200 bg-white transition-colors hover:bg-zinc-50",
-                      item.isOwn && "bg-[#D97757]/5 hover:bg-zinc-50"
+                      "border-b border-stone-200 bg-white transition-colors hover:bg-stone-50",
+                      item.isOwn && "bg-[#D97757]/5 hover:bg-stone-50"
                     )}
                   >
                     <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur">
@@ -360,11 +360,11 @@ function TagStack({
 function RankBadge({ rank }: { rank: number }) {
   const badgeClass =
     rank === 1
-      ? "bg-zinc-100 text-[#D99E55] ring-amber-200"
+      ? "bg-stone-100 text-[#D99E55] ring-amber-200"
       : rank === 2
         ? "bg-slate-100 text-slate-700 ring-slate-200"
         : rank === 3
-          ? "bg-zinc-100 text-[#C9604D] ring-orange-200"
+          ? "bg-stone-100 text-[#C9604D] ring-orange-200"
           : "bg-muted text-muted-foreground ring-border";
 
   return (
@@ -389,8 +389,8 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium font-mono tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-          : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+          ? "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
+          : "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
       )}
     >
       <TrendingUp className="size-3.5" />

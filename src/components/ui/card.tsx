@@ -12,7 +12,7 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-2xl border border-zinc-200 bg-white py-6 text-[13px] text-zinc-800 transition-[border-color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl",
+        "group/card flex flex-col gap-4 overflow-hidden rounded-2xl border border-stone-200 bg-white py-6 text-[13px] text-stone-700 transition-[border-color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl",
         className
       )}
       {...props}
@@ -38,7 +38,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-title"
       className={cn(
-        "text-[14px] font-semibold tracking-tight text-zinc-800 group-data-[size=sm]/card:text-[13px]",
+        "text-[18px] font-bold tracking-tight text-stone-900 group-data-[size=sm]/card:text-[13px]",
         className
       )}
       {...props}
@@ -50,7 +50,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-[13px] text-zinc-500", className)}
+      className={cn("text-[13px] text-stone-500", className)}
       {...props}
     />
   )

@@ -74,9 +74,9 @@ export function GovernanceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[768px] !max-w-[calc(100vw-2rem)] h-[384px] rounded-2xl border border-zinc-200 bg-white p-0 flex flex-col">
-        <DialogHeader className="border-b border-zinc-200 px-6 py-4 shrink-0">
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
+      <DialogContent className="!w-[768px] !max-w-[calc(100vw-2rem)] h-[384px] rounded-2xl border border-stone-200 bg-white p-0 flex flex-col">
+        <DialogHeader className="border-b border-stone-200 px-6 py-4 shrink-0">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-800">
             数据管理
           </DialogTitle>
         </DialogHeader>
@@ -85,7 +85,7 @@ export function GovernanceDialog({
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-                  <h3 className="text-[13px] font-medium tracking-tight text-zinc-800">
+                  <h3 className="text-[13px] font-medium tracking-tight text-stone-800">
                     数据导出
                   </h3>
                 </div>
@@ -96,12 +96,12 @@ export function GovernanceDialog({
           {canEditData ? (
             <section className="space-y-3">
               <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-                <h3 className="text-[13px] font-medium tracking-tight text-zinc-800">
+                <h3 className="text-[13px] font-medium tracking-tight text-stone-800">
                   数据修正
                 </h3>
               </div>
               {isLoading ? (
-                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-[13px] text-zinc-500">
+                <div className="rounded-xl border border-dashed border-stone-200 bg-stone-50 px-4 py-8 text-center text-[13px] text-stone-500">
                   正在加载当日数据…
                 </div>
               ) : data ? (
@@ -115,7 +115,7 @@ export function GovernanceDialog({
                   onDateChange={setSelectedDate}
                 />
               ) : (
-                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-[13px] text-zinc-500">
+                <div className="rounded-xl border border-dashed border-stone-200 bg-stone-50 px-4 py-8 text-center text-[13px] text-stone-500">
                   当前日期没有可用数据。
                 </div>
               )}

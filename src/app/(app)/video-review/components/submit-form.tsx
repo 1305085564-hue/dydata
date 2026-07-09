@@ -274,11 +274,11 @@ function StartStep({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+        <p className="text-[12px] font-medium text-stone-400">
           Step 0
         </p>
-        <h3 className="mt-1 text-[18px] font-medium text-zinc-800">选择关联账号</h3>
-        <p className="mt-1 text-[12px] text-zinc-500">
+        <h3 className="mt-1 text-[18px] font-medium text-stone-800">选择关联账号</h3>
+        <p className="mt-1 text-[12px] text-stone-500">
           选择这条待发稿要发布到的账号；可暂不选，后续审核时再补。
         </p>
       </div>
@@ -292,15 +292,15 @@ function StartStep({
               "flex items-center justify-between rounded-xl border bg-white px-4 py-3 text-left transition-all active:translate-y-0",
               accountId === acc.id
                 ? "border-[#D97757] ring-1 ring-[#D97757]/20"
-                : "border-zinc-200 hover:border-zinc-300",
+                : "border-stone-200 hover:border-stone-300",
             )}
           >
             <div className="min-w-0">
-              <p className="truncate text-[14px] font-medium text-zinc-800">
+              <p className="truncate text-[13px] font-medium text-stone-800">
                 {acc.display_name}
               </p>
               {acc.content_direction ? (
-                <p className="mt-0.5 truncate text-[11px] text-zinc-400">
+                <p className="mt-0.5 truncate text-[12px] text-stone-400">
                   {acc.content_direction}
                 </p>
               ) : null}
@@ -317,12 +317,12 @@ function StartStep({
             "flex items-center justify-between rounded-xl border bg-white px-4 py-3 text-left transition-all active:translate-y-0",
             accountId === null
               ? "border-[#D97757] ring-1 ring-[#D97757]/20"
-              : "border-zinc-200 hover:border-zinc-300",
+              : "border-stone-200 hover:border-stone-300",
           )}
         >
           <div>
-            <p className="text-[14px] font-medium text-zinc-800">暂不关联</p>
-            <p className="mt-0.5 text-[11px] text-zinc-400">先提交话术，待定后再补账号</p>
+            <p className="text-[13px] font-medium text-stone-800">暂不关联</p>
+            <p className="mt-0.5 text-[12px] text-stone-400">先提交话术，待定后再补账号</p>
           </div>
           {accountId === null ? (
             <Check className="size-4 stroke-[2] text-[#D97757]" />
@@ -359,7 +359,7 @@ function CoreStep({
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="script_text" className="text-[13px] font-medium text-zinc-800">
+        <Label htmlFor="script_text" className="text-[13px] font-medium text-stone-800">
           话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
@@ -368,20 +368,20 @@ function CoreStep({
           onChange={(e) => onScriptChange(e.target.value)}
           placeholder="原封不动粘贴这条短视频准备使用的话术内容"
           autoFocus
-          className="min-h-[170px] resize-none rounded-xl border-transparent bg-zinc-100/70 text-[14px] leading-7 focus:border-zinc-200 focus:bg-white focus:ring-1 focus:ring-zinc-950/5"
+          className="min-h-[170px] resize-none rounded-lg bg-stone-50 border border-stone-200 text-[13px] leading-7 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40"
         />
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-[13px] font-medium text-zinc-800">
+          <Label className="text-[13px] font-medium text-stone-800">
             截图
-            <span className="ml-2 text-[11px] font-normal text-zinc-400">
+            <span className="ml-2 text-[12px] font-normal text-stone-400">
               建议 · 最多 {MAX_SCREENSHOTS} 张
             </span>
           </Label>
           {screenshots.length ? (
-            <span className="text-[11px] tabular-nums text-zinc-400">
+            <span className="text-[12px] tabular-nums text-stone-400">
               {screenshots.length} / {MAX_SCREENSHOTS}
             </span>
           ) : null}
@@ -391,7 +391,7 @@ function CoreStep({
           {screenshots.map((s, idx) => (
             <div
               key={s.path}
-              className="group relative size-24 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100"
+              className="group relative size-24 overflow-hidden rounded-lg border border-stone-200 bg-stone-100"
             >
               <button
                 type="button"
@@ -423,10 +423,10 @@ function CoreStep({
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className={cn(
-                "flex size-24 flex-col items-center justify-center gap-1 rounded-xl border border-dashed bg-white text-[11px] transition-colors",
+                "flex size-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed bg-white text-[12px] transition-colors",
                 isUploading
-                  ? "cursor-wait border-zinc-200 text-zinc-300"
-                  : "border-zinc-300 text-zinc-500 hover:border-[#D97757] hover:text-[#D97757]",
+                  ? "cursor-wait border-stone-200 text-stone-300"
+                  : "border-stone-300 text-stone-500 hover:border-[#D97757] hover:text-[#D97757]",
               )}
             >
               <Upload className="size-4 stroke-[1.5]" />
@@ -469,35 +469,35 @@ function ReviewStep({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+        <p className="text-[12px] font-medium text-stone-400">
           Review
         </p>
-        <h3 className="mt-1 text-[18px] font-medium text-zinc-800">确认提交</h3>
-        <p className="mt-1 text-[12px] text-zinc-500">
+        <h3 className="mt-1 text-[18px] font-medium text-stone-800">确认提交</h3>
+        <p className="mt-1 text-[12px] text-stone-500">
           确认无误后点击右下角「确认提交」，进入待审核队列。
         </p>
       </div>
 
-      <div className="rounded-xl bg-zinc-100/50 p-4 space-y-3">
+      <div className="border-t border-stone-100 pt-4 space-y-4">
         <div className="flex items-baseline justify-between">
-          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+          <span className="text-[12px] font-medium text-stone-400">
             账号
           </span>
-          <span className="text-[13px] text-zinc-800">
+          <span className="text-[13px] text-stone-800">
             {account ? account.display_name : "暂不关联"}
           </span>
         </div>
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+          <span className="text-[12px] font-medium text-stone-400">
             话术
           </span>
-          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-7 text-zinc-800">
-            {scriptText.trim() || <span className="text-zinc-400">未填写</span>}
+          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-7 text-stone-800">
+            {scriptText.trim() || <span className="text-stone-400">未填写</span>}
           </p>
         </div>
         {screenshots.length ? (
           <div>
-            <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+            <span className="text-[12px] font-medium text-stone-400">
               截图（{screenshots.length}）
             </span>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -506,7 +506,7 @@ function ReviewStep({
                   key={s.path}
                   type="button"
                   onClick={() => onPreview(idx)}
-                  className="size-16 overflow-hidden rounded-lg border border-zinc-200 bg-white"
+                  className="size-16 overflow-hidden rounded-lg border border-stone-200 bg-white"
                 >
                   <Image
                     src={`/api/violations/screenshot/${encodeURI(s.path)}`}
@@ -545,17 +545,17 @@ function FeedbackBanner({
     <div className="rounded-2xl border border-[#D97757]/30 bg-[#D97757]/[0.04] p-5 mb-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#D97757]">
+          <p className="text-[12px] font-medium text-[#D97757]">
             第 {currentRound} 轮整改
           </p>
-          <p className="mt-1 text-[13px] font-medium text-zinc-800">
+          <p className="mt-1 text-[13px] font-medium text-stone-800">
             管理上一轮的优化建议
           </p>
-          <p className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.7] text-zinc-700">
+          <p className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
             {rejection.feedback_text || "（未填写具体说明，请联系管理。）"}
           </p>
           {rejection.reviewer_name ? (
-            <p className="mt-2 text-[11px] text-zinc-400">
+            <p className="mt-2 text-[12px] text-stone-400">
               来自 {rejection.reviewer_name}
             </p>
           ) : null}
@@ -579,13 +579,13 @@ function FeedbackBanner({
           {expanded ? (
             <ul className="mt-3 space-y-2 border-t border-[#D97757]/20 pt-3">
               {history.map((h, i) => (
-                <li key={i} className="text-[12px] leading-[1.7] text-zinc-600">
-                  <span className="font-medium text-zinc-700">第 {h.round} 轮</span>
+                <li key={i} className="text-[12px] leading-[1.7] text-stone-600">
+                  <span className="font-medium text-stone-700">第 {h.round} 轮</span>
                   <span className="ml-2">
                     {h.action === "approve" ? "通过" : "打回"}
                   </span>
                   {h.feedback_text ? (
-                    <span className="ml-2 text-zinc-500">— {h.feedback_text}</span>
+                    <span className="ml-2 text-stone-500">— {h.feedback_text}</span>
                   ) : null}
                 </li>
               ))}

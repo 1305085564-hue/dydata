@@ -26,9 +26,9 @@ interface AnalyticsContentProps {
 function LoadingSpinner() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <div className="h-32 rounded-2xl bg-zinc-100" />
-      <div className="h-32 rounded-2xl bg-zinc-100" />
-      <div className="h-32 rounded-2xl bg-zinc-100" />
+      <div className="h-32 rounded-2xl bg-stone-100" />
+      <div className="h-32 rounded-2xl bg-stone-100" />
+      <div className="h-32 rounded-2xl bg-stone-100" />
     </div>
   );
 }
@@ -154,7 +154,7 @@ export function AnalyticsContent({
       <AnalyticsPageHeader preset={currentPreset} from={currentFrom} to={currentTo} onChange={handleRangeChange} />
 
       {error && !hasVisibleData ? (
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-[13px] text-[#C9604D] border-l-[2px] border-l-[#C9604D]">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] text-[#C9604D] border-l-[2px] border-l-[#C9604D]">
           加载失败：{error}
         </div>
       ) : null}

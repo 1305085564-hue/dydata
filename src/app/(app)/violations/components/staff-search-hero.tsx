@@ -27,17 +27,17 @@ export function StaffSearchHero({
   };
 
   return (
-    <section className={`rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 transition-opacity ${isPending ? "opacity-70" : ""}`}>
+    <section className={`rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 transition-opacity ${isPending ? "opacity-70" : ""}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="leading-tight">
-          <p className="text-[12px] font-medium text-zinc-500">先在已沉淀的话术里搜一遍</p>
-          <p className="text-[13px] text-zinc-400">
-            团队已积累 <span className="font-mono tabular-nums text-zinc-700">{totalCases}</span> 条案例
+          <p className="text-[12px] font-medium text-stone-500">先在已沉淀的话术里搜一遍</p>
+          <p className="text-[13px] text-stone-400">
+            团队已积累 <span className="font-mono tabular-nums text-stone-700">{totalCases}</span> 条案例
           </p>
         </div>
         <Link
           href="/violations/submit"
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50 active:translate-y-0"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-4 text-sm font-medium text-stone-800 transition-colors hover:bg-stone-50 active:translate-y-0"
         >
           <FilePlus2 className="size-4 stroke-[1.5]" />
           没找到，交一条
@@ -45,14 +45,14 @@ export function StaffSearchHero({
       </div>
 
       <form onSubmit={handleSubmit} className="relative mt-4">
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-stone-400" />
         <input
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="输入场景或关键词"
           disabled={isPending}
-          className="h-12 w-full rounded-lg border border-transparent bg-zinc-100/70 pl-11 pr-28 text-sm text-zinc-800 placeholder:text-zinc-400 transition-colors focus:border-zinc-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-950/5 disabled:opacity-60"
+          className="h-12 w-full rounded-lg border border-transparent bg-stone-100/70 pl-11 pr-28 text-sm text-stone-800 placeholder:text-stone-400 transition-colors focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5 disabled:opacity-60"
         />
         <button
           type="submit"

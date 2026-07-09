@@ -279,10 +279,10 @@ function EmptyBlock({
   onAction?: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-zinc-200 bg-white px-4 py-8 text-center">
+    <div className="rounded-2xl border border-dashed border-stone-200 bg-white px-4 py-8 text-center">
       <div className="space-y-1">
-        <p className="text-sm font-medium text-zinc-800">{title}</p>
-        <p className="text-xs text-zinc-500">{description}</p>
+        <p className="text-sm font-medium text-stone-800">{title}</p>
+        <p className="text-xs text-stone-500">{description}</p>
       </div>
       {actionLabel && onAction ? (
         <Button className="mt-4" size="sm" onClick={onAction}>
@@ -305,19 +305,19 @@ function SummaryCard({
   hint: string;
 }) {
   return (
-    <Card size="sm" className="border-zinc-200 bg-white">
+    <Card size="sm" className="border-stone-200 bg-white">
       <CardContent className="pt-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-400">
               {label}
             </div>
-            <div className="text-2xl font-semibold tracking-[-0.03em] text-zinc-800">
+            <div className="text-2xl font-semibold tracking-[-0.03em] text-stone-800">
               {value}
             </div>
-            <div className="text-xs leading-5 text-zinc-500">{hint}</div>
+            <div className="text-xs leading-5 text-stone-500">{hint}</div>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-zinc-800">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 bg-stone-100 text-stone-800">
             <Icon className="size-4" />
           </div>
         </div>
@@ -936,28 +936,28 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
     if (sectionKey === "runtime") {
       return (
         <div className="grid gap-4 lg:grid-cols-[1.3fr,1fr,1fr]">
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-500">
-            <p className="font-medium text-zinc-800">当前固定规则</p>
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm leading-6 text-stone-500">
+            <p className="font-medium text-stone-800">当前固定规则</p>
             <p className="mt-2">1. 首条默认结果模式，只出 1 个主版本。</p>
             <p>2. 第二轮开始固定聊天模式，不再返回版本卡。</p>
             <p>3. 顶部强框架 / 强语感 / 真实模型 / 普通模式会自动清空并锁定。</p>
           </div>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-zinc-800">输出上限</span>
+            <span className="text-sm font-medium text-stone-800">输出上限</span>
             <Input
               value={runtimeForm.output_token_limit}
               onChange={(event) => setRuntimeForm((prev) => ({ ...prev, output_token_limit: event.target.value }))}
               inputMode="numeric"
             />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               现在填的是 {runtimeForm.output_token_limit || "0"} tokens，约等于{" "}
               {estimateChars(Number.parseInt(runtimeForm.output_token_limit || "0", 10) || 0)} 个汉字。
             </p>
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-zinc-800">上下文条数</span>
+            <span className="text-sm font-medium text-stone-800">上下文条数</span>
             <Input
               value={runtimeForm.context_message_limit}
               onChange={(event) =>
@@ -965,7 +965,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               }
               inputMode="numeric"
             />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-stone-500">
               最近保留多少条历史消息。系统内部仍会额外做总长度安全截断，避免请求被拖死。
             </p>
           </label>
@@ -984,7 +984,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {bundle.fixedModes.map((row) => (
-            <Card key={row.id} size="sm" className="border-zinc-200 bg-white">
+            <Card key={row.id} size="sm" className="border-stone-200 bg-white">
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
@@ -994,22 +994,22 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                   {getStatusBadge(row.is_enabled)}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm text-zinc-500">
+              <CardContent className="space-y-3 text-sm text-stone-500">
                 <div className="grid gap-2 text-xs">
-                  <div className="rounded-2xl bg-zinc-50 px-3 py-2">
-                    <span className="font-semibold text-zinc-800">key：</span>
+                  <div className="rounded-2xl bg-stone-50 px-3 py-2">
+                    <span className="font-semibold text-stone-800">key：</span>
                     <span className="font-mono">{row.key}</span>
                   </div>
-                  <div className="rounded-2xl bg-zinc-50 px-3 py-2">
-                    <span className="font-semibold text-zinc-800">绑定真实模型：</span>
+                  <div className="rounded-2xl bg-stone-50 px-3 py-2">
+                    <span className="font-semibold text-stone-800">绑定真实模型：</span>
                     {primaryRouteByModelViewId.get(row.model_view_id)?.actual_model ?? row.model_view?.label ?? "未绑定"}
                   </div>
-                  <div className="rounded-2xl bg-zinc-50 px-3 py-2">
-                    <span className="font-semibold text-zinc-800">固定字数：</span>
+                  <div className="rounded-2xl bg-stone-50 px-3 py-2">
+                    <span className="font-semibold text-stone-800">固定字数：</span>
                     {row.length_preset?.name ?? "跟随默认字数"}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm leading-6 text-zinc-800">
+                <div className="rounded-2xl border border-stone-200 bg-stone-50 px-3 py-3 text-sm leading-6 text-stone-800">
                   {row.fixed_prompt}
                 </div>
                 <div className="flex justify-end gap-2">
@@ -1058,14 +1058,14 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
           <TableBody>
             {bundle.modelRoutes.map((row) => (
               <TableRow key={row.id} className="group">
-                <TableCell className="font-mono text-xs text-zinc-700">{row.actual_model}</TableCell>
+                <TableCell className="font-mono text-xs text-stone-700">{row.actual_model}</TableCell>
                 <TableCell>
                   <div className="space-y-1">
-                    <div className="font-medium text-zinc-800">{row.channel?.name ?? "已丢失渠道"}</div>
-                    <div className="text-xs text-zinc-500">{getRouteChannelStatus(row)}</div>
+                    <div className="font-medium text-stone-800">{row.channel?.name ?? "已丢失渠道"}</div>
+                    <div className="text-xs text-stone-500">{getRouteChannelStatus(row)}</div>
                   </div>
                 </TableCell>
-                <TableCell className="max-w-[220px] whitespace-normal text-sm text-zinc-500">
+                <TableCell className="max-w-[220px] whitespace-normal text-sm text-stone-500">
                   {row.workflow_step ? `${row.workflow_step.name} (${row.workflow_step.step_key})` : "通用"}
                 </TableCell>
                 <TableCell>{row.priority}</TableCell>
@@ -1119,13 +1119,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <TableRow key={row.id} className="group">
                 <TableCell>
                   <div className="space-y-1">
-                    <div className="font-medium text-zinc-800">{row.name}</div>
-                    <div className="max-w-[260px] whitespace-normal text-xs text-zinc-500">
+                    <div className="font-medium text-stone-800">{row.name}</div>
+                    <div className="max-w-[260px] whitespace-normal text-xs text-stone-500">
                       {row.description || "—"}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-zinc-500">{row.key}</TableCell>
+                <TableCell className="font-mono text-xs text-stone-500">{row.key}</TableCell>
                 <TableCell>{row.sort_order}</TableCell>
                 <TableCell>{getStatusBadge(row.is_enabled, row.is_default)}</TableCell>
                 <TableCell className="text-right">
@@ -1176,13 +1176,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <TableRow key={row.id} className="group">
                 <TableCell>
                   <div className="space-y-1">
-                    <div className="font-medium text-zinc-800">{row.name}</div>
-                    <div className="max-w-[260px] whitespace-normal text-xs text-zinc-500">
+                    <div className="font-medium text-stone-800">{row.name}</div>
+                    <div className="max-w-[260px] whitespace-normal text-xs text-stone-500">
                       {row.description || "—"}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-zinc-500">{row.key}</TableCell>
+                <TableCell className="font-mono text-xs text-stone-500">{row.key}</TableCell>
                 <TableCell>{row.sort_order}</TableCell>
                 <TableCell>{getStatusBadge(row.is_enabled, row.is_default)}</TableCell>
                 <TableCell className="text-right">
@@ -1219,8 +1219,8 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
     ) : (
       <div className="space-y-4">
         {workflowGroups.map(({ workflow, steps }) => (
-          <Card key={workflow.id} size="sm" className="border-zinc-200 bg-white">
-            <CardHeader className="border-b border-zinc-200">
+          <Card key={workflow.id} size="sm" className="border-stone-200 bg-white">
+            <CardHeader className="border-b border-stone-200">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -1278,13 +1278,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                       <TableRow key={step.id} className="group">
                         <TableCell>
                           <div className="space-y-1">
-                            <div className="font-medium text-zinc-800">{step.name}</div>
-                            <div className="max-w-[320px] whitespace-normal text-xs text-zinc-500">
+                            <div className="font-medium text-stone-800">{step.name}</div>
+                            <div className="max-w-[320px] whitespace-normal text-xs text-stone-500">
                               {step.description || "—"}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-zinc-500">{step.step_key}</TableCell>
+                        <TableCell className="font-mono text-xs text-stone-500">{step.step_key}</TableCell>
                         <TableCell>
                           {step.model_view_id
                             ? primaryRouteByModelViewId.get(step.model_view_id)?.actual_model ?? step.model_view?.label ?? "未绑定"
@@ -1342,7 +1342,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                   "group relative inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 pl-3.5 text-[12px] font-medium transition-colors duration-150 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60",
                   isActive
                     ? "border-[#D97757]/40 bg-white text-[#D97757]"
-                    : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800",
+                    : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-800",
                 )}
               >
                 <span
@@ -1358,7 +1358,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                   <span
                     className={cn(
                       "tabular-nums text-[11px]",
-                      isActive ? "text-[#D97757]/70" : "text-zinc-400",
+                      isActive ? "text-[#D97757]/70" : "text-stone-400",
                     )}
                   >
                     {section.chipCount}
@@ -1388,15 +1388,15 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 exit={{ opacity: 0, scale: 0.96, y: -4 }}
                 transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                 style={{ transformOrigin: "top right" }}
-                className="absolute right-0 top-full z-30 mt-2 w-[min(720px,calc(100vw-3rem))] origin-top-right rounded-2xl border border-zinc-200 bg-white p-5 ring-1 ring-foreground/10 shadow-sm"
+                className="absolute right-0 top-full z-30 mt-2 w-[min(720px,calc(100vw-3rem))] origin-top-right rounded-2xl border border-stone-200 bg-white p-5 ring-1 ring-foreground/10 shadow-sm"
               >
-                <div className="flex flex-col gap-3 border-b border-zinc-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-3 border-b border-stone-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-900">
+                    <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-stone-900">
                       {ActiveSectionIcon ? <ActiveSectionIcon className="size-4 text-[#D97757]" /> : null}
                       <span>{activeSectionMeta.label}</span>
                     </div>
-                    <p className="text-xs text-zinc-500">{activeSectionMeta.summary}</p>
+                    <p className="text-xs text-stone-500">{activeSectionMeta.summary}</p>
                   </div>
                   <div className="flex items-center justify-end gap-2">
                     {renderEmbeddedPanelAction(activeSectionMeta.key)}
@@ -1405,7 +1405,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                       variant="ghost"
                       size="icon"
                       onClick={() => setActiveSection(null)}
-                      className="size-8 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+                      className="size-8 text-stone-500 hover:bg-stone-100 hover:text-stone-800"
                     >
                       <X className="size-4" />
                       <span className="sr-only">关闭</span>
@@ -1452,7 +1452,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
       )}
 
       {embedded ? null : (
-        <Card className="border-zinc-200 bg-white">
+        <Card className="border-stone-200 bg-white">
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -1467,7 +1467,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-zinc-500">
+          <CardContent className="space-y-3 text-sm leading-6 text-stone-500">
             <p>首条消息固定走结果模式，默认只出 1 个主版本；第二轮开始固定进入正常聊天，不再回版本卡。</p>
             <p>最关键的是先确认“固定套餐 → 真实模型”能对应到可用渠道，再确认输出上限和上下文条数是否符合线上体验。</p>
           </CardContent>
@@ -1475,7 +1475,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
       )}
 
       {embedded ? null : (
-        <Card className="border-zinc-200 bg-white">
+        <Card className="border-stone-200 bg-white">
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <button
@@ -1486,14 +1486,14 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               >
                 <ChevronDown
                   className={cn(
-                    "mt-1 size-4 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-150",
+                    "mt-1 size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-150",
                     isSectionActive("runtime") ? "" : "-rotate-90",
                   )}
                   aria-hidden
                 />
                 <div className="flex-1">
                   <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                    <Ruler className="size-4 text-zinc-800" />
+                    <Ruler className="size-4 text-stone-800" />
                     运行规则
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -1520,13 +1520,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
       ) : null}
 
       {isLoading ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-8 text-sm text-zinc-500">
+        <div className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-8 text-sm text-stone-500">
           <Skeleton className="size-4 rounded-full" />
           正在加载文案改写...
         </div>
       ) : embedded ? null : (
         <div className="space-y-6">
-              <Card className="border-zinc-200 bg-white">
+              <Card className="border-stone-200 bg-white">
                 <CardHeader>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <button
@@ -1537,14 +1537,14 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                     >
                       <ChevronDown
                         className={cn(
-                          "mt-1 size-4 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-150",
+                          "mt-1 size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-150",
                           isSectionActive("fixedModes") ? "" : "-rotate-90",
                         )}
                         aria-hidden
                       />
                       <div className="flex-1">
                         <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                          <Sparkles className="size-4 text-zinc-800" />
+                          <Sparkles className="size-4 text-stone-800" />
                           固定能力套餐
                         </CardTitle>
                         <CardDescription className="mt-1">
@@ -1563,7 +1563,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 {isSectionActive("fixedModes") ? <CardContent>{renderEmbeddedSectionContent("fixedModes")}</CardContent> : null}
               </Card>
 
-              <Card className="border-zinc-200 bg-white">
+              <Card className="border-stone-200 bg-white">
                 <CardHeader>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <button
@@ -1574,14 +1574,14 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                     >
                       <ChevronDown
                         className={cn(
-                          "mt-1 size-4 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-150",
+                          "mt-1 size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-150",
                           isSectionActive("modelRoutes") ? "" : "-rotate-90",
                         )}
                         aria-hidden
                       />
                       <div className="flex-1">
                         <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                          <Route className="size-4 text-zinc-800" />
+                          <Route className="size-4 text-stone-800" />
                           真实模型
                         </CardTitle>
                         <CardDescription className="mt-1">
@@ -1603,7 +1603,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               </Card>
 
               <div className="grid gap-6 xl:grid-cols-2">
-                <Card className="border-zinc-200 bg-white">
+                <Card className="border-stone-200 bg-white">
                   <CardHeader>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <button
@@ -1614,14 +1614,14 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                       >
                         <ChevronDown
                           className={cn(
-                            "mt-1 size-4 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-150",
+                            "mt-1 size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-150",
                             isSectionActive("modes") ? "" : "-rotate-90",
                           )}
                           aria-hidden
                         />
                         <div className="flex-1">
                           <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                            <Sparkles className="size-4 text-zinc-800" />
+                            <Sparkles className="size-4 text-stone-800" />
                             模式
                           </CardTitle>
                           <CardDescription className="mt-1">
@@ -1640,7 +1640,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                   {isSectionActive("modes") ? <CardContent>{renderEmbeddedSectionContent("modes")}</CardContent> : null}
                 </Card>
 
-                <Card className="border-zinc-200 bg-white">
+                <Card className="border-stone-200 bg-white">
                   <CardHeader>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <button
@@ -1651,14 +1651,14 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                       >
                         <ChevronDown
                           className={cn(
-                            "mt-1 size-4 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-150",
+                            "mt-1 size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-150",
                             isSectionActive("lengthPresets") ? "" : "-rotate-90",
                           )}
                           aria-hidden
                         />
                         <div className="flex-1">
                           <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                            <Ruler className="size-4 text-zinc-800" />
+                            <Ruler className="size-4 text-stone-800" />
                             字数预设
                           </CardTitle>
                           <CardDescription className="mt-1">
@@ -1680,7 +1680,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 </Card>
               </div>
 
-              <Card className="border-zinc-200 bg-white">
+              <Card className="border-stone-200 bg-white">
                 <CardHeader>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <button
@@ -1691,14 +1691,14 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                     >
                       <ChevronDown
                         className={cn(
-                          "mt-1 size-4 shrink-0 stroke-[1.5] text-zinc-400 transition-transform duration-150",
+                          "mt-1 size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-150",
                           isSectionActive("workflows") ? "" : "-rotate-90",
                         )}
                         aria-hidden
                       />
                       <div className="flex-1">
                         <CardTitle className="flex items-center gap-2 font-semibold tracking-tight">
-                          <GitBranch className="size-4 text-zinc-800" />
+                          <GitBranch className="size-4 text-stone-800" />
                           自动流程与步骤
                         </CardTitle>
                         <CardDescription className="mt-1">
@@ -1790,9 +1790,9 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <Label htmlFor="fixed-mode-sort">排序</Label>
                 <Input id="fixed-mode-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">启用</span>
+                  <span className="text-sm text-stone-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1852,9 +1852,9 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <Label htmlFor="route-weight">权重</Label>
                 <Input id="route-weight" value={textField("weight")} onChange={(e) => setField("weight", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 md:col-span-2">
+              <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 md:col-span-2">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">启用这个真实模型</span>
+                  <span className="text-sm text-stone-800">启用这个真实模型</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1883,13 +1883,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <Label htmlFor="mode-sort">排序</Label>
                 <Input id="mode-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">设为默认</span>
+                  <span className="text-sm text-stone-800">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">启用</span>
+                  <span className="text-sm text-stone-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1918,13 +1918,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <Label htmlFor="length-sort">排序</Label>
                 <Input id="length-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">设为默认</span>
+                  <span className="text-sm text-stone-800">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">启用</span>
+                  <span className="text-sm text-stone-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -1949,13 +1949,13 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <Label htmlFor="workflow-sort">排序</Label>
                 <Input id="workflow-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">设为默认</span>
+                  <span className="text-sm text-stone-800">设为默认</span>
                   <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">启用</span>
+                  <span className="text-sm text-stone-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
@@ -2023,9 +2023,9 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <Label htmlFor="step-sort">排序</Label>
                 <Input id="step-sort" value={textField("sort_order")} onChange={(e) => setField("sort_order", e.target.value)} inputMode="numeric" />
               </div>
-              <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm text-zinc-800">启用</span>
+                  <span className="text-sm text-stone-800">启用</span>
                   <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>

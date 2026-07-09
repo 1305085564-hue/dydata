@@ -12,7 +12,7 @@ export default function GrowthLoading() {
       {/* 状态卡片 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
+          <div key={i} className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-6 w-20" />
             <Skeleton className="h-3 w-12" />
@@ -21,7 +21,7 @@ export default function GrowthLoading() {
       </div>
 
       {/* 能力维度 */}
-      <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-5">
+      <div className="space-y-3 rounded-2xl border border-stone-200 bg-white p-5">
         <Skeleton className="h-5 w-24" />
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -34,7 +34,7 @@ export default function GrowthLoading() {
       <Skeleton className="h-[280px]" />
 
       {/* 诊断卡 */}
-      <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-5">
+      <div className="space-y-3 rounded-2xl border border-stone-200 bg-white p-5">
         <Skeleton className="h-5 w-20" />
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (

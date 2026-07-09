@@ -76,7 +76,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       : accounts.find((item) => item.id === filters.accountId)?.name ?? "全部账号";
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-stone-200 bg-white p-3">
       <Select
         value={filters.profileId}
         onValueChange={(value) => updateFilter("profileId", value || "all")}
@@ -118,7 +118,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           onChange={(event) => updateFilter("startDate", event.target.value)}
           className="h-8 w-32 rounded-lg bg-white text-[12px]"
         />
-        <span className="text-zinc-300">—</span>
+        <span className="text-stone-300">—</span>
         <Input
           type="date"
           value={filters.endDate}
@@ -146,7 +146,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 rounded-lg text-[12px] text-zinc-400"
+        className="h-8 rounded-lg text-[12px] text-stone-400"
         onClick={handleReset}
       >
         重置

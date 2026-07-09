@@ -40,17 +40,17 @@ const 标杆角标配置: Record<
   同标签最佳: {
     文案: "同标签最佳",
     icon: Tags,
-    className: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+    className: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
   },
   单项最佳: {
     文案: "单项最佳",
     icon: Target,
-    className: "border-zinc-200 bg-zinc-50 text-zinc-800",
+    className: "border-stone-200 bg-stone-50 text-stone-800",
   },
   近期跃迁: {
     文案: "近期跃迁",
     icon: Sparkles,
-    className: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+    className: "border-stone-200 bg-stone-50 text-[#D99E55]",
   },
 }
 
@@ -66,8 +66,8 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
   return (
     <div className="space-y-2.5 rounded-xl bg-white p-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] font-medium text-zinc-800">{item.指标名}</span>
-        <span className="text-[11px] font-mono tabular-nums text-zinc-500">
+        <span className="text-[13px] font-medium text-stone-800">{item.指标名}</span>
+        <span className="text-[11px] font-mono tabular-nums text-stone-500">
           {格式化指标(item.我的值, item.单位, item.精度)} / {" "}
           {格式化指标(item.标杆值, item.单位, item.精度)}
         </span>
@@ -75,28 +75,28 @@ function 对比条({ item }: { item: 核心指标差距项 }) {
 
       <div className="space-y-2">
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-zinc-500">
+          <div className="flex items-center justify-between text-[11px] text-stone-500">
             <span>我</span>
             <span className="font-mono tabular-nums">
               {格式化指标(item.我的值, item.单位, item.精度)}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+          <div className="h-2 overflow-hidden rounded-full bg-stone-100">
             <div
-              className="h-full rounded-full bg-zinc-300 transition-[width] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-full rounded-full bg-stone-300 transition-[width] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
               style={{ width: `${我的占比}%` }}
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-zinc-500">
+          <div className="flex items-center justify-between text-[11px] text-stone-500">
             <span>标杆</span>
             <span className="font-mono tabular-nums">
               {格式化指标(item.标杆值, item.单位, item.精度)}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+          <div className="h-2 overflow-hidden rounded-full bg-stone-100">
             <div
               className="h-full rounded-full bg-[#D97757] transition-[width] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
               style={{ width: `${标杆占比}%` }}
@@ -128,7 +128,7 @@ export function BenchmarkCard({
         className
       )}
     >
-      <div className="gap-3 border-b border-zinc-200 p-5">
+      <div className="gap-3 border-b border-stone-200 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">
             <Badge
@@ -142,11 +142,11 @@ export function BenchmarkCard({
               {配置.文案}
             </Badge>
             <div className="space-y-1">
-              <h3 className="text-[18px] font-medium tracking-tight text-zinc-800">
+              <h3 className="text-[18px] font-medium tracking-tight text-stone-800">
                 {账号名}
               </h3>
               {账号标识 ? (
-                <p className="text-[13px] text-zinc-500">
+                <p className="text-[13px] text-stone-500">
                   {账号标识}
                 </p>
               ) : null}
@@ -158,7 +158,7 @@ export function BenchmarkCard({
               <Badge
                 key={tag}
                 variant="outline"
-                className="rounded-full border-zinc-200 bg-white px-2.5 text-[11px] font-medium text-zinc-500"
+                className="rounded-full border-stone-200 bg-white px-2.5 text-[11px] font-medium text-stone-500"
               >
                 {tag}
               </Badge>
@@ -166,7 +166,7 @@ export function BenchmarkCard({
           </div>
         </div>
 
-        <p className="mt-3 max-w-3xl text-[13px] leading-[1.7] text-zinc-500">{推荐理由}</p>
+        <p className="mt-3 max-w-3xl text-[13px] leading-[1.7] text-stone-500">{推荐理由}</p>
       </div>
 
       <div className="p-5">
@@ -177,13 +177,13 @@ export function BenchmarkCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between bg-zinc-50 px-5 py-3">
-        <span className="text-[13px] text-zinc-500">
+      <div className="flex items-center justify-between bg-stone-50 px-5 py-3">
+        <span className="text-[13px] text-stone-500">
           从代表样本里拆你最需要补的动作细节
         </span>
         <a
           href={代表样本入口.链接}
-          className="inline-flex items-center gap-1 text-[13px] font-semibold text-zinc-800 transition-[opacity,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-70"
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-stone-800 transition-[opacity,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-70"
         >
           {代表样本入口.标题 ?? "查看 TA 的作品"}
           <ArrowUpRight className="size-4 stroke-[1.5]" />

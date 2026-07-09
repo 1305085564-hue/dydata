@@ -130,7 +130,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
             <select
               id="teamId"
               name="teamId"
-              className="flex h-8 w-full rounded-lg border border-transparent bg-zinc-50 px-3 text-[13px] text-zinc-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+              className="flex h-8 w-full rounded-lg border border-transparent bg-stone-50 px-3 text-[13px] text-stone-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-stone-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-950/5"
               defaultValue=""
               disabled={isLoadingTeams || teams.length === 0}
               required
@@ -144,7 +144,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
                 </option>
               ))}
             </select>
-            <p className="text-[12px] text-zinc-400">
+            <p className="text-[12px] text-stone-400">
               {teamLoadError ? "团队列表暂时加载失败，请刷新后重试" : "提交后由管理员审核，通过后将归属该团队"}
             </p>
           </div>
@@ -167,7 +167,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
                   {passwordStrengthConfig.map((item, idx) => (
                     <span
                       key={item.level}
-                      className="h-[3px] flex-1 rounded-full bg-zinc-100 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="h-[3px] flex-1 rounded-full bg-stone-100 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       style={
                         idx < passwordStrengthIndex
                           ? { backgroundColor: activeConfig?.color }
@@ -190,9 +190,9 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
 
 
 
-          <p className="text-center text-[13px] text-zinc-500">
+          <p className="text-center text-[13px] text-stone-500">
             已有账号？
-            <Link className="ml-1 text-zinc-800 underline underline-offset-4" href="/login">
+            <Link className="ml-1 text-stone-800 underline underline-offset-4" href="/login">
               去登录
             </Link>
           </p>

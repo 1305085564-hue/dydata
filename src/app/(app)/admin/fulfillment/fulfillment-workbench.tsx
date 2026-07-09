@@ -558,11 +558,11 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
       {/* P0 — 待处理工作流 (Tab 整合：异常处理队列 与 待处理申诉列表) */}
       <section className="space-y-3">
         <Tabs defaultValue="exceptions" className="w-full">
-          <div className="flex items-center justify-between border-b border-zinc-200/50 pb-2">
+          <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
             <TabsList variant="line">
               <TabsTrigger value="exceptions" className="text-[14px]">
                 待处理异常
-                <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-600">
                   {exceptionMembers.length}
                 </span>
               </TabsTrigger>
@@ -574,7 +574,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
                     {pendingAppeals.length}
                   </span>
                 ) : (
-                  <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                  <span className="ml-1.5 font-mono text-[11px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-600">
                     0
                   </span>
                 )}
@@ -584,9 +584,9 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
 
           <TabsContent value="exceptions" className="mt-3">
             {isLoadingCalendar ? (
-              <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
+              <div className="flex items-center justify-center py-12 rounded-2xl border border-stone-200 bg-white">
                 <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-zinc-500">正在刷新数据...</span>
+                <span className="text-[13px] text-stone-500">正在刷新数据...</span>
               </div>
             ) : (
               <ExceptionQueue
@@ -604,36 +604,36 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
 
           <TabsContent value="appeals" className="mt-3">
             {isSubmittingAppeal ? (
-              <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
+              <div className="flex items-center justify-center py-12 rounded-2xl border border-stone-200 bg-white">
                 <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-zinc-500">正在处理申诉...</span>
+                <span className="text-[13px] text-stone-500">正在处理申诉...</span>
               </div>
             ) : pendingAppeals.length === 0 ? (
-              <div className="rounded-2xl border border-zinc-200/50 bg-white py-12 shadow-sm">
+              <div className="rounded-2xl border border-stone-200/50 bg-white py-12 shadow-sm">
                 <EmptyState title="当前无待处理申诉" description="所有成员的申诉请求已处理完毕" />
               </div>
             ) : (
-              <div className="rounded-2xl border border-zinc-200/50 bg-white overflow-hidden shadow-sm">
+              <div className="rounded-2xl border border-stone-200/50 bg-white overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-[13px]">
                     <thead>
-                      <tr className="border-b border-zinc-200/50 bg-zinc-50/50">
-                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">成员</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">申诉日期</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">申诉原因</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">提交时间</th>
-                        <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">操作</th>
+                      <tr className="border-b border-stone-200/50 bg-stone-50/50">
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">成员</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">申诉日期</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">申诉原因</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">提交时间</th>
+                        <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pendingAppeals.map((appeal) => (
-                        <tr key={appeal.id} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/30 transition-colors">
-                          <td className="px-3 py-2.5 font-medium text-zinc-800">{appeal.user_name || "未知成员"}</td>
+                        <tr key={appeal.id} className="border-b border-stone-100 last:border-b-0 hover:bg-stone-50/30 transition-colors">
+                          <td className="px-3 py-2.5 font-medium text-stone-800">{appeal.user_name || "未知成员"}</td>
                           <td className="px-3 py-2.5 font-mono text-[12px]">{appeal.record_date}</td>
-                          <td className="px-3 py-2.5 text-zinc-600 max-w-[240px] truncate" title={appeal.reason}>
+                          <td className="px-3 py-2.5 text-stone-600 max-w-[240px] truncate" title={appeal.reason}>
                             {appeal.reason}
                           </td>
-                          <td className="px-3 py-2.5 text-zinc-400 font-mono text-[11px]">
+                          <td className="px-3 py-2.5 text-stone-400 font-mono text-[11px]">
                             {new Date(appeal.created_at).toLocaleString("zh-CN")}
                           </td>
                           <td className="px-3 py-2.5 text-right">
@@ -671,9 +671,9 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
       <section>
         {isLoadingCalendar ? (
           <div className="flex flex-col gap-3">
-            <button disabled className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left">
-              <span className="text-[14px] font-semibold text-zinc-400">正在刷新日历数据...</span>
-              <span className="size-4 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
+            <button disabled className="flex w-full items-center justify-between rounded-xl border border-stone-200 bg-white px-4 py-3 text-left">
+              <span className="text-[14px] font-semibold text-stone-400">正在刷新日历数据...</span>
+              <span className="size-4 animate-spin rounded-full border-2 border-stone-400 border-t-transparent" />
             </button>
           </div>
         ) : (

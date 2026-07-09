@@ -66,7 +66,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
         {/* 顶部操作区 */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-baseline gap-2">
-            <h2 className="text-[14px] font-bold text-stone-800">已发作品案例</h2>
+            <h2 className="text-[13px] font-bold text-stone-800">已发作品案例</h2>
             <span className="font-mono text-[12px] tabular-nums text-stone-400">
               {totalText}
             </span>
@@ -80,7 +80,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
               className={cn(
                 "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[12px] font-medium transition-colors active:scale-95",
                 onlyMine
-                  ? "border-[#D97757] bg-[#D97757]/5 text-[#D97757]"
+                  ? "border-[#8AA8C7] bg-[#8AA8C7]/10 text-[#8AA8C7]"
                   : "border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:text-stone-800",
               )}
             >
@@ -97,7 +97,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder="搜已发文案内容..."
-                  className="h-9 w-48 rounded-lg border border-transparent bg-stone-100/70 pl-8 pr-3 text-[12px] text-stone-800 placeholder:text-stone-400 transition-all focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 sm:w-64"
+                  className="h-9 w-48 rounded-lg border border-stone-200 bg-stone-50 pl-8 pr-3 text-[12px] text-stone-800 placeholder:text-stone-400 transition-all focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 sm:w-64"
                 />
               </div>
             </form>
@@ -111,7 +111,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
               <Search className="size-5 stroke-[1.5]" />
             </div>
             <p className="mt-3 text-[13px] font-medium text-stone-700">没有符合条件的已发案例</p>
-            <p className="mt-1 text-[11px] text-stone-500">可能是查询条件有误，或者今日大家还没有登记过作品凭证</p>
+            <p className="mt-1 text-[12px] text-stone-500">可能是查询条件有误，或者今日大家还没有登记过作品凭证</p>
             <button
               type="button"
               onClick={() => {
@@ -124,7 +124,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredItems.map((item) => (
               <CaseCard
                 key={item.id}

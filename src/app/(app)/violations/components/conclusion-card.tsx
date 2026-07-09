@@ -18,11 +18,11 @@ export function ConclusionCard({
   if (!hasReasonTags && !hasConclusion && !hasSuggestion) return null;
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5">
+    <div className="rounded-xl border border-stone-200 bg-white p-5">
       {/* Eyebrow */}
       <div className="flex items-center gap-2">
         <span className="size-1.5 rounded-full bg-[#D97757]" />
-        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
           审核结论
         </span>
       </div>
@@ -49,11 +49,11 @@ export function ConclusionCard({
           <div>
             <div className="flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-[#D99E55]" />
-              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
                 管理员结论
               </span>
             </div>
-            <p className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.7] text-zinc-700">
+            <p className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
               {adminConclusion}
             </p>
           </div>
@@ -62,11 +62,11 @@ export function ConclusionCard({
           <div>
             <div className="flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
                 建议动作
               </span>
             </div>
-            <p className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.7] text-zinc-700">
+            <p className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
               {suggestedAction}
             </p>
           </div>

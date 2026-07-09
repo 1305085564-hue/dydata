@@ -38,7 +38,7 @@ const ACTION_META: Record<string, { label: string; variant: BadgeVariant }> = {
 
 export function AuditLogList({ logs }: AuditLogListProps) {
   if (logs.length === 0) {
-    return <p className="py-4 text-[13px] text-zinc-400">暂无操作记录</p>;
+    return <p className="py-4 text-[13px] text-stone-400">暂无操作记录</p>;
   }
 
   return (
@@ -46,7 +46,7 @@ export function AuditLogList({ logs }: AuditLogListProps) {
       <div className="hidden sm:block">
         <Table>
           <TableHeader>
-            <TableRow className="border-zinc-200 hover:bg-transparent">
+            <TableRow className="border-stone-200 hover:bg-transparent">
               <TableHead>时间</TableHead>
               <TableHead>操作人</TableHead>
               <TableHead>操作</TableHead>
@@ -60,8 +60,8 @@ export function AuditLogList({ logs }: AuditLogListProps) {
                 variant: "neutral" as BadgeVariant,
               };
               return (
-                <TableRow key={log.id} className="border-zinc-200">
-                  <TableCell className="whitespace-nowrap text-[13px] text-zinc-500">
+                <TableRow key={log.id} className="border-stone-200">
+                  <TableCell className="whitespace-nowrap text-[13px] text-stone-500">
                     {new Date(log.created_at).toLocaleString("zh-CN", {
                       month: "2-digit",
                       day: "2-digit",
@@ -69,13 +69,13 @@ export function AuditLogList({ logs }: AuditLogListProps) {
                       minute: "2-digit",
                     })}
                   </TableCell>
-                  <TableCell className="text-[13px] text-zinc-800">
+                  <TableCell className="text-[13px] text-stone-800">
                     {log.user_name ?? log.user_id.slice(0, 8)}
                   </TableCell>
                   <TableCell>
                     <Badge variant={meta.variant}>{meta.label}</Badge>
                   </TableCell>
-                  <TableCell className="max-w-[300px] truncate text-[13px] text-zinc-500">
+                  <TableCell className="max-w-[300px] truncate text-[13px] text-stone-500">
                     {log.detail ?? "-"}
                   </TableCell>
                 </TableRow>
@@ -94,11 +94,11 @@ export function AuditLogList({ logs }: AuditLogListProps) {
           return (
             <div
               key={log.id}
-              className="space-y-1 rounded-xl border border-zinc-200 bg-white p-3"
+              className="space-y-1 rounded-xl border border-stone-200 bg-white p-3"
             >
               <div className="flex items-center justify-between">
                 <Badge variant={meta.variant}>{meta.label}</Badge>
-                <span className="text-[12px] text-zinc-500">
+                <span className="text-[12px] text-stone-500">
                   {new Date(log.created_at).toLocaleString("zh-CN", {
                     month: "2-digit",
                     day: "2-digit",
@@ -107,11 +107,11 @@ export function AuditLogList({ logs }: AuditLogListProps) {
                   })}
                 </span>
               </div>
-              <p className="text-[12px] text-zinc-500">
+              <p className="text-[12px] text-stone-500">
                 {log.user_name ?? log.user_id.slice(0, 8)}
               </p>
               {log.detail && (
-                <p className="truncate text-[12px] text-zinc-500">{log.detail}</p>
+                <p className="truncate text-[12px] text-stone-500">{log.detail}</p>
               )}
             </div>
           );

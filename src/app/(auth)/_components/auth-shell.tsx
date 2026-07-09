@@ -21,14 +21,14 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         </div>
 
         <div className="mb-10 space-y-3 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-400">
+          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
             {eyebrow}
           </p>
-          <h1 className="text-[24px] font-semibold tracking-tight text-zinc-800">
+          <h1 className="text-[24px] font-semibold tracking-tight text-stone-800">
             {title}
           </h1>
           {subtitle ? (
-            <p className="text-[13px] leading-[1.7] text-zinc-500">{subtitle}</p>
+            <p className="text-[13px] leading-[1.7] text-stone-500">{subtitle}</p>
           ) : null}
         </div>
 

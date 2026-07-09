@@ -120,14 +120,14 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
                 className={cn(
                   "inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[13px] font-semibold tracking-tight transition-all duration-200 ease-out active:translate-y-0",
                   active
-                    ? "bg-zinc-150 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                    : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300",
+                    ? "bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-white"
+                    : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-300",
                 )}
               >
                 <item.icon
                   className={cn(
                     "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors",
-                    active ? "text-[#D97757]" : "text-zinc-400"
+                    active ? "text-[#D97757]" : "text-stone-400"
                   )}
                 />
                 <span className="whitespace-nowrap">{item.label}</span>
@@ -137,7 +137,7 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
                       "inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[9px] font-black tabular-nums transition-colors duration-150 ml-1.5",
                       active
                         ? "bg-[#D97757] text-white"
-                        : "bg-zinc-200/60 text-zinc-500 dark:bg-zinc-850 dark:text-zinc-400",
+                        : "bg-stone-200/60 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
                     )}
                     aria-label={`${badgeValue} 项`}
                   >

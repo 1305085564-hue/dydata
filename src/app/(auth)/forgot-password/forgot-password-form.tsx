@@ -61,8 +61,8 @@ export function ForgotPasswordForm() {
           <Button className="w-full" disabled={submitting} type="submit">
             {submitting ? "发送中" : "发送重置邮件"}
           </Button>
-          <p className="text-center text-[13px] text-zinc-500">
-            <Link className="text-zinc-800 underline underline-offset-4" href="/login">
+          <p className="text-center text-[13px] text-stone-500">
+            <Link className="text-stone-800 underline underline-offset-4" href="/login">
               返回登录
             </Link>
           </p>

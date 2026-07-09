@@ -52,19 +52,19 @@ const 卡片配置 = [
     key: "diagnosis",
     title: "诊断",
     toneClassName:
-      "border-zinc-200 border-l-[1.5px] border-l-[#D99E55]",
+      "border-stone-200 border-l-[1.5px] border-l-[#D99E55]",
   },
   {
     key: "reference",
     title: "参考",
     toneClassName:
-      "border-zinc-200 border-l-[1.5px] border-l-[#8AA8C7]",
+      "border-stone-200 border-l-[1.5px] border-l-[#8AA8C7]",
   },
   {
     key: "action",
     title: "动作",
     toneClassName:
-      "border-zinc-200 border-l-[1.5px] border-l-[#6FAA7D]",
+      "border-stone-200 border-l-[1.5px] border-l-[#6FAA7D]",
   },
 ] as const satisfies ReadonlyArray<{
   key: keyof GrowthAdviceData
@@ -87,9 +87,9 @@ function 骨架卡片() {
       {[0, 1, 2].map((item) => (
         <Card
           key={item}
-          className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
+          className="overflow-hidden rounded-2xl border border-stone-200 bg-white"
         >
-          <CardHeader className="space-y-3 border-b border-zinc-200 pb-4">
+          <CardHeader className="space-y-3 border-b border-stone-200 pb-4">
             <Skeleton className="h-4 w-24" />
           </CardHeader>
           <CardContent className="space-y-3 pt-4">
@@ -192,8 +192,8 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
                 key={section.key}
                 className="overflow-hidden rounded-2xl bg-white"
               >
-                <CardHeader className="border-b border-zinc-200 pb-4">
-                  <CardTitle className="text-[13px] font-semibold text-zinc-800">
+                <CardHeader className="border-b border-stone-200 pb-4">
+                  <CardTitle className="text-[13px] font-semibold text-stone-800">
                     {section.title}
                   </CardTitle>
                 </CardHeader>
@@ -206,14 +206,14 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
                   >
                     {isReference ? (
                       <div className="space-y-3">
-                        <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">
+                        <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-stone-800">
                           {content}
                         </p>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-auto px-0 text-[13px] font-medium text-zinc-800 hover:bg-transparent hover:opacity-70"
+                          className="h-auto px-0 text-[13px] font-medium text-stone-800 hover:bg-transparent hover:opacity-70"
                           onClick={() =>
                             onReferenceClick?.({
                               personName: referenceMeta?.personName,
@@ -228,7 +228,7 @@ export function AiAdvice({ userId, accountId, payload, onReferenceClick, classNa
                         </Button>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-zinc-800">
+                      <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-stone-800">
                         {content}
                       </p>
                     )}

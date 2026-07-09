@@ -32,12 +32,12 @@ interface AdviceDetailDialogProps {
 }
 
 const STATUS_STYLES = {
-  待查看: "border-zinc-200 bg-zinc-100 text-zinc-700",
-  已查看: "border-zinc-200 bg-zinc-100 text-zinc-600",
-  待执行: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  已执行: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  已忽略: "border-zinc-200 bg-zinc-50 text-zinc-500",
-  已复核: "border-zinc-200 bg-zinc-100 text-zinc-700",
+  待查看: "border-stone-200 bg-stone-100 text-stone-700",
+  已查看: "border-stone-200 bg-stone-100 text-stone-600",
+  待执行: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  已执行: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+  已忽略: "border-stone-200 bg-stone-50 text-stone-500",
+  已复核: "border-stone-200 bg-stone-100 text-stone-700",
 } as const;
 
 type LocalStatus = "已查看" | "待执行" | "已执行" | "已忽略";
@@ -71,7 +71,7 @@ function formatDateTime(value: string | null) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-      <h3 className="text-[14px] font-medium tracking-tight text-zinc-800">{children}</h3>
+      <h3 className="text-[14px] font-medium tracking-tight text-stone-800">{children}</h3>
     </div>
   );
 }
@@ -138,8 +138,8 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="text-[18px] font-medium tracking-tight text-zinc-800">{targetProfile?.name || "未命名员工"}</div>
-                  <div className="text-[12px] text-zinc-500">账号：{targetAccount?.name || "-"} · 来源：{advice.advice_source === "ai" ? "AI" : "管理员"}</div>
+                  <div className="text-[18px] font-medium tracking-tight text-stone-800">{targetProfile?.name || "未命名员工"}</div>
+                  <div className="text-[12px] text-stone-500">账号：{targetAccount?.name || "-"} · 来源：{advice.advice_source === "ai" ? "AI" : "管理员"}</div>
                 </div>
                 <Badge variant="outline" className={`text-[12px] ${STATUS_STYLES[advice.status]}`}>
                   {advice.status}
@@ -147,35 +147,35 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
               </div>
 
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[11px] text-zinc-400">创建时间</div>
-                  <div className="mt-1 text-[13px] text-zinc-700">{formatDateTime(advice.created_at)}</div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[11px] text-stone-400">创建时间</div>
+                  <div className="mt-1 text-[13px] text-stone-700">{formatDateTime(advice.created_at)}</div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[11px] text-zinc-400">更新时间</div>
-                  <div className="mt-1 text-[13px] text-zinc-700">{formatDateTime(advice.updated_at)}</div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[11px] text-stone-400">更新时间</div>
+                  <div className="mt-1 text-[13px] text-stone-700">{formatDateTime(advice.updated_at)}</div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[11px] text-zinc-400">下发管理员</div>
-                  <div className="mt-1 text-[13px] text-zinc-700">{assignedProfile?.name || "-"}</div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[11px] text-stone-400">下发管理员</div>
+                  <div className="mt-1 text-[13px] text-stone-700">{assignedProfile?.name || "-"}</div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[11px] text-zinc-400">复核结果</div>
-                  <div className="mt-1 text-[13px] text-zinc-700">{advice.review_result || "-"}</div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[11px] text-stone-400">复核结果</div>
+                  <div className="mt-1 text-[13px] text-stone-700">{advice.review_result || "-"}</div>
                 </div>
               </div>
             </section>
 
             <section className="space-y-2">
               <SectionTitle>完整建议</SectionTitle>
-              <div className="max-h-64 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
+              <div className="max-h-64 overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 p-4 whitespace-pre-wrap break-words text-[13px] leading-6 text-stone-700">
                 {advice.advice_content}
               </div>
             </section>
 
             <section className="space-y-2">
               <SectionTitle>证据</SectionTitle>
-              <div className="max-h-56 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-50 p-4 whitespace-pre-wrap break-words text-[13px] leading-6 text-zinc-700">
+              <div className="max-h-56 overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 p-4 whitespace-pre-wrap break-words text-[13px] leading-6 text-stone-700">
                 {advice.evidence || "暂无证据"}
               </div>
             </section>
@@ -183,9 +183,9 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
             <section className="space-y-2">
               <SectionTitle>管理操作</SectionTitle>
               <div className="grid gap-4 lg:grid-cols-3">
-                <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[12px] font-medium text-zinc-700">下发</div>
-                  <div className="text-[11px] text-zinc-500">记录当前管理员并将状态更新为待执行。</div>
+                <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[12px] font-medium text-stone-700">下发</div>
+                  <div className="text-[11px] text-stone-500">记录当前管理员并将状态更新为待执行。</div>
                   <Button
                     className="h-9 w-full rounded-lg bg-[#D97757] text-[13px] text-white hover:bg-[#C96442] active:translate-y-0"
                     disabled={isPending}
@@ -195,8 +195,8 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                   </Button>
                 </div>
 
-                <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[12px] font-medium text-zinc-700">状态更新</div>
+                <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[12px] font-medium text-stone-700">状态更新</div>
                   <Select value={localStatus} onValueChange={(value) => setLocalStatus((value || "已执行") as LocalStatus)}>
                     <SelectTrigger className="h-9 rounded-xl bg-white text-[13px]">
                       <SelectValue>{statusLabel(localStatus)}</SelectValue>
@@ -218,8 +218,8 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                   </Button>
                 </div>
 
-                <div className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[12px] font-medium text-zinc-700">复核</div>
+                <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
+                  <div className="text-[12px] font-medium text-stone-700">复核</div>
                   <Select value={reviewResult} onValueChange={(value) => setReviewResult(value as ReviewResult)}>
                     <SelectTrigger className="h-9 rounded-xl bg-white text-[13px]">
                       <SelectValue>{reviewLabel(reviewResult)}</SelectValue>
@@ -241,7 +241,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                 </div>
               </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[11px] text-zinc-500">
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-[11px] text-stone-500">
                 当前复核人：{reviewedProfile?.name || "-"}
               </div>
             </section>
@@ -250,17 +250,17 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
               <SectionTitle>关联视频</SectionTitle>
               {relatedVideo ? (
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                    <div className="text-[11px] text-zinc-400">视频标题</div>
-                    <div className="mt-1 line-clamp-3 break-words text-[13px] text-zinc-700">{relatedVideo.video_title?.trim() || "未命名视频"}</div>
+                  <div className="rounded-xl border border-stone-200 bg-white p-4">
+                    <div className="text-[11px] text-stone-400">视频标题</div>
+                    <div className="mt-1 line-clamp-3 break-words text-[13px] text-stone-700">{relatedVideo.video_title?.trim() || "未命名视频"}</div>
                   </div>
-                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                    <div className="text-[11px] text-zinc-400">发布时间</div>
-                    <div className="mt-1 text-[13px] text-zinc-700">{formatDateTime(relatedVideo.published_at)}</div>
+                  <div className="rounded-xl border border-stone-200 bg-white p-4">
+                    <div className="text-[11px] text-stone-400">发布时间</div>
+                    <div className="mt-1 text-[13px] text-stone-700">{formatDateTime(relatedVideo.published_at)}</div>
                   </div>
-                  <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                    <div className="text-[11px] text-zinc-400">视频链接</div>
-                    <div className="mt-1 break-all text-[13px] text-zinc-700">
+                  <div className="rounded-xl border border-stone-200 bg-white p-4">
+                    <div className="text-[11px] text-stone-400">视频链接</div>
+                    <div className="mt-1 break-all text-[13px] text-stone-700">
                       {relatedVideo.video_url ? (
                         <a href={relatedVideo.video_url} target="_blank" rel="noreferrer" className="text-[#D97757] underline underline-offset-4">
                           {relatedVideo.video_url}
@@ -272,7 +272,7 @@ export function AdviceDetailDialog({ advice, currentUserId, open, onOpenChange, 
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">暂无关联视频。</div>
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-500">暂无关联视频。</div>
               )}
             </section>
           </div>

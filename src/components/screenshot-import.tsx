@@ -82,9 +82,9 @@ function getBadgeVariant(level: ConfidenceLevel): "default" | "secondary" | "des
 }
 
 function getBadgeClassName(level: ConfidenceLevel): string {
-  if (level === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
-  if (level === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
-  return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  if (level === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700";
+  if (level === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700";
+  return "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700";
 }
 
 interface ScreenshotImportProps {
@@ -267,7 +267,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
           "flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors",
           isDragging
             ? "border-[#D97757] bg-[#D97757]/10"
-            : "border-zinc-200 bg-zinc-50 hover:border-[#D97757]/60 hover:bg-zinc-100"
+            : "border-stone-200 bg-stone-50 hover:border-[#D97757]/60 hover:bg-stone-100"
         )}
       >
         <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/8 text-primary">

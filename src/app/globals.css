@@ -85,7 +85,7 @@
     -webkit-font-smoothing: antialiased;
   }
   /* 白卡全局微阴影 — 配合加深背景制造层级差 */
-  .bg-white[class*="rounded-"][class*="border-zinc-"] {
+  .bg-white[class*="rounded-"][class*="border-stone-"] {
     box-shadow: var(--shadow-card);
   }
   /* Toast 居中主控制点 */

@@ -122,7 +122,7 @@ function TrendTooltip({ active, payload, label }: { active?: boolean; payload?: 
   if (!active || !payload?.length || !label) return null;
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]">
+    <div className="rounded-lg border border-stone-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]">
       <p className="text-xs font-medium text-foreground">{label}</p>
       <p className="mt-1 text-xs text-muted-foreground">发布视频 {payload[0].value} 条</p>
     </div>
@@ -191,7 +191,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
             return (
               <Card
                 key={video.id}
-                className="rounded-2xl border border-zinc-200 bg-white shadow-sm"
+                className="rounded-2xl border border-stone-200 bg-white shadow-sm"
               >
                 <CardHeader className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -250,7 +250,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
         )}
       </div>
 
-      <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <Card className="rounded-2xl border border-stone-200 bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="text-[18px] font-semibold tracking-tight">每日视频数趋势</CardTitle>
         </CardHeader>
@@ -285,7 +285,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <Card className="rounded-2xl border border-stone-200 bg-white shadow-sm">
         <CardHeader>
           <CardTitle className="text-[18px] font-semibold tracking-tight">视频排行榜</CardTitle>
         </CardHeader>

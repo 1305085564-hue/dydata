@@ -35,9 +35,9 @@ export type 学习样本库Props = {
 
 const 来源样式: Record<学习样本来源, string> = {
   标杆样本:
-    "border-zinc-200 bg-zinc-50 text-[#8AA8C7]",
+    "border-stone-200 bg-stone-50 text-[#8AA8C7]",
   你的历史最佳:
-    "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+    "border-stone-200 bg-stone-50 text-[#6FAA7D]",
 }
 
 function 截断文案(text: string, length = 100) {
@@ -136,8 +136,8 @@ function 样本卡({
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white px-3.5 py-3 text-sm leading-6 text-zinc-500">
-          <span className="font-semibold text-zinc-800">推荐理由：</span>
+        <div className="rounded-2xl border border-stone-200 bg-white px-3.5 py-3 text-sm leading-6 text-stone-500">
+          <span className="font-semibold text-stone-800">推荐理由：</span>
           {sample.推荐理由}
         </div>
       </div>
@@ -159,20 +159,20 @@ export function SampleLibrary({
   return (
     <Card
       className={cn(
-        "overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm",
+        "overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm",
         className
       )}
     >
       <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1.5">
-            <h2 className="text-[18px] font-medium text-zinc-800">学习样本库</h2>
-            <p className="text-sm leading-6 text-zinc-500">
+            <h2 className="text-[18px] font-medium text-stone-800">学习样本库</h2>
+            <p className="text-sm leading-6 text-stone-500">
               把标杆样本和你自己的历史最佳放到同一个观察面板里，先抄最弱指标对应的动作。
             </p>
           </div>
 
-          <div className="hidden items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 p-1 sm:inline-flex">
+          <div className="hidden items-center gap-1 rounded-full border border-stone-200 bg-stone-50 p-1 sm:inline-flex">
             <Button
               variant={视图 === "list" ? "secondary" : "ghost"}
               size="sm"

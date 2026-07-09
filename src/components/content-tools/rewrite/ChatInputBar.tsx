@@ -139,16 +139,16 @@ export function ChatInputBar({
             {activeSkills.map((skill) => (
               <div
                 key={skill.id}
-                className="flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/95 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all"
+                className="flex items-center gap-1.5 rounded-full border border-stone-200/80 bg-white/95 px-2.5 py-0.5 text-[11px] font-medium text-stone-700 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all"
               >
                 <Sparkles className="h-3 w-3 text-[#8AA8C7]" />
-                <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-400">已激活</span>
+                <span className="text-[10px] uppercase tracking-[0.16em] text-stone-400">已激活</span>
                 <span>{skill.name}</span>
                 <button
                   type="button"
                   aria-label={`移除技能 ${skill.name}`}
                   onClick={() => onToggleSkill(skill)}
-                  className="ml-0.5 rounded-full p-0.5 hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700"
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-stone-100 text-stone-400 hover:text-stone-700"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -159,19 +159,19 @@ export function ChatInputBar({
 
         {/* Referenced Text Bar (ChatGPT style) */}
         {referredText && (
-          <div className="flex items-start justify-between gap-3 border border-zinc-200 bg-zinc-100/90 hover:bg-zinc-150 px-3 py-2 rounded-lg text-zinc-700 text-[12.5px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] mb-2.5 animate-in slide-in-from-bottom-2 duration-200">
+          <div className="flex items-start justify-between gap-3 border border-stone-200 bg-stone-100/90 hover:bg-stone-100 px-3 py-2 rounded-lg text-stone-700 text-[12.5px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] mb-2.5 animate-in slide-in-from-bottom-2 duration-200">
             <div className="flex items-start gap-2.5 min-w-0">
-              <Quote className="h-3.5 w-3.5 text-zinc-400 mt-1 shrink-0 rotate-180" />
+              <Quote className="h-3.5 w-3.5 text-stone-400 mt-1 shrink-0 rotate-180" />
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-0.5">引用选中文本</span>
-                <p className="line-clamp-2 text-zinc-600 font-medium leading-relaxed">&quot;{referredText}&quot;</p>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-0.5">引用选中文本</span>
+                <p className="line-clamp-2 text-stone-600 font-medium leading-relaxed">&quot;{referredText}&quot;</p>
               </div>
             </div>
             {onClearReferredText && (
               <button
                 type="button"
                 onClick={onClearReferredText}
-                className="shrink-0 rounded-full p-1 hover:bg-zinc-200/80 text-zinc-400 hover:text-zinc-600 transition-colors mt-0.5"
+                className="shrink-0 rounded-full p-1 hover:bg-stone-200/80 text-stone-400 hover:text-stone-600 transition-colors mt-0.5"
                 title="清除引用"
               >
                 <X className="h-3 w-3" />
@@ -183,17 +183,17 @@ export function ChatInputBar({
         {/* Skill Popover */}
         {showSkillPopover && (
           <div className="absolute bottom-full left-0 mb-3 w-64 rounded-lg border border-white/20 bg-white/85 backdrop-blur-xl p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-stone-400">
               添加技能 (Enter确认)
             </div>
             <div className="max-h-[200px] overflow-y-auto">
               {filteredSkills.length === 0 ? (
-                <div className="px-2 py-3 text-center text-[12px] text-zinc-500">无匹配项</div>
+                <div className="px-2 py-3 text-center text-[12px] text-stone-500">无匹配项</div>
               ) : (
                 <div className="space-y-1">
                   {groupedSkills.map((group) => (
                     <div key={group.scope}>
-                      <div className="px-2 pb-1 pt-1.5 text-[10px] font-semibold tracking-[0.18em] text-zinc-400">
+                      <div className="px-2 pb-1 pt-1.5 text-[10px] font-semibold tracking-[0.18em] text-stone-400">
                         {group.label}
                       </div>
                       {group.items.map((item) => {
@@ -204,7 +204,7 @@ export function ChatInputBar({
                             key={item.id}
                             className={cn(
                               'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12px] transition-colors',
-                              idx === selectedIndex ? 'bg-zinc-100 font-medium text-zinc-900' : 'text-zinc-600 hover:bg-zinc-50'
+                              idx === selectedIndex ? 'bg-stone-100 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-50'
                             )}
                             onMouseEnter={() => setSelectedIndex(idx)}
                             onClick={() => {
@@ -214,7 +214,7 @@ export function ChatInputBar({
                               setShowSkillPopover(false);
                             }}
                           >
-                            <Sparkles className={cn('h-3.5 w-3.5 shrink-0', idx === selectedIndex ? 'text-[#D97757]' : 'text-zinc-400')} />
+                            <Sparkles className={cn('h-3.5 w-3.5 shrink-0', idx === selectedIndex ? 'text-[#D97757]' : 'text-stone-400')} />
                             <span className="min-w-0 flex-1 truncate">{item.name}</span>
                             {active && <span className="text-[10px] font-medium text-[#4F7F5E]">已激活</span>}
                           </button>
@@ -231,10 +231,10 @@ export function ChatInputBar({
         <div
           className={cn(
             'group relative flex items-end gap-2 rounded-lg border transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]',
-            'focus-within:border-zinc-300 focus-within:bg-white focus-within:shadow-sm focus-within:-translate-y-[1px]',
+            'focus-within:border-stone-300 focus-within:bg-white focus-within:shadow-sm focus-within:-translate-y-[1px]',
             isSending
-              ? 'border-zinc-200 bg-zinc-100/50'
-              : 'border-transparent bg-zinc-100/70 hover:bg-zinc-100/90 hover:border-zinc-200/30'
+              ? 'border-stone-200 bg-stone-100/50'
+              : 'border-transparent bg-stone-100/70 hover:bg-stone-100/90 hover:border-stone-200/30'
           )}
         >
           <textarea
@@ -245,7 +245,7 @@ export function ChatInputBar({
             placeholder={placeholder}
             rows={1}
             className={cn(
-              'max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.7] tracking-[0.005em] text-zinc-800 outline-none placeholder:text-zinc-400'
+              'max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-2 py-2 text-[14px] leading-[1.7] tracking-[0.005em] text-stone-800 outline-none placeholder:text-stone-400'
             )}
           />
           <button
@@ -261,10 +261,10 @@ export function ChatInputBar({
             className={cn(
               'mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-[background-color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]',
               isSending
-                ? 'bg-zinc-800 text-white shadow-[0_2px_8px_rgba(39,39,42,0.22)] hover:bg-zinc-700 active:scale-[0.98]'
+                ? 'bg-stone-800 text-white shadow-[0_2px_8px_rgba(39,39,42,0.22)] hover:bg-stone-700 active:scale-[0.98]'
                 : canSend
                 ? 'bg-[#D97757] text-white hover:bg-[#C96442] shadow-[0_2px_8px_rgba(217,119,87,0.3)] active:scale-[0.98]'
-                : 'bg-zinc-100 text-zinc-400'
+                : 'bg-stone-100 text-stone-400'
             )}
             title={isSending ? '停止生成' : canSend ? '发送' : '输入内容后可发送'}
           >
@@ -276,10 +276,10 @@ export function ChatInputBar({
           </button>
         </div>
         <div className="mt-1.5 flex items-center justify-between px-2">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400">
             {isSending ? '可继续输入 · 点方块停止当前生成' : 'Enter 发送 · Shift+Enter 换行'}
           </span>
-          <span className="text-[12px] text-zinc-400 font-mono tabular-nums">{inputText.length} 字</span>
+          <span className="text-[12px] text-stone-400 font-mono tabular-nums">{inputText.length} 字</span>
         </div>
       </div>
     </div>

@@ -41,7 +41,7 @@ function SheetOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
     <DialogPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-zinc-950/20 duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-stone-950/20 duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className,
       )}
       {...props}
@@ -67,7 +67,7 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed z-50 flex flex-col gap-4 border-zinc-200 bg-white text-[13px] text-zinc-800 shadow-sm outline-none duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "fixed z-50 flex flex-col gap-4 border-stone-200 bg-white text-[13px] text-stone-700 shadow-sm outline-none duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
           sideClasses[side],
           className,
         )}
@@ -99,7 +99,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-header"
       className={cn(
-        "flex flex-col gap-1 border-b border-zinc-200 px-6 pt-6 pb-4",
+        "flex flex-col gap-1 border-b border-stone-200 px-6 pt-6 pb-4",
         className,
       )}
       {...props}
@@ -122,7 +122,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 border-t border-zinc-200 px-6 py-4 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-2 border-t border-stone-200 px-6 py-4 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}
@@ -135,7 +135,7 @@ function SheetTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="sheet-title"
       className={cn(
-        "text-[14px] font-medium leading-none tracking-tight text-zinc-800",
+        "text-[18px] font-bold leading-none tracking-tight text-stone-900",
         className,
       )}
       {...props}
@@ -150,7 +150,7 @@ function SheetDescription({
   return (
     <DialogPrimitive.Description
       data-slot="sheet-description"
-      className={cn("text-[12px] leading-[1.6] text-zinc-500", className)}
+      className={cn("text-[12px] leading-[1.6] text-stone-500", className)}
       {...props}
     />
   )

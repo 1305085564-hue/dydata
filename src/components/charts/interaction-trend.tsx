@@ -88,7 +88,7 @@ function 趋势空状态({ text }: { text: string }) {
           }}
         />
       </div>
-      <p className="text-[13px] font-medium text-zinc-500 mt-4">{text}</p>
+      <p className="text-[13px] font-medium text-stone-500 mt-4">{text}</p>
     </motion.div>
   );
 }
@@ -119,7 +119,7 @@ function InteractionTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-lg border border-zinc-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]"
+      className="min-w-40 rounded-lg border border-stone-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]"
     >
       <p className="text-[11px] font-medium tracking-[0.01em] text-foreground/70">{label}</p>
       <div className="mt-2 space-y-1.5">

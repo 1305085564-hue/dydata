@@ -27,11 +27,11 @@ export interface MetricCardProps {
 export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "neutral" }: MetricCardProps) {
   const Icon = iconMap[icon] ?? Activity;
   const toneClasses = {
-    primary: "text-[#D97757] bg-zinc-50 border-zinc-200",
-    warning: "text-[#D99E55] bg-zinc-50 border-zinc-200",
-    success: "text-[#6FAA7D] bg-zinc-50 border-zinc-200",
-    danger: "text-[#C9604D] bg-zinc-50 border-zinc-200",
-    neutral: "text-zinc-500 bg-zinc-50 border-zinc-200",
+    primary: "text-[#D97757] bg-stone-50 border-stone-200",
+    warning: "text-[#D99E55] bg-stone-50 border-stone-200",
+    success: "text-[#6FAA7D] bg-stone-50 border-stone-200",
+    danger: "text-[#C9604D] bg-stone-50 border-stone-200",
+    neutral: "text-stone-500 bg-stone-50 border-stone-200",
   };
 
   const isClickable = !!onClick;
@@ -40,15 +40,15 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
     <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        isClickable && "cursor-pointer hover:shadow-sm hover:border-zinc-300 group"
+        "relative overflow-hidden rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        isClickable && "cursor-pointer hover:shadow-sm hover:border-stone-300 group"
       )}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-zinc-400">{label}</p>
+          <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-stone-400">{label}</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[18px] font-semibold tracking-tight text-zinc-800 font-mono tabular-nums">{value}</span>
+            <span className="text-[18px] font-semibold tracking-tight text-stone-800 font-mono tabular-nums">{value}</span>
             {trend && (
               <span className={cn(
                 "text-[12px] font-medium px-1.5 py-0.5 rounded-full",
@@ -58,7 +58,7 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
               </span>
             )}
           </div>
-          <p className="mt-2 text-[12px] leading-[1.7] text-zinc-400">{hint}</p>
+          <p className="mt-2 text-[12px] leading-[1.7] text-stone-400">{hint}</p>
         </div>
         <div className={cn("rounded-lg p-2.5 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]", toneClasses[tone])}>
           <Icon className="size-5 stroke-[1.5]" />

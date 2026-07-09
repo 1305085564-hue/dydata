@@ -38,12 +38,12 @@ export function ProcessedList({ items, pendingBackend = false }: ProcessedListPr
   if (pendingBackend) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <div className="flex size-9 items-center justify-center rounded-full border border-zinc-200">
-          <CircleSlash2 className="size-4 stroke-[1.5] text-zinc-400" />
+        <div className="flex size-9 items-center justify-center rounded-full border border-stone-200">
+          <CircleSlash2 className="size-4 stroke-[1.5] text-stone-400" />
         </div>
         <div className="space-y-0.5">
-          <p className="text-[13px] font-medium text-zinc-500">即将上线</p>
-          <p className="text-[12px] text-zinc-400">已处理列表的后端接口准备中</p>
+          <p className="text-[13px] font-medium text-stone-500">即将上线</p>
+          <p className="text-[12px] text-stone-400">已处理列表的后端接口准备中</p>
         </div>
       </div>
     );
@@ -52,12 +52,12 @@ export function ProcessedList({ items, pendingBackend = false }: ProcessedListPr
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <div className="flex size-9 items-center justify-center rounded-full border border-zinc-200">
-          <Inbox className="size-4 stroke-[1.5] text-zinc-400" />
+        <div className="flex size-9 items-center justify-center rounded-full border border-stone-200">
+          <Inbox className="size-4 stroke-[1.5] text-stone-400" />
         </div>
         <div className="space-y-0.5">
-          <p className="text-[13px] font-medium text-zinc-500">暂无已处理记录</p>
-          <p className="text-[12px] text-zinc-400">审批后这里会出现近期记录</p>
+          <p className="text-[13px] font-medium text-stone-500">暂无已处理记录</p>
+          <p className="text-[12px] text-stone-400">审批后这里会出现近期记录</p>
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ export function ProcessedList({ items, pendingBackend = false }: ProcessedListPr
           <Link
             key={entry.id}
             href={`/violations/${entry.id}`}
-            className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-zinc-50 active:translate-y-0"
+            className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-50 active:translate-y-0"
           >
             <span
               className="size-1.5 shrink-0 rounded-full"
@@ -79,20 +79,20 @@ export function ProcessedList({ items, pendingBackend = false }: ProcessedListPr
               title={meta.label}
             />
             <div className="min-w-0 flex-1">
-              <p className="line-clamp-1 text-[13px] font-medium text-zinc-800">
+              <p className="line-clamp-1 text-[13px] font-medium text-stone-800">
                 {entry.script_text}
               </p>
-              <div className="mt-0.5 flex items-center gap-x-2 text-[12px] text-zinc-500">
+              <div className="mt-0.5 flex items-center gap-x-2 text-[12px] text-stone-500">
                 <span className="text-[11px] font-medium" style={{ color: meta.color }}>
                   {meta.label}
                 </span>
-                <span className="text-zinc-300">·</span>
+                <span className="text-stone-300">·</span>
                 <span>{entry.submitted_by_name}</span>
-                <span className="text-zinc-300">·</span>
+                <span className="text-stone-300">·</span>
                 <span>{formatTime(entry.created_at)}</span>
               </div>
             </div>
-            <ArrowUpRight className="size-3.5 shrink-0 stroke-[1.5] text-zinc-300 opacity-0 transition-all group-hover:opacity-100 group-hover:text-zinc-500" />
+            <ArrowUpRight className="size-3.5 shrink-0 stroke-[1.5] text-stone-300 opacity-0 transition-all group-hover:opacity-100 group-hover:text-stone-500" />
           </Link>
         );
       })}
@@ -102,7 +102,7 @@ export function ProcessedList({ items, pendingBackend = false }: ProcessedListPr
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 active:translate-y-0"
+            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 active:translate-y-0"
           >
             {expanded ? "收起" : `展开剩余 ${items.length - 8} 条`}
           </button>

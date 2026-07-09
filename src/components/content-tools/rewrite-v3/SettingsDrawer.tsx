@@ -121,28 +121,28 @@ export function SettingsDrawer({
       )}
     >
       {/* 头部控制 */}
-      <div className="shrink-0 h-[48px] px-4 border-b border-zinc-200/50 flex items-center justify-between bg-zinc-50/50">
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500 font-mono tracking-wider">
+      <div className="shrink-0 h-[48px] px-4 border-b border-stone-200/50 flex items-center justify-between bg-stone-50/50">
+        <div className="flex items-center gap-1.5 text-[12px] font-bold text-stone-500 font-mono tracking-wider">
           <SlidersHorizontal className="h-4 w-4" />
           <span>创意配置台</span>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-full hover:bg-zinc-150 text-zinc-400 hover:text-zinc-650"
+          className="p-1 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* Tabs 切换 */}
-      <div className="shrink-0 flex border-b border-zinc-200/40 px-2 pt-1.5 bg-zinc-50/20">
+      <div className="shrink-0 flex border-b border-stone-200/40 px-2 pt-1.5 bg-stone-50/20">
         <button
           onClick={() => { setActiveTab('skills'); setEditingSkill(null); }}
           className={cn(
-            'px-4 py-1.5 text-[11px] font-bold border-b-2 transition-all',
+            'px-4 py-1.5 text-[12px] font-bold border-b-2 transition-all',
             activeTab === 'skills'
-              ? 'border-zinc-900 text-zinc-900'
-              : 'border-transparent text-zinc-400 hover:text-zinc-700'
+              ? 'border-stone-900 text-stone-900'
+              : 'border-transparent text-stone-400 hover:text-stone-700'
           )}
         >
           个人技能管理
@@ -150,10 +150,10 @@ export function SettingsDrawer({
         <button
           onClick={() => { setActiveTab('params'); setEditingSkill(null); }}
           className={cn(
-            'px-4 py-1.5 text-[11px] font-bold border-b-2 transition-all',
+            'px-4 py-1.5 text-[12px] font-bold border-b-2 transition-all',
             activeTab === 'params'
-              ? 'border-zinc-900 text-zinc-900'
-              : 'border-transparent text-zinc-400 hover:text-zinc-700'
+              ? 'border-stone-900 text-stone-900'
+              : 'border-transparent text-stone-400 hover:text-stone-700'
           )}
         >
           参数配置
@@ -166,39 +166,39 @@ export function SettingsDrawer({
           editingSkill ? (
             /* 1. 创建/编辑技能表单 */
             <div className="space-y-3 animate-in fade-in duration-200">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+              <div className="text-[12px] font-bold uppercase tracking-wider text-stone-400">
                 {editingSkill.id ? '编辑个人技能' : '新建个人技能'}
               </div>
 
               <label className="block space-y-1">
-                <span className="text-[11px] font-semibold text-zinc-600 pl-0.5">技能名称 (必填)</span>
+                <span className="text-[12px] font-semibold text-stone-600 pl-0.5">技能名称 (必填)</span>
                 <input
                   type="text"
                   value={skillName}
                   onChange={(e) => setSkillName(e.target.value)}
-                  className="w-full bg-zinc-100/50 border border-transparent focus:bg-white focus:border-zinc-200 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-zinc-900/10"
+                  className="w-full bg-stone-100/50 border border-transparent focus:bg-white focus:border-stone-200 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-stone-900/10"
                   placeholder="如：小红书爆款润色"
                 />
               </label>
 
               <label className="block space-y-1">
-                <span className="text-[11px] font-semibold text-zinc-600 pl-0.5">提示词指令 System Prompt (必填)</span>
+                <span className="text-[12px] font-semibold text-stone-600 pl-0.5">提示词指令 System Prompt (必填)</span>
                 <textarea
                   value={skillPrompt}
                   onChange={(e) => setSkillPrompt(e.target.value)}
                   rows={6}
-                  className="w-full bg-zinc-100/50 border border-transparent focus:bg-white focus:border-zinc-200 rounded-lg p-2.5 text-xs leading-relaxed outline-none focus:ring-1 focus:ring-zinc-900/10"
+                  className="w-full bg-stone-100/50 border border-transparent focus:bg-white focus:border-stone-200 rounded-lg p-2.5 text-xs leading-relaxed outline-none focus:ring-1 focus:ring-stone-900/10"
                   placeholder="输入此技能对文案的具体改写指令要求..."
                 />
               </label>
 
               <label className="block space-y-1">
-                <span className="text-[11px] font-semibold text-zinc-600 pl-0.5">技能简短说明</span>
+                <span className="text-[12px] font-semibold text-stone-600 pl-0.5">技能简短说明</span>
                 <input
                   type="text"
                   value={skillDesc}
                   onChange={(e) => setSkillDesc(e.target.value)}
-                  className="w-full bg-zinc-100/50 border border-transparent focus:bg-white focus:border-zinc-200 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-zinc-900/10"
+                  className="w-full bg-stone-100/50 border border-transparent focus:bg-white focus:border-stone-200 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-stone-900/10"
                   placeholder="简述使用场景或作用"
                 />
               </label>
@@ -206,11 +206,11 @@ export function SettingsDrawer({
               {/* 绑定默认模型 */}
               {bootstrap && (
                 <label className="block space-y-1">
-                  <span className="text-[11px] font-semibold text-zinc-600 pl-0.5">绑定默认模型 (可选)</span>
+                  <span className="text-[12px] font-semibold text-stone-600 pl-0.5">绑定默认模型 (可选)</span>
                   <select
                     value={skillModel}
                     onChange={(e) => setSkillModel(e.target.value)}
-                    className="w-full bg-zinc-100/50 border border-transparent focus:bg-white focus:border-zinc-200 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-zinc-900/10"
+                    className="w-full bg-stone-100/50 border border-transparent focus:bg-white focus:border-stone-200 rounded-lg p-2 text-xs outline-none focus:ring-1 focus:ring-stone-900/10"
                   >
                     <option value="">跟随全局配置</option>
                     {bootstrap.modelViews.map((item) => (
@@ -226,7 +226,7 @@ export function SettingsDrawer({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setEditingSkill(null)}
-                  className="flex-1 border border-zinc-200 hover:bg-zinc-50 font-bold py-2 rounded-lg text-xs transition-all active:scale-[0.98]"
+                  className="flex-1 border border-stone-200 hover:bg-stone-50 font-bold py-2 rounded-lg text-xs transition-all active:scale-[0.98]"
                 >
                   取消
                 </button>
@@ -243,10 +243,10 @@ export function SettingsDrawer({
             /* 2. 个人技能管理列表 */
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">自建个人技能</span>
+                <span className="text-[12px] font-bold uppercase tracking-wider text-stone-400">自建个人技能</span>
                 <button
                   onClick={startCreate}
-                  className="inline-flex items-center gap-1 bg-[#D97757]/10 hover:bg-[#D97757]/20 border border-[#D97757]/25 text-[#C96442] px-2 py-0.5 rounded-lg text-[10.5px] font-bold transition-all active:scale-[0.98]"
+                  className="inline-flex items-center gap-1 bg-[#D97757]/10 hover:bg-[#D97757]/20 border border-[#D97757]/25 text-[#C96442] px-2 py-0.5 rounded-lg text-[12px] font-bold transition-all active:scale-[0.98]"
                 >
                   <Plus className="h-3 w-3" />
                   <span>添加技能</span>
@@ -254,37 +254,37 @@ export function SettingsDrawer({
               </div>
 
               {privateSkills.length === 0 ? (
-                <div className="text-center py-10 border border-dashed border-zinc-200 rounded-lg space-y-2">
-                  <BookOpen className="h-6 w-6 text-zinc-300 mx-auto" />
-                  <p className="text-[11px] text-zinc-400 font-semibold">暂无个人技能，点击上方按钮创建</p>
+                <div className="text-center py-10 border border-dashed border-stone-200 rounded-lg space-y-2">
+                  <BookOpen className="h-6 w-6 text-stone-300 mx-auto" />
+                  <p className="text-[12px] text-stone-400 font-semibold">暂无个人技能，点击上方按钮创建</p>
                 </div>
               ) : (
                 <div className="space-y-1.5">
                   {privateSkills.map((skill) => (
                     <div
                       key={skill.id}
-                      className="group border border-zinc-200/50 bg-white hover:border-zinc-250 p-2.5 rounded-lg flex items-center justify-between transition-all"
+                      className="group flex items-center justify-between rounded-lg border border-stone-200/50 bg-white p-2.5 transition-all hover:border-stone-300"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
                           <Sparkles className="h-3 w-3 text-amber-500 shrink-0" />
-                          <span className="text-xs font-bold text-zinc-800 truncate">{skill.name}</span>
+                          <span className="text-xs font-bold text-stone-800 truncate">{skill.name}</span>
                         </div>
                         {skill.description && (
-                          <p className="text-[10px] text-zinc-400 line-clamp-1 mt-0.5 leading-relaxed">{skill.description}</p>
+                          <p className="text-[12px] text-stone-400 line-clamp-1 mt-0.5 leading-relaxed">{skill.description}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 ml-3 shrink-0">
                         <button
                           onClick={() => startEdit(skill)}
-                          className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-700"
+                          className="p-1 hover:bg-stone-100 rounded-lg text-stone-400 hover:text-stone-700"
                           title="编辑技能"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteSkill(skill.id)}
-                          className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-rose-600"
+                          className="p-1 hover:bg-stone-100 rounded-lg text-stone-400 hover:text-rose-600"
                           title="删除技能"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -299,12 +299,12 @@ export function SettingsDrawer({
         ) : (
           /* 3. 参数配置（上下文剪枝限制） */
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">上下文管理</div>
+            <div className="text-[12px] font-bold uppercase tracking-wider text-stone-400">上下文管理</div>
 
-            <div className="border border-zinc-200/50 bg-white p-4 rounded-lg space-y-3 shadow-sm">
+            <div className="border border-stone-200/50 bg-white p-4 rounded-lg space-y-3 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-zinc-800">携带历史对话轮数</span>
-                <span className="text-[10px] bg-zinc-100 px-2 py-0.5 rounded-full font-bold text-zinc-650">
+                <span className="text-xs font-bold text-stone-800">携带历史对话轮数</span>
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[12px] font-bold text-stone-700">
                   {contextLimit === 99 ? '携带全量' : `携带最近 ${contextLimit} 轮`}
                 </span>
               </div>
@@ -321,9 +321,9 @@ export function SettingsDrawer({
                     const val = parseInt(e.target.value, 10);
                     onUpdateContextLimit(val === 12 ? 99 : val);
                   }}
-                  className="w-full accent-zinc-800 h-1.5 bg-zinc-200 rounded-lg cursor-pointer"
+                  className="w-full accent-stone-800 h-1.5 bg-stone-200 rounded-lg cursor-pointer"
                 />
-                <div className="flex justify-between text-[9px] font-bold text-zinc-400 font-mono">
+                <div className="flex justify-between text-[9px] font-bold text-stone-400 font-mono">
                   <span>2轮</span>
                   <span>4轮</span>
                   <span>6轮</span>
@@ -332,7 +332,7 @@ export function SettingsDrawer({
                   <span>全量</span>
                 </div>
               </div>
-              <p className="text-[10px] text-zinc-400 leading-relaxed leading-normal mt-1">
+              <p className="text-[12px] text-stone-400 leading-relaxed leading-normal mt-1">
                 限制携带轮数能极大降低长对话的 token 消耗成本，并能有效减少 AI 受到远期老指令的幻觉干扰。
               </p>
             </div>

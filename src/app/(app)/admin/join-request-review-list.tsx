@@ -277,7 +277,7 @@ export function JoinRequestReviewList({ rows }: Props) {
   const showEmpty = visibleRows.length === 0 && !undoApproveItem && !undoRejectItem;
   if (showEmpty) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-6 text-center text-[13px] text-zinc-400">
+      <div className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-6 text-center text-[13px] text-stone-400">
         暂无待审申请
       </div>
     );
@@ -288,7 +288,7 @@ export function JoinRequestReviewList({ rows }: Props) {
       {/* 撤销提示条：同意 */}
       {undoApproveItem ? (
         <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-4 py-2.5">
-          <span className="text-[13px] text-zinc-700">
+          <span className="text-[13px] text-stone-700">
             已同意 <span className="font-medium">{undoApproveItem.row.applicantName || undoApproveItem.row.applicantEmail || "未命名"}</span> 的入队申请
           </span>
           <span className="ml-auto text-[13px] font-medium text-[#D97757]">
@@ -308,7 +308,7 @@ export function JoinRequestReviewList({ rows }: Props) {
       {/* 撤销提示条：驳回 */}
       {undoRejectItem ? (
         <div className="mb-3 flex items-center gap-3 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-4 py-2.5">
-          <span className="text-[13px] text-zinc-700">
+          <span className="text-[13px] text-stone-700">
             已驳回 <span className="font-medium">{undoRejectItem.row.applicantName || undoRejectItem.row.applicantEmail || "未命名"}</span> 的入队申请
           </span>
           <span className="ml-auto text-[13px] font-medium text-[#D97757]">
@@ -327,9 +327,9 @@ export function JoinRequestReviewList({ rows }: Props) {
 
       {/* 批量操作栏 */}
       {someSelected ? (
-        <div className="mb-3 flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-sm">
-          <span className="text-[13px] text-zinc-600">
-            已选择 <span className="font-medium text-zinc-800">{selectedIds.size}</span> 条
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+          <span className="text-[13px] text-stone-600">
+            已选择 <span className="font-medium text-stone-800">{selectedIds.size}</span> 条
           </span>
           <div className="ml-auto flex items-center gap-2">
             <Button
@@ -354,7 +354,7 @@ export function JoinRequestReviewList({ rows }: Props) {
               variant="ghost"
               onClick={() => setSelectedIds(new Set())}
               disabled={isPending}
-              className="h-7 text-[12px] text-zinc-500 hover:text-zinc-700"
+              className="h-7 text-[12px] text-stone-500 hover:text-stone-700"
             >
               取消选择
             </Button>
@@ -364,7 +364,7 @@ export function JoinRequestReviewList({ rows }: Props) {
 
       {/* 批量驳回对话框 */}
       <Dialog open={batchRejectOpen} onOpenChange={setBatchRejectOpen}>
-        <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-sm">
+        <DialogContent className="max-w-md rounded-2xl border border-stone-200 bg-white p-0 shadow-sm">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>批量驳回申请</DialogTitle>
           </DialogHeader>
@@ -401,22 +401,22 @@ export function JoinRequestReviewList({ rows }: Props) {
         </DialogContent>
       </Dialog>
 
-      <div className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-zinc-50">
+      <div className="divide-y divide-stone-200 rounded-lg border border-stone-200 bg-stone-50">
         {/* 表头 */}
-        <div className="flex items-center gap-3 px-4 py-2 bg-zinc-100/50">
+        <div className="flex items-center gap-3 px-4 py-2 bg-stone-100/50">
           <Checkbox
             checked={allSelected}
             onCheckedChange={toggleSelectAll}
             aria-label="全选"
           />
-          <span className="text-[12px] font-medium text-zinc-500">全选</span>
+          <span className="text-[12px] font-medium text-stone-500">全选</span>
         </div>
 
         {visibleRows.map((row) => {
           const isRejecting = rejectingId === row.id;
           const isSelected = selectedIds.has(row.id);
           return (
-            <div key={row.id} className="group flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-6 hover:bg-zinc-100/30 transition-colors duration-150">
+            <div key={row.id} className="group flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-6 hover:bg-stone-100/30 transition-colors duration-150">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Checkbox
                   checked={isSelected}
@@ -425,14 +425,14 @@ export function JoinRequestReviewList({ rows }: Props) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[13px] font-medium tracking-tight text-zinc-800 truncate">
+                    <span className="text-[13px] font-medium tracking-tight text-stone-800 truncate">
                       {row.applicantName || "未命名"}
                     </span>
-                    <span className="text-[12px] text-zinc-500 truncate">{row.applicantEmail}</span>
+                    <span className="text-[12px] text-stone-500 truncate">{row.applicantEmail}</span>
                   </div>
                   <div className="mt-0.5 flex items-baseline gap-2 text-[12px]">
-                    <span className="text-zinc-800">{row.targetTeamName || "未知团队"}</span>
-                    <span className="text-zinc-400">{formatTime(row.createdAt)}</span>
+                    <span className="text-stone-800">{row.targetTeamName || "未知团队"}</span>
+                    <span className="text-stone-400">{formatTime(row.createdAt)}</span>
                   </div>
                 </div>
               </div>

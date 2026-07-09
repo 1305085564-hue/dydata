@@ -23,19 +23,19 @@ function SettingCard({ href, title, description, icon }: SettingCardProps) {
     <Link
       href={href}
       className={cn(
-        "group flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-5 transition duration-200 ease-out",
+        "group flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-5 transition duration-200 ease-out",
         "hover:border-[#D97757]/40 active:translate-y-0",
       )}
     >
       <div className="flex items-start gap-3">
-        <span className="flex size-11 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 text-zinc-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
+        <span className="flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
           {icon}
         </span>
-        <span className="flex-1 pt-1 text-[18px] font-semibold tracking-[-0.02em] text-zinc-800">
+        <span className="flex-1 pt-1 text-[18px] font-semibold tracking-[-0.02em] text-stone-800">
           {title}
         </span>
       </div>
-      <span className="text-sm leading-6 text-zinc-500">{description}</span>
+      <span className="text-sm leading-6 text-stone-500">{description}</span>
     </Link>
   );
 }

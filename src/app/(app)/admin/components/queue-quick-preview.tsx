@@ -68,33 +68,33 @@ function PreviewShell({
     size === "lg" ? "sm:max-w-xl" : size === "md" ? "sm:max-w-lg" : "sm:max-w-md";
   const primaryToneClass =
     primaryAction?.tone === "danger"
-      ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+      ? "bg-stone-100 text-stone-700 hover:bg-stone-200"
       : "bg-[#D97757] text-white hover:bg-[#C96442]";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton
         className={cn(
-          "rounded-2xl border border-zinc-200 bg-white p-0",
+          "rounded-2xl border border-stone-200 bg-white p-0",
           widthClass,
         )}
       >
         <DialogHeader className="px-5 pb-3 pt-5">
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-800">
             {title}
           </DialogTitle>
           {subtitle ? (
-            <div className="mt-1 text-[12px] text-zinc-500">{subtitle}</div>
+            <div className="mt-1 text-[12px] text-stone-500">{subtitle}</div>
           ) : null}
         </DialogHeader>
 
         <div className="px-5 pb-4">{children}</div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-100 px-5 py-3">
+        <div className="flex items-center justify-between gap-2 border-t border-stone-100 px-5 py-3">
           {fullViewHref ? (
             <Link
               href={fullViewHref}
-              className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-colors hover:text-zinc-800"
+              className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] text-stone-500 transition-colors hover:text-stone-800"
               onClick={() => onOpenChange(false)}
             >
               {fullViewLabel}
@@ -109,10 +109,10 @@ function PreviewShell({
                 type="button"
                 onClick={secondaryAction.onClick}
                 disabled={secondaryAction.loading || secondaryAction.disabled}
-                className="inline-flex h-8 items-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-8 items-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 transition hover:border-stone-300 hover:bg-stone-50 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {secondaryAction.loading ? (
-                  <div className="space-y-2"><div className="h-12 rounded-lg bg-zinc-100" /><div className="h-12 rounded-lg bg-zinc-100" /></div>
+                  <div className="space-y-2"><div className="h-12 rounded-lg bg-stone-100" /><div className="h-12 rounded-lg bg-stone-100" /></div>
                 ) : (
                   <>
                     {secondaryAction.label}
@@ -131,7 +131,7 @@ function PreviewShell({
                 )}
               >
                 {primaryAction.loading ? (
-                  <div className="space-y-2"><div className="h-12 rounded-lg bg-zinc-100" /><div className="h-12 rounded-lg bg-zinc-100" /></div>
+                  <div className="space-y-2"><div className="h-12 rounded-lg bg-stone-100" /><div className="h-12 rounded-lg bg-stone-100" /></div>
                 ) : (
                   <>
                     {primaryAction.label}
@@ -151,8 +151,8 @@ function MetaInline({ items }: { items: { label: string; value: React.ReactNode 
     <dl className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px]">
       {items.map((item, idx) => (
         <div key={idx} className="flex items-baseline gap-1.5">
-          <dt className="text-zinc-400">{item.label}</dt>
-          <dd className="text-zinc-700">{item.value}</dd>
+          <dt className="text-stone-400">{item.label}</dt>
+          <dd className="text-stone-700">{item.value}</dd>
         </div>
       ))}
     </dl>
@@ -199,15 +199,15 @@ export function VideoPreviewDialog({
       fullViewLabel="前往批改台"
     >
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
-          <p className="text-[11px] text-zinc-400">本条 24h 播放</p>
-          <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-800">
+        <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
+          <p className="text-[11px] text-stone-400">本条 24h 播放</p>
+          <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-800">
             {(row.current_play_count ?? 0).toLocaleString()}
           </p>
         </div>
-        <div className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
-          <p className="text-[11px] text-zinc-400">上一条 24h 播放</p>
-          <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-800">
+        <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
+          <p className="text-[11px] text-stone-400">上一条 24h 播放</p>
+          <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-800">
             {(row.previous_play_count ?? 0).toLocaleString()}
           </p>
         </div>
@@ -262,7 +262,7 @@ export function SubmissionPreviewDialog({
               ? {
                   label: "距今",
                   value: (
-                    <span className={gapDays >= 2 ? "text-[#C9604D]" : "text-zinc-700"}>
+                    <span className={gapDays >= 2 ? "text-[#C9604D]" : "text-stone-700"}>
                       {gapDays} 天
                     </span>
                   ),
@@ -270,7 +270,7 @@ export function SubmissionPreviewDialog({
               : null,
           ].filter(Boolean) as { label: string; value: React.ReactNode }[]}
         />
-        <p className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-[13px] leading-7 text-zinc-600">
+        <p className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 text-[13px] leading-7 text-stone-600">
           系统每天 11:15 自动飞书催交。 “催交历史” 可看具体送达记录。
         </p>
       </div>
@@ -310,7 +310,7 @@ export function ExemptionPreviewDialog({
       title={`${row.applicant_name} 申请豁免`}
       subtitle={
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="inline-flex items-center gap-1 text-zinc-600">
+          <span className="inline-flex items-center gap-1 text-stone-600">
             <span className="size-1.5 rounded-full bg-[#D99E55]" />
             {typeLabel}
           </span>
@@ -331,8 +331,8 @@ export function ExemptionPreviewDialog({
         loading: reviewing,
       }}
     >
-      <div className="max-h-[360px] min-h-[180px] overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200">
-        <p className="whitespace-pre-wrap text-[14px] leading-[1.85] text-zinc-800">
+      <div className="max-h-[360px] min-h-[180px] overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-stone-200">
+        <p className="whitespace-pre-wrap text-[14px] leading-[1.85] text-stone-800">
           {row.reason ?? "未填写原因"}
         </p>
       </div>

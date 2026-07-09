@@ -84,8 +84,8 @@ function ConversationItem({
       className={cn(
         'group relative w-full rounded-lg border border-transparent px-3 py-2 text-left transition-colors',
         active
-          ? 'bg-zinc-200/95'
-          : 'hover:bg-zinc-100'
+          ? 'bg-stone-200/95'
+          : 'hover:bg-stone-100'
       )}
     >
       <div className="flex items-center gap-2">
@@ -93,22 +93,22 @@ function ConversationItem({
           className={cn(
             'inline-flex h-1.5 w-1.5 shrink-0 rounded-full border transition-colors',
             active
-              ? 'border-zinc-500 bg-transparent'
+              ? 'border-stone-500 bg-transparent'
             : isToday(conversation.updatedAt)
-                ? 'border-zinc-400 bg-transparent'
-                : 'border-zinc-300 bg-transparent group-hover:border-zinc-400'
+                ? 'border-stone-400 bg-transparent'
+                : 'border-stone-300 bg-transparent group-hover:border-stone-400'
           )}
         />
         <p
           className={cn(
             'truncate text-[13px] font-medium leading-tight',
-            active ? 'text-zinc-800' : 'text-zinc-600'
+            active ? 'text-stone-800' : 'text-stone-600'
           )}
         >
           {conversation.title || '新文案'}
         </p>
         {showTag ? (
-          <span className="ml-auto shrink-0 text-[12px] text-zinc-400">
+          <span className="ml-auto shrink-0 text-[12px] text-stone-400">
             · {tag}
           </span>
         ) : null}
@@ -140,15 +140,15 @@ export function RewriteHistory({
       {/* Header */}
       <div className="shrink-0 px-3 pt-3 pb-2">
         <div className="flex items-center gap-2 px-1">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-stone-400">
             历史记录
           </span>
-          <div className="h-px flex-1 bg-zinc-200" />
-          <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{conversations.length}</span>
+          <div className="h-px flex-1 bg-stone-200" />
+          <span className="text-[10px] text-stone-400 font-mono tabular-nums">{conversations.length}</span>
         </div>
         <button
           onClick={onNewConversation}
-          className="active:translate-y-0 mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:text-zinc-800"
+          className="active:translate-y-0 mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-[11px] font-medium text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800"
         >
           <Plus className="h-3 w-3" />
           <span className="tracking-wide">新文案</span>
@@ -156,17 +156,17 @@ export function RewriteHistory({
       </div>
 
       {/* Divider */}
-      <div className="mx-3 h-px bg-zinc-200" />
+      <div className="mx-3 h-px bg-stone-200" />
 
       {/* List */}
       <div className="flex-1 overflow-y-auto px-2 py-2">
         {conversations.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center px-3 text-center">
-            <span className="mb-2 inline-flex h-6 w-6 items-center justify-center rounded-lg border border-zinc-200">
-              <FileText className="h-3 w-3 text-zinc-300" />
+            <span className="mb-2 inline-flex h-6 w-6 items-center justify-center rounded-lg border border-stone-200">
+              <FileText className="h-3 w-3 text-stone-300" />
             </span>
-            <p className="text-[11px] font-medium text-zinc-500">暂无记录</p>
-            <p className="mt-0.5 text-[12px] leading-relaxed text-zinc-400">
+            <p className="text-[11px] font-medium text-stone-500">暂无记录</p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-stone-400">
               改写的文案会保存在这里
             </p>
           </div>
@@ -175,11 +175,11 @@ export function RewriteHistory({
             {sections.map((section) => (
               <div key={section.key} className="space-y-1">
                 <div className="flex items-center gap-2 px-1 py-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-stone-400">
                     {section.label}
                   </span>
-                  <div className="h-px flex-1 bg-zinc-200" />
-                  <span className="text-[10px] text-zinc-400 font-mono tabular-nums">{section.items.length}</span>
+                  <div className="h-px flex-1 bg-stone-200" />
+                  <span className="text-[10px] text-stone-400 font-mono tabular-nums">{section.items.length}</span>
                 </div>
                 <div className="space-y-1">
                   {section.items.map((conversation) => (
@@ -201,7 +201,7 @@ export function RewriteHistory({
 
       {/* Footer */}
       <div className="shrink-0 px-3 pt-3 pb-2">
-        <p className="truncate text-[10px] uppercase tracking-[0.2em] text-zinc-400">
+        <p className="truncate text-[10px] uppercase tracking-[0.2em] text-stone-400">
           {featureLabel}
         </p>
       </div>

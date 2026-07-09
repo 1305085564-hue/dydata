@@ -41,12 +41,12 @@ interface VideoListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  正常: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
-  删稿: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  限流: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
+  正常: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
+  删稿: "border-stone-200 bg-stone-50 text-[#C9604D]",
+  限流: "border-stone-200 bg-stone-50 text-[#C9604D]",
+  投流: "border-stone-200 bg-stone-50 text-[#D99E55]",
+  活动干预: "border-stone-200 bg-stone-50 text-[#D99E55]",
+  "未满24h": "border-stone-200 bg-stone-50 text-stone-500",
 };
 
 const PAGE_SIZE = 30;
@@ -270,21 +270,21 @@ export function VideoList({
 
       <div
         ref={tableContainerRef}
-        className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-sm"
+        className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white shadow-sm"
         style={{ maxHeight: "calc(100vh - 280px)" }}
       >
         <Table freezeFirst>
           <TableHeader className="sticky top-0 z-10">
-            <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
-              <TableHead className="h-9 px-4 text-[12px] font-medium text-zinc-500">视频标题</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">负责人</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">发布时间</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">24h播放量</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">互动率(%)</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">涨粉</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">状态</TableHead>
-              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-zinc-500">操作</TableHead>
+            <TableRow className="border-b border-stone-200 bg-stone-50 hover:bg-stone-50">
+              <TableHead className="h-9 px-4 text-[12px] font-medium text-stone-500">视频标题</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">账号</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">负责人</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">发布时间</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">24h播放量</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">互动率(%)</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">涨粉</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">状态</TableHead>
+              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-stone-500">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -294,18 +294,18 @@ export function VideoList({
                 const showPatchButton = shouldShowPatch24hButton(video, snapshot);
 
                 return (
-                  <TableRow key={video.id} data-video-id={video.id} className="group hover:bg-zinc-50">
+                  <TableRow key={video.id} data-video-id={video.id} className="group hover:bg-stone-50">
                     <TableCell className="max-w-[280px] whitespace-normal px-4 align-top">
-                      <div className="line-clamp-2 text-[13px] font-medium text-zinc-800">
+                      <div className="line-clamp-2 text-[13px] font-medium text-stone-900">
                         {video.video_title?.trim() || "未命名视频"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-[12px] text-zinc-500">{video.accounts.name}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-500">{video.profiles.name}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-500">{formatDateTime(video.published_at)}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-700 font-mono tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-500">{video.accounts.name}</TableCell>
+                    <TableCell className="text-[12px] text-stone-500">{video.profiles.name}</TableCell>
+                    <TableCell className="text-[12px] text-stone-500">{formatDateTime(video.published_at)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-700 font-mono tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-700 font-mono tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-700 font-mono tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
                         {video.anomaly_status}
@@ -325,7 +325,7 @@ export function VideoList({
                         <button
                           type="button"
                           onClick={() => setSelectedVideoId(video.id)}
-                          className="text-[12px] text-zinc-600 underline-offset-4 hover:text-zinc-900 hover:underline"
+                          className="text-[12px] text-stone-600 underline-offset-4 hover:text-stone-900 hover:underline"
                         >
                           查看详情
                         </button>
@@ -336,7 +336,7 @@ export function VideoList({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="px-4 py-16 text-center text-[13px] text-zinc-500">
+                <TableCell colSpan={9} className="px-4 py-16 text-center text-[13px] text-stone-500">
                   当前筛选条件下暂无视频数据。
                 </TableCell>
               </TableRow>
@@ -360,7 +360,7 @@ export function VideoList({
           <Button
             variant="outline"
             size="sm"
-            className="h-10 gap-1.5 rounded-xl border-zinc-200 px-6 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+            className="h-10 gap-1.5 rounded-xl border-stone-200 px-6 text-[13px] text-stone-500 hover:bg-stone-50 hover:text-stone-700"
             onClick={() => {
               if (hasDeferredData && onLoadDeferredData) {
                 void onLoadDeferredData();
@@ -380,7 +380,7 @@ export function VideoList({
               <>
                 <ChevronDown className="size-3.5" />
                 加载更多
-                <span className="ml-1 text-[11px] text-zinc-400">
+                <span className="ml-1 text-[12px] text-stone-300">
                   (已加载 {Math.min(loadedCount, filteredVideos.length)} / 共 {hasDeferredData ? totalCount ?? filteredVideos.length : filteredVideos.length} 条)
                 </span>
               </>
@@ -391,7 +391,7 @@ export function VideoList({
 
       {/* End state */}
       {!hasMore && filteredVideos.length > 0 && (
-        <div className="mt-4 text-center text-[12px] text-zinc-400">
+        <div className="mt-4 text-center text-[12px] text-stone-300">
           已加载全部 {filteredVideos.length} 条视频
         </div>
       )}

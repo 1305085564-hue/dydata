@@ -73,10 +73,10 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
       : accounts.find((item) => item.id === filters.accountId)?.name ?? "全部账号";
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+    <div className="rounded-2xl border border-stone-200 bg-white p-4">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <div className="space-y-1">
-          <div className="text-[12px] text-zinc-500">员工</div>
+          <div className="text-[12px] text-stone-500">员工</div>
           <Select
             value={filters.profileId}
             onValueChange={(value) => updateFilter("profileId", value || "all")}
@@ -100,7 +100,7 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
         </div>
 
         <div className="space-y-1">
-          <div className="text-[12px] text-zinc-500">账号</div>
+          <div className="text-[12px] text-stone-500">账号</div>
           <Select
             value={filters.accountId}
             onValueChange={(value) => updateFilter("accountId", value || "all")}
@@ -124,7 +124,7 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
         </div>
 
         <div className="space-y-1">
-          <div className="text-[12px] text-zinc-500">状态</div>
+          <div className="text-[12px] text-stone-500">状态</div>
           <Select
             value={filters.status}
             onValueChange={(value) => updateFilter("status", (value || "all") as AdviceFilterValue["status"])}
@@ -144,7 +144,7 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
         </div>
 
         <div className="space-y-1">
-          <div className="text-[12px] text-zinc-500">来源</div>
+          <div className="text-[12px] text-stone-500">来源</div>
           <Select
             value={filters.source}
             onValueChange={(value) => updateFilter("source", (value || "all") as AdviceFilterValue["source"])}
@@ -164,7 +164,7 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
         </div>
 
         <div className="space-y-1">
-          <div className="text-[12px] text-zinc-500">开始日期</div>
+          <div className="text-[12px] text-stone-500">开始日期</div>
           <Input
             type="date"
             value={filters.startDate}
@@ -174,7 +174,7 @@ export function AdviceFilters({ profiles, accounts, onFilter }: AdviceFiltersPro
         </div>
 
         <div className="space-y-1">
-          <div className="text-[12px] text-zinc-500">结束日期</div>
+          <div className="text-[12px] text-stone-500">结束日期</div>
           <div className="flex gap-2">
             <Input
               type="date"

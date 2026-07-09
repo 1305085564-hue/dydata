@@ -107,24 +107,24 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 className={"group " + (onReportOpen ? "cursor-pointer" : "")}
                 onClick={onReportOpen ? () => onReportOpen(report) : undefined}
               >
-                <TableCell className="whitespace-nowrap text-zinc-500 font-mono tabular-nums">
+                <TableCell className="whitespace-nowrap text-stone-500 font-mono tabular-nums">
                   {report.report_date?.slice(5)}
                 </TableCell>
-                <TableCell className="max-w-[120px] truncate text-zinc-500">
+                <TableCell className="max-w-[120px] truncate text-stone-500">
                   {accountDisplayNameMap[report.account_id] ?? "-"}
                 </TableCell>
-                <TableCell className="max-w-[160px] truncate text-zinc-800">{report.title}</TableCell>
-                <TableCell className="text-right font-semibold font-mono tabular-nums text-zinc-800">
+                <TableCell className="max-w-[160px] truncate text-stone-800">{report.title}</TableCell>
+                <TableCell className="text-right font-semibold font-mono tabular-nums text-stone-800">
                   {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-zinc-800">{report.avg_play_duration ?? "-"}</TableCell>
-                <TableCell className="hidden text-right font-mono tabular-nums text-zinc-800 lg:table-cell">{report.bounce_rate_2s ?? "-"}</TableCell>
-                <TableCell className="hidden text-right font-mono tabular-nums text-zinc-800 lg:table-cell">{report.completion_rate_5s ?? "-"}</TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-zinc-800">{report.likes}</TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-zinc-800">{report.comments}</TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-zinc-800">{report.shares}</TableCell>
-                <TableCell className="hidden text-right font-mono tabular-nums text-zinc-800 lg:table-cell">{report.favorites}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-stone-800">{report.completion_rate ?? "-"}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-stone-800">{report.avg_play_duration ?? "-"}</TableCell>
+                <TableCell className="hidden text-right font-mono tabular-nums text-stone-800 lg:table-cell">{report.bounce_rate_2s ?? "-"}</TableCell>
+                <TableCell className="hidden text-right font-mono tabular-nums text-stone-800 lg:table-cell">{report.completion_rate_5s ?? "-"}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-stone-800">{report.likes}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-stone-800">{report.comments}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-stone-800">{report.shares}</TableCell>
+                <TableCell className="hidden text-right font-mono tabular-nums text-stone-800 lg:table-cell">{report.favorites}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
@@ -150,20 +150,20 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
             key={report.id}
             className={
               onReportOpen
-                ? "cursor-pointer space-y-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
-                : "space-y-2 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
+                ? "cursor-pointer space-y-2 rounded-xl border border-stone-200 bg-white p-4 shadow-sm"
+                : "space-y-2 rounded-xl border border-stone-200 bg-white p-4 shadow-sm"
             }
             onClick={onReportOpen ? () => onReportOpen(report) : undefined}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[12px] text-zinc-400 font-mono tabular-nums">{report.report_date?.slice(5)}</p>
-                <p className="mt-1 text-[12px] text-zinc-400">
+                <p className="text-[12px] text-stone-400 font-mono tabular-nums">{report.report_date?.slice(5)}</p>
+                <p className="mt-1 text-[12px] text-stone-400">
                   {accountDisplayNameMap[report.account_id] ?? "-"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <p className="text-[13px] font-semibold font-mono tabular-nums text-zinc-800">
+                <p className="text-[13px] font-semibold font-mono tabular-nums text-stone-800">
                   {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
                 </p>
                 <Button
@@ -179,23 +179,23 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 </Button>
               </div>
             </div>
-            <p className="truncate text-[13px] text-zinc-800">{report.title}</p>
+            <p className="truncate text-[13px] text-stone-800">{report.title}</p>
             <div className="grid grid-cols-4 gap-2 text-[12px]">
               <div>
-                <p className="text-zinc-400">完播率</p>
-                <p className="font-mono tabular-nums text-zinc-800">{report.completion_rate ?? "-"}</p>
+                <p className="text-stone-400">完播率</p>
+                <p className="font-mono tabular-nums text-stone-800">{report.completion_rate ?? "-"}</p>
               </div>
               <div>
-                <p className="text-zinc-400">点赞</p>
-                <p className="font-mono tabular-nums text-zinc-800">{report.likes}</p>
+                <p className="text-stone-400">点赞</p>
+                <p className="font-mono tabular-nums text-stone-800">{report.likes}</p>
               </div>
               <div>
-                <p className="text-zinc-400">评论</p>
-                <p className="font-mono tabular-nums text-zinc-800">{report.comments}</p>
+                <p className="text-stone-400">评论</p>
+                <p className="font-mono tabular-nums text-stone-800">{report.comments}</p>
               </div>
               <div>
-                <p className="text-zinc-400">分享</p>
-                <p className="font-mono tabular-nums text-zinc-800">{report.shares}</p>
+                <p className="text-stone-400">分享</p>
+                <p className="font-mono tabular-nums text-stone-800">{report.shares}</p>
               </div>
             </div>
           </div>
@@ -213,7 +213,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">修改日报</DialogTitle>
+            <DialogTitle className="text-[18px] font-semibold tracking-tight text-stone-800">修改日报</DialogTitle>
           </DialogHeader>
           {editingReport && (
             <DashboardForm
