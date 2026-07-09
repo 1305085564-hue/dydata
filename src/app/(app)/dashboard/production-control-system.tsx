@@ -5,7 +5,6 @@
  * 只保留数据报表主工作台，组合头部、概览卡和填报面板。
  */
 
-import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
 import { useEffect, useMemo, useState } from "react";
@@ -42,7 +41,6 @@ interface ProductionControlSystemProps {
   hasPendingExemption?: boolean;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
 export function ProductionControlSystem({
@@ -60,7 +58,6 @@ export function ProductionControlSystem({
   hasPendingExemption = false,
   userExemptionProfile,
   userExemptionGrants,
-  teamReviewRequests,
 }: ProductionControlSystemProps) {
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [activeBizDate, setActiveBizDate] = useState(today);
@@ -151,7 +148,6 @@ export function ProductionControlSystem({
           hasPendingExemption={hasPendingExemption}
           userExemptionProfile={userExemptionProfile}
           userExemptionGrants={userExemptionGrants}
-          teamReviewRequests={teamReviewRequests}
         />
       </main>
     </div>

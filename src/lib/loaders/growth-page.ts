@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { measureAsync } from "@/lib/perf";
 import {
   buildAdviceSections,
   buildGrowthDimensionCards,
@@ -77,12 +78,15 @@ function isMissingContentScriptSchemaError(error: { message?: string } | null | 
   return Boolean(
     error?.message &&
       (error.message.includes("content_item.account_id") ||
+        error.message.includes("content_item.owner_user_id") ||
         error.message.includes("script_document.content_item_id") ||
         error.message.includes("script_segment.segment_type") ||
         error.message.includes("column content_item.account_id does not exist") ||
+        error.message.includes("column content_item.owner_user_id does not exist") ||
         error.message.includes("column script_document.content_item_id does not exist") ||
         error.message.includes("column script_segment.segment_type does not exist") ||
         error.message.includes("Could not find the 'account_id' column of 'content_item'") ||
+        error.message.includes("Could not find the 'owner_user_id' column of 'content_item'") ||
         error.message.includes("Could not find the 'content_item_id' column of 'script_document'") ||
         error.message.includes("Could not find the 'segment_type' column of 'script_segment'")),
   );
@@ -97,10 +101,12 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
     };
   }
 
-  const contentItemsResult = await supabase
-    .from("content_item")
-    .select("id, account_id, biz_date, owner_user_id")
-    .eq("owner_user_id", userId);
+  const contentItemsResult = await measureAsync("growth.full.scriptContext.contentItems", () =>
+    supabase
+      .from("content_item")
+      .select("id, account_id, biz_date, owner_user_id")
+      .eq("owner_user_id", userId),
+  );
 
   if (isMissingContentScriptSchemaError(contentItemsResult.error)) {
     contentScriptSchemaAvailable = false;
@@ -123,10 +129,12 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
 
   const contentItemIds = contentItems.map((item) => item.id);
 
-  const scriptDocumentsResult = await supabase
-    .from("script_document")
-    .select("id, content_item_id, raw_text, estimated_duration_sec")
-    .in("content_item_id", contentItemIds);
+  const scriptDocumentsResult = await measureAsync("growth.full.scriptContext.scriptDocuments", () =>
+    supabase
+      .from("script_document")
+      .select("id, content_item_id, raw_text, estimated_duration_sec")
+      .in("content_item_id", contentItemIds),
+  );
 
   if (isMissingContentScriptSchemaError(scriptDocumentsResult.error)) {
     contentScriptSchemaAvailable = false;
@@ -148,10 +156,12 @@ async function loadScriptContextData(supabase: GrowthSupabase, userId: string) {
   }
 
   const scriptDocumentIds = scriptDocuments.map((document) => document.id);
-  const scriptSegmentsResult = await supabase
-    .from("script_segment")
-    .select("id, script_document_id, segment_type, segment_order, content, start_sec, end_sec")
-    .in("script_document_id", scriptDocumentIds);
+  const scriptSegmentsResult = await measureAsync("growth.full.scriptContext.scriptSegments", () =>
+    supabase
+      .from("script_segment")
+      .select("id, script_document_id, segment_type, segment_order, content, start_sec, end_sec")
+      .in("script_document_id", scriptDocumentIds),
+  );
 
   if (isMissingContentScriptSchemaError(scriptSegmentsResult.error)) {
     contentScriptSchemaAvailable = false;
@@ -410,6 +420,25 @@ export interface GrowthPageData {
   isPartial: boolean;
 }
 
+export interface GrowthPageHydrationData
+  extends Pick<
+    GrowthPageData,
+    | "reportCount"
+    | "statusCards"
+    | "capabilityCards"
+    | "weakBenchmarkCards"
+    | "pkPanel"
+    | "scriptBreakdown"
+    | "advice"
+    | "myReports"
+    | "teamReports"
+    | "teamMembers"
+    | "summary"
+  > {
+  loadMode: "full";
+  isPartial: false;
+}
+
 function buildGrowthPageResponse({
   mode,
   now,
@@ -558,40 +587,39 @@ async function loadInitialGrowthPageData({
   now: Date;
 }) {
   const twoWeeksAgo = shiftDateOnly(now, -14);
-  const [profileResult, myAccountsResult, myReportsResult, teamReportsResult, aiInsightResult] = await Promise.all([
-    supabase.from("profiles").select("id, name").eq("id", userId).single(),
-    supabase
-      .from("accounts")
-      .select("id, profile_id, name, content_direction, presentation_format")
-      .eq("profile_id", userId)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("daily_reports")
-      .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
-      .eq("user_id", userId)
-      .gte("report_date", twoWeeksAgo),
-    supabase
-      .from("daily_reports")
-      .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
-      .gte("report_date", twoWeeksAgo),
-    supabase
-      .from("ai_insight_result")
-      .select("id, insight_type, result_status, result_json, rendered_text, created_at")
-      .eq("insight_type", "growth_edit")
-      .contains("result_json", { meta_user_id: userId })
-      .order("created_at", { ascending: false })
-      .limit(1),
+  const [profileResult, myAccountsResult, teamReportsResult, aiInsightResult] = await Promise.all([
+    measureAsync("growth.initial.profile", () => supabase.from("profiles").select("id, name").eq("id", userId).single()),
+    measureAsync("growth.initial.myAccounts", () =>
+      supabase
+        .from("accounts")
+        .select("id, profile_id, name, content_direction, presentation_format")
+        .eq("profile_id", userId)
+        .order("created_at", { ascending: true }),
+    ),
+    measureAsync("growth.initial.teamReports14d", () =>
+      supabase
+        .from("daily_reports")
+        .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
+        .gte("report_date", twoWeeksAgo),
+    ),
+    measureAsync("growth.initial.aiInsight", () =>
+      supabase
+        .from("ai_insight_result")
+        .select("id, insight_type, result_status, result_json, rendered_text, created_at")
+        .eq("insight_type", "growth_edit")
+        .contains("result_json", { meta_user_id: userId })
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ),
   ]);
 
   const profile = profileResult.data as ProfileRow | null;
   const myAccounts = (myAccountsResult.data ?? []) as MetricsAccount[];
-  const myAccountIdSet = new Set(myAccounts.map((account) => account.id));
-  const myReports = ((myReportsResult.data ?? []) as DailyReportRow[]).filter((report) => myAccountIdSet.has(report.account_id));
   const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
   const teamUserIds = Array.from(new Set(teamReports.map((report) => report.user_id)));
   const profilesResult =
     teamUserIds.length > 0
-      ? await supabase.from("profiles").select("id, name").in("id", teamUserIds)
+      ? await measureAsync("growth.initial.teamProfiles", () => supabase.from("profiles").select("id, name").in("id", teamUserIds))
       : { data: [] as ProfileRow[], error: null };
   const profileNameMap = buildProfileNameMap((profilesResult.data ?? []) as ProfileRow[]);
   const aiInsight = ((aiInsightResult.data ?? [])[0] ?? null) as AiInsightRow | null;
@@ -622,43 +650,33 @@ async function loadFullGrowthPageData({
   now: Date;
 }) {
   const monthAgo = shiftDateOnly(now, -30);
-  const [
-    profileResult,
-    myAccountsResult,
-    allAccountsResult,
-    teamReportsResult,
-    profilesResult,
-    aiInsightResult,
-    scriptContextData,
-  ] = await Promise.all([
-    supabase.from("profiles").select("id, name").eq("id", userId).single(),
-    supabase
-      .from("accounts")
-      .select("id, profile_id, name, content_direction, presentation_format")
-      .eq("profile_id", userId)
-      .order("created_at", { ascending: true }),
-    supabase.from("accounts").select("id, profile_id, name, content_direction, presentation_format"),
-    supabase
-      .from("daily_reports")
-      .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
-      .gte("report_date", monthAgo),
-    supabase.from("profiles").select("id, name"),
-    supabase
-      .from("ai_insight_result")
-      .select("id, insight_type, result_status, result_json, rendered_text, created_at")
-      .eq("insight_type", "growth_edit")
-      .contains("result_json", { meta_user_id: userId })
-      .order("created_at", { ascending: false })
-      .limit(1),
-    loadScriptContextData(supabase, userId),
+  const [allAccountsResult, teamReportsResult, scriptContextData] = await Promise.all([
+    measureAsync("growth.full.allAccounts", () =>
+      supabase
+        .from("accounts")
+        .select("id, profile_id, name, content_direction, presentation_format")
+        .order("created_at", { ascending: true }),
+    ),
+    measureAsync("growth.full.teamReports30d", () =>
+      supabase
+        .from("daily_reports")
+        .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
+        .gte("report_date", monthAgo),
+    ),
+    measureAsync("growth.full.scriptContext.total", () => loadScriptContextData(supabase, userId)),
   ]);
 
-  const profile = profileResult.data as ProfileRow | null;
-  const myAccounts = (myAccountsResult.data ?? []) as MetricsAccount[];
   const allAccounts = (allAccountsResult.data ?? []) as MetricsAccount[];
+  const myAccounts = allAccounts.filter((account) => account.profile_id === userId);
   const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
-  const profileNameMap = buildProfileNameMap((profilesResult.data ?? []) as ProfileRow[]);
-  const aiInsight = ((aiInsightResult.data ?? [])[0] ?? null) as AiInsightRow | null;
+  const teamUserIds = Array.from(new Set(teamReports.map((report) => report.user_id)));
+  const profilesResult =
+    teamUserIds.length > 0
+      ? await measureAsync("growth.full.teamProfiles", () => supabase.from("profiles").select("id, name").in("id", teamUserIds))
+      : { data: [] as ProfileRow[], error: null };
+  const profiles = (profilesResult.data ?? []) as ProfileRow[];
+  const profileNameMap = buildProfileNameMap(profiles);
+  const profile = profiles.find((item) => item.id === userId) ?? null;
 
   return buildGrowthPageResponse({
     mode: "full",
@@ -669,9 +687,46 @@ async function loadFullGrowthPageData({
     myAccounts,
     allAccounts,
     teamReports: mapReportsWithSubmitter(teamReports, profileNameMap),
-    aiInsight,
+    aiInsight: null,
     scriptContextData,
   });
+}
+
+export async function loadGrowthPageHydrationData({
+  supabase,
+  userId,
+  userEmail,
+  now = new Date(),
+}: {
+  supabase: GrowthSupabase;
+  userId: string;
+  userEmail: string | null | undefined;
+  now?: Date;
+}): Promise<GrowthPageHydrationData> {
+  const fullData = await measureAsync("growth.full.total", () =>
+    loadFullGrowthPageData({
+      supabase,
+      userId,
+      userEmail,
+      now,
+    }),
+  );
+
+  return {
+    reportCount: fullData.reportCount,
+    statusCards: fullData.statusCards,
+    capabilityCards: fullData.capabilityCards,
+    weakBenchmarkCards: fullData.weakBenchmarkCards,
+    pkPanel: fullData.pkPanel,
+    scriptBreakdown: fullData.scriptBreakdown,
+    advice: fullData.advice,
+    myReports: fullData.myReports,
+    teamReports: fullData.teamReports,
+    teamMembers: fullData.teamMembers,
+    summary: fullData.summary,
+    loadMode: "full",
+    isPartial: false,
+  };
 }
 
 export async function loadGrowthPageData({
@@ -688,18 +743,22 @@ export async function loadGrowthPageData({
   now?: Date;
 }): Promise<GrowthPageData> {
   if (mode === "initial") {
-    return loadInitialGrowthPageData({
+    return measureAsync("growth.initial.total", () =>
+      loadInitialGrowthPageData({
+        supabase,
+        userId,
+        userEmail,
+        now,
+      }),
+    );
+  }
+
+  return measureAsync("growth.full.legacyTotal", () =>
+    loadFullGrowthPageData({
       supabase,
       userId,
       userEmail,
       now,
-    });
-  }
-
-  return loadFullGrowthPageData({
-    supabase,
-    userId,
-    userEmail,
-    now,
-  });
+    }),
+  );
 }

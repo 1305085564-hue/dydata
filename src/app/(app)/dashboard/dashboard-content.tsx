@@ -27,7 +27,6 @@ interface DashboardContentProps {
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
 export function DashboardContent(props: DashboardContentProps) {

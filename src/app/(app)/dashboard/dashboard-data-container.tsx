@@ -3,16 +3,13 @@ import { loadDashboardPageData } from "@/lib/loaders/dashboard-page";
 import { measureAsync } from "@/lib/perf";
 import { DashboardContent } from "./dashboard-content";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
-import type { UserRole } from "@/types";
 
 interface DashboardDataContainerProps {
   userId: string;
-  userRole: UserRole;
 }
 
 export async function DashboardDataContainer({
   userId,
-  userRole,
 }: DashboardDataContainerProps) {
   const supabase = await createClient();
 
@@ -28,7 +25,7 @@ export async function DashboardDataContainer({
       <DashboardContent
         today={data.today}
         userDisplayName={data.userDisplayName}
-        userRole={userRole}
+        userRole={data.userRole}
         accounts={data.accounts}
         userId={data.userId}
         todayReports={data.todayReports}
@@ -41,7 +38,6 @@ export async function DashboardDataContainer({
         userExemptionReviewNotice={data.userExemptionReviewNotice}
         userExemptionProfile={data.userExemptionProfile}
         userExemptionGrants={data.userExemptionGrants}
-        teamReviewRequests={data.teamReviewRequests}
       />
     </DashboardAnimatedSection>
   );

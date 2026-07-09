@@ -9,8 +9,9 @@ import { ScriptBreakdown } from "@/components/growth/script-breakdown";
 import { GrowthActionPlanPanel } from "@/components/growth/growth-action-plan-panel";
 import { GrowthPkPanel } from "@/components/growth/growth-pk-panel";
 import { AppShell, AppShellHero, AppShellSection } from "@/components/app-shell";
+import { mergeGrowthPageData, scheduleGrowthFullHydration } from "@/lib/growth-hydration";
 
-import type { GrowthPageData } from "@/lib/loaders/growth-page";
+import type { GrowthPageData, GrowthPageHydrationData } from "@/lib/loaders/growth-page";
 
 interface GrowthHydrationState {
   status: "idle" | "loading" | "ready" | "error";
@@ -27,19 +28,11 @@ async function fetchFullGrowthPageData(signal: AbortSignal) {
     throw new Error(`growth full load failed: ${response.status}`);
   }
 
-  return (await response.json()) as GrowthPageData;
-}
-
-function mergeGrowthData(initialData: GrowthPageData, fullData: GrowthPageData | null) {
-  if (!fullData) {
-    return initialData;
-  }
-
-  return fullData;
+  return (await response.json()) as GrowthPageHydrationData;
 }
 
 export function GrowthClientShell(initialData: GrowthPageData) {
-  const [fullData, setFullData] = useState<GrowthPageData | null>(initialData.isPartial ? null : initialData);
+  const [fullData, setFullData] = useState<GrowthPageHydrationData | null>(initialData.isPartial ? null : null);
   const [hydrationState, setHydrationState] = useState<GrowthHydrationState>({
     status: initialData.isPartial ? "loading" : "ready",
   });
@@ -50,23 +43,25 @@ export function GrowthClientShell(initialData: GrowthPageData) {
     const controller = new AbortController();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrationState({ status: "loading" });
-
-    fetchFullGrowthPageData(controller.signal)
-      .then((data) => {
-        setFullData(data);
-        setHydrationState({ status: "ready" });
-      })
-      .catch((error) => {
-        if ((error as { name?: string }).name === "AbortError") return;
-        setHydrationState({ status: "error" });
-      });
+    const cleanup = scheduleGrowthFullHydration(() => {
+      fetchFullGrowthPageData(controller.signal)
+        .then((data) => {
+          setFullData(data);
+          setHydrationState({ status: "ready" });
+        })
+        .catch((error) => {
+          if ((error as { name?: string }).name === "AbortError") return;
+          setHydrationState({ status: "error" });
+        });
+    });
 
     return () => {
+      cleanup();
       controller.abort();
     };
   }, [initialData]);
 
-  const data = mergeGrowthData(initialData, fullData);
+  const data = mergeGrowthPageData(initialData, fullData);
   const hydrationLabel =
     hydrationState.status === "loading"
       ? "团队对标、PK 和结构化拆解补全中"

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { loadGrowthPageData, type GrowthPageLoadMode } from "@/lib/loaders/growth-page";
+import { loadGrowthPageData, loadGrowthPageHydrationData, type GrowthPageLoadMode } from "@/lib/loaders/growth-page";
 import { createClient } from "@/lib/supabase/server";
 
 function resolveMode(searchParams: URLSearchParams): GrowthPageLoadMode | null {
@@ -25,12 +25,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  const data = await loadGrowthPageData({
-    supabase,
-    userId: user.id,
-    userEmail: user.email,
-    mode,
-  });
+  const data =
+    mode === "full"
+      ? await loadGrowthPageHydrationData({
+          supabase,
+          userId: user.id,
+          userEmail: user.email,
+        })
+      : await loadGrowthPageData({
+          supabase,
+          userId: user.id,
+          userEmail: user.email,
+          mode,
+        });
 
   return NextResponse.json(data);
 }

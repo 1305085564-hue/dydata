@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { __internal, loadGrowthPageData } from "./growth-page";
+import { __internal, loadGrowthPageData, loadGrowthPageHydrationData } from "./growth-page";
 
 type QueryCall = {
   table: string;
@@ -149,6 +149,52 @@ test("成长页脚本字段缺失时不继续查询脚本文档和脚本分段",
     {
       from(table: string) {
         return new MissingSchemaQuery(table, calls);
+      },
+    } as never,
+    "user-1",
+  );
+
+  assert.deepEqual(result, {
+    contentItems: [],
+    scriptDocuments: [],
+    scriptSegments: [],
+  });
+  assert.deepEqual(calls, ["content_item"]);
+});
+
+test("成长页 owner_user_id 缺列时按兼容降级，不误跑后续脚本链", async () => {
+  __internal.resetContentScriptSchemaCache();
+  const calls: string[] = [];
+
+  class MissingOwnerColumnQuery {
+    constructor(
+      private readonly table: string,
+      private readonly tableCalls: string[],
+    ) {}
+
+    select() {
+      this.tableCalls.push(this.table);
+      return this;
+    }
+
+    eq() {
+      return this;
+    }
+
+    then(resolve: (value: { data: unknown[] | null; error: { message: string } | null }) => void) {
+      return Promise.resolve({
+        data: null,
+        error: {
+          message: "Could not find the 'owner_user_id' column of 'content_item' in the schema cache",
+        },
+      }).then(resolve);
+    }
+  }
+
+  const result = await __internal.loadScriptContextData(
+    {
+      from(table: string) {
+        return new MissingOwnerColumnQuery(table, calls);
       },
     } as never,
     "user-1",
@@ -314,10 +360,8 @@ test("成长页 initial 模式避开全量账号和脚本重链路，但保留�
   assert.equal(accountsCalls.length, 1);
   assert.deepEqual(accountsCalls[0]?.eq, { profile_id: "user-1" });
 
-  const dailyReportDates = calls
-    .filter((call) => call.table === "daily_reports")
-    .map((call) => call.gte.report_date);
-  assert.deepEqual(dailyReportDates, ["2026-05-17", "2026-05-17"]);
+  const dailyReportDates = calls.filter((call) => call.table === "daily_reports").map((call) => call.gte.report_date);
+  assert.deepEqual(dailyReportDates, ["2026-05-17"]);
 });
 
 test("成长页 full 模式会恢复 PK、团队对比和结构化脚本数据", async () => {
@@ -477,4 +521,129 @@ test("成长页 full 模式会恢复 PK、团队对比和结构化脚本数据",
 
   const hasFullAccountsQuery = calls.some((call) => call.table === "accounts" && Object.keys(call.eq).length === 0);
   assert.equal(hasFullAccountsQuery, true);
+});
+
+test("成长页 full 补拉返回页面关键升级字段，并收窄重复基础查询", async () => {
+  __internal.resetContentScriptSchemaCache();
+  const calls: QueryCall[] = [];
+  const now = new Date("2026-05-31T12:00:00.000Z");
+  const fullReports = [
+    createReport({ report_date: "2026-05-30", play_count: 12000, completion_rate: "31%", completion_rate_5s: "43%" }),
+    createReport({ report_date: "2026-05-21", play_count: 21000, completion_rate: "36%", completion_rate_5s: "49%" }),
+    createReport({ report_date: "2026-05-08", play_count: 34000, completion_rate: "42%", completion_rate_5s: "58%" }),
+    createReport({
+      user_id: "user-2",
+      account_id: "acc-peer",
+      report_date: "2026-05-29",
+      play_count: 42000,
+      likes: 2600,
+      comments: 280,
+      shares: 160,
+      favorites: 210,
+      follower_gain: 55,
+      completion_rate: "54%",
+      completion_rate_5s: "70%",
+      content: "同行高表现内容",
+    }),
+  ];
+
+  const supabase = createFakeSupabase((call) => {
+    if (call.table === "accounts") {
+      return {
+        data: [
+          {
+            id: "acc-self",
+            profile_id: "user-1",
+            name: "我的账号",
+            content_direction: "财经",
+            presentation_format: "口播",
+          },
+          {
+            id: "acc-peer",
+            profile_id: "user-2",
+            name: "同行账号",
+            content_direction: "财经",
+            presentation_format: "口播",
+          },
+        ],
+        error: null,
+      };
+    }
+
+    if (call.table === "daily_reports") {
+      return { data: fullReports, error: null };
+    }
+
+    if (call.table === "profiles") {
+      return {
+        data: [
+          { id: "user-1", name: "阿禅" },
+          { id: "user-2", name: "小王" },
+        ],
+        error: null,
+      };
+    }
+
+    if (call.table === "content_item") {
+      return {
+        data: [{ id: "content-1", account_id: "acc-self", biz_date: "2026-05-30", owner_user_id: "user-1" }],
+        error: null,
+      };
+    }
+
+    if (call.table === "script_document") {
+      return {
+        data: [{ id: "doc-1", content_item_id: "content-1", raw_text: "先说结论，再给方法。", estimated_duration_sec: 38 }],
+        error: null,
+      };
+    }
+
+    if (call.table === "script_segment") {
+      return {
+        data: [
+          {
+            id: "seg-1",
+            script_document_id: "doc-1",
+            segment_type: "hook",
+            segment_order: 1,
+            content: "先抛反常识结论",
+            start_sec: 0,
+            end_sec: 4,
+          },
+        ],
+        error: null,
+      };
+    }
+
+    return { data: [], error: null };
+  }, calls);
+
+  const result = await loadGrowthPageHydrationData({
+    supabase: supabase as never,
+    userId: "user-1",
+    userEmail: "user@example.com",
+    now,
+  });
+
+  assert.equal(result.isPartial, false);
+  assert.equal(result.loadMode, "full");
+  assert.equal(result.reportCount, 3);
+  assert.equal(result.summary.hasEnoughData, true);
+  assert.equal(typeof result.summary.weakestDimension, "string");
+  assert.equal(result.statusCards.length > 0, true);
+  assert.equal(result.capabilityCards.length, 6);
+  assert.equal(result.myReports.length, 3);
+  assert.equal(result.teamReports.length, 4);
+  assert.equal(typeof result.advice.diagnosis, "string");
+  assert.equal(Array.isArray(result.teamMembers), true);
+  assert.equal(result.scriptBreakdown.state, "structured");
+  assert.equal(result.weakBenchmarkCards.length > 0, true);
+  assert.equal(result.pkPanel?.rightName, "小王");
+
+  const accountsCalls = calls.filter((call) => call.table === "accounts");
+  assert.equal(accountsCalls.length, 1);
+  assert.deepEqual(accountsCalls[0]?.eq, {});
+
+  assert.equal(calls.some((call) => call.table === "ai_insight_result"), false);
+  assert.equal(calls.some((call) => call.table === "profiles" && call.single), false);
 });

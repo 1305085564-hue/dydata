@@ -23,7 +23,6 @@ import {
   type ExemptionProfileLike,
 } from "@/lib/豁免";
 import { DashboardForm, type DashboardReportData } from "./dashboard-form";
-import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import {
   getDashboardMetricGridClass,
   getDashboardStatusClass,
@@ -101,7 +100,6 @@ interface VideoSubmitPanelProps {
   hasPendingExemption?: boolean;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  teamReviewRequests?: DashboardPageData["teamReviewRequests"];
   embeddedChrome?: boolean;
   selectedAccountId?: string;
   onSelectedAccountChange?: (accountId: string) => void;

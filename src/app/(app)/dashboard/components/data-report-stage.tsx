@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "../video-submit-panel-state";
 
@@ -34,7 +33,6 @@ interface DataReportStageProps {
   hasPendingExemption: boolean;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  teamReviewRequests: DashboardPageData["teamReviewRequests"];
 }
 
 function DataReportStageSkeleton() {
@@ -77,7 +75,6 @@ export function DataReportStage({
   hasPendingExemption,
   userExemptionProfile,
   userExemptionGrants,
-  teamReviewRequests,
 }: DataReportStageProps) {
   return (
     <div>
@@ -99,7 +96,6 @@ export function DataReportStage({
         hasPendingExemption={hasPendingExemption}
         userExemptionProfile={userExemptionProfile}
         userExemptionGrants={userExemptionGrants}
-        teamReviewRequests={teamReviewRequests}
         embeddedChrome
       />
     </div>

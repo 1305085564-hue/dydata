@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
 import type { DashboardActivityReport } from "@/lib/loaders/dashboard-activity";
-import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getExemptionStateForDate,
   type ExemptionGrantLike,
@@ -9,6 +8,7 @@ import {
 } from "@/lib/豁免";
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
+import type { UserRole } from "@/types";
 import { formatShanghaiDateOnly, getSafeAccountDisplayName, uniqueNonEmpty } from "./shared";
 
 type DashboardSupabase = SupabaseClient;
@@ -21,6 +21,7 @@ type DashboardAccountRow = {
 
 type ProfileWithExemptionRow = {
   name: string | null;
+  role: UserRole | null;
   status: string | null;
   exempt_type: "permanent" | "temporary" | null;
   exempt_start_date: string | null;
@@ -52,17 +53,10 @@ export type UserExemptionReviewNotice = {
   created_at: string | null;
 };
 
-export type DashboardReviewRequest = {
-  id: string;
-  applicant_user_id: string;
-  applicant_name: string;
-  exemption_type: string;
-  exemption_category: "waive" | "leave" | null;
-  start_date: string | null;
-  end_date: string | null;
-  reason: string | null;
-  created_at: string;
-};
+const DASHBOARD_PROFILE_SELECT =
+  "name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
+const DASHBOARD_PROFILE_SELECT_FALLBACK =
+  "name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason";
 
 let profileExemptionCategoryAvailable: boolean | null = null;
 let exemptionGrantTableAvailable: boolean | null = null;
@@ -90,7 +84,7 @@ async function loadDashboardProfileWithoutCategory(
 ): Promise<ProfileWithExemptionRow | null> {
   const fallback = await supabase
     .from("profiles")
-    .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason")
+    .select(DASHBOARD_PROFILE_SELECT_FALLBACK)
     .eq("id", userId)
     .single();
 
@@ -112,7 +106,7 @@ async function loadDashboardProfile(
 
   const primary = await supabase
     .from("profiles")
-    .select("name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category")
+    .select(DASHBOARD_PROFILE_SELECT)
     .eq("id", userId)
     .single();
 
@@ -243,6 +237,7 @@ export interface DashboardPageData {
   monthSubmittedDates: string[];
   monthReports: DashboardActivityReport[];
   userId: string;
+  userRole: UserRole;
   userDisplayName: string;
   accounts: Array<DashboardAccountRow & { display_name: string }>;
   accountIds: string[];
@@ -254,7 +249,6 @@ export interface DashboardPageData {
   userExemptionReviewNotice: UserExemptionReviewNotice | null;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  teamReviewRequests: DashboardReviewRequest[];
   summary: {
     totalAccounts: number;
     submittedCount: number;
@@ -281,6 +275,7 @@ export async function loadDashboardPageData({
 
   const accounts = accountsResult.data;
   const userDisplayName = profile?.name?.trim() || "当前用户";
+  const userRole = profile?.role ?? "member";
 
   if (!accounts || accounts.length === 0) {
     try {
@@ -318,25 +313,12 @@ export async function loadDashboardPageData({
   const accountIds = displayAccounts.map((account) => account.id);
   const ownContentDirections = uniqueNonEmpty(displayAccounts.map((account) => account.content_direction));
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
-  const adminSupabase = createAdminClient();
-  const { data: currentProfileScope } = await adminSupabase
-    .from("profiles")
-    .select("role, permissions, team_id")
-    .eq("id", userId)
-    .maybeSingle();
-  const currentRole = currentProfileScope?.role ?? "member";
-  const currentPermissions = (currentProfileScope?.permissions ?? {}) as Record<string, boolean>;
-  const currentTeamId = typeof currentProfileScope?.team_id === "string" ? currentProfileScope.team_id : null;
-  const canReviewTeamRequests =
-    currentRole === "owner" ||
-    (currentRole === "admin" && currentPermissions.manage_members === true);
 
   const [
     { data: rawTodayReports },
     userExemptionGrants,
     hasPendingExemption,
     userExemptionReviewNotice,
-    { data: teamReviewRequestRows },
   ] = await Promise.all([
     accountIds.length
       ? supabase
@@ -351,14 +333,6 @@ export async function loadDashboardPageData({
     loadUserExemptionGrants(supabase, userId),
     loadHasPendingExemptionRequest(supabase, userId),
     loadLatestExemptionReviewNotice(supabase, userId),
-    canReviewTeamRequests
-      ? adminSupabase
-          .from("exemption_request")
-          .select("id, applicant_user_id, team_id, exemption_type, exemption_category, start_date, end_date, reason, created_at, profiles:applicant_user_id(name, team_id)")
-          .eq("request_status", "pending")
-          .neq("applicant_user_id", userId)
-          .order("created_at", { ascending: true })
-      : Promise.resolve({ data: [] }),
   ]);
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
@@ -378,37 +352,6 @@ export async function loadDashboardPageData({
   const pendingCountForSummary = todayExemptionState.isExempt
     ? 0
     : Math.max(displayAccounts.length - submittedAccountIds.size, 0);
-  const teamReviewRequests = ((teamReviewRequestRows ?? []) as Array<{
-    id: string;
-    applicant_user_id: string;
-    exemption_type: string;
-    exemption_category?: "waive" | "leave" | null;
-    start_date: string | null;
-    end_date: string | null;
-    reason: string | null;
-    created_at: string;
-    profiles?: { name: string | null; team_id?: string | null } | { name: string | null; team_id?: string | null }[] | null;
-    team_id?: string | null;
-  }>)
-    .filter((request) => {
-      if (currentRole === "owner" || currentPermissions.manage_members === true) return true;
-      const profile = Array.isArray(request.profiles) ? request.profiles[0] : request.profiles;
-      return Boolean(currentTeamId) && (request.team_id ?? profile?.team_id ?? null) === currentTeamId;
-    })
-    .map((request) => {
-      const profile = Array.isArray(request.profiles) ? request.profiles[0] : request.profiles;
-      return {
-        id: request.id,
-        applicant_user_id: request.applicant_user_id,
-        applicant_name: profile?.name?.trim() || "未知成员",
-        exemption_type: request.exemption_type,
-        exemption_category: request.exemption_category ?? "waive",
-        start_date: request.start_date,
-        end_date: request.end_date,
-        reason: request.reason,
-        created_at: request.created_at,
-      };
-    });
 
   return {
     today,
@@ -416,6 +359,7 @@ export async function loadDashboardPageData({
     monthSubmittedDates: [],
     monthReports: [],
     userId,
+    userRole,
     userDisplayName,
     accounts: displayAccounts,
     accountIds,
@@ -427,7 +371,6 @@ export async function loadDashboardPageData({
     userExemptionReviewNotice,
     userExemptionProfile,
     userExemptionGrants,
-    teamReviewRequests,
     summary: {
       totalAccounts: displayAccounts.length,
       submittedCount: submittedCountForSummary,
@@ -436,3 +379,8 @@ export async function loadDashboardPageData({
     },
   };
 }
+
+export const __internal = {
+  DASHBOARD_PROFILE_SELECT,
+  DASHBOARD_PROFILE_SELECT_FALLBACK,
+};
