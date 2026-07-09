@@ -161,7 +161,7 @@ export function ExemptionWorkbench({
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       {/* 左侧：申请表单 (U1) */}
-      <div className="lg:col-span-1 rounded-2xl border border-zinc-200 bg-white p-6 space-y-5 h-fit">
+      <div className="lg:col-span-1 rounded-2xl border border-stone-200 bg-white p-6 space-y-5 h-fit">
         <h2 className="text-[16px] font-bold text-stone-800">
           新建豁免申请
         </h2>
@@ -175,7 +175,7 @@ export function ExemptionWorkbench({
             <select
               value={exemptionType}
               onChange={(e) => setExemptionType(e.target.value)}
-              className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+              className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
             >
               {Object.entries(EXEMPTION_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -195,7 +195,7 @@ export function ExemptionWorkbench({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
               />
             </div>
           )}
@@ -211,13 +211,13 @@ export function ExemptionWorkbench({
                 value={endDate}
                 min={startDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
               />
             </div>
           )}
 
           {/* 生效时间概览预览 (微反馈) */}
-          <div className="rounded-lg bg-stone-50 p-3 border border-stone-100 text-[12px] text-stone-500 space-y-1">
+          <div className="rounded-lg bg-stone-50 p-3 text-[12px] text-stone-500 space-y-1">
             <div className="flex justify-between">
               <span>生效开始:</span>
               <span className="font-mono text-stone-700">{computedStart}</span>
@@ -236,11 +236,12 @@ export function ExemptionWorkbench({
               申请原因说明
             </label>
             <textarea
+              id="exemption-reason-input"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="请输入具体的请假、故障或限流原因，便于管理员审批..."
               rows={4}
-              className="w-full rounded-xl border-0 bg-stone-100/70 p-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+              className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
             />
           </div>
 
@@ -248,7 +249,7 @@ export function ExemptionWorkbench({
           <button
             type="submit"
             disabled={submitting}
-            className="w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[14px] font-semibold shadow-sm transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50"
+            className="w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-semibold transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50"
           >
             {submitting ? (
               <>
@@ -265,7 +266,7 @@ export function ExemptionWorkbench({
       {/* 右侧：申请历史列表 (U2) */}
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-[14px] font-bold text-stone-800">
+          <h3 className="text-[13px] font-bold text-stone-800">
             我的申请历史
           </h3>
           <span className="font-mono text-[12px] tabular-nums text-stone-400">
@@ -274,11 +275,21 @@ export function ExemptionWorkbench({
         </div>
 
         {history.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-zinc-200 bg-white py-12 text-center text-stone-400 text-[13px]">
-            暂无历史申请记录
+          <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 flex flex-col items-center justify-center text-center">
+            <FileText className="size-10 text-stone-300 mb-3" />
+            <p className="text-[13px] text-stone-500 mb-4">暂无历史申请记录</p>
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById("exemption-reason-input")?.focus();
+              }}
+              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-semibold text-white hover:bg-[#C96442] active:scale-95 transition-all"
+            >
+              新建申请记录
+            </button>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
             {history.map((req, idx) => {
               const isLast = idx === history.length - 1;
               const dateText = req.end_date && req.end_date !== req.start_date
@@ -298,7 +309,7 @@ export function ExemptionWorkbench({
                       <span className="text-[13px] font-bold text-stone-800">
                         {EXEMPTION_LABELS[req.exemption_type] || req.exemption_type}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-[11px] text-stone-400 font-mono">
+                      <span className="inline-flex items-center gap-1 text-[12px] text-stone-400 font-mono">
                         <CalendarDays className="size-3" />
                         {dateText}
                       </span>
@@ -306,7 +317,7 @@ export function ExemptionWorkbench({
                     <p className="text-[13px] text-stone-600 leading-[1.6]">
                       {req.reason}
                     </p>
-                    <div className="text-[10px] text-stone-400 font-mono">
+                    <div className="text-[12px] text-stone-400 font-mono">
                       申请于: {new Date(req.created_at).toLocaleString("zh-CN")}
                     </div>
                   </div>

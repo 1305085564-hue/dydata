@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import { 
   Upload, 
-  Trash2, 
   Plus, 
   FileText, 
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   Image as ImageIcon,
   Loader2,
@@ -16,13 +13,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { SubmissionHistory } from "../components/submission-history";
 
 interface WorkSubmission {
   id: string;
+  user_id: string;
+  team_id: string | null;
+  group_id: string | null;
+  submit_date: string;
   content_text: string | null;
-  screenshot_urls: string[];
-  screenshot_items: Array<{ path: string; signed_url: string | null }>;
+  screenshot_urls: string[] | null;
+  screenshot_items?: Array<{ path: string; signed_url: string | null }>;
   note: string | null;
   created_at: string;
 }
@@ -54,9 +55,7 @@ export function SubmitWorkbench({
   const [submitting, setSubmitting] = useState(false);
 
   // Uploaded screenshots in current form
-  // We keep track of local preview URL and remote storage path
   const [screenshotFiles, setScreenshotFiles] = useState<Array<{ previewUrl: string; storagePath: string }>>([]);
-  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   // Computed Quota Stats
   const submittedCount = submissions.length;
@@ -120,7 +119,6 @@ export function SubmitWorkbench({
 
     setScreenshotFiles(newUploads);
     setUploading(false);
-    // Reset file input value
     e.target.value = "";
   };
 
@@ -185,8 +183,6 @@ export function SubmitWorkbench({
 
   // Delete today's submission
   const handleDeleteSubmission = async (id: string) => {
-    if (!confirm("确定要删除这条提交记录吗？")) return;
-
     try {
       const res = await fetch(`/api/work-submissions/${id}`, {
         method: "DELETE",
@@ -223,22 +219,22 @@ export function SubmitWorkbench({
       <div className="lg:col-span-2 space-y-6">
         {/* 今日统计大数 (A.3/C.3) */}
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[100px]">
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[100px]">
             <span className="text-[13px] text-stone-500">今日目标</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-[28px] font-bold font-mono tabular-nums text-stone-800">
+              <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
                 {target}
               </span>
               <span className="text-[12px] text-stone-400 ml-1">个作品</span>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[100px]">
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[100px]">
             <span className="text-[13px] text-stone-500">已交凭证</span>
             <div className="flex items-baseline gap-1">
               <span className={cn(
-                "text-[28px] font-bold font-mono tabular-nums",
-                isTargetMet ? "text-[#6FAA7D]" : "text-stone-800"
+                "text-[18px] font-bold font-mono tabular-nums",
+                isTargetMet ? "text-[#6FAA7D]" : "text-stone-950"
               )}>
                 {submittedCount}
               </span>
@@ -246,11 +242,11 @@ export function SubmitWorkbench({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[100px]">
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[100px]">
             <span className="text-[13px] text-stone-500">还差额</span>
             <div className="flex items-baseline gap-1">
               <span className={cn(
-                "text-[28px] font-bold font-mono tabular-nums",
+                "text-[32px] font-bold font-mono tabular-nums",
                 gap > 0 ? "text-[#C9604D]" : "text-[#6FAA7D]"
               )}>
                 {gap}
@@ -263,49 +259,42 @@ export function SubmitWorkbench({
         {/* 豁免提示区 */}
         {!isTargetMet && (
           <div className={cn(
-            "rounded-xl border p-4 flex items-start justify-between gap-3 text-[13px] leading-[1.6]",
-            hasApprovedExemption 
-              ? "border-[#6FAA7D] bg-[#6FAA7D]/5 text-[#6FAA7D]" 
+            "rounded-xl border p-4 text-[13px] leading-[1.6]",
+            hasApprovedExemption
+              ? "bg-[#6FAA7D]/5 border-[#6FAA7D]/20 text-[#6FAA7D] flex items-start gap-2"
               : hasPendingExemption
-              ? "border-[#D99E55] bg-[#D99E55]/5 text-[#D99E55]"
-              : "border-[#C9604D] bg-[#C9604D]/5 text-[#C9604D]"
+              ? "bg-[#D99E55]/5 border-[#D99E55]/20 text-[#D99E55] flex items-start gap-2"
+              : "bg-[#C9604D]/5 border-[#C9604D]/20 text-[#C9604D] flex items-start gap-2"
           )}>
-            <div className="flex gap-2">
-              <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">
-                  {hasApprovedExemption 
-                    ? "今日已豁免成功" 
-                    : hasPendingExemption 
-                    ? "豁免申请正在审批中" 
-                    : "今日发片指标尚未达成"}
+            <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+            <div>
+              {hasApprovedExemption ? (
+                <p className="font-medium">
+                  今日有已通过的免责豁免，您的“未交齐”红灯已被消除，今日指标豁免不扣分。
                 </p>
-                <p className="mt-0.5 text-stone-500">
-                  {hasApprovedExemption 
-                    ? "您今天的差额已被审核减免，今日无需继续补交。" 
-                    : hasPendingExemption
-                    ? "您的豁免申请已提交，请耐心等待管理员审批。若今日仍发了片，可继续在此提交凭证。"
-                    : "如确有请假、账号限流或技术故障等异常，请在今天内主动提交豁免申请。"}
+              ) : hasPendingExemption ? (
+                <p className="font-medium">
+                  今日免责豁免申请处理中。管理员审核通过后，未交齐红灯将自动消除。
                 </p>
-              </div>
+              ) : (
+                <p className="font-medium">
+                  今日尚未交齐发片指标，且未提交豁免请假申请。建议及时点击右上角进行豁免报备。
+                </p>
+              )}
             </div>
-            {!hasApprovedExemption && !hasPendingExemption && (
-              <Link
-                href="/video-review/exemption"
-                className="group shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#D97757] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#C96442] active:translate-y-0"
-              >
-                申请豁免
-                <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            )}
           </div>
         )}
 
-        {/* 填报表单 (U1) */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4">
-          <h2 className="text-[16px] font-bold text-stone-800">
-            上传发片凭证
-          </h2>
+        {/* 提交表单白色卡片 */}
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 space-y-5">
+          <div>
+            <h2 className="text-[15px] font-bold text-stone-900">
+              凭证上传登记
+            </h2>
+            <p className="text-[13px] text-stone-400 mt-1 leading-[1.5]">
+              请如实填写发片凭证，支持提交视频标题文案或截图。
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* 文案内容 */}
@@ -314,11 +303,12 @@ export function SubmitWorkbench({
                 文案内容 / 话术原文
               </label>
               <textarea
+                id="submit-content-input"
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
                 placeholder="粘贴已发视频的标题、文案或话术原文..."
                 rows={4}
-                className="w-full rounded-xl border-0 bg-stone-100/70 p-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+                className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
               />
             </div>
 
@@ -327,51 +317,45 @@ export function SubmitWorkbench({
               <label className="text-[12px] font-medium text-stone-500">
                 作品截图凭证
               </label>
-              
               <div className="flex flex-wrap gap-2.5">
-                {/* 已上传截图缩略图 */}
-                {screenshotFiles.map((file, sIdx) => (
+                {screenshotFiles.map((item, index) => (
                   <div 
-                    key={sIdx}
-                    className="size-[84px] relative rounded-lg border border-stone-200 bg-stone-50 overflow-hidden group/thumb"
+                    key={index} 
+                    className="relative size-20 rounded-lg border border-stone-200 bg-stone-50 overflow-hidden group"
                   >
                     <img 
-                      src={file.previewUrl} 
+                      src={item.previewUrl} 
                       alt="预览" 
-                      className="size-full object-cover"
+                      className="size-full object-cover" 
                     />
                     <button
                       type="button"
-                      onClick={() => removeScreenshot(sIdx)}
-                      className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity text-white"
+                      onClick={() => removeScreenshot(index)}
+                      className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
                     >
-                      <Trash2 className="size-4" />
+                      <X className="size-3" />
                     </button>
                   </div>
                 ))}
 
-                {/* 上传槽位按钮 */}
-                {screenshotFiles.length < 9 && (
-                  <label className={cn(
-                    "size-[84px] flex flex-col items-center justify-center border border-dashed border-stone-300 rounded-lg cursor-pointer bg-stone-50 hover:bg-stone-100/60 transition",
-                    uploading && "cursor-not-allowed opacity-60"
-                  )}>
-                    {uploading ? (
-                      <Loader2 className="size-4 text-stone-400 animate-spin" />
-                    ) : (
-                      <>
-                        <Plus className="size-4 text-stone-500" />
-                        <span className="text-[11px] text-stone-400 mt-1">添加截图</span>
-                      </>
-                    )}
+                {screenshotFiles.length < 5 && (
+                  <label className="flex size-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-stone-200 bg-stone-50 text-stone-400 hover:bg-stone-100/60 active:scale-95 transition-all">
                     <input
                       type="file"
-                      multiple
                       accept="image/*"
+                      multiple
                       onChange={handleFileChange}
-                      disabled={uploading}
                       className="hidden"
+                      disabled={uploading}
                     />
+                    {uploading ? (
+                      <Loader2 className="size-5 animate-spin text-stone-400" />
+                    ) : (
+                      <>
+                        <Plus className="size-5" />
+                        <span className="text-[11px] mt-1 font-semibold">上传截图</span>
+                      </>
+                    )}
                   </label>
                 )}
               </div>
@@ -387,16 +371,16 @@ export function SubmitWorkbench({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="例如：发在XXX号，今天第一条..."
-                className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
               />
             </div>
 
-            {/* 提交按钮 (唯一主 CTA `#D97757`) */}
+            {/* 提交按钮 */}
             <button
               type="submit"
               disabled={submitting || uploading}
               className={cn(
-                "w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[14px] font-semibold shadow-sm transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                "w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-semibold transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
               )}
             >
               {submitting ? (
@@ -412,105 +396,16 @@ export function SubmitWorkbench({
         </div>
       </div>
 
-      {/* 右侧：今日已交记录列表 (U2) */}
-      <div className="space-y-4">
-        <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-[14px] font-bold text-stone-800">
-            今日提交历史
-          </h3>
-          <span className="font-mono text-[12px] tabular-nums text-stone-400">
-            共 {submissions.length} 条
-          </span>
+      {/* 右侧历史记录列表 */}
+      <div className="lg:col-span-1 space-y-4">
+        <div className="rounded-2xl border border-stone-200 bg-stone-50/50 p-4 space-y-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto">
+          <SubmissionHistory
+            submissions={submissions}
+            onDelete={handleDeleteSubmission}
+            onCtaClick={() => document.getElementById("submit-content-input")?.focus()}
+          />
         </div>
-
-        {submissions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-8 text-center text-stone-400 text-[13px]">
-            今天还没有提交发片凭证
-          </div>
-        ) : (
-          <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
-            {submissions.map((sub) => (
-              <div 
-                key={sub.id} 
-                className="rounded-2xl border border-zinc-200 bg-white p-4.5 space-y-3 relative group"
-              >
-                {/* 删除按钮 */}
-                <button
-                  type="button"
-                  onClick={() => handleDeleteSubmission(sub.id)}
-                  className="absolute top-3 right-3 text-stone-400 hover:text-[#C9604D] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                  title="删除"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-
-                {/* 话术文本预览 */}
-                {sub.content_text && (
-                  <p className="text-[13px] text-stone-800 leading-[1.6] line-clamp-3 whitespace-pre-wrap">
-                    {sub.content_text}
-                  </p>
-                )}
-
-                {/* 截图列表 */}
-                {sub.screenshot_items && sub.screenshot_items.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {sub.screenshot_items.map((item, imgIdx) => (
-                      <div
-                        key={imgIdx}
-                        onClick={() => { if (item.signed_url) setZoomImage(item.signed_url); }}
-                        className="size-11 relative rounded border border-stone-200 bg-stone-50 overflow-hidden cursor-zoom-in"
-                      >
-                        {item.signed_url ? (
-                          <img 
-                            src={item.signed_url} 
-                            alt="截图" 
-                            className="size-full object-cover"
-                          />
-                        ) : (
-                          <div className="size-full flex items-center justify-center text-[10px] text-stone-400">
-                            失败
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 备注 */}
-                {sub.note && (
-                  <div className="flex items-start gap-1 text-[11px] text-stone-400 truncate">
-                    <FileText className="size-3 mt-0.5 shrink-0" />
-                    <span>{sub.note}</span>
-                  </div>
-                )}
-
-                {/* 提交时间 */}
-                <div className="text-[10px] text-stone-400 font-mono">
-                  {new Date(sub.created_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
-
-      {/* 放大预览 Dialog */}
-      <Dialog open={zoomImage !== null} onOpenChange={(open) => { if (!open) setZoomImage(null); }}>
-        <DialogContent className="bg-black/90 border-0 p-2 rounded-2xl flex items-center justify-center overflow-hidden" style={{ maxWidth: '1024px' }}>
-          <div className="relative max-h-[85vh] max-w-full">
-            {zoomImage && (
-              <img 
-                src={zoomImage} 
-                alt="放大截图" 
-                className="max-h-[80vh] object-contain rounded-lg shadow-2xl mx-auto"
-              />
-            )}
-            <DialogClose className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors">
-              <X className="size-4" />
-            </DialogClose>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

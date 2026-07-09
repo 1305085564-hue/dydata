@@ -4,6 +4,7 @@ import { FilePlus2 } from "lucide-react";
 import { loadApprovedList } from "@/lib/publish-drafts/read-model";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ApprovedList } from "./components/approved-list";
+import { ReloadButton } from "./components/reload-button";
 
 interface ApprovedListDataContainerProps {
   query: string;
@@ -21,8 +22,9 @@ export async function ApprovedListDataContainer({
 
   if (errorMessage) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-[13px] leading-[1.7] text-[#D99E55]">
-        {errorMessage}
+      <div className="rounded-xl border border-stone-200 bg-stone-50 p-5 text-[13px] leading-[1.7] text-[#D99E55] flex flex-col items-start">
+        <span>{errorMessage}</span>
+        <ReloadButton />
       </div>
     );
   }
@@ -31,7 +33,7 @@ export async function ApprovedListDataContainer({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white py-12">
+      <div className="rounded-2xl border border-dashed border-stone-300 bg-white py-12">
         <EmptyState
           title={query ? "没找到匹配的已发稿件" : "还没有已通过的稿件"}
           description={

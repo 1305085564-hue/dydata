@@ -8,12 +8,12 @@ import {
   CheckCircle2, 
   AlertCircle, 
   ArrowRight, 
-  X,
   FileText,
   UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImageLightbox } from "@/components/image-lightbox";
 import { toast } from "sonner";
 import { getUserSubmissions } from "../actions";
 
@@ -65,7 +65,7 @@ export function ProductionDashboard({
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ paths: string[]; index: number } | null>(null);
 
   // Trigger search params change
   const handleFilterChange = (newDate: string, newTeamId: string, newGroupId: string) => {
@@ -112,7 +112,7 @@ export function ProductionDashboard({
   return (
     <div className="space-y-6">
       {/* 筛选过滤条 */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-stone-200 bg-white p-4">
         {/* 日期选择 */}
         <div className="flex items-center gap-2">
           <Calendar className="size-4 text-stone-500" />
@@ -123,7 +123,7 @@ export function ProductionDashboard({
               setDate(e.target.value);
               handleFilterChange(e.target.value, teamId, groupId);
             }}
-            className="h-9 rounded-lg border-0 bg-stone-100/70 px-3 text-[13px] font-mono font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-mono font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
           />
         </div>
 
@@ -136,7 +136,7 @@ export function ProductionDashboard({
               setTeamId(e.target.value);
               handleFilterChange(date, e.target.value, groupId);
             }}
-            className="h-9 rounded-lg border-0 bg-stone-100/70 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
           >
             <option value="all">所有团队</option>
             {teams.map((t) => (
@@ -156,7 +156,7 @@ export function ProductionDashboard({
               setGroupId(e.target.value);
               handleFilterChange(date, teamId, e.target.value);
             }}
-            className="h-9 rounded-lg border-0 bg-stone-100/70 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
+            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
           >
             <option value="all">所有小组</option>
             {groups.map((g) => (
@@ -174,13 +174,13 @@ export function ProductionDashboard({
         )}
       </div>
 
-      {/* 概览大数卡片 (A.3/C.3) */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* 概览大数指标条 */}
+      <div className="rounded-2xl border border-stone-200 bg-white px-6 py-5 flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-stone-100 gap-4 sm:gap-0">
         {/* 指标 1 */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[110px]">
+        <div className="flex-1 pb-4 sm:pb-0 sm:pr-4 space-y-1">
           <span className="text-[13px] text-stone-500">今日全队目标</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-[32px] font-bold font-mono tabular-nums text-stone-800">
+            <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
               {totalTarget}
             </span>
             <span className="text-[12px] text-stone-400 ml-1">条</span>
@@ -188,10 +188,10 @@ export function ProductionDashboard({
         </div>
 
         {/* 指标 2 */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[110px]">
+        <div className="flex-1 py-4 sm:py-0 sm:px-4 space-y-1">
           <span className="text-[13px] text-stone-500">已提交作品</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-[32px] font-bold font-mono tabular-nums text-[#6FAA7D]">
+            <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
               {totalSubmitted}
             </span>
             <span className="text-[12px] text-stone-400 ml-1">条</span>
@@ -199,10 +199,10 @@ export function ProductionDashboard({
         </div>
 
         {/* 指标 3 */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[110px]">
+        <div className="flex-1 py-4 sm:py-0 sm:px-4 space-y-1">
           <span className="text-[13px] text-stone-500">完成率</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-[32px] font-bold font-mono tabular-nums text-stone-800">
+            <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
               {fulfillmentRate}
             </span>
             <span className="text-[12px] text-stone-400 ml-1">%</span>
@@ -210,12 +210,12 @@ export function ProductionDashboard({
         </div>
 
         {/* 指标 4 */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[110px]">
+        <div className="flex-1 pt-4 sm:pt-0 sm:pl-4 space-y-1">
           <span className="text-[13px] text-stone-500">未达标人数 (红灯)</span>
           <div className="flex items-baseline gap-1">
             <span className={cn(
               "text-[32px] font-bold font-mono tabular-nums",
-              redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-800"
+              redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-950"
             )}>
               {redAlertCount}
             </span>
@@ -227,8 +227,21 @@ export function ProductionDashboard({
       {/* 数据列表 */}
       <div className="space-y-6">
         {Object.keys(groupedData).length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-zinc-200 bg-white py-12 text-center text-stone-400 text-[13px]">
-            暂无相关成员数据
+          <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 flex flex-col items-center justify-center text-center">
+            <Users className="size-10 text-stone-300 mb-3" />
+            <p className="text-[13px] text-stone-500 mb-4">暂无相关成员数据</p>
+            <button
+              type="button"
+              onClick={() => {
+                setDate(selectedDate);
+                setTeamId("all");
+                setGroupId("all");
+                handleFilterChange(selectedDate, "all", "all");
+              }}
+              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-semibold text-white hover:bg-[#C96442] active:scale-95 transition-all"
+            >
+              重置筛选条件
+            </button>
           </div>
         ) : (
           Object.entries(groupedData).map(([groupName, members]) => {
@@ -240,7 +253,7 @@ export function ProductionDashboard({
               <div key={groupName} className="space-y-3">
                 {/* 组头 */}
                 <div className="flex items-baseline justify-between px-1">
-                  <h3 className="text-[14px] font-bold text-stone-800">
+                  <h3 className="text-[13px] font-bold text-stone-800">
                     {groupName}
                   </h3>
                   <span className="text-[12px] text-stone-500 font-medium">
@@ -249,7 +262,7 @@ export function ProductionDashboard({
                 </div>
 
                 {/* 组成员列表 */}
-                <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+                <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
                   {members.map((member, idx) => {
                     const isLast = idx === members.length - 1;
                     return (
@@ -278,7 +291,7 @@ export function ProductionDashboard({
                             aria-hidden
                           />
                           <div>
-                            <span className="text-[14px] font-medium text-stone-800">
+                            <span className="text-[13px] font-medium text-stone-800">
                               {member.user_name}
                             </span>
                             <span className="text-[12px] text-stone-400 ml-2">
@@ -314,7 +327,7 @@ export function ProductionDashboard({
                           <button
                             type="button"
                             onClick={() => handleViewUser(member.user_id, member.user_name)}
-                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-stone-600 transition-colors hover:border-[#D97757]/40 hover:text-[#D97757] active:translate-y-0"
+                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] font-medium text-stone-600 transition-colors hover:border-[#D97757]/40 hover:text-[#D97757] active:translate-y-0"
                           >
                             作品记录
                             <ArrowRight className="size-3" />
@@ -334,7 +347,7 @@ export function ProductionDashboard({
       <Dialog open={selectedUser !== null} onOpenChange={(open) => { if (!open) setSelectedUser(null); }}>
         <DialogContent className="bg-white p-8 rounded-2xl max-h-[85vh] overflow-y-auto" style={{ maxWidth: '720px' }}>
           <DialogHeader className="flex flex-row items-center justify-between border-b border-stone-100 pb-3">
-            <DialogTitle className="text-[18px] font-bold text-stone-800">
+            <DialogTitle className="text-[18px] font-bold text-stone-950">
               {selectedUser?.name} · 作品提交详情
             </DialogTitle>
           </DialogHeader>
@@ -373,7 +386,7 @@ export function ProductionDashboard({
                       {sub.screenshot_items.map((item: any, sIdx: number) => (
                         <div 
                           key={sIdx}
-                          onClick={() => setZoomImage(item.signed_url)}
+                          onClick={() => setLightbox({ paths: [item.signed_url], index: 0 })}
                           className="aspect-square relative rounded-lg border border-stone-200 bg-stone-50 overflow-hidden cursor-zoom-in group/img"
                         >
                           {item.signed_url ? (
@@ -410,26 +423,15 @@ export function ProductionDashboard({
         </DialogContent>
       </Dialog>
 
-      {/* 放大预览 Dialog */}
-      <Dialog open={zoomImage !== null} onOpenChange={(open) => { if (!open) setZoomImage(null); }}>
-        <DialogContent className="bg-black/90 border-0 p-2 rounded-2xl flex items-center justify-center overflow-hidden" style={{ maxWidth: '1024px' }}>
-          <div className="relative max-h-[85vh] max-w-full">
-            {zoomImage && (
-              <img 
-                src={zoomImage} 
-                alt="放大截图" 
-                className="max-h-[80vh] object-contain rounded-lg shadow-2xl mx-auto"
-              />
-            )}
-            <button
-              onClick={() => setZoomImage(null)}
-              className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* 放大预览 Lightbox */}
+      {lightbox && (
+        <ImageLightbox
+          paths={lightbox.paths}
+          currentIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onNavigate={(idx) => setLightbox((prev) => (prev ? { ...prev, index: idx } : prev))}
+        />
+      )}
     </div>
   );
 }

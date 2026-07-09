@@ -31,7 +31,7 @@ export function VideoReviewTabs({ isAdmin }: VideoReviewTabsProps) {
             className={cn(
               "inline-flex items-center justify-center rounded-lg px-4 py-1.5 text-[13px] font-medium transition duration-150 ease-out focus-visible:outline-none",
               active
-                ? "bg-white text-stone-900 shadow-sm"
+                ? "bg-white text-stone-900"
                 : "text-stone-500 hover:text-stone-900"
             )}
           >

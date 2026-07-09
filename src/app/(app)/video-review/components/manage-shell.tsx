@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getApiErrorMessage } from "@/lib/violations/errors";
+import { cn } from "@/lib/utils";
 
 import { QueueList } from "./queue-list";
 import { ReviewDetail } from "./review-detail";
@@ -31,6 +33,7 @@ export function ManageShell({
   const [todayProcessed, setTodayProcessed] = useState(0);
 
   const [lightbox, setLightbox] = useState<{ paths: string[]; index: number } | null>(null);
+  const [showQueueMobile, setShowQueueMobile] = useState(false);
 
   const activeItem = useMemo(
     () => queue.find((q) => q.id === activeId) ?? null,
@@ -189,7 +192,7 @@ export function ManageShell({
 
   if (queue.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white py-16">
+      <div className="rounded-2xl border border-dashed border-stone-300 bg-white py-16">
         <EmptyState
           title="队列已清空"
           description={
@@ -202,26 +205,61 @@ export function ManageShell({
     );
   }
 
+  const handleSelectQueueItem = (id: string) => {
+    setActiveId(id);
+    setShowQueueMobile(false);
+  };
+
   return (
     <>
-      <div className="grid grid-cols-[320px_1fr] gap-4 lg:gap-6">
-        <QueueList
-          items={queue}
-          activeId={activeId}
-          pendingCount={pendingCount}
-          todayProcessed={todayProcessed}
-          onSelect={setActiveId}
-        />
-        {activeItem ? (
-          <ReviewDetail
-            key={activeItem.id}
-            item={activeItem}
-            isProcessing={inFlightIds.has(activeItem.id)}
-            onApprove={() => handleApprove(activeItem.id)}
-            onReject={(text) => handleReject(activeItem.id, text)}
-            onPreview={(paths, index) => setLightbox({ paths, index })}
+      {/* 移动端队列触发栏 */}
+      <div className="flex md:hidden items-center justify-between p-3.5 bg-stone-50 border border-stone-200 rounded-xl mb-4 text-[13px] text-stone-600">
+        <span className="font-semibold">待审队列: {queue.length} 条</span>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowQueueMobile(!showQueueMobile)}
+          className="h-8 text-[12px] rounded-lg border-stone-200 bg-white"
+        >
+          {showQueueMobile ? "隐藏待审队列" : "展开待审队列"}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr] gap-4 lg:gap-6">
+        {/* 在桌面端始终显示；在移动端当展开时显示 */}
+        <div className={cn(
+          "md:block",
+          showQueueMobile ? "block" : "hidden"
+        )}>
+          <QueueList
+            items={queue}
+            activeId={activeId}
+            pendingCount={pendingCount}
+            todayProcessed={todayProcessed}
+            onSelect={handleSelectQueueItem}
           />
-        ) : null}
+        </div>
+
+        {/* 详情页：桌面端始终显示，移动端当队列隐藏时显示 */}
+        <div className={cn(
+          "md:block",
+          showQueueMobile ? "hidden" : "block"
+        )}>
+          {activeItem ? (
+            <ReviewDetail
+              key={activeItem.id}
+              item={activeItem}
+              isProcessing={inFlightIds.has(activeItem.id)}
+              onApprove={() => handleApprove(activeItem.id)}
+              onReject={(text) => handleReject(activeItem.id, text)}
+              onPreview={(paths, index) => setLightbox({ paths, index })}
+            />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-16 text-center text-[13px] text-stone-400">
+              请选择要审核的稿件
+            </div>
+          )}
+        </div>
       </div>
 
       {lightbox ? (

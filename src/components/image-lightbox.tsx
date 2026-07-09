@@ -50,7 +50,12 @@ export function ImageLightbox({
 
   if (!currentPath) return null;
 
-  const src = `/api/violations/screenshot/${encodeURI(currentPath)}`;
+  const src =
+    currentPath.startsWith("http://") ||
+    currentPath.startsWith("https://") ||
+    currentPath.startsWith("data:")
+      ? currentPath
+      : `/api/violations/screenshot/${encodeURI(currentPath)}`;
 
   return (
     <div
@@ -60,13 +65,13 @@ export function ImageLightbox({
           onClose();
         }
       }}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/80"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-950/80"
     >
       {/* Close */}
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
+        className="absolute top-4 right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
       >
         <X className="size-5" />
       </button>
@@ -76,7 +81,7 @@ export function ImageLightbox({
         <button
           type="button"
           onClick={handlePrev}
-          className="absolute left-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
+          className="absolute left-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -95,7 +100,7 @@ export function ImageLightbox({
         <button
           type="button"
           onClick={handleNext}
-          className="absolute right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
+          className="absolute right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
         >
           <ChevronRight className="size-5" />
         </button>
@@ -103,7 +108,7 @@ export function ImageLightbox({
 
       {/* Counter */}
       {total > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-zinc-800/60 px-3 py-1.5 text-[12px] tabular-nums text-white">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-stone-800/60 px-3 py-1.5 text-[12px] tabular-nums text-white">
           {currentIndex + 1} / {total}
         </div>
       )}

@@ -232,7 +232,7 @@ export function SubmitDialog({
                   ) : (
                     <>
                       <Plus className="size-5" />
-                      <span className="text-[10px] font-medium">添加</span>
+                      <span className="text-[12px] font-medium">添加</span>
                     </>
                   )}
                   <input

@@ -6,6 +6,7 @@ import {
   X,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   Clock,
   CheckCircle2,
   XCircle,
@@ -17,7 +18,6 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 interface ExemptionRequest {
@@ -310,7 +310,7 @@ export function ApprovalDialog({
               type="button"
               onClick={() => setActiveTab("pending")}
               className={cn(
-                "h-7 rounded-full px-3 text-[11px] font-semibold transition-colors flex items-center gap-1.5",
+                "h-7 rounded-full px-3 text-[12px] font-semibold transition-colors flex items-center gap-1.5",
                 activeTab === "pending"
                   ? "bg-[#8AA8C7]/10 text-[#8AA8C7]"
                   : "text-stone-500 hover:text-stone-700 hover:bg-stone-50"
@@ -327,7 +327,7 @@ export function ApprovalDialog({
               type="button"
               onClick={() => setActiveTab("history")}
               className={cn(
-                "h-7 rounded-full px-3 text-[11px] font-semibold transition-colors flex items-center gap-1.5",
+                "h-7 rounded-full px-3 text-[12px] font-semibold transition-colors flex items-center gap-1.5",
                 activeTab === "history"
                   ? "bg-[#8AA8C7]/10 text-[#8AA8C7]"
                   : "text-stone-500 hover:text-stone-700 hover:bg-stone-50"
@@ -366,7 +366,7 @@ export function ApprovalDialog({
                       variant="ghost"
                       disabled={batchProcessing || processingIds.size > 0}
                       onClick={() => handleBatchReview("rejected")}
-                      className="h-8 rounded-lg text-stone-500 hover:text-[#C9604D] hover:bg-[#C9604D]/5 text-[11px]"
+                      className="h-8 rounded-lg text-stone-500 hover:text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px]"
                     >
                       批量拒绝
                     </Button>
@@ -374,7 +374,7 @@ export function ApprovalDialog({
                       type="button"
                       disabled={batchProcessing || processingIds.size > 0}
                       onClick={() => handleBatchReview("approved")}
-                      className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[11px] font-semibold active:scale-95 transition-transform"
+                      className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[12px] font-semibold active:scale-95 transition-transform"
                     >
                       {batchProcessing ? (
                         <Loader2 className="size-3 animate-spin mr-1" />
@@ -396,7 +396,7 @@ export function ApprovalDialog({
                     type="button"
                     variant="outline"
                     onClick={refreshLists}
-                    className="mt-3 h-8 rounded-lg border-[#D97757] text-[#D97757] hover:bg-[#D97757]/5 text-[11px] font-semibold"
+                    className="mt-3 h-8 rounded-lg border-[#D97757] text-[#D97757] hover:bg-[#D97757]/5 text-[12px] font-semibold"
                   >
                     重新加载
                   </Button>
@@ -440,13 +440,13 @@ export function ApprovalDialog({
                           <span className="text-stone-500">
                             {item.group_name || item.team_name || "未分类小组"}
                           </span>
-                          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600">
+                          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[12px] font-semibold text-stone-600">
                             {EXEMPTION_LABELS[item.exemption_type] || item.exemption_type}
                           </span>
                         </div>
 
                         {/* 申请日期 */}
-                        <div className="flex items-center gap-1.5 text-[11px] text-stone-400">
+                        <div className="flex items-center gap-1.5 text-[12px] text-stone-400">
                           <CalendarDays className="size-3.5" />
                           <span className="font-mono">{item.start_date}</span>
                           {item.end_date && (
@@ -471,7 +471,7 @@ export function ApprovalDialog({
                           size="sm"
                           disabled={processingIds.size > 0 || batchProcessing}
                           onClick={() => handleReview(item.id, "rejected")}
-                          className="h-8 rounded-lg text-stone-500 hover:text-[#C9604D] hover:bg-[#C9604D]/5 text-[11px] px-2.5"
+                          className="h-8 rounded-lg text-stone-500 hover:text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px] px-2.5"
                         >
                           拒绝
                         </Button>
@@ -480,7 +480,7 @@ export function ApprovalDialog({
                           size="sm"
                           disabled={processingIds.size > 0 || batchProcessing}
                           onClick={() => handleReview(item.id, "approved")}
-                          className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[11px] px-2.5 active:scale-95 font-semibold"
+                          className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[12px] px-2.5 active:scale-95 font-semibold"
                         >
                           {isProcessing ? (
                             <Loader2 className="size-3 animate-spin" />
@@ -498,9 +498,22 @@ export function ApprovalDialog({
         ) : (
           <div className="mt-4">
             {processed.length === 0 ? (
-              <p className="text-[12px] text-stone-400 text-center py-8">
-                暂无历史审批处理记录
-              </p>
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <CheckCircle2 className="size-10 text-stone-300 mb-3" />
+                <p className="text-[13px] text-stone-500 mb-4">暂无历史审批处理记录</p>
+                <button
+                  type="button"
+                  disabled={activeTab === "pending"}
+                  onClick={() => {
+                    if (activeTab !== "pending") {
+                      setActiveTab("pending");
+                    }
+                  }}
+                  className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-semibold text-white hover:bg-[#C96442] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  查看待处理申请
+                </button>
+              </div>
             ) : (
               <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
                 {processed.map((item) => (
@@ -520,17 +533,17 @@ export function ApprovalDialog({
                       </div>
                       
                       {item.request_status === "approved" ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[10px] font-medium text-[#6FAA7D]">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[12px] font-medium text-[#6FAA7D]">
                           已通过
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#C9604D]/10 px-2 py-0.5 text-[10px] font-medium text-[#C9604D]">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#C9604D]/10 px-2 py-0.5 text-[12px] font-medium text-[#C9604D]">
                           已拒绝
                         </span>
                       )}
                     </div>
                     
-                    <div className="mt-1 flex items-center gap-2 text-stone-400 text-[11px]">
+                    <div className="mt-1 flex items-center gap-2 text-stone-400 text-[12px]">
                       <span>期限: <span className="font-mono">{item.start_date}</span></span>
                       {item.end_date && (
                         <>
