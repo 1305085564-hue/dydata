@@ -85,6 +85,17 @@ test("scheduleGrowthFullHydration 清理后不会再触发请求", () => {
 
 function createInitialGrowthPageData(): GrowthPageData {
   return {
+    contract: {
+      identity: { profileName: "阿禅", accountCount: 1, reportCount: 2 },
+      credibility: { level: "low", label: "样本不足，仅供参考", sampleCount: 2 },
+      verdict: null,
+      radar: [],
+      metricsOverview: [],
+      benchmark: { state: "none" },
+      scriptBreakdown: { state: "none" },
+      trend: [],
+      emptyState: { isEmpty: false },
+    },
     profileName: "阿禅",
     accountCount: 1,
     reportCount: 2,
@@ -170,6 +181,23 @@ function createInitialGrowthPageData(): GrowthPageData {
 
 function createFullHydrationData(): GrowthPageHydrationData {
   return {
+    contract: {
+      identity: { profileName: "阿禅", accountCount: 1, reportCount: 4 },
+      credibility: { level: "mid", label: "样本累积中", sampleCount: 4 },
+      verdict: {
+        weakestDimension: "增长转化",
+        diagnosis: "full contract diagnosis",
+        prescription: "full contract action",
+        source: "rule",
+        metric: { self: 1, teamAvg: 2, unit: "%" },
+      },
+      radar: [],
+      metricsOverview: [],
+      benchmark: { state: "ok", peer: { name: "小王", dimensionValue: 2, scriptSnippet: "先说结论" } },
+      scriptBreakdown: { state: "ok", segments: [{ type: "hook", order: 1, content: "先说结论" }] },
+      trend: [],
+      emptyState: { isEmpty: false },
+    },
     reportCount: 4,
     statusCards: [
       { label: "播放", value: "4.8 万", trend: "较上周 +18%", tone: "good" },
@@ -317,4 +345,6 @@ test("mergeGrowthPageData 在 full 补拉后会升级页面关键字段", () => 
   assert.equal(merged.advice.diagnosis, "full diagnosis");
   assert.equal(merged.pkPanel?.rightName, "小王");
   assert.equal(merged.scriptBreakdown.state, "structured");
+  assert.equal(merged.contract.identity.reportCount, 4);
+  assert.equal(merged.contract.scriptBreakdown.state, "ok");
 });

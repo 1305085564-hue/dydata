@@ -9,6 +9,7 @@ export function mergeGrowthPageData(initialData: GrowthPageData, fullData: Growt
 
   return {
     ...initialData,
+    contract: fullData.contract,
     reportCount: fullData.reportCount,
     statusCards: fullData.statusCards,
     capabilityCards: fullData.capabilityCards,

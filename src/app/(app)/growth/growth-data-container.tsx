@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { loadGrowthPageData } from "@/lib/loaders/growth-page";
-import { GrowthClientShell } from "./growth-client";
+import { loadGrowthPageContract } from "@/lib/loaders/growth-page";
 
 interface GrowthDataContainerProps {
   userId: string;
@@ -9,12 +8,17 @@ interface GrowthDataContainerProps {
 
 export async function GrowthDataContainer({ userId, userEmail }: GrowthDataContainerProps) {
   const supabase = await createClient();
-  const data = await loadGrowthPageData({
+  const data = await loadGrowthPageContract({
     supabase,
     userId,
     userEmail,
-    mode: "initial",
   });
 
-  return <GrowthClientShell {...data} />;
+  return (
+    <main>
+      {/* ⚠️ 一次性验证前端，Antigravity 重写时整块删除，禁止参考此处任何结构/样式/命名。 */}
+      <h1>⚠️ 一次性验证前端，Antigravity 重写时整块删除，禁止参考此处任何结构/样式/命名。</h1>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
+    </main>
+  );
 }

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { measureAsync } from "@/lib/perf";
 import {
-  buildAdviceSections,
+  buildGrowthDataContract,
   buildGrowthDimensionCards,
   buildPkComparisonData,
   buildScriptBreakdownData,
@@ -10,6 +10,7 @@ import {
   getWeakestDimensions,
   type AdviceSections,
   type GrowthDimensionCard,
+  type GrowthPageContract,
   type GrowthPkRow,
   type ScriptBreakdownData,
   type StatusCardItem,
@@ -33,15 +34,6 @@ type ScriptSegmentRow = {
   start_sec: number | null;
   end_sec: number | null;
 };
-type AiInsightRow = {
-  id: string;
-  insight_type: string;
-  result_status: string | null;
-  result_json: Record<string, unknown> | null;
-  rendered_text: string | null;
-  created_at: string;
-};
-
 export type GrowthPageLoadMode = "initial" | "full";
 
 type GrowthPageSummary = {
@@ -187,39 +179,6 @@ export const __internal = {
     contentScriptSchemaAvailable = null;
   },
 };
-
-function generateVirtualReports(
-  accountIds: string[],
-  userId: string,
-  count: number,
-  baseDate: Date,
-  existingDates: Set<string>,
-): MetricsReport[] {
-  const reports: MetricsReport[] = [];
-  const templates = [
-    { play_count: 52000, likes: 1100, comments: 150, shares: 100, favorites: 180, follower_gain: 42, completion_rate: "38%", completion_rate_5s: "56%" },
-    { play_count: 48000, likes: 980, comments: 130, shares: 90, favorites: 165, follower_gain: 38, completion_rate: "35%", completion_rate_5s: "53%" },
-    { play_count: 55000, likes: 1200, comments: 165, shares: 110, favorites: 195, follower_gain: 45, completion_rate: "40%", completion_rate_5s: "58%" },
-  ];
-
-  let offset = 1;
-  while (reports.length < count) {
-    const candidateDate = shiftDateOnly(baseDate, -offset);
-    if (!existingDates.has(candidateDate)) {
-      const template = templates[reports.length % templates.length];
-      const accountId = accountIds[reports.length % accountIds.length] ?? "virtual";
-      reports.push({
-        user_id: userId,
-        account_id: accountId,
-        report_date: candidateDate,
-        ...template,
-      });
-    }
-    offset++;
-    if (offset > 60) break;
-  }
-  return reports;
-}
 
 function mapReportsWithSubmitter(reports: DailyReportRow[], profileNameMap: Map<string, string>) {
   return reports.map((report) => ({
@@ -403,6 +362,7 @@ function buildGrowthSummary(reportCount: number, weakestDimensions: string[]) {
 }
 
 export interface GrowthPageData {
+  contract: GrowthPageContract;
   profileName: string;
   accountCount: number;
   reportCount: number;
@@ -424,6 +384,7 @@ export interface GrowthPageHydrationData
   extends Pick<
     GrowthPageData,
     | "reportCount"
+    | "contract"
     | "statusCards"
     | "capabilityCards"
     | "weakBenchmarkCards"
@@ -448,7 +409,6 @@ function buildGrowthPageResponse({
   myAccounts,
   allAccounts,
   teamReports,
-  aiInsight,
   scriptContextData,
 }: {
   mode: GrowthPageLoadMode;
@@ -459,7 +419,6 @@ function buildGrowthPageResponse({
   myAccounts: MetricsAccount[];
   allAccounts: MetricsAccount[];
   teamReports: DailyReportRow[];
-  aiInsight: AiInsightRow | null;
   scriptContextData: Awaited<ReturnType<typeof loadScriptContextData>> | null;
 }): GrowthPageData {
   const weekAgo = shiftDateOnly(now, -7);
@@ -477,11 +436,7 @@ function buildGrowthPageResponse({
   const myAccountIdSet = new Set(myAccountIds);
   const myAllReports = teamReportsWithSubmitter.filter((report) => myAccountIdSet.has(report.account_id));
 
-  const needsVirtualData = myAllReports.length < 3;
-  const virtualReports = needsVirtualData
-    ? generateVirtualReports(myAccountIds, userId, 3 - myAllReports.length, now, new Set(myAllReports.map((report) => report.report_date)))
-    : [];
-  const effectiveMyReports = [...myAllReports, ...virtualReports];
+  const effectiveMyReports = myAllReports;
 
   const myReports7d = effectiveMyReports.filter((report) => report.report_date >= weekAgo);
   const myReportsPrev7d = effectiveMyReports.filter((report) => report.report_date >= twoWeeksAgo && report.report_date < weekAgo);
@@ -498,14 +453,6 @@ function buildGrowthPageResponse({
   const { linkedScriptDocument, linkedScriptSegments, scriptSegmentsByAccountId } = buildLinkedScriptContext({
     latestReport,
     scriptContextData,
-  });
-
-  const weakestCard = capabilityCards.find((item) => item.name === weakestDimensions[0]);
-  const advice = buildAdviceSections({
-    aiInsight,
-    weakestDimension: weakestDimensions[0] ?? "待积累",
-    selfValue: weakestCard?.metricValue ?? 0,
-    teamValue: 0,
   });
 
   const scriptBreakdown = buildScriptBreakdownData({
@@ -556,7 +503,37 @@ function buildGrowthPageResponse({
         ),
       });
 
+  const contract = buildGrowthDataContract({
+    profileName: profile?.name ?? userEmail ?? "",
+    accountCount: myAccounts.length,
+    myProfileId: userId,
+    myReports: myAllReports,
+    teamReports: teamReportsWithSubmitter,
+    statusCards,
+    scriptSegments: linkedScriptSegments,
+    scriptSegmentsByAccountId,
+  });
+  const advice: AdviceSections = contract.verdict
+    ? {
+        source: "rule",
+        diagnosis: contract.verdict.diagnosis,
+        reference:
+          contract.benchmark.state === "ok" && contract.benchmark.peer
+            ? `参考 ${contract.benchmark.peer.name}：${contract.benchmark.peer.scriptSnippet || "先看对方近期高表现内容。"}`
+            : contract.benchmark.state === "fallback_team_avg"
+              ? "当前没有可实名展示的稳定对标人，先参考团队均值。"
+              : "当前没有可用团队对标，先复盘自己的真实历史数据。",
+        action: contract.verdict.prescription,
+      }
+    : {
+        source: "rule",
+        diagnosis: "还没有真实日报数据，暂不生成体检结论。",
+        reference: "提交真实日报后再生成团队对标。",
+        action: "先提交一条真实日报。",
+      };
+
   return {
+    contract,
     profileName: profile?.name ?? userEmail ?? "",
     accountCount: myAccounts.length,
     reportCount: myAllReports.length,
@@ -587,7 +564,7 @@ async function loadInitialGrowthPageData({
   now: Date;
 }) {
   const twoWeeksAgo = shiftDateOnly(now, -14);
-  const [profileResult, myAccountsResult, teamReportsResult, aiInsightResult] = await Promise.all([
+  const [profileResult, myAccountsResult, teamReportsResult] = await Promise.all([
     measureAsync("growth.initial.profile", () => supabase.from("profiles").select("id, name").eq("id", userId).single()),
     measureAsync("growth.initial.myAccounts", () =>
       supabase
@@ -602,28 +579,17 @@ async function loadInitialGrowthPageData({
         .select("user_id, account_id, report_date, play_count, likes, comments, shares, favorites, follower_gain, completion_rate, completion_rate_5s, content")
         .gte("report_date", twoWeeksAgo),
     ),
-    measureAsync("growth.initial.aiInsight", () =>
-      supabase
-        .from("ai_insight_result")
-        .select("id, insight_type, result_status, result_json, rendered_text, created_at")
-        .eq("insight_type", "growth_edit")
-        .contains("result_json", { meta_user_id: userId })
-        .order("created_at", { ascending: false })
-        .limit(1),
-    ),
   ]);
 
   const profile = profileResult.data as ProfileRow | null;
   const myAccounts = (myAccountsResult.data ?? []) as MetricsAccount[];
   const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
-  const teamUserIds = Array.from(new Set(teamReports.map((report) => report.user_id)));
+  const teamUserIds = Array.from(new Set([...teamReports.map((report) => report.user_id), userId]));
   const profilesResult =
     teamUserIds.length > 0
       ? await measureAsync("growth.initial.teamProfiles", () => supabase.from("profiles").select("id, name").in("id", teamUserIds))
       : { data: [] as ProfileRow[], error: null };
   const profileNameMap = buildProfileNameMap((profilesResult.data ?? []) as ProfileRow[]);
-  const aiInsight = ((aiInsightResult.data ?? [])[0] ?? null) as AiInsightRow | null;
-
   return buildGrowthPageResponse({
     mode: "initial",
     now,
@@ -633,7 +599,6 @@ async function loadInitialGrowthPageData({
     myAccounts,
     allAccounts: myAccounts,
     teamReports: mapReportsWithSubmitter(teamReports, profileNameMap),
-    aiInsight,
     scriptContextData: null,
   });
 }
@@ -669,7 +634,7 @@ async function loadFullGrowthPageData({
   const allAccounts = (allAccountsResult.data ?? []) as MetricsAccount[];
   const myAccounts = allAccounts.filter((account) => account.profile_id === userId);
   const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
-  const teamUserIds = Array.from(new Set(teamReports.map((report) => report.user_id)));
+  const teamUserIds = Array.from(new Set([...teamReports.map((report) => report.user_id), userId]));
   const profilesResult =
     teamUserIds.length > 0
       ? await measureAsync("growth.full.teamProfiles", () => supabase.from("profiles").select("id, name").in("id", teamUserIds))
@@ -687,7 +652,6 @@ async function loadFullGrowthPageData({
     myAccounts,
     allAccounts,
     teamReports: mapReportsWithSubmitter(teamReports, profileNameMap),
-    aiInsight: null,
     scriptContextData,
   });
 }
@@ -713,6 +677,7 @@ export async function loadGrowthPageHydrationData({
   );
 
   return {
+    contract: fullData.contract,
     reportCount: fullData.reportCount,
     statusCards: fullData.statusCards,
     capabilityCards: fullData.capabilityCards,
@@ -761,4 +726,27 @@ export async function loadGrowthPageData({
       now,
     }),
   );
+}
+
+export async function loadGrowthPageContract({
+  supabase,
+  userId,
+  userEmail,
+  now = new Date(),
+}: {
+  supabase: GrowthSupabase;
+  userId: string;
+  userEmail: string | null | undefined;
+  now?: Date;
+}): Promise<GrowthPageContract> {
+  const fullData = await measureAsync("growth.contract.total", () =>
+    loadFullGrowthPageData({
+      supabase,
+      userId,
+      userEmail,
+      now,
+    }),
+  );
+
+  return fullData.contract;
 }

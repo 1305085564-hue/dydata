@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { __internal, loadGrowthPageData, loadGrowthPageHydrationData } from "./growth-page";
+import { __internal, loadGrowthPageContract, loadGrowthPageData, loadGrowthPageHydrationData } from "./growth-page";
 
 type QueryCall = {
   table: string;
@@ -364,6 +364,57 @@ test("成长页 initial 模式避开全量账号和脚本重链路，但保留�
   assert.deepEqual(dailyReportDates, ["2026-05-17"]);
 });
 
+test("成长页只有一条真实报告时绝不补造虚拟报告", async () => {
+  const calls: QueryCall[] = [];
+  const now = new Date("2026-05-31T12:00:00.000Z");
+  const onlyRealReport = createReport({ report_date: "2026-05-30", play_count: 12345 });
+  const supabase = createFakeSupabase((call) => {
+    if (call.table === "profiles" && call.single) {
+      return { data: { id: "user-1", name: "阿禅" }, error: null };
+    }
+    if (call.table === "accounts") {
+      return {
+        data: [{ id: "acc-self", profile_id: "user-1", name: "我的账号", content_direction: "财经", presentation_format: "口播" }],
+        error: null,
+      };
+    }
+    if (call.table === "daily_reports") {
+      return { data: [onlyRealReport], error: null };
+    }
+    if (call.table === "profiles") {
+      return { data: [{ id: "user-1", name: "阿禅" }], error: null };
+    }
+    if (call.table === "ai_insight_result") {
+      return { data: [], error: null };
+    }
+    return { data: [], error: null };
+  }, calls);
+
+  const result = await loadGrowthPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+    userEmail: "user@example.com",
+    mode: "initial",
+    now,
+  });
+
+  assert.equal(result.reportCount, 1);
+  assert.equal(result.myReports.length, 1);
+  assert.equal(result.myReports[0]?.play_count, 12345);
+
+  const contract = await loadGrowthPageContract({
+    supabase: supabase as never,
+    userId: "user-1",
+    userEmail: "user@example.com",
+    now,
+  });
+
+  assert.deepEqual(contract.identity, { profileName: "阿禅", accountCount: 1, reportCount: 1 });
+  assert.equal(contract.credibility.level, "low");
+  assert.equal("teamReports" in contract, false);
+  assert.equal("myReports" in contract, false);
+});
+
 test("成长页 full 模式会恢复 PK、团队对比和结构化脚本数据", async () => {
   __internal.resetContentScriptSchemaCache();
   const calls: QueryCall[] = [];
@@ -509,6 +560,9 @@ test("成长页 full 模式会恢复 PK、团队对比和结构化脚本数据",
   assert.equal(result.isPartial, false);
   assert.equal(result.loadMode, "full");
   assert.equal(result.scriptBreakdown.state, "structured");
+  assert.equal(result.contract.scriptBreakdown.state, "ok");
+  assert.equal(result.contract.verdict?.source, "rule");
+  assert.deepEqual(Object.keys(result.contract.benchmark.peer ?? {}).sort(), ["dimensionValue", "name", "scriptSnippet"]);
   assert.equal(result.pkPanel?.rightName, "小王");
   assert.equal(result.teamMembers.length, 1);
   assert.equal(result.weakBenchmarkCards.length, 2);

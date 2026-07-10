@@ -127,6 +127,17 @@ test("DiagnosisCard 有 submitter 样本时显示真实对标人名字", () => {
 test("GrowthClientShell 使用统一行动面板替代旧双卡", () => {
   const html = renderToStaticMarkup(
     <GrowthClientShell
+      contract={{
+        identity: { profileName: "测试用户", accountCount: 1, reportCount: 3 },
+        credibility: { level: "mid", label: "样本累积中", sampleCount: 3 },
+        verdict: null,
+        radar: [],
+        metricsOverview: [],
+        benchmark: { state: "none" },
+        scriptBreakdown: { state: "none" },
+        trend: [],
+        emptyState: { isEmpty: false },
+      }}
       profileName="测试用户"
       accountCount={1}
       reportCount={3}

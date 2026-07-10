@@ -84,14 +84,129 @@ export type GrowthPkRow = {
   insight: string;
 };
 
-const dimensionMeta = [
-  { key: "hook", name: "开头留人", metricLabel: "5秒完播率" },
-  { key: "mid_bounce", name: "中段跳出", metricLabel: "中段流失率" },
-  { key: "completion", name: "整体完播", metricLabel: "完播率" },
-  { key: "growth", name: "增长转化", metricLabel: "涨粉率" },
-  { key: "interaction", name: "互动吸引", metricLabel: "综合互动率" },
-  { key: "topic", name: "话题爆点", metricLabel: "同题材播放优势" },
+export const GROWTH_DIMENSION_RULES = [
+  {
+    key: "hook",
+    name: "开头留人",
+    metricLabel: "5秒完播率",
+    unit: "%",
+    higherIsBetter: true,
+    diagnosisTail: "开头没有尽快给出继续看的理由。",
+    prescription: "下一条开头 3 秒先抛冲突或结果，别先讲背景。",
+  },
+  {
+    key: "mid_bounce",
+    name: "中段跳出",
+    metricLabel: "中段流失率",
+    unit: "%",
+    higherIsBetter: false,
+    diagnosisTail: "进入正文后信息承接不够紧。",
+    prescription: "下一条砍掉重复铺垫，中段每 8 秒补一个新信息或转折。",
+  },
+  {
+    key: "completion",
+    name: "整体完播",
+    metricLabel: "完播率",
+    unit: "%",
+    higherIsBetter: true,
+    diagnosisTail: "内容节奏或信息密度还不足以把人留到结尾。",
+    prescription: "下一条把结论前置到前 10 秒，中段只保留一个核心转折。",
+  },
+  {
+    key: "growth",
+    name: "增长转化",
+    metricLabel: "涨粉率",
+    unit: "%",
+    higherIsBetter: true,
+    diagnosisTail: "看完后缺少明确的关注理由。",
+    prescription: "下一条结尾固定一句关注理由，口播和字幕同时出现，别只说空泛 CTA。",
+  },
+  {
+    key: "interaction",
+    name: "互动吸引",
+    metricLabel: "综合互动率",
+    unit: "%",
+    higherIsBetter: true,
+    diagnosisTail: "内容还没有给用户足够强的表达和参与冲动。",
+    prescription: "下一条在情绪最高点插一句二选一提问，让用户明确表态。",
+  },
+  {
+    key: "topic",
+    name: "话题爆点",
+    metricLabel: "平均播放量",
+    unit: "次",
+    higherIsBetter: true,
+    diagnosisTail: "当前选题拿到的分发低于团队常态。",
+    prescription: "下一条沿用团队高播放题材做一个新角度，标题前 5 个字直接写结果。",
+  },
 ] as const;
+
+type GrowthDimensionRule = (typeof GROWTH_DIMENSION_RULES)[number];
+export type GrowthDimensionName = GrowthDimensionRule["name"];
+export type GrowthRating = "strong" | "mid" | "weak";
+export type GrowthCredibilityLevel = "low" | "mid" | "high";
+
+export type GrowthCredibility = {
+  level: GrowthCredibilityLevel;
+  label: string;
+  sampleCount: number;
+};
+
+export type GrowthRadarItem = {
+  dimension: GrowthDimensionName;
+  self: number;
+  teamAvg: number;
+  rating: GrowthRating;
+};
+
+export type GrowthVerdict = {
+  weakestDimension: GrowthDimensionName;
+  diagnosis: string;
+  prescription: string;
+  source: "rule" | "ai";
+  metric: {
+    self: number;
+    teamAvg: number;
+    unit: string;
+  };
+};
+
+export type GrowthBenchmark = {
+  state: "ok" | "fallback_team_avg" | "none";
+  peer?: {
+    name: string;
+    dimensionValue: number;
+    scriptSnippet: string;
+  };
+  teamAvg?: number;
+};
+
+export type GrowthScriptBreakdownContract =
+  | {
+      state: "ok";
+      segments: Array<{ type: ScriptSegmentItem["segmentType"]; order: number; content: string }>;
+    }
+  | { state: "none" };
+
+export type GrowthPageContract = {
+  identity: { profileName: string; accountCount: number; reportCount: number };
+  credibility: GrowthCredibility;
+  verdict: GrowthVerdict | null;
+  radar: GrowthRadarItem[];
+  metricsOverview: Array<{ label: string; value: number; trend: number | null; unit: string }>;
+  benchmark: GrowthBenchmark;
+  scriptBreakdown: GrowthScriptBreakdownContract;
+  trend: Array<{
+    date: string;
+    playCount: number;
+    followerGain: number;
+    completionRate5s: number;
+    completionRate: number;
+  }>;
+  emptyState: { isEmpty: boolean; reason?: string };
+};
+
+type GrowthAnalysisReport = MetricsReport & { content?: string | null; submitter?: string };
 
 function safeNumber(value: number | null | undefined) {
   return Number.isFinite(value) ? Number(value) : 0;
@@ -124,11 +239,27 @@ function getSampleHint(count: number) {
   return "样本充足，可作为稳定判断依据";
 }
 
-function getRating(selfValue: number, baseline: number) {
-  const ratio = baseline > 0 ? selfValue / baseline : selfValue > 0 ? 1.2 : 1;
+function getRatingByRatio(ratio: number) {
   if (ratio >= 1.1) return { label: "强" as const, tone: "success" as const };
   if (ratio <= 0.9) return { label: "弱" as const, tone: "danger" as const };
   return { label: "中" as const, tone: "warning" as const };
+}
+
+function getContractRating(ratio: number): GrowthRating {
+  if (ratio >= 1.1) return "strong";
+  if (ratio <= 0.9) return "weak";
+  return "mid";
+}
+
+function getComparisonRatio(selfValue: number, teamValue: number, higherIsBetter: boolean) {
+  if (teamValue <= 0) {
+    if (selfValue <= 0) return 1;
+    return higherIsBetter ? 1.1 : 0;
+  }
+
+  if (higherIsBetter) return selfValue / teamValue;
+  if (selfValue <= 0) return 1.1;
+  return teamValue / selfValue;
 }
 
 function getDimensionValues(myReports: MetricsReport[], teamReports: MetricsReport[]) {
@@ -158,20 +289,27 @@ function getDimensionValues(myReports: MetricsReport[], teamReports: MetricsRepo
   const myTopic = average(myReports.map((report) => safeNumber(report.play_count)));
   const teamTopic = average(teamReports.map((report) => safeNumber(report.play_count)));
 
+  const buildValue = (rule: GrowthDimensionRule, value: number, baseline: number, metricText: string) => ({
+    value,
+    baseline,
+    metricText,
+    ratio: getComparisonRatio(value, baseline, rule.higherIsBetter),
+  });
+
   return {
-    开头留人: { value: myHook, baseline: teamHook, metricText: formatPercent(myHook), sortValue: myHook - teamHook },
-    中段跳出: { value: myMidBounce, baseline: teamMidBounce, metricText: formatPercent(myMidBounce), sortValue: teamMidBounce - myMidBounce },
-    整体完播: { value: myCompletion, baseline: teamCompletion, metricText: formatPercent(myCompletion), sortValue: myCompletion - teamCompletion },
-    增长转化: { value: myGrowth, baseline: teamGrowth, metricText: formatPercent(myGrowth), sortValue: myGrowth - teamGrowth },
-    互动吸引: { value: myInteraction, baseline: teamInteraction, metricText: formatPercent(myInteraction), sortValue: myInteraction - teamInteraction },
-    话题爆点: { value: myTopic, baseline: teamTopic, metricText: formatCompactCount(myTopic), sortValue: myTopic - teamTopic },
+    开头留人: buildValue(GROWTH_DIMENSION_RULES[0], myHook, teamHook, formatPercent(myHook)),
+    中段跳出: buildValue(GROWTH_DIMENSION_RULES[1], myMidBounce, teamMidBounce, formatPercent(myMidBounce)),
+    整体完播: buildValue(GROWTH_DIMENSION_RULES[2], myCompletion, teamCompletion, formatPercent(myCompletion)),
+    增长转化: buildValue(GROWTH_DIMENSION_RULES[3], myGrowth, teamGrowth, formatPercent(myGrowth)),
+    互动吸引: buildValue(GROWTH_DIMENSION_RULES[4], myInteraction, teamInteraction, formatPercent(myInteraction)),
+    话题爆点: buildValue(GROWTH_DIMENSION_RULES[5], myTopic, teamTopic, formatCompactCount(myTopic)),
   };
 }
 
 export function getWeakestDimensions(myReports: MetricsReport[], teamReports: MetricsReport[]) {
   const values = getDimensionValues(myReports, teamReports);
   return Object.entries(values)
-    .sort((left, right) => left[1].sortValue - right[1].sortValue)
+    .sort((left, right) => left[1].ratio - right[1].ratio)
     .slice(0, 2)
     .map(([name]) => name) as [string, string];
 }
@@ -238,7 +376,7 @@ export function buildStatusCards(myReports: MetricsReport[], prevReports: Metric
 
 export function buildGrowthDimensionCards({ myReports, teamReports }: { myReports: MetricsReport[]; teamReports: MetricsReport[] }): GrowthDimensionCard[] {
   const values = getDimensionValues(myReports, teamReports);
-  return dimensionMeta.map((item, index) => {
+  return GROWTH_DIMENSION_RULES.map((item, index) => {
     const dimension = values[item.name as keyof typeof values];
     const sampleCount = index < 2 ? myReports.length : teamReports.length;
     return {
@@ -247,7 +385,7 @@ export function buildGrowthDimensionCards({ myReports, teamReports }: { myReport
       metricLabel: item.metricLabel,
       metricValue: dimension.value,
       metricText: dimension.metricText,
-      rating: getRating(dimension.value, dimension.baseline),
+      rating: getRatingByRatio(dimension.ratio),
       sample: {
         count: sampleCount,
         label: `样本 ${sampleCount}`,
@@ -258,17 +396,209 @@ export function buildGrowthDimensionCards({ myReports, teamReports }: { myReport
   });
 }
 
+export function getGrowthCredibility(sampleCount: number): GrowthCredibility {
+  const normalizedCount = Math.max(0, Math.trunc(sampleCount));
+  if (normalizedCount < 3) {
+    return { level: "low", label: "样本不足，仅供参考", sampleCount: normalizedCount };
+  }
+  if (normalizedCount < 10) {
+    return { level: "mid", label: "样本累积中", sampleCount: normalizedCount };
+  }
+  return { level: "high", label: "样本充足", sampleCount: normalizedCount };
+}
+
+function getDimensionRule(name: GrowthDimensionName) {
+  return GROWTH_DIMENSION_RULES.find((rule) => rule.name === name) ?? GROWTH_DIMENSION_RULES[0];
+}
+
+function formatContractMetric(value: number, unit: string) {
+  if (unit === "%") return `${value.toFixed(1)}%`;
+  return `${Math.round(value).toLocaleString("zh-CN")}${unit}`;
+}
+
+function buildContractBenchmark({
+  weakestDimension,
+  myProfileId,
+  teamReports,
+  scriptSegmentsByAccountId,
+}: {
+  weakestDimension: GrowthDimensionName;
+  myProfileId: string;
+  teamReports: GrowthAnalysisReport[];
+  scriptSegmentsByAccountId: Map<string, Array<{ content: string }>>;
+}): GrowthBenchmark {
+  const peerReports = teamReports.filter((report) => report.user_id !== myProfileId);
+  if (peerReports.length === 0) return { state: "none" };
+
+  const teamValues = getDimensionValues(peerReports, peerReports);
+  const teamAvg = teamValues[weakestDimension].value;
+  const rule = getDimensionRule(weakestDimension);
+  const reportsByProfile = new Map<string, GrowthAnalysisReport[]>();
+
+  for (const report of peerReports) {
+    const name = report.submitter?.trim();
+    if (!name || name === "未知") continue;
+    const current = reportsByProfile.get(report.user_id) ?? [];
+    current.push(report);
+    reportsByProfile.set(report.user_id, current);
+  }
+
+  const ranked = Array.from(reportsByProfile.values())
+    .map((reports) => ({
+      name: reports[0]?.submitter?.trim() ?? "",
+      value: getDimensionValues(reports, peerReports)[weakestDimension].value,
+      reports,
+    }))
+    .sort((left, right) => (rule.higherIsBetter ? right.value - left.value : left.value - right.value));
+
+  const best = ranked[0];
+  if (!best) return { state: "fallback_team_avg", teamAvg };
+
+  const snippet = best.reports
+    .map((report) => scriptSegmentsByAccountId.get(report.account_id)?.[0]?.content?.trim() || report.content?.trim() || "")
+    .find(Boolean) ?? "";
+
+  return {
+    state: "ok",
+    peer: {
+      name: best.name,
+      dimensionValue: best.value,
+      scriptSnippet: snippet,
+    },
+  };
+}
+
+function getOverviewUnit(item: StatusCardItem) {
+  if (item.suffix) return item.suffix;
+  if (item.label === "发布数") return "条";
+  if (item.label === "总涨粉") return "人";
+  return "次";
+}
+
+/**
+ * 个人成长页 V1 的唯一数据契约生成器。
+ * 六维名称、指标、方向、评级阈值、诊断和改法只允许来自 GROWTH_DIMENSION_RULES。
+ */
+export function buildGrowthDataContract({
+  profileName,
+  accountCount,
+  myProfileId,
+  myReports,
+  teamReports,
+  statusCards,
+  scriptSegments,
+  scriptSegmentsByAccountId,
+}: {
+  profileName: string;
+  accountCount: number;
+  myProfileId: string;
+  myReports: GrowthAnalysisReport[];
+  teamReports: GrowthAnalysisReport[];
+  statusCards?: StatusCardItem[];
+  scriptSegments: ScriptSegmentItem[];
+  scriptSegmentsByAccountId: Map<string, Array<{ content: string }>>;
+}): GrowthPageContract {
+  const identity = { profileName, accountCount, reportCount: myReports.length };
+  const credibility = getGrowthCredibility(myReports.length);
+
+  if (myReports.length === 0) {
+    return {
+      identity,
+      credibility,
+      verdict: null,
+      radar: [],
+      metricsOverview: [],
+      benchmark: { state: "none" },
+      scriptBreakdown: { state: "none" },
+      trend: [],
+      emptyState: { isEmpty: true, reason: "还没有真实日报数据" },
+    };
+  }
+
+  const peerReports = teamReports.filter((report) => report.user_id !== myProfileId);
+  const dimensionValues = getDimensionValues(myReports, peerReports);
+  const radar: GrowthRadarItem[] = GROWTH_DIMENSION_RULES.map((rule) => {
+    const value = dimensionValues[rule.name];
+    return {
+      dimension: rule.name,
+      self: value.value,
+      teamAvg: value.baseline,
+      rating: getContractRating(value.ratio),
+    };
+  });
+  const weakestDimension = [...GROWTH_DIMENSION_RULES].sort(
+    (left, right) => dimensionValues[left.name].ratio - dimensionValues[right.name].ratio,
+  )[0].name;
+  const weakestRule = getDimensionRule(weakestDimension);
+  const weakestValue = dimensionValues[weakestDimension];
+  const diagnosis = peerReports.length
+    ? `你的${weakestRule.metricLabel}是 ${formatContractMetric(weakestValue.value, weakestRule.unit)}，团队均值是 ${formatContractMetric(weakestValue.baseline, weakestRule.unit)}，${weakestRule.diagnosisTail}`
+    : `你的${weakestRule.metricLabel}是 ${formatContractMetric(weakestValue.value, weakestRule.unit)}，团队暂无可比样本，先按真实数据继续积累。`;
+  const overview = statusCards ?? buildStatusCards(myReports, []);
+
+  return {
+    identity,
+    credibility,
+    verdict: {
+      weakestDimension,
+      diagnosis,
+      prescription: weakestRule.prescription,
+      source: "rule",
+      metric: {
+        self: weakestValue.value,
+        teamAvg: weakestValue.baseline,
+        unit: weakestRule.unit,
+      },
+    },
+    radar,
+    metricsOverview: overview.map((item) => ({
+      label: item.label,
+      value: item.value,
+      trend: item.delta ?? null,
+      unit: getOverviewUnit(item),
+    })),
+    benchmark: buildContractBenchmark({
+      weakestDimension,
+      myProfileId,
+      teamReports: peerReports,
+      scriptSegmentsByAccountId,
+    }),
+    scriptBreakdown:
+      scriptSegments.length > 0
+        ? {
+            state: "ok",
+            segments: scriptSegments.map((segment, index) => ({
+              type: segment.segmentType,
+              order: index + 1,
+              content: segment.content,
+            })),
+          }
+        : { state: "none" },
+    trend: [...myReports]
+      .sort((left, right) => left.report_date.localeCompare(right.report_date))
+      .map((report) => ({
+        date: report.report_date,
+        playCount: safeNumber(report.play_count),
+        followerGain: safeNumber(report.follower_gain),
+        completionRate5s: parsePercentText(report.completion_rate_5s),
+        completionRate: parsePercentText(report.completion_rate),
+      })),
+    emptyState: { isEmpty: false },
+  };
+}
+
 function getAccountDimensionValue(dimension: string, reports: MetricsReport[], teamReports: MetricsReport[]) {
   const values = getDimensionValues(reports, teamReports);
   return values[dimension as keyof typeof values]?.value ?? 0;
 }
 
 function getHistoryTopSamples(myReports: MetricsReport[], dimension: string) {
+  const rule = getDimensionRule(dimension as GrowthDimensionName);
   return [...myReports]
     .sort((left, right) => {
       const valueLeft = getAccountDimensionValue(dimension, [left], myReports);
       const valueRight = getAccountDimensionValue(dimension, [right], myReports);
-      return valueRight - valueLeft;
+      return rule.higherIsBetter ? valueRight - valueLeft : valueLeft - valueRight;
     })
     .slice(0, 3)
     .map((report) => ({
@@ -302,6 +632,7 @@ export function buildWeakBenchmarkCards({
   );
 
   return weakestDimensions.map((dimension) => {
+    const rule = getDimensionRule(dimension as GrowthDimensionName);
     const ranked = [
       { accountId: myAccountId, name: selfAccount?.name ?? "我", value: getAccountDimensionValue(dimension, myReports, teamReports) },
       ...candidates.map((account) => ({
@@ -313,10 +644,10 @@ export function buildWeakBenchmarkCards({
           teamReports,
         ),
       })),
-    ].sort((left, right) => right.value - left.value);
+    ].sort((left, right) => (rule.higherIsBetter ? right.value - left.value : left.value - right.value));
 
     const best = ranked[0];
-    if (!best || best.value <= 0) {
+    if (!best || (rule.higherIsBetter && best.value <= 0)) {
       return {
         dimension,
         state: "empty",
