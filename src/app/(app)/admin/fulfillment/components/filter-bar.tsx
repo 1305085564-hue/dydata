@@ -114,8 +114,8 @@ export function FilterBar({
                 onClick={() => handlePresetChange(opt.value)}
                 className={`rounded-md px-2.5 py-1 text-[13px] transition-all duration-150 ${
                   range === opt.value
-                    ? "bg-white shadow-sm font-semibold text-stone-800 ring-1 ring-stone-200/5"
-                    : "text-stone-500 hover:text-stone-800"
+                    ? "bg-white font-medium text-stone-900 ring-1 ring-stone-200"
+                    : "text-stone-500 hover:text-stone-700"
                 }`}
               >
                 {opt.label}
@@ -156,7 +156,7 @@ export function FilterBar({
 
         {/* 飞书催交总开关 */}
         <div className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 transition-colors duration-200">
-          <span className="text-[12px] font-medium text-stone-600">飞书自动催交</span>
+          <span className="text-[12px] font-medium text-stone-700">飞书自动催交</span>
           {isUpdatingSettings ? (
             <div className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : (
@@ -166,7 +166,7 @@ export function FilterBar({
       </div>
 
       {/* 当前范围指示 */}
-      <div className="flex items-center gap-2 text-[12px] text-stone-400">
+      <div className="flex items-center gap-2 text-[12px] text-stone-500">
         <CalendarDays className="size-3.5" />
         <span>
           当前范围：{formatRangeLabel(range, year, month)}
@@ -174,7 +174,7 @@ export function FilterBar({
           {selectedGroup ? ` · ${selectedGroup}` : ""}
         </span>
         {(range === "last7days" || range === "custom") && (
-          <span className="rounded-md bg-[#D99E55]/10 px-1.5 py-0.5 text-[11px] text-[#D99E55]">
+          <span className="rounded-md bg-[#D99E55]/10 px-1.5 py-0.5 text-[12px] font-normal text-[#D99E55]">
             仅显示本月内数据
           </span>
         )}

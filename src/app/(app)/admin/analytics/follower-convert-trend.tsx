@@ -49,8 +49,8 @@ function CustomTooltip({
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]">
-      <p className="text-[12px] font-medium tracking-tight text-stone-800">{label}</p>
-      <p className="mt-1 text-[12px] font-mono tabular-nums text-[#D97757]">
+      <p className="text-[12px] font-medium tracking-tight text-stone-700">{label}</p>
+      <p className="mt-1 text-[12px] tabular-nums text-[#D97757]">
         导粉：{payload[0].value.toLocaleString()}
       </p>
     </div>
@@ -101,7 +101,7 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-0.5">
-          <h3 className="text-[14px] font-medium tracking-tight text-stone-800">导粉趋势</h3>
+          <h3 className="text-[18px] font-medium tracking-tight text-stone-900">导粉趋势</h3>
           <p className="text-[12px] text-stone-500">按最近 {preset === "7d" ? "7" : "30"} 天查看团队导粉变化</p>
         </div>
         <div className="inline-flex w-fit rounded-lg border border-stone-200 bg-stone-50 p-0.5">
@@ -111,8 +111,8 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
               size="sm"
               variant="ghost"
               className={cn(
-                "h-7 rounded-md px-2 text-[11px] font-medium text-stone-500 shadow-none transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                preset === p && "bg-white text-stone-800 shadow-sm"
+                "h-7 rounded-md px-2 text-[12px] font-normal text-stone-500 shadow-none transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                preset === p && "bg-white text-stone-900"
               )}
               onClick={() => setPreset(p)}
             >

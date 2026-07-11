@@ -43,8 +43,8 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     <AdminWorkspaceLayout indexItems={[]} width="wide">
       <div className="space-y-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-stone-400">经营分析</p>
-          <h1 className="mt-1 text-[18px] font-medium tracking-tight text-stone-800">经营分析</h1>
+          <p className="text-[12px] tracking-[0.12em] text-stone-500">经营分析</p>
+          <h1 className="mt-1 text-[24px] font-medium tracking-tight text-stone-900">经营分析</h1>
         </div>
         <Suspense
           key={`${currentPreset}-${currentFrom ?? ""}-${currentTo ?? ""}`}

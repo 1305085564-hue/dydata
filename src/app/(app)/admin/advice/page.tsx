@@ -49,7 +49,7 @@ async function AdviceDataContainer({ currentUserId }: { currentUserId: string })
       className="scroll-mt-8 space-y-4 rounded-2xl border border-stone-200 bg-white p-6 mt-4"
     >
       <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-        <h2 className="text-[24px] font-semibold tracking-tight text-stone-800">建议队列</h2>
+        <h2 className="text-[24px] font-medium tracking-tight text-stone-900">建议队列</h2>
       </div>
       <AdviceList
         advice={data.advice}

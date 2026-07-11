@@ -114,7 +114,7 @@ function formatTime(value: string | null | undefined) {
 function MissingBadge({ field }: { field: string }) {
   const label = MISSING_LABEL[field] ?? field;
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-[#D99E55]/20 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[11px] text-[#D99E55]">
+    <span className="inline-flex items-center gap-1 rounded-md border border-[#D99E55]/20 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] text-[#D99E55]">
       <span className="size-1 rounded-full bg-[#D99E55]" />
       缺{label}
     </span>
@@ -152,7 +152,7 @@ function TaskRow({
         "group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all",
         selected
           ? "border-stone-300 bg-stone-50"
-          : "border-transparent hover:border-stone-200 hover:bg-stone-50/60"
+          : "border-transparent hover:border-stone-200 hover:bg-stone-100"
       )}
     >
       {/* Checkbox */}
@@ -190,19 +190,19 @@ function TaskRow({
         }}
         className="min-w-0 flex-1 cursor-pointer pl-1 text-left focus-visible:outline-none"
       >
-        <p className="line-clamp-2 text-[13px] font-medium text-stone-800">
+        <p className="line-clamp-2 text-[13px] font-medium text-stone-900">
           {entry.script_text}
         </p>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-stone-500">
           <span>{entry.submitted_by_name}</span>
-          <span className="text-stone-300">·</span>
+          <span className="text-stone-500">·</span>
           <span>{formatTime(entry.created_at)}</span>
           {entry.risk_level && entry.risk_level !== "low" ? (
             <>
-              <span className="text-stone-300">·</span>
+              <span className="text-stone-500">·</span>
               <span
                 className={cn(
-                  "rounded-md border px-1.5 py-0.5 text-[11px] font-semibold",
+                  "rounded-md border px-1.5 py-0.5 text-[12px] font-medium",
                   TONE.danger.badge
                 )}
               >
@@ -224,8 +224,8 @@ function TaskRow({
             onAction(entry, "approve");
           }}
           className={cn(
-            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors",
-            "text-stone-400 hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D]",
+            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-colors",
+            "text-stone-500 hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
           title="通过"
@@ -243,8 +243,8 @@ function TaskRow({
             onAction(entry, "reject");
           }}
           className={cn(
-            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors",
-            "text-stone-400 hover:bg-[#C9604D]/10 hover:text-[#C9604D]",
+            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-colors",
+            "text-stone-500 hover:bg-[#C9604D]/10 hover:text-[#C9604D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
           title="驳回"
@@ -319,7 +319,7 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left transition-colors hover:bg-stone-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
+        className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
       >
         <div className="flex items-center gap-3 min-w-0">
           <span
@@ -332,12 +332,12 @@ function CollapsibleSection({
             <Icon className="size-3.5 stroke-[1.5]" />
           </span>
           <div className="min-w-0 leading-tight">
-            <p className="text-[13px] font-semibold text-stone-800">
+            <p className="text-[13px] font-medium text-stone-900">
               {section.title}
               {visualCount > 0 && (
                 <span
                   className={cn(
-                    "ml-2 inline-flex h-5 items-center rounded-md border px-1.5 text-[11px] font-mono tabular-nums font-semibold",
+                    "ml-2 inline-flex h-5 items-center rounded-md border px-1.5 text-[12px] tabular-nums font-medium",
                     style.badge
                   )}
                 >
@@ -346,12 +346,12 @@ function CollapsibleSection({
               )}
               {section.headerTag}
             </p>
-            <p className="text-[11px] text-stone-500">{section.hint}</p>
+            <p className="text-[12px] text-stone-500">{section.hint}</p>
           </div>
         </div>
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-300",
+            "size-4 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-300",
             open ? "" : "-rotate-90"
           )}
         />
@@ -372,7 +372,7 @@ function CollapsibleSection({
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="px-3 py-6 text-center text-[12px] text-stone-400"
+                  className="px-3 py-6 text-center text-[12px] text-stone-500"
                 >
                   {section.emptyHint}
                 </motion.p>
@@ -414,7 +414,7 @@ function CollapsibleSection({
                       <button
                         type="button"
                         onClick={() => setExpanded((v) => !v)}
-                        className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800"
+                        className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
                       >
                         {expanded
                           ? "收起"
@@ -469,7 +469,7 @@ function BulkActionBar({
         }}
         className="fixed left-1/2 z-50 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2.5 shadow-sm sm:gap-3 sm:px-5 sm:py-3 [--bulk-bar-offset:24px] max-sm:[--bulk-bar-offset:96px]"
       >
-        <span className="whitespace-nowrap text-[13px] font-medium text-stone-800">
+        <span className="whitespace-nowrap text-[13px] font-medium text-stone-900">
           已选择 <span className="tabular-nums text-[#D97757]">{count}</span> 项
         </span>
         <div className="h-4 w-px bg-stone-200" />
@@ -494,7 +494,7 @@ function BulkActionBar({
         <button
           type="button"
           onClick={onClear}
-          className="flex size-7 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
+          className="flex size-7 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
         >
           <X className="size-3.5" />
         </button>
@@ -869,7 +869,7 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
         entries: inbox.high_risk_pending,
         emptyHint: "目前没有高风险案例待处理",
         headerTag: counts.high_risk_pending > 0 ? (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#C9604D]">
+          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[12px] text-[#C9604D]">
             <span className="size-1 rounded-full bg-[#C9604D]" />
             优先处理
           </span>
@@ -947,7 +947,7 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
               <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-white shadow-sm">
                 <Sparkles className="size-4 stroke-[1.75] text-[#6FAA7D]" />
               </div>
-              <p className="mt-3 text-[14px] font-semibold text-stone-800">
+              <p className="mt-3 text-[13px] font-medium text-stone-900">
                 今天的审批已清空
               </p>
               <p className="mt-1 text-[12px] text-stone-500">

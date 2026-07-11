@@ -52,7 +52,7 @@ export default function BindingsClient() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-stone-800">业务功能绑定</h2>
+        <h2 className="text-[18px] font-medium text-stone-900">业务功能绑定</h2>
         <Button size="sm" className="gap-1.5" onClick={() => setBindingModal({ open: true, data: null })}>
           <Plus className="size-4" /> 添加绑定
         </Button>
@@ -80,28 +80,28 @@ export default function BindingsClient() {
             ) : (
               bundle.featureBindings.map((binding) => (
                 <TableRow key={binding.id}>
-                  <TableCell className="font-mono text-xs text-stone-600">
+                  <TableCell className="font-mono text-[12px] text-stone-700">
                     {binding.feature_key}
                   </TableCell>
-                  <TableCell className="font-medium text-stone-800">
+                  <TableCell className="font-medium text-stone-900">
                     {binding.label}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="font-normal text-stone-600 bg-stone-50">
+                    <Badge variant="outline" className="font-normal text-stone-700 bg-stone-50">
                       {getModelName(binding.provider_key_model_id)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs text-stone-500">
+                  <TableCell className="text-[12px] text-stone-500">
                     {binding.context_message_limit} 轮 / {binding.output_token_limit} tk
                   </TableCell>
                   <TableCell>
                     <Switch checked={binding.is_enabled} onCheckedChange={(c) => toggleStatus(binding, c)} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="size-8 text-stone-400 hover:text-stone-600" onClick={() => setBindingModal({ open: true, data: binding })}>
+                    <Button variant="ghost" size="icon" className="size-8 text-stone-500 hover:text-stone-700" onClick={() => setBindingModal({ open: true, data: binding })}>
                       <Pencil className="size-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-8 text-stone-400 hover:text-rose-600" onClick={() => setDeleteConfirm({ open: true, id: binding.id, title: `删除功能绑定 ${binding.label}` })}>
+                    <Button variant="ghost" size="icon" className="size-8 text-stone-500 hover:text-[#C9604D]" onClick={() => setDeleteConfirm({ open: true, id: binding.id, title: `删除功能绑定 ${binding.label}` })}>
                       <Trash2 className="size-4" />
                     </Button>
                   </TableCell>

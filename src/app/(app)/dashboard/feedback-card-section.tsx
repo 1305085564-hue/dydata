@@ -132,11 +132,11 @@ function CardRow({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
-            <span className="truncate text-[13px] font-medium text-stone-800">
+            <span className="truncate text-[13px] font-medium text-stone-700">
               {item.video?.video_title || "（无标题）"}
             </span>
             {item.video?.published_at && (
-              <span className="shrink-0 text-[11px] text-stone-400">
+              <span className="shrink-0 text-[12px] text-stone-500">
                 {formatDate(item.video.published_at)}
               </span>
             )}
@@ -153,7 +153,7 @@ function CardRow({
               {confirmed.summary.problem_tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex rounded-md border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[10px] text-stone-500"
+                  className="inline-flex rounded-md border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[12px] text-stone-500"
                 >
                   {tag}
                 </span>
@@ -164,7 +164,7 @@ function CardRow({
 
         <ChevronDownIcon
           className={cn(
-            "mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            "mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
             expanded && "rotate-180",
           )}
         />
@@ -192,7 +192,7 @@ function CardRow({
                   <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
                     {mainProblem && (
                       <div className="space-y-1">
-                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                        <div className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
                           主要问题
                         </div>
                         <p className="text-[13px] leading-[1.7] text-stone-700">{mainProblem}</p>
@@ -200,10 +200,10 @@ function CardRow({
                     )}
                     {improvement && (
                       <div className="border-l-2 border-[#D97757] pl-3">
-                        <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                        <div className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
                           建议下次
                         </div>
-                        <p className="mt-1 whitespace-pre-wrap text-[14px] font-medium leading-[1.7] text-stone-800">
+                        <p className="mt-1 whitespace-pre-wrap text-[13px] font-medium leading-[1.7] text-stone-700">
                           {improvement}
                         </p>
                       </div>
@@ -213,18 +213,18 @@ function CardRow({
               })()}
 
               {item.account?.name && (
-                <div className="text-[11px] text-stone-400">账号：{item.account.name}</div>
+                <div className="text-[12px] text-stone-500">账号：{item.account.name}</div>
               )}
 
               {/* Employee reply section */}
               {item.feedback_card.employee_reply_status && item.feedback_card.employee_reply_status !== "pending" ? (
                 <div className={cn(
-                  "rounded-xl border p-3 mt-2 text-xs space-y-1",
+                  "rounded-xl border p-3 mt-2 text-[12px] space-y-1",
                   item.feedback_card.employee_reply_status === "acknowledged"
                     ? "border-green-200 bg-green-50/40 text-green-950"
                     : "border-amber-200 bg-amber-50/40 text-amber-950"
                 )}>
-                  <div className="flex items-center gap-1.5 font-semibold">
+                  <div className="flex items-center gap-1.5 font-medium">
                     <span className={cn(
                       "size-1.5 rounded-full",
                       item.feedback_card.employee_reply_status === "acknowledged" ? "bg-green-500" : "bg-amber-500"
@@ -239,14 +239,14 @@ function CardRow({
                 </div>
               ) : (
                 <div className="mt-4 pt-3 border-t border-stone-100 space-y-3">
-                  <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                  <div className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
                     复盘回传
                   </div>
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     disabled={submitting}
-                    className="w-full min-h-[64px] rounded-xl border border-stone-200 p-2.5 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#D97757] disabled:bg-stone-50"
+                    className="w-full min-h-[64px] rounded-xl border border-stone-200 p-2.5 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:outline-none focus:ring-1 focus:ring-[#D97757] disabled:bg-stone-50"
                     placeholder="在此输入你对本条视频数据波动的复盘分析、客观原因或下一步改进方案..."
                   />
                   <div className="flex gap-2">
@@ -254,7 +254,7 @@ function CardRow({
                       type="button"
                       disabled={submitting || !replyText.trim()}
                       onClick={() => handleSubmitReply("acknowledged")}
-                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-green-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-green-600 px-4 text-[12px] font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                     >
                       {submitting ? "提交中..." : "认可并采纳"}
                     </button>
@@ -262,7 +262,7 @@ function CardRow({
                       type="button"
                       disabled={submitting || !replyText.trim()}
                       onClick={() => handleSubmitReply("disputed")}
-                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-stone-950 px-4 text-xs font-semibold text-white transition-colors hover:bg-stone-900 disabled:opacity-50"
+                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-stone-900 px-4 text-[12px] font-medium text-white transition-colors hover:bg-stone-900 disabled:opacity-50"
                     >
                       {submitting ? "提交中..." : "申诉/解释复盘"}
                     </button>
@@ -336,7 +336,7 @@ export function FeedbackCardSection() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-4 w-px bg-[#D97757]" />
-          <h3 className="text-[14px] font-medium text-stone-800">复盘反馈</h3>
+          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
         </div>
         <FeedbackSkeleton />
       </section>
@@ -373,14 +373,14 @@ export function FeedbackCardSection() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-4 w-px bg-[#D97757]" />
-          <h3 className="text-[14px] font-medium text-stone-800">复盘反馈</h3>
+          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
           {data.summary.unread > 0 && (
-            <span className="inline-flex items-center rounded-full bg-[#D97757]/6 px-2 py-0.5 text-[11px] font-medium text-[#D97757]">
+            <span className="inline-flex items-center rounded-full bg-[#D97757]/6 px-2 py-0.5 text-[12px] font-medium text-[#D97757]">
               {data.summary.unread} 条未读
             </span>
           )}
         </div>
-        <span className="text-[11px] text-stone-400">共 {data.summary.total} 条</span>
+        <span className="text-[12px] text-stone-500">共 {data.summary.total} 条</span>
       </div>
 
       <div className="space-y-2">

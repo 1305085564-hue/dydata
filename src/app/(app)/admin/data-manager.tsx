@@ -360,18 +360,18 @@ export function DataManager({
       <TableRow key={`${report.id}-edit`} className="border-0 bg-transparent hover:bg-transparent">
         <TableCell colSpan={14} className="p-0">
           <div className="m-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <div className="mb-3 text-sm font-semibold text-stone-800">编辑数据</div>
+            <div className="mb-3 text-[13px] font-medium text-stone-900">编辑数据</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
-                <label className="text-xs font-medium text-stone-500">标题</label>
+                <label className="text-[12px] font-normal text-stone-500">标题</label>
                 <Input
                   value={editData.title ?? ""}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">播放量（万）</label>
+                <label className="text-[12px] font-normal text-stone-500">播放量（万）</label>
                 <Input
                   type="number"
                   step="0.01"
@@ -379,11 +379,11 @@ export function DataManager({
                   onChange={(e) =>
                     setEditData({ ...editData, play_count: Math.round(Number(e.target.value) * 10000) })
                   }
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">完播率</label>
+                <label className="text-[12px] font-normal text-stone-500">完播率</label>
                 <Input
                   value={stripSuffix(editData.completion_rate ?? null, "%")}
                   onChange={(e) =>
@@ -392,20 +392,20 @@ export function DataManager({
                       completion_rate: e.target.value ? `${e.target.value}%` : null,
                     })
                   }
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">涨粉</label>
+                <label className="text-[12px] font-normal text-stone-500">涨粉</label>
                 <Input
                   type="number"
                   value={editData.follower_gain ?? 0}
                   onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">导粉</label>
+                <label className="text-[12px] font-normal text-stone-500">导粉</label>
                 <Input
                   type="number"
                   value={editData.follower_convert ?? ""}
@@ -415,43 +415,43 @@ export function DataManager({
                       follower_convert: e.target.value ? Number(e.target.value) : null,
                     })
                   }
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">点赞</label>
+                <label className="text-[12px] font-normal text-stone-500">点赞</label>
                 <Input
                   type="number"
                   value={editData.likes ?? 0}
                   onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">评论</label>
+                <label className="text-[12px] font-normal text-stone-500">评论</label>
                 <Input
                   type="number"
                   value={editData.comments ?? 0}
                   onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">分享</label>
+                <label className="text-[12px] font-normal text-stone-500">分享</label>
                 <Input
                   type="number"
                   value={editData.shares ?? 0}
                   onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-500">收藏</label>
+                <label className="text-[12px] font-normal text-stone-500">收藏</label>
                 <Input
                   type="number"
                   value={editData.favorites ?? 0}
                   onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}
-                  className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
             </div>
@@ -460,7 +460,7 @@ export function DataManager({
                 size="sm"
                 disabled={isPending}
                 onClick={() => handleSave(report.id)}
-                className="h-8 bg-white border border-stone-200 text-xs text-stone-800 hover:bg-stone-50"
+                className="h-8 bg-white border border-stone-200 text-[12px] text-stone-900 hover:bg-stone-50"
               >
                 保存
               </Button>
@@ -468,7 +468,7 @@ export function DataManager({
                 size="sm"
                 variant="outline"
                 onClick={cancelEdit}
-                className="h-8 text-xs border-stone-200 text-stone-500 hover:text-stone-800"
+                className="h-8 text-[12px] border-stone-200 text-stone-500 hover:text-stone-900"
               >
                 取消
               </Button>
@@ -485,39 +485,39 @@ export function DataManager({
       <TableRow key={report.id} className={`group border-stone-200 ${isEditing ? "bg-stone-50" : "hover:bg-stone-50"}`}>
         <TableCell>
           <div className="space-y-1">
-            <p className="text-sm text-stone-800">{viewMode === "account" ? report.accountName : report.profileName}</p>
-            <p className="text-xs text-stone-500">
+            <p className="text-[13px] text-stone-900">{viewMode === "account" ? report.accountName : report.profileName}</p>
+            <p className="text-[12px] text-stone-500">
               {viewMode === "account" ? report.profileName : `${report.accountName} · ${report.report_date}`}
             </p>
             {viewMode === "account" ? renderAccountMeta(report) : null}
           </div>
         </TableCell>
-        <TableCell className="max-w-[160px] truncate text-sm text-stone-800">{report.title}</TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">
+        <TableCell className="max-w-[160px] truncate text-[13px] text-stone-900">{report.title}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">
           {report.play_count != null ? (report.play_count / 10000).toFixed(2) : "-"}
           {renderAnomaly(report)}
         </TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">{report.completion_rate ?? "-"}</TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">{report.follower_gain}</TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">{report.follower_convert ?? "-"}</TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">{report.likes}</TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">{report.comments}</TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">{report.shares}</TableCell>
-        <TableCell className="text-right font-mono tabular-nums text-sm text-stone-800">{report.favorites}</TableCell>
-        <TableCell className="text-sm text-stone-500">{formatShanghaiDateTime(report.published_at)}</TableCell>
-        <TableCell className="text-sm text-stone-500">{formatShanghaiDateTime(report.uploaded_at)}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">{report.completion_rate ?? "-"}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">{report.follower_gain}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">{report.follower_convert ?? "-"}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">{report.likes}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">{report.comments}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">{report.shares}</TableCell>
+        <TableCell className="text-right tabular-nums text-[13px] text-stone-900">{report.favorites}</TableCell>
+        <TableCell className="text-[13px] text-stone-500">{formatShanghaiDateTime(report.published_at)}</TableCell>
+        <TableCell className="text-[13px] text-stone-500">{formatShanghaiDateTime(report.uploaded_at)}</TableCell>
         <TableCell>
           {report.content ? (
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setContentDialog({ title: report.title, content: report.content ?? "" })}
-              className="h-7 text-xs text-stone-500 hover:text-stone-800 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+              className="h-7 text-[12px] text-stone-500 hover:text-stone-900 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
             >
               查看
             </Button>
           ) : (
-            <span className="text-xs text-stone-500">-</span>
+            <span className="text-[12px] text-stone-500">-</span>
           )}
         </TableCell>
         <TableCell className="text-right">
@@ -527,7 +527,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => startEdit(report)}
-                className="h-7 text-xs text-stone-500 hover:text-stone-800"
+                className="h-7 text-[12px] text-stone-500 hover:text-stone-900"
               >
                 编辑
               </Button>
@@ -549,18 +549,18 @@ export function DataManager({
   function renderMobileEditPanel(report: (typeof reportsWithMeta)[number]) {
     return (
       <div className="mt-2 space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
-        <div className="text-sm font-semibold text-stone-800">编辑数据</div>
+        <div className="text-[13px] font-medium text-stone-900">编辑数据</div>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-stone-500">标题</label>
+          <label className="text-[12px] font-normal text-stone-500">标题</label>
           <Input
             value={editData.title ?? ""}
             onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-            className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">播放量（万）</label>
+            <label className="text-[12px] font-normal text-stone-500">播放量（万）</label>
             <Input
               type="number"
               step="0.01"
@@ -568,11 +568,11 @@ export function DataManager({
               onChange={(e) =>
                 setEditData({ ...editData, play_count: Math.round(Number(e.target.value) * 10000) })
               }
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">完播率</label>
+            <label className="text-[12px] font-normal text-stone-500">完播率</label>
             <Input
               value={stripSuffix(editData.completion_rate ?? null, "%")}
               onChange={(e) =>
@@ -581,20 +581,20 @@ export function DataManager({
                   completion_rate: e.target.value ? `${e.target.value}%` : null,
                 })
               }
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">涨粉</label>
+            <label className="text-[12px] font-normal text-stone-500">涨粉</label>
             <Input
               type="number"
               value={editData.follower_gain ?? 0}
               onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">导粉</label>
+            <label className="text-[12px] font-normal text-stone-500">导粉</label>
             <Input
               type="number"
               value={editData.follower_convert ?? ""}
@@ -604,43 +604,43 @@ export function DataManager({
                   follower_convert: e.target.value ? Number(e.target.value) : null,
                 })
               }
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">点赞</label>
+            <label className="text-[12px] font-normal text-stone-500">点赞</label>
             <Input
               type="number"
               value={editData.likes ?? 0}
               onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">评论</label>
+            <label className="text-[12px] font-normal text-stone-500">评论</label>
             <Input
               type="number"
               value={editData.comments ?? 0}
               onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">分享</label>
+            <label className="text-[12px] font-normal text-stone-500">分享</label>
             <Input
               type="number"
               value={editData.shares ?? 0}
               onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-500">收藏</label>
+            <label className="text-[12px] font-normal text-stone-500">收藏</label>
             <Input
               type="number"
               value={editData.favorites ?? 0}
               onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}
-              className="h-8 bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+              className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
             />
           </div>
         </div>
@@ -649,7 +649,7 @@ export function DataManager({
             size="sm"
             disabled={isPending}
             onClick={() => handleSave(report.id)}
-            className="h-8 bg-white border border-stone-200 text-xs text-stone-800 hover:bg-stone-50"
+            className="h-8 bg-white border border-stone-200 text-[12px] text-stone-900 hover:bg-stone-50"
           >
             保存
           </Button>
@@ -657,7 +657,7 @@ export function DataManager({
             size="sm"
             variant="outline"
             onClick={cancelEdit}
-            className="h-8 text-xs border-stone-200 text-stone-500 hover:text-stone-800"
+            className="h-8 text-[12px] border-stone-200 text-stone-500 hover:text-stone-900"
           >
             取消
           </Button>
@@ -672,9 +672,9 @@ export function DataManager({
       <div key={report.id} className={`space-y-2 rounded-xl border border-stone-200 bg-white p-4 ${isEditing ? "ring-1 ring-stone-200" : ""}`}>
         <div className="flex items-center justify-between gap-2">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-stone-800">{viewMode === "account" ? report.accountName : report.profileName}</p>
-            <p className="max-w-[220px] truncate text-xs text-stone-500">{report.title}</p>
-            <p className="text-xs text-stone-500">{viewMode === "account" ? report.profileName : report.accountName}</p>
+            <p className="text-[13px] font-medium text-stone-900">{viewMode === "account" ? report.accountName : report.profileName}</p>
+            <p className="max-w-[220px] truncate text-[12px] text-stone-500">{report.title}</p>
+            <p className="text-[12px] text-stone-500">{viewMode === "account" ? report.profileName : report.accountName}</p>
             {viewMode === "account" ? renderAccountMeta(report) : null}
           </div>
           {!isEditing ? (
@@ -683,7 +683,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => startEdit(report)}
-                className="h-7 text-xs text-stone-500 hover:text-stone-800"
+                className="h-7 text-[12px] text-stone-500 hover:text-stone-900"
               >
                 编辑
               </Button>
@@ -698,41 +698,41 @@ export function DataManager({
             </div>
           ) : null}
         </div>
-        <div className="grid grid-cols-4 gap-2 text-xs">
+        <div className="grid grid-cols-4 gap-2 text-[12px]">
           <div>
             <p className="text-stone-500">播放量</p>
-            <p className="font-medium font-mono tabular-nums text-stone-800">
+            <p className="font-medium tabular-nums text-stone-900">
               {formatPlayCount(report.play_count)}
               {renderAnomaly(report)}
             </p>
           </div>
           <div>
             <p className="text-stone-500">完播率</p>
-            <p className="font-mono tabular-nums text-stone-800">{report.completion_rate ?? "-"}</p>
+            <p className="tabular-nums text-stone-900">{report.completion_rate ?? "-"}</p>
           </div>
           <div>
             <p className="text-stone-500">涨粉</p>
-            <p className="font-mono tabular-nums text-stone-800">{report.follower_gain}</p>
+            <p className="tabular-nums text-stone-900">{report.follower_gain}</p>
           </div>
           <div>
             <p className="text-stone-500">导粉</p>
-            <p className="font-mono tabular-nums text-stone-800">{report.follower_convert ?? "-"}</p>
+            <p className="tabular-nums text-stone-900">{report.follower_convert ?? "-"}</p>
           </div>
           <div>
             <p className="text-stone-500">点赞</p>
-            <p className="font-mono tabular-nums text-stone-800">{report.likes}</p>
+            <p className="tabular-nums text-stone-900">{report.likes}</p>
           </div>
           <div>
             <p className="text-stone-500">评论</p>
-            <p className="font-mono tabular-nums text-stone-800">{report.comments}</p>
+            <p className="tabular-nums text-stone-900">{report.comments}</p>
           </div>
           <div>
             <p className="text-stone-500">发布时间</p>
-            <p className="text-stone-800">{formatShanghaiDateTime(report.published_at)}</p>
+            <p className="text-stone-900">{formatShanghaiDateTime(report.published_at)}</p>
           </div>
           <div>
             <p className="text-stone-500">上传时间</p>
-            <p className="text-stone-800">{formatShanghaiDateTime(report.uploaded_at)}</p>
+            <p className="text-stone-900">{formatShanghaiDateTime(report.uploaded_at)}</p>
           </div>
         </div>
         {report.content ? (
@@ -740,7 +740,7 @@ export function DataManager({
             size="sm"
             variant="ghost"
             onClick={() => setContentDialog({ title: report.title, content: report.content ?? "" })}
-            className="h-7 w-full justify-start text-xs text-stone-500 hover:text-stone-800"
+            className="h-7 w-full justify-start text-[12px] text-stone-500 hover:text-stone-900"
           >
             查看文案
           </Button>
@@ -758,16 +758,16 @@ export function DataManager({
             type="date"
             value={date}
             onChange={handleDateChange}
-            className="h-9 w-auto bg-stone-50 border-transparent text-stone-800 focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="h-9 w-auto bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
           />
-          <span className="text-sm text-stone-500">{localReports.length} 条记录</span>
+          <span className="text-[13px] text-stone-500">{localReports.length} 条记录</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant={viewMode === "profile" ? "default" : "outline"}
             onClick={() => setViewMode("profile")}
-            className={viewMode === "profile" ? "bg-white shadow-sm text-stone-800 rounded-lg border-stone-200 hover:bg-white" : "border-stone-200 text-stone-500 hover:text-stone-800"}
+            className={viewMode === "profile" ? "bg-white text-stone-900 rounded-lg border-stone-200 hover:bg-white" : "border-stone-200 text-stone-500 hover:text-stone-900"}
           >
             按人查看
           </Button>
@@ -775,7 +775,7 @@ export function DataManager({
             size="sm"
             variant={viewMode === "account" ? "default" : "outline"}
             onClick={() => setViewMode("account")}
-            className={viewMode === "account" ? "bg-white shadow-sm text-stone-800 rounded-lg border-stone-200 hover:bg-white" : "border-stone-200 text-stone-500 hover:text-stone-800"}
+            className={viewMode === "account" ? "bg-white text-stone-900 rounded-lg border-stone-200 hover:bg-white" : "border-stone-200 text-stone-500 hover:text-stone-900"}
           >
             按账号查看
           </Button>
@@ -783,7 +783,7 @@ export function DataManager({
       </div>
 
       {localReports.length === 0 ? (
-        <p className="py-4 text-sm text-stone-500">该日期暂无提交记录</p>
+        <p className="py-4 text-[13px] text-stone-500">该日期暂无提交记录</p>
       ) : viewMode === "profile" ? (
         <div className="space-y-6">
           {profileGroups.map((group) => (
@@ -791,17 +791,17 @@ export function DataManager({
               <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-[18px] font-medium text-stone-800">{group.profileName}</h3>
-                    <Badge variant="outline" className="border-stone-200 bg-stone-100 text-xs text-stone-600">
+                    <h3 className="text-[18px] font-medium text-stone-900">{group.profileName}</h3>
+                    <Badge variant="outline" className="border-stone-200 bg-stone-100 text-[12px] text-stone-700">
                       {group.accountCount} 个账号
                     </Badge>
-                    <Badge variant="outline" className="border-stone-200 bg-stone-100 text-xs text-stone-600">
+                    <Badge variant="outline" className="border-stone-200 bg-stone-100 text-[12px] text-stone-700">
                       {group.reportCount} 条提交
                     </Badge>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {group.accountNames.map((name) => (
-                      <Badge key={name} variant="outline" className="border-stone-200 text-[11px] text-stone-500">
+                      <Badge key={name} variant="outline" className="border-stone-200 text-[12px] text-stone-500">
                         {name}
                       </Badge>
                     ))}
@@ -810,19 +810,19 @@ export function DataManager({
                 <div className="grid grid-cols-2 gap-2 text-[13px] sm:grid-cols-4">
                   <div>
                     <p className="text-stone-500">总播放</p>
-                    <p className="font-semibold font-mono tabular-nums text-stone-800">{formatPlayCount(group.totalPlay)}</p>
+                    <p className="font-medium tabular-nums text-stone-900">{formatPlayCount(group.totalPlay)}</p>
                   </div>
                   <div>
                     <p className="text-stone-500">总互动</p>
-                    <p className="font-semibold font-mono tabular-nums text-stone-800">{group.totalEngagement}</p>
+                    <p className="font-medium tabular-nums text-stone-900">{group.totalEngagement}</p>
                   </div>
                   <div>
                     <p className="text-stone-500">账号数</p>
-                    <p className="font-semibold font-mono tabular-nums text-stone-800">{group.accountCount}</p>
+                    <p className="font-medium tabular-nums text-stone-900">{group.accountCount}</p>
                   </div>
                   <div>
                     <p className="text-stone-500">记录数</p>
-                    <p className="font-semibold font-mono tabular-nums text-stone-800">{group.reportCount}</p>
+                    <p className="font-medium tabular-nums text-stone-900">{group.reportCount}</p>
                   </div>
                 </div>
               </div>
@@ -831,20 +831,20 @@ export function DataManager({
                 <Table>
                   <TableHeader>
                     <TableRow className="border-stone-200 hover:bg-transparent">
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">账号 / 日期</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">标题</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">播放量(万)</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">完播率</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">涨粉</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">导粉</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">点赞</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">评论</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">分享</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">收藏</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">发布时间</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">上传时间</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">文案</TableHead>
-                      <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">操作</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">账号 / 日期</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">标题</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">播放量(万)</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">完播率</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">涨粉</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">导粉</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">点赞</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">评论</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">分享</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">收藏</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">发布时间</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">上传时间</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">文案</TableHead>
+                      <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -866,20 +866,20 @@ export function DataManager({
             <Table>
               <TableHeader>
                 <TableRow className="border-stone-200 hover:bg-transparent">
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">账号 / 所属人</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">标题</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">播放量(万)</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">完播率</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">涨粉</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">导粉</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">点赞</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">评论</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">分享</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">收藏</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">发布时间</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">上传时间</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium">文案</TableHead>
-                  <TableHead className="bg-stone-50 text-stone-500 text-[11px] uppercase tracking-wider font-medium text-right">操作</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">账号 / 所属人</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">标题</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">播放量(万)</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">完播率</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">涨粉</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">导粉</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">点赞</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">评论</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">分享</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">收藏</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">发布时间</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">上传时间</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal">文案</TableHead>
+                  <TableHead className="bg-stone-50 text-stone-500 text-[12px] uppercase tracking-wider font-normal text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -914,9 +914,9 @@ export function DataManager({
       <Dialog open={!!contentDialog} onOpenChange={() => setContentDialog(null)}>
         <DialogContent className="max-w-lg border-stone-200">
           <DialogHeader>
-            <DialogTitle className="text-[18px] font-medium text-stone-800">{contentDialog?.title}</DialogTitle>
+            <DialogTitle className="text-[18px] font-medium text-stone-900">{contentDialog?.title}</DialogTitle>
           </DialogHeader>
-          <p className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
+          <p className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-[13px] leading-relaxed text-stone-700">
             {contentDialog?.content}
           </p>
         </DialogContent>

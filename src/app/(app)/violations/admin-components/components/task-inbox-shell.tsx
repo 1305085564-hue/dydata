@@ -38,12 +38,12 @@ export function TaskInboxShell({
       <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
         <div className="flex items-baseline justify-between gap-2 border-b border-stone-100 px-5 py-4">
           <div className="flex items-baseline gap-2">
-            <h2 className="text-[14px] font-semibold text-stone-800">待处理</h2>
-            <span className="font-mono text-[13px] tabular-nums text-stone-400">
+            <h2 className="text-[18px] font-medium text-stone-900">待处理</h2>
+            <span className="text-[13px] tabular-nums text-stone-500">
               {pendingTotal}
             </span>
           </div>
-          <span className="text-[11px] text-stone-400">
+          <span className="text-[12px] text-stone-500">
             高风险 / 待审核 / 缺数据
           </span>
         </div>
@@ -57,20 +57,20 @@ export function TaskInboxShell({
         <button
           type="button"
           onClick={() => setProcessedOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-2 px-5 py-4 text-left transition-colors hover:bg-stone-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
+          className="flex w-full items-center justify-between gap-2 px-5 py-4 text-left transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
         >
           <div className="flex items-baseline gap-2">
-            <h2 className="text-[14px] font-semibold text-stone-800">已处理</h2>
+            <h2 className="text-[18px] font-medium text-stone-900">已处理</h2>
             {processedCount !== null ? (
-              <span className="font-mono text-[13px] tabular-nums text-stone-400">
+              <span className="text-[13px] tabular-nums text-stone-500">
                 {processedCount}
               </span>
             ) : null}
-            <span className="text-[11px] text-stone-400">近 30 天审批记录</span>
+            <span className="text-[12px] text-stone-500">近 30 天审批记录</span>
           </div>
           <ChevronDown
             className={cn(
-              "size-4 shrink-0 stroke-[1.5] text-stone-400 transition-transform duration-300",
+              "size-4 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-300",
               processedOpen ? "" : "-rotate-90",
             )}
           />

@@ -55,7 +55,7 @@ const VIOLATION_USAGE_OPTIONS: Array<{
     value: "not_recommended",
     label: "× 推荐",
     hint: "效果差，× 优先用",
-    dotColor: "#a1a1aa",
+    dotColor: "#78716C",
     icon: CircleDashed,
   },
   {
@@ -92,7 +92,7 @@ const CONVERSION_USAGE_OPTIONS: Array<{
     value: "not_recommended",
     label: "× 推荐",
     hint: "效果差，× 优先用",
-    dotColor: "#a1a1aa",
+    dotColor: "#78716C",
     icon: CircleDashed,
   },
 ];
@@ -284,7 +284,7 @@ export function ReviewDecisionPanel({
     <section className="rounded-xl border border-stone-200 bg-white p-5 sm:p-6">
       <header className="flex items-center gap-2">
         <span className="size-1.5 rounded-full bg-[#D97757]" />
-        <h2 className="text-[18px] font-semibold leading-[1.44] tracking-tight text-stone-800">审核决策</h2>
+        <h2 className="text-[18px] font-medium leading-[1.6] text-stone-900">审核决策</h2>
         <span className="text-[12px] text-stone-500">
           {initialStatus === "submitted"
             ? "员工等你判断能否纳入知识库"
@@ -316,7 +316,7 @@ export function ReviewDecisionPanel({
       {decision === "verify" ? (
         <div className="mt-5 space-y-4">
           <div>
-            <p className="text-[12px] font-medium text-stone-600">使用状态</p>
+            <p className="text-[12px] font-normal text-stone-500">使用状态</p>
             <div
               className={cn(
                 "mt-2 grid grid-cols-2 gap-2",
@@ -334,8 +334,8 @@ export function ReviewDecisionPanel({
                     className={cn(
                       "flex items-start gap-2 rounded-xl border px-3 py-2.5 text-left transition-colors active:translate-y-0",
                       active
-                        ? "border-stone-300 bg-stone-50 text-stone-800"
-                        : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-800",
+                        ? "border-stone-300 bg-stone-50 text-stone-700"
+                        : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700",
                     )}
                   >
                     <Icon className="mt-0.5 size-4 shrink-0 stroke-[1.5]" />
@@ -351,7 +351,7 @@ export function ReviewDecisionPanel({
 
           {isViolation ? (
             <div>
-              <p className="text-[12px] font-medium text-stone-600">风险等级</p>
+              <p className="text-[12px] font-normal text-stone-500">风险等级</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {RISK_OPTIONS.map((option) => (
                   <button
@@ -361,8 +361,8 @@ export function ReviewDecisionPanel({
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
                       riskLevel === option.value
-                        ? "border-stone-300 bg-stone-50 text-stone-800"
-                        : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-800",
+                        ? "border-stone-300 bg-stone-50 text-stone-700"
+                        : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700",
                     )}
                   >
                     <span className="size-1.5 rounded-full" style={{ backgroundColor: option.dotColor }} />
@@ -392,14 +392,14 @@ export function ReviewDecisionPanel({
       {decision === "reject" ? (
         <div className="mt-5 space-y-4">
           <div>
-            <p className="text-[12px] font-medium text-stone-600">驳回原因模板</p>
+            <p className="text-[12px] font-normal text-stone-500">驳回原因模板</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {rejectTemplates.map((tpl) => (
                 <button
                   key={tpl.id}
                   type="button"
                   onClick={() => applyTemplate(tpl.id)}
-                  className="rounded-full border border-stone-200 bg-white px-3 py-1 text-[12px] font-medium text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
+                  className="rounded-full border border-stone-200 bg-white px-3 py-1 text-[12px] font-medium text-stone-700 transition-colors hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
                 >
                   {tpl.label}
                 </button>
@@ -408,7 +408,7 @@ export function ReviewDecisionPanel({
           </div>
           {isViolation ? (
             <div>
-              <p className="text-[12px] font-medium text-stone-600">风险等级</p>
+              <p className="text-[12px] font-normal text-stone-500">风险等级</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {RISK_OPTIONS.map((option) => (
                   <button
@@ -418,8 +418,8 @@ export function ReviewDecisionPanel({
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
                       riskLevel === option.value
-                        ? "border-stone-300 bg-stone-50 text-stone-800"
-                        : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-800",
+                        ? "border-stone-300 bg-stone-50 text-stone-700"
+                        : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700",
                     )}
                   >
                     <span className="size-1.5 rounded-full" style={{ backgroundColor: option.dotColor }} />
@@ -435,12 +435,12 @@ export function ReviewDecisionPanel({
       {showReasonTags && isViolation ? (
         <div className="mt-5">
           <div className="flex items-center gap-2">
-            <p className="text-[12px] font-medium text-stone-600">踩雷点标签</p>
+            <p className="text-[12px] font-normal text-stone-500">踩雷点标签</p>
             {reasonTagIds.length > 0 ? (
               <span className="text-[12px] text-stone-500">已选 {reasonTagIds.length}</span>
             ) : null}
           </div>
-          <p className="mt-1 text-[12px] text-stone-400">告诉员工是因为踩到哪些雷被处罚的。可多选。</p>
+          <p className="mt-1 text-[12px] text-stone-500">告诉员工是因为踩到哪些雷被处罚的。可多选。</p>
           {isLoadingTags ? (
             <div className="mt-2 flex flex-wrap gap-2">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -462,7 +462,7 @@ export function ReviewDecisionPanel({
                       "rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
                       active
                         ? "border-[#D97757]/40 text-[#D97757]"
-                        : "border-stone-200 text-stone-600 hover:border-stone-300 hover:text-stone-800",
+                        : "border-stone-200 text-stone-700 hover:border-stone-300 hover:text-stone-900",
                     )}
                   >
                     {tag.name}
@@ -477,7 +477,7 @@ export function ReviewDecisionPanel({
       {decision ? (
         <div className="mt-5 space-y-3">
           <label className="block">
-            <span className="text-[12px] font-medium text-stone-600">
+            <span className="text-[12px] font-normal text-stone-500">
               {decision === "verify" ? "管理员结论" : "驳回原因"}
               <span className="ml-1 text-[#C9604D]">*</span>
             </span>
@@ -495,7 +495,7 @@ export function ReviewDecisionPanel({
 
           {decision === "verify" ? (
             <label className="block">
-              <span className="text-[12px] font-medium text-stone-600">建议动作（选填）</span>
+              <span className="text-[12px] font-normal text-stone-500">建议动作（选填）</span>
               <Textarea
                 value={action}
                 onChange={(event) => setAction(event.target.value)}
@@ -509,7 +509,7 @@ export function ReviewDecisionPanel({
 
       {decision ? (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[12px] text-stone-400">
+          <p className="text-[12px] text-stone-500">
             {decision === "verify"
               ? "保存后员工立刻能在话术库看到"
               : "保存后此提交从员工列表移除，员工可重新提交"}
@@ -526,7 +526,7 @@ export function ReviewDecisionPanel({
       ) : null}
 
       {isLocked ? (
-        <p className="mt-4 inline-flex items-center gap-2 text-[12px] text-stone-400">
+        <p className="mt-4 inline-flex items-center gap-2 text-[12px] text-stone-500">
           <AlertTriangle className="size-3.5 stroke-[1.5]" />
           已归档案例 × 可修改，请先取消归档
         </p>
@@ -554,10 +554,10 @@ function DecisionPill({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-xl border px-4 text-[13px] font-medium transition-colors active:translate-y-0",
+        "inline-flex h-9 items-center gap-1.5 rounded-xl border px-4 text-[13px] font-normal transition-colors active:translate-y-0",
         active
-          ? "border-stone-300 bg-stone-50 text-stone-800"
-          : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-800",
+          ? "border-stone-300 bg-stone-50 text-stone-700"
+          : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700",
       )}
     >
       <span className="size-1.5 rounded-full" style={{ backgroundColor: active ? dotColor : "transparent" }} />

@@ -120,10 +120,10 @@ export function SubmissionSlotsSection({
             />
             <div className="flex flex-col items-center gap-2">
               <UploadCloud className="size-6 stroke-[1.5] text-[#D97757] transition-colors" />
-              <p className="text-[13px] font-bold leading-snug text-[#D97757]">
+              <p className="text-[13px] font-medium leading-snug text-[#D97757]">
                 {isDragOver ? "松开投放到此" : "拖入、选择多张截图，亦可在此 Ctrl+V 粘贴"}
               </p>
-              <div className="flex flex-col gap-0.5 text-[10px] leading-relaxed text-stone-500">
+              <div className="flex flex-col gap-0.5 text-[12px] leading-relaxed text-stone-500">
                 <p>1. 互动截图 (包含播放量/数据/曲线)</p>
                 <p>2. 完播截图 (包含均播/留存率/完播数据)</p>
               </div>
@@ -190,11 +190,11 @@ export function SubmissionSlotsSection({
 
                     {/* 文字描述 */}
                     <div className="min-w-0">
-                      <span className="text-[12px] font-semibold text-stone-700 block leading-none">{item.title}</span>
+                      <span className="text-[12px] font-medium text-stone-700 block leading-none">{item.title}</span>
                       {slot.status !== "empty" && (
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-none mt-1.5",
+                            "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] font-medium leading-none mt-1.5",
                             isProcessing && "bg-[#D97757]/10 text-[#D97757]",
                             isSuccess && "bg-[#6FAA7D]/10 text-[#6FAA7D]",
                             isWarning && "bg-[#D99E55]/10 text-[#D99E55]",
@@ -215,7 +215,7 @@ export function SubmissionSlotsSection({
                           <button
                             type="button"
                             onClick={() => onRetry(item.role)}
-                            className="inline-flex size-6 items-center justify-center rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 border border-stone-300 transition-colors"
+                            className="inline-flex size-6 items-center justify-center rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 transition-colors"
                             title="重新识别"
                           >
                             <RefreshCw className="size-3" />
@@ -225,7 +225,7 @@ export function SubmissionSlotsSection({
                           <button
                             type="button"
                             onClick={() => onManualFill(item.role)}
-                            className="inline-flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-[9px] font-medium text-stone-600 hover:bg-stone-200 border border-stone-300 transition-colors"
+                            className="inline-flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-[12px] font-medium text-stone-700 hover:bg-stone-200 border border-stone-300 transition-colors"
                           >
                             手输
                           </button>
@@ -246,7 +246,7 @@ export function SubmissionSlotsSection({
                 </div>
 
                 {/* 下半部：文件名或解析结果 */}
-                <div className="text-[10px] text-stone-500 truncate mt-1">
+                <div className="text-[12px] text-stone-500 truncate mt-1">
                   {slot.status === "empty"
                     ? `待上传${item.required ? " (必传)" : ""}`
                     : isProcessing

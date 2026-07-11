@@ -55,19 +55,19 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex items-center justify-between gap-3 rounded-lg px-1 py-1 text-left transition-all duration-200",
-          "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 active:scale-[0.98]",
-          isOpen && "text-stone-800 dark:text-stone-200"
+          "text-stone-500 hover:text-stone-900 dark:text-stone-500 dark:hover:text-[#E7E5E4] active:scale-[0.98]",
+          isOpen && "text-stone-900 dark:text-[#FAFAF9]"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0">
-            <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <div className="size-2 rounded-full bg-[#6FAA7D]" />
           </div>
           <div className="min-w-0 flex flex-col">
-            <span className="truncate text-xs font-semibold leading-tight text-stone-950 dark:text-stone-200 max-w-[110px]">
+            <span className="truncate text-[12px] font-medium leading-tight text-stone-900 dark:text-[#FAFAF9] max-w-[110px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
-            <span className="truncate text-[10px] font-medium leading-none text-stone-500 mt-0.5 max-w-[115px] tracking-tight">
+            <span className="truncate text-[12px] font-medium leading-none text-stone-500 mt-0.5 max-w-[115px] tracking-tight">
               @{selectedAccount?.name || "dydata"}
             </span>
           </div>
@@ -76,7 +76,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
           size={14}
           className={cn(
             "text-stone-500 transition-transform shrink-0 duration-200",
-            isOpen && "rotate-180 text-stone-800 dark:text-stone-200"
+            isOpen && "rotate-180 text-stone-900 dark:text-[#FAFAF9]"
           )}
         />
       </button>
@@ -95,10 +95,10 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
           >
             {/* Intro Header */}
             <div className="px-2.5 py-2 border-b border-stone-100 dark:border-stone-900 mb-1.5">
-              <div className="text-[12px] font-bold text-stone-900 dark:text-stone-100">
+              <div className="text-[12px] font-medium text-stone-900 dark:text-stone-100">
                 工作账号切换
               </div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-600 mt-1 leading-normal">
+              <div className="text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-1 leading-normal">
                 切换账号并载入对应数据
               </div>
             </div>
@@ -112,7 +112,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className={cn(
-                  "w-full rounded-lg border py-1.5 pl-8 pr-3 text-xs tracking-tight outline-none transition-all duration-200",
+                  "w-full rounded-lg border py-1.5 pl-8 pr-3 text-[12px] tracking-tight outline-none transition-all duration-200",
                   "border-stone-300 bg-stone-100/50 focus:border-stone-400",
                   "dark:border-stone-800 dark:bg-stone-900/50 dark:focus:border-stone-600 dark:focus:bg-stone-900"
                 )}
@@ -122,7 +122,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
             {/* List */}
             <div className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
               {filteredAccounts.length === 0 ? (
-                <div className="py-6 text-center text-[11px] text-stone-500 dark:text-stone-600">
+                <div className="py-6 text-center text-[12px] text-stone-500 dark:text-[#E7E5E4]">
                   没有找到匹配的账号
                 </div>
               ) : (
@@ -148,10 +148,10 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                           <div className="size-2 rounded-full bg-emerald-500" />
                         </div>
                         <div className="min-w-0">
-                          <span className="truncate text-xs font-semibold tracking-tight text-stone-950 dark:text-stone-50 block">
+                          <span className="truncate text-[12px] font-medium tracking-tight text-stone-900 dark:text-stone-50 block">
                             {account.display_name}
                           </span>
-                          <span className="block truncate text-[10px] text-stone-500 dark:text-stone-600 font-medium">
+                          <span className="block truncate text-[12px] text-stone-500 dark:text-[#E7E5E4] font-medium">
                             方向: {account.content_direction || "未分类方向"}
                           </span>
                         </div>
@@ -166,7 +166,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
               )}
             </div>
             
-            <div className="mt-1 border-t border-stone-100 dark:border-stone-900 pt-1.5 px-1 pb-0.5 flex justify-between items-center text-[10px] text-stone-500 dark:text-stone-600">
+            <div className="mt-1 border-t border-stone-100 dark:border-stone-900 pt-1.5 px-1 pb-0.5 flex justify-between items-center text-[12px] text-stone-500 dark:text-[#E7E5E4]">
               <span>状态码: 🟢 良好 | 🟡 预警 | 🔴 异常</span>
             </div>
           </motion.div>

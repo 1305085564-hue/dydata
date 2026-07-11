@@ -55,7 +55,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-stone-400">
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-stone-500">
             <ImageIcon className="size-6 stroke-[1.5]" />
             <span className="text-[12px]">无截图凭证</span>
           </div>
@@ -75,7 +75,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
             onClick={handleViewShots}
             disabled={screenshotCount === 0}
             className={cn(
-              "flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-800 transition-colors active:scale-95",
+              "flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-700 transition-colors active:scale-95",
               screenshotCount === 0
                 ? "cursor-not-allowed opacity-50"
                 : "hover:bg-white"
@@ -87,7 +87,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
           <button
             type="button"
             onClick={handleCopy}
-            className="flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-800 transition-colors hover:bg-white active:scale-95"
+            className="flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-700 transition-colors hover:bg-white active:scale-95"
             title="复制文案"
           >
             {copied ? (
@@ -101,20 +101,20 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
 
       {/* 内容信息区域 */}
       <div className="flex flex-1 flex-col justify-between p-3.5 space-y-3 bg-white">
-        <p className="line-clamp-2 text-[13px] font-medium leading-[1.5] text-stone-800">
+        <p className="line-clamp-2 text-[13px] font-medium leading-[1.5] text-stone-700">
           {item.script_text}
         </p>
 
         <div className="flex items-center justify-between pt-1 border-t border-stone-100 text-[12px] text-stone-500">
           <div className="min-w-0 flex-1 space-y-0.5">
-            <p className="truncate font-semibold text-stone-700">
+            <p className="truncate font-medium text-stone-700">
               {item.submitted_by_name}
             </p>
-            <p className="truncate text-stone-400">
+            <p className="truncate text-stone-500">
               {item.account_name_snapshot ?? "未关联账号"}
             </p>
           </div>
-          <span className="font-mono text-stone-400 tabular-nums">
+          <span className="text-stone-500 tabular-nums">
             {formatShortDate(item.approved_at)}
           </span>
         </div>

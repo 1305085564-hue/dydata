@@ -67,7 +67,7 @@ export function BindingDialog({
           <div className="space-y-2">
             <Label>绑定模型</Label>
             <select
-              className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm shadow-sm"
+              className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-[13px]"
               value={formData.provider_key_model_id || ""}
               onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
             >

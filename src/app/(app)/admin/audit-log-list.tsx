@@ -38,7 +38,7 @@ const ACTION_META: Record<string, { label: string; variant: BadgeVariant }> = {
 
 export function AuditLogList({ logs }: AuditLogListProps) {
   if (logs.length === 0) {
-    return <p className="py-4 text-[13px] text-stone-400">暂无操作记录</p>;
+    return <p className="py-4 text-[13px] text-stone-500">暂无操作记录</p>;
   }
 
   return (
@@ -69,7 +69,7 @@ export function AuditLogList({ logs }: AuditLogListProps) {
                       minute: "2-digit",
                     })}
                   </TableCell>
-                  <TableCell className="text-[13px] text-stone-800">
+                  <TableCell className="text-[13px] text-stone-900">
                     {log.user_name ?? log.user_id.slice(0, 8)}
                   </TableCell>
                   <TableCell>

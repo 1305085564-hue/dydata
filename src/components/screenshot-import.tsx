@@ -237,7 +237,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
 
   return (
     <div className="space-y-5">
-      <div className="space-y-2 rounded-2xl border border-border/60 bg-muted/35 p-4 text-sm text-muted-foreground">
+      <div className="space-y-2 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-500">
         <p>建议上传包含播放量、点赞、评论、分享、收藏、涨粉的抖音后台截图。</p>
         <p>系统会先识别，再由你确认与修正后写回日报表单。</p>
       </div>
@@ -270,24 +270,24 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
             : "border-stone-200 bg-stone-50 hover:border-[#D97757]/60 hover:bg-stone-100"
         )}
       >
-        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/8 text-primary">
+        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#D97757]/[0.08] text-[#D97757]">
           <Upload className="size-6" />
         </div>
         <div className="space-y-2">
-          <p className="text-[14px] font-medium text-foreground">拖拽截图到这里，或点击选择图片</p>
-          <p className="text-sm text-muted-foreground">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
-          {fileName ? <p className="text-sm text-foreground">当前文件：{fileName}</p> : null}
+          <p className="text-[13px] font-medium text-stone-900">拖拽截图到这里，或点击选择图片</p>
+          <p className="text-[13px] text-stone-500">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
+          {fileName ? <p className="text-[13px] text-stone-700">当前文件：{fileName}</p> : null}
         </div>
       </div>
 
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {FIELD_META.map((field) => (
-            <Card key={field.key} className="card-elevated animate-pulse bg-background/75">
+            <Card key={field.key} className="animate-pulse border border-stone-200 bg-white">
               <CardContent className="space-y-4 pt-5 pb-5">
-                <div className="h-4 w-20 rounded bg-muted" />
-                <div className="h-8 w-full rounded bg-muted" />
-                <div className="h-3 w-16 rounded bg-muted" />
+                <div className="h-4 w-20 rounded bg-stone-200/60" />
+                <div className="h-8 w-full rounded bg-stone-200/60" />
+                <div className="h-3 w-16 rounded bg-stone-200/60" />
               </CardContent>
             </Card>
           ))}
@@ -298,10 +298,10 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FIELD_META.map((field) => (
-              <Card key={field.key} className="card-elevated bg-background/80">
+              <Card key={field.key} className="border border-stone-200 bg-white">
                 <CardContent className="space-y-3 pt-5 pb-5">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-foreground">{field.label}</div>
+                    <div className="text-[13px] font-medium text-stone-900">{field.label}</div>
                     <Badge
                       variant={getBadgeVariant(confidence[field.key])}
                       className={getBadgeClassName(confidence[field.key])}
@@ -323,7 +323,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
                         className={field.suffix ? "pr-10 h-10" : "h-10"}
                       />
                       {field.suffix ? (
-                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">
+                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-[13px] text-stone-500">
                           {field.suffix}
                         </span>
                       ) : null}
@@ -334,7 +334,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-t border-stone-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <Button type="button" variant="outline" onClick={resetAndPickAgain}>
               <RefreshCcw className="size-4" />
               继续识别下一张

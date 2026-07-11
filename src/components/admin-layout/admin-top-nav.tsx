@@ -118,26 +118,26 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
                 prefetch={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[13px] font-semibold tracking-tight transition-all duration-200 ease-out active:translate-y-0",
+                  "inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-[13px] font-medium tracking-tight transition-all duration-200 ease-out active:translate-y-0",
                   active
-                    ? "bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-white"
-                    : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-300",
+                    ? "border border-stone-200 bg-white text-stone-900"
+                    : "text-stone-500 hover:text-stone-700",
                 )}
               >
                 <item.icon
                   className={cn(
                     "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors",
-                    active ? "text-[#D97757]" : "text-stone-400"
+                    active ? "text-[#D97757]" : "text-stone-500"
                   )}
                 />
                 <span className="whitespace-nowrap">{item.label}</span>
                 {badgeValue > 0 ? (
                   <span
                     className={cn(
-                      "inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[9px] font-black tabular-nums transition-colors duration-150 ml-1.5",
+                      "ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[12px] font-medium tabular-nums transition-colors duration-150",
                       active
                         ? "bg-[#D97757] text-white"
-                        : "bg-stone-200/60 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
+                        : "bg-stone-200/60 text-stone-500",
                     )}
                     aria-label={`${badgeValue} 项`}
                   >

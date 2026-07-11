@@ -54,7 +54,7 @@ export function AnimatedNumber({
     };
   }, [animationDuration, isHydrated, motionValue, reduceMotion, value]);
 
-  return <motion.span className={`font-mono tabular-nums ${className}`}>{isHydrated ? display : fallbackDisplay}</motion.span>;
+  return <motion.span className={`tabular-nums ${className}`}>{isHydrated ? display : fallbackDisplay}</motion.span>;
 }
 
 function defaultFormat(value: number) {

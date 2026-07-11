@@ -213,8 +213,8 @@ export function ManageShell({
   return (
     <>
       {/* 移动端队列触发栏 */}
-      <div className="flex md:hidden items-center justify-between p-3.5 bg-stone-50 border border-stone-200 rounded-xl mb-4 text-[13px] text-stone-600">
-        <span className="font-semibold">待审队列: {queue.length} 条</span>
+      <div className="flex md:hidden items-center justify-between p-3.5 bg-stone-50 border border-stone-200 rounded-xl mb-4 text-[13px] text-stone-500">
+        <span className="font-medium">待审队列: {queue.length} 条</span>
         <Button
           type="button"
           variant="outline"
@@ -255,7 +255,7 @@ export function ManageShell({
               onPreview={(paths, index) => setLightbox({ paths, index })}
             />
           ) : (
-            <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-16 text-center text-[13px] text-stone-400">
+            <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-16 text-center text-[13px] text-stone-500">
               请选择要审核的稿件
             </div>
           )}

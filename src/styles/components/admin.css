@@ -11,8 +11,7 @@
 
   .admin-subnav-link-active {
     border-color: var(--color-border);
-    background: #f4f4f5;
-    box-shadow: var(--shadow-light);
+    background: #F5F5F4;
   }
 
   .admin-subnav-link-head {

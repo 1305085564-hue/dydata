@@ -232,7 +232,7 @@ export function AdvicePanel() {
   }
 
   if (isLoading) {
-    return <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-[13px] text-stone-400">建议加载中...</div>;
+    return <div className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-[13px] text-stone-500">建议加载中...</div>;
   }
 
   if (adviceList.length === 0) {
@@ -255,12 +255,12 @@ export function AdvicePanel() {
                     <Badge variant={getStatusVariant(advice.status)}>{advice.status}</Badge>
                     <Badge variant="outline">{getSourceLabel(advice.advice_source)}</Badge>
                   </div>
-                  <p className="text-[13px] font-medium leading-[1.7] text-stone-800">{getAdviceSummary(advice.advice_content)}</p>
+                  <p className="text-[13px] font-medium leading-[1.7] text-stone-700">{getAdviceSummary(advice.advice_content)}</p>
                   {advice.evidence ? (
                     <p className="text-[12px] leading-[1.7] text-stone-500">来源依据：{advice.evidence}</p>
                   ) : null}
                 </div>
-                <span className="text-[12px] font-mono tabular-nums text-stone-400">{advice.created_at.slice(5, 10)}</span>
+                <span className="text-[12px] tabular-nums text-stone-500">{advice.created_at.slice(5, 10)}</span>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -315,12 +315,12 @@ export function AdvicePanel() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-[18px] font-semibold tracking-tight text-stone-800">关联已执行视频</DialogTitle>
+            <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-700">关联已执行视频</DialogTitle>
             <DialogDescription className="text-[13px] leading-[1.7] text-stone-500">选择你已发布或已提交的视频，系统会把这条建议标记为已执行。</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2">
-            <p className="text-[13px] font-medium text-stone-800">选择视频</p>
+            <p className="text-[13px] font-medium text-stone-700">选择视频</p>
             <Select
               value={selectedVideoId}
               onValueChange={(value) => setSelectedVideoId(value ?? "")}

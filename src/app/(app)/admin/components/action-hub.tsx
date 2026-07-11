@@ -75,12 +75,12 @@ export function ActionHub({
   const validQuickActions = quickActions.filter((item) => item.href);
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-      <h2 className="text-[18px] font-medium tracking-tight text-stone-800">工作流中心</h2>
+    <div className="flex h-full flex-col rounded-2xl border border-stone-200 bg-white p-6">
+      <h2 className="text-[18px] font-medium tracking-tight text-stone-900">工作流中心</h2>
 
       <div className="mt-5 space-y-5">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-stone-400">优先待办</p>
+          <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-stone-500">优先待办</p>
           <div className="mt-3">
             {canManageMembers ? (
               <Dialog
@@ -106,7 +106,7 @@ export function ActionHub({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-[13px] font-semibold text-stone-800">
+                      <p className="text-[13px] font-medium text-stone-900">
                         {exemptionReminder.title}
                       </p>
                       {exemptionReminder.badge ? (
@@ -121,7 +121,7 @@ export function ActionHub({
                   </div>
                 </DialogTrigger>
 
-                <DialogContent className="max-w-[min(960px,calc(100vw-2rem))] rounded-2xl border border-stone-200 bg-white p-0 shadow-sm">
+                <DialogContent className="max-w-[min(960px,calc(100vw-2rem))] rounded-2xl border border-stone-200 bg-white p-0 shadow-xl">
                   <div className="space-y-4 p-5 sm:p-6">
                     <DialogHeader>
                       <DialogTitle>
@@ -151,7 +151,7 @@ export function ActionHub({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[13px] font-semibold text-stone-800">
+                  <p className="text-[13px] font-medium text-stone-900">
                     提交状态异常
                   </p>
                 </div>
@@ -164,7 +164,7 @@ export function ActionHub({
         </div>
 
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-stone-400">快捷动作</p>
+          <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-stone-500">快捷动作</p>
           <div className="mt-3">
             {validQuickActions.length > 0 ? (
               validQuickActions.map((item) => (
@@ -177,11 +177,11 @@ export function ActionHub({
                     <div className="size-1.5 rounded-full bg-stone-300" />
                     <p className="text-[13px] text-stone-700">{item.label}</p>
                   </div>
-                  <ChevronRight className="size-4 text-stone-400 stroke-[1.5]" />
+                  <ChevronRight className="size-4 text-stone-500 stroke-[1.5]" />
                 </Link>
               ))
             ) : (
-              <p className="py-2 text-[13px] text-stone-400">
+              <p className="py-2 text-[13px] text-stone-500">
                 暂无推荐快捷操作
               </p>
             )}

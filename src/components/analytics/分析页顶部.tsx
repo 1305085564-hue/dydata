@@ -59,10 +59,10 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
   }
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white px-4 py-3">
+    <section className="rounded-2xl border border-stone-200 bg-white px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="text-[14px] font-medium tracking-tight text-zinc-800">经营分析总览</h2>
-        <span className="font-mono text-[12px] tabular-nums text-zinc-500">
+        <h2 className="text-[13px] font-medium tracking-tight text-stone-900">经营分析总览</h2>
+        <span className="text-[12px] tabular-nums text-stone-500">
           {from} 至 {to}
         </span>
 
@@ -77,7 +77,7 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
                   "h-7 rounded-lg px-3 text-[12px]",
                   preset === option.value
                     ? "border-transparent bg-[#D97757] text-white hover:bg-[#C96442]"
-                    : "border-zinc-200 bg-white text-zinc-600",
+                    : "border-stone-200 bg-white text-stone-700",
                 )}
                 onClick={() => onChange(option.value)}
               >
@@ -92,14 +92,14 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
                 type="date"
                 value={from}
                 onChange={(event) => onChange("custom", { from: event.target.value, to })}
-                className="h-8 w-[140px] border-zinc-200 bg-white text-[12px]"
+                className="h-8 w-[140px] border-stone-200 bg-white text-[12px]"
               />
-              <span className="text-[12px] text-zinc-400">→</span>
+              <span className="text-[12px] text-stone-500">→</span>
               <Input
                 type="date"
                 value={to}
                 onChange={(event) => onChange("custom", { from, to: event.target.value })}
-                className="h-8 w-[140px] border-zinc-200 bg-white text-[12px]"
+                className="h-8 w-[140px] border-stone-200 bg-white text-[12px]"
               />
             </div>
           ) : null}

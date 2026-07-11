@@ -176,7 +176,7 @@ export function MetricInputCard({
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={cn(
-              "rounded-xl pr-8 font-mono tabular-nums text-stone-800 transition-[background-color,border-color,box-shadow,color] duration-300",
+              "rounded-xl pr-8 tabular-nums text-stone-900 transition-[background-color,border-color,box-shadow,color] duration-300",
               "bg-stone-100/70 border-transparent text-[13px]",
               "focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-950/5 focus:border-b-2 focus:border-b-[#D97757]",
               "h-10",
@@ -201,7 +201,7 @@ export function MetricInputCard({
             ) : null}
           </span>
         ) : suffix ? (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-stone-400">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-stone-500">
             {suffix}
           </span>
         ) : null}

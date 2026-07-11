@@ -254,7 +254,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
                   ) : (
                     <ShieldCheck className="size-4 shrink-0 stroke-[1.5] text-[#6FAA7D]" />
                   )}
-                  <h3 className="text-[13px] font-semibold text-stone-800">{item.title}</h3>
+                  <h3 className="text-[13px] font-medium text-stone-900">{item.title}</h3>
                 </div>
                 <span
                   className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-medium ${
@@ -268,12 +268,12 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
               </div>
 
               {/* 数据证据 */}
-              <p className="mt-3 text-[13px] leading-[1.7] text-stone-600">
+              <p className="mt-3 text-[13px] leading-[1.7] text-stone-700">
                 {item.evidence}
               </p>
 
               {/* 对标信息 — 压缩为一行小字 */}
-              <p className="mt-1 text-[11px] text-stone-400">
+              <p className="mt-1 text-[12px] text-stone-500">
                 {item.benchmarkLabel} · {item.benchmarkReason}
               </p>
 
@@ -281,7 +281,7 @@ export function DiagnosisCard({ myReports, teamReports, className }: DiagnosisCa
               <div className="mt-auto pt-3">
                 <div className={`flex items-start gap-2 rounded-xl border border-stone-200 border-l-[1.5px] p-3 ${isWeak ? "border-l-[#D97757]" : "border-l-[#6FAA7D]"}`}>
                   <ArrowRight className="mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-stone-500" />
-                  <p className="text-[13px] leading-[1.7] text-stone-800">{item.action}</p>
+                  <p className="text-[13px] leading-[1.7] text-stone-700">{item.action}</p>
                 </div>
               </div>
             </motion.article>

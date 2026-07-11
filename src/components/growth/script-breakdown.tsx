@@ -47,15 +47,15 @@ function EmptyReasonBlock({ data }: { data: ScriptBreakdownData }) {
 
   return (
     <div className="rounded-xl border border-dashed border-stone-200 bg-white p-4">
-      <div className="flex items-center gap-2 text-[13px] font-semibold text-stone-800">
+      <div className="flex items-center gap-2 text-[13px] font-medium text-stone-900">
         <FileSearch className="size-4 stroke-[1.5] text-stone-500" />
         为什么这里没有真实内容
       </div>
       <p className="mt-2 text-[13px] leading-[1.7] text-stone-500">{reasonText}</p>
       {data.rawText ? (
         <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-3">
-          <div className="mb-1 text-[12px] font-medium uppercase tracking-[0.25em] text-stone-400">当前拿到的原始文案</div>
-          <p className="text-[13px] leading-[1.7] text-stone-800">{data.rawText}</p>
+          <div className="mb-1 text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">当前拿到的原始文案</div>
+          <p className="text-[13px] leading-[1.7] text-stone-700">{data.rawText}</p>
         </div>
       ) : null}
     </div>
@@ -66,8 +66,8 @@ function DemoReferenceBlock() {
   return (
     <div className="rounded-xl border border-dashed border-stone-200 bg-stone-50 p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-[13px] font-semibold text-stone-800">
-          <Lightbulb className="size-4 stroke-[1.5] text-stone-800" />
+        <div className="flex items-center gap-2 text-[13px] font-medium text-stone-900">
+          <Lightbulb className="size-4 stroke-[1.5] text-stone-900" />
           示例拆解参考
         </div>
         <span className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">
@@ -81,7 +81,7 @@ function DemoReferenceBlock() {
             <Badge className={cn("rounded-lg border px-2.5 py-1 text-[12px] font-medium", toneMap[segment.tone])} variant="outline">
               {segment.label}
             </Badge>
-            <p className="mt-3 text-[13px] leading-[1.7] text-stone-800">{segment.content}</p>
+            <p className="mt-3 text-[13px] leading-[1.7] text-stone-700">{segment.content}</p>
           </div>
         ))}
       </div>
@@ -111,10 +111,10 @@ export function ScriptBreakdown({
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-stone-200" />
-            <span className="text-[12px] font-semibold uppercase tracking-[0.25em] text-stone-400">Script Breakdown</span>
+            <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">Script Breakdown</span>
             <div className="h-px flex-1 bg-stone-200" />
           </div>
-          <h2 className="text-[24px] font-semibold tracking-tight text-stone-800">{title}</h2>
+          <h2 className="text-[24px] font-medium tracking-tight text-stone-900">{title}</h2>
           <p className="text-[13px] leading-[1.7] text-stone-500">先看开头、中段、结尾分别出了什么问题，再决定文案怎么改。</p>
         </div>
 
@@ -127,19 +127,19 @@ export function ScriptBreakdown({
                   type="button"
                   variants={itemVariants}
                   onClick={() => onSegmentSelect?.({ startSec: segment.startSec, endSec: segment.endSec })}
-                  className="rounded-xl border border-stone-200 bg-white p-4 text-left shadow-sm transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0"
+                  className="rounded-xl border border-stone-200 bg-white p-4 text-left transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Badge className={cn("rounded-full border px-2.5 py-1 text-[12px] font-medium", toneMap[segment.tone as SegmentTone])} variant="outline">
                       {segment.label}
                     </Badge>
                     {segment.startSec !== undefined || segment.endSec !== undefined ? (
-                      <span className="text-[12px] font-mono tabular-nums text-stone-500">
+                      <span className="text-[12px] tabular-nums text-stone-500">
                         {segment.startSec ?? 0}s - {segment.endSec ?? "--"}s
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 text-[13px] leading-[1.7] text-stone-800">{segment.content}</p>
+                  <p className="mt-3 text-[13px] leading-[1.7] text-stone-700">{segment.content}</p>
                 </motion.button>
               ))}
             </motion.div>

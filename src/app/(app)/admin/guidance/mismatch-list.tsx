@@ -36,23 +36,23 @@ export function MismatchList({ items }: { items: MismatchItem[] }) {
               <TableRow key={item.accountId} className="h-11">
                 <TableCell className="align-top">
                   <div className="space-y-0.5">
-                    <div className="text-[13px] font-medium text-stone-800">{item.ownerName}</div>
+                    <div className="text-[13px] font-medium text-stone-900">{item.ownerName}</div>
                     <div className="text-[12px] text-stone-500">{item.accountName}</div>
                   </div>
                 </TableCell>
                 <TableCell className="align-top">
                   <Badge variant="outline" className="text-[12px]">{item.currentMode}</Badge>
                 </TableCell>
-                <TableCell className="align-top text-[13px] text-stone-600">{item.actualPerformance}</TableCell>
+                <TableCell className="align-top text-[13px] text-stone-700">{item.actualPerformance}</TableCell>
                 <TableCell className="align-top">
                   <div className="space-y-1">
                     <Badge variant="outline" className="border-stone-200 bg-[#D99E55]/10 text-[12px] text-[#D99E55]">
                       {item.mismatchType}
                     </Badge>
-                    <p className="text-[11px] text-stone-400">可信度：{item.confidenceLabel}</p>
+                    <p className="text-[12px] text-stone-500">可信度：{item.confidenceLabel}</p>
                   </div>
                 </TableCell>
-                <TableCell className="max-w-xs whitespace-normal text-[13px] text-stone-600">{item.suggestion}</TableCell>
+                <TableCell className="max-w-xs whitespace-normal text-[13px] text-stone-700">{item.suggestion}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -63,7 +63,7 @@ export function MismatchList({ items }: { items: MismatchItem[] }) {
         {items.map((item) => (
           <div key={item.accountId} className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
             <div className="space-y-0.5">
-              <div className="text-[14px] font-medium text-stone-800">{item.ownerName}</div>
+              <div className="text-[13px] font-medium text-stone-900">{item.ownerName}</div>
               <div className="text-[12px] text-stone-500">{item.accountName}</div>
             </div>
             <div className="flex items-center gap-2">
@@ -74,14 +74,14 @@ export function MismatchList({ items }: { items: MismatchItem[] }) {
             </div>
             <div className="space-y-2 rounded-xl bg-stone-50 px-3 py-2 text-[13px]">
               <div>
-                <p className="text-[11px] text-stone-400">实际表现</p>
+                <p className="text-[12px] text-stone-500">实际表现</p>
                 <p className="mt-1 text-stone-700">{item.actualPerformance}</p>
               </div>
               <div>
-                <p className="text-[11px] text-stone-400">建议调整</p>
+                <p className="text-[12px] text-stone-500">建议调整</p>
                 <p className="mt-1 text-stone-700">{item.suggestion}</p>
               </div>
-              <p className="text-[11px] text-stone-400">可信度：{item.confidenceLabel}</p>
+              <p className="text-[12px] text-stone-500">可信度：{item.confidenceLabel}</p>
             </div>
           </div>
         ))}

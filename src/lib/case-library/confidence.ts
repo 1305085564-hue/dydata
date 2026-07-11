@@ -20,7 +20,7 @@ const META: Record<ConfidenceTier, ConfidenceMeta> = {
   high: { tier: "high", label: "高置信", hint: "样本充足，可作为团队复用依据", toneHex: "#6FAA7D" },
   medium: { tier: "medium", label: "中置信", hint: "样本中等，可参考", toneHex: "#D97757" },
   low: { tier: "low", label: "低置信", hint: "样本偏小，建议继续跑", toneHex: "#D99E55" },
-  insufficient: { tier: "insufficient", label: "样本不足", hint: "流量低于 1.5 万，建议继续跑量再参考", toneHex: "#A1A1AA" },
+  insufficient: { tier: "insufficient", label: "样本不足", hint: "流量低于 1.5 万，建议继续跑量再参考", toneHex: "#78716C" },
 };
 
 export function resolveConfidence(views: number): ConfidenceMeta {

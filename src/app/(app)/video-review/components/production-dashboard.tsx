@@ -123,7 +123,7 @@ export function ProductionDashboard({
               setDate(e.target.value);
               handleFilterChange(e.target.value, teamId, groupId);
             }}
-            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-mono font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
           />
         </div>
 
@@ -136,7 +136,7 @@ export function ProductionDashboard({
               setTeamId(e.target.value);
               handleFilterChange(date, e.target.value, groupId);
             }}
-            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
           >
             <option value="all">所有团队</option>
             {teams.map((t) => (
@@ -156,7 +156,7 @@ export function ProductionDashboard({
               setGroupId(e.target.value);
               handleFilterChange(date, teamId, e.target.value);
             }}
-            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+            className="h-9 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
           >
             <option value="all">所有小组</option>
             {groups.map((g) => (
@@ -168,7 +168,7 @@ export function ProductionDashboard({
         </div>
 
         {isPending && (
-          <span className="text-[12px] text-stone-400 opacity-60 ml-auto">
+          <span className="text-[12px] text-stone-500 opacity-60 ml-auto">
             数据加载中...
           </span>
         )}
@@ -180,10 +180,10 @@ export function ProductionDashboard({
         <div className="flex-1 pb-4 sm:pb-0 sm:pr-4 space-y-1">
           <span className="text-[13px] text-stone-500">今日全队目标</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+            <span className="text-[18px] font-medium tabular-nums text-stone-900">
               {totalTarget}
             </span>
-            <span className="text-[12px] text-stone-400 ml-1">条</span>
+            <span className="text-[12px] text-stone-500 ml-1">条</span>
           </div>
         </div>
 
@@ -191,10 +191,10 @@ export function ProductionDashboard({
         <div className="flex-1 py-4 sm:py-0 sm:px-4 space-y-1">
           <span className="text-[13px] text-stone-500">已提交作品</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+            <span className="text-[18px] font-medium tabular-nums text-stone-900">
               {totalSubmitted}
             </span>
-            <span className="text-[12px] text-stone-400 ml-1">条</span>
+            <span className="text-[12px] text-stone-500 ml-1">条</span>
           </div>
         </div>
 
@@ -202,10 +202,10 @@ export function ProductionDashboard({
         <div className="flex-1 py-4 sm:py-0 sm:px-4 space-y-1">
           <span className="text-[13px] text-stone-500">完成率</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+            <span className="text-[18px] font-medium tabular-nums text-stone-900">
               {fulfillmentRate}
             </span>
-            <span className="text-[12px] text-stone-400 ml-1">%</span>
+            <span className="text-[12px] text-stone-500 ml-1">%</span>
           </div>
         </div>
 
@@ -214,12 +214,12 @@ export function ProductionDashboard({
           <span className="text-[13px] text-stone-500">未达标人数 (红灯)</span>
           <div className="flex items-baseline gap-1">
             <span className={cn(
-              "text-[32px] font-bold font-mono tabular-nums",
-              redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-950"
+              "text-[24px] font-medium tabular-nums",
+              redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-900"
             )}>
               {redAlertCount}
             </span>
-            <span className="text-[12px] text-stone-400 ml-1">人</span>
+            <span className="text-[12px] text-stone-500 ml-1">人</span>
           </div>
         </div>
       </div>
@@ -228,7 +228,7 @@ export function ProductionDashboard({
       <div className="space-y-6">
         {Object.keys(groupedData).length === 0 ? (
           <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 flex flex-col items-center justify-center text-center">
-            <Users className="size-10 text-stone-300 mb-3" />
+            <Users className="size-10 text-stone-500 mb-3" />
             <p className="text-[13px] text-stone-500 mb-4">暂无相关成员数据</p>
             <button
               type="button"
@@ -238,7 +238,7 @@ export function ProductionDashboard({
                 setGroupId("all");
                 handleFilterChange(selectedDate, "all", "all");
               }}
-              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-semibold text-white hover:bg-[#C96442] active:scale-95 transition-all"
+              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-all"
             >
               重置筛选条件
             </button>
@@ -253,11 +253,11 @@ export function ProductionDashboard({
               <div key={groupName} className="space-y-3">
                 {/* 组头 */}
                 <div className="flex items-baseline justify-between px-1">
-                  <h3 className="text-[13px] font-bold text-stone-800">
+                  <h3 className="text-[13px] font-medium text-stone-900">
                     {groupName}
                   </h3>
                   <span className="text-[12px] text-stone-500 font-medium">
-                    已交 <span className="font-mono tabular-nums">{groupSubmitted}</span> / 目标 <span className="font-mono tabular-nums">{groupTarget}</span> (<span className="font-mono tabular-nums">{groupRate}%</span>)
+                    已交 <span className="tabular-nums">{groupSubmitted}</span> / 目标 <span className="tabular-nums">{groupTarget}</span> (<span className="tabular-nums">{groupRate}%</span>)
                   </span>
                 </div>
 
@@ -291,11 +291,11 @@ export function ProductionDashboard({
                             aria-hidden
                           />
                           <div>
-                            <span className="text-[13px] font-medium text-stone-800">
+                            <span className="text-[13px] font-medium text-stone-700">
                               {member.user_name}
                             </span>
-                            <span className="text-[12px] text-stone-400 ml-2">
-                              目标: <span className="font-mono tabular-nums">{member.daily_target}</span> / 已交: <span className="font-mono tabular-nums">{member.submitted_count}</span>
+                            <span className="text-[12px] text-stone-500 ml-2">
+                              目标: <span className="tabular-nums">{member.daily_target}</span> / 已交: <span className="tabular-nums">{member.submitted_count}</span>
                             </span>
                           </div>
                         </div>
@@ -317,9 +317,9 @@ export function ProductionDashboard({
 
                           {/* 缺额警报 */}
                           {member.alert_level === "red" && member.gap > 0 && (
-                            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#C9604D]">
+                            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#C9604D]">
                               <AlertCircle className="size-3.5" />
-                              缺 <span className="font-mono tabular-nums">{member.gap}</span> 条
+                              缺 <span className="tabular-nums">{member.gap}</span> 条
                             </span>
                           )}
 
@@ -327,7 +327,7 @@ export function ProductionDashboard({
                           <button
                             type="button"
                             onClick={() => handleViewUser(member.user_id, member.user_name)}
-                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] font-medium text-stone-600 transition-colors hover:border-[#D97757]/40 hover:text-[#D97757] active:translate-y-0"
+                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] font-medium text-stone-500 transition-colors hover:border-[#D97757]/40 hover:text-[#D97757] active:translate-y-0"
                           >
                             作品记录
                             <ArrowRight className="size-3" />
@@ -347,7 +347,7 @@ export function ProductionDashboard({
       <Dialog open={selectedUser !== null} onOpenChange={(open) => { if (!open) setSelectedUser(null); }}>
         <DialogContent className="bg-white p-8 rounded-2xl max-h-[85vh] overflow-y-auto" style={{ maxWidth: '720px' }}>
           <DialogHeader className="flex flex-row items-center justify-between border-b border-stone-100 pb-3">
-            <DialogTitle className="text-[18px] font-bold text-stone-950">
+            <DialogTitle className="text-[18px] font-medium text-stone-900">
               {selectedUser?.name} · 作品提交详情
             </DialogTitle>
           </DialogHeader>
@@ -358,7 +358,7 @@ export function ProductionDashboard({
               <span className="text-[13px] text-stone-500">正在获取并加载截图...</span>
             </div>
           ) : userSubmissions.length === 0 ? (
-            <div className="py-12 text-center text-stone-400 text-[13px]">
+            <div className="py-12 text-center text-stone-500 text-[13px]">
               该成员在当天未提交任何作品截图。
             </div>
           ) : (
@@ -374,7 +374,7 @@ export function ProductionDashboard({
                   {/* 文案展示 */}
                   {sub.content_text && (
                     <div className="rounded-xl bg-stone-100/50 p-4 border border-stone-200/50">
-                      <p className="text-[13px] text-stone-800 whitespace-pre-wrap leading-relaxed">
+                      <p className="text-[13px] text-stone-700 whitespace-pre-wrap leading-relaxed">
                         {sub.content_text}
                       </p>
                     </div>
@@ -396,7 +396,7 @@ export function ProductionDashboard({
                               className="size-full object-cover transition duration-200 group-hover/img:scale-105"
                             />
                           ) : (
-                            <div className="size-full flex items-center justify-center text-[12px] text-stone-400">
+                            <div className="size-full flex items-center justify-center text-[12px] text-stone-500">
                               加载失败
                             </div>
                           )}
@@ -408,12 +408,12 @@ export function ProductionDashboard({
                   {/* 备注 */}
                   {sub.note && (
                     <div className="flex items-start gap-1.5 text-[12px] text-stone-500">
-                      <FileText className="size-3.5 text-stone-400 mt-0.5" />
+                      <FileText className="size-3.5 text-stone-500 mt-0.5" />
                       <span>备注: {sub.note}</span>
                     </div>
                   )}
 
-                  <div className="text-[12px] text-stone-400 font-mono">
+                  <div className="text-[12px] text-stone-500 ">
                     提交于: {new Date(sub.created_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
                   </div>
                 </div>

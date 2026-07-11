@@ -34,7 +34,7 @@ const INITIAL_FILTERS: AdviceFilterValue = {
 
 const STATUS_STYLES: Record<AdviceStatus, string> = {
   待查看: "border-stone-200 bg-stone-100 text-stone-700",
-  已查看: "border-stone-200 bg-stone-100 text-stone-600",
+  已查看: "border-stone-200 bg-stone-100 text-stone-700",
   待执行: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
   已执行: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
   已忽略: "border-stone-200 bg-stone-50 text-stone-500",
@@ -229,13 +229,13 @@ export function AdviceList({ advice, profiles, accounts, currentUserId }: Advice
 
                 return (
                   <TableRow key={item.id} className="group h-10">
-                    <TableCell className="px-4 text-[13px] font-medium text-stone-800">{targetProfile?.name || "-"}</TableCell>
-                    <TableCell className="text-[13px] text-stone-600">{targetAccount?.name || "-"}</TableCell>
+                    <TableCell className="px-4 text-[13px] font-medium text-stone-900">{targetProfile?.name || "-"}</TableCell>
+                    <TableCell className="text-[13px] text-stone-700">{targetAccount?.name || "-"}</TableCell>
                     <TableCell className="max-w-[360px] whitespace-normal align-top">
                       <div className="line-clamp-2 text-[13px] text-stone-700">{buildSummary(item.advice_content)}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="border-stone-200 bg-stone-50 text-[12px] text-stone-600">
+                      <Badge variant="outline" className="border-stone-200 bg-stone-50 text-[12px] text-stone-700">
                         {SOURCE_LABELS[item.advice_source]}
                       </Badge>
                     </TableCell>

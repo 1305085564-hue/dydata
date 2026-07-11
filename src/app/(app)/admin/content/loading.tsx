@@ -5,7 +5,7 @@ export default function ContentLoading() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <Skeleton className="h-8 w-40" />
-      <div className="rounded-2xl border border-stone-200 bg-white p-6 space-y-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-6">
         <Skeleton className="h-5 w-28" />
         <div className="flex items-center justify-between gap-4">
           <Skeleton className="h-8 w-40" />

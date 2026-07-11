@@ -116,14 +116,14 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           type="date"
           value={filters.startDate}
           onChange={(event) => updateFilter("startDate", event.target.value)}
-          className="h-8 w-32 rounded-lg bg-white text-[12px]"
+          className="h-8 w-32 rounded-lg border border-stone-200 bg-white text-[12px] text-stone-700 focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
         />
-        <span className="text-stone-300">—</span>
+        <span className="text-stone-500">—</span>
         <Input
           type="date"
           value={filters.endDate}
           onChange={(event) => updateFilter("endDate", event.target.value)}
-          className="h-8 w-32 rounded-lg bg-white text-[12px]"
+          className="h-8 w-32 rounded-lg border border-stone-200 bg-white text-[12px] text-stone-700 focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
         />
       </div>
 
@@ -146,7 +146,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 rounded-lg text-[12px] text-stone-400"
+        className="h-8 rounded-lg text-[12px] text-stone-500 hover:text-stone-700"
         onClick={handleReset}
       >
         重置

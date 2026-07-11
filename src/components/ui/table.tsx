@@ -18,7 +18,7 @@ function Table({ className, freezeFirst, ...props }: TableProps) {
         data-slot="table"
         data-freeze-first={freezeFirst}
         className={cn(
-          "w-full caption-bottom text-[13px] text-stone-700 dark:text-stone-200 tabular-nums",
+          "w-full caption-bottom text-[13px] text-stone-700 dark:text-[#E7E5E4] tabular-nums",
           freezeFirst && [
             "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-30 [&_th:first-child]:bg-white/95 [&_th:first-child]:backdrop-blur-md [&_th:first-child]:dark:bg-stone-900/95",
             "[&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-20 [&_td:first-child]:bg-white [&_td:first-child]:dark:bg-stone-900",

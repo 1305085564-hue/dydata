@@ -217,7 +217,7 @@ export function Leaderboard({
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-dashed bg-muted/20 px-4 py-8 text-center text-[13px] text-muted-foreground">
           {emptyMessage}
         </div>
       ) : (
@@ -263,10 +263,10 @@ export function Leaderboard({
                     <TableCell className="sticky left-14 z-10 bg-background/95 backdrop-blur">
                       <div className="w-[96px]">
                         <div className="flex items-center gap-1">
-                          <span className="truncate font-semibold text-foreground">{item.accountName}</span>
+                          <span className="truncate font-medium text-foreground">{item.accountName}</span>
                           {item.isOwn ? <span className="size-1.5 shrink-0 rounded-full bg-primary" /> : null}
                         </div>
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.ownerName}</p>
+                        <p className="mt-0.5 truncate text-[12px] text-muted-foreground">{item.ownerName}</p>
                       </div>
                     </TableCell>
                     {boardType === "progress" ? (
@@ -275,7 +275,7 @@ export function Leaderboard({
                       </TableCell>
                     ) : null}
                     {visibleMetrics.map((metric) => (
-                      <TableCell key={metric.key} className="text-right font-mono tabular-nums">
+                      <TableCell key={metric.key} className="text-right tabular-nums">
                         {formatMetric(item, metric.key)}
                       </TableCell>
                     ))}
@@ -338,7 +338,7 @@ function TagStack({
   presentationFormat: string | null;
 }) {
   if (!contentDirection && !presentationFormat) {
-    return <span className="text-xs text-muted-foreground">未设置标签</span>;
+    return <span className="text-[12px] text-muted-foreground">未设置标签</span>;
   }
 
   return (
@@ -370,11 +370,11 @@ function RankBadge({ rank }: { rank: number }) {
   return (
     <span
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold font-mono tabular-nums ring-1",
+        "inline-flex size-8 items-center justify-center rounded-full text-[13px] font-medium tabular-nums ring-1",
         badgeClass
       )}
     >
-      <AnimatedNumber value={rank} duration={0.5} className="text-sm font-semibold" />
+      <AnimatedNumber value={rank} duration={0.5} className="text-[13px] font-medium" />
     </span>
   );
 }
@@ -387,7 +387,7 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium font-mono tabular-nums",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium tabular-nums",
         item.progressRate === null || item.progressRate >= 0
           ? "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
           : "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"

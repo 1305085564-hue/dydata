@@ -78,9 +78,9 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
       {/* Views + Follows */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="conv_views" className="text-[12px] font-medium text-stone-600">
+          <Label htmlFor="conv_views" className="text-[12px] font-normal text-stone-500">
             流量 <span className="text-[#C9604D]">*</span>
-            <span className="ml-1 text-[11px] font-normal text-stone-400">播放/曝光</span>
+            <span className="ml-1 text-[12px] font-normal text-stone-500">播放/曝光</span>
           </Label>
           <Input
             id="conv_views"
@@ -92,13 +92,13 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
             onChange={(e) => onChange({ viewsInput: e.target.value })}
             placeholder="例如 30000"
             autoFocus
-            className="h-14 rounded-xl border-transparent bg-stone-100/70 text-[18px] font-semibold tabular-nums text-stone-800 placeholder:text-[14px] placeholder:font-normal focus:border-stone-200 focus:bg-white focus:ring-1 focus:ring-stone-950/5"
+            className="h-14 rounded-xl border border-stone-200 bg-stone-50 text-[13px] font-normal tabular-nums text-stone-700 placeholder:text-[13px] placeholder:font-normal placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="conv_follows" className="text-[12px] font-medium text-stone-600">
+          <Label htmlFor="conv_follows" className="text-[12px] font-normal text-stone-500">
             导粉 <span className="text-[#C9604D]">*</span>
-            <span className="ml-1 text-[11px] font-normal text-stone-400">没涨粉填 0</span>
+            <span className="ml-1 text-[12px] font-normal text-stone-500">没涨粉填 0</span>
           </Label>
           <Input
             id="conv_follows"
@@ -110,12 +110,12 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
             onChange={(e) => onChange({ followsInput: e.target.value })}
             placeholder="例如 180"
             className={cn(
-              "h-14 rounded-xl border-transparent bg-stone-100/70 text-[18px] font-semibold tabular-nums text-stone-800 placeholder:text-[14px] placeholder:font-normal focus:border-stone-200 focus:bg-white focus:ring-1 focus:ring-stone-950/5",
+              "h-14 rounded-xl border border-stone-200 bg-stone-50 text-[13px] font-normal tabular-nums text-stone-700 placeholder:text-[13px] placeholder:font-normal placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5",
               followsExceedsViews && "border-[#C9604D]/40 bg-white",
             )}
           />
           {followsExceedsViews ? (
-            <p className="text-[11px] text-[#C9604D]">导粉数不能大于流量</p>
+            <p className="text-[12px] text-[#C9604D]">导粉数不能大于流量</p>
           ) : null}
         </div>
       </div>
@@ -123,27 +123,27 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
       {/* Conversion rate + Confidence */}
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-10">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+          <p className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
             转化率
           </p>
           <p className="mt-2 flex items-baseline gap-1 leading-none tabular-nums">
             {conversionRate === null ? (
-              <span className="text-[24px] font-semibold text-stone-300">—</span>
+              <span className="text-[18px] font-medium text-stone-500">—</span>
             ) : (
               <>
                 <MotionNumber
                   value={conversionRate * 100}
                   format={(n) => n.toFixed(2)}
-                  className="text-[28px] font-semibold text-stone-800"
+                  className="text-[24px] font-semibold tabular-nums text-stone-900"
                 />
-                <span className="text-[14px] font-medium text-stone-400">%</span>
+                <span className="text-[12px] font-normal text-stone-500">%</span>
               </>
             )}
           </p>
-          <p className="mt-1.5 text-[11px] text-stone-400">导粉 ÷ 流量</p>
+          <p className="mt-1.5 text-[12px] text-stone-500">导粉 ÷ 流量</p>
         </div>
         <div className="sm:flex-1">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+          <p className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
             置信度
           </p>
           <div className="mt-2 inline-flex items-center gap-2">
@@ -154,22 +154,22 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
               aria-hidden
             />
             <motion.span
-              className="text-[14px] font-medium tabular-nums"
+              className="text-[13px] font-medium tabular-nums"
               animate={{ color: confidence.toneHex }}
               transition={{ duration: 0.3 }}
             >
               {confidence.label}
             </motion.span>
           </div>
-          <p className="mt-1.5 text-[11px] text-stone-400">{confidence.hint}</p>
+          <p className="mt-1.5 text-[12px] text-stone-500">{confidence.hint}</p>
         </div>
       </div>
 
       {/* Platforms */}
       <div className="space-y-2">
-        <Label className="text-[12px] font-medium text-stone-600">
+        <Label className="text-[12px] font-normal text-stone-500">
           平台 <span className="text-[#C9604D]">*</span>
-          <span className="ml-2 text-[11px] font-normal text-stone-400">可多选 · 默认抖音</span>
+          <span className="ml-2 text-[12px] font-normal text-stone-500">可多选 · 默认抖音</span>
         </Label>
         <div className="flex flex-wrap gap-2">
           {PLATFORMS.map((platform) => {
@@ -196,7 +196,7 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
         </div>
       </div>
 
-      <p className="text-[11px] text-stone-400">
+      <p className="text-[12px] text-stone-500">
         高置信 ≥ 5 万 / 中置信 ≥ 2.5 万 / 低置信 ≥ 1.5 万 / 1.5 万以下样本不足
       </p>
     </div>

@@ -26,7 +26,7 @@ function DetailToast({
     <div className="flex flex-col gap-1">
       <div className="font-medium">{message}</div>
       {description && (
-        <div className="text-sm opacity-90">{description}</div>
+        <div className="text-[13px] opacity-90">{description}</div>
       )}
       {hasDetails && (
         <div className="mt-1">

@@ -51,7 +51,7 @@ export function ReviewDetail({
     <section className="flex h-auto md:h-[calc(100vh-260px)] md:min-h-[480px] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white">
       <header className="flex items-baseline justify-between border-b border-stone-100 px-6 py-4">
         <div className="flex items-baseline gap-3">
-          <h2 className="text-[16px] font-semibold text-stone-800">
+          <h2 className="text-[18px] font-medium text-stone-900">
             {item.account_name_snapshot ?? "未关联账号"}
           </h2>
           <span className="text-[12px] text-stone-500">{item.submitted_by_name}</span>
@@ -61,7 +61,7 @@ export function ReviewDetail({
             </span>
           ) : null}
         </div>
-        <span className="font-mono text-[12px] tabular-nums text-stone-400">
+        <span className="text-[12px] tabular-nums text-stone-500">
           已等 {formatWaitDuration(item.created_at)}
         </span>
       </header>
@@ -76,18 +76,18 @@ export function ReviewDetail({
         ) : null}
 
         <div className="mt-4">
-          <p className="text-[12px] font-medium text-stone-400">
+          <p className="text-[12px] font-medium text-stone-500">
             话术原文
           </p>
           <div className="mt-2 rounded-xl bg-stone-100/50 p-4">
-            <p className="whitespace-pre-wrap text-[13px] leading-7 text-stone-800">
+            <p className="whitespace-pre-wrap text-[13px] leading-7 text-stone-700">
               {item.script_text}
             </p>
           </div>
         </div>
 
         <div className="mt-5">
-          <p className="text-[12px] font-medium text-stone-400">
+          <p className="text-[12px] font-medium text-stone-500">
             截图（{screenshotCount}）
           </p>
           {screenshotCount > 0 ? (
@@ -111,7 +111,7 @@ export function ReviewDetail({
               ))}
             </div>
           ) : (
-            <p className="mt-2 rounded-lg border border-dashed border-stone-200 px-4 py-3 text-[12px] text-stone-400">
+            <p className="mt-2 rounded-lg border border-dashed border-stone-200 px-4 py-3 text-[12px] text-stone-500">
               本稿未上传截图
             </p>
           )}
@@ -122,13 +122,13 @@ export function ReviewDetail({
         {rejectMode ? (
           <div className="space-y-3">
             <div className="flex items-baseline justify-between">
-              <p className="text-[13px] font-medium text-stone-800">
+              <p className="text-[13px] font-medium text-stone-700">
                 打回 · 给一句具体建议
               </p>
               <button
                 type="button"
                 onClick={cancelReject}
-                className="text-[12px] text-stone-500 hover:text-stone-800"
+                className="text-[12px] text-stone-500 hover:text-stone-700"
               >
                 取消
               </button>
@@ -139,7 +139,7 @@ export function ReviewDetail({
                   key={r}
                   type="button"
                   onClick={() => setFeedbackText(r)}
-                  className="inline-flex items-center rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[12px] text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
+                  className="inline-flex items-center rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[12px] text-stone-500 transition-colors hover:border-stone-300 hover:text-stone-700 active:translate-y-0"
                 >
                   {r}
                 </button>
@@ -150,7 +150,7 @@ export function ReviewDetail({
               onChange={(e) => setFeedbackText(e.target.value)}
               placeholder="可点上方常见理由直接填入，也可自行补充"
               autoFocus
-              className="block w-full resize-none rounded-lg bg-stone-50 border border-stone-200 p-3 text-[13px] leading-6 text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40"
+              className="block w-full resize-none rounded-lg bg-stone-50 border border-stone-200 p-3 text-[13px] leading-6 text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40"
               rows={3}
               maxLength={1000}
             />
@@ -160,7 +160,7 @@ export function ReviewDetail({
                 disabled={rejectSubmitDisabled}
                 onClick={() => onReject(feedbackText)}
                 className={cn(
-                  "h-10 rounded-lg bg-[#C9604D] px-5 text-[13px] font-semibold text-white transition-all active:translate-y-[1px]",
+                  "h-10 rounded-lg bg-[#C9604D] px-5 text-[13px] font-medium text-white transition-all active:translate-y-[1px]",
                   rejectSubmitDisabled
                     ? "cursor-not-allowed opacity-60"
                     : "hover:bg-[#B5503D]",
@@ -179,7 +179,7 @@ export function ReviewDetail({
               className={cn(
                 "inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-4 text-[13px] font-medium transition-colors active:translate-y-0",
                 isProcessing
-                  ? "cursor-not-allowed text-stone-300"
+                  ? "cursor-not-allowed text-stone-500/40"
                   : "text-stone-700 hover:text-[#C9604D] hover:bg-[#C9604D]/10 hover:border-[#C9604D]/20",
               )}
             >
@@ -191,7 +191,7 @@ export function ReviewDetail({
               onClick={onApprove}
               disabled={approveDisabled}
               className={cn(
-                "inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#6FAA7D] px-5 text-[13px] font-semibold text-white transition-all active:translate-y-[1px]",
+                "inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#6FAA7D] px-5 text-[13px] font-medium text-white transition-all active:translate-y-[1px]",
                 approveDisabled
                   ? "cursor-not-allowed opacity-60"
                   : "hover:bg-[#5E9A6C]",
@@ -228,12 +228,12 @@ function FeedbackHistorySection({
         onClick={onToggle}
         className="flex w-full items-center justify-between py-2 text-left"
       >
-        <span className="text-[12px] font-medium text-stone-600">
+        <span className="text-[12px] font-medium text-stone-500">
           历史轮次 · {history.length} 条
         </span>
         <ChevronDown
           className={cn(
-            "size-4 stroke-[1.5] text-stone-400 transition-transform",
+            "size-4 stroke-[1.5] text-stone-500 transition-transform",
             open ? "rotate-180" : "",
           )}
         />
@@ -241,7 +241,7 @@ function FeedbackHistorySection({
       {open ? (
         <ul className="py-2 space-y-2">
           {reverseSorted.map((h, i) => (
-            <li key={i} className="text-[12px] leading-[1.7] text-stone-600">
+            <li key={i} className="text-[12px] leading-[1.7] text-stone-500">
               <span className="font-medium text-stone-700">
                 第 {h.round} 轮 · {h.action === "approve" ? "通过" : "打回"}
               </span>
@@ -249,7 +249,7 @@ function FeedbackHistorySection({
                 <span className="ml-2 text-stone-500">— {h.feedback_text}</span>
               ) : null}
               {h.reviewer_name ? (
-                <span className="ml-2 text-stone-400">@ {h.reviewer_name}</span>
+                <span className="ml-2 text-stone-500">@ {h.reviewer_name}</span>
               ) : null}
             </li>
           ))}

@@ -50,7 +50,7 @@ const statusClassName: Record<Video["anomaly_status"], string> = {
   限流: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
   投流: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
   活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  "未满24h": "border-stone-200 bg-stone-100 text-stone-600",
+  "未满24h": "border-stone-200 bg-stone-100 text-stone-500",
 };
 
 function formatDateTime(value: string | null) {
@@ -90,7 +90,7 @@ function MetricCard({ label, value, placeholder }: { label: string; value: strin
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-4">
       <div className="text-[12px] text-stone-500">{label}</div>
-      <div className={`mt-1 text-[13px] ${placeholder ? "text-stone-300" : "text-stone-700"}`}>{value}</div>
+      <div className={`mt-1 text-[13px] ${placeholder ? "text-stone-500" : "text-stone-700"}`}>{value}</div>
     </div>
   );
 }
@@ -224,7 +224,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="text-[18px] font-bold text-stone-900">
+                  <div className="text-[18px] font-medium text-stone-900">
                     {video.video_title?.trim() || "未命名视频"}
                   </div>
                   <div className="text-[12px] text-stone-500">
@@ -280,7 +280,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                   <textarea
                     value={assetNote}
                     onChange={(e) => setAssetNote(e.target.value)}
-                    className="mt-2 w-full resize-none rounded-lg border border-stone-200 bg-stone-50 p-2 text-[13px] leading-[1.6] text-stone-700 placeholder:text-stone-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5"
+                    className="mt-2 w-full resize-none rounded-lg border border-stone-200 bg-stone-50 p-2 text-[13px] leading-[1.6] text-stone-700 placeholder:text-stone-500 focus-visible:outline-none focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/5"
                     rows={2}
                     placeholder="输入备注..."
                   />
@@ -390,7 +390,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                   {renderSnapshotFields(snapshot)}
                 </div>
               ) : (
-                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-300">
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-500">
                   暂无快照数据。
                 </div>
               )}

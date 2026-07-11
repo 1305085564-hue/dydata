@@ -40,11 +40,11 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
             >
               <div
                 className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-400 transition-colors",
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-500 transition-colors",
                   checkpoint.status === "done" && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
                   checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#D99E55]",
                   checkpoint.status === "late" && "border-[#C9604D] bg-[#C9604D] text-white",
-                  checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-400",
+                  checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-500",
                 )}
               >
                 {checkpoint.status === "done" ? (
@@ -54,12 +54,12 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
                 ) : checkpoint.isPlaceholder ? (
                   <Lock className="size-3 stroke-[1.5] opacity-50" />
                 ) : (
-                  <span className="text-xs font-semibold font-mono tabular-nums">{index + 1}</span>
+                  <span className="text-[12px] font-medium tabular-nums">{index + 1}</span>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-stone-700">{checkpoint.name}</p>
-                <p className="text-[10px] text-stone-400 font-mono">{checkpoint.time}</p>
+                <p className="truncate text-[12px] font-medium text-stone-700">{checkpoint.name}</p>
+                <p className="text-[12px] text-stone-500">{checkpoint.time}</p>
               </div>
             </button>
           );
@@ -82,18 +82,18 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
               type="button"
               onClick={() => onCheckpointClick(checkpoint.id)}
               className={cn(
-                "group relative z-10 flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-left outline-none transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0 focus-visible:ring-1 focus-visible:ring-stone-950/5",
+                "group relative z-10 flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-left outline-none transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0 focus-visible:ring-1 focus-visible:ring-stone-900/5",
                 isActive ? "bg-white shadow-sm ring-1 ring-stone-200" : "bg-white/70 hover:bg-white",
               )}
             >
               <div
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-400 transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-500 transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   checkpoint.status === "done" && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
                   checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#D99E55]",
                   checkpoint.status === "late" && "border-[#C9604D] bg-[#C9604D] text-white",
-                  checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-400",
-                  isActive && "ring-1 ring-stone-950/5",
+                  checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-500",
+                  isActive && "ring-1 ring-stone-900/5",
                 )}
               >
                 {checkpoint.status === "done" ? (
@@ -103,22 +103,22 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
                 ) : checkpoint.isPlaceholder ? (
                   <Lock className="size-4 stroke-[1.5] opacity-50" />
                 ) : (
-                  <span className="text-sm font-semibold font-mono tabular-nums">{index + 1}</span>
+                  <span className="text-[13px] font-medium tabular-nums">{index + 1}</span>
                 )}
               </div>
 
               <div className="min-w-0 space-y-0.5">
                 <p
                   className={cn(
-                    "truncate text-[11px] font-medium tracking-[0.02em]",
-                    isActive ? "text-stone-800" : "text-stone-500 group-hover:text-stone-800",
+                    "truncate text-[12px] font-medium tracking-[0.02em]",
+                    isActive ? "text-stone-700" : "text-stone-500 group-hover:text-stone-700",
                   )}
                 >
                   {checkpoint.name}
                 </p>
-                <div className="flex items-center gap-1.5 text-stone-400">
+                <div className="flex items-center gap-1.5 text-stone-500">
                   <Clock className="size-3 stroke-[1.5]" />
-                  <span className="text-[12px] font-medium font-mono tabular-nums">{checkpoint.time}</span>
+                  <span className="text-[12px] font-medium tabular-nums">{checkpoint.time}</span>
                 </div>
               </div>
 

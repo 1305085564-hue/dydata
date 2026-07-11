@@ -270,7 +270,7 @@ export function VideoList({
 
       <div
         ref={tableContainerRef}
-        className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white shadow-sm"
+        className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white"
         style={{ maxHeight: "calc(100vh - 280px)" }}
       >
         <Table freezeFirst>
@@ -303,9 +303,9 @@ export function VideoList({
                     <TableCell className="text-[12px] text-stone-500">{video.accounts.name}</TableCell>
                     <TableCell className="text-[12px] text-stone-500">{video.profiles.name}</TableCell>
                     <TableCell className="text-[12px] text-stone-500">{formatDateTime(video.published_at)}</TableCell>
-                    <TableCell className="text-[12px] text-stone-700 font-mono tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
-                    <TableCell className="text-[12px] text-stone-700 font-mono tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
-                    <TableCell className="text-[12px] text-stone-700 font-mono tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
                         {video.anomaly_status}
@@ -325,7 +325,7 @@ export function VideoList({
                         <button
                           type="button"
                           onClick={() => setSelectedVideoId(video.id)}
-                          className="text-[12px] text-stone-600 underline-offset-4 hover:text-stone-900 hover:underline"
+                          className="text-[12px] text-stone-700 underline-offset-4 hover:text-stone-900 hover:underline"
                         >
                           查看详情
                         </button>
@@ -380,7 +380,7 @@ export function VideoList({
               <>
                 <ChevronDown className="size-3.5" />
                 加载更多
-                <span className="ml-1 text-[12px] text-stone-300">
+                <span className="ml-1 text-[12px] text-stone-500">
                   (已加载 {Math.min(loadedCount, filteredVideos.length)} / 共 {hasDeferredData ? totalCount ?? filteredVideos.length : filteredVideos.length} 条)
                 </span>
               </>
@@ -391,7 +391,7 @@ export function VideoList({
 
       {/* End state */}
       {!hasMore && filteredVideos.length > 0 && (
-        <div className="mt-4 text-center text-[12px] text-stone-300">
+        <div className="mt-4 text-center text-[12px] text-stone-500">
           已加载全部 {filteredVideos.length} 条视频
         </div>
       )}

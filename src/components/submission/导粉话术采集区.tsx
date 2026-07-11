@@ -36,8 +36,8 @@ export function ScriptCaptureSection({
             <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
 
             <div className="mb-4 flex items-center gap-2">
-              <h3 className="text-[13px] font-semibold text-stone-800">导粉话术</h3>
-              <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-stone-400">
+              <h3 className="text-[13px] font-medium text-stone-900">导粉话术</h3>
+              <span className="text-[12px] uppercase tracking-[0.25em] font-medium text-stone-500">
                 required
               </span>
             </div>
@@ -57,7 +57,7 @@ export function ScriptCaptureSection({
                 rows={4}
                 className={cn(
                   "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
-                  "text-[13px] leading-[1.7] tracking-[0.005em] text-stone-800 placeholder:text-stone-400",
+                  "text-[13px] leading-[1.7] tracking-[0.005em] text-stone-900 placeholder:text-stone-500",
                   "outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5",
                 )}
               />

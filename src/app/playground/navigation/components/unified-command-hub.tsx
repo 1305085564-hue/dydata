@@ -57,9 +57,9 @@ export function UnifiedCommandHub() {
       case "warning":
         return "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/30";
       case "info":
-        return "bg-stone-50 text-stone-600 dark:bg-stone-900 dark:text-stone-400 border-stone-200 dark:border-stone-800";
+        return "bg-stone-50 text-stone-700 dark:bg-stone-900 dark:text-stone-500 border-stone-200 dark:border-stone-800";
       default:
-        return "bg-stone-50 text-stone-600";
+        return "bg-stone-50 text-stone-700";
     }
   };
 
@@ -85,17 +85,17 @@ export function UnifiedCommandHub() {
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 220 }}
             className={cn(
-              "relative flex h-full w-full max-w-[460px] flex-col border-l bg-stone-50 dark:bg-stone-950 shadow-2xl",
+              "relative flex h-full w-full max-w-[460px] flex-col border-l bg-stone-50 dark:bg-stone-950 shadow-xl",
               "border-stone-200 dark:border-stone-800"
             )}
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b bg-white dark:bg-stone-900 px-5 py-4 border-stone-200 dark:border-stone-800">
               <div>
-                <div className="text-[10px] font-bold tracking-widest text-[#D97757] uppercase">
+                <div className="text-[12px] font-medium tracking-widest text-[#D97757] uppercase">
                   Command Hub
                 </div>
-                <h2 className="text-base font-bold text-stone-900 dark:text-white tracking-tight mt-0.5">
+                <h2 className="text-[13px] font-medium text-stone-900 dark:text-white tracking-tight mt-0.5">
                   智能工作中心
                 </h2>
               </div>
@@ -103,14 +103,14 @@ export function UnifiedCommandHub() {
                 {commandHubTab === "notifications" && notifications.some((n) => !n.read) && (
                   <button
                     onClick={markAllNotificationsRead}
-                    className="text-[11px] font-semibold text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white px-2 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    className="text-[12px] font-medium text-stone-500 hover:text-stone-900 dark:text-stone-500 dark:hover:text-white px-2 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                   >
                     全部已读
                   </button>
                 )}
                 <button
                   onClick={() => setCommandHubOpen(false)}
-                  className="flex size-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-white transition-all duration-200"
+                  className="flex size-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-500 hover:text-stone-900 dark:hover:text-white transition-all duration-200"
                 >
                   <X className="size-4 stroke-[1.8]" />
                 </button>
@@ -122,13 +122,13 @@ export function UnifiedCommandHub() {
               <button
                 onClick={() => setCommandHubTab("todos")}
                 className={cn(
-                  "relative py-3 text-xs font-bold transition-colors duration-200 mr-6",
-                  commandHubTab === "todos" ? "text-stone-950 dark:text-white" : "text-stone-400 hover:text-stone-700"
+                  "relative py-3 text-[12px] font-medium transition-colors duration-200 mr-6",
+                  commandHubTab === "todos" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
                 )}
               >
                 今日待办
                 {activeTodos.length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[10px] font-extrabold">
+                  <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[12px] font-medium">
                     {activeTodos.length}
                   </span>
                 )}
@@ -143,13 +143,13 @@ export function UnifiedCommandHub() {
               <button
                 onClick={() => setCommandHubTab("notifications")}
                 className={cn(
-                  "relative py-3 text-xs font-bold transition-colors duration-200",
-                  commandHubTab === "notifications" ? "text-stone-950 dark:text-white" : "text-stone-400 hover:text-stone-700"
+                  "relative py-3 text-[12px] font-medium transition-colors duration-200",
+                  commandHubTab === "notifications" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
                 )}
               >
                 系统动态
                 {notifications.filter((n) => !n.read).length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 text-[10px] font-extrabold">
+                  <span className="ml-1.5 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 text-[12px] font-medium">
                     {notifications.filter((n) => !n.read).length}
                   </span>
                 )}
@@ -171,19 +171,19 @@ export function UnifiedCommandHub() {
                   {/* Active Todos List */}
                   {activeTodos.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-400 dark:text-stone-600 mb-3 shadow-inner">
+                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
                         <CheckCircle2 className="size-6 text-emerald-500" />
                       </div>
-                      <h3 className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                      <h3 className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9]">
                         今日待办已全部完成
                       </h3>
-                      <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-[12px] text-stone-500 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
                         团队目前没有未处理的违规审核或履约卡点，状态良好。
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-1">
+                      <div className="text-[12px] font-medium text-stone-500 dark:text-stone-500 mb-1">
                         进行中 ({activeTodos.length})
                       </div>
                       <AnimatePresence initial={false}>
@@ -195,38 +195,38 @@ export function UnifiedCommandHub() {
                             exit={{ opacity: 0, x: -50, height: 0, marginBottom: 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             className={cn(
-                              "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors shadow-sm",
+                              "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors",
                               "border-stone-200/80 dark:border-stone-800"
                             )}
                           >
                             <button
                               onClick={() => toggleTodo(todo.id)}
-                              className="mt-0.5 text-stone-400 hover:text-[#D97757] transition-colors shrink-0 outline-none"
+                              className="mt-0.5 text-stone-500 hover:text-[#D97757] transition-colors shrink-0 outline-none"
                             >
                               <Circle className="size-4" />
                             </button>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <span className={cn(
-                                  "inline-flex border px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider",
+                                  "inline-flex border px-1.5 py-0.5 rounded text-[12px] font-medium uppercase tracking-wider",
                                   getSeverityBadge(todo.severity)
                                 )}>
                                   {todo.severity === "critical" ? "P0 急需" : todo.severity === "warning" ? "P1 高优" : "P2 常规"}
                                 </span>
-                                <span className="text-[9px] text-stone-400 dark:text-stone-500 flex items-center gap-1">
+                                <span className="text-[12px] text-stone-500 dark:text-stone-500 flex items-center gap-1">
                                   <CalendarDays className="size-2.5" />
                                   {todo.dueDate}
                                 </span>
                               </div>
-                              <h4 className="text-[12px] font-bold text-stone-900 dark:text-stone-50 leading-tight mt-1.5">
+                              <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-50 leading-tight mt-1.5">
                                 {todo.title}
                               </h4>
-                              <p className="text-[10px] text-stone-500 dark:text-stone-400 leading-normal mt-1">
+                              <p className="text-[12px] text-stone-500 dark:text-stone-500 leading-normal mt-1">
                                 {todo.description}
                               </p>
                               
                               <div className="mt-2.5 flex items-center justify-end">
-                                <button className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#D97757] hover:opacity-85 transition-opacity">
+                                <button className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:opacity-85 transition-opacity">
                                   立即批改
                                   <ArrowRight className="size-3" />
                                 </button>
@@ -241,7 +241,7 @@ export function UnifiedCommandHub() {
                   {/* Completed List (if any) */}
                   {completedTodos.length > 0 && (
                     <div className="pt-2 border-t border-stone-200/50 dark:border-stone-800/50">
-                      <div className="text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-2">
+                      <div className="text-[12px] font-medium text-stone-500 dark:text-stone-500 mb-2">
                         已完成 ({completedTodos.length})
                       </div>
                       <div className="space-y-1.5 opacity-60">
@@ -256,7 +256,7 @@ export function UnifiedCommandHub() {
                             >
                               <CheckCircle2 className="size-4 fill-emerald-500 text-white" />
                             </button>
-                            <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 line-through truncate flex-1">
+                            <span className="text-[12px] font-medium text-stone-500 dark:text-stone-500 line-through truncate flex-1">
                               {todo.title}
                             </span>
                           </div>
@@ -272,13 +272,13 @@ export function UnifiedCommandHub() {
                 <div className="space-y-4">
                   {notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-400 dark:text-stone-600 mb-3 shadow-inner">
-                        <Inbox className="size-6 text-stone-400" />
+                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
+                        <Inbox className="size-6 text-stone-500" />
                       </div>
-                      <h3 className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                      <h3 className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9]">
                         目前没有任何动态
                       </h3>
-                      <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-[12px] text-stone-500 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
                         当系统有新的合规提示、账号限流预警或发布情况时，将在此汇总。
                       </p>
                     </div>
@@ -293,7 +293,7 @@ export function UnifiedCommandHub() {
                             exit={{ opacity: 0, x: 50, height: 0, marginBottom: 0 }}
                             transition={{ type: "spring", stiffness: 450, damping: 28 }}
                             className={cn(
-                              "relative rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors shadow-sm",
+                              "relative rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors",
                               notif.read ? "border-stone-200/50 dark:border-stone-800/50 opacity-70" : "border-stone-200 dark:border-stone-700/80"
                             )}
                           >
@@ -305,7 +305,7 @@ export function UnifiedCommandHub() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-2">
                                   <span className={cn(
-                                    "text-[9px] font-black uppercase px-1 rounded-sm",
+                                    "text-[12px] font-medium uppercase px-1 rounded-sm",
                                     notif.severity === "critical" ? "text-rose-600 bg-rose-50 dark:bg-rose-950/20" :
                                     notif.severity === "warning" ? "text-amber-600 bg-amber-50 dark:bg-amber-950/20" :
                                     notif.severity === "success" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" :
@@ -313,16 +313,16 @@ export function UnifiedCommandHub() {
                                   )}>
                                     {notif.severity === "critical" ? "违规警告" : notif.severity === "warning" ? "批改意见" : "动态"}
                                   </span>
-                                  <span className="text-[9px] text-stone-400 dark:text-stone-500">{notif.created_at}</span>
+                                  <span className="text-[12px] text-stone-500 dark:text-stone-500">{notif.created_at}</span>
                                 </div>
                                 <h4 className={cn(
-                                  "text-[11.5px] leading-snug mt-1.5",
-                                  notif.read ? "font-medium text-stone-600 dark:text-stone-400" : "font-bold text-stone-950 dark:text-stone-50"
+                                  "text-[12px] leading-snug mt-1.5",
+                                  notif.read ? "font-medium text-stone-700 dark:text-stone-500" : "font-medium text-stone-900 dark:text-stone-50"
                                 )}>
                                   {notif.title}
                                 </h4>
                                 {notif.body && (
-                                  <p className="text-[10px] text-stone-500 dark:text-stone-400 leading-normal mt-1">
+                                  <p className="text-[12px] text-stone-500 dark:text-stone-500 leading-normal mt-1">
                                     {notif.body}
                                   </p>
                                 )}
@@ -332,16 +332,16 @@ export function UnifiedCommandHub() {
                                   {!notif.read ? (
                                     <button
                                       onClick={() => markNotificationRead(notif.id)}
-                                      className="text-[10px] font-bold text-[#D97757] hover:opacity-80 transition-opacity"
+                                      className="text-[12px] font-medium text-[#D97757] hover:opacity-80 transition-opacity"
                                     >
                                       标为已读
                                     </button>
                                   ) : (
-                                    <span className="text-[9px] font-medium text-stone-400">已处理</span>
+                                    <span className="text-[12px] font-medium text-stone-500">已处理</span>
                                   )}
                                   <button
                                     onClick={() => deleteNotification(notif.id)}
-                                    className="text-stone-400 hover:text-rose-500 transition-colors"
+                                    className="text-stone-500 hover:text-rose-500 transition-colors"
                                     title="删除动态"
                                   >
                                     <Trash2 className="size-3" />
@@ -359,8 +359,8 @@ export function UnifiedCommandHub() {
             </div>
 
             {/* Footer summary */}
-            <div className="shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 text-center text-[10px] text-stone-400 dark:text-stone-500">
-              <span className="font-semibold">DYData Premium Console</span> • 所有待处理项目将同步同步至移动钉群
+            <div className="shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 text-center text-[12px] text-stone-500 dark:text-stone-500">
+              <span className="font-medium">DYData Premium Console</span> • 所有待处理项目将同步同步至移动钉群
             </div>
           </motion.div>
         </div>

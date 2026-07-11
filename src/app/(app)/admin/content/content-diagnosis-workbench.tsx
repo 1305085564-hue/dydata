@@ -623,10 +623,10 @@ export function ContentDiagnosisWorkbench({
           </Button>
           <div className="h-4 w-px bg-stone-200" />
           <div className="min-w-0">
-            <h1 className="text-sm font-semibold text-stone-800 truncate max-w-md">
+            <h1 className="max-w-md truncate text-[18px] font-medium text-stone-900">
               {video?.video_title || "诊断舱"}
             </h1>
-            <p className="text-[12px] text-stone-400 mt-0.5">
+            <p className="mt-0.5 text-[12px] text-stone-500">
               成员：{video?.profiles?.name || "未知"} · 账号：{video?.accounts?.name || "未知"}
             </p>
           </div>
@@ -651,7 +651,7 @@ export function ContentDiagnosisWorkbench({
           )}
 
           {video && (
-            <Badge variant="outline" className={`text-xs h-6 ${statusBadgeClass[video.anomaly_status]}`}>
+            <Badge variant="outline" className={`h-6 text-[12px] ${statusBadgeClass[video.anomaly_status]}`}>
               {video.anomaly_status}
             </Badge>
           )}
@@ -664,7 +664,7 @@ export function ContentDiagnosisWorkbench({
         {/* Left Screen: Data Cockpit */}
         <div className="flex flex-col border-r border-stone-200 bg-white overflow-y-auto p-6 space-y-6">
           <div>
-            <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
+            <h2 className="flex items-center gap-1.5 text-[12px] font-normal tracking-[0.12em] text-stone-500">
               <span className="size-1.5 rounded-full bg-[#D97757]" />
               数据对比大盘
             </h2>
@@ -718,7 +718,7 @@ export function ContentDiagnosisWorkbench({
 
           {/* Attribution Funnel View */}
           <div>
-            <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
+            <h2 className="flex items-center gap-1.5 text-[12px] font-normal tracking-[0.12em] text-stone-500">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               流量归因留存漏斗
             </h2>
@@ -732,11 +732,11 @@ export function ContentDiagnosisWorkbench({
                         <stop offset="95%" stopColor="#D97757" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E4E4E7" />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "#71717A", fontSize: 11 }} />
-                    <YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: "#71717A", fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E7E5E4" />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "#78716C", fontSize: 12 }} />
+                    <YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: "#78716C", fontSize: 12 }} />
                     <ChartTooltip
-                      contentStyle={{ borderRadius: "12px", border: "1px solid #E4E4E7", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+                      contentStyle={{ borderRadius: "12px", border: "1px solid #E7E5E4", boxShadow: "0 4px 12px rgba(28,25,23,0.08)" }}
                       formatter={(val: any) => [`${parseFloat(val).toFixed(1)}%`, "留存率"]}
                     />
                     <Area type="monotone" dataKey="rate" stroke="#D97757" strokeWidth={2} fillOpacity={1} fill="url(#colorRate)" />
@@ -744,7 +744,7 @@ export function ContentDiagnosisWorkbench({
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="mt-3 border border-dashed border-stone-200 rounded-2xl p-8 text-center text-xs text-stone-400">
+              <div className="mt-3 rounded-2xl border border-dashed border-stone-200 p-8 text-center text-[12px] text-stone-500">
                 暂无 24h 快照留存曲线数据
               </div>
             )}
@@ -753,7 +753,7 @@ export function ContentDiagnosisWorkbench({
           {/* Screenshot Wall */}
           {screenshotItems.length > 0 && (
             <div>
-              <h2 className="text-xs font-semibold text-stone-400 uppercase tracking-widest flex items-center gap-1.5">
+              <h2 className="flex items-center gap-1.5 text-[12px] font-normal tracking-[0.12em] text-stone-500">
                 <span className="size-1.5 rounded-full bg-stone-400" />
                 曲线及留存截图
               </h2>
@@ -796,8 +796,8 @@ export function ContentDiagnosisWorkbench({
                 onClick={() => setActiveTab("analysis")}
                 className={`rounded-md px-3.5 py-1.5 text-[12px] font-medium transition-all ${
                   activeTab === "analysis"
-                    ? "bg-white text-stone-800 shadow-sm"
-                    : "text-stone-500 hover:text-stone-800"
+                    ? "border border-stone-200 bg-white text-stone-900"
+                    : "text-stone-500 hover:text-stone-700"
                 }`}
               >
                 1. 深度分析
@@ -807,8 +807,8 @@ export function ContentDiagnosisWorkbench({
                 onClick={() => setActiveTab("feedback")}
                 className={`rounded-md px-3.5 py-1.5 text-[12px] font-medium transition-all ${
                   activeTab === "feedback"
-                    ? "bg-white text-stone-800 shadow-sm"
-                    : "text-stone-500 hover:text-stone-800"
+                    ? "border border-stone-200 bg-white text-stone-900"
+                    : "text-stone-500 hover:text-stone-700"
                 }`}
               >
                 2. 反馈下发
@@ -816,7 +816,7 @@ export function ContentDiagnosisWorkbench({
             </div>
             
             {/* Save Status */}
-            <div className="text-[12px] text-stone-400 flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 text-[12px] text-stone-500">
               {isSavingDraft ? (
                 <>
                   <Loader2 className="size-3 animate-spin text-[#D99E55]" />
@@ -837,7 +837,7 @@ export function ContentDiagnosisWorkbench({
             {/* Segmented Script (Visible in both tabs for context) */}
             {scriptSegments.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-widest flex items-center justify-between mb-3">
+                <h3 className="mb-3 flex items-center justify-between text-[12px] font-normal tracking-[0.12em] text-stone-500">
                   <span>分段脚本 (点击句子可一键引用至反馈)</span>
                   {video?.video_url && (
                     <a
@@ -850,7 +850,7 @@ export function ContentDiagnosisWorkbench({
                     </a>
                   )}
                 </h3>
-                <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden divide-y divide-stone-100 max-h-[220px] overflow-y-auto shadow-sm">
+                <div className="max-h-[220px] overflow-y-auto divide-y divide-stone-100 overflow-hidden rounded-2xl border border-stone-200 bg-white">
                   {scriptSegments.map((seg, idx) => {
                     const isHighlighted = highlightedSegmentIndex === idx;
                     return (
@@ -861,7 +861,7 @@ export function ContentDiagnosisWorkbench({
                           isHighlighted ? "bg-amber-50/50" : "hover:bg-stone-50"
                         }`}
                       >
-                        <span className="font-mono text-[12px] text-stone-400 mt-1 shrink-0 w-4">
+                        <span className="mt-1 w-4 shrink-0 text-[12px] text-stone-500 tabular-nums">
                           {idx + 1}
                         </span>
                         <p className={`text-[12px] leading-relaxed flex-1 ${isHighlighted ? "text-amber-900 font-medium" : "text-stone-700"}`}>
@@ -871,7 +871,7 @@ export function ContentDiagnosisWorkbench({
                           <button
                             type="button"
                             title="引用此句"
-                            className="p-1 rounded-md text-stone-400 hover:text-[#D97757] hover:bg-stone-100"
+                            className="rounded-md p-1 text-stone-500 hover:bg-stone-100 hover:text-[#D97757]"
                           >
                             <Quote className="size-3" />
                           </button>
@@ -886,12 +886,12 @@ export function ContentDiagnosisWorkbench({
             {activeTab === "analysis" ? (
               <>
                 {/* Section: Curve observations */}
-                <div className="bg-white border border-stone-200 rounded-2xl p-5 space-y-4 shadow-sm">
-                  <h3 className="text-xs font-semibold text-stone-800">1.1 走势维度诊断</h3>
+                <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
+                  <h3 className="text-[18px] font-medium text-stone-900">1.1 走势维度诊断</h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[12px] font-medium text-stone-500">推流峰值</label>
+                      <label className="text-[12px] font-normal text-stone-500">推流峰值</label>
                       <Select
                         value={observation.traffic_peak_level}
                         onValueChange={(v) =>
@@ -915,7 +915,7 @@ export function ContentDiagnosisWorkbench({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[12px] font-medium text-stone-500">峰值后走势</label>
+                      <label className="text-[12px] font-normal text-stone-500">峰值后走势</label>
                       <Select
                         value={observation.post_peak_trend}
                         onValueChange={(v) =>
@@ -939,7 +939,7 @@ export function ContentDiagnosisWorkbench({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[12px] font-medium text-stone-500">流量承接</label>
+                      <label className="text-[12px] font-normal text-stone-500">流量承接</label>
                       <Select
                         value={observation.traffic_retention_quality}
                         onValueChange={(v) =>
@@ -964,7 +964,7 @@ export function ContentDiagnosisWorkbench({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[12px] font-medium text-stone-500">跳出集中阶段</label>
+                    <label className="text-[12px] font-normal text-stone-500">跳出集中阶段</label>
                     <SegmentedControl
                       value={observation.drop_off_stage}
                       options={dropOffStageOptions}
@@ -974,7 +974,7 @@ export function ContentDiagnosisWorkbench({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[12px] font-medium text-stone-500">疑似问题阶段</label>
+                    <label className="text-[12px] font-normal text-stone-500">疑似问题阶段</label>
                     <SegmentedControl
                       value={observation.suspected_problem_stage}
                       options={suspectedStageOptions}
@@ -984,11 +984,11 @@ export function ContentDiagnosisWorkbench({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[12px] font-medium text-stone-500">观察备注</label>
+                    <label className="text-[12px] font-normal text-stone-500">观察备注</label>
                     <textarea
                       value={observation.note}
                       onChange={(e) => setObservation((prev) => ({ ...prev, note: e.target.value }))}
-                      className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                      className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
                       rows={2}
                       placeholder="录入曲线的观察点与漏斗诊断意见（自动保存）"
                     />
@@ -998,7 +998,7 @@ export function ContentDiagnosisWorkbench({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 gap-1.5 rounded-xl border-stone-200 bg-white text-xs text-stone-700 hover:bg-stone-50 hover:text-stone-900 active:scale-[0.98] transition-all duration-150"
+                      className="h-8 gap-1.5 rounded-xl border-stone-200 bg-white text-[12px] text-stone-700 transition-all duration-150 hover:bg-stone-50 hover:text-stone-900 active:scale-[0.98]"
                       onClick={handleGenerateAnalysis}
                       disabled={isGeneratingAnalysis}
                     >
@@ -1010,8 +1010,8 @@ export function ContentDiagnosisWorkbench({
 
                 {/* Section: AI Analysis Results */}
                 {(isGeneratingAnalysis || analysisResult) && (
-                  <div className="rounded-2xl border border-stone-200 border-l-2 border-l-[#D97757] bg-stone-100/50 p-5 shadow-sm space-y-4">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[#D97757] uppercase tracking-widest">
+                  <div className="space-y-4 rounded-2xl border border-stone-200 border-l-2 border-l-[#D97757] bg-stone-100/50 p-5">
+                    <div className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.12em] text-[#D97757]">
                       <Sparkles className="size-4" />
                       AI 智能诊断
                     </div>
@@ -1024,7 +1024,7 @@ export function ContentDiagnosisWorkbench({
                       </div>
                     ) : analysisResult ? (
                       <div className="space-y-4">
-                        <p className="text-[18px] font-bold leading-relaxed text-stone-900">
+                        <p className="text-[18px] font-medium leading-[1.6] text-stone-900">
                           {analysisResult.data_summary}
                         </p>
 
@@ -1040,7 +1040,7 @@ export function ContentDiagnosisWorkbench({
                           {analysisResult.key_metric_evidence.slice(0, 3).map((ev) => (
                             <span
                               key={ev}
-                              className="inline-flex items-center rounded-full border border-stone-200 bg-white/90 px-2.5 py-0.5 text-[12px] font-medium text-stone-600"
+                              className="inline-flex items-center rounded-full border border-stone-200 bg-white/90 px-2.5 py-0.5 text-[12px] font-normal text-stone-500"
                             >
                               {ev}
                             </span>
@@ -1048,8 +1048,8 @@ export function ContentDiagnosisWorkbench({
                         </div>
 
                         {analysisResult.copywriting_reason && (
-                          <p className="text-[12px] leading-relaxed text-stone-600">
-                            <span className="text-stone-400 font-medium">文案诊断：</span>
+                          <p className="text-[12px] leading-[1.7] text-stone-700">
+                            <span className="font-normal text-stone-500">文案诊断：</span>
                             {analysisResult.copywriting_reason}
                           </p>
                         )}
@@ -1057,7 +1057,7 @@ export function ContentDiagnosisWorkbench({
                         <div className="flex flex-wrap gap-2 pt-2">
                           <Button
                             size="sm"
-                            className="h-8 rounded-lg bg-[#D97757] px-3.5 text-xs text-white hover:bg-[#C96442]"
+                            className="h-8 rounded-lg bg-[#D97757] px-3.5 text-[12px] text-white hover:bg-[#C96442]"
                             onClick={handleQuoteAnalysisToFeedback}
                           >
                             应用到反馈草稿
@@ -1065,7 +1065,7 @@ export function ContentDiagnosisWorkbench({
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-lg border-stone-200 bg-white text-xs text-stone-600"
+                            className="h-8 rounded-lg border-stone-200 bg-white text-[12px] text-stone-700"
                             onClick={() => handleMarkExperience("analysis", "hot_case")}
                             disabled={isMarkingExperience}
                           >
@@ -1078,16 +1078,16 @@ export function ContentDiagnosisWorkbench({
                 )}
               </>
             ) : (
-              <div className="bg-white border border-stone-200 rounded-2xl p-5 space-y-4 shadow-sm">
-                <h3 className="text-xs font-semibold text-stone-800">2.1 反馈内容录入</h3>
+              <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
+                <h3 className="text-[18px] font-medium text-stone-900">2.1 反馈内容录入</h3>
                 
                 {/* Evidence overview */}
                 {feedbackEvidence.length > 0 && (
-                  <div className="rounded-xl bg-stone-50 border border-stone-200/60 px-3.5 py-2.5 text-[12px] leading-relaxed text-stone-600 flex flex-wrap gap-x-3 gap-y-1">
-                    <span className="text-stone-400 font-medium">诊断依据：</span>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 rounded-xl border border-stone-200/60 bg-stone-50 px-3.5 py-2.5 text-[12px] leading-[1.7] text-stone-700">
+                    <span className="font-normal text-stone-500">诊断依据：</span>
                     {feedbackEvidence.map((line, i) => (
                       <span key={line} className="flex items-center gap-1.5">
-                        {i > 0 && <span className="text-stone-300">·</span>}
+                        {i > 0 && <span className="text-stone-500">·</span>}
                         <span className="text-stone-700">{line}</span>
                       </span>
                     ))}
@@ -1095,11 +1095,11 @@ export function ContentDiagnosisWorkbench({
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-stone-600">主要问题诊断</label>
+                  <label className="text-[12px] font-normal text-stone-500">主要问题诊断</label>
                   <textarea
                     value={mainIssues}
                     onChange={(e) => setMainIssues(e.target.value)}
-                    className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                    className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
                     rows={2}
                     placeholder="例如：开头留人弱 / 选题不清 / 互动性差"
                     disabled={!isEditable}
@@ -1107,11 +1107,11 @@ export function ContentDiagnosisWorkbench({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-stone-600">建议及改进反馈</label>
+                  <label className="text-[12px] font-normal text-stone-500">建议及改进反馈</label>
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                    className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
                     rows={6}
                     placeholder="请输入针对该视频的具体文案改进、口语演绎或视觉剪辑优化意见"
                     disabled={!isEditable}
@@ -1125,7 +1125,7 @@ export function ContentDiagnosisWorkbench({
                       ? "border-green-200 bg-green-50/30 text-green-900" 
                       : "border-amber-200 bg-amber-50/30 text-amber-900"
                   }`}>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold">
+                    <div className="flex items-center gap-1.5 text-[12px] font-medium">
                       <span className={`size-1.5 rounded-full ${
                         cardDetail.employee_reply_status === "acknowledged" ? "bg-green-500" : "bg-amber-500"
                       }`} />
@@ -1151,7 +1151,7 @@ export function ContentDiagnosisWorkbench({
                   className={`h-6 rounded-md px-2 text-[12px] font-medium gap-1 ${
                     cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
                       ? "border-green-200 bg-green-50 text-[#3f6f4d]"
-                      : "border-stone-200 bg-stone-50 text-stone-600"
+                      : "border-stone-200 bg-stone-50 text-stone-700"
                   }`}
                 >
                   <span
@@ -1164,7 +1164,7 @@ export function ContentDiagnosisWorkbench({
                   {cardDetail.workflow_label}
                 </Badge>
               ) : (
-                <span className="text-stone-400">未开始</span>
+                <span className="text-stone-500">未开始</span>
               )}
             </div>
 
@@ -1174,14 +1174,14 @@ export function ContentDiagnosisWorkbench({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 rounded-lg text-xs"
+                    className="h-8 rounded-lg text-[12px]"
                     onClick={handleManualSaveDraft}
                   >
                     保存草稿
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 rounded-lg bg-[#D97757] px-4 text-xs text-white hover:bg-[#C96442]"
+                    className="h-8 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
                     onClick={handleConfirmAndSend}
                     disabled={!canConfirm}
                   >
@@ -1189,7 +1189,7 @@ export function ContentDiagnosisWorkbench({
                   </Button>
                 </>
               ) : (
-                <span className="text-xs text-stone-400 font-medium">已下发（不可编辑）</span>
+                <span className="text-[12px] font-normal text-stone-500">已下发（不可编辑）</span>
               )}
 
               <DropdownMenu>
@@ -1209,14 +1209,14 @@ export function ContentDiagnosisWorkbench({
                   <DropdownMenuItem
                     onClick={() => handleMarkExperience("feedback", "hot_case")}
                     disabled={isMarkingExperience}
-                    className="text-xs"
+                    className="text-[12px]"
                   >
                     沉淀为爆款案例
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleMarkExperience("feedback", "fail_case")}
                     disabled={isMarkingExperience}
-                    className="text-xs"
+                    className="text-[12px]"
                   >
                     沉淀为失败案例
                   </DropdownMenuItem>
@@ -1268,11 +1268,11 @@ function MetricBarCard({ label, current, history, team, formatter, lowerIsBetter
   const showSuccess = diffFromHistory != null && (lowerIsBetter ? diffFromHistory < -8 : diffFromHistory > 8);
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-3 space-y-2 shadow-sm text-left">
+    <div className="space-y-2 rounded-xl border border-stone-200 bg-white p-3 text-left">
       <div className="flex justify-between items-baseline">
-        <span className="text-[12px] text-stone-400 font-medium">{label}</span>
-        <span className={`text-[12px] font-bold ${
-          showWarning ? "text-[#C9604D]" : showSuccess ? "text-[#6FAA7D]" : "text-stone-800"
+        <span className="text-[12px] font-normal text-stone-500">{label}</span>
+        <span className={`text-[12px] font-medium ${
+          showWarning ? "text-[#C9604D]" : showSuccess ? "text-[#6FAA7D]" : "text-stone-700"
         }`}>
           {formatter(current)}
         </span>
@@ -1290,7 +1290,7 @@ function MetricBarCard({ label, current, history, team, formatter, lowerIsBetter
 
 function MiniBar({ label, pct, color }: { label: string; pct: number; color: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-[12px] text-stone-300 leading-none">
+    <div className="flex items-center gap-1.5 text-[12px] leading-none text-stone-500">
       <span className="w-6 shrink-0">{label}</span>
       <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.max(5, Math.min(100, pct))}%` }} />
@@ -1329,8 +1329,8 @@ function SegmentedControl<T extends string>({
             onClick={() => onChange(key)}
             className={`active:scale-[0.98] rounded-lg py-1.5 text-[12px] font-medium transition-all ${
               active
-                ? "bg-white text-[#D97757] shadow-sm"
-                : "text-stone-500 hover:text-stone-800"
+                ? "border border-stone-200 bg-white text-[#D97757]"
+                : "text-stone-500 hover:text-stone-700"
             }`}
           >
             {label}
@@ -1415,7 +1415,7 @@ function ScreenshotPreview({
             className="rounded-xl border border-white/10 bg-black object-contain max-h-[85vh] max-w-[85vw]"
           />
         </div>
-        <p className="text-white/80 mt-4 text-xs font-semibold">{current.label}</p>
+        <p className="mt-4 text-[12px] font-medium text-white/80">{current.label}</p>
       </motion.div>
     </AnimatePresence>
   );

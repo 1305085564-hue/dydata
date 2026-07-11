@@ -48,7 +48,7 @@ export function CaseDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl bg-white p-6 rounded-2xl border border-stone-200">
         <DialogHeader>
-          <DialogTitle className="text-[18px] font-bold text-stone-950">
+          <DialogTitle className="text-[18px] font-medium text-stone-900">
             稿件案例详情
           </DialogTitle>
         </DialogHeader>
@@ -105,7 +105,7 @@ export function CaseDetailDialog({
                 <label className="text-[12px] font-medium text-stone-500">
                   话术文案
                 </label>
-                <div className="relative flex-1 rounded-xl bg-stone-50 p-4 text-[13px] leading-[1.6] text-stone-800 min-h-[260px] max-h-[440px] overflow-y-auto border border-stone-200/50">
+                <div className="relative flex-1 rounded-xl bg-stone-50 p-4 text-[13px] leading-[1.6] text-stone-700 min-h-[260px] max-h-[440px] overflow-y-auto border border-stone-200/50">
                   <p className="whitespace-pre-wrap pr-8">{item.script_text}</p>
                   <Button
                     type="button"
@@ -136,7 +136,7 @@ export function CaseDetailDialog({
                 <label className="text-[12px] font-medium text-stone-500">
                   话术文案
                 </label>
-                <div className="relative rounded-xl bg-stone-50 p-4 text-[13px] leading-[1.6] text-stone-800 max-h-[360px] overflow-y-auto border border-stone-200/50">
+                <div className="relative rounded-xl bg-stone-50 p-4 text-[13px] leading-[1.6] text-stone-700 max-h-[360px] overflow-y-auto border border-stone-200/50">
                   <p className="whitespace-pre-wrap pr-8">{item.script_text}</p>
                   <Button
                     type="button"
@@ -159,7 +159,7 @@ export function CaseDetailDialog({
                   </Button>
                 </div>
               </div>
-              <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-stone-200 text-[12px] text-stone-400 bg-stone-50/50">
+              <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-stone-200 text-[12px] text-stone-500 bg-stone-50/50">
                 <ImageIcon className="mr-1.5 size-4" />
                 该作品暂未上传截图凭证
               </div>
@@ -168,24 +168,24 @@ export function CaseDetailDialog({
 
           {/* 属性元数据：一行三个 (sm:grid-cols-3) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6 py-4 border-y border-stone-200/60 text-[12px]">
-            <div className="flex items-center gap-2 text-stone-600 min-w-0">
-              <User className="size-4 text-stone-400 shrink-0" />
+            <div className="flex items-center gap-2 text-stone-500 min-w-0">
+              <User className="size-4 text-stone-500 shrink-0" />
               <span className="shrink-0">提交成员：</span>
-              <span className="font-semibold text-stone-800 truncate">
+              <span className="font-medium text-stone-700 truncate">
                 {item.submitted_by_name}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-stone-600 min-w-0">
-              <Calendar className="size-4 text-stone-400 shrink-0" />
+            <div className="flex items-center gap-2 text-stone-500 min-w-0">
+              <Calendar className="size-4 text-stone-500 shrink-0" />
               <span className="shrink-0">发布时间：</span>
-              <span className="font-mono text-stone-800 truncate">
+              <span className="text-stone-700 truncate">
                 {formatShortDate(item.approved_at)}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-stone-600 min-w-0">
+            <div className="flex items-center gap-2 text-stone-500 min-w-0">
               <span className="size-1.5 rounded-full bg-stone-400 shrink-0" />
               <span className="shrink-0">关联账号：</span>
-              <span className="font-medium text-stone-800 truncate" title={item.account_name_snapshot ?? "未关联账号"}>
+              <span className="font-medium text-stone-700 truncate" title={item.account_name_snapshot ?? "未关联账号"}>
                 {item.account_name_snapshot ?? "未关联账号"}
               </span>
             </div>

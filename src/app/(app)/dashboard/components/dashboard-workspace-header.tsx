@@ -62,11 +62,11 @@ export function DashboardWorkspaceHeader({
     <div className="mx-auto mb-4 max-w-6xl">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.25em] text-stone-400">
-            <Activity size={14} className="text-stone-800" /> 今日工作台
+          <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">
+            <Activity size={14} className="text-stone-700" /> 今日工作台
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <h2 className="text-[24px] font-semibold tracking-tight text-stone-800">
+            <h2 className="text-[24px] font-medium tracking-tight text-stone-900">
               今日提交
             </h2>
             <nav
@@ -80,12 +80,12 @@ export function DashboardWorkspaceHeader({
                     key={action.key}
                     type="button"
                     onClick={() => onDashboardAction(action.key)}
-                    className="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-stone-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-800 focus-visible:bg-stone-100 focus-visible:text-stone-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5"
+                    className="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-stone-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-700 focus-visible:bg-stone-100 focus-visible:text-stone-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-900/5"
                     style={{ transitionDelay: "50ms" }}
                   >
                     <Icon
                       size={14}
-                      className="stroke-[1.5] text-stone-400 transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:text-stone-700"
+                      className="stroke-[1.5] text-stone-500 transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:text-stone-700"
                     />
                     {action.label}
                   </button>
@@ -106,12 +106,12 @@ export function DashboardWorkspaceHeader({
           <button
             type="button"
             onClick={openDatePicker}
-            className="group inline-flex h-10 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3.5 text-[13px] font-medium tracking-tight text-stone-800 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/40 hover:bg-[#FDF9F7] hover:text-[#C96442] focus-visible:ring-1 focus-visible:ring-stone-950/5"
+            className="group inline-flex h-10 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3.5 text-[13px] font-medium tracking-tight text-stone-700 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/40 hover:bg-[#FDF9F7] hover:text-[#C96442] focus-visible:ring-1 focus-visible:ring-stone-900/5"
             aria-label="选择填报日期"
           >
-            <CalendarDays className="size-4 stroke-[1.6] text-stone-400 transition-colors duration-150 group-hover:text-[#D97757]" />
-            <span className="font-mono tabular-nums">{activeBizDate}</span>
-            <ChevronDown className="size-3.5 stroke-[1.6] text-stone-300 transition-colors duration-150 group-hover:text-[#D97757]" />
+            <CalendarDays className="size-4 stroke-[1.6] text-stone-500 transition-colors duration-150 group-hover:text-[#D97757]" />
+            <span className="tabular-nums">{activeBizDate}</span>
+            <ChevronDown className="size-3.5 stroke-[1.6] text-stone-500 transition-colors duration-150 group-hover:text-[#D97757]" />
           </button>
           <input
             ref={dateInputRef}

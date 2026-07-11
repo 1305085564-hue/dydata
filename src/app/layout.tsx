@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 
 import { Toaster } from "@/components/ui/sonner";
 
@@ -10,13 +10,6 @@ const inter = Inter({
   display: "swap",
   variable: "--font-inter",
   weight: ["400", "500", "600"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-mono",
-  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -30,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="antialiased">
+    <html lang="zh-CN" className={inter.variable}>
+      <body className="antialiased tabular-nums">
         {children}
         <Toaster richColors position="top-right" />
       </body>

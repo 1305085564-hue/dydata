@@ -133,10 +133,10 @@ export function VideoReviewWorkbench({
       <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6 space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-stone-500">
+            <p className="text-[12px] font-normal text-stone-500">
               产量对账
             </p>
-            <h1 className="mt-1 text-[24px] font-bold text-stone-950">
+            <h1 className="mt-1 text-[24px] font-medium text-stone-900">
               视频审核与产量对账
             </h1>
             <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.6] text-stone-500">
@@ -152,7 +152,7 @@ export function VideoReviewWorkbench({
               type="button"
               variant="outline"
               onClick={() => setExemptionOpen(true)}
-              className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-semibold gap-1.5"
+              className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-medium gap-1.5"
             >
               <CalendarDays className="size-4 text-stone-500" />
               申请豁免
@@ -163,7 +163,7 @@ export function VideoReviewWorkbench({
               id="workbench-upload-btn"
               type="button"
               onClick={() => setSubmitOpen(true)}
-              className="h-9 rounded-lg bg-[#D97757] font-semibold text-white hover:bg-[#C96442] active:scale-95 transition-transform gap-1.5"
+              className="h-9 rounded-lg bg-[#D97757] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-transform gap-1.5"
             >
               <Upload className="size-4" />
               上传作品凭证
@@ -175,7 +175,7 @@ export function VideoReviewWorkbench({
                 type="button"
                 variant="outline"
                 onClick={() => setDashboardOpen(true)}
-                className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-semibold gap-1.5"
+                className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-medium gap-1.5"
               >
                 <BarChart3 className="size-4 text-stone-500" />
                 {adminActions[0]?.label ?? "产量看板"}
@@ -186,32 +186,32 @@ export function VideoReviewWorkbench({
       </header>
 
       {/* 核心指标条 - 紧凑轻量化设计 */}
-      <div className="inline-flex flex-wrap items-center gap-4 bg-stone-100/80 dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800/80 rounded-xl px-4 py-2 text-[12px] text-stone-600 dark:text-stone-400 w-fit">
+      <div className="inline-flex flex-wrap items-center gap-4 bg-stone-100/80 dark:bg-stone-900 border border-stone-200/80 dark:border-stone-700/80 rounded-xl px-4 py-2 text-[12px] text-stone-700 dark:text-stone-500 w-fit">
         <div className="flex items-center gap-1">
           <span className="font-medium text-stone-500">今日目标:</span>
-          <span className="font-bold font-mono tabular-nums text-stone-900 dark:text-stone-200">
+          <span className="font-normal tabular-nums text-stone-700 dark:text-[#E7E5E4]">
             {target}
           </span>
-          <span className="text-stone-400">个作品</span>
+          <span className="text-stone-500">个作品</span>
         </div>
         <div className="w-[1px] h-3 bg-stone-300 dark:bg-stone-800" />
         <div className="flex items-center gap-1">
           <span className="font-medium text-stone-500">已交凭证:</span>
-          <span className="font-bold font-mono tabular-nums text-stone-900 dark:text-stone-200">
+          <span className="font-normal tabular-nums text-stone-700 dark:text-[#E7E5E4]">
             {submittedCount}
           </span>
-          <span className="text-stone-400">个作品</span>
+          <span className="text-stone-500">个作品</span>
         </div>
         <div className="w-[1px] h-3 bg-stone-300 dark:bg-stone-800" />
         <div className="flex items-center gap-1">
           <span className="font-medium text-stone-500">还差额:</span>
           <span className={cn(
-            "font-bold font-mono tabular-nums",
+            "font-normal tabular-nums",
             gap > 0 ? "text-[#C9604D]" : "text-[#6FAA7D]"
           )}>
             {gap}
           </span>
-          <span className="text-stone-400">个作品</span>
+          <span className="text-stone-500">个作品</span>
         </div>
       </div>
 

@@ -80,7 +80,7 @@ function PreviewShell({
         )}
       >
         <DialogHeader className="px-5 pb-3 pt-5">
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-800">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-900">
             {title}
           </DialogTitle>
           {subtitle ? (
@@ -94,7 +94,7 @@ function PreviewShell({
           {fullViewHref ? (
             <Link
               href={fullViewHref}
-              className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] text-stone-500 transition-colors hover:text-stone-800"
+              className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] text-stone-500 transition-colors hover:text-stone-900"
               onClick={() => onOpenChange(false)}
             >
               {fullViewLabel}
@@ -151,7 +151,7 @@ function MetaInline({ items }: { items: { label: string; value: React.ReactNode 
     <dl className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px]">
       {items.map((item, idx) => (
         <div key={idx} className="flex items-baseline gap-1.5">
-          <dt className="text-stone-400">{item.label}</dt>
+          <dt className="text-stone-500">{item.label}</dt>
           <dd className="text-stone-700">{item.value}</dd>
         </div>
       ))}
@@ -200,14 +200,14 @@ export function VideoPreviewDialog({
     >
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
-          <p className="text-[11px] text-stone-400">本条 24h 播放</p>
-          <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-800">
+          <p className="text-[12px] text-stone-500">本条 24h 播放</p>
+          <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-900">
             {(row.current_play_count ?? 0).toLocaleString()}
           </p>
         </div>
         <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
-          <p className="text-[11px] text-stone-400">上一条 24h 播放</p>
-          <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-800">
+          <p className="text-[12px] text-stone-500">上一条 24h 播放</p>
+          <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-900">
             {(row.previous_play_count ?? 0).toLocaleString()}
           </p>
         </div>
@@ -270,7 +270,7 @@ export function SubmissionPreviewDialog({
               : null,
           ].filter(Boolean) as { label: string; value: React.ReactNode }[]}
         />
-        <p className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 text-[13px] leading-7 text-stone-600">
+        <p className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 text-[13px] leading-7 text-stone-700">
           系统每天 11:15 自动飞书催交。 “催交历史” 可看具体送达记录。
         </p>
       </div>
@@ -310,7 +310,7 @@ export function ExemptionPreviewDialog({
       title={`${row.applicant_name} 申请豁免`}
       subtitle={
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="inline-flex items-center gap-1 text-stone-600">
+          <span className="inline-flex items-center gap-1 text-stone-700">
             <span className="size-1.5 rounded-full bg-[#D99E55]" />
             {typeLabel}
           </span>
@@ -332,7 +332,7 @@ export function ExemptionPreviewDialog({
       }}
     >
       <div className="max-h-[360px] min-h-[180px] overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-stone-200">
-        <p className="whitespace-pre-wrap text-[14px] leading-[1.85] text-stone-800">
+        <p className="whitespace-pre-wrap text-[13px] leading-[1.85] text-stone-900">
           {row.reason ?? "未填写原因"}
         </p>
       </div>

@@ -51,16 +51,16 @@ export function DetailTabs({ purpose, usageRecords, events, testsSlot }: DetailT
               className={cn(
                 "relative inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors active:translate-y-0",
                 isActive
-                  ? "bg-white text-stone-800"
-                  : "text-stone-500 hover:bg-stone-100 hover:text-stone-800",
+                  ? "bg-white text-stone-900"
+                  : "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
               )}
             >
               {tab.label}
               {typeof tab.count === "number" ? (
                 <span
                   className={cn(
-                    "rounded-full px-1.5 text-[11px] font-medium tabular-nums",
-                    isActive ? "bg-stone-100 text-stone-600" : "bg-stone-100 text-stone-500",
+                    "rounded-full px-1.5 text-[12px] font-medium tabular-nums",
+                    isActive ? "bg-stone-100 text-stone-700" : "bg-stone-100 text-stone-500",
                   )}
                 >
                   {tab.count}

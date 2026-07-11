@@ -237,43 +237,43 @@ export function MemberDrawer({
           <SheetBody className="space-y-6">
             {/* 当前时间段统计 */}
             <section>
-              <h3 className="mb-3 text-[12px] font-medium uppercase tracking-[0.15em] text-stone-400">
+              <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-stone-500">
                 当前统计
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
-                  <p className="text-[12px] text-stone-400">应发天数</p>
-                  <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-stone-800">
+                  <p className="text-[12px] text-stone-500">应发天数</p>
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-900">
                     {member.totalDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
-                  <p className="text-[12px] text-stone-400">实发天数</p>
-                  <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#6FAA7D]">
+                  <p className="text-[12px] text-stone-500">实发天数</p>
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#6FAA7D]">
                     {member.publishedDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
-                  <p className="text-[12px] text-stone-400">发布率</p>
-                  <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-stone-800">
+                  <p className="text-[12px] text-stone-500">发布率</p>
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-900">
                     {member.fulfillmentRate}%
                   </p>
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
-                  <p className="text-[12px] text-stone-400">请假</p>
-                  <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#8AA8C7]">
+                  <p className="text-[12px] text-stone-500">请假</p>
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#8AA8C7]">
                     {member.leaveDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
-                  <p className="text-[12px] text-stone-400">豁免</p>
-                  <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#8AA8C7]">
+                  <p className="text-[12px] text-stone-500">豁免</p>
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#8AA8C7]">
                     {member.waivedDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
-                  <p className="text-[12px] text-stone-400">缺勤</p>
-                  <p className="mt-1 font-mono text-[18px] font-semibold tabular-nums text-[#C9604D]">
+                  <p className="text-[12px] text-stone-500">缺勤</p>
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#C9604D]">
                     {member.absentDays}
                   </p>
                 </div>
@@ -294,12 +294,12 @@ export function MemberDrawer({
 
             {/* 历史记录时间线 */}
             <section>
-              <h3 className="mb-3 text-[12px] font-medium uppercase tracking-[0.15em] text-stone-400">
+              <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-stone-500">
                 历史记录
               </h3>
               <div className="max-h-[200px] overflow-y-auto rounded-xl border border-stone-200">
                 {historyDates.length === 0 ? (
-                  <p className="p-4 text-[13px] text-stone-400">暂无历史记录</p>
+                  <p className="p-4 text-[13px] text-stone-500">暂无历史记录</p>
                 ) : (
                   <div className="divide-y divide-stone-100">
                     {historyDates.map((d) => {
@@ -315,19 +315,19 @@ export function MemberDrawer({
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className={`font-mono text-[12px] tabular-nums ${isSelected ? "font-medium text-stone-800" : "text-stone-500"}`}>
+                            <span className={`text-[12px] tabular-nums ${isSelected ? "font-medium text-stone-900" : "text-stone-500"}`}>
                               {d.slice(5)}
                             </span>
                             <StatusBadge status={record.status} />
                           </div>
                           <div className="flex items-center gap-2">
                             {record.reason ? (
-                              <span className="max-w-[120px] truncate text-[11px] text-stone-400" title={record.reason}>
+                              <span className="max-w-[120px] truncate text-[12px] text-stone-500" title={record.reason}>
                                 {record.reason}
                               </span>
                             ) : null}
                             {record.markedByName ? (
-                              <span className="text-[11px] text-stone-400">
+                              <span className="text-[12px] text-stone-500">
                                 {record.markedByName}
                               </span>
                             ) : null}
@@ -343,14 +343,14 @@ export function MemberDrawer({
             {/* 员工申诉状态 (新集成) */}
             {dateAppeal && (
               <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4 space-y-3">
-                <h4 className="text-[12px] font-semibold text-amber-800 flex items-center gap-1.5">
+                <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#D99E55]">
                   <span className="size-2 rounded-full bg-amber-400" />
                   员工发起申诉
                 </h4>
                 <div className="text-[13px] text-stone-700 bg-white border border-stone-200/60 p-2.5 rounded-lg italic">
                   "{dateAppeal.reason}"
                 </div>
-                <p className="text-[10px] text-stone-400">
+                <p className="text-[12px] text-stone-500">
                   提交时间: {new Date(dateAppeal.created_at).toLocaleString("zh-CN")}
                 </p>
                 
@@ -384,7 +384,7 @@ export function MemberDrawer({
                       {dateAppeal.status === "approved" ? "已同意改判" : "已驳回"}
                     </span>
                     {dateAppeal.handler_name && (
-                      <span className="text-stone-400 ml-1.5 text-[11px]">({dateAppeal.handler_name})</span>
+                      <span className="ml-1.5 text-[12px] text-stone-500">({dateAppeal.handler_name})</span>
                     )}
                   </div>
                 )}
@@ -393,7 +393,7 @@ export function MemberDrawer({
 
             {/* 当日/选中日状态 */}
             <section>
-              <h3 className="mb-3 text-[12px] font-medium uppercase tracking-[0.15em] text-stone-400">
+              <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-stone-500">
                 {effectiveDate === date ? "当日状态" : `${effectiveDate?.slice(5)} 状态`}
               </h3>
               <div className="space-y-2 bg-stone-50/50 border border-stone-200/50 rounded-xl p-3.5">
@@ -401,13 +401,13 @@ export function MemberDrawer({
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-[13px]">
                       <span className="text-stone-500">发布数量</span>
-                      <span className="font-mono tabular-nums font-semibold text-stone-800">
+                      <span className="tabular-nums font-medium text-stone-900">
                         {dayRecord.publishedCount} 条
                       </span>
                     </div>
                     {dayRecord.reason ? (
                       <div className="rounded-lg border border-stone-200/60 bg-white p-2.5">
-                        <p className="text-[11px] text-stone-400">打标备注原因</p>
+                        <p className="text-[12px] text-stone-500">打标备注原因</p>
                         <p className="mt-1 text-[13px] text-stone-700 leading-normal">{dayRecord.reason}</p>
                       </div>
                     ) : null}
@@ -420,7 +420,7 @@ export function MemberDrawer({
                     {dayRecord.markedAt ? (
                       <div className="flex items-center justify-between text-[13px]">
                         <span className="text-stone-500">标记时间</span>
-                        <span className="text-stone-600 text-[12px]">{new Date(dayRecord.markedAt).toLocaleString("zh-CN")}</span>
+                        <span className="text-[12px] text-stone-700">{new Date(dayRecord.markedAt).toLocaleString("zh-CN")}</span>
                       </div>
                     ) : null}
                   </div>
@@ -432,13 +432,13 @@ export function MemberDrawer({
 
             {/* 操作区 */}
             <section>
-              <h3 className="mb-3 text-[12px] font-medium uppercase tracking-[0.15em] text-stone-400">
+              <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-stone-500">
                 操作
               </h3>
               {activeAction ? (
                 <div className="space-y-3">
                   <div className="rounded-xl border border-stone-200 bg-stone-50/50 p-3">
-                    <label className="mb-1.5 block text-[12px] font-medium text-stone-500">
+                    <label className="mb-1.5 block text-[12px] font-normal text-stone-500">
                       {ACTION_CONFIG[activeAction].label}原因（可选）
                     </label>
                     <input
@@ -446,7 +446,7 @@ export function MemberDrawer({
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       placeholder="请输入原因..."
-                      className="w-full rounded-lg border border-transparent bg-stone-100/70 px-3 py-2 text-[13px] text-stone-800 outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-stone-400 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-950/5"
+                      className="w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-[13px] text-stone-700 outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                       disabled={isSubmitting}
                     />
                   </div>

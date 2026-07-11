@@ -554,10 +554,10 @@ export function AdminModulesContentV2({
     <div className="mt-4 grid gap-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr] relative items-start">
       
       {/* 左侧栏：团队架构树 */}
-      <aside className="space-y-4 rounded-2xl border border-stone-200 bg-[#FAFAFB] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <aside className="space-y-4 rounded-2xl border border-stone-200 bg-stone-50 p-5">
         <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
-          <span className="text-[13px] font-semibold tracking-tight text-stone-950">团队架构树</span>
-          <span className="font-mono text-[11px] uppercase tracking-wider text-stone-400">Structure</span>
+          <span className="text-[13px] font-medium tracking-tight text-stone-900">团队架构树</span>
+          <span className="text-[12px] uppercase tracking-wider text-stone-500">Structure</span>
         </div>
 
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
@@ -568,14 +568,14 @@ export function AdminModulesContentV2({
               "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150 active:scale-[0.98]",
               selectedTeamId === "__all__"
                 ? "bg-[#8AA8C7]/10 border-stone-300 text-stone-900 font-medium"
-                : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-800"
+                : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-900"
             )}
           >
             <span className="flex items-center gap-2">
-              <UsersRound className="size-4 text-stone-400" />
+              <UsersRound className="size-4 text-stone-500" />
               全员大盘
             </span>
-            <span className="rounded-full bg-stone-200/60 px-2 py-0.5 font-mono text-[11px] text-stone-600">
+            <span className="rounded-full bg-stone-200/60 px-2 py-0.5 text-[12px] text-stone-700">
               {localProfiles.length}
             </span>
           </button>
@@ -592,7 +592,7 @@ export function AdminModulesContentV2({
                     "group flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150 cursor-pointer",
                     isTeamSelected && !selectedGroupId
                       ? "bg-[#8AA8C7]/10 border-stone-300 text-stone-900 font-medium"
-                      : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-800"
+                      : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-900"
                   )}
                   onClick={() => { setSelectedTeamId(team.id); setSelectedGroupId(null); }}
                 >
@@ -602,14 +602,14 @@ export function AdminModulesContentV2({
                   </span>
                   
                   <div className="flex items-center gap-1.5">
-                    <span className="rounded-full bg-stone-200/60 px-2 py-0.5 font-mono text-[11px] text-stone-600">
+                    <span className="rounded-full bg-stone-200/60 px-2 py-0.5 text-[12px] text-stone-700">
                       {teamMembers.length}
                     </span>
                     {isOwner && teamMembers.length === 0 && teamGroups.length === 0 && (
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setDeleteTeamTarget(team); }}
-                        className="rounded-lg p-1 text-stone-300 opacity-0 transition-opacity hover:text-[#C9604D] group-hover:opacity-100 focus-within:opacity-100"
+                        className="rounded-lg p-1 text-stone-500/40 opacity-0 transition-opacity hover:text-[#C9604D] group-hover:opacity-100 focus-within:opacity-100"
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -632,17 +632,17 @@ export function AdminModulesContentV2({
                           className={cn(
                             "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors",
                             isGroupSelected
-                              ? "bg-stone-200/80 text-stone-950 font-medium"
-                              : "text-stone-500 hover:bg-stone-100/50 hover:text-stone-800"
+                              ? "bg-stone-200/80 text-stone-900 font-medium"
+                              : "text-stone-500 hover:bg-stone-100/50 hover:text-stone-900"
                           )}
                         >
                           <span className="truncate">
                             <span className="block truncate">{group.name}</span>
-                            <span className="block scale-90 origin-left text-[10px] text-stone-400 font-normal">
+                            <span className="block scale-90 origin-left text-[12px] text-stone-500 font-normal">
                               组长: {leaderName}
                             </span>
                           </span>
-                          <span className="font-mono text-[10px] text-stone-400">{groupMembers.length}人</span>
+                          <span className="text-[12px] text-stone-500">{groupMembers.length}人</span>
                         </button>
                       );
                     })}
@@ -653,12 +653,12 @@ export function AdminModulesContentV2({
                       className={cn(
                         "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors",
                         selectedGroupId === "__direct__"
-                          ? "bg-stone-200/80 text-stone-950 font-medium"
+                          ? "bg-stone-200/80 text-stone-900 font-medium"
                           : "text-stone-500 hover:bg-stone-100/50 hover:text-stone-900"
                       )}
                     >
                       <span>未分配组员</span>
-                      <span className="font-mono text-[10px] text-stone-400">
+                      <span className="text-[12px] text-stone-500">
                         {teamMembers.filter(p => p.role === "member" && !p.group_id).length}人
                       </span>
                     </button>
@@ -672,13 +672,13 @@ export function AdminModulesContentV2({
         {isOwner && (
           <div className="border-t border-stone-200/80 pt-4 space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">快捷新建团队</Label>
+              <Label className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">快捷新建团队</Label>
               <div className="flex gap-1.5">
                 <Input
                   value={newTeamName}
                   onChange={e => setNewTeamName(e.target.value)}
                   placeholder="如: 广州一部"
-                  className="h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white rounded-lg"
+                  className="h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 rounded-lg"
                 />
                 <Button
                   onClick={handleCreateTeam}
@@ -692,18 +692,18 @@ export function AdminModulesContentV2({
 
             {selectedTeamId !== "__all__" && canManageGroups && (
               <div className="space-y-2 border-t border-dashed border-stone-200 pt-3">
-                <Label className="text-[11px] font-medium text-stone-500 uppercase tracking-wider">在当前团队建组</Label>
+                <Label className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">在当前团队建组</Label>
                 <div className="space-y-1.5">
                   <Input
                     value={newGroupName}
                     onChange={e => setNewGroupName(e.target.value)}
                     placeholder="组名，如: 财经二组"
-                    className="h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white rounded-lg"
+                    className="h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 rounded-lg"
                   />
                   <select
                     value={newGroupLeaderId}
                     onChange={e => setNewGroupLeaderId(e.target.value)}
-                    className="w-full h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white rounded-lg px-2 text-stone-700 outline-none border focus:border-stone-200"
+                    className="w-full h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 rounded-lg px-2 text-stone-700 outline-none border"
                   >
                     <option value="">选择组长</option>
                     {leaderCandidates.map(c => (
@@ -727,10 +727,10 @@ export function AdminModulesContentV2({
       {/* 中间栏：工作台与审批 */}
       <main className="space-y-6">
         {pendingRequests.length > 0 && (
-          <section className="rounded-2xl border border-stone-200 bg-[#FAFAFB] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+          <section className="rounded-2xl border border-stone-200 bg-stone-50 p-5">
             <div className="flex items-center gap-3">
-              <span className="text-[14px] font-semibold text-stone-950">待审批入团申请</span>
-              <span className="inline-flex items-center rounded-full bg-[#D99E55]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#9B6B2E] tracking-tight">
+              <span className="text-[13px] font-medium text-stone-900">待审批入团申请</span>
+              <span className="inline-flex items-center rounded-full bg-[#D99E55]/15 px-2.5 py-0.5 text-[12px] font-medium text-[#9B6B2E] tracking-tight">
                 {pendingRequests.length} 个待办
               </span>
             </div>
@@ -739,17 +739,17 @@ export function AdminModulesContentV2({
               {pendingRequests.map(req => (
                 <div 
                   key={req.id} 
-                  className="flex flex-col justify-between rounded-xl border border-stone-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.01)] hover:border-stone-300 transition-colors"
+                  className="flex flex-col justify-between rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 transition-colors"
                 >
                   <div className="space-y-1">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-[13px] font-bold text-stone-900">{req.applicantName}</span>
-                      <span className="text-[10px] text-stone-400">
+                      <span className="text-[13px] font-medium text-stone-900">{req.applicantName}</span>
+                      <span className="text-[12px] text-stone-500">
                         {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                       </span>
                     </div>
-                    <p className="text-[11px] text-stone-500">
-                      申请加入团队：<span className="text-stone-800 font-medium">{req.targetTeamName}</span>
+                    <p className="text-[12px] text-stone-500">
+                      申请加入团队：<span className="text-stone-900 font-medium">{req.targetTeamName}</span>
                     </p>
                   </div>
 
@@ -758,14 +758,14 @@ export function AdminModulesContentV2({
                       variant="ghost"
                       onClick={() => handleReviewJoinRequest(req.id, "reject")}
                       disabled={isPending}
-                      className="h-7 px-3 text-[11px] text-[#C9604D] hover:bg-[#C9604D]/5 rounded-lg"
+                      className="h-7 px-3 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/5 rounded-lg"
                     >
                       拒绝
                     </Button>
                     <Button
                       onClick={() => handleReviewJoinRequest(req.id, "approve")}
                       disabled={isPending}
-                      className="h-7 px-3 text-[11px] bg-[#6FAA7D] hover:bg-[#5C9469] text-white rounded-lg active:scale-95"
+                      className="h-7 px-3 text-[12px] bg-[#6FAA7D] hover:bg-[#5C9469] text-white rounded-lg active:scale-95"
                     >
                       同意加入
                     </Button>
@@ -776,19 +776,19 @@ export function AdminModulesContentV2({
           </section>
         )}
 
-        <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+        <section className="rounded-2xl border border-stone-200 bg-white p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-stone-100 pb-5">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-2.5 size-4 text-stone-400 stroke-[1.5]" />
+              <Search className="absolute left-3 top-2.5 size-4 text-stone-500 stroke-[1.5]" />
               <Input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="搜索姓名、邮箱或所属团队..."
-                className="h-9.5 pl-9 pr-4 text-[13px] bg-stone-100/60 border-transparent focus:bg-white rounded-xl"
+                className="h-9.5 pl-9 pr-4 text-[13px] bg-stone-100/60 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 rounded-xl"
               />
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[11px] tabular-nums text-stone-400 uppercase tracking-wider">
+              <span className="text-[12px] tabular-nums text-stone-500 uppercase tracking-wider">
                 展示 {filteredProfiles.length} / {localProfiles.length} 人
               </span>
             </div>
@@ -800,11 +800,11 @@ export function AdminModulesContentV2({
                 <div className="absolute inset-0 rounded-full border border-dashed border-stone-300 animate-[spin_40s_linear_infinite]" />
                 <div className="absolute h-full w-px bg-stone-200" />
                 <div className="absolute w-full h-px bg-stone-200" />
-                <UsersRound className="size-6 text-stone-400 z-10 stroke-[1.25]" />
+                <UsersRound className="size-6 text-stone-500 z-10 stroke-[1.25]" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-[14px] font-semibold text-stone-700">未找到任何成员</h3>
-                <p className="text-[12px] text-stone-400 max-w-[260px] mx-auto leading-relaxed">
+                <h3 className="text-[13px] font-medium text-stone-700">未找到任何成员</h3>
+                <p className="text-[12px] text-stone-500 max-w-[260px] mx-auto leading-relaxed">
                   当前筛选条件或搜索词下无可管理的人员。您可以尝试点击左侧大盘或调整搜索条件。
                 </p>
               </div>
@@ -821,30 +821,30 @@ export function AdminModulesContentV2({
                     key={member.id}
                     onClick={() => handleSelectMember(member)}
                     className={cn(
-                      "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 cursor-pointer hover:border-stone-300 hover:shadow-[0_2px_8px_rgba(0,0,0,0.03)]",
+                      "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 cursor-pointer hover:border-stone-300 hover:shadow-sm",
                       isCurrentMemberActive
-                        ? "border-[#8AA8C7] bg-[#8AA8C7]/5 shadow-[0_2px_8px_rgba(138,168,199,0.08)]"
+                        ? "border-[#8AA8C7] bg-[#8AA8C7]/5"
                         : "border-stone-200 bg-white"
                     )}
                   >
                     <div className="space-y-2">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="text-[13.5px] font-bold text-stone-950 flex items-center gap-1.5">
+                          <h4 className="text-[13px] font-medium text-stone-900 flex items-center gap-1.5">
                             {member.name}
                             {member.id === currentUserId && (
-                              <span className="scale-90 text-[10px] text-stone-400 font-normal border border-stone-200 px-1 rounded">我</span>
+                              <span className="scale-90 text-[12px] text-stone-500 font-normal border border-stone-200 px-1 rounded">我</span>
                             )}
                           </h4>
-                          <span className="text-[11px] font-mono text-stone-400 leading-none">
+                          <span className="text-[12px] text-stone-500 leading-none">
                             {member.email ? member.email : "邮箱获取中..."}
                           </span>
                         </div>
 
                         <span className={cn(
-                          "inline-flex h-5.5 items-center gap-1 rounded-full px-2 text-[10.5px] font-medium tracking-tight border",
+                          "inline-flex h-5.5 items-center gap-1 rounded-full px-2 text-[12px] font-medium tracking-tight border",
                           isAdmin
-                            ? "bg-white border-[#D97757]/30 text-stone-800 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                            ? "bg-white border-[#D97757]/30 text-stone-900"
                             : "bg-stone-100 border-transparent text-stone-700"
                         )}>
                           {isAdmin ? (
@@ -857,21 +857,21 @@ export function AdminModulesContentV2({
                       </div>
 
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        <span className="inline-flex items-center rounded-lg bg-stone-100 px-2 py-0.5 text-[11px] text-stone-600 font-medium">
+                        <span className="inline-flex items-center rounded-lg bg-stone-100 px-2 py-0.5 text-[12px] text-stone-700 font-medium">
                           {member.team_name || "未分配团队"}
                         </span>
                         {groupAsLeader ? (
-                          <span className="inline-flex items-center rounded-lg bg-[#8AA8C7]/15 px-2 py-0.5 text-[11px] text-[#5A7E9C] font-semibold">
+                          <span className="inline-flex items-center rounded-lg bg-[#8AA8C7]/15 px-2 py-0.5 text-[12px] text-[#8AA8C7] font-medium">
                             组长 : {groupAsLeader.name}
                           </span>
                         ) : member.group_id ? (
-                          <span className="inline-flex items-center rounded-lg bg-stone-100/80 px-2 py-0.5 text-[11px] text-stone-500">
+                          <span className="inline-flex items-center rounded-lg bg-stone-100/80 px-2 py-0.5 text-[12px] text-stone-500">
                             {teamManagement.groups.find(g => g.id === member.group_id)?.name || "已分分组"}
                           </span>
                         ) : null}
                         
                         {member.exempt_type && (
-                          <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[11px] text-[#C9604D] font-medium">
+                          <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
                             已豁免
                           </span>
                         )}
@@ -885,7 +885,7 @@ export function AdminModulesContentV2({
                             value={member.team_id ?? ""}
                             onChange={e => handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)}
                             onClick={e => e.stopPropagation()}
-                            className="h-6.5 text-[10.5px] bg-stone-50 border border-stone-200 rounded px-1.5 text-stone-600 outline-none"
+                            className="h-6.5 text-[12px] bg-stone-50 border border-stone-200 rounded px-1.5 text-stone-700 outline-none"
                           >
                             <option value="">未分配团队</option>
                             {localTeams.map(t => (
@@ -899,7 +899,7 @@ export function AdminModulesContentV2({
                             value={member.group_id ?? ""}
                             onChange={e => handleAssignMemberToGroup(member.id, e.target.value ? e.target.value : null)}
                             onClick={e => e.stopPropagation()}
-                            className="h-6.5 text-[10.5px] bg-stone-50 border border-stone-200 rounded px-1.5 text-stone-600 outline-none"
+                            className="h-6.5 text-[12px] bg-stone-50 border border-stone-200 rounded px-1.5 text-stone-700 outline-none"
                           >
                             <option value="">直管成员</option>
                             {teamManagement.groups
@@ -918,7 +918,7 @@ export function AdminModulesContentV2({
                             type="button"
                             title="修改角色"
                             onClick={(e) => { e.stopPropagation(); handleToggleRole(member); }}
-                            className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+                            className="rounded p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-700"
                           >
                             <Settings className="size-3.5" />
                           </button>
@@ -926,7 +926,7 @@ export function AdminModulesContentV2({
                             type="button"
                             title="重置密码"
                             onClick={(e) => { e.stopPropagation(); setPasswordResetTarget(member); }}
-                            className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+                            className="rounded p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-700"
                           >
                             <KeyRound className="size-3.5" />
                           </button>
@@ -954,17 +954,17 @@ export function AdminModulesContentV2({
             <div className="flex items-start justify-between border-b border-stone-200 p-6">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-[18px] font-bold text-stone-950">{activeMember.name}</h3>
+                  <h3 className="text-[18px] font-medium text-stone-900">{activeMember.name}</h3>
                   <span className={cn(
-                    "inline-flex h-5 items-center gap-1 rounded-full px-2 text-[10px] font-semibold border",
+                    "inline-flex h-5 items-center gap-1 rounded-full px-2 text-[12px] font-medium border",
                     activeMember.role === "admin"
-                      ? "bg-white border-[#D97757]/30 text-stone-800"
+                      ? "bg-white border-[#D97757]/30 text-stone-900"
                       : "bg-stone-100 border-transparent text-stone-700"
                   )}>
                     {activeMember.role === "admin" ? "管理员" : "组员"}
                   </span>
                 </div>
-                <p className="text-[11.5px] text-stone-500 leading-none">
+                <p className="text-[12px] text-stone-500 leading-none">
                   {activeMember.team_name || "未分配团队"} · {activeMember.email || "邮箱同步中"}
                 </p>
               </div>
@@ -975,7 +975,7 @@ export function AdminModulesContentV2({
                     variant="outline"
                     onClick={handleFetchAiSuggestion}
                     disabled={aiSuggestion?.loading}
-                    className="h-8 text-[11px] rounded-lg border-stone-200 hover:bg-stone-50 flex items-center gap-1 px-2.5"
+                    className="h-8 text-[12px] rounded-lg border-stone-200 hover:bg-stone-50 flex items-center gap-1 px-2.5"
                   >
                     <Sparkles className="size-3 text-[#D97757] animate-pulse" />
                     AI 诊断
@@ -984,7 +984,7 @@ export function AdminModulesContentV2({
                 <button
                   type="button"
                   onClick={() => { setActiveMemberId(null); setAiSuggestion(null); }}
-                  className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+                  className="rounded-lg p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-700"
                 >
                   <X className="size-4.5" />
                 </button>
@@ -994,11 +994,11 @@ export function AdminModulesContentV2({
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {aiSuggestion && (
                 <div className={cn(
-                  "rounded-xl border-l-2 bg-[#FAFAFB] p-4 space-y-3",
+                  "rounded-xl border-l-2 bg-stone-50 p-4 space-y-3",
                   aiSuggestion.status === "critical" ? "border-l-[#C9604D]" : "border-l-stone-300"
                 )}>
                   {aiSuggestion.loading ? (
-                    <div className="flex items-center gap-2 text-[12px] text-stone-400 py-2">
+                    <div className="flex items-center gap-2 text-[12px] text-stone-500 py-2">
                       <RefreshCw className="size-3.5 animate-spin" />
                       AI 正在深度审查其日常填报及安全审计日志...
                     </div>
@@ -1006,14 +1006,14 @@ export function AdminModulesContentV2({
                     <>
                       <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
                         <span className={cn(
-                          "inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold",
+                          "inline-flex rounded px-1.5 py-0.5 text-[12px] font-medium",
                           aiSuggestion.status === "critical" 
                             ? "bg-[#C9604D]/15 text-[#C9604D]" 
-                            : "bg-[#8AA8C7]/15 text-[#5A7E9C]"
+                            : "bg-[#8AA8C7]/15 text-[#8AA8C7]"
                         )}>
                           {aiSuggestion.status === "critical" ? "安全警告" : "诊断建议"}
                         </span>
-                        <span className="text-[10px] text-stone-400">AI 推理建议</span>
+                        <span className="text-[12px] text-stone-500">AI 推理建议</span>
                       </div>
                       <p className="text-[12px] text-stone-700 leading-relaxed">{aiSuggestion.summary}</p>
                       
@@ -1021,15 +1021,15 @@ export function AdminModulesContentV2({
                         const key = `${sug.label}-${idx}`;
                         const isBusy = executingAiKey === key;
                         return (
-                          <div key={idx} className="bg-white rounded-lg border border-stone-200 p-2.5 flex items-start justify-between gap-3 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
+                          <div key={idx} className="bg-white rounded-lg border border-stone-200 p-2.5 flex items-start justify-between gap-3">
                             <div className="space-y-0.5">
-                              <h5 className="text-[11.5px] font-bold text-stone-800">{sug.label}</h5>
-                              <p className="text-[10.5px] text-stone-500 leading-relaxed">{sug.description}</p>
+                              <h5 className="text-[12px] font-medium text-stone-900">{sug.label}</h5>
+                              <p className="text-[12px] text-stone-500 leading-relaxed">{sug.description}</p>
                             </div>
                             <Button
                               onClick={() => void handleExecuteAiSuggestion(sug, key)}
                               disabled={Boolean(executingAiKey)}
-                              className="h-7 px-2.5 bg-stone-950 text-white hover:bg-stone-800 rounded text-[11px] shrink-0 active:scale-95"
+                              className="h-7 px-2.5 bg-stone-950 text-white hover:bg-stone-800 rounded text-[12px] shrink-0 active:scale-95"
                             >
                               {isBusy ? "执行中..." : "一键部署"}
                             </Button>
@@ -1044,7 +1044,7 @@ export function AdminModulesContentV2({
               {activeMember.role === "admin" ? (
                 <>
                   <div className="space-y-2.5">
-                    <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400">后台管理授权</h4>
+                    <h4 className="text-[12px] font-normal uppercase tracking-[0.2em] text-stone-500">后台管理授权</h4>
                     <div className="grid gap-2">
                       {ADMIN_PERMISSION_KEYS.map(key => {
                         const isChecked = draftPermissions[key] === true;
@@ -1053,15 +1053,15 @@ export function AdminModulesContentV2({
                             key={key}
                             onClick={() => permissionManagerCapabilities.canEditPermissions && handleTogglePermission(key, !isChecked)}
                             className={cn(
-                              "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150 shadow-[0_1px_2px_rgba(0,0,0,0.01)]",
+                              "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked
                                 ? "border-[#8AA8C7]/60 bg-[#8AA8C7]/8"
                                 : "border-stone-200 bg-white hover:bg-stone-50"
                             )}
                           >
                             <div className="space-y-0.5 pr-2">
-                              <span className="text-[12.5px] font-bold text-stone-900">{PERMISSION_LABELS[key]}</span>
-                              <p className="text-[11px] text-stone-500 leading-relaxed">
+                              <span className="text-[13px] font-medium text-stone-900">{PERMISSION_LABELS[key]}</span>
+                              <p className="text-[12px] text-stone-500 leading-relaxed">
                                 {PERMISSION_DESCRIPTIONS[key] || "后台管理和维护的基本操作。"}
                               </p>
                             </div>
@@ -1078,7 +1078,7 @@ export function AdminModulesContentV2({
                   </div>
 
                   <div className="space-y-2.5">
-                    <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400">AI 智能辅助授权</h4>
+                    <h4 className="text-[12px] font-normal uppercase tracking-[0.2em] text-stone-500">AI 智能辅助授权</h4>
                     <div className="grid gap-2">
                       {AI_PERMISSION_KEYS.map(key => {
                         const isChecked = draftPermissions[key] === true;
@@ -1087,15 +1087,15 @@ export function AdminModulesContentV2({
                             key={key}
                             onClick={() => permissionManagerCapabilities.canEditPermissions && handleTogglePermission(key, !isChecked)}
                             className={cn(
-                              "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150 shadow-[0_1px_2px_rgba(0,0,0,0.01)]",
+                              "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked
                                 ? "border-[#8AA8C7]/60 bg-[#8AA8C7]/8"
                                 : "border-stone-200 bg-white hover:bg-stone-50"
                             )}
                           >
                             <div className="space-y-0.5 pr-2">
-                              <span className="text-[12.5px] font-bold text-stone-900">{PERMISSION_LABELS[key]}</span>
-                              <p className="text-[11px] text-stone-500 leading-relaxed">
+                              <span className="text-[13px] font-medium text-stone-900">{PERMISSION_LABELS[key]}</span>
+                              <p className="text-[12px] text-stone-500 leading-relaxed">
                                 {PERMISSION_DESCRIPTIONS[key] || "分配和设置成员智能工作流辅助工具能力。"}
                               </p>
                             </div>
@@ -1113,10 +1113,10 @@ export function AdminModulesContentV2({
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-6 text-center">
-                  <ShieldAlert className="size-5.5 text-stone-400 stroke-[1.5]" />
+                  <ShieldAlert className="size-5.5 text-stone-500 stroke-[1.5]" />
                   <div>
-                    <h5 className="text-[12px] font-bold text-stone-700">组员无需单独授权</h5>
-                    <p className="text-[11px] text-stone-500 max-w-[200px] leading-relaxed mt-0.5">
+                    <h5 className="text-[12px] font-medium text-stone-700">组员无需单独授权</h5>
+                    <p className="text-[12px] text-stone-500 max-w-[200px] leading-relaxed mt-0.5">
                       系统内普通组员不享有单独管理和AI功能配置权。提升其角色为“管理员”即可开放授权。
                     </p>
                   </div>
@@ -1125,7 +1125,7 @@ export function AdminModulesContentV2({
 
               {isOwner && activeMember.id !== currentUserId && (
                 <div className="space-y-3.5 border-t border-stone-200 pt-6">
-                  <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400">高级管理</h4>
+                  <h4 className="text-[12px] font-normal uppercase tracking-[0.2em] text-stone-500">高级管理</h4>
                   
                   <div className="grid gap-2 sm:grid-cols-2">
                     <Button
@@ -1156,8 +1156,8 @@ export function AdminModulesContentV2({
             </div>
 
             {activeMember.role === "admin" && (
-              <div className="flex flex-col gap-2 border-t border-stone-200 bg-[#FAFAFB] p-4">
-                <span className="text-[10px] text-stone-400">* 权限保存更改需要刷新浏览器刷新缓存以最终生效。</span>
+              <div className="flex flex-col gap-2 border-t border-stone-200 bg-stone-50 p-4">
+                <span className="text-[12px] text-stone-500">* 权限保存更改需要刷新浏览器刷新缓存以最终生效。</span>
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="ghost"
@@ -1200,9 +1200,9 @@ export function AdminModulesContentV2({
           </DialogHeader>
           {passwordResetTarget && (
             <div className="space-y-4 pt-2">
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-3.5 text-[12.5px] text-stone-700">
-                <span className="block font-bold text-stone-800">{passwordResetTarget.name}</span>
-                <span className="block text-[11.5px]">{passwordResetTarget.email || "未关联邮箱"}</span>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-3.5 text-[13px] text-stone-700">
+                <span className="block font-medium text-stone-900">{passwordResetTarget.name}</span>
+                <span className="block text-[12px]">{passwordResetTarget.email || "未关联邮箱"}</span>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="v2-new-password">新密码</Label>
@@ -1212,7 +1212,7 @@ export function AdminModulesContentV2({
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   placeholder="不得少于 6 位"
-                  className="rounded-lg h-9 bg-stone-50 focus:bg-white"
+                  className="rounded-lg h-9 bg-stone-50 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                 />
               </div>
               <div className="space-y-1.5">
@@ -1223,7 +1223,7 @@ export function AdminModulesContentV2({
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="重新输入新密码"
-                  className="rounded-lg h-9 bg-stone-50 focus:bg-white"
+                  className="rounded-lg h-9 bg-stone-50 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                 />
               </div>
             </div>

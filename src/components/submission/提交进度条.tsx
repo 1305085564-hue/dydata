@@ -30,7 +30,7 @@ export function 提交进度条({ currentStage }: SubmissionProgressProps) {
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 className={cn(
                   badgeClass(active ? "primary" : "neutral"),
-                  "h-8 px-3 text-xs font-semibold",
+                  "h-8 px-3 text-[12px] font-medium",
                   current && "ring-2 ring-[#D97757]/15"
                 )}
               >

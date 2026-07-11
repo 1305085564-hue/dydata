@@ -36,12 +36,12 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
               <TableRow key={item.accountId} className="h-11">
                 <TableCell className="align-top">
                   <div className="space-y-0.5">
-                    <div className="text-[13px] font-medium text-stone-800">{item.ownerName}</div>
+                    <div className="text-[13px] font-medium text-stone-900">{item.ownerName}</div>
                     <div className="text-[12px] text-stone-500">{item.accountName}</div>
                   </div>
                 </TableCell>
                 <TableCell className="align-top text-[13px] font-medium text-[#C9604D]">{item.metrics[0]?.value ?? "—"}</TableCell>
-                <TableCell className="align-top text-[13px] text-stone-600">{item.latestPerformance}</TableCell>
+                <TableCell className="align-top text-[13px] text-stone-700">{item.latestPerformance}</TableCell>
                 <TableCell className="align-top">
                   <div className="flex flex-wrap gap-1.5">
                     {item.reasons.map((reason) => (
@@ -51,7 +51,7 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
                     ))}
                   </div>
                 </TableCell>
-                <TableCell className="max-w-xs whitespace-normal text-[13px] text-stone-600">{item.action}</TableCell>
+                <TableCell className="max-w-xs whitespace-normal text-[13px] text-stone-700">{item.action}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -62,7 +62,7 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
         {items.map((item) => (
           <div key={item.accountId} className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
             <div className="space-y-0.5">
-              <div className="text-[14px] font-medium text-stone-800">{item.ownerName}</div>
+              <div className="text-[13px] font-medium text-stone-900">{item.ownerName}</div>
               <div className="text-[12px] text-stone-500">{item.accountName}</div>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -75,7 +75,7 @@ export function InterventionList({ items }: { items: InterventionItem[] }) {
             <div className="grid grid-cols-2 gap-2 text-[13px]">
               {item.metrics.map((metric) => (
                 <div key={metric.label} className="rounded-xl bg-stone-50 px-3 py-2">
-                  <p className="text-[11px] text-stone-400">{metric.label}</p>
+                  <p className="text-[12px] text-stone-500">{metric.label}</p>
                   <p className="mt-1 font-medium text-stone-700">{metric.value}</p>
                 </div>
               ))}

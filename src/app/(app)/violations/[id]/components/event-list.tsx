@@ -26,16 +26,16 @@ export type EventItem = {
 const EVENT_TYPE_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
   限流: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
   警告: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
-  删除视频: { borderColor: "border-stone-200", textColor: "text-stone-600", dotColor: "#a1a1aa" },
+  删除视频: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
   封号: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
-  其他: { borderColor: "border-stone-200", textColor: "text-stone-600", dotColor: "#a1a1aa" },
+  其他: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
 };
 
 const APPEAL_STATUS_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
   申诉成功: { borderColor: "border-[#6FAA7D]/30", textColor: "text-[#6FAA7D]", dotColor: "#6FAA7D" },
   申诉失败: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
   申诉中: { borderColor: "border-[#8AA8C7]/30", textColor: "text-[#8AA8C7]", dotColor: "#8AA8C7" },
-  未申诉: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#a1a1aa" },
+  未申诉: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
 };
 
 function firstOf<T>(value: T | T[] | null | undefined): T | null {
@@ -75,9 +75,9 @@ function PlatformNoticeBlock({ text }: { text: string }) {
   return (
     <div className="rounded-lg bg-stone-50 p-3">
       <div className="flex items-start gap-2">
-        <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-stone-400" strokeWidth={1.5} />
+        <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-stone-500" strokeWidth={1.5} />
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+          <div className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
             平台通知
           </div>
           <p
@@ -92,7 +92,7 @@ function PlatformNoticeBlock({ text }: { text: string }) {
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-stone-500 hover:text-stone-800 active:translate-y-0"
+              className="mt-1 inline-flex items-center gap-1 text-[12px] font-normal text-stone-500 hover:text-stone-700 active:translate-y-0"
             >
               {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
               {expanded ? "收起" : "展开全文"}
@@ -223,7 +223,7 @@ export function EventList({ events }: { events: EventItem[] }) {
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-medium",
+                      "inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[12px] font-normal",
                       eventStyle.borderColor,
                       eventStyle.textColor,
                     )}
@@ -232,15 +232,15 @@ export function EventList({ events }: { events: EventItem[] }) {
                     {event.event_type}
                   </span>
                   <span className="inline-flex items-center gap-1 text-[12px] text-stone-500">
-                    <Calendar className="size-3.5 text-stone-400" strokeWidth={1.5} />
+                    <Calendar className="size-3.5 text-stone-500" strokeWidth={1.5} />
                     {formatDateTime(event.occurred_at)}
                   </span>
-                  <span className="text-stone-300">·</span>
-                  <span className="text-[12px] font-medium text-stone-700">{accountName}</span>
+                    <span className="text-stone-500">·</span>
+                  <span className="text-[12px] font-normal text-stone-700">{accountName}</span>
                 </div>
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[11px] font-medium",
+                    "inline-flex items-center gap-1.5 rounded-lg border px-2 py-0.5 text-[12px] font-normal",
                     appealStyle.borderColor,
                     appealStyle.textColor,
                   )}
@@ -257,21 +257,21 @@ export function EventList({ events }: { events: EventItem[] }) {
               ) : null}
 
               {event.suspected_reason ? (
-                <p className="mt-3 text-[12px] leading-6 text-stone-600">
-                  <span className="font-medium text-stone-500">疑似原因：</span>
+                <p className="mt-3 text-[12px] leading-6 text-stone-700">
+                  <span className="font-normal text-stone-500">疑似原因：</span>
                   {event.suspected_reason}
                 </p>
               ) : null}
 
               {event.appeal_result ? (
-                <p className="mt-2 text-[12px] leading-6 text-stone-600">
-                  <span className="font-medium text-stone-500">申诉结果：</span>
+                <p className="mt-2 text-[12px] leading-6 text-stone-700">
+                  <span className="font-normal text-stone-500">申诉结果：</span>
                   {event.appeal_result}
                 </p>
               ) : null}
 
               {event.recovered_at ? (
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#6FAA7D]/30 px-2 py-0.5 text-[11px] font-medium text-[#6FAA7D]">
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#6FAA7D]/30 px-2 py-0.5 text-[12px] font-normal text-[#6FAA7D]">
                   <RefreshCw className="size-3" strokeWidth={1.5} />
                   恢复于 {formatDateTime(event.recovered_at)}
                 </div>
@@ -280,13 +280,13 @@ export function EventList({ events }: { events: EventItem[] }) {
               <ScreenshotThumbs paths={screenshots} onOpen={setLightboxPath} />
 
               {event.note ? (
-                <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-stone-600">
+                <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-stone-700">
                   {event.note}
                 </p>
               ) : null}
 
               {reporterName ? (
-                <div className="mt-3 text-[11px] text-stone-400">上报人 {reporterName}</div>
+                <div className="mt-3 text-[12px] text-stone-500">上报人 {reporterName}</div>
               ) : null}
             </motion.li>
           );

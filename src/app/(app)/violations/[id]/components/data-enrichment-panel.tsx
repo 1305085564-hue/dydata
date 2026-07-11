@@ -132,9 +132,9 @@ export function DataEnrichmentPanel({
       <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileCheck className="size-4.5 text-[#D97757]" />
-          <h2 className="text-sm font-semibold text-stone-800">黄金知识沉淀台 (Data Enrichment Desk)</h2>
+          <h2 className="text-[18px] font-medium text-stone-900">黄金知识沉淀台 (Data Enrichment Desk)</h2>
         </div>
-        <button onClick={onClose} className="p-1 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-50 transition-colors">
+        <button onClick={onClose} className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700">
           <X className="size-4" />
         </button>
       </div>
@@ -144,8 +144,8 @@ export function DataEnrichmentPanel({
         
         {/* Original Script */}
         <div className="space-y-1.5">
-          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">原始脚本文案</span>
-          <div className="rounded-xl border border-stone-200 bg-stone-50/50 p-4 font-mono text-[12px] leading-relaxed text-stone-700 whitespace-pre-wrap max-h-[120px] overflow-y-auto">
+          <span className="text-[12px] font-normal tracking-[0.12em] text-stone-500">原始脚本文案</span>
+          <div className="max-h-[120px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-stone-200 bg-stone-50/50 p-4 text-[12px] leading-relaxed text-stone-700">
             {caseDetail.script_text}
           </div>
         </div>
@@ -155,25 +155,25 @@ export function DataEnrichmentPanel({
             {/* Enrichment Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">
-                  钩子文案 (hook_text) <span className="text-red-500">*</span>
+                <label className="text-[12px] font-normal text-stone-500">
+                  钩子文案 (hook_text) <span className="text-[#C9604D]">*</span>
                 </label>
                 <textarea
                   value={hookText}
                   onChange={(e) => setHookText(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                   placeholder="提取视频前 3 秒吸引人点入的黄金钩子..."
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">
-                  系统级总结洞察 (admin_insight) <span className="text-red-500">*</span>
+                <label className="text-[12px] font-normal text-stone-500">
+                  系统级总结洞察 (admin_insight) <span className="text-[#C9604D]">*</span>
                 </label>
                 <textarea
                   value={adminInsight}
                   onChange={(e) => setAdminInsight(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                   placeholder="总结本条案例的核心数据高转化原因及可复用方法论..."
                 />
               </div>
@@ -181,33 +181,33 @@ export function DataEnrichmentPanel({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">主体文案 (body_text)</label>
+                <label className="text-[12px] font-normal text-stone-500">主体文案 (body_text)</label>
                 <textarea
                   value={bodyText}
                   onChange={(e) => setBodyText(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                   placeholder="视频主体论证或价值交付段落..."
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">引导文案 (cta_text)</label>
+                <label className="text-[12px] font-normal text-stone-500">引导文案 (cta_text)</label>
                 <textarea
                   value={ctaText}
                   onChange={(e) => setCtaText(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                   placeholder="结尾引导点赞关注、私信或加粉丝群的话术..."
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">关联原始视频 UUID (original_video_id)</label>
+              <label className="text-[12px] font-normal text-stone-500">关联原始视频 UUID (original_video_id)</label>
               <input
                 type="text"
                 value={originalVideoId}
                 onChange={(e) => setOriginalVideoId(e.target.value)}
-                className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[12px] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                className="h-9 w-full rounded-xl border border-stone-200 px-3 text-[12px] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                 placeholder="若本话术来源于某条批改视频，可填入其 UUID"
               />
             </div>
@@ -215,7 +215,7 @@ export function DataEnrichmentPanel({
             {/* Taxonomy Tag Pillars */}
             <div className="space-y-3.5 pt-2 border-t border-stone-100">
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">情感分类 (Emotion)</span>
+                <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">情感分类 (Emotion)</span>
                 <div className="flex flex-wrap gap-1.5">
                   {emotionTags.map((tag) => {
                     const active = selectedEmotions.includes(tag);
@@ -225,7 +225,7 @@ export function DataEnrichmentPanel({
                         type="button"
                         onClick={() => toggleTag(selectedEmotions, setSelectedEmotions, tag)}
                         className={cn(
-                          "rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors active:scale-95",
+                          "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
                             ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
                             : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
@@ -239,7 +239,7 @@ export function DataEnrichmentPanel({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">场景分类 (Scenario)</span>
+                <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">场景分类 (Scenario)</span>
                 <div className="flex flex-wrap gap-1.5">
                   {scenarioTags.map((tag) => {
                     const active = selectedScenarios.includes(tag);
@@ -249,7 +249,7 @@ export function DataEnrichmentPanel({
                         type="button"
                         onClick={() => toggleTag(selectedScenarios, setSelectedScenarios, tag)}
                         className={cn(
-                          "rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors active:scale-95",
+                          "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
                             ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
                             : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
@@ -263,7 +263,7 @@ export function DataEnrichmentPanel({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">产品品类 (Product Category)</span>
+                <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">产品品类 (Product Category)</span>
                 <div className="flex flex-wrap gap-1.5">
                   {categoryTags.map((tag) => {
                     const active = selectedCategories.includes(tag);
@@ -273,7 +273,7 @@ export function DataEnrichmentPanel({
                         type="button"
                         onClick={() => toggleTag(selectedCategories, setSelectedCategories, tag)}
                         className={cn(
-                          "rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors active:scale-95",
+                          "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
                             ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
                             : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
@@ -289,26 +289,26 @@ export function DataEnrichmentPanel({
           </>
         ) : (
           /* Request Supplement Panel */
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/20 p-5 space-y-4">
-            <div className="flex items-start gap-2.5 text-xs text-amber-800 font-semibold uppercase tracking-wider">
+          <div className="space-y-4 rounded-2xl border border-[#D99E55]/30 bg-[#D99E55]/[0.06] p-5">
+            <div className="flex items-start gap-2.5 text-[12px] font-medium tracking-[0.12em] text-[#D99E55]">
               <AlertTriangle className="size-4.5 text-[#D99E55]" />
               向员工索要凭证 / 退回修改
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest">打回具体原因说明</label>
+              <label className="text-[12px] font-normal text-stone-500">打回具体原因说明</label>
               <textarea
                 value={supplementReason}
                 onChange={(e) => setSupplementReason(e.target.value)}
-                className="w-full min-h-[80px] rounded-xl border border-stone-200 bg-white p-3 text-[12px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#D97757]"
+                className="w-full min-h-[80px] rounded-xl border border-stone-200 bg-white p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
                 placeholder="例如：请上传 24h 完播率或流量漏斗截图，以及本话术的使用效果反馈说明..."
               />
             </div>
 
             <div className="space-y-2">
-              <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-widest block">需要补充的缺省项</span>
+              <span className="block text-[12px] font-normal text-stone-500">需要补充的缺省项</span>
               <div className="flex gap-4">
-                <label className="flex items-center gap-1.5 text-xs font-medium text-stone-700 cursor-pointer select-none">
+                <label className="flex cursor-pointer select-none items-center gap-1.5 text-[12px] font-normal text-stone-700">
                   <input
                     type="checkbox"
                     checked={missingFields.includes("screenshot")}
@@ -320,7 +320,7 @@ export function DataEnrichmentPanel({
                   />
                   完播/流量截图
                 </label>
-                <label className="flex items-center gap-1.5 text-xs font-medium text-stone-700 cursor-pointer select-none">
+                <label className="flex cursor-pointer select-none items-center gap-1.5 text-[12px] font-normal text-stone-700">
                   <input
                     type="checkbox"
                     checked={missingFields.includes("usage_metrics")}
@@ -340,7 +340,7 @@ export function DataEnrichmentPanel({
                 size="sm"
                 onClick={handleRequestSupplement}
                 disabled={submitting}
-                className="h-8 rounded-lg bg-[#C9604D] px-4 text-xs font-medium text-white hover:bg-[#B7513F] disabled:opacity-50"
+                className="h-8 rounded-lg bg-[#C9604D] px-4 text-[12px] font-medium text-white hover:bg-[#B7513F] disabled:opacity-50"
               >
                 确认打回并要求补交
               </Button>
@@ -348,7 +348,7 @@ export function DataEnrichmentPanel({
                 size="sm"
                 variant="outline"
                 onClick={() => setShowSupplementForm(false)}
-                className="h-8 rounded-lg border-stone-200 bg-white text-xs text-stone-600"
+                className="h-8 rounded-lg border-stone-200 bg-white text-[12px] text-stone-700"
               >
                 取消
               </Button>
@@ -363,7 +363,7 @@ export function DataEnrichmentPanel({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 rounded-lg border-amber-200/60 bg-amber-50/30 text-xs text-amber-800 hover:bg-amber-50/60 hover:text-amber-900"
+            className="h-8 rounded-lg border-[#D99E55]/30 bg-[#D99E55]/[0.06] text-[12px] text-[#D99E55] hover:bg-[#D99E55]/10"
             onClick={() => setShowSupplementForm(true)}
           >
             打回并索要凭证
@@ -374,7 +374,7 @@ export function DataEnrichmentPanel({
               size="sm"
               variant="outline"
               onClick={onClose}
-              className="h-8 rounded-lg text-xs"
+              className="h-8 rounded-lg text-[12px]"
             >
               取消
             </Button>
@@ -382,7 +382,7 @@ export function DataEnrichmentPanel({
               size="sm"
               disabled={submitting}
               onClick={handleEnrichVerify}
-              className="h-8 rounded-lg bg-[#D97757] text-xs text-white hover:bg-[#C96442] px-4"
+              className="h-8 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
             >
               {submitting ? "高光升库中..." : "确认富化并高光入库"}
             </Button>

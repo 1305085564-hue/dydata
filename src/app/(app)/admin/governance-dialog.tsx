@@ -76,7 +76,7 @@ export function GovernanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[768px] !max-w-[calc(100vw-2rem)] h-[384px] rounded-2xl border border-stone-200 bg-white p-0 flex flex-col">
         <DialogHeader className="border-b border-stone-200 px-6 py-4 shrink-0">
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-800">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-900">
             数据管理
           </DialogTitle>
         </DialogHeader>
@@ -85,7 +85,7 @@ export function GovernanceDialog({
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-                  <h3 className="text-[13px] font-medium tracking-tight text-stone-800">
+                  <h3 className="text-[13px] font-medium tracking-tight text-stone-900">
                     数据导出
                   </h3>
                 </div>
@@ -96,7 +96,7 @@ export function GovernanceDialog({
           {canEditData ? (
             <section className="space-y-3">
               <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-                <h3 className="text-[13px] font-medium tracking-tight text-stone-800">
+                <h3 className="text-[13px] font-medium tracking-tight text-stone-900">
                   数据修正
                 </h3>
               </div>

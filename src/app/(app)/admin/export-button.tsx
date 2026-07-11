@@ -53,7 +53,7 @@ export function ExportButton() {
           type="date"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
-          className="h-9 w-auto border-stone-200 bg-white text-stone-800"
+          className="h-9 w-auto border-stone-200 bg-white text-stone-900"
         />
       </div>
       <div className="space-y-1.5">
@@ -63,13 +63,13 @@ export function ExportButton() {
           type="date"
           value={to}
           onChange={(e) => setTo(e.target.value)}
-          className="h-9 w-auto border-stone-200 bg-white text-stone-800"
+          className="h-9 w-auto border-stone-200 bg-white text-stone-900"
         />
       </div>
       <Button
         onClick={handleExport}
         disabled={loading}
-        className="h-9 bg-white border border-stone-200 text-stone-800 hover:bg-stone-50"
+        className="h-9 bg-white border border-stone-200 text-stone-900 hover:bg-stone-50"
       >
         {loading ? "导出中..." : "导出 Excel"}
       </Button>

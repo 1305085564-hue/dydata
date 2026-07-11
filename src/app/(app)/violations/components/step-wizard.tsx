@@ -59,7 +59,7 @@ export function StepWizard({
           >
             <span
               className={cn(
-                "flex size-6 items-center justify-center rounded-full border text-[11px] font-semibold transition-colors",
+                "flex size-6 items-center justify-center rounded-full border text-[12px] font-medium transition-colors",
                 visibleStep >= 0
                   ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
                   : "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]",
@@ -67,7 +67,7 @@ export function StepWizard({
             >
               {visibleStep >= 0 ? <Check className="size-3 stroke-[2.5]" /> : "·"}
             </span>
-            <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-stone-400">
+            <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
               起步
             </span>
           </motion.div>
@@ -99,7 +99,7 @@ export function StepWizard({
                         damping: 26,
                       }}
                       className={cn(
-                        "flex size-8 items-center justify-center rounded-full text-[13px] font-semibold transition-colors",
+                        "flex size-8 items-center justify-center rounded-full text-[13px] font-medium transition-colors",
                         isCurrent && "bg-[#D97757] text-white shadow-sm",
                         isCompleted && "bg-[#6FAA7D] text-white",
                         isUpcoming && "bg-stone-200 text-stone-500",
@@ -115,7 +115,7 @@ export function StepWizard({
                       className={cn(
                         "text-[12px] transition-colors",
                         isCurrent
-                          ? "font-medium text-stone-800"
+                          ? "font-medium text-stone-900"
                           : "text-stone-500",
                       )}
                     >
@@ -199,10 +199,10 @@ export function StepWizard({
                 onClick={onSubmit}
                 disabled={isSubmitting || !canGoNext}
                 className={cn(
-                  "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
+                  "h-11 rounded-lg px-6 text-[13px] font-medium transition-all active:translate-y-[1px]",
                   isSubmitting || !canGoNext
-                    ? "cursor-not-allowed opacity-70"
-                    : "hover:bg-[#C96442] hover:shadow-sm",
+                    ? "cursor-not-allowed bg-stone-100 text-stone-500"
+                    : "bg-[#D97757] text-white shadow-sm hover:bg-[#C96442] hover:shadow-sm",
                 )}
               >
                 {isSubmitting ? "提交中..." : "确认提交"}
@@ -213,10 +213,10 @@ export function StepWizard({
                 onClick={onNext}
                 disabled={!canGoNext}
                 className={cn(
-                  "h-11 rounded-lg bg-[#D97757] px-6 text-[13px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
+                  "h-11 rounded-lg px-6 text-[13px] font-medium transition-all active:translate-y-[1px]",
                   !canGoNext
-                    ? "cursor-not-allowed opacity-70"
-                    : "hover:bg-[#C96442] hover:shadow-sm",
+                    ? "cursor-not-allowed bg-stone-100 text-stone-500"
+                    : "bg-[#D97757] text-white shadow-sm hover:bg-[#C96442] hover:shadow-sm",
                 )}
               >
                 下一步

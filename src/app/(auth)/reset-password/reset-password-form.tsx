@@ -78,7 +78,7 @@ export function ResetPasswordForm() {
             {submitting ? "提交中" : "确认重置密码"}
           </Button>
           <p className="text-center text-[13px] text-stone-500">
-            <Link className="text-stone-800 underline underline-offset-4" href="/login">
+            <Link className="text-stone-700 underline underline-offset-4" href="/login">
               返回登录
             </Link>
           </p>

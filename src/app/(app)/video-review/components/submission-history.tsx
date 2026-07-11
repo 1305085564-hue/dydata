@@ -55,23 +55,23 @@ export function SubmissionHistory({
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between px-1">
-        <h3 className="text-[13px] font-bold text-stone-800">
+        <h3 className="text-[18px] font-medium text-stone-900">
           今日提交历史
         </h3>
-        <span className="font-mono text-[12px] tabular-nums text-stone-400">
+        <span className="text-[12px] tabular-nums text-stone-500">
           共 {submissions.length} 条
         </span>
       </div>
 
       {submissions.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 flex flex-col items-center justify-center text-center">
-          <Upload className="size-10 text-stone-300 mb-3" />
+          <Upload className="size-10 text-stone-500 mb-3" />
           <p className="text-[13px] text-stone-500 mb-4">今天还没有提交发片凭证</p>
           {onCtaClick && (
             <button
               type="button"
               onClick={onCtaClick}
-              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-semibold text-white hover:bg-[#C96442] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/20"
+              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/20"
             >
               立即上传凭证
             </button>
@@ -102,7 +102,7 @@ export function SubmissionHistory({
                     "absolute top-3 right-3 text-[12px] font-medium flex items-center gap-1 transition-all rounded px-2 py-0.5",
                     confirmDeleteId === sub.id
                       ? "text-[#C9604D] bg-[#C9604D]/10 border border-[#C9604D]/20 opacity-100"
-                      : "text-stone-400 hover:text-[#C9604D] opacity-0 group-hover:opacity-100"
+                      : "text-stone-500 hover:text-[#C9604D] opacity-0 group-hover:opacity-100"
                   )}
                   title={confirmDeleteId === sub.id ? "确认删除？" : "删除"}
                 >
@@ -115,7 +115,7 @@ export function SubmissionHistory({
 
                 {/* Content text */}
                 {sub.content_text && (
-                  <p className="text-[13px] text-stone-800 leading-[1.6] line-clamp-3 whitespace-pre-wrap pr-6">
+                  <p className="text-[13px] text-stone-700 leading-[1.6] line-clamp-3 whitespace-pre-wrap pr-6">
                     {sub.content_text}
                   </p>
                 )}
@@ -141,14 +141,14 @@ export function SubmissionHistory({
 
                 {/* Note */}
                 {sub.note && (
-                  <div className="flex items-start gap-1 text-[12px] text-stone-400 truncate">
+                  <div className="flex items-start gap-1 text-[12px] text-stone-500 truncate">
                     <FileText className="size-3 mt-0.5 shrink-0" />
                     <span>{sub.note}</span>
                   </div>
                 )}
 
                 {/* Sub time */}
-                <div className="text-[12px] text-stone-400 font-mono">
+                <div className="text-[12px] text-stone-500 ">
                   {new Date(sub.created_at).toLocaleTimeString("zh-CN", {
                     hour: "2-digit",
                     minute: "2-digit",

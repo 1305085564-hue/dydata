@@ -30,7 +30,7 @@ function LoadingPlaceholder() {
     <div className="flex h-48 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-500">
       <div className="flex items-center gap-3">
         <Skeleton className="size-4 rounded-full" />
-        <span className="text-sm">正在加载模块...</span>
+        <span className="text-[13px]">正在加载模块...</span>
       </div>
     </div>
   );
@@ -50,7 +50,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
                 "inline-flex items-center rounded-xl border px-4 py-2 text-[13px] font-medium transition-colors",
                 isActive
                   ? "border-[#D97757]/40 bg-[#D97757]/8 text-[#D97757]"
-                  : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-800",
+                  : "border-stone-200 bg-white text-stone-700 hover:bg-stone-50 hover:text-stone-900",
               )}
             >
               {tab.label}

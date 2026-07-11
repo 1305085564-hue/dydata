@@ -52,13 +52,13 @@ function formatRate(value: number | null | undefined, views?: number | null, fol
 function SourceChip({ source }: { source: string }) {
   if (source === "daily_report") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-lg border border-[#D97757]/30 px-2 py-0.5 text-[11px] font-medium text-[#D97757]">
+      <span className="inline-flex items-center gap-1 rounded-lg border border-[#D97757]/30 px-2 py-0.5 text-[12px] font-normal text-[#D97757]">
         日报同步
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+    <span className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-normal text-stone-500">
       手动补录
     </span>
   );
@@ -114,16 +114,16 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
                 />
                 <div className="rounded-xl border border-stone-200 bg-white p-4 transition-colors hover:border-stone-300">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-[13px] font-medium text-stone-800">
-                      <Calendar className="size-3.5 text-stone-400" strokeWidth={1.5} />
+                    <div className="flex items-center gap-2 text-[13px] font-normal text-stone-700">
+                      <Calendar className="size-3.5 text-stone-500" strokeWidth={1.5} />
                       {formatDate(record.used_at)}
-                      <span className="text-stone-300">·</span>
+                      <span className="text-stone-500">·</span>
                       <span className="truncate">{accountName}</span>
                     </div>
                     <SourceChip source={record.source} />
                   </div>
                   <div className="mt-2 flex items-center gap-1.5 text-[12px] text-stone-500">
-                    <User2 className="size-3.5 text-stone-400" strokeWidth={1.5} />
+                    <User2 className="size-3.5 text-stone-500" strokeWidth={1.5} />
                     记录人 {recorderName}
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2">
@@ -145,7 +145,7 @@ export function UsageTimeline({ records }: { records: UsageRecordItem[] }) {
                     />
                   </div>
                   {record.note ? (
-                    <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-stone-600">
+                    <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-stone-700">
                       {record.note}
                     </p>
                   ) : null}
@@ -172,15 +172,15 @@ function MetricCell({
 }) {
   return (
     <div className="rounded-lg bg-stone-50 px-3 py-2">
-      <div className="flex items-center gap-1 text-[11px] font-medium text-stone-500">
-        <span className={accent ? "text-[#6FAA7D]" : "text-stone-400"}>{icon}</span>
+      <div className="flex items-center gap-1 text-[12px] font-normal text-stone-500">
+        <span className={accent ? "text-[#6FAA7D]" : "text-stone-500"}>{icon}</span>
         {label}
       </div>
       <div
         className={
           accent
             ? "mt-0.5 text-[13px] font-medium tracking-tight text-[#6FAA7D] tabular-nums"
-            : "mt-0.5 text-[13px] font-medium tracking-tight text-stone-800 tabular-nums"
+            : "mt-0.5 text-[13px] font-normal tracking-tight text-stone-700 tabular-nums"
         }
       >
         {value}

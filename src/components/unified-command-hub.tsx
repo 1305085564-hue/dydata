@@ -245,7 +245,7 @@ export function UnifiedCommandHub({
       case "success":
         return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-250 dark:border-emerald-900/30";
       default:
-        return "bg-stone-50 text-stone-600 dark:bg-stone-900 dark:text-stone-400 border-stone-200 dark:border-stone-800";
+        return "bg-stone-50 text-stone-700 dark:bg-stone-900 dark:text-stone-500 border-stone-200 dark:border-stone-800";
     }
   };
 
@@ -297,17 +297,17 @@ export function UnifiedCommandHub({
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 220 }}
             className={cn(
-              "relative flex h-full w-full max-w-[460px] flex-col border-l bg-stone-50 dark:bg-stone-950 shadow-2xl",
+              "relative flex h-full w-full max-w-[460px] flex-col border-l bg-stone-50 dark:bg-stone-950 shadow-xl",
               "border-stone-200 dark:border-stone-800"
             )}
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b bg-white dark:bg-stone-900 px-5 py-4 border-stone-200 dark:border-stone-800">
               <div>
-                <div className="text-[10px] font-bold tracking-widest text-[#D97757] uppercase">
+                <div className="text-[12px] font-medium tracking-widest text-[#D97757] uppercase">
                   Command Hub
                 </div>
-                <h2 className="text-base font-bold text-stone-900 dark:text-white tracking-tight mt-0.5">
+                <h2 className="text-[13px] font-medium text-stone-900 dark:text-white tracking-tight mt-0.5">
                   智能工作中心
                 </h2>
               </div>
@@ -315,14 +315,14 @@ export function UnifiedCommandHub({
                 {activeTab === "notifications" && alerts.some((n) => n.status === "unread") && (
                   <button
                     onClick={() => void markAllRead()}
-                    className="text-[11px] font-semibold text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white px-2 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    className="text-[12px] font-medium text-stone-500 hover:text-stone-900 dark:text-stone-500 dark:hover:text-white px-2 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                   >
                     全部已读
                   </button>
                 )}
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="flex size-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-white transition-all duration-200"
+                  className="flex size-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-500 hover:text-stone-900 dark:hover:text-white transition-all duration-200"
                 >
                   <X className="size-4 stroke-[1.8]" />
                 </button>
@@ -334,13 +334,13 @@ export function UnifiedCommandHub({
               <button
                 onClick={() => onTabChange("todos")}
                 className={cn(
-                  "relative py-3 text-xs font-bold transition-colors duration-200 mr-6",
-                  activeTab === "todos" ? "text-stone-950 dark:text-white" : "text-stone-400 hover:text-stone-700"
+                  "relative py-3 text-[12px] font-medium transition-colors duration-200 mr-6",
+                  activeTab === "todos" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
                 )}
               >
                 今日待办
                 {activeTodos.length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[10px] font-extrabold">
+                  <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[12px] font-medium">
                     {activeTodos.length}
                   </span>
                 )}
@@ -356,13 +356,13 @@ export function UnifiedCommandHub({
                 <button
                   onClick={() => onTabChange("approvals")}
                   className={cn(
-                    "relative py-3 text-xs font-bold transition-colors duration-200 mr-6",
-                    activeTab === "approvals" ? "text-stone-950 dark:text-white" : "text-stone-400 hover:text-stone-700"
+                    "relative py-3 text-[12px] font-medium transition-colors duration-200 mr-6",
+                    activeTab === "approvals" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
                   )}
                 >
                   豁免审批
                   {pendingApprovalsCount > 0 && (
-                    <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[10px] font-extrabold">
+                    <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[12px] font-medium">
                       {pendingApprovalsCount}
                     </span>
                   )}
@@ -378,13 +378,13 @@ export function UnifiedCommandHub({
               <button
                 onClick={() => onTabChange("notifications")}
                 className={cn(
-                  "relative py-3 text-xs font-bold transition-colors duration-200",
-                  activeTab === "notifications" ? "text-stone-950 dark:text-white" : "text-stone-400 hover:text-stone-700"
+                  "relative py-3 text-[12px] font-medium transition-colors duration-200",
+                  activeTab === "notifications" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
                 )}
               >
                 系统动态
                 {alerts.filter((n) => n.status === "unread").length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 text-[10px] font-extrabold">
+                  <span className="ml-1.5 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 text-[12px] font-medium">
                     {alerts.filter((n) => n.status === "unread").length}
                   </span>
                 )}
@@ -406,14 +406,14 @@ export function UnifiedCommandHub({
                   <div className="rounded-2xl border border-stone-200 bg-white p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-stone-400">
+                        <div className="text-[12px] font-medium uppercase tracking-[0.22em] text-stone-500">
                           待审申请
                         </div>
                         <div className="mt-1 flex items-baseline gap-2">
-                          <span className="font-mono text-[30px] font-bold tabular-nums text-stone-900">
+                          <span className="text-[24px] font-medium tabular-nums text-stone-900">
                             {pendingApprovals.length}
                           </span>
-                          <span className="text-[11px] font-medium text-stone-500">
+                          <span className="text-[12px] font-medium text-stone-500">
                             条待处理
                           </span>
                         </div>
@@ -430,10 +430,10 @@ export function UnifiedCommandHub({
                               }}
                               className="border-stone-300"
                             />
-                            <span className="text-[11px] font-medium text-stone-600">
+                            <span className="text-[12px] font-medium text-stone-700">
                               全选
                             </span>
-                            <span className="font-mono text-[11px] font-semibold text-stone-900">
+                            <span className="text-[12px] font-medium text-stone-900">
                               {selectedApprovalIds.size}
                             </span>
                           </div>
@@ -443,9 +443,9 @@ export function UnifiedCommandHub({
                             disabled={selectedApprovalIds.size === 0 || batchProcessing}
                             onClick={() => void handleBatchApproveApprovals()}
                             className={cn(
-                              "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold transition-colors",
+                              "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-medium transition-colors",
                               selectedApprovalIds.size === 0 || batchProcessing
-                                ? "cursor-not-allowed bg-stone-100 text-stone-400"
+                                ? "cursor-not-allowed bg-stone-100 text-stone-500"
                                 : "bg-[#D97757] text-white hover:bg-[#C96442]"
                             )}
                           >
@@ -462,17 +462,17 @@ export function UnifiedCommandHub({
                   </div>
 
                   {approvalsLoading && pendingApprovals.length === 0 ? (
-                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-xs text-stone-500">
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-[12px] text-stone-500">
                       <Loader2 className="size-4 animate-spin text-[#D97757]" />
                       正在加载待审批申请...
                     </div>
                   ) : pendingApprovals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-center">
                       <CheckCircle2 className="mb-2 size-8 text-[#6FAA7D]" />
-                      <h3 className="text-xs font-bold text-stone-800">
+                      <h3 className="text-[12px] font-medium text-stone-900">
                         暂无待审豁免
                       </h3>
-                      <p className="mt-1 max-w-[220px] text-[10px] leading-relaxed text-stone-500">
+                      <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-stone-500">
                         当前没有新的豁免申请，审批队列已经清空。
                       </p>
                     </div>
@@ -509,32 +509,32 @@ export function UnifiedCommandHub({
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <span className="truncate text-[12px] font-bold text-stone-900">
+                                      <span className="truncate text-[12px] font-medium text-stone-900">
                                         {item.applicant_name || "未命名成员"}
                                       </span>
-                                      <span className="inline-flex shrink-0 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[10px] font-medium text-[#D99E55]">
+                                      <span className="inline-flex shrink-0 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
                                         {EXEMPTION_LABELS[item.exemption_type] || item.exemption_type}
                                       </span>
                                     </div>
-                                    <div className="mt-1 text-[10px] text-stone-500">
+                                    <div className="mt-1 text-[12px] text-stone-500">
                                       {item.group_name || item.team_name || "未分组"} ·{" "}
-                                      <span className="font-mono tabular-nums text-stone-400">
+                                      <span className="tabular-nums text-stone-500">
                                         {item.start_date}
                                         {item.end_date ? ` 至 ${item.end_date}` : ""}
                                       </span>
                                     </div>
                                   </div>
 
-                                  <span className="shrink-0 font-mono text-[10px] text-stone-400">
+                                  <span className="shrink-0 text-[12px] text-stone-500">
                                     {relativeTime(item.created_at)}
                                   </span>
                                 </div>
 
-                                <p className="mt-2 line-clamp-1 rounded-lg bg-stone-50 px-2.5 py-2 text-[11px] text-stone-600">
+                                <p className="mt-2 line-clamp-1 rounded-lg bg-stone-50 px-2.5 py-2 text-[12px] text-stone-700">
                                   原因：{item.reason?.trim() || "未填写原因"}
                                 </p>
                                 {!requestId ? (
-                                  <p className="mt-2 text-[10px] font-medium text-[#C9604D]">
+                                  <p className="mt-2 text-[12px] font-medium text-[#C9604D]">
                                     申请编号异常，请刷新后再试
                                   </p>
                                 ) : null}
@@ -545,7 +545,7 @@ export function UnifiedCommandHub({
                                   type="button"
                                   disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
                                   onClick={() => void handleReviewApproval(item, "approved")}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium text-[#6FAA7D] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-stone-400"
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
                                 >
                                   {isApproving ? (
                                     <Loader2 className="size-3.5 animate-spin" />
@@ -558,7 +558,7 @@ export function UnifiedCommandHub({
                                   type="button"
                                   disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
                                   onClick={() => void handleReviewApproval(item, "rejected")}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-stone-400"
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
                                 >
                                   {isRejecting ? (
                                     <Loader2 className="size-3.5 animate-spin" />
@@ -579,7 +579,7 @@ export function UnifiedCommandHub({
               {activeTab === "todos" && (
                 <div className="space-y-4">
                   {loading && activeTodos.length === 0 && (
-                    <div className="py-12 text-center text-xs text-stone-400 animate-pulse">
+                    <div className="py-12 text-center text-[12px] text-stone-500 animate-pulse">
                       正在加载待办事项...
                     </div>
                   )}
@@ -587,19 +587,19 @@ export function UnifiedCommandHub({
                   {/* Active Todos List */}
                   {!loading && activeTodos.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-400 dark:text-stone-600 mb-3 shadow-inner">
+                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
                         <CheckCircle2 className="size-6 text-emerald-500" />
                       </div>
-                      <h3 className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                      <h3 className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9]">
                         今日待办已全部完成
                       </h3>
-                      <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-[12px] text-stone-500 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
                         团队目前没有未处理的违规审核或履约卡点，状态良好。
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-1">
+                      <div className="text-[12px] font-medium text-stone-500 dark:text-stone-500 mb-1">
                         进行中 ({activeTodos.length})
                       </div>
                       <AnimatePresence initial={false}>
@@ -611,34 +611,34 @@ export function UnifiedCommandHub({
                             exit={{ opacity: 0, x: -50, height: 0, marginBottom: 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             className={cn(
-                              "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors shadow-sm",
+                              "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors",
                               "border-stone-200/80 dark:border-stone-800"
                             )}
                           >
                             <button
                               onClick={() => handleToggleTodo(todo)}
-                              className="mt-0.5 text-stone-400 hover:text-[#D97757] transition-colors shrink-0 outline-none"
+                              className="mt-0.5 text-stone-500 hover:text-[#D97757] transition-colors shrink-0 outline-none"
                             >
                               <Circle className="size-4" />
                             </button>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <span className={cn(
-                                  "inline-flex border px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider",
+                                  "inline-flex border px-1.5 py-0.5 rounded text-[12px] font-medium uppercase tracking-wider",
                                   getSeverityBadge(todo.severity)
                                 )}>
                                   {todo.severity === "critical" ? "P0 急需" : todo.severity === "warning" ? "P1 高优" : "P2 常规"}
                                 </span>
-                                <span className="text-[9px] text-stone-400 dark:text-stone-500 flex items-center gap-1">
+                                <span className="text-[12px] text-stone-500 dark:text-stone-500 flex items-center gap-1">
                                   <CalendarDays className="size-2.5" />
                                   截止于 {relativeTime(todo.created_at)}
                                 </span>
                               </div>
-                              <h4 className="text-[12px] font-bold text-stone-900 dark:text-stone-50 leading-tight mt-1.5">
+                              <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-50 leading-tight mt-1.5">
                                 {todo.title}
                               </h4>
                               {todo.body && (
-                                <p className="text-[10px] text-stone-500 dark:text-stone-400 leading-normal mt-1">
+                                <p className="text-[12px] text-stone-500 dark:text-stone-500 leading-normal mt-1">
                                   {todo.body}
                                 </p>
                               )}
@@ -651,7 +651,7 @@ export function UnifiedCommandHub({
                                       if (todo.status === "unread") void markRead(todo.id);
                                       onOpenChange(false);
                                     }}
-                                    className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#D97757] hover:opacity-85 transition-opacity"
+                                    className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:opacity-85 transition-opacity"
                                   >
                                     {todo.action_label || "立即处理"}
                                     <ArrowRight className="size-3" />
@@ -668,7 +668,7 @@ export function UnifiedCommandHub({
                   {/* Completed List (in this session) */}
                   {completedSessionIds.length > 0 && (
                     <div className="pt-2 border-t border-stone-200/50 dark:border-stone-800/50">
-                      <div className="text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-2">
+                      <div className="text-[12px] font-medium text-stone-500 dark:text-stone-500 mb-2">
                         已完成 ({completedSessionIds.length})
                       </div>
                       <div className="space-y-1.5 opacity-60">
@@ -680,7 +680,7 @@ export function UnifiedCommandHub({
                             <span className="text-emerald-500 shrink-0">
                               <CheckCircle2 className="size-4 fill-emerald-500 text-white" />
                             </span>
-                            <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 line-through truncate flex-1">
+                            <span className="text-[12px] font-medium text-stone-500 dark:text-stone-500 line-through truncate flex-1">
                               {completedSessionTitles[id] || "完成的待办事项"}
                             </span>
                           </div>
@@ -695,20 +695,20 @@ export function UnifiedCommandHub({
               {activeTab === "notifications" && (
                 <div className="space-y-4">
                   {loading && alerts.length === 0 && (
-                    <div className="py-12 text-center text-xs text-stone-400 animate-pulse">
+                    <div className="py-12 text-center text-[12px] text-stone-500 animate-pulse">
                       正在读取系统动态...
                     </div>
                   )}
 
                   {!loading && alerts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-400 dark:text-stone-600 mb-3 shadow-inner">
-                        <Inbox className="size-6 text-stone-400" />
+                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
+                        <Inbox className="size-6 text-stone-500" />
                       </div>
-                      <h3 className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                      <h3 className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9]">
                         目前没有任何动态
                       </h3>
-                      <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-[12px] text-stone-500 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
                         当系统有新的合规提示、账号限流预警或发布情况时，将在此汇总。
                       </p>
                     </div>
@@ -726,7 +726,7 @@ export function UnifiedCommandHub({
                               exit={{ opacity: 0, x: 50, height: 0, marginBottom: 0 }}
                               transition={{ type: "spring", stiffness: 450, damping: 28 }}
                               className={cn(
-                                "relative rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors shadow-sm",
+                                "relative rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors",
                                 !isUnread ? "border-stone-200/50 dark:border-stone-800/50 opacity-70" : "border-stone-200 dark:border-stone-700/80"
                               )}
                             >
@@ -738,7 +738,7 @@ export function UnifiedCommandHub({
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center justify-between gap-2">
                                     <span className={cn(
-                                      "text-[9px] font-black uppercase px-1 rounded-sm",
+                                      "text-[12px] font-medium uppercase px-1 rounded-sm",
                                       notif.severity === "critical" ? "text-rose-600 bg-rose-50 dark:bg-rose-950/20" :
                                       notif.severity === "warning" ? "text-amber-600 bg-amber-50 dark:bg-amber-950/20" :
                                       notif.severity === "success" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" :
@@ -746,16 +746,16 @@ export function UnifiedCommandHub({
                                     )}>
                                       {notif.severity === "critical" ? "重大预警" : notif.severity === "warning" ? "建议反馈" : "动态通知"}
                                     </span>
-                                    <span className="text-[9px] text-stone-400 dark:text-stone-500">{relativeTime(notif.created_at)}</span>
+                                    <span className="text-[12px] text-stone-500 dark:text-stone-500">{relativeTime(notif.created_at)}</span>
                                   </div>
                                   <h4 className={cn(
-                                    "text-[11.5px] leading-snug mt-1.5",
-                                    !isUnread ? "font-medium text-stone-600 dark:text-stone-400" : "font-bold text-stone-950 dark:text-stone-50"
+                                    "text-[12px] leading-snug mt-1.5",
+                                    !isUnread ? "font-medium text-stone-700 dark:text-stone-500" : "font-medium text-stone-900 dark:text-stone-50"
                                   )}>
                                     {notif.title}
                                   </h4>
                                   {notif.body && (
-                                    <p className="text-[10px] text-stone-500 dark:text-stone-400 leading-normal mt-1">
+                                    <p className="text-[12px] text-stone-500 dark:text-stone-500 leading-normal mt-1">
                                       {notif.body}
                                     </p>
                                   )}
@@ -767,7 +767,7 @@ export function UnifiedCommandHub({
                                         <button
                                           type="button"
                                           onClick={() => void markRead(notif.id)}
-                                          className="text-[10px] font-bold text-[#D97757] hover:opacity-85"
+                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
                                         >
                                           标为已读
                                         </button>
@@ -779,7 +779,7 @@ export function UnifiedCommandHub({
                                             if (isUnread) void markRead(notif.id);
                                             onOpenChange(false);
                                           }}
-                                          className="text-[10px] font-bold text-[#D97757] hover:opacity-85 inline-flex items-center gap-0.5"
+                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85 inline-flex items-center gap-0.5"
                                         >
                                           {notif.action_label || "查看"}
                                           <ArrowRight className="size-2.5" />
@@ -792,7 +792,7 @@ export function UnifiedCommandHub({
                                             notif.primaryAction?.();
                                             onOpenChange(false);
                                           }}
-                                          className="text-[10px] font-bold text-[#D97757] hover:opacity-85"
+                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
                                         >
                                           {notif.primaryActionLabel}
                                         </button>
@@ -801,7 +801,7 @@ export function UnifiedCommandHub({
                                     <button
                                       type="button"
                                       onClick={() => void markDone(notif.id, "ignored")}
-                                      className="text-stone-400 hover:text-rose-500 transition-colors"
+                                      className="text-stone-500 hover:text-rose-500 transition-colors"
                                       title="忽略此条"
                                     >
                                       <Trash2 className="size-3" />
@@ -820,8 +820,8 @@ export function UnifiedCommandHub({
             </div>
 
             {/* Footer summary */}
-            <div className="shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 text-center text-[10px] text-stone-400 dark:text-stone-500">
-              <span className="font-semibold">DYData Premium Console</span> • 所有待处理项目将同步同步至移动钉群
+            <div className="shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 text-center text-[12px] text-stone-500 dark:text-stone-500">
+              <span className="font-medium">DYData Premium Console</span> • 所有待处理项目将同步同步至移动钉群
             </div>
           </motion.div>
         </div>

@@ -222,10 +222,10 @@ export function SubmitWorkbench({
           <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[100px]">
             <span className="text-[13px] text-stone-500">今日目标</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+              <span className="text-[18px] font-medium tabular-nums text-stone-900">
                 {target}
               </span>
-              <span className="text-[12px] text-stone-400 ml-1">个作品</span>
+              <span className="text-[12px] text-stone-500 ml-1">个作品</span>
             </div>
           </div>
 
@@ -233,12 +233,12 @@ export function SubmitWorkbench({
             <span className="text-[13px] text-stone-500">已交凭证</span>
             <div className="flex items-baseline gap-1">
               <span className={cn(
-                "text-[18px] font-bold font-mono tabular-nums",
-                isTargetMet ? "text-[#6FAA7D]" : "text-stone-950"
+                "text-[18px] font-medium tabular-nums",
+                isTargetMet ? "text-[#6FAA7D]" : "text-stone-900"
               )}>
                 {submittedCount}
               </span>
-              <span className="text-[12px] text-stone-400 ml-1">个作品</span>
+              <span className="text-[12px] text-stone-500 ml-1">个作品</span>
             </div>
           </div>
 
@@ -246,12 +246,12 @@ export function SubmitWorkbench({
             <span className="text-[13px] text-stone-500">还差额</span>
             <div className="flex items-baseline gap-1">
               <span className={cn(
-                "text-[32px] font-bold font-mono tabular-nums",
+                "text-[24px] font-medium tabular-nums",
                 gap > 0 ? "text-[#C9604D]" : "text-[#6FAA7D]"
               )}>
                 {gap}
               </span>
-              <span className="text-[12px] text-stone-400 ml-1">个作品</span>
+              <span className="text-[12px] text-stone-500 ml-1">个作品</span>
             </div>
           </div>
         </div>
@@ -288,10 +288,10 @@ export function SubmitWorkbench({
         {/* 提交表单白色卡片 */}
         <div className="rounded-2xl border border-stone-200 bg-white p-6 space-y-5">
           <div>
-            <h2 className="text-[15px] font-bold text-stone-900">
+            <h2 className="text-[18px] font-medium text-stone-900">
               凭证上传登记
             </h2>
-            <p className="text-[13px] text-stone-400 mt-1 leading-[1.5]">
+            <p className="text-[13px] text-stone-500 mt-1 leading-[1.5]">
               请如实填写发片凭证，支持提交视频标题文案或截图。
             </p>
           </div>
@@ -308,7 +308,7 @@ export function SubmitWorkbench({
                 onChange={(e) => setContentText(e.target.value)}
                 placeholder="粘贴已发视频的标题、文案或话术原文..."
                 rows={4}
-                className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+                className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
               />
             </div>
 
@@ -339,7 +339,7 @@ export function SubmitWorkbench({
                 ))}
 
                 {screenshotFiles.length < 5 && (
-                  <label className="flex size-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-stone-200 bg-stone-50 text-stone-400 hover:bg-stone-100/60 active:scale-95 transition-all">
+                  <label className="flex size-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-stone-200 bg-stone-50 text-stone-500 hover:bg-stone-100/60 active:scale-95 transition-all">
                     <input
                       type="file"
                       accept="image/*"
@@ -349,11 +349,11 @@ export function SubmitWorkbench({
                       disabled={uploading}
                     />
                     {uploading ? (
-                      <Loader2 className="size-5 animate-spin text-stone-400" />
+                      <Loader2 className="size-5 animate-spin text-stone-500" />
                     ) : (
                       <>
                         <Plus className="size-5" />
-                        <span className="text-[11px] mt-1 font-semibold">上传截图</span>
+                        <span className="text-[12px] mt-1 font-medium">上传截图</span>
                       </>
                     )}
                   </label>
@@ -371,7 +371,7 @@ export function SubmitWorkbench({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="例如：发在XXX号，今天第一条..."
-                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
               />
             </div>
 
@@ -380,7 +380,7 @@ export function SubmitWorkbench({
               type="submit"
               disabled={submitting || uploading}
               className={cn(
-                "w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-semibold transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                "w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-medium transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
               )}
             >
               {submitting ? (

@@ -40,15 +40,15 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
     <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "relative overflow-hidden rounded-xl border border-stone-200 bg-white p-5 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
         isClickable && "cursor-pointer hover:shadow-sm hover:border-stone-300 group"
       )}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-stone-400">{label}</p>
+          <p className="text-[12px] uppercase tracking-[0.25em] font-normal text-stone-500">{label}</p>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[18px] font-semibold tracking-tight text-stone-800 font-mono tabular-nums">{value}</span>
+            <span className="text-[18px] font-medium tracking-tight text-stone-900 tabular-nums">{value}</span>
             {trend && (
               <span className={cn(
                 "text-[12px] font-medium px-1.5 py-0.5 rounded-full",
@@ -58,7 +58,7 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
               </span>
             )}
           </div>
-          <p className="mt-2 text-[12px] leading-[1.7] text-stone-400">{hint}</p>
+          <p className="mt-2 text-[12px] leading-[1.7] text-stone-500">{hint}</p>
         </div>
         <div className={cn("rounded-lg p-2.5 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]", toneClasses[tone])}>
           <Icon className="size-5 stroke-[1.5]" />

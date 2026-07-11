@@ -31,11 +31,11 @@ function SettingCard({ href, title, description, icon }: SettingCardProps) {
         <span className="flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
           {icon}
         </span>
-        <span className="flex-1 pt-1 text-[18px] font-semibold tracking-[-0.02em] text-stone-800">
+        <span className="flex-1 pt-1 text-[18px] font-medium tracking-[-0.02em] text-stone-900">
           {title}
         </span>
       </div>
-      <span className="text-sm leading-6 text-stone-500">{description}</span>
+      <span className="text-[13px] leading-6 text-stone-500">{description}</span>
     </Link>
   );
 }

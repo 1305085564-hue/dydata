@@ -274,10 +274,10 @@ function StartStep({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-[12px] font-medium text-stone-400">
+        <p className="text-[12px] font-medium text-stone-500">
           Step 0
         </p>
-        <h3 className="mt-1 text-[18px] font-medium text-stone-800">选择关联账号</h3>
+        <h3 className="mt-1 text-[18px] font-medium text-stone-900">选择关联账号</h3>
         <p className="mt-1 text-[12px] text-stone-500">
           选择这条待发稿要发布到的账号；可暂不选，后续审核时再补。
         </p>
@@ -296,11 +296,11 @@ function StartStep({
             )}
           >
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-medium text-stone-800">
+              <p className="truncate text-[13px] font-medium text-stone-700">
                 {acc.display_name}
               </p>
               {acc.content_direction ? (
-                <p className="mt-0.5 truncate text-[12px] text-stone-400">
+                <p className="mt-0.5 truncate text-[12px] text-stone-500">
                   {acc.content_direction}
                 </p>
               ) : null}
@@ -321,8 +321,8 @@ function StartStep({
           )}
         >
           <div>
-            <p className="text-[13px] font-medium text-stone-800">暂不关联</p>
-            <p className="mt-0.5 text-[12px] text-stone-400">先提交话术，待定后再补账号</p>
+            <p className="text-[13px] font-medium text-stone-700">暂不关联</p>
+            <p className="mt-0.5 text-[12px] text-stone-500">先提交话术，待定后再补账号</p>
           </div>
           {accountId === null ? (
             <Check className="size-4 stroke-[2] text-[#D97757]" />
@@ -359,7 +359,7 @@ function CoreStep({
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="script_text" className="text-[13px] font-medium text-stone-800">
+        <Label htmlFor="script_text" className="text-[13px] font-medium text-stone-700">
           话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
@@ -374,14 +374,14 @@ function CoreStep({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-[13px] font-medium text-stone-800">
+          <Label className="text-[13px] font-medium text-stone-700">
             截图
-            <span className="ml-2 text-[12px] font-normal text-stone-400">
+            <span className="ml-2 text-[12px] font-normal text-stone-500">
               建议 · 最多 {MAX_SCREENSHOTS} 张
             </span>
           </Label>
           {screenshots.length ? (
-            <span className="text-[12px] tabular-nums text-stone-400">
+            <span className="text-[12px] tabular-nums text-stone-500">
               {screenshots.length} / {MAX_SCREENSHOTS}
             </span>
           ) : null}
@@ -425,7 +425,7 @@ function CoreStep({
               className={cn(
                 "flex size-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed bg-white text-[12px] transition-colors",
                 isUploading
-                  ? "cursor-wait border-stone-200 text-stone-300"
+                  ? "cursor-wait border-stone-200 text-stone-500/40"
                   : "border-stone-300 text-stone-500 hover:border-[#D97757] hover:text-[#D97757]",
               )}
             >
@@ -469,10 +469,10 @@ function ReviewStep({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-[12px] font-medium text-stone-400">
+        <p className="text-[12px] font-medium text-stone-500">
           Review
         </p>
-        <h3 className="mt-1 text-[18px] font-medium text-stone-800">确认提交</h3>
+        <h3 className="mt-1 text-[18px] font-medium text-stone-900">确认提交</h3>
         <p className="mt-1 text-[12px] text-stone-500">
           确认无误后点击右下角「确认提交」，进入待审核队列。
         </p>
@@ -480,24 +480,24 @@ function ReviewStep({
 
       <div className="border-t border-stone-100 pt-4 space-y-4">
         <div className="flex items-baseline justify-between">
-          <span className="text-[12px] font-medium text-stone-400">
+          <span className="text-[12px] font-medium text-stone-500">
             账号
           </span>
-          <span className="text-[13px] text-stone-800">
+          <span className="text-[13px] text-stone-700">
             {account ? account.display_name : "暂不关联"}
           </span>
         </div>
         <div>
-          <span className="text-[12px] font-medium text-stone-400">
+          <span className="text-[12px] font-medium text-stone-500">
             话术
           </span>
-          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-7 text-stone-800">
-            {scriptText.trim() || <span className="text-stone-400">未填写</span>}
+          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-7 text-stone-700">
+            {scriptText.trim() || <span className="text-stone-500">未填写</span>}
           </p>
         </div>
         {screenshots.length ? (
           <div>
-            <span className="text-[12px] font-medium text-stone-400">
+            <span className="text-[12px] font-medium text-stone-500">
               截图（{screenshots.length}）
             </span>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -548,14 +548,14 @@ function FeedbackBanner({
           <p className="text-[12px] font-medium text-[#D97757]">
             第 {currentRound} 轮整改
           </p>
-          <p className="mt-1 text-[13px] font-medium text-stone-800">
+          <p className="mt-1 text-[13px] font-medium text-stone-700">
             管理上一轮的优化建议
           </p>
           <p className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
             {rejection.feedback_text || "（未填写具体说明，请联系管理。）"}
           </p>
           {rejection.reviewer_name ? (
-            <p className="mt-2 text-[12px] text-stone-400">
+            <p className="mt-2 text-[12px] text-stone-500">
               来自 {rejection.reviewer_name}
             </p>
           ) : null}
@@ -579,7 +579,7 @@ function FeedbackBanner({
           {expanded ? (
             <ul className="mt-3 space-y-2 border-t border-[#D97757]/20 pt-3">
               {history.map((h, i) => (
-                <li key={i} className="text-[12px] leading-[1.7] text-stone-600">
+                <li key={i} className="text-[12px] leading-[1.7] text-stone-500">
                   <span className="font-medium text-stone-700">第 {h.round} 轮</span>
                   <span className="ml-2">
                     {h.action === "approve" ? "通过" : "打回"}

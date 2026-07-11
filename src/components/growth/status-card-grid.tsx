@@ -39,9 +39,9 @@ export function StatusCardGrid({ items }: { items: StatusCardItem[] }) {
         <motion.div key={item.label} variants={itemVariants} className="h-full">
           <div className="h-full rounded-xl border border-stone-200 bg-white p-4 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:shadow-sm active:translate-y-0">
             <div className="flex h-full flex-col justify-between gap-3">
-              <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-stone-400">{item.label}</p>
+              <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">{item.label}</p>
               <div className="flex items-end justify-between gap-2">
-                <div className="whitespace-nowrap text-[18px] font-semibold leading-none font-mono tabular-nums tracking-tight text-stone-800 sm:text-[24px]">
+                <div className="whitespace-nowrap text-[18px] font-medium leading-none tabular-nums tracking-tight text-stone-900 sm:text-[24px]">
                   <StatusValue item={item} />
                 </div>
                 <Delta item={item} />

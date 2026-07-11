@@ -160,10 +160,10 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-stone-200" />
-            <span className="text-[12px] font-semibold uppercase tracking-[0.25em] text-stone-400">Action Plan</span>
+            <span className="text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">Action Plan</span>
             <div className="h-px flex-1 bg-stone-200" />
           </div>
-          <h2 className="text-[24px] font-semibold tracking-tight text-stone-800">下一轮先怎么改</h2>
+          <h2 className="text-[24px] font-medium tracking-tight text-stone-900">下一轮先怎么改</h2>
           <p className="text-[13px] leading-[1.7] text-stone-500">
             {noData
               ? "当前没有真实数据，先看一次完整示例，知道这里以后会给你什么。"
@@ -182,7 +182,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
               return (
                 <div key={block.key} className={`rounded-xl border p-4 ${block.toneClass}`}>
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-[13px] font-semibold text-stone-800">
+                    <div className="flex items-center gap-2 text-[13px] font-medium text-stone-900">
                       <Icon className="size-4 stroke-[1.5]" />
                       {block.title}
                     </div>
@@ -192,7 +192,7 @@ export function GrowthActionPlanPanelBody({ insightState, advice, noData }: { in
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-stone-800">{block.content}</p>
+                  <p className="mt-3 whitespace-pre-wrap break-words text-[13px] leading-[1.7] text-stone-700">{block.content}</p>
                 </div>
               );
             })}

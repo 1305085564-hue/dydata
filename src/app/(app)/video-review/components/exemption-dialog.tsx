@@ -97,7 +97,7 @@ export function ExemptionDialog({
         <DialogHeader className="px-7 pt-6 pb-4 border-b border-stone-100">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-[18px] font-bold text-stone-950 flex items-center gap-2">
+              <DialogTitle className="text-[18px] font-medium text-stone-900 flex items-center gap-2">
                 <CalendarDays className="size-5 text-[#D97757]" />
                 申请产量豁免
               </DialogTitle>
@@ -111,7 +111,7 @@ export function ExemptionDialog({
         <form onSubmit={handleSubmit} className="px-7 py-5 space-y-4">
           {/* 豁免类型 */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-stone-700">豁免类型</label>
+            <label className="text-[13px] font-medium text-stone-700">豁免类型</label>
             <div className="flex flex-wrap gap-2">
               {EXEMPTION_TYPES.map((type) => (
                 <button
@@ -122,7 +122,7 @@ export function ExemptionDialog({
                     "h-8 rounded-lg border px-3 text-[12px] font-medium transition-all",
                     exemptionType === type.value
                       ? "border-[#D97757] bg-[#D97757]/10 text-[#D97757]"
-                      : "border-stone-200 text-stone-600 hover:border-stone-300 hover:bg-stone-50"
+                      : "border-stone-200 text-stone-500 hover:border-stone-300 hover:bg-stone-50"
                   )}
                 >
                   {type.label}
@@ -134,35 +134,35 @@ export function ExemptionDialog({
           {/* 日期区间 */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[13px] font-semibold text-stone-700">开始日期</label>
+              <label className="text-[13px] font-medium text-stone-700">开始日期</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-semibold text-stone-700">结束日期</label>
+              <label className="text-[13px] font-medium text-stone-700">结束日期</label>
               <input
                 type="date"
                 value={endDate}
                 min={startDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] font-mono text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
               />
             </div>
           </div>
 
           {/* 申请原因 */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-stone-700">申请原因</label>
+            <label className="text-[13px] font-medium text-stone-700">申请原因</label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               placeholder="简要说明请假或豁免原因..."
-              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
             />
           </div>
 
@@ -172,14 +172,14 @@ export function ExemptionDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
-              className="h-9 rounded-lg border border-stone-200 px-4 text-[13px] font-medium text-stone-600 hover:bg-stone-50 transition-colors"
+              className="h-9 rounded-lg border border-stone-200 px-4 text-[13px] font-medium text-stone-500 hover:bg-stone-50 transition-colors"
             >
               取消
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex h-9 items-center gap-2 rounded-lg bg-[#D97757] px-5 text-[13px] font-semibold text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
+              className="flex h-9 items-center gap-2 rounded-lg bg-[#D97757] px-5 text-[13px] font-medium text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
             >
               {submitting ? (
                 <>

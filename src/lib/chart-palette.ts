@@ -8,9 +8,9 @@ export const CHART_COLORS = {
   success: "#6FAA7D",    // 森林绿
   warning: "#D99E55",    // 晚霞琥珀
   danger: "#C9604D",     // 晚霞红
-  muted: "#A1A1AA",      // stone-400（次线 / 基准线）
-  grid: "#E4E4E7",       // stone-200（网格虚线）
-  axis: "#A1A1AA",       // stone-400（坐标轴文字）
+  muted: "#78716C",      // stone-500（次线 / 基准线）
+  grid: "#E7E5E4",       // stone-200（网格虚线）
+  axis: "#78716C",       // stone-500（坐标轴文字）
 } as const;
 
 /**
@@ -38,7 +38,7 @@ export const CHART_GRADIENT_PRIMARY = {
 export const CHART_AXIS_TICK = {
   fontSize: 10,
   fill: CHART_COLORS.axis,
-  fontFamily: "var(--font-mono, ui-monospace), tabular-nums",
+  fontFamily: "var(--font-inter), Inter, -apple-system, PingFang SC, system-ui, sans-serif",
 } as const;
 
 /**

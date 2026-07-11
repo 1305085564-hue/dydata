@@ -59,7 +59,7 @@ export function CaseRejectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle className="text-[15px]">
+          <DialogTitle className="text-[13px]">
             {count > 1 ? `批量驳回 ${count} 条` : "驳回这条提交"}
           </DialogTitle>
           <DialogDescription>
@@ -80,7 +80,7 @@ export function CaseRejectDialog({
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setReason(r)}
                 className={cn(
-                  "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  "rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
                   reason === r
                     ? "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D]"
                     : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700",
@@ -106,7 +106,7 @@ export function CaseRejectDialog({
               }
             }}
           />
-          <p className="text-[11px] text-stone-400">
+          <p className="text-[12px] text-stone-500">
             Cmd / Ctrl + Enter 直接提交
           </p>
         </div>
@@ -116,7 +116,7 @@ export function CaseRejectDialog({
             type="button"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-9 rounded-lg border border-stone-200 bg-white px-4 text-[12px] font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-60"
+            className="h-9 rounded-lg border border-stone-200 bg-white px-4 text-[12px] font-medium text-stone-700 transition-colors hover:bg-stone-50 disabled:opacity-60"
           >
             取消
           </button>
@@ -125,7 +125,7 @@ export function CaseRejectDialog({
             onClick={handleConfirm}
             disabled={!canConfirm}
             className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#C9604D] px-4 text-[12px] font-semibold text-white shadow-sm transition-all active:translate-y-[1px]",
+              "inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#C9604D] px-4 text-[12px] font-medium text-white shadow-sm transition-all active:translate-y-[1px]",
               !canConfirm
                 ? "cursor-not-allowed opacity-60"
                 : "hover:bg-[#B0533F] hover:shadow-sm",

@@ -276,7 +276,7 @@ export function TeamGroupManager({
         <div />
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={selectedTeamId} onValueChange={handleTeamChange}>
-            <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择团队">
                 {selectedTeamName ?? undefined}
               </SelectValue>
@@ -290,7 +290,7 @@ export function TeamGroupManager({
             </SelectContent>
           </Select>
           <Select value={effectiveSelectedGroupId} onValueChange={handleGroupChange}>
-            <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
+            <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] sm:w-48">
               <SelectValue placeholder="选择分组">
                 {selectedGroupName ?? (effectiveSelectedGroupId === NO_GROUP ? "暂无分组" : undefined)}
               </SelectValue>
@@ -313,12 +313,12 @@ export function TeamGroupManager({
       <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-4">
           <div className="flex items-center justify-between">
-            <div className="font-medium text-stone-800">当前分组</div>
+            <div className="font-medium text-stone-900">当前分组</div>
             <Badge
               className={
                 access.canEditGroups
                   ? "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
-                  : "bg-stone-50 text-stone-600 border border-stone-200 hover:bg-stone-50"
+                  : "bg-stone-50 text-stone-700 border border-stone-200 hover:bg-stone-50"
               }
             >
               {access.canEditGroups ? (
@@ -344,8 +344,8 @@ export function TeamGroupManager({
                   }`}
                 >
                   <span>
-                    <span className="block font-medium text-stone-800">{group.name}</span>
-                    <span className="text-xs text-stone-500">
+                    <span className="block font-medium text-stone-900">{group.name}</span>
+                    <span className="text-[12px] text-stone-500">
                       组长：{getProfileName(localProfiles, group.leader_user_id)}
                     </span>
                   </span>
@@ -355,7 +355,7 @@ export function TeamGroupManager({
                 </button>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-4 text-sm text-stone-500">
+              <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-4 text-[13px] text-stone-500">
                 这个团队还没有分组。
               </div>
             )}
@@ -369,12 +369,12 @@ export function TeamGroupManager({
             <div className="flex flex-wrap gap-2">
               {directMembers.length > 0 ? (
                 directMembers.map((member) => (
-                  <Badge key={member.id} className="bg-stone-100 text-stone-600">
+                  <Badge key={member.id} className="bg-stone-100 text-stone-700">
                     {member.name}
                   </Badge>
                 ))
               ) : (
-                <span className="text-sm text-stone-500">暂无直管组员</span>
+                <span className="text-[13px] text-stone-500">暂无直管组员</span>
               )}
             </div>
           </div>
@@ -390,13 +390,13 @@ export function TeamGroupManager({
                   value={newGroupName}
                   onChange={(event) => setNewGroupName(event.target.value)}
                   placeholder="例如：第一组"
-                  className="rounded-xl bg-stone-50 border-transparent focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-xl bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label>组长</Label>
                 <Select value={newLeaderId} onValueChange={handleNewLeaderChange}>
-                  <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                  <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                     <SelectValue placeholder="选择组长">
                       {newLeaderName ?? undefined}
                     </SelectValue>
@@ -438,13 +438,13 @@ export function TeamGroupManager({
                       id="edit-group-name"
                       value={editGroupName}
                       onChange={(event) => setEditGroupName(event.target.value)}
-                      className="rounded-xl bg-stone-50 border-transparent focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                      className="rounded-xl bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label>更换组长</Label>
                     <Select value={editLeaderId} onValueChange={handleEditLeaderChange}>
-                      <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-200 focus:shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                      <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                         <SelectValue placeholder="选择组长">
                           {editLeaderName ?? undefined}
                         </SelectValue>
@@ -479,7 +479,7 @@ export function TeamGroupManager({
 
               <div className="grid gap-4 xl:grid-cols-2">
                 <div className="rounded-xl border border-stone-200 bg-white p-4">
-                  <div className="mb-2 font-medium text-stone-800">组内成员</div>
+                  <div className="mb-2 font-medium text-stone-900">组内成员</div>
                   <div className="space-y-2">
                     {groupMembers.length > 0 ? (
                       groupMembers.map((member) => (
@@ -516,12 +516,12 @@ export function TeamGroupManager({
                 {access.canEditGroups ? (
                   <div className="rounded-xl border border-stone-200 bg-white p-4">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="font-medium text-stone-800">分配组员</div>
+                      <div className="font-medium text-stone-900">分配组员</div>
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
- className="bg-white border-stone-300 text-stone-800 hover:bg-stone-50 active:translate-y-0 "
+ className="bg-white border-stone-300 text-stone-900 hover:bg-stone-50 active:translate-y-0 "
                         onClick={handleAssignMembers}
                         disabled={isPending || checkedMemberIds.length === 0}
                       >
@@ -532,7 +532,7 @@ export function TeamGroupManager({
                       {/* 未分配成员 */}
                       {unassignedMembers.length > 0 && (
                         <div className="space-y-2">
-                          <div className="text-[11px] font-medium text-stone-500">未分配</div>
+                          <div className="text-[12px] font-normal text-stone-500">未分配</div>
                           {unassignedMembers.map((member) => (
                             <label
                               key={member.id}
@@ -545,7 +545,7 @@ export function TeamGroupManager({
                                 />
                                 {member.name}
                               </span>
-                              <Badge className="bg-stone-100 text-stone-600">未分配</Badge>
+                              <Badge className="bg-stone-100 text-stone-700">未分配</Badge>
                             </label>
                           ))}
                         </div>
@@ -556,7 +556,7 @@ export function TeamGroupManager({
                         <div className="space-y-2">
                           {unassignedMembers.length > 0 && (
                             <div className="border-t border-stone-200 pt-2">
-                              <div className="text-[11px] font-medium text-stone-500">已分配</div>
+                              <div className="text-[12px] font-normal text-stone-500">已分配</div>
                             </div>
                           )}
                           {assignedMembers.map((member) => (
@@ -571,7 +571,7 @@ export function TeamGroupManager({
                                 />
                                 {member.name}
                               </span>
-                              <Badge className="bg-stone-100 text-stone-600">
+                              <Badge className="bg-stone-100 text-stone-700">
                                 {getMemberGroupLabel(member)}
                               </Badge>
                             </label>
@@ -588,7 +588,7 @@ export function TeamGroupManager({
               </div>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-500">
+            <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-6 text-[13px] text-stone-500">
               先创建或选择一个分组。
             </div>
           )}

@@ -74,7 +74,7 @@ export function InstructionFeed({
             <div className="h-1.5 w-1.5 rounded-full bg-stone-300 animate-bounce [animation-delay:-0.15s]" />
             <div className="h-1.5 w-1.5 rounded-full bg-stone-300 animate-bounce" />
           </div>
-          <span className="text-[11px] uppercase tracking-[0.25em] text-stone-400 font-medium">
+          <span className="text-[12px] uppercase tracking-[0.25em] text-stone-500 font-medium">
             加载历史消息
           </span>
         </div>
@@ -91,10 +91,10 @@ export function InstructionFeed({
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg border border-stone-200 bg-white shadow-sm">
               <PenLine className="h-4 w-4 text-stone-500" />
             </div>
-            <h2 className="text-[18px] font-semibold tracking-tight text-stone-900">
+            <h2 className="text-[18px] font-medium tracking-tight text-stone-900">
               {isV2Conversation ? '选择技能开始写作' : activeFixedMode ? `${activeFixedMode.name} 已就绪` : '文案润色工作室'}
             </h2>
-            <p className="text-[12px] leading-[1.6] text-stone-400">
+            <p className="text-[12px] leading-[1.6] text-stone-500">
               {isV2Conversation
                 ? '技能会作为提示词注入当前画布，可单选也可多选。'
                 : '选择润色技能，贴入原文。系统将保持上下文持续修改，右侧画布始终展示最新终稿。'}
@@ -104,12 +104,12 @@ export function InstructionFeed({
           {isV2Conversation && (
             <div className="space-y-3">
               {groupedSkills.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-stone-200 bg-white px-3.5 py-4 text-center text-[12px] text-stone-400">
+                <div className="rounded-lg border border-dashed border-stone-200 bg-white px-3.5 py-4 text-center text-[12px] text-stone-500">
                   暂无可用技能
                 </div>
               ) : groupedSkills.map((group) => (
                 <div key={group.scope} className="space-y-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-500 pl-1">
+                  <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-stone-500 pl-1">
                     {group.label}
                   </span>
                   <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
@@ -129,12 +129,12 @@ export function InstructionFeed({
                         >
                           <div className="flex items-center gap-2.5">
                             {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#8AA8C7]" />}
-                            <span className={cn('text-[12.5px]', isActive ? 'font-semibold text-stone-800 tracking-tight' : 'font-medium text-stone-700')}>
+                            <span className={cn('text-[13px]', isActive ? 'font-medium text-stone-900 tracking-tight' : 'font-medium text-stone-700')}>
                               {skill.name}
                             </span>
                           </div>
                           {isActive && (
-                            <span className="shrink-0 rounded-lg bg-[#8AA8C7]/10 px-2 py-0.5 text-[9.5px] font-medium tracking-wider text-stone-800">
+                            <span className="shrink-0 rounded-lg bg-[#8AA8C7]/10 px-2 py-0.5 text-[12px] font-medium tracking-wider text-stone-900">
                               已激活
                             </span>
                           )}
@@ -149,7 +149,7 @@ export function InstructionFeed({
 
           {!isV2Conversation && bootstrap.fixedModes.length > 0 && (
             <div className="space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-500 pl-1">
+              <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-stone-500 pl-1">
                 选择文案技能
               </span>
               <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
@@ -170,12 +170,12 @@ export function InstructionFeed({
                       <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-2.5">
                           {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#8AA8C7]" />}
-                          <span className={cn('text-[12.5px]', isActive ? 'font-semibold text-stone-800 tracking-tight' : 'font-medium text-stone-700')}>
+                          <span className={cn('text-[13px]', isActive ? 'font-medium text-stone-900 tracking-tight' : 'font-medium text-stone-700')}>
                             {mode.name}
                           </span>
                         </div>
                       </div>
-                      <p className={cn("text-[11px] leading-[1.5] transition-colors pl-4", isActive ? 'text-stone-500 font-medium' : 'text-stone-400 group-hover:text-stone-500')}>
+                      <p className={cn("text-[12px] leading-[1.5] transition-colors pl-4", isActive ? 'text-stone-500 font-medium' : 'text-stone-500 group-hover:text-stone-500')}>
                         {mode.description || '内置定制润色指令'}
                       </p>
                     </button>
@@ -187,7 +187,7 @@ export function InstructionFeed({
 
           {/* Quick Actions / Shortcuts */}
           <div className="space-y-2 mt-4">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-500 pl-1">
+            <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-stone-500 pl-1">
               快捷指令建议
             </span>
             <div className="grid grid-cols-1 gap-1">
@@ -203,12 +203,12 @@ export function InstructionFeed({
                       <span className="text-[12px] font-medium text-stone-700 group-hover:text-stone-900 transition-colors">
                         {shortcut.label}
                       </span>
-                      <span className="text-[10.5px] text-stone-400 group-hover:text-stone-500 transition-colors truncate">
+                      <span className="text-[12px] text-stone-500 group-hover:text-stone-500 transition-colors truncate">
                         {shortcut.hint}
                       </span>
                     </div>
                   </div>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-stone-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#D97757]" />
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-stone-500 transition-transform group-hover:translate-x-0.5 group-hover:text-[#D97757]" />
                 </button>
               ))}
             </div>
@@ -227,7 +227,7 @@ export function InstructionFeed({
           if (message.role === 'user') {
             return (
               <div key={message.id} className="flex justify-end">
-                <div className="max-w-[85%] rounded-lg rounded-tr-md bg-stone-100/80 px-3.5 py-2 text-[12.5px] leading-[1.6] text-stone-800 border border-stone-200/50">
+                <div className="max-w-[85%] rounded-lg rounded-tr-md bg-stone-100/80 px-3.5 py-2 text-[13px] leading-[1.6] text-stone-900 border border-stone-200/50">
                   <p className="whitespace-pre-wrap font-medium">{message.content}</p>
                 </div>
               </div>
@@ -238,7 +238,7 @@ export function InstructionFeed({
           if (message.role === 'system_note') {
             return (
               <div key={message.id} className="flex justify-center">
-                <div className="relative max-w-md overflow-hidden rounded-lg border border-stone-200 bg-stone-50 px-3.5 py-2 text-center text-[11px] leading-[1.6] text-stone-500 shadow-sm">
+                <div className="relative max-w-md overflow-hidden rounded-lg border border-stone-200 bg-stone-50 px-3.5 py-2 text-center text-[12px] leading-[1.6] text-stone-500 shadow-sm">
                   <div className="absolute left-0 top-0 h-full w-[2px] bg-[#D99E55]" />
                   <span>{message.content}</span>
                 </div>
@@ -259,24 +259,24 @@ export function InstructionFeed({
 
               <div className="min-w-0 flex-1 rounded-lg border border-stone-200 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-stone-900">
+                  <span className="text-[12px] font-medium text-stone-900">
                     AI 润色反馈
                   </span>
                   {isStreaming ? (
-                    <span className="inline-flex items-center gap-1.5 text-[10.5px] text-[#D99E55] font-medium">
+                    <span className="inline-flex items-center gap-1.5 text-[12px] text-[#D99E55] font-medium">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55] animate-pulse" />
                       <span>收到，正在为你重塑...</span>
                     </span>
                   ) : (
-                    <span className="text-[10px] text-stone-400">已重构完毕</span>
+                    <span className="text-[12px] text-stone-500">已重构完毕</span>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   {/* Status Indicator Bubble */}
-                  <div className="text-[11px] text-stone-400 pb-1">
+                  <div className="text-[12px] text-stone-500 pb-1">
                     {isStreaming ? (
-                      <span className="text-stone-400">正在重写内容，右侧画布实时更新...</span>
+                      <span className="text-stone-500">正在重写内容，右侧画布实时更新...</span>
                     ) : (
                       <span className="text-[#4F7F5E]">✨ 终稿已在右侧同步更新</span>
                     )}
@@ -285,10 +285,10 @@ export function InstructionFeed({
                   {/* Notes / Edit Explanations */}
                   {!isStreaming && notes.length > 0 && (
                     <div className="relative pl-3 space-y-1.5 border-l-2 border-stone-200/60">
-                      <span className="text-[9.5px] font-semibold uppercase tracking-[0.2em] text-stone-400 block">
+                      <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-stone-500 block">
                         修改要点
                       </span>
-                      <ul className="space-y-1.5 text-[11.5px] leading-[1.55] text-stone-500">
+                      <ul className="space-y-1.5 text-[12px] leading-[1.55] text-stone-500">
                         {notes.map((note, index) => (
                           <li key={`${message.id}-note-${index}`} className="flex items-start gap-1.5">
                             <span className="mt-1.5 inline-flex h-1 w-1 shrink-0 rounded-full bg-stone-300" />
@@ -304,10 +304,10 @@ export function InstructionFeed({
                     <div className="pt-1">
                       <button
                         onClick={() => setHiddenAfterIndex(idx)}
-                        className="group inline-flex h-7 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[10.5px] font-medium text-stone-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-stone-300 hover:text-stone-800"
+                        className="group inline-flex h-7 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] font-medium text-stone-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-stone-300 hover:text-stone-900"
                         title="废弃此节点之后的对话，直接基于当前版本继续润色"
                       >
-                        <RotateCcw className="h-3 w-3 text-stone-400 group-hover:text-stone-600 transition-colors" />
+                        <RotateCcw className="h-3 w-3 text-stone-500 group-hover:text-stone-700 transition-colors" />
                         <span>基于此版本继续</span>
                       </button>
                     </div>
@@ -326,10 +326,10 @@ export function InstructionFeed({
                 key={`${suggestion}-${index}`}
                 type="button"
                 onClick={() => onSendOverride(suggestion)}
-                className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-medium text-stone-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
+                className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[12px] font-medium text-stone-500 shadow-sm transition-[background-color,border-color] duration-150 hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
               >
                 <span>{suggestion}</span>
-                <ArrowRight className="h-3 w-3 text-stone-400" />
+                <ArrowRight className="h-3 w-3 text-stone-500" />
               </button>
             ))}
           </div>

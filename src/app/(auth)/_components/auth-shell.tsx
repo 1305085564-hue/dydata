@@ -12,7 +12,7 @@ interface AuthShellProps {
 export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: AuthShellProps) {
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="relative w-full max-w-[440px] overflow-hidden rounded-2xl bg-white px-8 py-10">
+      <div className="relative w-full max-w-[440px] overflow-hidden rounded-2xl border border-stone-200 bg-white px-8 py-10">
         <div className="absolute right-6 top-6 opacity-80">
           <div
             className="h-[6px] w-[6px] rounded-full bg-[#D97757] motion-safe:animate-pulse"
@@ -21,10 +21,10 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         </div>
 
         <div className="mb-10 space-y-3 text-center">
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+          <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
             {eyebrow}
           </p>
-          <h1 className="text-[24px] font-semibold tracking-tight text-stone-800">
+          <h1 className="text-[24px] font-medium tracking-tight text-stone-900">
             {title}
           </h1>
           {subtitle ? (

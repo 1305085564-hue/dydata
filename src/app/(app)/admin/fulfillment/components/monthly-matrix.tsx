@@ -121,8 +121,8 @@ export function MonthlyMatrix({
           className="flex w-full items-center justify-between rounded-xl border border-stone-200/60 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-stone-50/50"
         >
           <div className="flex items-center gap-3">
-            <h2 className="text-[14px] font-semibold text-stone-700">月度矩阵</h2>
-            <span className="text-[12px] text-stone-400">
+            <h2 className="text-[18px] font-medium text-stone-900">月度矩阵</h2>
+            <span className="text-[12px] text-stone-500">
               {year}年{month}月 · {members.length} 人
             </span>
           </div>
@@ -132,23 +132,23 @@ export function MonthlyMatrix({
                 <Button variant="ghost" size="icon-xs" onClick={handlePrevMonth}>
                   <ChevronLeft className="size-3.5" />
                 </Button>
-                <span className="min-w-[72px] text-center text-[12px] font-medium text-stone-600">
+                <span className="min-w-[72px] text-center text-[12px] font-medium text-stone-700">
                   {year}年{month}月
                 </span>
                 <Button variant="ghost" size="icon-xs" onClick={handleNextMonth}>
                   <ChevronRight className="size-3.5" />
                 </Button>
                 {!isCurrentMonth() && (
-                  <Button variant="ghost" size="xs" onClick={handleCurrentMonth} className="ml-1 text-[11px]">
+                <Button variant="ghost" size="xs" onClick={handleCurrentMonth} className="ml-1 text-[12px]">
                     当月
                   </Button>
                 )}
               </div>
             )}
             {expanded ? (
-              <ChevronUp className="size-4 text-stone-400" />
+              <ChevronUp className="size-4 text-stone-500" />
             ) : (
-              <ChevronDown className="size-4 text-stone-400" />
+              <ChevronDown className="size-4 text-stone-500" />
             )}
           </div>
         </button>
@@ -156,11 +156,11 @@ export function MonthlyMatrix({
         {/* 展开内容 */}
         {expanded && (
           <div className="space-y-3">
-            <div className="overflow-x-auto rounded-2xl border border-stone-200/60 bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-stone-200/60">
-                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-stone-200/60 bg-white px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wider text-stone-400">
+                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-stone-200/60 bg-white px-3 py-2 text-left text-[12px] font-normal tracking-[0.12em] text-stone-500">
                       成员
                     </th>
                     {dayNumbers.map((day) => {
@@ -169,15 +169,15 @@ export function MonthlyMatrix({
                       return (
                         <th
                           key={day}
-                          className={`min-w-[28px] px-0.5 py-2 text-center text-[11px] font-medium tabular-nums ${
-                            isToday ? "text-[#D97757] font-semibold" : "text-stone-400"
+                          className={`min-w-[28px] px-0.5 py-2 text-center text-[12px] font-normal tabular-nums ${
+                            isToday ? "text-[#D97757] font-medium" : "text-stone-500"
                           }`}
                         >
                           {day}
                         </th>
                       );
                     })}
-                    <th className="min-w-[72px] border-l border-stone-200/60 px-3 py-2 text-right text-[11px] font-medium text-stone-400">
+                    <th className="min-w-[72px] border-l border-stone-200/60 px-3 py-2 text-right text-[12px] font-normal text-stone-500">
                       实发/应发
                     </th>
                   </tr>
@@ -188,8 +188,8 @@ export function MonthlyMatrix({
                     <tr key={member.userId} className="border-b border-stone-100 last:border-b-0 hover:bg-stone-50/10 transition-colors">
                       <td className="sticky left-0 z-10 border-r border-stone-200/60 bg-white px-3 py-2 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
                         <div className="flex flex-col">
-                          <span className="text-[13px] font-medium text-stone-800">{member.userName}</span>
-                          <span className="text-[11px] text-stone-400">{member.groupName ?? member.teamName ?? ""}</span>
+                          <span className="text-[13px] font-medium text-stone-900">{member.userName}</span>
+                          <span className="text-[12px] text-stone-500">{member.groupName ?? member.teamName ?? ""}</span>
                         </div>
                       </td>
                       {dayNumbers.map((day) => {
@@ -214,43 +214,43 @@ export function MonthlyMatrix({
                                 }
                               />
                               <TooltipContent
-                                className="flex flex-col items-start gap-1.5 p-3 bg-stone-900 border border-stone-800 text-white rounded-lg shadow-md w-60 z-50 text-[11px]"
+                                className="z-50 flex w-60 flex-col items-start gap-1.5 rounded-lg border border-stone-700 bg-stone-900 p-3 text-[12px] text-white shadow-lg"
                                 align="center"
                                 side="top"
                               >
                                 <div className="flex w-full items-center justify-between gap-2 border-b border-stone-800 pb-1.5">
-                                  <span className="font-semibold text-stone-200">{dateKey}</span>
-                                  <span className="font-medium text-stone-400">{member.userName}</span>
+                                  <span className="font-medium text-stone-50">{dateKey}</span>
+                                  <span className="font-medium text-stone-500">{member.userName}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   <span className={`size-2 rounded-full ${getStatusColor(status)}`} />
-                                  <span className="font-semibold">{getStatusLabel(status)}</span>
+                                  <span className="font-normal">{getStatusLabel(status)}</span>
                                   {record && record.publishedCount > 0 && (
-                                    <span className="text-stone-500 font-mono">({record.publishedCount} 条视频)</span>
+                                    <span className="text-stone-500 tabular-nums">({record.publishedCount} 条视频)</span>
                                   )}
                                 </div>
                                 
                                 {record?.reason && (
-                                  <div className="w-full text-stone-400 bg-stone-900/50 p-1.5 rounded border border-stone-800/40">
-                                    <span className="text-stone-500 block text-[10px] font-medium">打标原因：</span>
-                                    <p className="mt-0.5 text-stone-300 leading-normal">{record.reason}</p>
+                                  <div className="w-full rounded border border-stone-300 bg-stone-100 p-1.5 text-stone-500">
+                                    <span className="block text-[12px] font-normal text-stone-500">打标原因：</span>
+                                    <p className="mt-0.5 leading-[1.6] text-stone-100">{record.reason}</p>
                                     {record.markedByName && (
-                                      <span className="block text-[9px] text-stone-500 mt-1 text-right">— 标记人: {record.markedByName}</span>
+                                      <span className="mt-1 block text-right text-[12px] text-stone-500">— 标记人: {record.markedByName}</span>
                                     )}
                                   </div>
                                 )}
 
                                 {appeal && (
                                   <div className="w-full border border-amber-500/20 bg-amber-500/10 p-1.5 rounded text-amber-200 mt-1">
-                                    <div className="flex items-center gap-1 font-semibold">
+                                    <div className="flex items-center gap-1 font-normal">
                                       <span className="size-1 bg-amber-400 rounded-full" />
                                       员工申诉 ({appeal.status === "pending" ? "待处理" : appeal.status === "approved" ? "申诉通过" : "被驳回"})
                                     </div>
-                                    <p className="mt-1 text-stone-300 leading-relaxed italic text-[10px]">
+                                    <p className="mt-1 text-[12px] italic leading-[1.7] text-stone-100">
                                       "{appeal.reason}"
                                     </p>
                                     {appeal.handler_name && (
-                                      <span className="block text-[9px] text-stone-400 mt-1 text-right">处理人: {appeal.handler_name}</span>
+                                      <span className="mt-1 block text-right text-[12px] text-stone-500">处理人: {appeal.handler_name}</span>
                                     )}
                                   </div>
                                 )}
@@ -261,7 +261,7 @@ export function MonthlyMatrix({
                       })}
                       <td className="border-l border-stone-200/60 px-3 py-2 text-right">
                         <span
-                          className={`font-mono text-[12px] tabular-nums font-semibold ${
+                          className={`text-[12px] tabular-nums font-medium ${
                             member.publishedDays >= member.totalDays
                               ? "text-[#6FAA7D]"
                               : member.publishedDays / member.totalDays >= 0.6
@@ -271,8 +271,8 @@ export function MonthlyMatrix({
                         >
                           {member.publishedDays}
                         </span>
-                        <span className="mx-0.5 text-[11px] text-stone-300">/</span>
-                        <span className="font-mono text-[12px] tabular-nums text-stone-400">
+                        <span className="mx-0.5 text-[12px] text-stone-500">/</span>
+                        <span className="text-[12px] tabular-nums text-stone-500">
                           {member.totalDays}
                         </span>
                       </td>
@@ -283,7 +283,7 @@ export function MonthlyMatrix({
             </div>
 
             {/* 图例 */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-stone-500 bg-stone-100/50 p-2.5 rounded-lg">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-stone-100/50 p-2.5 text-[12px] text-stone-500">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block size-[10px] rounded-sm bg-[#6FAA7D] border border-[#5d946a]" />
                 已发布 / 已确认

@@ -134,17 +134,17 @@ export function CaseDetailDialog({
         <DialogHeader className="sticky top-0 z-10 border-b border-stone-100 bg-white/95 px-6 pt-6 pb-4 backdrop-blur-md">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-[16px] font-semibold leading-[1.5] text-stone-800">
+              <DialogTitle className="text-[18px] font-medium leading-[1.5] text-stone-900">
                 话术详情
               </DialogTitle>
-              <p className="mt-1 text-[12px] text-stone-400">
+              <p className="mt-1 text-[12px] text-stone-500">
                 {showReviewPanel ? "查看详情 · 底部审核" : "复制即用"}
               </p>
             </div>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="flex size-8 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
+              className="flex size-8 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
               aria-label="关闭"
             >
               <X className="size-4 stroke-[1.75]" />
@@ -166,11 +166,11 @@ export function CaseDetailDialog({
           ) : data ? (
             <>
               {data.status === "needs_revision" && (
-                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-xs text-amber-800 flex items-start gap-2.5">
+                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-[12px] text-amber-800 flex items-start gap-2.5">
                   <AlertTriangle className="size-4.5 text-[#D99E55] shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-amber-900">缺失凭证打回中</p>
-                    {data.revision_note && <p className="mt-1 text-stone-600">{data.revision_note}</p>}
+                  <p className="text-[#D99E55]">缺失凭证打回中</p>
+                    {data.revision_note && <p className="mt-1 text-stone-700">{data.revision_note}</p>}
                   </div>
                 </div>
               )}
@@ -181,12 +181,12 @@ export function CaseDetailDialog({
                 {!isConversion && (
                   <PassRateBadge passCount={data.pass_count} failCount={data.fail_count} />
                 )}
-                <span className="inline-flex items-center rounded-lg border border-stone-200 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+                <span className="inline-flex items-center rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] text-stone-700">
                   {data.category || "其他"}
                 </span>
                 {confidence ? (
                   <span
-                    className="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-medium"
+                    className="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[12px]"
                     style={{
                       borderColor: `${confidence.toneHex}33`,
                       color: confidence.toneHex,
@@ -205,17 +205,17 @@ export function CaseDetailDialog({
               {/* 话术全文 + 复制按钮 */}
               <div className="rounded-xl border border-stone-200 bg-stone-50/40 p-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                  <p className="text-[12px] uppercase tracking-[0.25em] text-stone-500">
                     话术全文
                   </p>
                   <button
                     type="button"
                     onClick={handleCopy}
                     className={cn(
-                      "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[11px] font-medium transition-all active:translate-y-0",
+                      "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[12px] transition-all active:translate-y-0",
                       copied
                         ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
-                        : "border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:text-stone-800",
+                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:text-stone-900",
                     )}
                   >
                     {copied ? (
@@ -231,7 +231,7 @@ export function CaseDetailDialog({
                     )}
                   </button>
                 </div>
-                <p className="whitespace-pre-wrap text-[14px] leading-[1.7] text-stone-800">
+                <p className="whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
                   {data.script_text}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export function CaseDetailDialog({
               {/* 管理员点评 */}
               {data.admin_conclusion ? (
                 <div className="rounded-xl border border-[#D97757]/15 bg-[#D97757]/[0.04] p-4">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#D97757]">
+                  <p className="text-[12px] uppercase tracking-[0.25em] text-[#D97757]">
                     管理员点评
                   </p>
                   <p className="mt-2 text-[13px] leading-[1.7] text-stone-700">
@@ -280,13 +280,13 @@ export function CaseDetailDialog({
               {screenshots.length > 0 ? (
                 <div>
                   <div className="flex items-baseline justify-between">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                    <p className="text-[12px] uppercase tracking-[0.25em] text-stone-500">
                       截图 · {screenshots.length} 张
                     </p>
                     <button
                       type="button"
                       onClick={() => handleScreenshotClick(screenshots, 0)}
-                      className="text-[11px] text-stone-500 transition-colors hover:text-stone-800"
+                      className="text-[12px] text-stone-500 transition-colors hover:text-stone-900"
                     >
                       查看大图
                     </button>
@@ -302,7 +302,7 @@ export function CaseDetailDialog({
                           onClick={() => handleScreenshotClick(screenshots, idx)}
                           className={cn(
                             "group/thumb relative aspect-[3/4] shrink-0 overflow-hidden rounded-lg border border-stone-200 bg-stone-100 transition-all",
-                            "hover:-translate-y-0.5 hover:border-stone-400 hover:shadow-[0_8px_20px_-10px_rgba(15,23,42,0.18)]",
+                            "hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-[0_8px_20px_-10px_rgba(28,25,23,0.18)]",
                             isHero && "col-span-2 row-span-2 aspect-[3/2]",
                           )}
                         >
@@ -315,12 +315,12 @@ export function CaseDetailDialog({
                             className="object-cover transition-transform group-hover/thumb:scale-[1.04]"
                           />
                           {isHero ? (
-                            <span className="absolute left-2 top-2 inline-flex items-center rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+                            <span className="absolute left-2 top-2 inline-flex items-center rounded bg-black/55 px-1.5 py-0.5 text-[12px] uppercase tracking-wider text-white backdrop-blur-sm">
                               主图
                             </span>
                           ) : null}
                           {isLast ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[14px] font-semibold text-white">
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[13px] text-white">
                               +{screenshots.length - 7}
                             </div>
                           ) : null}
@@ -334,14 +334,14 @@ export function CaseDetailDialog({
               {/* 测试明细 */}
               {testRecords.length > 0 ? (
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                  <p className="text-[12px] uppercase tracking-[0.25em] text-stone-500">
                     多号测试明细 · {testRecords.length} 条
                   </p>
                   <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                     {testRecords.slice(0, 8).map((record) => (
                       <li
                         key={record.id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-stone-100 bg-white px-3 py-2 text-[12px]"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-[12px]"
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-2">
                           <span
@@ -355,12 +355,12 @@ export function CaseDetailDialog({
                           </span>
                         </div>
                         <span
-                          className="shrink-0 font-medium"
+                          className="shrink-0"
                           style={{ color: record.passed ? "#6FAA7D" : "#C9604D" }}
                         >
                           {record.passed ? "通过" : "违规"}
                         </span>
-                        <span className="shrink-0 tabular-nums text-stone-400">
+                        <span className="shrink-0 tabular-nums text-stone-500">
                           {formatDateTime(record.tested_at)}
                         </span>
                       </li>
@@ -370,7 +370,7 @@ export function CaseDetailDialog({
               ) : null}
 
               {/* 元数据 */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-stone-100 pt-4 text-[12px] sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-stone-200 pt-4 text-[12px] sm:grid-cols-4">
                 <MetaRow label="提交人" value={getSubmitterName(data)} />
                 <MetaRow label="时间" value={formatDateTime(data.created_at)} />
                 <MetaRow label="账号" value={getAccountName(data)} />
@@ -393,7 +393,7 @@ export function CaseDetailDialog({
                   />
                 ) : (
                   <>
-                    <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                    <p className="mb-3 text-[12px] uppercase tracking-[0.25em] text-stone-500">
                       审核决策
                     </p>
                     <ReviewDecisionPanel
@@ -418,7 +418,7 @@ export function CaseDetailDialog({
             ) : null}
             </>
           ) : (
-            <div className="py-10 text-center text-[13px] text-stone-400">
+            <div className="py-10 text-center text-[13px] text-stone-500">
               加载失败或案例不存在
             </div>
           )}
@@ -443,20 +443,20 @@ function StatBlock({
     <div
       className={cn(
         "rounded-lg border bg-white px-3 py-2.5",
-        accent ? "border-[#D97757]/20 bg-[#D97757]/[0.03]" : "border-stone-100",
+        accent ? "border-[#D97757]/20 bg-[#D97757]/[0.03]" : "border-stone-200",
       )}
     >
-      <p className="text-[10px] uppercase tracking-[0.18em] text-stone-400">{label}</p>
+      <p className="text-[12px] uppercase tracking-[0.18em] text-stone-500">{label}</p>
       <p
         className={cn(
-          "mt-0.5 font-mono text-[18px] font-semibold tabular-nums",
-          accent ? "text-[#D97757]" : "text-stone-800",
+          "mt-0.5 text-[18px] font-medium tabular-nums",
+          accent ? "text-[#D97757]" : "text-stone-900",
         )}
       >
         {value}
       </p>
       {sublabel ? (
-        <p className="mt-0.5 text-[10px] text-stone-400">{sublabel}</p>
+        <p className="mt-0.5 text-[12px] text-stone-500">{sublabel}</p>
       ) : null}
     </div>
   );
@@ -465,8 +465,8 @@ function StatBlock({
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <p className="flex items-baseline gap-2">
-      <span className="text-stone-400">{label}</span>
-      <span className="truncate font-medium text-stone-700">{value}</span>
+      <span className="text-stone-500">{label}</span>
+      <span className="truncate text-stone-700">{value}</span>
     </p>
   );
 }

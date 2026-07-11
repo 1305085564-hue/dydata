@@ -59,14 +59,14 @@ export function PKSelector({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-stone-200 bg-white p-4 shadow-sm",
+        "rounded-2xl border border-stone-200 bg-white p-4",
         className
       )}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <div className="text-sm font-semibold text-foreground">对战模式</div>
-          <p className="text-xs text-muted-foreground">在个人对个人与团队均值之间快速切换。</p>
+          <div className="text-[13px] font-medium text-foreground">对战模式</div>
+          <p className="text-[12px] text-muted-foreground">在个人对个人与团队均值之间快速切换。</p>
         </div>
 
         <div className="inline-flex rounded-full border border-stone-200 bg-stone-50 p-1">
@@ -98,7 +98,7 @@ export function PKSelector({
             mode === "vsTeam" && "hidden"
           )}
         >
-          <div className="mb-2 text-xs font-medium text-muted-foreground">选择对手</div>
+          <div className="mb-2 text-[12px] font-medium text-muted-foreground">选择对手</div>
           <Select
             value={currentOpponentId ?? undefined}
             onValueChange={(value) => onOpponentChange(value || null)}
@@ -117,7 +117,7 @@ export function PKSelector({
                   <span className="flex min-w-0 items-center justify-between gap-2">
                     <span className="truncate">{member.name}</span>
                     {member.label ? (
-                      <span className="truncate text-xs text-muted-foreground">{member.label}</span>
+                      <span className="truncate text-[12px] text-muted-foreground">{member.label}</span>
                     ) : null}
                   </span>
                 </SelectItem>

@@ -31,13 +31,13 @@ export function StaffSearchHero({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="leading-tight">
           <p className="text-[12px] font-medium text-stone-500">先在已沉淀的话术里搜一遍</p>
-          <p className="text-[13px] text-stone-400">
-            团队已积累 <span className="font-mono tabular-nums text-stone-700">{totalCases}</span> 条案例
+          <p className="text-[13px] text-stone-500">
+            团队已积累 <span className="tabular-nums text-stone-700">{totalCases}</span> 条案例
           </p>
         </div>
         <Link
           href="/violations/submit"
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-4 text-sm font-medium text-stone-800 transition-colors hover:bg-stone-50 active:translate-y-0"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-4 text-[13px] font-medium text-stone-700 transition-colors hover:bg-stone-100 active:translate-y-0"
         >
           <FilePlus2 className="size-4 stroke-[1.5]" />
           没找到，交一条
@@ -45,19 +45,19 @@ export function StaffSearchHero({
       </div>
 
       <form onSubmit={handleSubmit} className="relative mt-4">
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-stone-400" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-stone-500" />
         <input
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="输入场景或关键词"
           disabled={isPending}
-          className="h-12 w-full rounded-lg border border-transparent bg-stone-100/70 pl-11 pr-28 text-sm text-stone-800 placeholder:text-stone-400 transition-colors focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5 disabled:opacity-60"
+          className="h-12 w-full rounded-lg border border-stone-200 bg-stone-50 pl-11 pr-28 text-[13px] text-stone-700 placeholder:text-stone-500 transition-colors focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5 disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={isPending}
-          className="absolute right-2 top-1/2 inline-flex h-9 -translate-y-1/2 items-center gap-1 rounded-lg bg-[#D97757] px-4 text-xs font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className="absolute right-2 top-1/2 inline-flex h-9 -translate-y-1/2 items-center gap-1 rounded-lg bg-[#D97757] px-4 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0 disabled:cursor-not-allowed disabled:border disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500/40 disabled:hover:bg-stone-100"
         >
           {isPending ? (
             <>

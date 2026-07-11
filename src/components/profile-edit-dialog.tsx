@@ -173,7 +173,7 @@ export function ProfileEditDialog({
           ) : trigger === "icon" ? (
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-lg p-1 text-stone-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-600 active:translate-y-0"
+              className="inline-flex items-center justify-center rounded-lg p-1 text-stone-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-700 active:translate-y-0"
               aria-label="编辑资料"
             >
               <Pencil className="size-3.5 stroke-[1.5]" />
@@ -185,7 +185,7 @@ export function ProfileEditDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[18px] font-semibold tracking-tight text-stone-800">
+          <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-900">
             编辑个人资料
           </DialogTitle>
           <DialogDescription className="text-[13px] leading-[1.7] text-stone-500">
@@ -196,7 +196,7 @@ export function ProfileEditDialog({
           <div className="space-y-2">
             <Label
               htmlFor="profile-name"
-              className="text-[13px] font-medium text-stone-800"
+              className="text-[13px] font-medium text-stone-900"
             >
               显示名称
             </Label>
@@ -210,13 +210,13 @@ export function ProfileEditDialog({
               disabled={isPending}
               autoFocus
             />
-            <p className="text-[12px] text-stone-400">
+            <p className="text-[12px] text-stone-500">
               {name.length}/20 字符
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[13px] font-medium text-stone-800">
+            <Label className="text-[13px] font-medium text-stone-900">
               当前身份
             </Label>
             <div className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
@@ -228,10 +228,10 @@ export function ProfileEditDialog({
                 {currentName.trim().slice(0, 1).toUpperCase() || "?"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium text-stone-800">
+                <p className="truncate text-[13px] font-medium text-stone-900">
                   {currentName}
                 </p>
-                <p className="text-[12px] text-stone-400">
+                <p className="text-[12px] text-stone-500">
                   {roleLabel(role)}
                 </p>
               </div>
@@ -248,7 +248,7 @@ export function ProfileEditDialog({
 
           {accounts.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-[13px] font-medium text-stone-800">
+              <Label className="text-[13px] font-medium text-stone-900">
                 抖音账号名
               </Label>
               <div className="space-y-2">
@@ -292,16 +292,16 @@ export function ProfileEditDialog({
                           {account.name.trim().slice(0, 1).toUpperCase() || "?"}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] font-medium text-stone-800">
+                          <p className="truncate text-[13px] font-medium text-stone-900">
                             {account.name}
                           </p>
-                          <p className="text-[12px] text-stone-400">
+                          <p className="text-[12px] text-stone-500">
                             抖音账号
                           </p>
                         </div>
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center rounded-lg p-1 text-stone-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-600 active:translate-y-0"
+                          className="inline-flex items-center justify-center rounded-lg p-1 text-stone-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-700 active:translate-y-0"
                           onClick={() => handleEditAccount(account)}
                           disabled={isPending}
                           aria-label={`编辑 ${account.name}`}
@@ -324,7 +324,7 @@ export function ProfileEditDialog({
                         type="button"
                         onClick={handleCancelAddAccount}
                         disabled={isPending}
-                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-stone-400 transition-[background-color,color] duration-150 hover:bg-white hover:text-stone-700"
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-stone-500 transition-[background-color,color] duration-150 hover:bg-white hover:text-stone-700"
                         aria-label="取消添加账号"
                       >
                         <X className="size-3.5 stroke-[1.6]" />
@@ -379,7 +379,7 @@ export function ProfileEditDialog({
                   </button>
                 )}
               </div>
-              <p className="text-[12px] text-stone-400">
+              <p className="text-[12px] text-stone-500">
                 修改后将同步更新所有相关数据
               </p>
             </div>

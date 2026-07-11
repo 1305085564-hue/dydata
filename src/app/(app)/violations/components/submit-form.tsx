@@ -485,7 +485,7 @@ export function SubmitForm({
       >
         {renderStepContent()}
       </StepWizard>
-      <p className="mt-4 text-center text-[11px] text-stone-400">
+      <p className="mt-4 text-center text-[12px] text-stone-500">
         快捷键 · Esc 上一步 · Cmd/Ctrl + Enter 推进
       </p>
     </div>

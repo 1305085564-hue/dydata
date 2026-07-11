@@ -22,7 +22,7 @@ export function ConclusionCard({
       {/* Eyebrow */}
       <div className="flex items-center gap-2">
         <span className="size-1.5 rounded-full bg-[#D97757]" />
-        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
+        <span className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
           审核结论
         </span>
       </div>
@@ -49,7 +49,7 @@ export function ConclusionCard({
           <div>
             <div className="flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-[#D99E55]" />
-              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
+              <span className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
                 管理员结论
               </span>
             </div>
@@ -62,7 +62,7 @@ export function ConclusionCard({
           <div>
             <div className="flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
+              <span className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
                 建议动作
               </span>
             </div>

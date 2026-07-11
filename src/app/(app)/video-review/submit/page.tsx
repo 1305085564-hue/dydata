@@ -41,10 +41,10 @@ export default async function SubmitVideoReviewPage({
       <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6 space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-stone-500">
+            <p className="text-[12px] font-medium text-stone-500">
               视频审核
             </p>
-            <h1 className="mt-2 text-[24px] font-bold leading-[1.33] tracking-tight text-stone-950">
+            <h1 className="mt-2 text-[24px] font-medium leading-[1.33] tracking-tight text-stone-900">
               {isAmend ? "整改重提" : "上传待审稿"}
             </h1>
             <p className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-stone-500">

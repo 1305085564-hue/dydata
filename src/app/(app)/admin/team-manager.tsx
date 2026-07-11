@@ -14,7 +14,7 @@ interface TeamManagerProps {
 export function TeamManager({ teams }: TeamManagerProps) {
   return (
     <div className="space-y-2">
-      <p className="text-[13px] font-medium text-stone-800">当前团队</p>
+      <p className="text-[13px] font-medium text-stone-900">当前团队</p>
       <div className="flex flex-wrap gap-2">
         {teams.map((team) => (
           <Badge

@@ -76,19 +76,19 @@ function 趋势空状态({ text }: { text: string }) {
     >
       <div className="relative flex h-[120px] w-[120px] items-center justify-center">
         <svg className="absolute inset-0" viewBox="0 0 120 120" aria-hidden="true">
-          <circle cx="60" cy="60" r="24" fill="none" stroke="#D4D4D8" strokeWidth="0.5" strokeDasharray="3,3" />
-          <line x1="60" y1="36" x2="60" y2="84" stroke="#E4E4E7" strokeWidth="0.5" />
-          <line x1="36" y1="60" x2="84" y2="60" stroke="#E4E4E7" strokeWidth="0.5" />
+          <circle cx="60" cy="60" r="24" fill="none" stroke={CHART_COLORS.grid} strokeWidth="0.5" strokeDasharray="3,3" />
+          <line x1="60" y1="36" x2="60" y2="84" stroke={CHART_COLORS.grid} strokeWidth="0.5" />
+          <line x1="36" y1="60" x2="84" y2="60" stroke={CHART_COLORS.grid} strokeWidth="0.5" />
         </svg>
         <div
           className="relative h-2 w-2 rounded-full animate-float-y"
           style={{
-            background: "radial-gradient(circle, #E28D71 0%, #D97757 100%)",
+            background: CHART_COLORS.primary,
             boxShadow: "0 2px 6px rgba(217,119,87,0.3)",
           }}
         />
       </div>
-      <p className="text-[13px] font-medium text-stone-500 mt-4">{text}</p>
+      <p className="mt-4 text-[13px] text-stone-500">{text}</p>
     </motion.div>
   );
 }
@@ -119,21 +119,21 @@ function InteractionTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-lg border border-stone-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]"
+      className="min-w-40 rounded-lg border border-stone-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(28,25,23,0.06)]"
     >
-      <p className="text-[11px] font-medium tracking-[0.01em] text-foreground/70">{label}</p>
+      <p className="text-[12px] tracking-[0.01em] text-stone-500">{label}</p>
       <div className="mt-2 space-y-1.5">
         {payload.map((item) => {
           const numericValue = typeof item.value === "number" ? item.value : null;
           const showTrend = item.dataKey === personalLabel && isPositive != null;
 
           return (
-            <div key={item.dataKey} className="flex items-center justify-between gap-3 text-xs font-mono tabular-nums">
-              <span className="flex items-center gap-2 text-foreground/70">
+            <div key={item.dataKey} className="flex items-center justify-between gap-3 text-[12px] tabular-nums">
+              <span className="flex items-center gap-2 text-stone-500">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
                 {item.name}
               </span>
-              <span className="flex items-center gap-1 font-medium text-foreground">
+              <span className="flex items-center gap-1 text-stone-700">
                 {numericValue != null ? <AnimatedNumber value={numericValue} duration={280} /> : "-"}
                 {showTrend ? <趋势方向图标 positive={isPositive} /> : null}
               </span>
@@ -175,21 +175,21 @@ export function InteractionTrend({
   );
 
   return (
-    <section className="glass-card-static p-4 sm:p-5">
-      <div className="flex flex-col gap-2 border-b border-border/60 pb-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5">
+      <div className="flex flex-col gap-2 border-b border-stone-200 pb-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-[18px] font-medium tracking-tight text-foreground">互动质量分趋势</h3>
-          <p className="text-xs text-muted-foreground">评论×0.35 + 分享×0.25 + 点赞×0.25 + 收藏×0.15</p>
+          <h3 className="text-[18px] font-medium tracking-tight text-stone-900">互动质量分趋势</h3>
+          <p className="text-[12px] text-stone-500">评论×0.35 + 分享×0.25 + 点赞×0.25 + 收藏×0.15</p>
         </div>
-        <div className="inline-flex w-fit rounded-xl border border-border/70 bg-muted/45 p-0.5 backdrop-blur">
+        <div className="inline-flex w-fit rounded-xl border border-stone-200 bg-stone-100 p-0.5">
           {([7, 30] as const).map((value) => (
             <Button
               key={value}
               size="sm"
               variant="ghost"
               className={cn(
-                "h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground shadow-none transition-[transform,filter,background-color,color,box-shadow] duration-[var(--duration-micro)] ease-[var(--ease-spring)]] hover:brightness-105]",
-                range === value && "glass-panel text-foreground shadow-sm"
+                "h-7 rounded-lg px-2 text-[12px] text-stone-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-stone-700",
+                range === value && "border border-stone-200 bg-white text-stone-700"
               )}
               onClick={() => setRange(value)}
             >
@@ -219,8 +219,8 @@ export function InteractionTrend({
                 <ComposedChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
                   <defs>
                     <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#D97757" stopOpacity={0.03} />
-                      <stop offset="100%" stopColor="#D97757" stopOpacity={0} />
+                      <stop offset="0%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0.03} />
+                      <stop offset="100%" stopColor={CHART_GRADIENT_PRIMARY.from} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid {...CHART_GRID_PROPS} />
@@ -241,7 +241,7 @@ export function InteractionTrend({
                   />
                   <Tooltip
                     content={<InteractionTooltip personalLabel={personalLabel} teamAverageLabel={teamAverageLabel} />}
-                    cursor={{ stroke: "rgba(15,23,42,0.1)", strokeWidth: 1 }}
+                    cursor={{ stroke: "rgba(28,25,23,0.1)", strokeWidth: 1 }}
                   />
                   <Area
                     type="monotone"
@@ -255,7 +255,7 @@ export function InteractionTrend({
                     type="monotone"
                     dataKey={personalLabel}
                     name={personalLabel}
-                    stroke="#D97757"
+                    stroke={CHART_COLORS.primary}
                     strokeWidth={2}
                     dot={false}
                     activeDot={<ChartActiveDot />}
@@ -266,7 +266,7 @@ export function InteractionTrend({
                     type="monotone"
                     dataKey={teamAverageLabel}
                     name={teamAverageLabel}
-                    stroke="#D4D4D8"
+                    stroke={CHART_COLORS.muted}
                     strokeWidth={1}
                     dot={false}
                     activeDot={false}

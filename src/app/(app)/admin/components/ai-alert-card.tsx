@@ -41,14 +41,14 @@ export function AiAlertRow({ alert, checked, onToggle }: AiAlertRowProps) {
   const content = (
     <>
       {checkbox}
-      <span className="min-w-[80px] truncate text-[13px] font-medium text-stone-800">
+      <span className="min-w-[80px] truncate text-[13px] font-medium text-stone-900">
         {primaryEntity?.name ?? "—"}
       </span>
       <span className="flex-1 truncate text-[12px] text-stone-500">
         {alert.detail ?? alert.title}
       </span>
       {navigate && (
-        <ArrowRight className="size-3.5 text-stone-400 opacity-0 transition duration-150 group-hover:opacity-100" />
+        <ArrowRight className="size-3.5 text-stone-500 opacity-0 transition duration-150 group-hover:opacity-100" />
       )}
     </>
   );

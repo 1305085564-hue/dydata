@@ -35,11 +35,11 @@ export function WorkspacePicker() {
   const getStatusColor = (status: PremiumAccount["status"]) => {
     switch (status) {
       case "active":
-        return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+        return "bg-[#6FAA7D]";
       case "warning":
-        return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]";
+        return "bg-[#D99E55]";
       case "error":
-        return "bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]";
+        return "bg-[#C9604D]";
       default:
         return "bg-stone-400";
     }
@@ -72,10 +72,10 @@ export function WorkspacePicker() {
             <div className={cn("size-2 rounded-full", selectedAccount ? getStatusColor(selectedAccount.status) : "bg-stone-400")} />
           </div>
           <div className="min-w-0 flex flex-col">
-            <span className="truncate text-xs font-semibold leading-tight text-stone-900 dark:text-stone-100 max-w-[120px]">
+            <span className="truncate text-[12px] font-medium leading-tight text-stone-900 dark:text-stone-100 max-w-[120px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
-            <span className="truncate text-[10px] font-medium leading-none text-stone-500 mt-0.5 max-w-[125px] tracking-tight">
+            <span className="truncate text-[12px] font-medium leading-none text-stone-500 mt-0.5 max-w-[125px] tracking-tight">
               @{selectedAccount?.name || "dydata"}
             </span>
           </div>
@@ -103,14 +103,14 @@ export function WorkspacePicker() {
           >
             {/* Search Header */}
             <div className="relative flex items-center mb-1.5 px-1.5 pt-1">
-              <Search className="absolute left-3.5 size-3.5 text-stone-400" />
+              <Search className="absolute left-3.5 size-3.5 text-stone-500" />
               <input
                 type="text"
                 placeholder="搜索账号或领域方向..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className={cn(
-                  "w-full rounded-lg border py-1.5 pl-8 pr-3 text-xs tracking-tight outline-none transition-all duration-200",
+                  "w-full rounded-lg border py-1.5 pl-8 pr-3 text-[12px] tracking-tight outline-none transition-all duration-200",
                   "border-stone-200 bg-stone-50/50 focus:border-stone-400 focus:bg-white",
                   "dark:border-stone-800 dark:bg-stone-900/50 dark:focus:border-stone-600 dark:focus:bg-stone-900"
                 )}
@@ -120,7 +120,7 @@ export function WorkspacePicker() {
             {/* List */}
             <div className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
               {filteredAccounts.length === 0 ? (
-                <div className="py-6 text-center text-[11px] text-stone-400 dark:text-stone-600">
+                <div className="py-6 text-center text-[12px] text-stone-500 dark:text-[#E7E5E4]">
                   没有找到匹配的账号
                 </div>
               ) : (
@@ -147,17 +147,17 @@ export function WorkspacePicker() {
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="truncate text-xs font-semibold tracking-tight text-stone-950 dark:text-stone-50">
+                            <span className="truncate text-[12px] font-medium tracking-tight text-stone-900 dark:text-stone-50">
                               {account.display_name}
                             </span>
                             {getStatusIcon(account.status)}
                           </div>
-                          <span className="block truncate text-[10px] text-stone-400 dark:text-stone-500 font-medium">
+                          <span className="block truncate text-[12px] text-stone-500 dark:text-stone-500 font-medium">
                             {account.content_direction}
                           </span>
                           
                           {/* Metrics row */}
-                          <div className="flex items-center gap-3 mt-1.5 text-[9px] font-medium text-stone-400 dark:text-stone-500">
+                          <div className="flex items-center gap-3 mt-1.5 text-[12px] font-medium text-stone-500 dark:text-stone-500">
                             <span className="flex items-center gap-1 bg-stone-100 dark:bg-stone-900 px-1 rounded">
                               <TrendingUp className="size-2 text-emerald-500" />
                               {account.followers} 粉丝
@@ -179,9 +179,9 @@ export function WorkspacePicker() {
               )}
             </div>
             
-            <div className="mt-1 border-t border-stone-100 dark:border-stone-900 pt-1.5 px-1 pb-0.5 flex justify-between items-center text-[10px] text-stone-400 dark:text-stone-500">
+            <div className="mt-1 border-t border-stone-100 dark:border-stone-900 pt-1.5 px-1 pb-0.5 flex justify-between items-center text-[12px] text-stone-500 dark:text-stone-500">
               <span>状态码: 🟢 良好 | 🟡 预警 | 🔴 异常</span>
-              <span className="font-mono text-[9px]">⌘K 快捷键</span>
+              <span className="text-[12px]">⌘K 快捷键</span>
             </div>
           </motion.div>
         )}

@@ -65,10 +65,10 @@ export default async function ViolationsPage({
       <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+            <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
               导粉中心
             </p>
-            <h1 className="mt-2 text-[24px] font-semibold leading-[1.33] tracking-tight text-stone-800">
+            <h1 className="mt-2 text-[24px] font-medium leading-[1.33] tracking-tight text-stone-900">
               {isManageView ? "管理工作台" : "找话术 · 避坑"}
             </h1>
             <div className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-stone-500">
@@ -89,7 +89,7 @@ export default async function ViolationsPage({
                 <BackButton />
                 <Link
                   href="/violations"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 transition-colors hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
                 >
                   <TrendingUp className="size-3.5 stroke-[1.5]" />
                   员工视角
@@ -107,7 +107,7 @@ export default async function ViolationsPage({
                 {canManageViolations ? (
                   <Link
                     href="/violations?view=manage"
-                    className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[13px] font-medium text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[13px] font-medium text-stone-700 transition-colors hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
                   >
                     <Settings2 className="size-3.5 stroke-[1.5]" />
                     管理工作台
@@ -115,7 +115,7 @@ export default async function ViolationsPage({
                 ) : null}
                 <Link
                   href="/violations/submit"
-                  className="group inline-flex h-10 items-center gap-2 rounded-xl bg-[#D97757] px-4 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-[#C96442] hover:shadow-sm active:translate-y-0"
+                  className="group inline-flex h-10 items-center gap-2 rounded-xl bg-[#D97757] px-4 text-[13px] font-medium text-white transition-all hover:bg-[#C96442] active:translate-y-0"
                 >
                   <FilePlus2 className="size-4 stroke-[1.75]" />
                   上传话术

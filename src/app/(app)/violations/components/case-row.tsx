@@ -34,7 +34,7 @@ function resolveAccent(item: ViolationCase) {
     return { dotColor: "#D99E55", label: "待测试", muted: false };
   }
   if (ext.usage_state === "not_recommended") {
-    return { dotColor: "#a1a1aa", label: "× 推荐", muted: false };
+    return { dotColor: "#78716C", label: "× 推荐", muted: false };
   }
   return { dotColor: "#6FAA7D", label: "可用", muted: false };
 }
@@ -100,7 +100,7 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
       }}
       className={cn(
         "group relative flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors duration-150",
-        "hover:bg-stone-50 focus-visible:bg-stone-50 focus-visible:outline-none",
+        "hover:bg-stone-100 focus-visible:bg-stone-100 focus-visible:outline-none",
         accent.muted && "bg-stone-50/40",
       )}
     >
@@ -114,8 +114,8 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
       {/* 主体话术（单行截断） */}
       <p
         className={cn(
-          "min-w-0 flex-1 truncate text-[14px] leading-[1.6]",
-          accent.muted ? "text-stone-500" : "text-stone-800",
+          "min-w-0 flex-1 truncate text-[13px] leading-[1.6]",
+          accent.muted ? "text-stone-500" : "text-stone-700",
         )}
       >
         {caseItem.script_text}
@@ -124,26 +124,26 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
       {/* 右侧标签 + 指标 + 复制 */}
       <div className="flex shrink-0 items-center gap-2">
         {/* 类目 */}
-        <span className="hidden rounded-md border border-stone-200 px-1.5 py-0.5 text-[11px] font-medium text-stone-500 sm:inline-flex">
+        <span className="hidden rounded-md border border-stone-200 px-1.5 py-0.5 text-[12px] font-normal text-stone-500 sm:inline-flex">
           {caseItem.category || "其他"}
         </span>
 
         {/* 导粉方式 */}
         {guidanceLabel ? (
-          <span className="hidden rounded-md border border-stone-200 px-1.5 py-0.5 text-[11px] text-stone-500 md:inline-flex">
+          <span className="hidden rounded-md border border-stone-200 px-1.5 py-0.5 text-[12px] text-stone-500 md:inline-flex">
             {guidanceLabel}
           </span>
         ) : null}
 
         {/* 指标（label 上方 / 数字下方，紧凑） */}
         <div className="min-w-[68px] text-right leading-none">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-stone-400">
+          <p className="text-[12px] tracking-[0.12em] text-stone-500">
             {metric.label}
           </p>
           <p
             className={cn(
-              "mt-1 font-mono text-[14px] font-semibold tabular-nums",
-              caseItem.purpose === "conversion" ? "text-[#6FAA7D]" : "text-stone-800",
+              "mt-1 text-[13px] font-medium tabular-nums",
+              caseItem.purpose === "conversion" ? "text-[#6FAA7D]" : "text-stone-700",
               accent.muted && "text-stone-500",
             )}
           >
@@ -160,7 +160,7 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
             "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-within:opacity-100",
             copied
               ? "bg-[#6FAA7D]/10 text-[#6FAA7D] opacity-100"
-              : "text-stone-400 hover:bg-stone-100 hover:text-stone-700",
+              : "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
           )}
           aria-label="复制话术"
         >

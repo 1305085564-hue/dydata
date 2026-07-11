@@ -84,7 +84,7 @@ function PlayCountWithSignal({ video, playCount }: { video: VideoRow; playCount:
             {playCount != null ? formatNumber(playCount) : "-"}
           </span>
         </TooltipTrigger>
-        <TooltipContent className="text-base font-semibold">
+        <TooltipContent className="text-[13px] font-medium">
           <span style={{ color }}>{isUp ? "较上条暴涨" : "较上条腰斩"} {formatRate(pct)}</span>
         </TooltipContent>
       </Tooltip>
@@ -572,7 +572,7 @@ export function ContentList({
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-stone-500 hover:bg-stone-50 hover:text-stone-800"
+          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-stone-500 hover:bg-stone-100 hover:text-stone-700"
           onClick={handleBatchGenerate}
           disabled={isBatchGenerating || batchCandidates.length === 0}
         >
@@ -586,7 +586,7 @@ export function ContentList({
         <div className="flex-1 min-w-0">
           <div
             ref={tableContainerRef}
-            className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white shadow-sm"
+            className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white"
             style={{ maxHeight: "calc(100vh - 280px)" }}
           >
             <Table>
@@ -608,7 +608,7 @@ export function ContentList({
               <TableBody>
                 {visible.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-sm text-stone-500">
+                    <TableCell colSpan={11} className="py-12 text-center text-[13px] text-stone-500">
                       暂无内容
                     </TableCell>
                   </TableRow>
@@ -630,7 +630,7 @@ export function ContentList({
                         {showTodayDivider ? (
                           <TableRow className="hover:bg-transparent">
                             <TableCell colSpan={11} className="px-4 py-2">
-                              <div className="flex items-center gap-3 text-[12px] text-stone-300">
+                              <div className="flex items-center gap-3 text-[12px] text-stone-500">
                                 <span className="shrink-0 tracking-[0.18em]">历史</span>
                                 <span className="h-px flex-1 bg-stone-200" />
                               </div>
@@ -651,7 +651,7 @@ export function ContentList({
                               : undefined
                           }
                         >
-                          <TableCell className="py-2 text-[13px] font-medium font-mono tabular-nums text-stone-400">
+                          <TableCell className="py-2 text-[13px] tabular-nums text-stone-500">
                             <span className="inline-flex items-center gap-1.5">
                               {filters.sortMode === "priority" &&
                               (priorityScoreMap.get(video.id) ?? 0) >= PRIORITY_HIGHLIGHT_THRESHOLD ? (
@@ -665,7 +665,7 @@ export function ContentList({
                             </span>
                           </TableCell>
                           <TableCell className="max-w-md py-2">
-                            <div className="line-clamp-2 text-sm font-medium text-stone-800" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                            <div className="line-clamp-2 text-[13px] font-medium text-stone-900" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                               {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                             </div>
                           </TableCell>
@@ -678,7 +678,7 @@ export function ContentList({
                                 return (
                                   <Button
                                     size="sm"
-                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-xs font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     批改
@@ -690,7 +690,7 @@ export function ContentList({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-xs text-stone-500 hover:text-stone-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     查看
@@ -701,7 +701,7 @@ export function ContentList({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 rounded-lg px-3 text-xs text-stone-500 hover:bg-stone-50 hover:text-stone-800 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                  className="h-7 rounded-lg px-3 text-[12px] text-stone-500 hover:bg-stone-100 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                   onClick={() => onSelectVideoId(video.id)}
                                 >
                                   批改
@@ -709,30 +709,30 @@ export function ContentList({
                               );
                             })()}
                           </TableCell>
-                          <TableCell className="text-sm text-stone-500">
+                          <TableCell className="text-[13px] text-stone-500">
                             {video.profiles.name}
                           </TableCell>
-                          <TableCell className="text-sm text-stone-500">
+                          <TableCell className="text-[13px] text-stone-500">
                             {video.accounts.name}
                           </TableCell>
-                          <TableCell className="text-sm text-stone-500">
+                          <TableCell className="text-[13px] text-stone-500">
                             {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                           </TableCell>
-                          <TableCell className="text-right text-sm">
+                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700">
                             {snap ? (
                               <PlayCountWithSignal video={video} playCount={snap.play_count} />
                             ) : "-"}
                           </TableCell>
-                          <TableCell className="text-right text-sm">
+                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700">
                             {snap ? formatRate(snap.bounce_rate_2s) : "-"}
                           </TableCell>
-                          <TableCell className="text-right text-sm">
+                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700">
                             {snap ? formatRate(snap.completion_rate_5s) : "-"}
                           </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
-                              className={`text-xs ${statusClassName[video.anomaly_status]}`}
+                              className={`text-[12px] ${statusClassName[video.anomaly_status]}`}
                             >
                               {video.anomaly_status}
                             </Badge>
@@ -742,7 +742,7 @@ export function ContentList({
                               <div className="flex flex-col gap-1 items-start">
                                 <Badge
                                   variant="outline"
-                                  className={`text-xs ${workflowStatusClass[cardStatus] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
+                                  className={`text-[12px] ${workflowStatusClass[cardStatus] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
                                 >
                                   {card.workflow_label}
                                 </Badge>
@@ -762,12 +762,12 @@ export function ContentList({
                             ) : readiness ? (
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${readinessClass[readiness.status] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
+                                className={`text-[12px] ${readinessClass[readiness.status] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
                               >
                                 {readiness.label}
                               </Badge>
                             ) : (
-                              <span className="text-xs text-stone-500">未生成</span>
+                              <span className="text-[12px] text-stone-500">未生成</span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -817,7 +817,7 @@ export function ContentList({
                   <>
                     <ChevronDown className="size-3.5" />
                     加载更多
-                    <span className="ml-1 text-[12px] text-stone-300">
+                    <span className="ml-1 text-[12px] text-stone-500">
                       (已加载 {Math.min(loadedCount, filtered.length)} / 共 {hasDeferredData ? totalCount ?? filtered.length : filtered.length} 条)
                     </span>
                   </>
@@ -828,7 +828,7 @@ export function ContentList({
 
           {/* End state */}
           {!hasMore && filtered.length > 0 && (
-            <div className="mt-4 text-center text-[12px] text-stone-400">
+            <div className="mt-4 text-center text-[12px] text-stone-500">
               已加载全部 {filtered.length} 条内容
             </div>
           )}
@@ -837,7 +837,7 @@ export function ContentList({
         {/* Right sidebar: mini timeline */}
         {filtered.length > PAGE_SIZE && (
           <div className="hidden flex-col items-center gap-4 py-4 lg:flex">
-            <span className="text-[12px] text-stone-300" style={{ writingMode: "vertical-rl" }}>
+            <span className="text-[12px] text-stone-500" style={{ writingMode: "vertical-rl" }}>
               时间轴
             </span>
             <MiniTimeline
@@ -846,7 +846,7 @@ export function ContentList({
               currentIndex={Math.min(currentIndex, filtered.length - 1)}
               onSeek={handleTimelineSeek}
             />
-            <span className="text-[12px] text-stone-300" style={{ writingMode: "vertical-rl" }}>
+            <span className="text-[12px] text-stone-500" style={{ writingMode: "vertical-rl" }}>
               {filtered.length} 条
             </span>
           </div>

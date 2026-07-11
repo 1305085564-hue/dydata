@@ -62,7 +62,7 @@ export function ForgotPasswordForm() {
             {submitting ? "发送中" : "发送重置邮件"}
           </Button>
           <p className="text-center text-[13px] text-stone-500">
-            <Link className="text-stone-800 underline underline-offset-4" href="/login">
+            <Link className="text-stone-700 underline underline-offset-4" href="/login">
               返回登录
             </Link>
           </p>

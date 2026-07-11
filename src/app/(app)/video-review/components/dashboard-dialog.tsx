@@ -150,7 +150,7 @@ export function DashboardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={{ maxWidth: "min(1100px, calc(100vw - 32px))" }} className="w-[95vw] bg-white p-4 sm:p-6 rounded-2xl border border-stone-200 overflow-y-auto max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-[18px] font-bold text-stone-950">
+          <DialogTitle className="text-[18px] font-medium text-stone-900">
             团队产量对账看板
           </DialogTitle>
         </DialogHeader>
@@ -162,10 +162,10 @@ export function DashboardDialog({
               全队已交 / 目标
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[18px] font-bold font-mono tabular-nums text-stone-950">
+              <span className="text-[18px] font-medium tabular-nums text-stone-900">
                 {totalSubmitted} / {totalTarget}
               </span>
-              <span className="text-[12px] font-semibold text-[#6FAA7D] font-mono tabular-nums">
+              <span className="text-[12px] font-medium text-[#6FAA7D] tabular-nums">
                 ({fulfillmentRate}%)
               </span>
             </div>
@@ -176,10 +176,10 @@ export function DashboardDialog({
               待审请假
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[18px] font-bold font-mono tabular-nums text-[#8AA8C7]">
+              <span className="text-[18px] font-medium tabular-nums text-[#8AA8C7]">
                 {pendingExemptionsCount}
               </span>
-              <span className="text-[12px] text-stone-400">人申请请假</span>
+              <span className="text-[12px] text-stone-500">人申请请假</span>
             </div>
           </div>
 
@@ -189,12 +189,12 @@ export function DashboardDialog({
             </span>
             <div className="flex items-baseline gap-2">
               <span className={cn(
-                "text-[32px] font-bold font-mono tabular-nums",
-                redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-950"
+                "text-[24px] font-medium tabular-nums",
+                redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-900"
               )}>
                 {redAlertCount}
               </span>
-              <span className="text-[12px] text-stone-400">人未达标且无豁免</span>
+              <span className="text-[12px] text-stone-500">人未达标且无豁免</span>
             </div>
           </div>
         </div>
@@ -202,7 +202,7 @@ export function DashboardDialog({
         <div className="flex flex-col sm:flex-row flex-wrap sm:items-center gap-4 py-2 mt-6 mb-6">
           {/* 日期选择 */}
           <div className="flex w-full sm:w-auto items-center gap-2">
-            <Calendar className="size-4 text-stone-400 shrink-0" />
+            <Calendar className="size-4 text-stone-500 shrink-0" />
             <input
               type="date"
               value={date}
@@ -210,20 +210,20 @@ export function DashboardDialog({
                 setDate(e.target.value);
                 handleFilterChange(e.target.value, teamId, groupId);
               }}
-              className="h-8 w-full min-w-[8rem] sm:w-32 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[12px] font-mono font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+              className="h-8 w-full min-w-[8rem] sm:w-32 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[12px] font-medium text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
             />
           </div>
 
           {/* 团队筛选 */}
           <div className="flex w-full sm:w-auto items-center gap-2">
-            <Users className="size-4 text-stone-400 shrink-0" />
+            <Users className="size-4 text-stone-500 shrink-0" />
             <select
               value={teamId}
               onChange={(e) => {
                 setTeamId(e.target.value);
                 handleFilterChange(date, e.target.value, groupId);
               }}
-              className="h-8 w-full min-w-[8rem] sm:w-36 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[12px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+              className="h-8 w-full min-w-[8rem] sm:w-36 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[12px] font-medium text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
             >
               <option value="all">所有团队</option>
               {teams.map((t) => (
@@ -236,14 +236,14 @@ export function DashboardDialog({
 
           {/* 小组筛选 */}
           <div className="flex w-full sm:w-auto items-center gap-2">
-            <Users className="size-4 text-stone-400 shrink-0" />
+            <Users className="size-4 text-stone-500 shrink-0" />
             <select
               value={groupId}
               onChange={(e) => {
                 setGroupId(e.target.value);
                 handleFilterChange(date, teamId, e.target.value);
               }}
-              className="h-8 w-full min-w-[8rem] sm:w-36 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[12px] font-medium text-stone-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+              className="h-8 w-full min-w-[8rem] sm:w-36 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[12px] font-medium text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
             >
               <option value="all">所有小组</option>
               {groups.map((g) => (
@@ -259,17 +259,17 @@ export function DashboardDialog({
             type="button"
             onClick={() => setOnlyRedAlert(!onlyRedAlert)}
             className={cn(
-              "h-8 w-full sm:w-auto rounded-lg border px-3 text-[12px] font-semibold transition-colors active:scale-95",
+              "h-8 w-full sm:w-auto rounded-lg border px-3 text-[12px] font-medium transition-colors active:scale-95",
               onlyRedAlert
                 ? "border-[#C9604D] text-[#C9604D] bg-[#C9604D]/5"
-                : "border-stone-200 text-stone-600 bg-white hover:border-stone-300 hover:bg-stone-50"
+                : "border-stone-200 text-stone-500 bg-white hover:border-stone-300 hover:bg-stone-50"
             )}
           >
             只看红灯
           </button>
 
           {isPending && (
-            <span className="flex items-center text-[12px] text-stone-400 w-full sm:w-auto justify-center sm:justify-start">
+            <span className="flex items-center text-[12px] text-stone-500 w-full sm:w-auto justify-center sm:justify-start">
               <Loader2 className="mr-1 size-3 animate-spin" />
               数据同步中...
             </span>
@@ -279,7 +279,7 @@ export function DashboardDialog({
         {/* 树状折叠成员列表 (24px 留白分割) */}
         <div className="mt-6 space-y-5">
           {Object.keys(groupedData).length === 0 ? (
-            <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-stone-200 text-[12px] text-stone-400">
+            <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-stone-200 text-[12px] text-stone-500">
               {onlyRedAlert ? "当前没有红灯未达标成员" : "当前筛选条件下无团队成员对账数据"}
             </div>
           ) : (
@@ -300,15 +300,15 @@ export function DashboardDialog({
                   >
                     <div className="flex items-center gap-2">
                       {isCollapsed ? (
-                        <ChevronDown className="size-4 text-stone-400" />
+                        <ChevronDown className="size-4 text-stone-500" />
                       ) : (
-                        <ChevronUp className="size-4 text-stone-400" />
+                        <ChevronUp className="size-4 text-stone-500" />
                       )}
-                      <span className="text-[13px] font-bold text-stone-800">
+                      <span className="text-[13px] font-medium text-stone-700">
                         {groupName}
                       </span>
                       <span className="text-[12px] text-stone-500">
-                        (达标率 <span className="font-mono tabular-nums">{gSubmitted}/{gTarget}</span> - <span className="font-mono tabular-nums">{gRate}%</span>)
+                        (达标率 <span className="tabular-nums">{gSubmitted}/{gTarget}</span> - <span className="tabular-nums">{gRate}%</span>)
                       </span>
                     </div>
                   </div>
@@ -334,7 +334,7 @@ export function DashboardDialog({
                               {/* 组员基本信息 */}
                               <div className="flex items-center gap-3">
                                 {/* 头像与状态灯结合 (头像右下角状态灯，静态，尺寸 10px) */}
-                                <div className="relative size-8 rounded-full bg-stone-100 flex items-center justify-center text-[12px] font-bold text-stone-600">
+                                <div className="relative size-8 rounded-full bg-stone-100 flex items-center justify-center text-[12px] font-medium text-stone-500">
                                   {member.user_name.slice(0, 2)}
                                   
                                   {/* 状态灯映射 */}
@@ -349,7 +349,7 @@ export function DashboardDialog({
                                 </div>
 
                                 <div>
-                                  <span className="text-[13px] font-bold text-stone-800">
+                                  <span className="text-[13px] font-medium text-stone-700">
                                     {member.user_name}
                                   </span>
                                   {member.exemption_status !== "none" && (
@@ -363,17 +363,17 @@ export function DashboardDialog({
                               {/* 产量指标 */}
                               <div className="flex items-center gap-4">
                                 <div className="text-right">
-                                  <p className="text-[12px] font-bold text-stone-800 font-mono tabular-nums">
+                                  <p className="text-[12px] font-medium text-stone-700 tabular-nums">
                                     {member.submitted_count} / {member.daily_target}
                                   </p>
-                                  <p className="text-[12px] text-stone-400">
+                                  <p className="text-[12px] text-stone-500">
                                     今日发布
                                   </p>
                                 </div>
                                 {isUserExpanded ? (
-                                  <ChevronUp className="size-4 text-stone-400" />
+                                  <ChevronUp className="size-4 text-stone-500" />
                                 ) : (
-                                  <ChevronDown className="size-4 text-stone-400" />
+                                  <ChevronDown className="size-4 text-stone-500" />
                                 )}
                               </div>
                             </div>
@@ -382,12 +382,12 @@ export function DashboardDialog({
                             {isUserExpanded && (
                               <div className="mt-2 pt-1 space-y-2">
                                 {loadingSubmissions ? (
-                                  <div className="flex items-center justify-center py-4 text-stone-400 text-[12px]">
+                                  <div className="flex items-center justify-center py-4 text-stone-500 text-[12px]">
                                     <Loader2 className="mr-1.5 size-4 animate-spin" />
                                     正在获取提交明细...
                                   </div>
                                 ) : userSubmissionsError ? (
-                                  <div className="flex flex-col items-center justify-center py-3 text-stone-400 text-[12px] gap-2">
+                                  <div className="flex flex-col items-center justify-center py-3 text-stone-500 text-[12px] gap-2">
                                     <span className="flex items-center gap-1 text-[#D97757]">
                                       <AlertTriangle className="size-3.5" />
                                       {userSubmissionsError}
@@ -399,13 +399,13 @@ export function DashboardDialog({
                                         e.stopPropagation();
                                         handleToggleUser(member.user_id, member.user_name, true);
                                       }}
-                                      className="h-7 rounded-lg border-[#D97757] text-[#D97757] hover:bg-[#D97757]/5 text-[12px] font-semibold"
+                                      className="h-7 rounded-lg border-[#D97757] text-[#D97757] hover:bg-[#D97757]/5 text-[12px] font-medium"
                                     >
                                       重新加载
                                     </Button>
                                   </div>
                                 ) : userSubmissions.length === 0 ? (
-                                  <p className="text-[12px] text-stone-400 text-center py-2">
+                                  <p className="text-[12px] text-stone-500 text-center py-2">
                                     今日暂无截图凭证提交
                                   </p>
                                 ) : (
@@ -431,7 +431,7 @@ export function DashboardDialog({
                                               className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                                             />
                                           ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-stone-400">
+                                            <div className="flex h-full w-full items-center justify-center text-stone-500">
                                               <ImageIcon className="size-4" />
                                             </div>
                                           )}

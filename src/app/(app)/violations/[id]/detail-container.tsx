@@ -173,10 +173,10 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
       <div className="rounded-xl border border-stone-200 bg-white p-5">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+            <div className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
               通过率
             </div>
-            <div className="mt-2 text-[24px] font-semibold tabular-nums text-stone-800">
+            <div className="mt-2 text-[24px] font-semibold tabular-nums text-stone-900">
               {rate === null ? "—" : `${rate}%`}
             </div>
           </div>
@@ -199,7 +199,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
       </div>
 
       <div>
-        <h3 className="text-[13px] font-medium text-stone-800">同事追加测试</h3>
+        <h3 className="text-[18px] font-medium text-stone-900">同事追加测试</h3>
         <div className="mt-3 space-y-2">
           {records.length ? (
             records.map((record) => (
@@ -208,8 +208,8 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
                 className="rounded-xl border border-stone-200 bg-white p-3 text-[13px] transition-colors hover:border-stone-300"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-stone-800">{getRecordAccountName(record)}</span>
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+                  <span className="font-medium text-stone-900">{getRecordAccountName(record)}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
                     <span className={`size-1.5 rounded-full ${record.passed ? "bg-[#6FAA7D]" : "bg-[#C9604D]"}`} />
                     {record.passed ? "通过" : "未通过"}
                   </span>
@@ -218,7 +218,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
                   {getRecordTesterName(record)} · {formatDateTime(record.tested_at)}
                 </div>
                 {record.note ? (
-                  <p className="mt-2 whitespace-pre-wrap leading-6 text-stone-600">{record.note}</p>
+                  <p className="mt-2 whitespace-pre-wrap leading-[1.6] text-stone-700">{record.note}</p>
                 ) : null}
               </div>
             ))
@@ -299,12 +299,12 @@ async function CaseDetailBottom({
     <>
       {isConversion && Array.isArray(caseItem.platforms) && caseItem.platforms.length > 0 ? (
         <div className="flex items-center gap-2 text-[12px] text-stone-500">
-          <span className="text-stone-400">平台</span>
+          <span className="text-stone-500">平台</span>
           <div className="flex flex-wrap gap-1.5">
             {caseItem.platforms.map((platform) => (
               <span
                 key={platform}
-                className="rounded-lg border border-stone-200 px-2.5 py-0.5 text-[11px] font-medium text-stone-700"
+                className="rounded-lg border border-stone-200 px-2.5 py-0.5 text-[12px] font-normal text-stone-700"
               >
                 {platform}
               </span>
@@ -399,7 +399,7 @@ async function CaseDetailBottom({
         <section className="grid gap-4 lg:grid-cols-2">
           {(caseItem.screenshot_paths?.length ?? 0) > 0 ? (
             <div className="rounded-xl border border-stone-200 bg-white p-5">
-              <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
+              <h2 className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
                 截图
               </h2>
               <div className="mt-4">
@@ -409,13 +409,13 @@ async function CaseDetailBottom({
           ) : null}
           {caseItem.scene_description || caseItem.result ? (
             <div className="rounded-xl border border-stone-200 bg-white p-5">
-              <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-500">
+              <h2 className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
                 上下文
               </h2>
-              <div className="mt-3 space-y-3 text-[13px] leading-[1.7] text-stone-600">
+              <div className="mt-3 space-y-3 text-[13px] leading-[1.7] text-stone-700">
                 <p>{caseItem.scene_description || "暂无配套画面/导粉方式描述"}</p>
                 {caseItem.result ? (
-                  <p className="font-medium text-stone-800">结果：{caseItem.result}</p>
+                  <p className="text-stone-700">结果：{caseItem.result}</p>
                 ) : null}
               </div>
             </div>
@@ -468,7 +468,7 @@ export async function DetailContainer({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/violations"
-          className="inline-flex items-center gap-2 text-[12px] font-medium text-stone-500 transition-colors hover:text-stone-800 active:translate-y-0"
+          className="inline-flex items-center gap-2 text-[12px] font-medium text-stone-500 transition-colors hover:text-stone-700 active:translate-y-0"
         >
           <ArrowLeft className="size-4 stroke-[1.5]" />
           话术库
@@ -487,23 +487,23 @@ export async function DetailContainer({
             {isConversion ? null : (
               <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} />
             )}
-            <span className="inline-flex items-center rounded-lg border border-stone-200 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+            <span className="inline-flex items-center rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
               {caseItem.category || "其他"}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
               <span className="size-1.5 rounded-full" style={{ backgroundColor: formatMeta.dotColor }} />
               {formatMeta.label}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
               <span className="size-1.5 rounded-full" style={{ backgroundColor: purposeMeta.dotColor }} />
               {purposeMeta.label}
             </span>
           </div>
         </div>
 
-        <p className="mt-6 whitespace-pre-wrap text-[18px] font-medium leading-[1.44] tracking-wide text-stone-800">
+        <p className="mt-6 whitespace-pre-wrap text-[18px] font-medium leading-[1.6] text-stone-900">
           {caseItem.script_text}
         </p>
 
@@ -517,23 +517,23 @@ export async function DetailContainer({
 
         <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-stone-500">
           <span>
-            <span className="text-stone-400">提交人 </span>
-            <span className="font-medium text-stone-800">{getSubmitterName(caseItem)}</span>
+            <span className="text-stone-500">提交人 </span>
+            <span className="font-medium text-stone-700">{getSubmitterName(caseItem)}</span>
           </span>
-          <span className="text-stone-200">·</span>
+          <span className="text-stone-500">·</span>
           <span>
-            <span className="text-stone-400">提交时间 </span>
-            <span className="font-medium text-stone-800">{formatDateTime(caseItem.created_at)}</span>
+            <span className="text-stone-500">提交时间 </span>
+            <span className="font-medium text-stone-700">{formatDateTime(caseItem.created_at)}</span>
           </span>
-          <span className="text-stone-200">·</span>
+          <span className="text-stone-500">·</span>
           <span>
-            <span className="text-stone-400">账号 </span>
-            <span className="font-medium text-stone-800">{getAccountName(caseItem)}</span>
+            <span className="text-stone-500">账号 </span>
+            <span className="font-medium text-stone-700">{getAccountName(caseItem)}</span>
           </span>
-          <span className="text-stone-200">·</span>
+          <span className="text-stone-500">·</span>
           <span>
-            <span className="text-stone-400">团队 </span>
-            <span className="font-medium text-stone-800">{getTeamName(caseItem)}</span>
+            <span className="text-stone-500">团队 </span>
+            <span className="font-medium text-stone-700">{getTeamName(caseItem)}</span>
           </span>
         </div>
       </section>

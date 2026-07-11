@@ -11,7 +11,7 @@ interface StatsCardProps {
 
 const TONE_CLASS: Record<NonNullable<StatsCardProps["tone"]>, { value: string; hint: string }> = {
   default: {
-    value: "text-stone-800",
+    value: "text-stone-900",
     hint: "text-stone-500",
   },
   positive: {
@@ -40,21 +40,21 @@ export function StatsCard({
   return (
     <div
       className={cn(
-        "rounded-xl bg-white p-5 transition-all hover:shadow-[0_4px_16px_-8px_rgba(15,23,42,0.06)] hover:-translate-y-[1px]",
+        "rounded-xl border border-stone-200 bg-white p-5 transition-all hover:-translate-y-[1px] hover:shadow-sm",
         className,
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+        <span className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
           {label}
         </span>
-        {icon ? <span className="text-stone-400">{icon}</span> : null}
+        {icon ? <span className="text-stone-500">{icon}</span> : null}
       </div>
-      <div className={cn("mt-3 text-[24px] font-semibold leading-none tracking-tight tabular-nums", toneClass.value)}>
+      <div className={cn("mt-3 text-[18px] font-medium leading-none tracking-tight tabular-nums", toneClass.value)}>
         {value}
       </div>
       {hint ? (
-        <div className={cn("mt-2 text-[12px] font-medium", toneClass.hint)}>{hint}</div>
+        <div className={cn("mt-2 text-[12px] font-normal", toneClass.hint)}>{hint}</div>
       ) : null}
     </div>
   );

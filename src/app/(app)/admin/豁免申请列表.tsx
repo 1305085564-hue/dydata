@@ -80,16 +80,16 @@ function RequestRow({
 
   return (
     <TableRow>
-      <TableCell className="font-medium text-zinc-800">{request.applicant_name}</TableCell>
+      <TableCell className="font-medium text-stone-900">{request.applicant_name}</TableCell>
       <TableCell>
         {(CATEGORY_LABELS[request.exemption_category ?? "waive"] ?? "免交") +
           " / " +
           (MODE_LABELS[request.exemption_type] ?? request.exemption_type)}
       </TableCell>
-      <TableCell className="max-w-[200px] truncate text-zinc-500">
+      <TableCell className="max-w-[200px] truncate text-stone-500">
         {request.reason ?? "-"}
       </TableCell>
-      <TableCell className="text-[13px] text-zinc-500">
+      <TableCell className="text-[13px] text-stone-500">
         {new Date(request.created_at).toLocaleString("zh-CN", {
           month: "2-digit",
           day: "2-digit",
@@ -112,7 +112,7 @@ function RequestRow({
             variant="outline"
             disabled={isPending}
             onClick={() => handle("rejected")}
-            className="border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+            className="border-stone-200 text-stone-700 hover:bg-stone-50"
           >
             拒绝
           </Button>
@@ -147,7 +147,7 @@ function ExemptionRequestList({ requests, onHandled, onRestore }: Props) {
   }
 
   if (localRequests.length === 0) {
-    return <p className="text-[13px] text-zinc-400">暂无待审批申请</p>;
+    return <p className="text-[13px] text-stone-500">暂无待审批申请</p>;
   }
 
   return (

@@ -94,10 +94,10 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onConfirmFailed
   }
 
   return (
-    <Card className="rounded-2xl border border-stone-200 bg-white shadow-sm">
+    <Card className="rounded-2xl border border-stone-200 bg-white">
       <CardContent className="space-y-5 px-6 py-6 sm:px-7">
         <div className="space-y-1">
-          <h3 className="text-[18px] font-semibold tracking-tight text-stone-800">AI 推荐标签</h3>
+          <h3 className="text-[18px] font-medium tracking-tight text-stone-900">AI 推荐标签</h3>
           <p className="text-[13px] leading-[1.7] text-stone-500">提交成功后可立即确认或微调，低置信度标签会标记为待确认。</p>
         </div>
 
@@ -107,9 +107,9 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onConfirmFailed
             const reviewStatus = getTagReviewStatus(tag?.confidence ?? null);
 
             return (
-              <div key={dimension} className="space-y-3 rounded-xl border border-stone-200 bg-[#FAFAFB] p-4">
+              <div key={dimension} className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-[13px] font-medium text-stone-800">{dimension}</div>
+                  <div className="text-[13px] font-medium text-stone-700">{dimension}</div>
                   <Badge
                     variant="outline"
                     className={
@@ -148,7 +148,7 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onConfirmFailed
                   <div>来源：AI</div>
                   <div>
                     置信度：
-                    <span className="font-mono tabular-nums text-stone-800">
+                    <span className="tabular-nums text-stone-700">
                       {tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}
                     </span>
                   </div>

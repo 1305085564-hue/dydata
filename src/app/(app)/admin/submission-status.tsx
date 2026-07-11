@@ -185,7 +185,7 @@ export function SubmissionStatus({
     if (!label && !reason) return null;
 
     return (
-      <div className="space-y-1 text-xs text-muted-foreground">
+      <div className="space-y-1 text-[12px] text-stone-500">
         {label && <p>{label}</p>}
         {reason && <p>原因：{reason}</p>}
       </div>
@@ -245,11 +245,11 @@ export function SubmissionStatus({
     return (
       <div className="flex flex-col items-center gap-2 pt-3">
         <div className="flex flex-wrap items-center justify-center gap-1">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="h-8 px-3 text-xs rounded-xl">上一页</Button>
+          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="h-8 px-3 text-[12px] rounded-xl">上一页</Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-xs rounded-xl ${p === page ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}>{p}</Button>
+            <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-[12px] rounded-xl ${p === page ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60" : "bg-white border-stone-200 text-stone-700 hover:bg-stone-50"}`}>{p}</Button>
           ))}
-          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="h-8 px-3 text-xs rounded-xl">下一页</Button>
+          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="h-8 px-3 text-[12px] rounded-xl">下一页</Button>
         </div>
       </div>
     );
@@ -258,41 +258,41 @@ export function SubmissionStatus({
   return (
     <>
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
-        <Card className="card-elevated bg-white border-zinc-200">
+        <Card className="bg-white border-stone-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-zinc-400">{summary.totalLabel}</p>
-            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-stone-500">{summary.totalLabel}</p>
+            <p className="text-[18px] font-medium text-stone-900 tracking-tight mt-2 tabular-nums">
               <AnimatedNumber value={summary.totalActive} />
             </p>
           </CardContent>
         </Card>
-        <Card className="card-elevated bg-white border-zinc-200">
+        <Card className="bg-white border-stone-200">
           <CardContent className="pt-6 pb-5">
             <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#6FAA7D]">已提交</p>
-            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[18px] font-medium text-stone-900 tracking-tight mt-2 tabular-nums">
               <AnimatedNumber value={summary.submittedCount} />
             </p>
           </CardContent>
         </Card>
-        <Card className="card-elevated bg-white border-zinc-200">
+        <Card className="bg-white border-stone-200">
           <CardContent className="pt-6 pb-5">
             <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#D99E55]">待提交</p>
-            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[18px] font-medium text-stone-900 tracking-tight mt-2 tabular-nums">
               <AnimatedNumber value={summary.unsubmittedCount} />
             </p>
           </CardContent>
         </Card>
-        <Card className="card-elevated bg-white border-zinc-200">
+        <Card className="bg-white border-stone-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-zinc-400">提交率</p>
-            <p className="text-[18px] font-semibold text-zinc-800 tracking-tight mt-2 font-mono tabular-nums">
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-stone-500">提交率</p>
+            <p className="text-[18px] font-medium text-stone-900 tracking-tight mt-2 tabular-nums">
               <AnimatedNumber value={summary.submitRate} format={(n) => `${n}%`} />
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <Card className="rounded-2xl border border-stone-200 bg-white">
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-3">
@@ -332,28 +332,28 @@ export function SubmissionStatus({
                   </TableHeader>
                   <TableBody>
                     {visibleUnsubmittedProfileRows.map((row) => (
-                      <TableRow key={row.id} className="bg-zinc-50/50 hover:bg-zinc-50">
-                        <TableCell className="font-medium text-zinc-800">{row.name}</TableCell>
+                      <TableRow key={row.id} className="bg-stone-50/50 hover:bg-stone-50">
+                        <TableCell className="font-medium text-stone-900">{row.name}</TableCell>
                         <TableCell>
-                          <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">
+                          <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-[12px]">
                             {renderRole(row.role)}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-mono tabular-nums">{row.accountCount}</TableCell>
+                        <TableCell className="tabular-nums">{row.accountCount}</TableCell>
                         <TableCell>
                           <Badge
                             variant={getExemptionBadgeVariant(
                               row.exemption,
                               row.isSubmitted ? "success" : "warning",
                             )}
-                            className="text-xs"
+                            className="text-[12px]"
                           >
                             {getExemptionBadgeLabel(row.exemption, row.statusText)}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           {row.ownAccounts.length ? (
-                            <div className="space-y-1 text-xs text-muted-foreground">
+                            <div className="space-y-1 text-[12px] text-stone-500">
                               {row.ownAccounts.map((account) => (
                                 <div key={account.id} className="flex items-center gap-2">
                                   <span>{account.name}</span>
@@ -366,7 +366,7 @@ export function SubmissionStatus({
                               ))}
                             </div>
                           ) : (
-                            <span className="text-xs text-muted-foreground">暂无账号</span>
+                            <span className="text-[12px] text-stone-500">暂无账号</span>
                           )}
                         </TableCell>
                         <TableCell>{renderExemptionHint(row.exemption.label, row.exemption.reason)}</TableCell>
@@ -375,7 +375,7 @@ export function SubmissionStatus({
                             variant="ghost"
                             size="sm"
                             onClick={() => openDialog(row)}
-                            className="text-xs text-muted-foreground"
+                            className="text-[12px] text-stone-500"
                           >
                             设置豁免
                           </Button>
@@ -385,24 +385,24 @@ export function SubmissionStatus({
                     {submittedProfileRowsList.length > 0 && (
                       <>
                         <TableRow
-                          className="cursor-pointer hover:bg-zinc-50"
+                          className="cursor-pointer hover:bg-stone-50"
                           onClick={() => setProfileSubmittedExpanded((v) => !v)}
                         >
-                          <TableCell colSpan={7} className="py-2 text-xs text-muted-foreground select-none">
+                          <TableCell colSpan={7} className="py-2 text-[12px] text-stone-500 select-none">
                             已提交 {submittedProfileRowsList.length} 人 {profileSubmittedExpanded ? "▲" : "▼"}
                           </TableCell>
                         </TableRow>
                         {profileSubmittedExpanded && submittedProfileRowsList.map((row) => (
-                          <TableRow key={row.id} className="hover:bg-zinc-50">
+                          <TableRow key={row.id} className="hover:bg-stone-50">
                             <TableCell>{row.name}</TableCell>
                             <TableCell>
-                              <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-xs">{renderRole(row.role)}</Badge>
+                              <Badge variant={row.role === "admin" ? "default" : row.role === "owner" ? "destructive" : "secondary"} className="text-[12px]">{renderRole(row.role)}</Badge>
                             </TableCell>
-                            <TableCell className="font-mono tabular-nums">{row.accountCount}</TableCell>
-                            <TableCell><Badge variant="success" className="text-xs">{row.statusText}</Badge></TableCell>
+                            <TableCell className="tabular-nums">{row.accountCount}</TableCell>
+                            <TableCell><Badge variant="success" className="text-[12px]">{row.statusText}</Badge></TableCell>
                             <TableCell>
                               {row.ownAccounts.length ? (
-                                <div className="space-y-1 text-xs text-muted-foreground">
+                                <div className="space-y-1 text-[12px] text-stone-500">
                                   {row.ownAccounts.map((account) => (
                                     <div key={account.id} className="flex items-center gap-2">
                                       <span>{account.name}</span>
@@ -410,11 +410,11 @@ export function SubmissionStatus({
                                     </div>
                                   ))}
                                 </div>
-                              ) : <span className="text-xs text-muted-foreground">暂无账号</span>}
+                              ) : <span className="text-[12px] text-stone-500">暂无账号</span>}
                             </TableCell>
                             <TableCell>{renderExemptionHint(row.exemption.label, row.exemption.reason)}</TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => openDialog(row)} className="text-xs text-muted-foreground">设置豁免</Button>
+                              <Button variant="ghost" size="sm" onClick={() => openDialog(row)} className="text-[12px] text-stone-500">设置豁免</Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -423,26 +423,26 @@ export function SubmissionStatus({
                     {profileRows.exemptRows.length > 0 && (
                       <>
                         <TableRow>
-                          <TableCell colSpan={7} className="border-0 pt-4 pb-1 text-xs text-muted-foreground">
+                          <TableCell colSpan={7} className="border-0 pt-4 pb-1 text-[12px] text-stone-500">
                             豁免人员（不计入提交统计）
                           </TableCell>
                         </TableRow>
                         {profileRows.exemptRows.map((row) => (
-                          <TableRow key={row.id} className="bg-zinc-50 text-zinc-400 hover:bg-zinc-50">
+                          <TableRow key={row.id} className="bg-stone-50 text-stone-500 hover:bg-stone-50">
                             <TableCell>{row.name}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-[12px]">
                                 {renderRole(row.role)}
                               </Badge>
                             </TableCell>
-                            <TableCell className="font-mono tabular-nums">{row.accountCount}</TableCell>
+                            <TableCell className="tabular-nums">{row.accountCount}</TableCell>
                             <TableCell>
-                              <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                              <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-[12px]">
                                 {getExemptionBadgeLabel(row.exemption, row.statusText)}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1 text-xs text-muted-foreground">
+                              <div className="space-y-1 text-[12px] text-stone-500">
                                 {row.ownAccounts.map((account) => (
                                   <p key={account.id}>{account.name}</p>
                                 ))}
@@ -454,7 +454,7 @@ export function SubmissionStatus({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openDialog(row)}
-                                className="text-xs text-muted-foreground"
+                                className="text-[12px] text-stone-500"
                               >
                                 编辑
                               </Button>
@@ -472,13 +472,13 @@ export function SubmissionStatus({
                 {visibleUnsubmittedProfileRows.map((row) => (
                   <div
                     key={row.id}
-                    className="rounded-lg border border-zinc-200 bg-white overflow-hidden"
+                    className="rounded-lg border border-stone-200 bg-white overflow-hidden"
                   >
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-zinc-800">{row.name}</p>
-                          <p className="text-xs text-zinc-500">{renderRole(row.role)} · {row.accountCount} 个账号</p>
+                          <p className="text-[13px] font-medium text-stone-900">{row.name}</p>
+                          <p className="text-[12px] text-stone-500">{renderRole(row.role)} · {row.accountCount} 个账号</p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <Badge variant="warning" className="text-[12px]">
@@ -488,18 +488,18 @@ export function SubmissionStatus({
                             variant="ghost"
                             size="sm"
                             onClick={() => openDialog(row)}
-                            className="h-7 px-2 text-xs text-zinc-500"
+                            className="h-7 px-2 text-[12px] text-stone-500"
                           >
                             豁免
                           </Button>
                         </div>
                       </div>
-                      <div className="mt-3 space-y-2 text-xs text-zinc-500">
+                      <div className="mt-3 space-y-2 text-[12px] text-stone-500">
                         {row.ownAccounts.length ? (
                           row.ownAccounts.map((account) => (
                             <div key={account.id} className="flex items-center justify-between gap-2">
                               <span>{account.name}</span>
-                              <Badge className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 py-0 text-[12px] text-zinc-700">
+                              <Badge className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 py-0 text-[12px] text-stone-700">
                                 <span className={`size-1.5 rounded-full ${submittedAccountSet.has(account.id) ? "bg-[#6FAA7D]" : "bg-[#D99E55]"}`} aria-hidden />
                                 {submittedAccountSet.has(account.id) ? "已交" : "未交"}
                               </Badge>
@@ -516,22 +516,22 @@ export function SubmissionStatus({
                 {submittedProfileRowsList.length > 0 && (
                   <>
                     <button
-                      className="active:translate-y-0 w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
+                      className="active:translate-y-0 w-full pt-2 text-left text-[12px] text-stone-500 hover:text-stone-900"
                       onClick={() => setProfileSubmittedExpanded((v) => !v)}
                     >
                       已提交 {submittedProfileRowsList.length} 人 {profileSubmittedExpanded ? "▲" : "▼"}
                     </button>
                     {profileSubmittedExpanded && submittedProfileRowsList.map((row) => (
-                      <div key={row.id} className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+                      <div key={row.id} className="rounded-lg border border-stone-200 bg-white overflow-hidden">
                         <div className="p-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
-                              <p className="text-sm font-medium">{row.name}</p>
-                              <p className="text-xs text-zinc-500">{renderRole(row.role)} · {row.accountCount} 个账号</p>
+                              <p className="text-[13px] font-medium">{row.name}</p>
+                              <p className="text-[12px] text-stone-500">{renderRole(row.role)} · {row.accountCount} 个账号</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                               <Badge variant="success" className="text-[12px]">{row.statusText}</Badge>
-                              <Button variant="ghost" size="sm" onClick={() => openDialog(row)} className="h-7 px-2 text-xs text-zinc-500">豁免</Button>
+                              <Button variant="ghost" size="sm" onClick={() => openDialog(row)} className="h-7 px-2 text-[12px] text-stone-500">豁免</Button>
                             </div>
                           </div>
                         </div>
@@ -542,24 +542,24 @@ export function SubmissionStatus({
                 {renderPagination(profilePage, profileTotalPages, unsubmittedProfileRows.length, setProfilePage)}
                 {profileRows.exemptRows.length > 0 && (
                   <>
-                    <p className="pt-2 text-xs text-muted-foreground">豁免人员</p>
+                    <p className="pt-2 text-[12px] text-stone-500">豁免人员</p>
                     {profileRows.exemptRows.map((row) => (
-                      <div key={row.id} className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-zinc-400">
+                      <div key={row.id} className="space-y-2 rounded-lg border border-stone-200 bg-stone-50 p-3 text-stone-500">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium">{row.name}</p>
-                            <p className="text-xs text-zinc-500">{renderRole(row.role)} · {row.accountCount} 个账号</p>
+                            <p className="text-[13px] font-medium">{row.name}</p>
+                            <p className="text-[12px] text-stone-500">{renderRole(row.role)} · {row.accountCount} 个账号</p>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => openDialog(row)}
-                            className="h-7 px-2 text-xs text-zinc-500"
+                            className="h-7 px-2 text-[12px] text-stone-500"
                           >
                             编辑
                           </Button>
                         </div>
-                        <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                        <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-[12px]">
                           {getExemptionBadgeLabel(row.exemption, row.statusText)}
                         </Badge>
                         {renderExemptionHint(row.exemption.label, row.exemption.reason)}
@@ -585,17 +585,17 @@ export function SubmissionStatus({
                   </TableHeader>
                   <TableBody>
                     {visibleUnsubmittedAccountRows.map((row) => (
-                      <TableRow key={row.id} className="bg-zinc-50/50 hover:bg-zinc-50">
-                        <TableCell className="font-medium text-zinc-800">{row.name}</TableCell>
+                      <TableRow key={row.id} className="bg-stone-50/50 hover:bg-stone-50">
+                        <TableCell className="font-medium text-stone-900">{row.name}</TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <p>{row.profile_name}</p>
-                            <p className="text-xs text-muted-foreground">{renderRole(row.profile.role)}</p>
+                            <p className="text-[12px] text-stone-500">{renderRole(row.profile.role)}</p>
                           </div>
                         </TableCell>
                         <TableCell>{renderAccountMeta(row)}</TableCell>
                         <TableCell>
-                          <Badge variant={row.isSubmitted ? "success" : "warning"} className="text-xs">
+                          <Badge variant={row.isSubmitted ? "success" : "warning"} className="text-[12px]">
                             {row.isSubmitted ? "已提交" : "未提交"}
                           </Badge>
                         </TableCell>
@@ -605,7 +605,7 @@ export function SubmissionStatus({
                             variant="ghost"
                             size="sm"
                             onClick={() => openDialog(row.profile)}
-                            className="text-xs text-muted-foreground"
+                            className="text-[12px] text-stone-500"
                           >
                             设置豁免
                           </Button>
@@ -615,24 +615,24 @@ export function SubmissionStatus({
                     {submittedAccountRowsList.length > 0 && (
                       <>
                         <TableRow
-                          className="cursor-pointer hover:bg-zinc-50"
+                          className="cursor-pointer hover:bg-stone-50"
                           onClick={() => setAccountSubmittedExpanded((v) => !v)}
                         >
-                          <TableCell colSpan={6} className="py-2 text-xs text-muted-foreground select-none">
+                          <TableCell colSpan={6} className="py-2 text-[12px] text-stone-500 select-none">
                             已提交 {submittedAccountRowsList.length} 个账号 {accountSubmittedExpanded ? "▲" : "▼"}
                           </TableCell>
                         </TableRow>
                         {accountSubmittedExpanded && submittedAccountRowsList.map((row) => (
-                          <TableRow key={row.id} className="hover:bg-zinc-50">
+                          <TableRow key={row.id} className="hover:bg-stone-50">
                             <TableCell>{row.name}</TableCell>
                             <TableCell>
-                              <div className="space-y-1"><p>{row.profile_name}</p><p className="text-xs text-muted-foreground">{renderRole(row.profile.role)}</p></div>
+                              <div className="space-y-1"><p>{row.profile_name}</p><p className="text-[12px] text-stone-500">{renderRole(row.profile.role)}</p></div>
                             </TableCell>
                             <TableCell>{renderAccountMeta(row)}</TableCell>
-                            <TableCell><Badge variant="success" className="text-xs">已提交</Badge></TableCell>
+                            <TableCell><Badge variant="success" className="text-[12px]">已提交</Badge></TableCell>
                             <TableCell>{renderExemptionHint(row.exemption.label, row.exemption.reason)}</TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="text-xs text-muted-foreground">设置豁免</Button>
+                              <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="text-[12px] text-stone-500">设置豁免</Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -641,17 +641,17 @@ export function SubmissionStatus({
                     {accountRows.exemptRows.length > 0 && (
                       <>
                         <TableRow>
-                          <TableCell colSpan={6} className="border-0 pt-4 pb-1 text-xs text-muted-foreground">
+                          <TableCell colSpan={6} className="border-0 pt-4 pb-1 text-[12px] text-stone-500">
                             豁免账号（继承所属人员豁免状态）
                           </TableCell>
                         </TableRow>
                         {accountRows.exemptRows.map((row) => (
-                          <TableRow key={row.id} className="bg-zinc-50 text-zinc-400 hover:bg-zinc-50">
+                          <TableRow key={row.id} className="bg-stone-50 text-stone-500 hover:bg-stone-50">
                             <TableCell>{row.name}</TableCell>
                             <TableCell>{row.profile_name}</TableCell>
                             <TableCell>{renderAccountMeta(row)}</TableCell>
                             <TableCell>
-                              <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                              <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-[12px]">
                                 {getExemptionBadgeLabel(row.exemption, row.isSubmitted ? "已提交" : "未提交")}
                               </Badge>
                             </TableCell>
@@ -661,7 +661,7 @@ export function SubmissionStatus({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openDialog(row.profile)}
-                                className="text-xs text-muted-foreground"
+                                className="text-[12px] text-stone-500"
                               >
                                 编辑
                               </Button>
@@ -679,13 +679,13 @@ export function SubmissionStatus({
                 {visibleUnsubmittedAccountRows.map((row) => (
                   <div
                     key={row.id}
-                    className="rounded-lg border border-zinc-200 bg-white overflow-hidden"
+                    className="rounded-lg border border-stone-200 bg-white overflow-hidden"
                   >
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-zinc-800">{row.name}</p>
-                          <p className="text-xs text-zinc-500">{row.profile_name} · {renderRole(row.profile.role)}</p>
+                          <p className="text-[13px] font-medium text-stone-900">{row.name}</p>
+                          <p className="text-[12px] text-stone-500">{row.profile_name} · {renderRole(row.profile.role)}</p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <Badge variant="warning">未交</Badge>
@@ -693,13 +693,13 @@ export function SubmissionStatus({
                             variant="ghost"
                             size="sm"
                             onClick={() => openDialog(row.profile)}
-                            className="h-7 px-2 text-xs text-zinc-500"
+                            className="h-7 px-2 text-[12px] text-stone-500"
                           >
                             豁免
                           </Button>
                         </div>
                       </div>
-                      <div className="mt-3 space-y-2 text-xs text-zinc-500">
+                      <div className="mt-3 space-y-2 text-[12px] text-stone-500">
                         {renderAccountMeta(row)}
                         {renderExemptionHint(row.exemption.label, row.exemption.reason)}
                       </div>
@@ -709,25 +709,25 @@ export function SubmissionStatus({
                 {submittedAccountRowsList.length > 0 && (
                   <>
                     <button
-                      className="active:translate-y-0 w-full pt-2 text-left text-xs text-muted-foreground hover:text-foreground"
+                      className="active:translate-y-0 w-full pt-2 text-left text-[12px] text-stone-500 hover:text-stone-900"
                       onClick={() => setAccountSubmittedExpanded((v) => !v)}
                     >
                       已提交 {submittedAccountRowsList.length} 个账号 {accountSubmittedExpanded ? "▲" : "▼"}
                     </button>
                     {accountSubmittedExpanded && submittedAccountRowsList.map((row) => (
-                      <div key={row.id} className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+                      <div key={row.id} className="rounded-lg border border-stone-200 bg-white overflow-hidden">
                         <div className="p-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
-                              <p className="text-sm font-medium">{row.name}</p>
-                              <p className="text-xs text-zinc-500">{row.profile_name} · {renderRole(row.profile.role)}</p>
+                              <p className="text-[13px] font-medium">{row.name}</p>
+                              <p className="text-[12px] text-stone-500">{row.profile_name} · {renderRole(row.profile.role)}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                               <Badge variant="success">已交</Badge>
-                              <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="h-7 px-2 text-xs text-zinc-500">豁免</Button>
+                              <Button variant="ghost" size="sm" onClick={() => openDialog(row.profile)} className="h-7 px-2 text-[12px] text-stone-500">豁免</Button>
                             </div>
                           </div>
-                          <div className="mt-3 space-y-2 text-xs text-zinc-500">
+                          <div className="mt-3 space-y-2 text-[12px] text-stone-500">
                             {renderAccountMeta(row)}
                           </div>
                         </div>
@@ -738,24 +738,24 @@ export function SubmissionStatus({
                 {renderPagination(accountPage, accountTotalPages, unsubmittedAccountRows.length, setAccountPage)}
                 {accountRows.exemptRows.length > 0 && (
                   <>
-                    <p className="pt-2 text-xs text-muted-foreground">豁免账号</p>
+                    <p className="pt-2 text-[12px] text-stone-500">豁免账号</p>
                     {accountRows.exemptRows.map((row) => (
-                      <div key={row.id} className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-zinc-400">
+                      <div key={row.id} className="space-y-2 rounded-lg border border-stone-200 bg-stone-50 p-3 text-stone-500">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium">{row.name}</p>
-                            <p className="text-xs text-zinc-500">{row.profile_name}</p>
+                            <p className="text-[13px] font-medium">{row.name}</p>
+                            <p className="text-[12px] text-stone-500">{row.profile_name}</p>
                           </div>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => openDialog(row.profile)}
-                            className="h-7 px-2 text-xs text-zinc-500"
+                            className="h-7 px-2 text-[12px] text-stone-500"
                           >
                             编辑
                           </Button>
                         </div>
-                        <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-xs">
+                        <Badge variant={getExemptionBadgeVariant(row.exemption, "neutral")} className="text-[12px]">
                           {getExemptionBadgeLabel(row.exemption, row.isSubmitted ? "已交" : "未交")}
                         </Badge>
                         {renderAccountMeta(row)}

@@ -118,12 +118,12 @@ export function VideoPageClient({
               className={[
                 "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                 view === "pending"
-                  ? "bg-white text-stone-900 shadow-sm"
+                  ? "border border-stone-200 bg-white text-stone-900"
                   : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               待处理
-              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-[#D97757]">
+              <span className="ml-1.5 text-[12px] tabular-nums text-[#D97757]">
                 {data.summary.pendingCount}
               </span>
             </button>
@@ -134,12 +134,12 @@ export function VideoPageClient({
               className={[
                 "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                 view === "all"
-                  ? "bg-white text-stone-900 shadow-sm"
+                  ? "border border-stone-200 bg-white text-stone-900"
                   : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               全部
-              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-stone-300">
+              <span className="ml-1.5 text-[12px] tabular-nums text-stone-500">
                 {data.summary.totalVideos}
               </span>
             </button>
@@ -155,7 +155,7 @@ export function VideoPageClient({
                   className={[
                     "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                     perspective === "company"
-                      ? "bg-white text-stone-900 shadow-sm"
+                      ? "border border-stone-200 bg-white text-stone-900"
                       : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
@@ -168,7 +168,7 @@ export function VideoPageClient({
                   className={[
                     "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
                     perspective === "team"
-                      ? "bg-white text-stone-900 shadow-sm"
+                      ? "border border-stone-200 bg-white text-stone-900"
                       : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
@@ -199,19 +199,19 @@ export function VideoPageClient({
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-stone-500">
           <span>
             已入库
-            <span className="ml-0.5 font-mono tabular-nums text-[#6FAA7D]">
+            <span className="ml-0.5 tabular-nums text-[#6FAA7D]">
               {data.assetSummary.readyCount}
             </span>
           </span>
           <span>
             待整理
-            <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">
+            <span className="ml-0.5 tabular-nums text-[#D99E55]">
               {data.assetSummary.pendingLibraryCount}
             </span>
           </span>
           <span>
             已评级
-            <span className="ml-0.5 font-mono tabular-nums text-stone-700">
+            <span className="ml-0.5 tabular-nums text-stone-700">
               {data.assetSummary.gradedCount}
             </span>
           </span>

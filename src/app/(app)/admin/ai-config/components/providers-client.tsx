@@ -102,10 +102,10 @@ export default function ProvidersClient() {
   return (
     <div className="flex flex-col md:flex-row gap-3 items-start min-h-[580px]">
       {/* 左栏：极简白底卡片树导航 */}
-      <div className="w-full md:w-[280px] border border-stone-200 rounded-2xl bg-white p-3 shadow-sm space-y-3 shrink-0">
+      <div className="w-full md:w-[280px] border border-stone-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
         <div className="flex justify-between items-center px-2 py-1">
-          <h2 className="text-[12px] font-semibold text-stone-400 tracking-wider">渠道与分组</h2>
-          <Button variant="ghost" size="icon" className="size-6 text-stone-400 hover:text-stone-700 rounded-md bg-stone-50 hover:bg-stone-100" onClick={() => setProviderModal({ open: true, data: null })}>
+          <h2 className="text-[12px] font-normal text-stone-500 tracking-wider">渠道与分组</h2>
+          <Button variant="ghost" size="icon" className="size-6 text-stone-500 hover:text-stone-700 rounded-md bg-stone-50 hover:bg-stone-100" onClick={() => setProviderModal({ open: true, data: null })}>
             <Plus strokeWidth={2} className="size-3.5" />
           </Button>
         </div>
@@ -119,18 +119,18 @@ export default function ProvidersClient() {
             return (
               <div key={p.id} className="space-y-0.5">
                 {/* 渠道节点 (顶级) */}
-                <div 
+                <div
                   className={cn(
                     "group flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-all text-[13px] relative",
-                    isProviderActive 
-                      ? "bg-stone-100/80 text-stone-900 font-medium" 
-                      : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                    isProviderActive
+                      ? "bg-stone-100/80 text-stone-900 font-medium"
+                      : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
                   )}
                   onClick={() => setActiveNode({ type: "provider", id: p.id })}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <div 
-                      className="flex items-center justify-center size-5 rounded-md hover:bg-stone-200/50 text-stone-400 transition-colors shrink-0"
+                    <div
+                      className="flex items-center justify-center size-5 rounded-md hover:bg-stone-200/50 text-stone-500 transition-colors shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleProvider(p.id);
@@ -144,17 +144,17 @@ export default function ProvidersClient() {
                     </div>
                     <span className="truncate">{p.name}</span>
                     {!p.is_enabled && (
-                      <span className="text-[10px] text-stone-400 bg-stone-100 px-1 rounded-sm">停用</span>
+                      <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm">停用</span>
                     )}
                   </div>
                   <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="size-5 text-stone-400 hover:text-stone-700" 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        setProviderModal({ open: true, data: p }); 
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-5 text-stone-500 hover:text-stone-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProviderModal({ open: true, data: p });
                       }}
                     >
                       <Pencil strokeWidth={1.5} className="size-3" />
@@ -166,33 +166,33 @@ export default function ProvidersClient() {
                 {isExpanded && (
                   <div className="pl-[28px] space-y-0.5 pb-1">
                     {pKeys.length === 0 ? (
-                      <div className="text-xs text-stone-400 py-1 pl-2">无分组</div>
+                      <div className="text-[12px] text-stone-500 py-1 pl-2">无分组</div>
                     ) : (
                       pKeys.map((key) => {
                         const isKeyActive = activeNode?.type === "key" && activeNode?.id === key.id;
                         const healthy = isKeyHealthy(key);
 
                         return (
-                          <div 
+                          <div
                             key={key.id}
                             className={cn(
                               "group flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition-all text-[13px]",
-                              isKeyActive 
-                                ? "bg-[#8AA8C7]/10 text-stone-900 font-medium" 
-                                : "text-stone-500 hover:bg-stone-50 hover:text-stone-800"
+                              isKeyActive
+                                ? "bg-[#8AA8C7]/10 text-stone-900 font-medium"
+                                : "text-stone-500 hover:bg-stone-50 hover:text-stone-900"
                             )}
                             onClick={() => setActiveNode({ type: "key", id: key.id })}
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               {/* 极简健康状态点 */}
-                              <span className={cn("size-1.5 rounded-full shrink-0 shadow-sm", healthy ? "bg-emerald-500" : "bg-rose-500")} />
+                              <span className={cn("size-1.5 rounded-full shrink-0", healthy ? "bg-[#6FAA7D]" : "bg-[#C9604D]")} />
                               <span className="truncate">{key.label}</span>
                             </div>
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="size-5 text-stone-400 hover:text-stone-700"
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-5 text-stone-500 hover:text-stone-700"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setKeyModal({ open: true, providerId: p.id, data: key });
@@ -214,54 +214,54 @@ export default function ProvidersClient() {
       </div>
 
       {/* 右栏：独立白底配置卡片 */}
-      <div className="flex-1 border border-stone-200 rounded-2xl bg-white p-6 shadow-sm min-h-[480px] min-w-0">
+      <div className="flex-1 border border-stone-200 rounded-2xl bg-white p-6 min-h-[480px] min-w-0">
         {activeNode?.type === "provider" && (() => {
           const provider = bundle.providers.find((p) => p.id === activeNode.id);
-          if (!provider) return <div className="text-stone-400 text-xs py-10 text-center">渠道已不存在</div>;
+          if (!provider) return <div className="text-stone-500 text-[12px] py-10 text-center">渠道已不存在</div>;
           const providerKeys = bundle.keys.filter((k) => k.provider_id === provider.id);
 
           return (
             <div className="space-y-5">
               <div className="flex justify-between items-center border-b border-stone-100 pb-3">
                 <div>
-                  <h3 className="font-semibold text-[16px] leading-[1.5] text-stone-800">{provider.name}</h3>
-                  <div className="text-xs text-stone-400 mt-1 font-mono">{provider.base_url}</div>
+                  <h3 className="font-medium text-[13px] leading-[1.5] text-stone-900">{provider.name}</h3>
+                  <div className="text-[12px] text-stone-500 mt-1 font-mono">{provider.base_url}</div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-xs text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
+                  <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
                     <span>{provider.is_enabled ? "已启用" : "已禁用"}</span>
-                    <Switch 
+                    <Switch
                       className="scale-75"
-                      checked={provider.is_enabled} 
-                      onCheckedChange={(checked) => mutateEntity("update", "provider", { id: provider.id, is_enabled: checked })} 
+                      checked={provider.is_enabled}
+                      onCheckedChange={(checked) => mutateEntity("update", "provider", { id: provider.id, is_enabled: checked })}
                     />
                   </div>
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setProviderModal({ open: true, data: provider })}>
+                  <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setProviderModal({ open: true, data: provider })}>
                     <Pencil strokeWidth={1.5} className="size-3 mr-1" /> 编辑
                   </Button>
-                  <Button size="sm" className="h-7 text-xs" onClick={() => setKeyModal({ open: true, providerId: provider.id, data: null })}>
+                  <Button size="sm" className="h-7 text-[12px]" onClick={() => setKeyModal({ open: true, providerId: provider.id, data: null })}>
                     <Plus strokeWidth={1.5} className="size-3 mr-1" /> 新建分组
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-[12px] font-semibold text-stone-400 uppercase tracking-wider">绑定的 API 分组</h4>
+                <h4 className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">绑定的 API 分组</h4>
                 <div className="rounded-lg border border-stone-200 overflow-hidden bg-white">
                   <Table>
                     <TableHeader className="bg-stone-50/50">
                       <TableRow>
-                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-medium text-stone-500">分组名称</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-medium text-stone-500">API Key</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-medium text-stone-500">健康状态</TableHead>
-                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-medium text-stone-500">启用</TableHead>
-                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-medium text-stone-500">操作</TableHead>
+                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-normal text-stone-500">分组名称</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">API Key</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">健康状态</TableHead>
+                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-stone-500">启用</TableHead>
+                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-stone-500">操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {providerKeys.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="py-8 text-center text-[13px] text-stone-300">
+                          <TableCell colSpan={5} className="py-8 text-center text-[13px] text-stone-500">
                             暂无 API 分组，请点击新建分组
                           </TableCell>
                         </TableRow>
@@ -270,54 +270,54 @@ export default function ProvidersClient() {
                           const healthy = isKeyHealthy(key);
                           return (
                             <TableRow key={key.id} className="group hover:bg-stone-50/50 h-9 transition-colors">
-                              <TableCell className="py-1 text-[13px] font-medium text-stone-800 pl-3 text-left">{key.label}</TableCell>
-                              <TableCell className="py-1 text-[13px] font-mono text-stone-400 text-left">{key.api_key_masked || "***"}</TableCell>
+                              <TableCell className="py-1 text-[13px] font-medium text-stone-900 pl-3 text-left">{key.label}</TableCell>
+                              <TableCell className="py-1 text-[13px] font-mono text-stone-500 text-left">{key.api_key_masked || "***"}</TableCell>
                               <TableCell className="py-1 text-left">
                                 {healthy ? (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/5 text-emerald-700 border border-emerald-500/10">
-                                    <span className="size-1 rounded-full bg-emerald-500" />
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[12px] font-medium bg-[#6FAA7D]/100/5 text-[#6FAA7D] border border-[#6FAA7D]/10">
+                                    <span className="size-1 rounded-full bg-[#6FAA7D]/100" />
                                     正常
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-500/5 text-rose-700 border border-rose-500/10">
-                                    <span className="size-1 rounded-full bg-rose-500" />
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[12px] font-medium bg-[#C9604D]/5 text-[#C9604D] border border-[#C9604D]/10">
+                                    <span className="size-1 rounded-full bg-[#C9604D]" />
                                     异常/停用
                                   </span>
                                 )}
                               </TableCell>
                               <TableCell className="py-1 text-left">
-                                <Switch 
+                                <Switch
                                   className="scale-75 origin-left"
-                                  checked={key.is_enabled} 
-                                  onCheckedChange={(checked) => mutateEntity("update", "key", { id: key.id, is_enabled: checked })} 
+                                  checked={key.is_enabled}
+                                  onCheckedChange={(checked) => mutateEntity("update", "key", { id: key.id, is_enabled: checked })}
                                 />
                               </TableCell>
                               <TableCell className="py-1 text-right pr-3">
                                 <div className="flex items-center justify-end relative h-7">
                                   <div className="absolute right-1.5 opacity-30 group-hover:opacity-0 transition-opacity">
-                                    <span className="text-stone-400 text-[10px] tracking-widest font-bold">···</span>
+                                    <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
                                   </div>
                                   <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="size-7 text-stone-400 hover:text-stone-600" 
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-7 text-stone-500 hover:text-stone-700"
                                       onClick={() => setKeyModal({ open: true, providerId: provider.id, data: key })}
                                     >
                                       <Pencil strokeWidth={1.5} className="size-3" />
                                     </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="size-7 text-stone-400 hover:text-[#D97757]" 
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-7 text-stone-500 hover:text-[#D97757]"
                                       onClick={() => setModelModal({ open: true, keyId: key.id, data: null })}
                                     >
                                       <Plus strokeWidth={1.5} className="size-3" />
                                     </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="size-7 text-stone-400 hover:text-rose-600" 
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-7 text-stone-500 hover:text-[#C9604D]"
                                       onClick={() => setDeleteConfirm({ open: true, entity: "key", id: key.id, title: `删除分组 ${key.label}` })}
                                     >
                                       <Trash2 strokeWidth={1.5} className="size-3" />
@@ -339,7 +339,7 @@ export default function ProvidersClient() {
 
         {activeNode?.type === "key" && (() => {
           const apiKey = bundle.keys.find((k) => k.id === activeNode.id);
-          if (!apiKey) return <div className="text-stone-400 text-[13px] py-10 text-center">分组已不存在</div>;
+          if (!apiKey) return <div className="text-stone-500 text-[13px] py-10 text-center">分组已不存在</div>;
           const provider = bundle.providers.find((p) => p.id === apiKey.provider_id);
           const keyModels = bundle.models.filter((m) => m.key_id === apiKey.id);
 
@@ -347,24 +347,24 @@ export default function ProvidersClient() {
             <div className="space-y-5">
               <div className="flex justify-between items-center border-b border-stone-100 pb-3">
                 <div>
-                  <h3 className="font-semibold text-[16px] leading-[1.5] text-stone-800">{apiKey.label} 分组</h3>
-                  <div className="text-[12px] text-stone-400 mt-1">
+                  <h3 className="font-medium text-[13px] leading-[1.5] text-stone-900">{apiKey.label} 分组</h3>
+                  <div className="text-[12px] text-stone-500 mt-1">
                     所属渠道：{provider?.name || "未知"} | Key：<span className="font-mono">{apiKey.api_key_masked}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-xs text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
+                  <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
                     <span>{apiKey.is_enabled ? "已启用" : "已禁用"}</span>
-                    <Switch 
+                    <Switch
                       className="scale-75"
-                      checked={apiKey.is_enabled} 
-                      onCheckedChange={(checked) => mutateEntity("update", "key", { id: apiKey.id, is_enabled: checked })} 
+                      checked={apiKey.is_enabled}
+                      onCheckedChange={(checked) => mutateEntity("update", "key", { id: apiKey.id, is_enabled: checked })}
                     />
                   </div>
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setKeyModal({ open: true, providerId: apiKey.provider_id, data: apiKey })}>
+                  <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setKeyModal({ open: true, providerId: apiKey.provider_id, data: apiKey })}>
                     <Pencil strokeWidth={1.5} className="size-3 mr-1" /> 编辑分组
                   </Button>
-                  <Button size="sm" className="h-7 text-xs" onClick={() => setModelModal({ open: true, keyId: apiKey.id, data: null })}>
+                  <Button size="sm" className="h-7 text-[12px]" onClick={() => setModelModal({ open: true, keyId: apiKey.id, data: null })}>
                     <Plus strokeWidth={1.5} className="size-3 mr-1" /> 添加模型
                   </Button>
                 </div>
@@ -374,73 +374,73 @@ export default function ProvidersClient() {
               <div className="grid grid-cols-2 gap-4 bg-stone-50/50 p-3 rounded-lg border border-stone-100 text-[12px]">
                 <div>
                   <span className="text-stone-500">连续失败次数：</span>
-                  <span className={cn("font-semibold", apiKey.consecutive_failures > 0 ? "text-rose-600" : "text-stone-600")}>
+                  <span className={cn("font-medium", apiKey.consecutive_failures > 0 ? "text-[#C9604D]" : "text-stone-700")}>
                     {apiKey.consecutive_failures}
                   </span>
                 </div>
                 <div>
                   <span className="text-stone-500">最近成功时间：</span>
-                  <span className="text-stone-600 font-medium">
+                  <span className="text-stone-700 font-medium">
                     {apiKey.last_success_at ? new Date(apiKey.last_success_at).toLocaleString() : "暂无"}
                   </span>
                 </div>
                 {apiKey.last_error_message && (
-                  <div className="col-span-2 text-rose-500 border-t border-stone-100 pt-1.5 mt-0.5">
-                    <span className="font-bold text-[10px] uppercase tracking-wider">最近异常：</span>
+                  <div className="col-span-2 text-[#C9604D] border-t border-stone-100 pt-1.5 mt-0.5">
+                    <span className="font-medium text-[12px] uppercase tracking-wider">最近异常：</span>
                     {apiKey.last_error_message}
                   </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-[12px] font-semibold text-stone-400 uppercase tracking-wider">支持的可用模型列表</h4>
+                <h4 className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">支持的可用模型列表</h4>
                 <div className="rounded-lg border border-stone-200 overflow-hidden bg-white">
                   <Table>
                     <TableHeader className="bg-stone-50/50">
                       <TableRow>
-                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-medium text-stone-500">模型标识 (ID)</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-medium text-stone-500">友好显示名称</TableHead>
-                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-medium text-stone-500">启用</TableHead>
-                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-medium text-stone-500">操作</TableHead>
+                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-normal text-stone-500">模型标识 (ID)</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">友好显示名称</TableHead>
+                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-stone-500">启用</TableHead>
+                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-stone-500">操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {keyModels.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-[13px] py-8 text-stone-400">
+                          <TableCell colSpan={4} className="text-center text-[13px] py-8 text-stone-500">
                             暂无可用模型，请点击右上角添加
                           </TableCell>
                         </TableRow>
                       ) : (
                         keyModels.map((model) => (
                           <TableRow key={model.id} className="group hover:bg-stone-50/50 h-9 transition-colors">
-                            <TableCell className="py-1 text-xs font-mono text-stone-600 pl-3 text-left">{model.model_id}</TableCell>
-                            <TableCell className="py-1 text-[13px] font-medium text-stone-800 text-left">{model.display_name || model.model_id}</TableCell>
+                            <TableCell className="py-1 text-[12px] font-mono text-stone-700 pl-3 text-left">{model.model_id}</TableCell>
+                            <TableCell className="py-1 text-[13px] font-medium text-stone-900 text-left">{model.display_name || model.model_id}</TableCell>
                             <TableCell className="py-1 text-left">
-                              <Switch 
+                              <Switch
                                 className="scale-75 origin-left"
-                                checked={model.is_enabled} 
-                                onCheckedChange={(checked) => mutateEntity("update", "model", { id: model.id, is_enabled: checked })} 
+                                checked={model.is_enabled}
+                                onCheckedChange={(checked) => mutateEntity("update", "model", { id: model.id, is_enabled: checked })}
                               />
                             </TableCell>
                             <TableCell className="py-1 text-right pr-3">
                               <div className="flex items-center justify-end relative h-7">
                                 <div className="absolute right-1.5 opacity-30 group-hover:opacity-0 transition-opacity">
-                                  <span className="text-stone-400 text-[10px] tracking-widest font-bold">···</span>
+                                  <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
                                 </div>
                                 <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="size-7 text-stone-400 hover:text-stone-600" 
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 text-stone-500 hover:text-stone-700"
                                     onClick={() => setModelModal({ open: true, keyId: apiKey.id, data: model })}
                                   >
                                     <Pencil strokeWidth={1.5} className="size-3" />
                                   </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="size-7 text-stone-400 hover:text-rose-600" 
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 text-stone-500 hover:text-[#C9604D]"
                                     onClick={() => setDeleteConfirm({ open: true, entity: "model", id: model.id, title: `删除模型 ${model.display_name || model.model_id}` })}
                                   >
                                     <Trash2 strokeWidth={1.5} className="size-3" />
@@ -460,7 +460,7 @@ export default function ProvidersClient() {
         })()}
 
         {!activeNode && (
-          <div className="text-center py-20 text-[13px] text-stone-400">
+          <div className="text-center py-20 text-[13px] text-stone-500">
             请在左侧树中选择渠道或分组以查看详情
           </div>
         )}

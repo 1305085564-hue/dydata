@@ -173,8 +173,8 @@ export function NavBarClient({
 
    const primaryLinkClass = (active: boolean) =>
     cn(
-      "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-semibold tracking-tight transition-all duration-200 ease-out",
-      active ? "bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-white" : "text-stone-500 hover:text-stone-700 dark:hover:text-stone-300",
+      "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-medium tracking-tight transition-all duration-200 ease-out",
+      active ? "bg-white text-stone-900 border border-stone-200" : "text-stone-500 hover:text-stone-700",
     );
 
   return (
@@ -183,8 +183,8 @@ export function NavBarClient({
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "py-2 bg-white/75 dark:bg-stone-950/75 backdrop-blur-xl border-stone-300/60 dark:border-stone-800/50 shadow-sm"
-            : "py-4 bg-stone-100/50 dark:bg-stone-950/20 border-transparent"
+            ? "border-stone-200 bg-white/95 py-2 backdrop-blur-xl"
+            : "border-transparent bg-stone-50 py-4"
         )}
       >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -202,17 +202,17 @@ export function NavBarClient({
                   <Zap className="size-[18px] stroke-[2] fill-current" />
                 </div>
                 <div className="hidden sm:block">
-                  <div className="text-xs font-black tracking-tight text-stone-950 dark:text-white uppercase leading-none">
-                    DYData <span className="text-[#D97757] font-semibold text-[10px]">PREMIUM</span>
+                  <div className="text-[12px] font-medium tracking-tight text-stone-900 uppercase leading-none">
+                    DYData <span className="text-[#D97757] font-medium text-[12px]">PREMIUM</span>
                   </div>
-                  <div className="text-[9px] font-medium tracking-[0.18em] text-stone-500 dark:text-stone-600 uppercase leading-none mt-1">
+                  <div className="mt-1 text-[12px] font-normal tracking-[0.12em] text-stone-500 uppercase leading-none">
                     短视频管理控制台
                   </div>
                 </div>
               </Link>
 
               {/* Separator */}
-              <div className="hidden lg:block h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />
+              <div className="hidden h-5 w-px bg-stone-200 lg:block" />
 
               {/* Primary Navigation links / Admin secondary links depending on page url */}
               {showAdminCenterNav ? (
@@ -260,15 +260,15 @@ export function NavBarClient({
                   onClick={() => {
                     router.push(isAdminPath ? "/dashboard" : "/admin/content");
                   }}
-                  className="group relative flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-lg bg-stone-100 hover:bg-stone-200/80 active:scale-[0.98] dark:bg-stone-900 dark:hover:bg-stone-800/80 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200 border border-stone-200 dark:border-stone-800/80 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-200"
+                  className="group relative flex h-8 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 active:scale-[0.98]"
                 >
-                  <ArrowLeftRight className="size-3 text-stone-400 group-hover:text-stone-600 dark:text-stone-500 dark:group-hover:text-stone-300 transition-colors duration-300 group-hover:rotate-180" />
+                  <ArrowLeftRight className="size-3 text-stone-500 transition-colors duration-300 group-hover:text-stone-700 group-hover:rotate-180" />
                   <span>{isAdminPath ? "组员视角" : "管理视角"}</span>
                 </button>
               )}
 
               {/* Separator */}
-              {showAdminCenter && <div className="hidden md:block h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />}
+              {showAdminCenter && <div className="hidden h-5 w-px bg-stone-200 md:block" />}
 
               {/* Workspace Selector (Visible only if accounts are loaded) */}
               {accounts.length > 0 && (
@@ -278,7 +278,7 @@ export function NavBarClient({
               )}
 
               {/* Separator */}
-              <div className="hidden sm:block h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />
+              <div className="hidden h-5 w-px bg-stone-200 sm:block" />
 
               {/* System Maintenance (Wrench dropdown) */}
               {showSystemSettings && (
@@ -291,7 +291,7 @@ export function NavBarClient({
                     type="button"
                     className={cn(
                       "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200",
-                      "text-stone-500 hover:text-[#D97757] dark:text-stone-400 dark:hover:text-[#D97757] active:scale-95",
+                      "text-stone-500 hover:text-[#D97757] active:scale-95",
                       (wrenchOpen || pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/modules") || pathname.startsWith("/admin/ai-config")) &&
                         "text-[#D97757] dark:text-[#D97757]"
                     )}
@@ -309,14 +309,14 @@ export function NavBarClient({
                         transition={{ duration: 0.15, ease: [0, 0, 0.2, 1] }}
                         className={cn(
                           "absolute right-0 mt-2 z-50 w-56 origin-top-right overflow-hidden rounded-2xl border bg-white p-2 shadow-xl",
-                          "border-stone-200/80 dark:border-stone-800/80 dark:bg-stone-950 backdrop-blur-xl bg-white/95 dark:bg-stone-950/95"
+                          "border-stone-200 bg-white/95 backdrop-blur-xl"
                         )}
                       >
-                        <div className="px-2.5 py-2 border-b border-stone-100 dark:border-stone-900 mb-1.5">
-                          <div className="text-[12px] font-bold text-stone-900 dark:text-stone-100">
+                        <div className="mb-1.5 border-b border-stone-200 px-2.5 py-2">
+                          <div className="text-[12px] font-medium text-stone-900">
                             系统运行维护
                           </div>
-                          <div className="text-[11px] text-stone-500 dark:text-stone-600 mt-1 leading-normal">
+                          <div className="mt-1 text-[12px] text-stone-500 leading-normal">
                             管理团队架构与 AI 模块
                           </div>
                         </div>
@@ -326,7 +326,7 @@ export function NavBarClient({
                             href="/admin/modules"
                             prefetch={false}
                             onClick={() => setWrenchOpen(false)}
-                            className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-900/40 transition-colors"
+                            className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-colors hover:bg-stone-100"
                           >
                             <span>团队与成员</span>
                           </Link>
@@ -336,7 +336,7 @@ export function NavBarClient({
                               href="/admin/ai-config"
                               prefetch={false}
                               onClick={() => setWrenchOpen(false)}
-                              className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-900/40 transition-colors"
+                              className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-colors hover:bg-stone-100"
                             >
                               <span>AI 配置</span>
                             </Link>
@@ -354,33 +354,33 @@ export function NavBarClient({
                 onClick={() => void handleCommandHubOpen()}
                 className={cn(
                   "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200",
-                  "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200 active:scale-95"
+                  "text-stone-500 hover:text-stone-700 active:scale-95"
                 )}
                 title="待办与通知中心"
               >
                 <Bell className="size-4 stroke-[1.8]" />
                 {bellBadgeCount > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-stone-950 tabular-nums">
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[12px] font-medium text-white ring-2 ring-white tabular-nums">
                     {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                   </span>
                 )}
               </button>
 
               {/* User profile avatar info */}
-              <div className="h-5 w-[1px] bg-stone-200 dark:bg-stone-800" />
+              <div className="h-5 w-px bg-stone-200" />
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
                 className="flex items-center gap-2 text-left rounded-lg hover:opacity-85 focus:outline-none"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-950 text-[11px] font-black text-white dark:bg-stone-800 shadow-sm border border-stone-300/10">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700">
                   {name.trim().slice(0, 1).toUpperCase() || "?"}
                 </div>
                 <div className="hidden lg:flex flex-col">
-                  <span className="text-[10px] font-bold text-stone-800 dark:text-stone-200 leading-tight">
+                  <span className="text-[12px] font-medium text-stone-700 leading-tight">
                     {name.split(" ")[0]}
                   </span>
-                  <span className="text-[8px] font-semibold text-stone-500 leading-none mt-0.5 tracking-wider uppercase">
+                  <span className="mt-0.5 text-[12px] font-normal text-stone-500 leading-none tracking-wider uppercase">
                     {role === "owner" ? "创始人" : role === "admin" ? "管理员" : "成员"}
                   </span>
                 </div>

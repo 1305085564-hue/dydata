@@ -55,8 +55,8 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
     <AdminWorkspaceLayout indexItems={[]} width="wide">
       <div className="space-y-4">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">发布履约</p>
-          <h1 className="mt-1 text-[18px] font-medium tracking-tight text-stone-800">发布履约工作台</h1>
+          <p className="text-[12px] tracking-[0.12em] text-stone-500">发布履约</p>
+          <h1 className="mt-1 text-[24px] font-medium tracking-tight text-stone-900">发布履约工作台</h1>
         </div>
         <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
           <FulfillmentDataContainer year={year} month={month} visibleUserIds={scope.visibleUserIds} range={range} />

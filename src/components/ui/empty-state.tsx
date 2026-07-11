@@ -38,13 +38,13 @@ export function EmptyState({ title, description, action, className }: EmptyState
             cy="60"
             r="24"
             fill="none"
-            stroke="#D4D4D8"
+            stroke="#D6D3D1"
             strokeWidth="0.5"
             strokeDasharray="3,3"
           />
           {/* 十字辅助线 */}
-          <line x1="60" y1="36" x2="60" y2="84" stroke="#E4E4E7" strokeWidth="0.5" />
-          <line x1="36" y1="60" x2="84" y2="60" stroke="#E4E4E7" strokeWidth="0.5" />
+          <line x1="60" y1="36" x2="60" y2="84" stroke="#E7E5E4" strokeWidth="0.5" />
+          <line x1="36" y1="60" x2="84" y2="60" stroke="#E7E5E4" strokeWidth="0.5" />
           {/* 径向渐变定义 */}
           <defs>
             <radialGradient id="empty-state-core" cx="50%" cy="50%" r="50%">
@@ -65,9 +65,9 @@ export function EmptyState({ title, description, action, className }: EmptyState
 
       {/* 文案层 */}
       <div className="space-y-1">
-        <p className="text-[13px] font-medium text-stone-500 mt-4">{title}</p>
+        <p className="text-[13px] font-normal text-stone-700 mt-4">{title}</p>
         {description && (
-          <p className="max-w-[240px] text-[12px] text-stone-400 mt-1">{description}</p>
+          <p className="max-w-[240px] text-[12px] text-stone-500 mt-1">{description}</p>
         )}
       </div>
 

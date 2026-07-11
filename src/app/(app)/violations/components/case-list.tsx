@@ -152,7 +152,7 @@ export function CaseList({
         {showCount ? (
           <h2 className="text-[13px] font-medium text-stone-700">
             {query ? `「${query}」的搜索结果` : "话术列表"}
-            <span className="ml-2 font-mono text-[12px] text-stone-400 tabular-nums">
+            <span className="ml-2 text-[12px] text-stone-500 tabular-nums">
               {totalCases}
             </span>
           </h2>

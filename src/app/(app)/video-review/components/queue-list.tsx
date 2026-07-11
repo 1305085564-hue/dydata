@@ -23,13 +23,13 @@ export function QueueList({
     <aside className="flex h-[320px] md:h-[calc(100vh-260px)] md:min-h-[480px] flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white">
       <header className="flex items-baseline justify-between border-b border-stone-100 px-4 py-3">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-[13px] font-semibold text-stone-800">待审队列</h2>
-          <span className="font-mono text-[13px] tabular-nums text-stone-400">
+          <h2 className="text-[18px] font-medium text-stone-900">待审队列</h2>
+          <span className="text-[13px] tabular-nums text-stone-500">
             {pendingCount}
           </span>
         </div>
         {todayProcessed > 0 ? (
-          <span className="text-[12px] text-stone-400">
+          <span className="text-[12px] text-stone-500">
             今日已处理 {todayProcessed}
           </span>
         ) : null}
@@ -57,22 +57,22 @@ export function QueueList({
                 )}
               >
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[13px] font-medium text-stone-800">
+                  <span className="truncate text-[13px] font-medium text-stone-700">
                     {item.account_name_snapshot ?? item.submitted_by_name}
                   </span>
-                  <span className="shrink-0 font-mono text-[12px] tabular-nums text-stone-400">
+                  <span className="shrink-0 text-[12px] tabular-nums text-stone-500">
                     {formatWaitDuration(item.created_at)}
                   </span>
                 </div>
                 <p className="mt-1 line-clamp-2 text-[12px] leading-[1.55] text-stone-500">
                   {getScriptOpening(item.script_text, 80)}
                 </p>
-                <div className="mt-1.5 flex items-center gap-2 text-[12px] text-stone-400">
+                <div className="mt-1.5 flex items-center gap-2 text-[12px] text-stone-500">
                   <span>{item.submitted_by_name}</span>
                   {isAmend ? (
                     <>
-                      <span className="text-stone-300">·</span>
-                      <span className="rounded bg-stone-100 px-1.5 py-0.5 font-medium text-stone-600">
+                      <span className="text-stone-500">·</span>
+                      <span className="rounded bg-stone-100 px-1.5 py-0.5 font-medium text-stone-500">
                         二改 · 第 {item.current_round} 轮
                       </span>
                     </>
@@ -84,7 +84,7 @@ export function QueueList({
         })}
       </ul>
 
-      <footer className="border-t border-stone-100 px-4 py-2 text-[12px] text-stone-400">
+      <footer className="border-t border-stone-100 px-4 py-2 text-[12px] text-stone-500">
         快捷键 · J 下一条 · K 上一条
       </footer>
     </aside>

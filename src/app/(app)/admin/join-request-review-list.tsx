@@ -277,7 +277,7 @@ export function JoinRequestReviewList({ rows }: Props) {
   const showEmpty = visibleRows.length === 0 && !undoApproveItem && !undoRejectItem;
   if (showEmpty) {
     return (
-      <div className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-6 text-center text-[13px] text-stone-400">
+      <div className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-6 text-center text-[13px] text-stone-500">
         暂无待审申请
       </div>
     );
@@ -327,9 +327,9 @@ export function JoinRequestReviewList({ rows }: Props) {
 
       {/* 批量操作栏 */}
       {someSelected ? (
-        <div className="mb-3 flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
-          <span className="text-[13px] text-stone-600">
-            已选择 <span className="font-medium text-stone-800">{selectedIds.size}</span> 条
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2">
+          <span className="text-[13px] text-stone-700">
+            已选择 <span className="font-medium text-stone-900">{selectedIds.size}</span> 条
           </span>
           <div className="ml-auto flex items-center gap-2">
             <Button
@@ -364,7 +364,7 @@ export function JoinRequestReviewList({ rows }: Props) {
 
       {/* 批量驳回对话框 */}
       <Dialog open={batchRejectOpen} onOpenChange={setBatchRejectOpen}>
-        <DialogContent className="max-w-md rounded-2xl border border-stone-200 bg-white p-0 shadow-sm">
+        <DialogContent className="max-w-md rounded-2xl border border-stone-200 bg-white p-0 shadow-xl">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>批量驳回申请</DialogTitle>
           </DialogHeader>
@@ -425,14 +425,14 @@ export function JoinRequestReviewList({ rows }: Props) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[13px] font-medium tracking-tight text-stone-800 truncate">
+                    <span className="text-[13px] font-medium tracking-tight text-stone-900 truncate">
                       {row.applicantName || "未命名"}
                     </span>
                     <span className="text-[12px] text-stone-500 truncate">{row.applicantEmail}</span>
                   </div>
                   <div className="mt-0.5 flex items-baseline gap-2 text-[12px]">
-                    <span className="text-stone-800">{row.targetTeamName || "未知团队"}</span>
-                    <span className="text-stone-400">{formatTime(row.createdAt)}</span>
+                    <span className="text-stone-900">{row.targetTeamName || "未知团队"}</span>
+                    <span className="text-stone-500">{formatTime(row.createdAt)}</span>
                   </div>
                 </div>
               </div>

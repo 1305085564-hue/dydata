@@ -231,7 +231,7 @@ export function ContentPageClient({
               return (
                 <div
                   key={v.id}
-                  className="group relative flex flex-col justify-between w-[220px] shrink-0 rounded-xl border border-stone-200 bg-white p-4 shadow-sm hover:border-stone-300 hover:shadow transition-all duration-200"
+                  className="group relative flex flex-col justify-between w-[220px] shrink-0 rounded-xl border border-stone-200 bg-white p-4 transition-[border-color,box-shadow,transform] duration-150 hover:border-stone-300 hover:shadow-sm hover:-translate-y-px"
                 >
                   <div className="space-y-1.5 text-left">
                     <div className="flex items-center justify-between">
@@ -253,8 +253,8 @@ export function ContentPageClient({
 
                   <div className="mt-3 pt-2.5 border-t border-stone-100 flex items-center justify-between">
                     <div className="flex flex-col text-left">
-                      <span className="text-[12px] text-stone-300">24h播放</span>
-                      <span className="text-[12px] font-mono font-bold text-stone-700">
+                      <span className="text-[12px] text-stone-500">24h播放</span>
+                      <span className="text-[13px] font-medium tabular-nums text-stone-700">
                         {snap ? formatNumber(snap.play_count) : "—"}
                       </span>
                     </div>
@@ -283,12 +283,12 @@ export function ContentPageClient({
               className={[
                 "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                 view === "pending"
-                  ? "bg-white text-stone-800 shadow-sm"
+                  ? "bg-white text-stone-900"
                   : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               未开始
-              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-stone-300">
+              <span className="ml-1.5 text-[12px] tabular-nums text-stone-500">
                 {data.workflowSummary.notStarted}
               </span>
             </button>
@@ -299,12 +299,12 @@ export function ContentPageClient({
               className={[
                 "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                 view === "all"
-                  ? "bg-white text-stone-800 shadow-sm"
+                  ? "bg-white text-stone-900"
                   : "text-stone-500 hover:text-stone-700",
               ].join(" ")}
             >
               全部
-              <span className="ml-1.5 font-mono text-[12px] tabular-nums text-stone-300">
+              <span className="ml-1.5 text-[12px] tabular-nums text-stone-500">
                 {data.summary.totalVideos}
               </span>
             </button>
@@ -320,7 +320,7 @@ export function ContentPageClient({
                   className={[
                     "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                     perspective === "company"
-                      ? "bg-white text-stone-800 shadow-sm"
+                      ? "bg-white text-stone-900"
                       : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
@@ -333,7 +333,7 @@ export function ContentPageClient({
                   className={[
                     "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
                     perspective === "team"
-                      ? "bg-white text-stone-800 shadow-sm"
+                      ? "bg-white text-stone-900"
                       : "text-stone-500 hover:text-stone-700",
                   ].join(" ")}
                 >
@@ -365,7 +365,7 @@ export function ContentPageClient({
           {data.workflowSummary.draft > 0 && (
             <span>
               待确认
-              <span className="ml-0.5 font-mono tabular-nums text-[#D99E55]">
+              <span className="ml-0.5 tabular-nums text-[#D99E55]">
                 {data.workflowSummary.draft}
               </span>
             </span>
@@ -373,7 +373,7 @@ export function ContentPageClient({
           {data.workflowSummary.confirmed > 0 && (
             <span>
               已确认未发
-              <span className="ml-0.5 font-mono tabular-nums text-[#D97757]">
+              <span className="ml-0.5 tabular-nums text-[#D97757]">
                 {data.workflowSummary.confirmed}
               </span>
             </span>
@@ -381,7 +381,7 @@ export function ContentPageClient({
           {data.workflowSummary.sent > 0 && (
             <span>
               已下发
-              <span className="ml-0.5 font-mono tabular-nums text-[#D97757]">
+              <span className="ml-0.5 tabular-nums text-[#D97757]">
                 {data.workflowSummary.sent}
               </span>
             </span>
@@ -389,7 +389,7 @@ export function ContentPageClient({
           {data.workflowSummary.viewed > 0 && (
             <span>
               员工已读
-              <span className="ml-0.5 font-mono tabular-nums text-[#6FAA7D]">
+              <span className="ml-0.5 tabular-nums text-[#6FAA7D]">
                 {data.workflowSummary.viewed}
               </span>
             </span>

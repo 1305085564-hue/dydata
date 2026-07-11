@@ -135,7 +135,7 @@ function SheetTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="sheet-title"
       className={cn(
-        "text-[18px] font-bold leading-none tracking-tight text-stone-900",
+        "text-[18px] font-medium leading-none tracking-tight text-stone-900",
         className,
       )}
       {...props}

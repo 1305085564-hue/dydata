@@ -67,7 +67,7 @@ export function ConversionHubShell(props: HubShellProps) {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/violations"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800 active:translate-y-0"
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 transition-colors hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
           >
             <TrendingUp className="size-3.5 stroke-[1.5]" />
             员工视角

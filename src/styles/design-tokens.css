@@ -2,8 +2,8 @@
 :root {
   /* 底色三层（stone 暖灰体系） */
   --color-bg: #FAFAF9;           /* L0 页面背景 stone-50 */
-  --color-surface: #FAFAF9;      /* L1 stone-50 卡片、主面板 */
-  --color-focus: #FFFFFF;        /* L2 焦点区、Modal、Focus 态输入、激活 Tab */
+  --color-surface: #FFFFFF;      /* L1 白卡、主工作区 */
+  --color-focus: #FFFFFF;        /* 焦点区、Modal、Focus 态输入、激活 Tab */
 
   /* 统一光源色（饱和 25-60 / 亮度 55-60） */
   --color-primary: #D97757;      /* 主 CTA 暖橙 */
@@ -13,9 +13,9 @@
   --color-danger: #C9604D;       /* 失败/异常 矿物红 */
 
   /* 文字灰阶（stone 暖灰） */
-  --color-text-primary: #1C1A17;   /* stone-900 标题 */
-  --color-text-secondary: #78716C; /* stone-500 辅助文字 */
-  --color-text-tertiary: #D6D3D1;  /* stone-300 元数据/空状态/单位 */
+  --color-text-primary: #1C1917;   /* stone-900 标题 */
+  --color-text-secondary: #44403C; /* stone-700 正文 */
+  --color-text-tertiary: #78716C;  /* stone-500 元数据/空状态/单位 */
   --color-border: #E7E5E4;         /* stone-200 分隔/卡片/表格 */
   --color-border-warm: #D6D3D1;    /* stone-300 可交互元素 */
 
@@ -50,46 +50,45 @@
   --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.06);
 
   /* glass/nav 实色 */
-  --glass-bg: #FAFAF9;
+  --glass-bg: #FFFFFF;
   --glass-blur: none;
   --nav-bg: #FAFAF9;
   --nav-blur: none;
 
   /* Admin 专用 token */
   --admin-bg: #FAFAF9;
-  --admin-surface: #FAFAF9;
+  --admin-surface: #FFFFFF;
   --admin-border: #E7E5E4;
-  --admin-text-primary: #1C1A17;
-  --admin-text-secondary: #78716C;
-  --admin-text-tertiary: #D6D3D1;
-  --admin-action: #1C1A17;
+  --admin-text-primary: #1C1917;
+  --admin-text-secondary: #44403C;
+  --admin-text-tertiary: #78716C;
+  --admin-action: #1C1917;
   --admin-success: #6FAA7D;
-  --admin-success-bg: #FAFAF9;
+  --admin-success-bg: #FFFFFF;
   --admin-warning: #D99E55;
-  --admin-warning-bg: #FAFAF9;
+  --admin-warning-bg: #FFFFFF;
   --admin-danger: #C9604D;
-  --admin-danger-bg: #FAFAF9;
+  --admin-danger-bg: #FFFFFF;
   --admin-info: #8AA8C7;
-  --admin-info-bg: #FAFAF9;
+  --admin-info-bg: #FFFFFF;
 }
 
 .dark {
-  --color-bg: #18181B;
-  --color-surface: #27272A;
-  --color-focus: #27272A;
-  --color-text-primary: #F4F4F5;
-  --color-text-secondary: #A1A1AA;
-  --color-text-tertiary: #71717A;
-  --color-border: rgba(228, 228, 231, 0.12);
-  --glass-bg: #27272A;
-  --nav-bg: #27272A;
+  --color-bg: #1C1917;
+  --color-surface: #292524;
+  --color-focus: #292524;
+  --color-text-primary: #FAFAF9;
+  --color-text-secondary: #D6D3D1;
+  --color-text-tertiary: #A8A29E;
+  --color-border: rgba(231, 229, 228, 0.12);
+  --glass-bg: #292524;
+  --nav-bg: #292524;
 }
 
 @layer utilities {
   .num,
   .tabular {
     font-variant-numeric: tabular-nums;
-    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   .glass-panel {

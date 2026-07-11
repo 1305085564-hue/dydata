@@ -80,10 +80,10 @@ export function PremiumNavbar() {
                 <Zap className="size-[18px] stroke-[2] fill-current" />
               </div>
               <div className="hidden sm:block">
-                <div className="text-xs font-black tracking-tight text-stone-950 dark:text-white uppercase leading-none">
-                  DYData <span className="text-[#D97757] font-semibold text-[10px]">PREMIUM</span>
+                <div className="text-[12px] font-medium tracking-tight text-stone-900 dark:text-white uppercase leading-none">
+                  DYData <span className="text-[#D97757] font-medium text-[12px]">PREMIUM</span>
                 </div>
-                <div className="text-[9px] font-medium tracking-[0.18em] text-stone-400 dark:text-stone-500 uppercase leading-none mt-1">
+                <div className="text-[12px] font-medium tracking-[0.18em] text-stone-500 dark:text-stone-500 uppercase leading-none mt-1">
                   短视频管理控制台
                 </div>
               </div>
@@ -102,10 +102,10 @@ export function PremiumNavbar() {
                     key={item.id}
                     onClick={() => setActiveSubItem(item.id)}
                     className={cn(
-                      "relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-200",
+                      "relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium tracking-tight transition-all duration-200",
                       isActive
-                        ? "text-stone-950 dark:text-white"
-                        : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-300"
+                        ? "text-stone-900 dark:text-white"
+                        : "text-stone-500 hover:text-stone-700 dark:hover:text-[#E7E5E4]"
                     )}
                   >
                     {isActive && (
@@ -134,7 +134,7 @@ export function PremiumNavbar() {
                   setActiveSubItem("dashboard");
                 }}
                 className={cn(
-                  "relative z-10 px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200",
+                  "relative z-10 px-3 py-1 text-[12px] font-medium rounded-lg transition-colors duration-200",
                   perspective === "user" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
                 )}
               >
@@ -154,7 +154,7 @@ export function PremiumNavbar() {
                   setActiveSubItem("content");
                 }}
                 className={cn(
-                  "relative z-10 px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors duration-200",
+                  "relative z-10 px-3 py-1 text-[12px] font-medium rounded-lg transition-colors duration-200",
                   perspective === "admin" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
                 )}
               >
@@ -192,9 +192,9 @@ export function PremiumNavbar() {
               )}
               title="待办与通知中心"
             >
-              <Bell className="size-4 stroke-[1.8] text-stone-500 dark:text-stone-400" />
+              <Bell className="size-4 stroke-[1.8] text-stone-500 dark:text-stone-500" />
               {totalAlertsCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-stone-950 tabular-nums">
+                <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[12px] font-medium text-white shadow-sm ring-2 ring-white dark:ring-stone-950 tabular-nums">
                   {totalAlertsCount > 99 ? "99+" : totalAlertsCount}
                 </span>
               )}
@@ -209,7 +209,7 @@ export function PremiumNavbar() {
               )}
               title="个人与账号设置"
             >
-              <Settings className="size-4 stroke-[1.8] text-stone-500 dark:text-stone-400" />
+              <Settings className="size-4 stroke-[1.8] text-stone-500 dark:text-stone-500" />
             </button>
 
             {/* User profile capsule with custom display */}
@@ -218,14 +218,14 @@ export function PremiumNavbar() {
               onClick={() => setSettingsOpen(true)}
               className="flex items-center gap-2 text-left rounded-lg hover:opacity-85 focus:outline-none"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-stone-950 text-[11px] font-black text-white dark:bg-stone-800 shadow-sm border border-stone-200/10">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-stone-950 text-[12px] font-medium text-white dark:bg-stone-800 shadow-sm border border-stone-200/10">
                 {profileName.trim().slice(0, 1).toUpperCase()}
               </div>
               <div className="hidden lg:flex flex-col">
-                <span className="text-[10px] font-bold text-stone-800 dark:text-stone-200 leading-tight">
+                <span className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9] leading-tight">
                   {profileName.split(" ")[0]}
                 </span>
-                <span className="text-[8px] font-semibold text-stone-400 leading-none mt-0.5 tracking-wider uppercase">
+                <span className="text-[12px] font-medium text-stone-500 leading-none mt-0.5 tracking-wider uppercase">
                   创始人
                 </span>
               </div>

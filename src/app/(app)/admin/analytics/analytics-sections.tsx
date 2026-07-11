@@ -72,21 +72,21 @@ export function AnalyticsSections({
                 <div className="flex items-center gap-4">
                   <div
                     className={cn(
-                      "flex size-10 items-center justify-center rounded-lg bg-stone-100 text-[13px] font-medium text-stone-400 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] font-mono tabular-nums",
-                      isExpanded && "bg-stone-100 text-stone-800",
+                      "flex size-10 items-center justify-center rounded-lg bg-stone-100 text-[13px] font-medium text-stone-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] tabular-nums",
+                      isExpanded && "bg-stone-100 text-stone-900",
                     )}
                   >
                     {index + 1}
                   </div>
-                  <h2 className="text-[18px] font-medium tracking-tight text-stone-800">
+                  <h2 className="text-[18px] font-medium tracking-tight text-stone-900">
                     {section.title}
                   </h2>
                 </div>
 
                 <div
                   className={cn(
-                    "flex size-10 items-center justify-center rounded-full bg-stone-50 text-stone-400 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:bg-stone-100",
-                    isExpanded && "rotate-180 bg-stone-100 text-stone-800 group-hover:bg-stone-200",
+                    "flex size-10 items-center justify-center rounded-full bg-stone-50 text-stone-500 transition-[background-color,color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:bg-stone-100",
+                    isExpanded && "rotate-180 bg-stone-100 text-stone-900 group-hover:bg-stone-200",
                   )}
                 >
                   <ChevronDown className="size-5 stroke-[1.5]" />

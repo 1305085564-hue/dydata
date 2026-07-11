@@ -54,7 +54,7 @@ export function StepCoreContent({
     <div className="space-y-5">
       {/* Script text */}
       <div className="space-y-2">
-        <Label htmlFor="script_text" className="text-[13px] font-medium text-stone-800">
+        <Label htmlFor="script_text" className="text-[12px] font-normal text-stone-500">
           话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
@@ -63,21 +63,21 @@ export function StepCoreContent({
           onChange={(e) => onChange({ script_text: e.target.value })}
           placeholder="原封不动粘贴话术内容"
           autoFocus
-          className="min-h-[170px] resize-none rounded-xl border-transparent bg-stone-100/70 text-[14px] leading-7 focus:border-stone-200 focus:bg-white focus:ring-1 focus:ring-stone-950/5"
+          className="min-h-[170px] resize-none rounded-xl border border-stone-200 bg-stone-50 text-[13px] leading-[1.6] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
         />
       </div>
 
       {/* Screenshots */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-[13px] font-medium text-stone-800">
+          <Label className="text-[12px] font-normal text-stone-500">
             截图
-            <span className="ml-2 text-[11px] font-normal text-stone-400">
+            <span className="ml-2 text-[12px] font-normal text-stone-500">
               {isViolation ? "建议" : "可选"} · 最多 5 张
             </span>
           </Label>
           {screenshots.length ? (
-            <span className="text-[11px] tabular-nums text-stone-400">
+            <span className="text-[12px] tabular-nums text-stone-500">
               {screenshots.length} / 5
             </span>
           ) : null}
@@ -101,11 +101,11 @@ export function StepCoreContent({
               : "border-stone-300 bg-stone-50/70 hover:border-[#D97757]/40 hover:bg-stone-50",
           )}
         >
-          <Upload className="size-5 stroke-[1.5] text-stone-400" />
+          <Upload className="size-5 stroke-[1.5] text-stone-500" />
           <span className="text-[13px] font-medium text-stone-700">
             {isUploading ? "上传中..." : "点击上传或拖拽截图到此"}
           </span>
-          <span className="text-[11px] text-stone-400">
+          <span className="text-[12px] text-stone-500">
             JPG / PNG / WEBP · 单张最大 {formatSizeLimit(UPLOAD_LIMITS.violationScreenshot)}
           </span>
         </label>
@@ -125,7 +125,7 @@ export function StepCoreContent({
 
         {screenshots.length ? (
           <div className="space-y-1.5">
-            <p className="text-[11px] text-stone-400">
+            <p className="text-[12px] text-stone-500">
               拖动卡片可重排，第一张默认作为封面。
             </p>
             <div className="flex flex-wrap gap-2.5">
@@ -190,7 +190,7 @@ export function StepCoreContent({
                       </button>
 
                       {idx === 0 ? (
-                        <span className="absolute left-1 top-1 inline-flex items-center rounded bg-stone-900/70 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+                        <span className="absolute left-1 top-1 inline-flex items-center rounded bg-stone-900/70 px-1 py-0.5 text-[12px] font-medium tracking-[0.12em] text-white backdrop-blur-sm">
                           封面
                         </span>
                       ) : null}

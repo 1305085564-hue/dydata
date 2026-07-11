@@ -39,10 +39,10 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+        <p className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
           起步
         </p>
-        <h2 className="text-[18px] font-semibold leading-tight text-stone-800">
+        <h2 className="text-[18px] font-medium leading-tight text-stone-900">
           先告诉我们这一条的来由
         </h2>
         <p className="text-[12px] leading-[1.7] text-stone-500">
@@ -102,11 +102,11 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
               >
                 <Icon
                   className="size-[18px] stroke-[1.5]"
-                  style={!active ? { color: "#71717a" } : undefined}
+                  style={!active ? { color: "#78716C" } : undefined}
                 />
               </span>
               <div>
-                <p className="text-[14px] font-semibold text-stone-800">
+                <p className="text-[13px] font-medium text-stone-900">
                   {option.title}
                 </p>
                 <p className="mt-1 text-[12px] leading-[1.7] text-stone-500">
@@ -118,7 +118,7 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
         })}
       </div>
 
-      <p className="text-[11px] text-stone-400">
+      <p className="text-[12px] text-stone-500">
         点错了？再点另一张卡片即可切换。
       </p>
     </div>

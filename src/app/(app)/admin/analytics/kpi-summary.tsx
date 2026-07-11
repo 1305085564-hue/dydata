@@ -113,9 +113,9 @@ function DeltaBadge({ delta }: { delta: DeltaInfo | null }) {
       ? "text-[#067647]"
       : delta.direction === "down"
         ? "text-[#B42318]"
-        : "text-stone-400";
+        : "text-stone-500";
   return (
-    <span className={cn("text-[12px] font-mono tabular-nums", tone)}>
+    <span className={cn("text-[12px] tabular-nums", tone)}>
       {delta.text}
     </span>
   );
@@ -132,7 +132,7 @@ function KpiCard({ label, value, delta, hasComparison }: KpiCardProps) {
   return (
     <div className="rounded-xl border border-stone-200 bg-white px-3 py-2.5">
       <p className="text-[12px] text-stone-500">{label}</p>
-      <p className="mt-1 text-[24px] font-semibold tracking-tight text-stone-900 font-mono tabular-nums leading-none">
+      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums leading-none text-stone-700">
         {value}
       </p>
       <div className="mt-1.5 h-[16px]">
@@ -140,7 +140,7 @@ function KpiCard({ label, value, delta, hasComparison }: KpiCardProps) {
           delta ? (
             <DeltaBadge delta={delta} />
           ) : (
-            <span className="text-[12px] text-stone-400">vs 上周期 —</span>
+            <span className="text-[12px] text-stone-500">vs 上周期 —</span>
           )
         ) : null}
       </div>
@@ -171,9 +171,9 @@ export function KpiSummary({ reports, previousPeriodReports }: KpiSummaryProps) 
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-4">
       <div className="mb-3 flex items-center border-l-2 border-[#D97757] pl-3">
-        <h3 className="text-[14px] font-medium tracking-tight text-stone-800">当前周期 KPI 速览</h3>
+        <h3 className="text-[18px] font-medium tracking-tight text-stone-900">当前周期 KPI 速览</h3>
         {hasComparison ? (
-          <span className="ml-auto text-[12px] text-stone-400">vs 上周期</span>
+          <span className="ml-auto text-[12px] text-stone-500">vs 上周期</span>
         ) : null}
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

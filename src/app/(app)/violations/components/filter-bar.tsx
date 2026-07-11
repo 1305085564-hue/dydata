@@ -115,7 +115,7 @@ export function FilterBar() {
       <select
         value={`${activeSort}:${activeOrder}`}
         onChange={(e) => handleSortChange(e.target.value)}
-        className="h-8 cursor-pointer rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-700 outline-none transition-colors focus:border-stone-300"
+        className="h-8 cursor-pointer rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-700 outline-none transition-colors focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
       >
         {SORT_OPTIONS.map((opt) => (
           <optgroup key={opt.key} label={opt.label}>
@@ -130,7 +130,7 @@ export function FilterBar() {
         <button
           type="button"
           onClick={handleReset}
-          className="inline-flex items-center gap-1 text-[12px] text-stone-500 transition-colors hover:text-stone-800 active:translate-y-0"
+          className="inline-flex items-center gap-1 text-[12px] text-stone-500 transition-colors hover:text-stone-700 active:translate-y-0"
         >
           <RotateCcw className="size-3 stroke-[1.5]" />
           重置

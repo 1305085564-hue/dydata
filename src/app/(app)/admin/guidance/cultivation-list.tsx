@@ -49,7 +49,7 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
               <TableRow key={item.accountId} className="h-11">
                 <TableCell className="align-top">
                   <div className="space-y-0.5">
-                    <div className="text-[13px] font-medium text-stone-800">{item.ownerName}</div>
+                    <div className="text-[13px] font-medium text-stone-900">{item.ownerName}</div>
                     <div className="text-[12px] text-stone-500">{item.accountName}</div>
                   </div>
                 </TableCell>
@@ -62,7 +62,7 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
                 </TableCell>
                 <TableCell className="text-[13px] font-medium text-stone-700">{item.metrics[0]?.value ?? "—"}</TableCell>
                 <TableCell className="text-[13px] font-medium text-[#6FAA7D]">{item.metrics[1]?.value ?? "—"}</TableCell>
-                <TableCell className="max-w-xs whitespace-normal text-[13px] text-stone-600">{item.action}</TableCell>
+                <TableCell className="max-w-xs whitespace-normal text-[13px] text-stone-700">{item.action}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -73,7 +73,7 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
         {items.map((item) => (
           <div key={item.accountId} className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
             <div className="space-y-0.5">
-              <div className="text-[14px] font-medium text-stone-800">{item.ownerName}</div>
+              <div className="text-[13px] font-medium text-stone-900">{item.ownerName}</div>
               <div className="text-[12px] text-stone-500">{item.accountName}</div>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -84,7 +84,7 @@ function CultivationTable({ items }: { items: CultivationItem[] }) {
             <div className="grid grid-cols-2 gap-2 text-[13px]">
               {item.metrics.map((metric) => (
                 <div key={metric.label} className="rounded-xl bg-stone-50 px-3 py-2">
-                  <p className="text-[11px] text-stone-400">{metric.label}</p>
+                  <p className="text-[12px] text-stone-500">{metric.label}</p>
                   <p className="mt-1 font-medium text-stone-700">{metric.value}</p>
                 </div>
               ))}
@@ -129,14 +129,14 @@ export function CultivationList(props: GuidanceInput) {
               onClick={() => setActiveTab(tab.key)}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-[12px] transition-[background-color,color] duration-150 ${
                 active
-                  ? "bg-white text-stone-800 shadow-sm"
+                  ? "bg-white text-stone-900 shadow-sm"
                   : "text-stone-500 hover:text-stone-700"
               }`}
             >
               {tab.label}
               <Badge
                 variant="outline"
-                className={`ml-0.5 text-[11px] ${
+                className={`ml-0.5 text-[12px] ${
                   active ? "border-stone-200 bg-stone-50" : "border-transparent bg-white/60"
                 }`}
               >

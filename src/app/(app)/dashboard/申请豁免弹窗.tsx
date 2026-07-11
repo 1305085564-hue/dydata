@@ -139,7 +139,7 @@ function ExemptionModal({
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"
- : "h-8 border-stone-200 px-3 text-xs font-medium text-stone-800 shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-stone-300 hover:bg-white active:translate-y-0",
+ : "h-8 border-stone-200 px-3 text-[12px] font-medium text-stone-700 shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-stone-300 hover:bg-white active:translate-y-0",
           triggerClassName,
         )}
       >
@@ -164,9 +164,9 @@ function ExemptionModal({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-stone-200 bg-white p-0 shadow-sm sm:max-w-4xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-stone-200 bg-white p-0 shadow-xl sm:max-w-4xl">
           <DialogHeader className="px-6 pb-2 pt-6">
-            <DialogTitle className="text-[18px] font-semibold tracking-tight text-stone-800">
+            <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-700">
               选择豁免日期
             </DialogTitle>
           </DialogHeader>
@@ -181,7 +181,7 @@ function ExemptionModal({
                 </span>
               </p>
 
-              <div className="relative overflow-hidden rounded-xl border border-stone-200 bg-[#FAFAFB] p-1">
+              <div className="relative overflow-hidden rounded-xl border border-stone-200 bg-stone-50 p-1">
                 <SubmissionCalendar
                   today={today}
                   submittedDates={submittedDates}
@@ -198,14 +198,14 @@ function ExemptionModal({
             <div className="flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <p className="text-[13px] font-medium text-stone-800">已选豁免日期</p>
+                  <p className="text-[13px] font-medium text-stone-700">已选豁免日期</p>
                   {selectedDates.length > 0 ? (
-                    <div className="rounded-xl border border-stone-200 bg-[#FAFAFB] p-4">
+                    <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
                       <div className="flex flex-wrap gap-2">
                         {selectedDates.map((date) => (
                           <span
                             key={date}
-                            className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-medium font-mono tabular-nums text-stone-800"
+                            className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[12px] font-medium tabular-nums text-stone-700"
                           >
                             {date}
                           </span>
@@ -213,7 +213,7 @@ function ExemptionModal({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-stone-200 bg-[#FAFAFB] text-[13px] text-stone-400">
+                    <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-stone-200 bg-stone-50 text-[13px] text-stone-500">
                       尚未选择任何日期
                     </div>
                   )}
@@ -226,13 +226,13 @@ function ExemptionModal({
                       "flex items-center gap-2 rounded-xl border px-4 py-3 text-[13px]",
                       remindCount > 2
                         ? "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#D99E55]"
-                        : "border-stone-200 bg-[#FAFAFB] text-stone-600",
+                        : "border-stone-200 bg-stone-50 text-stone-500",
                     )}
                   >
                     <Bell className="size-4 shrink-0 stroke-[1.5]" />
                     <span>
                       该日期前后您已被催交{" "}
-                      <span className="font-semibold tabular-nums">{remindCount}</span>{" "}
+                      <span className="font-medium tabular-nums">{remindCount}</span>{" "}
                       次
                     </span>
                   </div>
@@ -245,18 +245,18 @@ function ExemptionModal({
                 )}
 
                 <div className="space-y-2">
-                  <p className="flex items-center gap-1.5 text-[13px] font-medium text-stone-800">
+                  <p className="flex items-center gap-1.5 text-[13px] font-medium text-stone-700">
                     申请原因
                     <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                   </p>
                   <textarea
-                    className="h-[120px] w-full resize-none rounded-lg border border-stone-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-stone-800 shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-stone-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-stone-950/5"
+                    className="h-[120px] w-full resize-none rounded-lg border border-stone-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-stone-700 shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-stone-500 focus:outline-none focus-visible:ring-1 focus-visible:ring-stone-900/5"
                     maxLength={100}
                     placeholder="请简述豁免原因，如：外出拍摄、周末双休、账号限流等（最多100字）"
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                   />
-                  <p className="text-right text-[12px] font-mono tabular-nums text-stone-400">{reason.length}/100</p>
+                  <p className="text-right text-[12px] tabular-nums text-stone-500">{reason.length}/100</p>
                 </div>
               </div>
 

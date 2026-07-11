@@ -28,14 +28,14 @@
   }
 
   .dashboard-section-title {
-    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.2rem);
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 500;
     letter-spacing: -0.02em;
   }
 
   .dashboard-section-kicker {
-    font-size: 10px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
     letter-spacing: 0.25em;
     text-transform: uppercase;
     color: var(--color-text-tertiary);
@@ -60,18 +60,18 @@
   }
 
   .dashboard-metric-strip-compact .app-shell-metric-label {
-    font-size: 0.62rem;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 400;
     letter-spacing: 0.04em;
   }
 
   .dashboard-metric-strip-compact .app-shell-metric-value {
-    font-size: clamp(1.05rem, 0.94rem + 0.46vw, 1.42rem);
+    font-size: 18px;
     line-height: 0.95;
   }
 
   .dashboard-metric-strip-compact .app-shell-metric-hint {
-    font-size: 0.66rem;
+    font-size: 12px;
     line-height: 1.2;
     color: color-mix(in srgb, var(--color-text-secondary) 90%, white);
   }
@@ -104,7 +104,7 @@
   .dashboard-top-action-card:hover,
   .dashboard-top-action-button:hover {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-medium);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.08);
     border-color: color-mix(in srgb, var(--primary) 24%, white);
   }
 
@@ -113,7 +113,7 @@
     outline: none;
     box-shadow:
       0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent),
-      var(--shadow-medium);
+      0 1px 2px rgba(28, 25, 23, 0.08);
   }
 
   .dashboard-top-action-card-head {
@@ -137,8 +137,8 @@
 
   .dashboard-top-action-title {
     flex: 1;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 500;
     line-height: 1.8rem;
     letter-spacing: -0.02em;
     color: var(--color-text-primary);
@@ -282,8 +282,8 @@
     background: color-mix(in srgb, var(--glass-bg) 96%, white);
     padding: 1rem 1.05rem;
     box-shadow:
-      0 20px 45px -28px rgba(15, 23, 42, 0.45),
-      0 10px 24px -20px rgba(15, 23, 42, 0.22);
+      0 20px 45px -28px rgba(28, 25, 23, 0.45),
+      0 10px 24px -20px rgba(28, 25, 23, 0.22);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
     pointer-events: auto;
@@ -309,7 +309,7 @@
     background: color-mix(in srgb, white 92%, var(--background));
     padding: 0 0.95rem;
     font-size: 0.95rem;
-    box-shadow: var(--shadow-light);
+    box-shadow: none;
     transition:
       border-color 0.2s ease,
       box-shadow 0.2s ease,
@@ -342,7 +342,7 @@
     background: color-mix(in srgb, white 90%, var(--background));
     padding: 1rem;
     text-align: left;
-    box-shadow: var(--shadow-light);
+    box-shadow: none;
     transition:
       transform 0.18s ease,
       box-shadow 0.18s ease,
@@ -353,7 +353,7 @@
   .dashboard-account-card:hover {
     transform: translateY(-1px);
     border-color: color-mix(in srgb, var(--primary) 20%, var(--color-border));
-    box-shadow: var(--shadow-medium);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.08);
   }
 
   .dashboard-account-card-selected {
@@ -361,7 +361,7 @@
     background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, white) 0%, color-mix(in srgb, white 96%, var(--background)) 100%);
     box-shadow:
       0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent),
-      var(--shadow-medium);
+      0 1px 2px rgba(28, 25, 23, 0.08);
   }
 
   .dashboard-account-card-header {
@@ -452,7 +452,7 @@
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--color-text-primary);
-    box-shadow: var(--shadow-light);
+    box-shadow: none;
     transition:
       transform 0.18s ease,
       border-color 0.18s ease,
@@ -464,7 +464,7 @@
     transform: translateY(-1px);
     border-color: color-mix(in srgb, var(--primary) 28%, white);
     background: color-mix(in srgb, var(--primary) 5%, white);
-    box-shadow: var(--shadow-medium);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.08);
   }
 
   .dashboard-action-button:disabled {
@@ -491,7 +491,7 @@
   .dashboard-mobile-submit-bar {
     border-top: 1px solid color-mix(in srgb, var(--color-border) 78%, white);
     background: color-mix(in srgb, var(--glass-bg) 96%, white);
-    box-shadow: 0 -12px 32px rgba(15, 23, 42, 0.1);
+    box-shadow: 0 -12px 32px rgba(28, 25, 23, 0.1);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
   }
@@ -513,7 +513,7 @@
     border: 1px solid color-mix(in srgb, var(--color-border) 72%, white);
     background: color-mix(in srgb, white 88%, var(--background));
     padding: 0.625rem 0.75rem;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    box-shadow: none;
   }
 
   .glass-metric-primary {
@@ -531,10 +531,9 @@
   .glass-card {
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: var(--shadow-card);
+    background: #FFFFFF;
+    border-color: #E7E5E4;
+    box-shadow: none;
     transition:
       transform var(--duration-fast) var(--ease-out),
       box-shadow var(--duration-fast) var(--ease-out),
@@ -543,17 +542,16 @@
 
   .glass-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.08);
     border-color: color-mix(in srgb, var(--color-primary) 24%, transparent);
   }
 
   .glass-card-static {
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: var(--shadow-card);
+    background: #FFFFFF;
+    border-color: #E7E5E4;
+    box-shadow: none;
   }
 
   /* ─── auth 登录页 ─── */
@@ -612,10 +610,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .card-elevated {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
-  }
-
   .typewriter-cursor {
     display: inline-block;
     width: 1px;
@@ -661,7 +655,7 @@
   .dark .dashboard-shell::before {
     background:
       radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 16%, transparent) 0%, transparent 48%),
-      linear-gradient(180deg, rgba(15, 17, 21, 0.9) 0%, transparent 100%);
+      linear-gradient(180deg, rgba(28, 25, 23, 0.9) 0%, transparent 100%);
   }
 
   .dark .dashboard-surface {

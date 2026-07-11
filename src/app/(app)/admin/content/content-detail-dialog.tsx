@@ -122,7 +122,7 @@ type AllComparisonData = {
 };
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
-  正常: "border-stone-200 bg-white text-stone-600",
+  正常: "border-stone-200 bg-white text-stone-700",
   删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   投流: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
@@ -182,7 +182,7 @@ function parseProblemTags(mainIssues: string): string[] {
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[12px] font-medium text-stone-400">
+    <div className="text-[12px] font-normal text-stone-500">
       {children}
     </div>
   );
@@ -211,7 +211,7 @@ function ComparisonTableRow({
 }) {
   return (
     <tr className={cn("border-b border-stone-100", isCurrent && "bg-stone-50/50")}>
-      <td className="sticky left-0 bg-white py-2 pl-3 pr-2 text-[12px] font-medium text-stone-500 whitespace-nowrap">
+      <td className="sticky left-0 whitespace-nowrap bg-white py-2 pl-3 pr-2 text-[12px] font-normal text-stone-500">
         {label}
       </td>
       {comparisonMetrics.map((metric) => {
@@ -235,7 +235,7 @@ function ComparisonTableRow({
         }
         return (
           <td key={metric.key} className="whitespace-nowrap py-2 px-1.5 text-left tabular-nums text-[12px]">
-            <span className={cn("font-semibold", isCurrent ? "text-stone-900" : "text-stone-700")}>{formatted}</span>
+            <span className={cn("font-normal", isCurrent ? "text-stone-900" : "text-stone-700")}>{formatted}</span>
             {diffStr && (
               <span className={cn("ml-1 text-[12px] font-medium", diffColor)}>{diffStr}</span>
             )}
@@ -386,8 +386,8 @@ function SegmentedControl<T extends string>({
             className={cn(
               "active:translate-y-0 rounded-md px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
               active
-                ? "bg-white text-[#D97757] shadow-sm"
-                : "text-stone-500 hover:text-stone-800",
+                ? "border border-stone-200 bg-white text-[#D97757]"
+                : "text-stone-500 hover:text-stone-700",
             )}
           >
             {label}
@@ -959,15 +959,15 @@ export function ContentDetailDialog({
             {video && (
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-stone-500">
                 <span className="text-stone-700">{video.profiles.name}</span>
-                <span className="text-stone-300">·</span>
+                <span className="text-stone-500">·</span>
                 <span>{video.accounts.name}</span>
-                <span className="text-stone-300">·</span>
+                <span className="text-stone-500">·</span>
                 <span>发布 {formatDateTime(video.published_at)}</span>
-                <span className="text-stone-300">·</span>
+                <span className="text-stone-500">·</span>
                 <span>上传 {formatDateTime(video.uploaded_at ?? video.created_at)}</span>
                 {video.video_url && (
                   <>
-                    <span className="text-stone-300">·</span>
+                    <span className="text-stone-500">·</span>
                     <a
                       href={video.video_url}
                       target="_blank"
@@ -1043,7 +1043,7 @@ export function ContentDetailDialog({
                           <Eyebrow>文案原文</Eyebrow>
                           <button
                             type="button"
-                            className="text-[12px] text-stone-500 hover:text-stone-800"
+                            className="text-[12px] text-stone-500 hover:text-stone-700"
                             onClick={() => setContentExpanded(false)}
                           >
                             收起
@@ -1057,10 +1057,10 @@ export function ContentDetailDialog({
                       </>
                     ) : (
                       <div className="flex items-baseline gap-3">
-                        <span className="shrink-0 text-[12px] font-medium text-stone-400">
+                        <span className="shrink-0 text-[12px] font-normal text-stone-500">
                           文案
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-[13px] text-stone-600">
+                        <span className="min-w-0 flex-1 truncate text-[13px] text-stone-700">
                           {video.content}
                         </span>
                         {video.content.length > 80 && (
@@ -1085,9 +1085,9 @@ export function ContentDetailDialog({
                       <table className="w-full text-[12px]">
                         <thead>
                           <tr className="border-b border-stone-200 bg-stone-50">
-                            <th className="sticky left-0 bg-stone-50 py-1.5 pl-3 pr-2 text-left font-medium text-stone-400 text-[12px]"></th>
+                            <th className="sticky left-0 bg-stone-50 py-1.5 pl-3 pr-2 text-left text-[12px] font-normal text-stone-500"></th>
                             {comparisonMetrics.map((m) => (
-                              <th key={m.key} className="whitespace-nowrap py-1.5 px-1.5 text-left font-medium text-stone-400 text-[12px]">
+                              <th key={m.key} className="whitespace-nowrap px-1.5 py-1.5 text-left text-[12px] font-normal text-stone-500">
                                 {m.label}
                               </th>
                             ))}
@@ -1101,9 +1101,9 @@ export function ContentDetailDialog({
                             isCurrent
                           />
                           {comparison.loading ? (
-                            <tr><td colSpan={11} className="py-3 text-center text-stone-400">加载中...</td></tr>
+                            <tr><td colSpan={11} className="py-3 text-center text-[12px] text-stone-500">加载中...</td></tr>
                           ) : comparison.error ? (
-                            <tr><td colSpan={11} className="py-3 text-center text-stone-400">{comparison.error}</td></tr>
+                            <tr><td colSpan={11} className="py-3 text-center text-[12px] text-stone-500">{comparison.error}</td></tr>
                           ) : (
                             <>
                               {comparison.previous && (
@@ -1121,7 +1121,7 @@ export function ContentDetailDialog({
                                 />
                               )}
                               {!comparison.previous && !comparison.recent3 && (
-                                <tr><td colSpan={11} className="py-3 text-center text-stone-400">暂无对比数据</td></tr>
+                                <tr><td colSpan={11} className="py-3 text-center text-[12px] text-stone-500">暂无对比数据</td></tr>
                               )}
                             </>
                           )}
@@ -1177,7 +1177,7 @@ export function ContentDetailDialog({
                             key={chip.metric}
                             className="inline-flex items-center gap-1.5 rounded-md bg-stone-100/60 px-2 py-1 text-[12px]"
                           >
-                            <span className="text-stone-600">{chip.metric}</span>
+                            <span className="text-stone-700">{chip.metric}</span>
                             <span className={cn("font-medium", statusTone)}>
                               {chip.status}
                             </span>
@@ -1293,7 +1293,7 @@ export function ContentDetailDialog({
                       onChange={(event) =>
                         setObservation((prev) => ({ ...prev, note: event.target.value }))
                       }
-                      className="w-full resize-none rounded-lg border border-transparent bg-stone-100/70 p-2.5 text-[12px] leading-[1.7] text-stone-800 placeholder:text-stone-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5"
+                      className="w-full resize-none rounded-lg border border-stone-200 bg-stone-100/70 p-2.5 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
                       rows={2}
                       placeholder="观察备注（自动保存）"
                     />
@@ -1340,7 +1340,7 @@ export function ContentDetailDialog({
                           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
                           className="mt-3 space-y-4"
                         >
-                          <p className="text-[18px] font-bold leading-[1.55] text-stone-900">
+                          <p className="text-[18px] font-medium leading-[1.6] text-stone-900">
                             {analysisResult.data_summary}
                           </p>
 
@@ -1356,7 +1356,7 @@ export function ContentDetailDialog({
                             {analysisResult.key_metric_evidence.slice(0, 3).map((ev) => (
                               <span
                                 key={ev}
-                                className="inline-flex items-center rounded-full border border-stone-200 bg-white/80 px-2.5 py-0.5 text-[12px] font-medium tabular-nums text-stone-600"
+                                className="inline-flex items-center rounded-full border border-stone-200 bg-white/80 px-2.5 py-0.5 text-[12px] font-normal tabular-nums text-stone-500"
                               >
                                 {ev}
                               </span>
@@ -1364,8 +1364,8 @@ export function ContentDetailDialog({
                           </div>
 
                           {analysisResult.copywriting_reason && (
-                            <p className="text-[13px] leading-[1.7] text-stone-600">
-                              <span className="text-stone-400">文案：</span>
+                            <p className="text-[13px] leading-[1.7] text-stone-700">
+                              <span className="text-stone-500">文案：</span>
                               {analysisResult.copywriting_reason}
                             </p>
                           )}
@@ -1376,7 +1376,7 @@ export function ContentDetailDialog({
                                 render={
                                   <button
                                     type="button"
-                                    className="active:translate-y-0 inline-flex items-center gap-1 text-[12px] font-medium text-stone-500 hover:text-stone-800"
+                                    className="inline-flex items-center gap-1 text-[12px] font-medium text-stone-500 hover:text-stone-700 active:translate-y-0"
                                   >
                                     <ChevronRightIcon
                                       className={cn(
@@ -1397,7 +1397,7 @@ export function ContentDetailDialog({
                           )}
 
                           <div className="space-y-2 pt-2">
-                            <p className="text-[12px] text-stone-400">
+                            <p className="text-[12px] text-stone-500">
                               引用后仅填入反馈字段，不会自动保存或下发
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -1429,11 +1429,11 @@ export function ContentDetailDialog({
               <TabsContent value="feedback" className="space-y-4">
                 {/* 复盘依据 inline */}
                 {feedbackEvidence.length > 0 && (
-                  <div className="rounded-lg bg-stone-100/50 px-3 py-2.5 text-[12px] leading-[1.7] text-stone-600">
-                    <span className="text-stone-400">依据 · </span>
+                  <div className="rounded-lg bg-stone-100/50 px-3 py-2.5 text-[12px] leading-[1.7] text-stone-700">
+                    <span className="text-stone-500">依据 · </span>
                     {feedbackEvidence.map((line, i) => (
                       <span key={line}>
-                        {i > 0 && <span className="text-stone-300"> · </span>}
+                        {i > 0 && <span className="text-stone-500"> · </span>}
                         <span className="text-stone-700">{line}</span>
                       </span>
                     ))}
@@ -1441,11 +1441,11 @@ export function ContentDetailDialog({
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-stone-700">主要问题</label>
+                  <label className="text-[12px] font-normal text-stone-500">主要问题</label>
                   <textarea
                     value={mainIssues}
                     onChange={(e) => setMainIssues(e.target.value)}
-                    className="w-full resize-none rounded-xl border border-transparent bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5"
+                    className="w-full resize-none rounded-xl border border-stone-200 bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
                     rows={2}
                     placeholder="例如：开头留人弱 / 选题不清 / 文案承接差"
                     disabled={!isEditable}
@@ -1453,11 +1453,11 @@ export function ContentDetailDialog({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-stone-700">改进反馈</label>
+                  <label className="text-[12px] font-normal text-stone-500">改进反馈</label>
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="w-full resize-none rounded-xl border border-transparent bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-200 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-950/5"
+                    className="w-full resize-none rounded-xl border border-stone-200 bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
                     rows={5}
                     placeholder="写给员工的具体改进建议"
                     disabled={!isEditable}
@@ -1477,7 +1477,7 @@ export function ContentDetailDialog({
                   "h-6 gap-1.5 rounded-md border px-2 text-[12px] font-medium",
                   cardDetail.workflow_status === "sent" || cardDetail.workflow_status === "viewed"
                     ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/5 text-[#3f6f4d]"
-                    : "border-stone-200 bg-white text-stone-600",
+                    : "border-stone-200 bg-white text-stone-700",
                 )}
               >
                 <span
@@ -1494,16 +1494,16 @@ export function ContentDetailDialog({
                 {cardDetail.workflow_label}
               </Badge>
             ) : (
-              <span className="text-stone-400">未开始</span>
+              <span className="text-stone-500">未开始</span>
             )}
             {!isLocked &&
               (isSavingDraft ? (
-                <span className="inline-flex items-center gap-1.5 text-stone-400">
+                <span className="inline-flex items-center gap-1.5 text-stone-500">
                   <span className="size-1 rounded-full bg-[#D99E55]" />
                   保存中
                 </span>
               ) : submittedDraft && draftSavedAt ? (
-                <span className="text-stone-400">{formatRelative(draftSavedAt)}</span>
+                <span className="text-stone-500">{formatRelative(draftSavedAt)}</span>
               ) : null)}
           </div>
 

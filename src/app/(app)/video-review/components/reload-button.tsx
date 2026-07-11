@@ -19,7 +19,7 @@ export function ReloadButton() {
           router.refresh();
         });
       }}
-      className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-800 disabled:opacity-50"
+      className="mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-500 transition-colors hover:border-stone-300 hover:text-stone-700 disabled:opacity-50"
     >
       <RefreshCw className={`size-3.5 ${isPending ? "animate-spin" : ""}`} />
       {isPending ? "正在加载..." : "重新加载"}

@@ -124,7 +124,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
           <div className="flex items-baseline justify-between gap-2">
             <Label htmlFor="password">密码</Label>
             <Link
-              className="active:translate-y-0 text-[12px] text-stone-500 hover:text-stone-800"
+              className="active:translate-y-0 text-[12px] text-stone-500 hover:text-stone-700"
               href="/forgot-password"
             >
               忘记密码
@@ -161,7 +161,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
 
         <p className="text-center text-[13px] text-stone-500">
           还没有账号？
-          <Link className="ml-1 text-stone-800 underline underline-offset-4" href="/register">
+          <Link className="ml-1 text-stone-700 underline underline-offset-4" href="/register">
             去注册
           </Link>
         </p>

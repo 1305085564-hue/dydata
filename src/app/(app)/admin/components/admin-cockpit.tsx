@@ -75,7 +75,7 @@ function ViewAllLink({ href, label = "查看全部" }: { href: string; label?: s
   return (
     <a
       href={href}
-      className="flex items-center gap-0.5 text-[11px] text-stone-400 transition-colors hover:text-stone-700"
+      className="flex items-center gap-0.5 text-[12px] text-stone-500 transition-colors hover:text-stone-700"
     >
       {label}
       <ChevronRight className="size-3 stroke-[1.5]" />
@@ -304,7 +304,7 @@ function ReviewBatchCard({
         <button
           type="button"
           onClick={() => setRemindLogOpen(true)}
-          className="inline-flex items-center gap-0.5 text-[11px] text-stone-400 transition-colors hover:text-stone-700"
+          className="inline-flex items-center gap-0.5 text-[12px] text-stone-500 transition-colors hover:text-stone-700"
         >
           <Bell className="size-3 stroke-[1.5]" />
           催交历史
@@ -327,22 +327,22 @@ function ReviewBatchCard({
       <section className="relative flex h-[480px] flex-col rounded-2xl border border-stone-200 bg-white">
         <header className="flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-3">
           <div className="flex min-w-0 items-baseline gap-2.5">
-            <span className="self-center text-stone-400">
+            <span className="self-center text-stone-500">
               <UserCheck2 className="size-4 stroke-[1.5]" />
             </span>
-            <h3 className="text-[16px] font-semibold tracking-tight text-stone-800">
+            <h3 className="text-[13px] font-medium tracking-tight text-stone-900">
               待审批
             </h3>
             <span
               className={cn(
                 "text-[18px] font-medium leading-none tabular-nums",
-                totalAll === 0 ? "text-stone-300" : "text-stone-800",
+                totalAll === 0 ? "text-stone-500" : "text-stone-900",
               )}
             >
               {totalAll}
             </span>
             {handledCount > 0 ? (
-              <span className="text-[11px] text-stone-400">已处理 {handledCount}</span>
+              <span className="text-[12px] text-stone-500">已处理 {handledCount}</span>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">{headerActions}</div>
@@ -357,7 +357,7 @@ function ReviewBatchCard({
               className={cn(
                 "group inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] transition",
                 activeTab === t.key
-                  ? "bg-stone-100 font-medium text-stone-800"
+                  ? "bg-stone-100 font-medium text-stone-900"
                   : "text-stone-500 hover:bg-stone-50 hover:text-stone-700",
               )}
             >
@@ -365,10 +365,10 @@ function ReviewBatchCard({
               {t.count > 0 ? (
                 <span
                   className={cn(
-                    "inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] font-medium tabular-nums",
+                    "inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[12px] font-medium tabular-nums",
                     activeTab === t.key
                       ? "bg-stone-700 text-white"
-                      : "bg-stone-200 text-stone-600",
+                      : "bg-stone-200 text-stone-700",
                   )}
                 >
                   {t.count > 99 ? "99+" : t.count}
@@ -397,16 +397,16 @@ function ReviewBatchCard({
                         )}
                       >
                         <div className="grid w-full grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-2 px-3 py-1.5">
-                          <span className="truncate text-[11px] text-stone-400">
+                          <span className="truncate text-[12px] text-stone-500">
                             {row.team_name ?? "未分组"}
                           </span>
                           <span className="truncate text-[13px] text-stone-700">{row.name}</span>
-                          <span className="shrink-0 text-[11px] tabular-nums text-stone-400">
+                          <span className="shrink-0 text-[12px] tabular-nums text-stone-500">
                             {row.last_report_date ?? "—"}
                           </span>
                         </div>
                         {handled ? (
-                          <span className="absolute top-1 right-2 text-[10px] text-stone-400">
+                          <span className="absolute top-1 right-2 text-[12px] text-stone-500">
                             {handled === "approved" ? "已催" : "已忽略"}
                           </span>
                         ) : null}
@@ -443,11 +443,11 @@ function ReviewBatchCard({
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-[13px] tracking-tight text-stone-700">
                               {row.applicant_name}
-                              <span className="ml-1.5 text-[11px] text-stone-400">
+                              <span className="ml-1.5 text-[12px] text-stone-500">
                                 {typeLabel}
                               </span>
                             </p>
-                            <p className="mt-0.5 line-clamp-1 text-[11px] text-stone-400">
+                            <p className="mt-0.5 line-clamp-1 text-[12px] text-stone-500">
                               {row.reason ?? "未填写原因"}
                             </p>
                           </div>
@@ -495,7 +495,7 @@ function ReviewBatchCard({
                             <p className="truncate text-[13px] tracking-tight text-stone-700">
                               {row.applicantName || "未命名"}
                             </p>
-                            <p className="mt-0.5 truncate text-[11px] text-stone-400">
+                            <p className="mt-0.5 truncate text-[12px] text-stone-500">
                               <UserPlus className="mr-0.5 inline size-3 stroke-[1.5]" />
                               申请加入「{row.targetTeamName || "未知团队"}」
                             </p>
@@ -531,7 +531,7 @@ function ReviewBatchCard({
 function EmptyState({ text }: { text: string }) {
   return (
     <div className="flex flex-1 items-center justify-center px-3 py-8">
-      <p className="text-[12px] text-stone-400">{text}</p>
+      <p className="text-[12px] text-stone-500">{text}</p>
     </div>
   );
 }
@@ -554,14 +554,14 @@ function TodayHero({ date, totalPending }: { date: string; totalPending: number 
   return (
     <section className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+        <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">
           Today · {dateLabel}
         </p>
         <div className="mt-3 flex items-baseline gap-3">
-          <span className="text-[32px] font-semibold leading-none tracking-tight tabular-nums text-stone-950">
+          <span className="text-[24px] font-semibold leading-none tracking-tight tabular-nums text-stone-900">
             {totalPending}
           </span>
-          <span className="text-[14px] font-medium text-stone-500">件 待你处理</span>
+          <span className="text-[13px] font-medium text-stone-500">件 待你处理</span>
         </div>
         <p className="mt-2 max-w-xl text-[13px] leading-[1.7] text-stone-500">
           下方主区是必须当天拍板的事，处理完会自动推进到下一条；底部的数字是其他模块的入口。
@@ -589,13 +589,13 @@ function AnomalyTimeline({
             <h3 className="text-[13px] font-medium tracking-tight text-stone-700">
               异常线索
             </h3>
-            <span className="text-[12px] tabular-nums text-stone-400">
+            <span className="text-[12px] tabular-nums text-stone-500">
               {total} 条
             </span>
           </div>
           <a
             href="/admin/content?view=all"
-            className="inline-flex items-center gap-0.5 text-[12px] text-stone-400 transition-colors hover:text-stone-700"
+            className="inline-flex items-center gap-0.5 text-[12px] text-stone-500 transition-colors hover:text-stone-700"
           >
             去批改台
             <ChevronRight className="size-3 stroke-[1.5]" />
@@ -604,7 +604,7 @@ function AnomalyTimeline({
 
         {rows.length === 0 ? (
           <div className="mt-3 rounded-xl bg-stone-50/60 px-4 py-6 text-center">
-            <p className="text-[12px] text-stone-400">今天没有暴涨或腰斩的视频</p>
+            <p className="text-[12px] text-stone-500">今天没有暴涨或腰斩的视频</p>
           </div>
         ) : (
           <ul className="mt-3 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -618,7 +618,7 @@ function AnomalyTimeline({
                     className="active:translate-y-0 group flex h-[88px] w-[200px] flex-col justify-between rounded-xl border border-stone-200 bg-white px-3.5 py-3 text-left transition-[border-color,background-color] duration-150 hover:border-stone-300 hover:bg-stone-50/60"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="truncate text-[13px] font-medium text-stone-800">
+                      <span className="truncate text-[13px] font-medium text-stone-900">
                         {row.account_name}
                       </span>
                       <span
@@ -629,10 +629,10 @@ function AnomalyTimeline({
                       />
                     </div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[11px] text-stone-400">
+                      <span className="text-[12px] text-stone-500">
                         {isSurge ? "暴涨" : "腰斩"} {formatPct(row.play_count_change_pct)}
                       </span>
-                      <span className="text-[14px] font-medium tabular-nums text-stone-700">
+                      <span className="text-[13px] font-medium tabular-nums text-stone-700">
                         {(row.current_play_count ?? 0).toLocaleString()}
                       </span>
                     </div>
@@ -668,14 +668,14 @@ function MetricLinks({ metrics }: { metrics: QueueMetricSummary }) {
           href={it.href}
           className="active:translate-y-0 group flex flex-col rounded-xl border border-stone-200 bg-white px-4 py-3.5 transition-[border-color,background-color] duration-150 hover:border-stone-300 hover:bg-stone-50/40"
         >
-          <span className="text-[11px] text-stone-400">{it.hint}</span>
+          <span className="text-[12px] text-stone-500">{it.hint}</span>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-[18px] font-semibold tabular-nums text-stone-800">
+            <span className="text-[18px] font-medium tabular-nums text-stone-900">
               {it.value}
             </span>
             <span className="text-[12px] text-stone-500">{it.label}</span>
           </div>
-          <span className="mt-2 inline-flex items-center gap-0.5 text-[11px] text-stone-400 transition-colors group-hover:text-stone-700">
+          <span className="mt-2 inline-flex items-center gap-0.5 text-[12px] text-stone-500 transition-colors group-hover:text-stone-700">
             打开
             <ChevronRight className="size-3 stroke-[1.5]" />
           </span>
@@ -759,7 +759,7 @@ export function AdminQueueSection({
 
       {isInitialLoading ? (
         <section className="flex h-[480px] items-center justify-center rounded-2xl border border-stone-200 bg-white">
-          <p className="text-[12px] text-stone-400">正在加载待办数据…</p>
+          <p className="text-[12px] text-stone-500">正在加载待办数据…</p>
         </section>
       ) : (
         <ReviewBatchCard

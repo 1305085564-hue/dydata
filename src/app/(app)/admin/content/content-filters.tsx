@@ -76,7 +76,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-stone-100/50 p-3">
       <Select value={filters.profileId} onValueChange={(v) => updateFilter("profileId", v ?? "all")}>
-        <SelectTrigger className="h-8 w-28 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5">
+        <SelectTrigger className="h-8 w-28 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5">
           <SelectValue>{getContentFilterLabel({ type: "profile", value: filters.profileId, options: profiles })}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -88,7 +88,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
       </Select>
 
       <Select value={filters.accountId} onValueChange={(v) => updateFilter("accountId", v ?? "all")}>
-        <SelectTrigger className="h-8 w-28 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5">
+        <SelectTrigger className="h-8 w-28 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5">
           <SelectValue>{getContentFilterLabel({ type: "account", value: filters.accountId, options: accounts })}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -100,7 +100,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
       </Select>
 
       <Select value={filters.status} onValueChange={(v) => updateFilter("status", v as AnomalyStatus | "all")}>
-        <SelectTrigger className="h-8 w-24 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5">
+        <SelectTrigger className="h-8 w-24 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5">
           <SelectValue>{getContentFilterLabel({ type: "status", value: filters.status })}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -111,7 +111,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
       </Select>
 
       <Select value={filters.hasSnapshot} onValueChange={(v) => updateFilter("hasSnapshot", v as "all" | "yes" | "no")}>
-        <SelectTrigger className="h-8 w-24 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5">
+        <SelectTrigger className="h-8 w-24 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5">
           <SelectValue>{getContentFilterLabel({ type: "hasSnapshot", value: filters.hasSnapshot })}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -122,7 +122,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
       </Select>
 
       <Select value={filters.reviewed} onValueChange={(v) => updateFilter("reviewed", v as "all" | "yes" | "no")}>
-        <SelectTrigger className="h-8 w-24 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5">
+        <SelectTrigger className="h-8 w-24 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5">
           <SelectValue>{filters.reviewed === "all" ? "全部" : filters.reviewed === "yes" ? "已复盘" : "未复盘"}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -133,7 +133,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
       </Select>
 
       <Select value={filters.feedbackStatus} onValueChange={(v) => updateFilter("feedbackStatus", v as "all" | "no_feedback" | "confirmed" | "sent" | "viewed")}>
-        <SelectTrigger className="h-8 w-24 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5">
+        <SelectTrigger className="h-8 w-24 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5">
           <SelectValue>{getContentFilterLabel({ type: "feedbackStatus", value: filters.feedbackStatus })}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -150,7 +150,7 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
         const [rank, sort] = v.split(":") as [ContentFilterValue["rankScope"], ContentFilterValue["sortMode"]];
         setFilters((cur) => ({ ...cur, rankScope: rank, sortMode: sort }));
       }}>
-        <SelectTrigger className="h-8 w-28 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5">
+        <SelectTrigger className="h-8 w-28 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5">
           <SelectValue>
             {filters.rankScope === "day"
               ? "日排名"
@@ -177,18 +177,18 @@ export function ContentFilters({ profiles, accounts, onFilter }: ContentFiltersP
           type="date"
           value={filters.startDate}
           onChange={(e) => updateFilter("startDate", e.target.value)}
-          className="h-8 w-32 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5"
+          className="h-8 w-32 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5"
         />
-        <span className="text-stone-300">—</span>
+        <span className="text-stone-500">—</span>
         <Input
           type="date"
           value={filters.endDate}
           onChange={(e) => updateFilter("endDate", e.target.value)}
-          className="h-8 w-32 rounded-lg bg-stone-100/70 border-transparent text-[12px] text-stone-800 focus:bg-white focus:border-stone-200 focus:ring-1 focus:ring-stone-950/5"
+          className="h-8 w-32 rounded-lg border border-stone-200 bg-stone-50 text-[12px] text-stone-700 focus:bg-white focus:border-stone-500 focus:ring-1 focus:ring-stone-900/5"
         />
       </div>
 
-      <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 rounded-lg text-[12px] text-stone-400">
+      <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 rounded-lg text-[12px] text-stone-500 hover:text-stone-700">
         重置
       </Button>
     </div>

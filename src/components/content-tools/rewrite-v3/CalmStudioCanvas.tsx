@@ -307,7 +307,7 @@ export function CalmStudioCanvas({
                         setEditingParagraphId(null);
                       }
                     }}
-                    className="w-full text-[13px] leading-relaxed tracking-wide text-stone-800 bg-transparent border-0 p-0 outline-none focus:ring-0 resize-none font-sans overflow-hidden"
+                    className="w-full text-[13px] leading-relaxed tracking-wide text-stone-700 bg-transparent border-0 p-0 outline-none focus:ring-0 resize-none font-sans overflow-hidden"
                     placeholder="编辑段落内容..."
                     autoFocus
                   />
@@ -317,7 +317,7 @@ export function CalmStudioCanvas({
                 <div
                   onDoubleClick={() => handleDoubleClick(para.id, para.content)}
                   className={cn(
-                    'text-[13px] leading-relaxed tracking-wide whitespace-pre-wrap transition-colors text-stone-800',
+                    'text-[13px] leading-relaxed tracking-wide whitespace-pre-wrap transition-colors text-stone-700',
                     isViewingHistory && 'text-stone-700'
                   )}
                   title={!isSending && !isViewingHistory ? '双击可编辑该段落' : undefined}
@@ -347,7 +347,7 @@ export function CalmStudioCanvas({
                       return <span key={tIdx}>{token.value}</span>;
                     })
                   ) : (
-                    para.content || <span className="text-stone-300 italic select-none">此段内容为空</span>
+                    para.content || <span className="text-stone-500 italic select-none">此段内容为空</span>
                   )}
                 </div>
               )}
@@ -358,7 +358,7 @@ export function CalmStudioCanvas({
                   {/* 1. 引用到对话 */}
                   <button
                     onClick={() => handleQuote(index, para.content)}
-                    className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800"
+                    className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900"
                     title="引用此段至对话微调"
                   >
                     <Quote className="h-3 w-3 rotate-180" />
@@ -367,12 +367,12 @@ export function CalmStudioCanvas({
                   {/* 2. 复制 */}
                   <button
                     onClick={() => handleCopy(para.id, para.content)}
-                    className="relative rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800"
+                    className="relative rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900"
                     title="复制此段"
                   >
                     <Copy className="h-3 w-3" />
                     {copiedParagraphId === para.id && (
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 bg-stone-900 text-white text-[9px] px-1 rounded shadow-sm whitespace-nowrap">
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 bg-stone-900 text-white text-[12px] px-1 rounded shadow-sm whitespace-nowrap">
                         已复制
                       </span>
                     )}
@@ -415,9 +415,9 @@ export function CalmStudioCanvas({
               }
               setFloatingBar(null);
             }}
-            className="inline-flex items-center gap-1 px-2.5 py-1 hover:bg-stone-800 rounded-lg text-[12px] font-bold text-stone-100 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 hover:bg-stone-800 rounded-lg text-[12px] font-medium text-stone-100 transition-colors"
           >
-            <Quote className="h-3 w-3 rotate-180 text-stone-400" />
+            <Quote className="h-3 w-3 rotate-180 text-stone-500" />
             <span>引用选区改写</span>
           </button>
           <div className="w-[1px] h-3 bg-stone-800" />
@@ -427,9 +427,9 @@ export function CalmStudioCanvas({
               setCopiedSelection(true);
               setTimeout(() => setFloatingBar(null), 1000);
             }}
-            className="inline-flex items-center gap-1 px-2.5 py-1 hover:bg-stone-800 rounded-lg text-[12px] font-bold text-stone-100 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 hover:bg-stone-800 rounded-lg text-[12px] font-medium text-stone-100 transition-colors"
           >
-            <Copy className="h-3 w-3 text-stone-400" />
+            <Copy className="h-3 w-3 text-stone-500" />
             <span>{copiedSelection ? '已复制' : '复制'}</span>
           </button>
         </div>
@@ -439,7 +439,7 @@ export function CalmStudioCanvas({
       {isViewingHistory && activeRevision && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-2 duration-300">
           <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
-          <div className="text-[12px] text-amber-800 font-semibold">
+          <div className="text-[12px] text-amber-800 font-medium">
             正在阅览历史版本 (由 {activeRevision.sourceType === 'fork' ? 'Fork' : activeRevision.sourceType === 'user_edit' ? '人手修改' : 'AI生成'} 创建于 {new Date(activeRevision.createdAt).toLocaleTimeString()})
           </div>
         </div>

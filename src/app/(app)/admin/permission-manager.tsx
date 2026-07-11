@@ -164,7 +164,7 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
         disabled && "cursor-not-allowed opacity-50",
       )}
     >
-      <span className="truncate font-medium text-stone-800" title={member.name}>
+      <span className="truncate font-medium text-stone-900" title={member.name}>
         {member.name}
       </span>
       <span className="truncate text-stone-500" title={currentTeamName}>
@@ -173,10 +173,10 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
       <span className="flex justify-center">
         <span
           className={cn(
-            "inline-flex h-6 items-center justify-center whitespace-nowrap rounded-xl px-2.5 text-[11px] font-medium tracking-tight",
+            "inline-flex h-6 items-center justify-center whitespace-nowrap rounded-xl px-2.5 text-[12px] font-medium tracking-tight",
             isAdmin
               ? "gap-1.5 rounded-lg border border-stone-200 bg-white text-stone-700"
-              : "bg-stone-100 text-stone-600",
+              : "bg-stone-100 text-stone-700",
           )}
         >
           {isAdmin ? (
@@ -187,12 +187,12 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
           ) : "成员"}
         </span>
       </span>
-      <span className="text-right font-mono text-[12px] tabular-nums text-stone-500">
+      <span className="text-right text-[12px] tabular-nums text-stone-500">
         {totalCount > 0 ? `${enabledCount}/${totalCount}` : "—"}
       </span>
       <ChevronRight
         className={cn(
-          "size-4 stroke-[1.5] text-stone-300 transition-colors duration-150",
+          "size-4 stroke-[1.5] text-stone-500/40 transition-colors duration-150",
           "group-hover:text-stone-500",
           isActive && "text-stone-700",
         )}
@@ -682,7 +682,7 @@ export function PermissionManager({
         <div className="flex flex-1 flex-wrap items-center gap-4">
           <Label
             htmlFor="team-filter"
-            className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400"
+            className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500"
           >
             团队
           </Label>
@@ -696,7 +696,7 @@ export function PermissionManager({
           >
             <SelectTrigger
               id="team-filter"
-              className="h-9 w-[150px] border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-200 focus:bg-white focus:shadow-sm"
+              className="h-9 w-[150px] border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
             >
               <SelectValue>{teamFilter === "all" ? "全部团队" : teamFilter}</SelectValue>
             </SelectTrigger>
@@ -717,19 +717,19 @@ export function PermissionManager({
               setPmShowAll(false);
             }}
             placeholder={hasAnyEmail ? "搜索姓名、邮箱或团队" : "搜索姓名或团队，邮箱补全中"}
-            className="h-9 w-full rounded-xl border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-200 focus:bg-white focus:shadow-sm sm:w-64"
+            className="h-9 w-full rounded-xl border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 sm:w-64"
           />
         </div>
-        <span className="font-mono text-[12px] tabular-nums text-stone-400">
+        <span className="text-[12px] tabular-nums text-stone-500">
           显示 {filteredMembers.length} / {visibleMembers.length} 人
         </span>
       </div>
 
       {filteredMembers.length === 0 ? (
-        <p className="py-10 text-center text-[13px] text-stone-400">暂无可管理成员</p>
+        <p className="py-10 text-center text-[13px] text-stone-500">暂无可管理成员</p>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-x-[146px] px-4 pb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-[146px] px-4 pb-2 text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500 lg:grid-cols-2">
             <div className="grid grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-6 border-b border-stone-200 pb-2">
               <span>姓名</span>
               <span>团队</span>
@@ -781,7 +781,7 @@ export function PermissionManager({
                         "h-8 w-8 rounded-xl p-0 text-[12px]",
                         page === pmPage
                           ? "border-[#D97757]/40 bg-white text-[#D97757] hover:border-[#D97757]/60 hover:bg-white"
-                          : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50",
+                          : "border-stone-200 bg-white text-stone-700 hover:bg-stone-50",
                       )}
                     >
                       {page}
@@ -828,10 +828,10 @@ export function PermissionManager({
                   <SheetTitle>{sheetMember.name}</SheetTitle>
                   <span
                     className={cn(
-                      "inline-flex h-5 items-center justify-center rounded-xl px-2 text-[11px] font-medium tracking-tight",
+                      "inline-flex h-5 items-center justify-center rounded-xl px-2 text-[12px] font-medium tracking-tight",
                       sheetMember.role === "admin"
                         ? "gap-1.5 rounded-lg border border-stone-200 bg-white text-stone-700"
-                        : "bg-stone-100 text-stone-600",
+                        : "bg-stone-100 text-stone-700",
                     )}
                   >
                     {sheetMember.role === "admin" ? (
@@ -860,9 +860,9 @@ export function PermissionManager({
                 </div>
                 <p className="text-[12px] text-stone-500">
                   {getTeamLabel(sheetMember.teamName)}
-                  <span className="ml-2 text-stone-400">
+                  <span className="ml-2 text-stone-500">
                     {sheetMember.email ? (
-                      <span className="font-mono tabular-nums">{sheetMember.email}</span>
+                      <span className="tabular-nums">{sheetMember.email}</span>
                     ) : "邮箱补全中"}
                   </span>
                 </p>
@@ -874,9 +874,9 @@ export function PermissionManager({
                     className={cn(
                       "mb-3 rounded-xl border-l-2 bg-stone-50/50 p-3",
                       aiSuggestion.data.status === "critical"
-                        ? "border-l-[#B42318]"
+                        ? "border-l-[#C9604D]"
                         : aiSuggestion.data.status === "warning"
-                          ? "border-l-[#EAB308]"
+                          ? "border-l-[#D99E55]"
                           : "border-l-stone-300",
                     )}
                   >
@@ -884,12 +884,12 @@ export function PermissionManager({
                       <div className="flex items-center gap-2">
                         <span
                           className={cn(
-                            "inline-flex h-5 items-center justify-center rounded-lg px-2 text-[11px] font-medium",
+                            "inline-flex h-5 items-center justify-center rounded-lg px-2 text-[12px] font-medium",
                             aiSuggestion.data.status === "critical"
-                              ? "bg-[#B42318]/10 text-[#B42318]"
+                              ? "bg-[#C9604D]/10 text-[#C9604D]"
                               : aiSuggestion.data.status === "warning"
-                                ? "bg-[#EAB308]/10 text-[#EAB308]"
-                                : "bg-stone-100 text-stone-600",
+                                ? "bg-[#D99E55]/10 text-[#D99E55]"
+                                : "bg-stone-100 text-stone-700",
                           )}
                         >
                           {aiSuggestion.data.status === "critical"
@@ -898,7 +898,7 @@ export function PermissionManager({
                               ? "警告"
                               : "正常"}
                         </span>
-                        <span className="text-[12px] text-stone-400">
+                        <span className="text-[12px] text-stone-500">
                           AI 分析于{" "}
                           {new Date(aiSuggestion.data.generatedAt).toLocaleTimeString("zh-CN", {
                             hour: "2-digit",
@@ -909,7 +909,7 @@ export function PermissionManager({
                       <button
                         type="button"
                         onClick={() => setAiSuggestion(null)}
-                        className="rounded-lg p-1 text-stone-400 transition-colors hover:bg-stone-200/50 hover:text-stone-600"
+                        className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-200/50 hover:text-stone-700"
                       >
                         <X className="size-3.5" />
                       </button>
@@ -927,7 +927,7 @@ export function PermissionManager({
                             className="flex items-start justify-between gap-3"
                           >
                             <div className="min-w-0 flex-1">
-                              <p className="text-[13px] font-medium text-stone-800">
+                              <p className="text-[13px] font-medium text-stone-900">
                                 {suggestion.label}
                               </p>
                               <p className="text-[12px] text-stone-500">
@@ -973,7 +973,7 @@ export function PermissionManager({
                 {sheetEditableKeys.length > 0 ? (
                   <>
                     <section className="space-y-2">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                      <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
                         后台权限
                       </p>
                       <div className="rounded-xl border border-stone-200">
@@ -1004,7 +1004,7 @@ export function PermissionManager({
                     </section>
 
                     <section className="space-y-2">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                      <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
                         AI 能力
                       </p>
                       <div className="rounded-xl border border-stone-200">
@@ -1022,7 +1022,7 @@ export function PermissionManager({
                                 {PERMISSION_LABELS[key]}
                               </p>
                               {PERMISSION_DESCRIPTIONS[key] ? (
-                                <p className="mt-0.5 text-[11px] text-stone-400">
+                                <p className="mt-0.5 text-[12px] text-stone-500">
                                   {PERMISSION_DESCRIPTIONS[key]}
                                 </p>
                               ) : null}
@@ -1045,12 +1045,12 @@ export function PermissionManager({
                 ) : null}
 
                 <section className="space-y-4 border-t border-stone-200 pt-6">
-                  <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-stone-400">
+                  <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
                     成员操作
                   </p>
 
                   <div className="space-y-2">
-                    <Label className="text-[12px] text-stone-600">角色</Label>
+                    <Label className="text-[12px] text-stone-700">角色</Label>
                     <Select
                       value={sheetMember.role}
                       onValueChange={(value) =>
@@ -1075,7 +1075,7 @@ export function PermissionManager({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[12px] text-stone-600">团队</Label>
+                    <Label className="text-[12px] text-stone-700">团队</Label>
                     <Select
                       value={sheetMember.teamId ?? "__none__"}
                       onValueChange={(value) => {
@@ -1154,13 +1154,13 @@ export function PermissionManager({
               </SheetBody>
 
               <SheetFooter className="flex-col items-stretch gap-2">
-                <p className="text-[11px] text-stone-400">
+                <p className="text-[12px] text-stone-500">
                   * 权限变更将在成员下次访问页面时生效
                 </p>
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="ghost"
-                    className="h-9 px-3 text-[12px] text-stone-500 hover:text-stone-800"
+                    className="h-9 px-3 text-[12px] text-stone-500 hover:text-stone-900"
                     onClick={() => {
                       if (hasDraftChanges) {
                         handleResetDraft();
@@ -1198,7 +1198,7 @@ export function PermissionManager({
         }}
       >
         <DialogContent
-          className="rounded-2xl border border-stone-200 bg-white shadow-sm"
+          className="rounded-2xl border border-stone-200 bg-white"
           showCloseButton={!isResettingPassword}
         >
           <DialogHeader>
@@ -1226,7 +1226,7 @@ export function PermissionManager({
                 placeholder="至少 6 位"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
-                className="rounded-xl border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-200 focus:bg-white focus:shadow-sm"
+                className="rounded-xl border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
               />
             </div>
             <div className="space-y-2">
@@ -1239,7 +1239,7 @@ export function PermissionManager({
                 placeholder="再次输入新密码"
                 autoComplete="new-password"
                 disabled={isResettingPassword}
-                className="rounded-xl border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-200 focus:bg-white focus:shadow-sm"
+                className="rounded-xl border-transparent bg-stone-50 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
               />
             </div>
           </div>
@@ -1280,7 +1280,7 @@ export function PermissionManager({
         confirmText="确认调整"
         destructive={roleChangeTarget?.role === "member"}
         loading={isChangingRole}
-        className="rounded-2xl border border-stone-200 bg-white shadow-sm"
+        className="rounded-2xl border border-stone-200 bg-white"
         onConfirm={confirmRoleChange}
         onOpenChange={(open) => {
           if (!open) setRoleChangeTarget(null);
@@ -1298,7 +1298,7 @@ export function PermissionManager({
         confirmText="确认移出"
         destructive
         loading={isRemoving}
-        className="rounded-2xl border border-stone-200 bg-white shadow-sm"
+        className="rounded-2xl border border-stone-200 bg-white"
         onConfirm={handleRemoveMember}
         onOpenChange={(open) => {
           if (!open) setRemoveTarget(null);

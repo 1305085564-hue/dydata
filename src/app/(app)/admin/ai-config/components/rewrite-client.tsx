@@ -137,7 +137,7 @@ function RewriteRouteDialog({
           <div className="space-y-2">
             <Label>模型视图</Label>
             <select
-              className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm shadow-sm"
+              className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-[13px]"
               value={formData.model_view_id || ""}
               onChange={(e) => setFormData({ ...formData, model_view_id: e.target.value })}
             >
@@ -150,7 +150,7 @@ function RewriteRouteDialog({
           <div className="space-y-2">
             <Label>物理映射 (渠道 / 分组 / 模型)</Label>
             <select
-              className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm shadow-sm"
+              className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-[13px]"
               value={formData.provider_key_model_id || ""}
               onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
             >
@@ -262,49 +262,49 @@ export default function RewriteClient() {
   return (
     <div className="flex flex-col md:flex-row gap-3 items-start min-h-[580px]">
       {/* 左栏：极简白底卡片导航 */}
-      <div className="w-full md:w-[280px] border border-stone-200 rounded-2xl bg-white p-3 shadow-sm space-y-3 shrink-0">
+      <div className="w-full md:w-[280px] border border-stone-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
         <div className="flex justify-between items-center px-2 py-1">
-          <h2 className="text-[12px] font-semibold text-stone-400 tracking-wider">模型视图</h2>
-          <Button variant="ghost" size="icon" className="size-6 text-stone-400 hover:text-stone-700 hover:bg-stone-100 bg-stone-50 rounded-md shrink-0" onClick={() => setViewModal({ open: true, data: null })}>
+          <h2 className="text-[12px] font-normal text-stone-500 tracking-wider">模型视图</h2>
+          <Button variant="ghost" size="icon" className="size-6 text-stone-500 hover:text-stone-700 hover:bg-stone-100 bg-stone-50 rounded-md shrink-0" onClick={() => setViewModal({ open: true, data: null })}>
             <Plus strokeWidth={2} className="size-3.5" />
           </Button>
         </div>
 
         <div className="space-y-0.5 max-h-[600px] overflow-y-auto pr-1">
           {views.length === 0 ? (
-            <div className="text-xs text-stone-400 py-6 text-center">暂无模型视图</div>
+            <div className="text-[12px] text-stone-500 py-6 text-center">暂无模型视图</div>
           ) : (
             views.map((v) => {
               const isViewActive = activeViewId === v.id;
               return (
-                <div 
+                <div
                   key={v.id}
                   className={cn(
                     "group flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-all text-[13px]",
-                    isViewActive 
-                      ? "bg-stone-100/80 text-stone-900 font-medium" 
-                      : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                    isViewActive
+                      ? "bg-stone-100/80 text-stone-900 font-medium"
+                      : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
                   )}
                   onClick={() => setActiveViewId(v.id)}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="truncate">{v.label}</span>
-                    <Badge variant="outline" className={cn("font-mono text-[9px] h-4.5 px-1 py-0 bg-white shrink-0 shadow-sm", isViewActive ? "text-stone-700 border-stone-300" : "text-stone-500 border-stone-200")}>{v.key}</Badge>
+                    <Badge variant="outline" className={cn("font-mono text-[12px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-stone-700 border-stone-300" : "text-stone-500 border-stone-200")}>{v.key}</Badge>
                     {v.is_default && (
                       <Star strokeWidth={1.5} className="size-3 text-[#D97757] fill-[#D97757] shrink-0" />
                     )}
                     {!v.is_enabled && (
-                      <span className="text-[10px] text-stone-400 bg-stone-100 px-1 rounded-sm shrink-0">停用</span>
+                      <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm shrink-0">停用</span>
                     )}
                   </div>
                   <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="size-5 text-stone-400 hover:text-stone-700" 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        setViewModal({ open: true, data: v }); 
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-5 text-stone-500 hover:text-stone-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewModal({ open: true, data: v });
                       }}
                     >
                       <Pencil strokeWidth={1.5} className="size-3" />
@@ -318,10 +318,10 @@ export default function RewriteClient() {
       </div>
 
       {/* 右栏：独立白底配置卡片 */}
-      <div className="flex-1 border border-stone-200 rounded-2xl bg-white p-6 shadow-sm min-h-[480px] min-w-0">
+      <div className="flex-1 border border-stone-200 rounded-2xl bg-white p-6 min-h-[480px] min-w-0">
         {activeViewId && (() => {
           const view = bundle.rewriteModelViews.find((v) => v.id === activeViewId);
-          if (!view) return <div className="text-stone-400 text-xs py-10 text-center">模型视图已不存在</div>;
+          if (!view) return <div className="text-stone-500 text-[12px] py-10 text-center">模型视图已不存在</div>;
           const routes = bundle.rewriteModelRoutes.filter((route) => route.model_view_id === view.id);
 
           return (
@@ -329,49 +329,49 @@ export default function RewriteClient() {
               <div className="flex justify-between items-center border-b border-stone-100 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-[16px] leading-[1.5] text-stone-800">{view.label}</h3>
-                    <Badge variant="outline" className="font-mono text-[10px] bg-stone-50">{view.key}</Badge>
-                    {view.is_default && <Badge className="h-5 text-[10px] bg-emerald-50 text-emerald-700 hover:bg-emerald-50">默认</Badge>}
+                    <h3 className="font-medium text-[13px] leading-[1.5] text-stone-900">{view.label}</h3>
+                    <Badge variant="outline" className="font-mono text-[12px] bg-stone-50">{view.key}</Badge>
+                    {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10">默认</Badge>}
                   </div>
                   {view.description && (
-                    <div className="text-xs text-stone-500 mt-1">{view.description}</div>
+                    <div className="text-[12px] text-stone-500 mt-1">{view.description}</div>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-xs text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
+                  <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
                     <span>{view.is_enabled ? "已启用" : "已禁用"}</span>
-                    <Switch 
+                    <Switch
                       className="scale-75"
-                      checked={view.is_enabled} 
-                      onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_view", { id: view.id, is_enabled: checked })} 
+                      checked={view.is_enabled}
+                      onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_view", { id: view.id, is_enabled: checked })}
                     />
                   </div>
-                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setViewModal({ open: true, data: view })}>
+                  <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setViewModal({ open: true, data: view })}>
                     <Pencil strokeWidth={1.5} className="size-3 mr-1" /> 编辑
                   </Button>
-                  <Button size="sm" className="h-7 text-xs" onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: { model_view_id: view.id } })}>
+                  <Button size="sm" className="h-7 text-[12px]" onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: { model_view_id: view.id } })}>
                     <Plus strokeWidth={1.5} className="size-3 mr-1" /> 添加路由
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-[12px] font-semibold text-stone-400 uppercase tracking-wider">绑定的路由分配规则</h4>
+                <h4 className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">绑定的路由分配规则</h4>
                 <div className="rounded-lg border border-stone-200 overflow-hidden bg-white">
                   <Table>
                     <TableHeader className="bg-stone-50/50">
                       <TableRow>
-                        <TableHead className="h-8 w-[80px] py-1.5 pl-3 text-left text-[12px] font-medium text-stone-500">优先级</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-medium text-stone-500">目标实际模型</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-medium text-stone-500">物理渠道 (渠道 / 分组)</TableHead>
-                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-medium text-stone-500">启用</TableHead>
-                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-medium text-stone-500">操作</TableHead>
+                        <TableHead className="h-8 w-[80px] py-1.5 pl-3 text-left text-[12px] font-normal text-stone-500">优先级</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">目标实际模型</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">物理渠道 (渠道 / 分组)</TableHead>
+                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-stone-500">启用</TableHead>
+                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-stone-500">操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {routes.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="py-8 text-center text-[13px] text-stone-300">
+                          <TableCell colSpan={5} className="py-8 text-center text-[13px] text-stone-500">
                             暂无路由，请点击右上角添加
                           </TableCell>
                         </TableRow>
@@ -380,49 +380,49 @@ export default function RewriteClient() {
                           const model = bundle.models.find((item) => item.id === route.provider_key_model_id);
                           const key = bundle.keys.find((item) => item.id === model?.key_id);
                           const provider = bundle.providers.find((item) => item.id === key?.provider_id);
-                          
+
                           return (
-                            <TableRow 
-                              key={route.id} 
+                            <TableRow
+                              key={route.id}
                               className={cn(
                                 "group hover:bg-stone-50/50 h-9 transition-colors",
                                 !route.is_enabled && "opacity-60"
                               )}
                             >
-                              <TableCell className="py-1 text-xs font-mono text-stone-500 font-medium pl-3 text-left">
+                              <TableCell className="py-1 text-[12px] font-mono text-stone-500 font-normal pl-3 text-left">
                                 P{route.priority}
                               </TableCell>
-                              <TableCell className="py-1 text-[13px] font-medium text-stone-800 text-left">
+                              <TableCell className="py-1 text-[13px] font-medium text-stone-900 text-left">
                                 {route.actual_model}
                               </TableCell>
-                              <TableCell className="py-1 text-xs text-stone-400 text-left truncate max-w-[200px]">
+                              <TableCell className="py-1 text-[12px] text-stone-500 text-left truncate max-w-[200px]">
                                 {provider ? `${provider.name} / ${key?.label}` : "自动分配"}
                               </TableCell>
                               <TableCell className="py-1 text-left">
-                                <Switch 
+                                <Switch
                                   className="scale-75 origin-left"
-                                  checked={route.is_enabled} 
-                                  onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_route", { id: route.id, is_enabled: checked })} 
+                                  checked={route.is_enabled}
+                                  onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_route", { id: route.id, is_enabled: checked })}
                                 />
                               </TableCell>
                               <TableCell className="py-1 text-right pr-3">
                                 <div className="flex items-center justify-end relative h-7">
                                   <div className="absolute right-1.5 opacity-30 group-hover:opacity-0 transition-opacity">
-                                    <span className="text-stone-400 text-[10px] tracking-widest font-bold">···</span>
+                                    <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
                                   </div>
                                   <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="size-7 text-stone-400 hover:text-stone-600" 
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-7 text-stone-500 hover:text-stone-700"
                                       onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: route })}
                                     >
                                       <Pencil strokeWidth={1.5} className="size-3" />
                                     </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="size-7 text-stone-400 hover:text-rose-600" 
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-7 text-stone-500 hover:text-[#C9604D]"
                                       onClick={() => setDeleteTarget({ open: true, id: route.id, entity: "rewrite_model_route", title: `删除路由 ${route.actual_model}` })}
                                     >
                                       <Trash2 strokeWidth={1.5} className="size-3" />
@@ -443,7 +443,7 @@ export default function RewriteClient() {
         })()}
 
         {!activeViewId && (
-          <div className="text-center py-20 text-xs text-stone-400">
+          <div className="text-center py-20 text-[12px] text-stone-500">
             请在左侧选择模型视图以查看详情
           </div>
         )}

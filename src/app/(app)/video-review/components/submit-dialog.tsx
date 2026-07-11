@@ -141,7 +141,7 @@ export function SubmitDialog({
         <DialogHeader className="px-7 pt-6 pb-4 border-b border-stone-100">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-[18px] font-bold text-stone-950">
+              <DialogTitle className="text-[18px] font-medium text-stone-900">
                 上传今日作品凭证
               </DialogTitle>
               <p className="mt-1 text-[13px] text-stone-500 leading-[1.6]">
@@ -162,7 +162,7 @@ export function SubmitDialog({
               />
             </div>
             {isTargetMet ? (
-              <span className="flex items-center gap-1 text-[12px] font-semibold text-[#6FAA7D] shrink-0">
+              <span className="flex items-center gap-1 text-[12px] font-medium text-[#6FAA7D] shrink-0">
                 <CheckCircle2 className="size-3.5 stroke-[2.5]" />
                 已达标 ({submittedCount}/{target})
               </span>
@@ -178,7 +178,7 @@ export function SubmitDialog({
         <form onSubmit={handleSubmit} className="px-7 py-5 space-y-5">
           {/* 文案输入 */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-stone-700">
+            <label className="text-[13px] font-medium text-stone-700">
               视频话术文案
             </label>
             <textarea
@@ -186,15 +186,15 @@ export function SubmitDialog({
               onChange={(e) => setContentText(e.target.value)}
               rows={5}
               placeholder="粘贴今日发布视频的话术文案内容..."
-              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] leading-[1.7] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
             />
           </div>
 
           {/* 截图上传 */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-stone-700">
+            <label className="text-[13px] font-medium text-stone-700">
               发布截图{" "}
-              <span className="font-normal text-stone-400">
+              <span className="font-normal text-stone-500">
                 (最多 {MAX_SCREENSHOTS} 张)
               </span>
             </label>
@@ -223,7 +223,7 @@ export function SubmitDialog({
               {screenshotFiles.length < MAX_SCREENSHOTS && (
                 <label
                   className={cn(
-                    "flex size-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stone-200 text-stone-400 transition-colors hover:border-[#D97757]/50 hover:bg-[#D97757]/5 hover:text-[#D97757]",
+                    "flex size-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stone-200 text-stone-500 transition-colors hover:border-[#D97757]/50 hover:bg-[#D97757]/5 hover:text-[#D97757]",
                     uploading && "cursor-wait opacity-60"
                   )}
                 >
@@ -250,16 +250,16 @@ export function SubmitDialog({
 
           {/* 备注 */}
           <div className="space-y-2">
-            <label className="text-[13px] font-semibold text-stone-700">
+            <label className="text-[13px] font-medium text-stone-700">
               备注{" "}
-              <span className="font-normal text-stone-400">(可选)</span>
+              <span className="font-normal text-stone-500">(可选)</span>
             </label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="附加说明，如多账号发布等..."
-              className="w-full rounded-lg border border-stone-200 bg-stone-50 px-4 py-2.5 text-[13px] text-stone-800 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+              className="w-full rounded-lg border border-stone-200 bg-stone-50 px-4 py-2.5 text-[13px] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
             />
           </div>
 
@@ -269,14 +269,14 @@ export function SubmitDialog({
               type="button"
               onClick={handleClose}
               disabled={submitting}
-              className="h-9 rounded-lg border border-stone-200 px-4 text-[13px] font-medium text-stone-600 hover:bg-stone-50 transition-colors"
+              className="h-9 rounded-lg border border-stone-200 px-4 text-[13px] font-medium text-stone-500 hover:bg-stone-50 transition-colors"
             >
               取消
             </button>
             <button
               type="submit"
               disabled={submitting || uploading}
-              className="flex h-9 items-center gap-2 rounded-lg bg-[#D97757] px-5 text-[13px] font-semibold text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
+              className="flex h-9 items-center gap-2 rounded-lg bg-[#D97757] px-5 text-[13px] font-medium text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
             >
               {submitting ? (
                 <>

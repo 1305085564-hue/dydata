@@ -70,11 +70,11 @@ export function TimelineDiff({
       <div className="flex items-center gap-4 max-w-[70%] min-w-0">
         {/* 中文化时光机眉题及引导说明 */}
         <div className="flex items-center gap-1.5 shrink-0 select-none">
-          <Calendar className="h-3.5 w-3.5 text-stone-400" />
-          <span className="text-[12px] font-bold text-stone-700 font-sans tracking-wide">
+          <Calendar className="h-3.5 w-3.5 text-stone-500" />
+          <span className="text-[12px] font-medium text-stone-700 font-sans tracking-wide">
             版本时光机
           </span>
-          <span className="text-[9.5px] font-medium text-stone-400 hidden sm:inline">
+          <span className="text-[12px] font-medium text-stone-500 hidden sm:inline">
             (点击圆点回溯)
           </span>
         </div>
@@ -129,12 +129,12 @@ export function TimelineDiff({
                   </span>
 
                   {/* 悬浮 CSS Tooltip 浮窗 */}
-                  <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-150 delay-150 z-50 bg-stone-900/95 backdrop-blur text-white text-[9px] p-2 rounded-lg shadow-xl whitespace-nowrap leading-normal font-sans">
-                    <div className="flex items-center gap-1.5 font-bold">
+                  <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-150 delay-150 z-50 bg-stone-900/95 backdrop-blur text-white text-[12px] p-2 rounded-lg shadow-xl whitespace-nowrap leading-normal font-sans">
+                    <div className="flex items-center gap-1.5 font-medium">
                       <span className={cn('h-1.5 w-1.5 rounded-full', isAi ? 'bg-amber-400' : 'bg-sky-400')} />
                       <span>第 {index + 1} 版 {isSelected && '(当前预览)'}</span>
                     </div>
-                    <div className="text-[8.5px] text-stone-300 mt-0.5 flex gap-2">
+                    <div className="text-[12px] text-stone-500 mt-0.5 flex gap-2">
                       <span>方式: {isAi ? 'AI 改写' : '手工编辑'}</span>
                       <span>时间: {createTime}</span>
                       <span>字数: {wordCount} 字</span>
@@ -154,10 +154,10 @@ export function TimelineDiff({
             <button
               onClick={() => onSelectDiffMode('vs-latest')}
               className={cn(
-                'px-2 py-0.5 text-[9.5px] font-bold rounded-lg transition-all active:scale-[0.98]',
+                'px-2 py-0.5 text-[12px] font-medium rounded-lg transition-all active:scale-[0.98]',
                 diffMode === 'vs-latest'
-                  ? 'bg-white text-stone-800 shadow-sm border border-stone-200/20'
-                  : 'text-stone-500 hover:text-stone-800'
+                  ? 'bg-white text-stone-900 shadow-sm border border-stone-200/20'
+                  : 'text-stone-500 hover:text-stone-900'
               )}
               title="对比所选版本与当前最新版本"
             >
@@ -166,10 +166,10 @@ export function TimelineDiff({
             <button
               onClick={() => onSelectDiffMode('vs-previous')}
               className={cn(
-                'px-2 py-0.5 text-[9.5px] font-bold rounded-lg transition-all active:scale-[0.98]',
+                'px-2 py-0.5 text-[12px] font-medium rounded-lg transition-all active:scale-[0.98]',
                 diffMode === 'vs-previous'
-                  ? 'bg-white text-stone-800 shadow-sm border border-stone-200/20'
-                  : 'text-stone-500 hover:text-stone-800'
+                  ? 'bg-white text-stone-900 shadow-sm border border-stone-200/20'
+                  : 'text-stone-500 hover:text-stone-900'
               )}
               title="对比所选版本与它的前一版 (按住 Alt / Option 临时切换)"
             >
@@ -182,7 +182,7 @@ export function TimelineDiff({
         {!isViewingLatest && currentSelectedRevision && (
           <button
             onClick={() => onAdoptRevision(currentSelectedRevision.id, currentSelectedRevision.fullContent || '')}
-            className="inline-flex items-center gap-1 bg-[#D97757] text-white hover:bg-[#C96442] font-bold text-[12px] px-2.5 py-1 rounded-lg shadow-sm shadow-[#D97757]/20 transition-all duration-200 active:scale-[0.98]"
+            className="inline-flex items-center gap-1 bg-[#D97757] text-white hover:bg-[#C96442] font-medium text-[12px] px-2.5 py-1 rounded-lg shadow-sm shadow-[#D97757]/20 transition-all duration-200 active:scale-[0.98]"
             title="以当前预览的历史版本文字为基准，拉出分支继续对话改写"
           >
             <RotateCcw className="h-3 w-3 shrink-0" />

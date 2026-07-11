@@ -78,21 +78,21 @@ export function GrowthClientShell(initialData: GrowthPageData) {
         description="按“看弱点、找对标、拆文案、定动作”的顺序走，先定位最该补的一环。"
         meta={
           <div className="flex flex-col items-end gap-1.5">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] text-zinc-500">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-[12px] text-stone-500">
               <Sparkles className="size-3.5 stroke-[1.5]" />
               {data.reportCount >= 3 ? "已满足最小样本要求" : data.reportCount > 0 ? "虚拟数据预览中，再提交真实数据替换" : "虚拟数据预览中，提交数据后替换"}
             </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] text-zinc-500">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-[12px] text-stone-500">
               <span className={`inline-block h-2 w-2 rounded-full ${hydrationState.status === "error" ? "bg-rose-400" : hydrationState.status === "ready" ? "bg-emerald-400" : "bg-amber-400"}`} />
               {hydrationLabel}
             </div>
-            <div className="hidden sm:flex items-center gap-2 text-[12px] text-zinc-500">
+            <div className="hidden items-center gap-2 text-[12px] text-stone-500 sm:flex">
               <span>分析主体 · {data.profileName || "当前账号"}</span>
-              <span className="text-zinc-300">·</span>
+              <span className="text-stone-500">·</span>
               <span>{data.accountCount} 个账号</span>
-              <span className="text-zinc-300">·</span>
+              <span className="text-stone-500">·</span>
               <span>{data.reportCount} 条样本</span>
-              <span className="text-zinc-300">·</span>
+              <span className="text-stone-500">·</span>
               <span>最弱 {data.summary.weakestDimension ?? "待积累"}</span>
             </div>
           </div>
@@ -102,13 +102,13 @@ export function GrowthClientShell(initialData: GrowthPageData) {
       </AppShellHero>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(360px,0.4fr)_minmax(0,1fr)]">
-        <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
+        <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-2">
             <div>
-              <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">能力分布</h2>
-              <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">看清六维差距来自哪里。</p>
+              <h2 className="text-[18px] font-medium text-stone-900">能力分布</h2>
+              <p className="mt-1 text-[13px] leading-[1.7] text-stone-500">看清六维差距来自哪里。</p>
             </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] text-zinc-500">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-[12px] text-stone-500">
               <Target className="size-3.5 stroke-[1.5] text-[#D99E55]" />
               最弱：{data.summary.weakestDimension ?? "待积累"}
             </div>
@@ -116,10 +116,10 @@ export function GrowthClientShell(initialData: GrowthPageData) {
           <六维雷达面板 capabilityCards={data.capabilityCards} weakBenchmarkCards={data.weakBenchmarkCards} teamMembers={data.teamMembers} />
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
+        <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
           <div className="mb-4">
-            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-800">诊断与行动</h2>
-            <p className="mt-1 text-[13px] leading-[1.7] text-zinc-500">结合团队均值，先明确当前最该动的地方。</p>
+            <h2 className="text-[18px] font-medium text-stone-900">诊断与行动</h2>
+            <p className="mt-1 text-[13px] leading-[1.7] text-stone-500">结合团队均值，先明确当前最该动的地方。</p>
           </div>
           <DiagnosisCard myReports={data.myReports} teamReports={data.teamReports} />
         </section>

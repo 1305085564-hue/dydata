@@ -110,11 +110,11 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
 }
 
 function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
-  if (tied) return <span className="text-xs text-stone-500">持平</span>;
+  if (tied) return <span className="text-[12px] text-stone-500">持平</span>;
   return leftLeads ? (
-    <span className="rounded-full bg-[#8AA8C7]/10 px-2 py-0.5 text-xs font-medium text-[#8AA8C7]">领先</span>
+    <span className="rounded-full bg-[#8AA8C7]/10 px-2 py-0.5 text-[12px] font-medium text-[#8AA8C7]">领先</span>
   ) : (
-    <span className="rounded-full bg-[rgba(0,0,0,0.06)] px-2 py-0.5 text-xs font-medium text-stone-500">落后</span>
+    <span className="rounded-full bg-[rgba(0,0,0,0.06)] px-2 py-0.5 text-[12px] font-medium text-stone-500">落后</span>
   );
 }
 
@@ -137,7 +137,7 @@ export function PKBattle({
         <CardHeader>
           <CardTitle>PK 对比</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">当前缺少对手数据。</CardContent>
+        <CardContent className="text-[13px] text-muted-foreground">当前缺少对手数据。</CardContent>
       </Card>
     );
   }
@@ -168,14 +168,14 @@ export function PKBattle({
       <div className="space-y-4 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold tracking-[-0.02em] text-stone-800">PK 对比</h2>
-            <p className="mt-1 text-sm text-stone-500">
+            <h2 className="text-[13px] font-medium tracking-[-0.02em] text-stone-900">PK 对比</h2>
+            <p className="mt-1 text-[13px] text-stone-500">
               {playerA.name} vs {playerB.name}
             </p>
           </div>
           {total > 0 && (
             <div className="shrink-0 rounded-full bg-[#8AA8C7]/10 px-3 py-1.5 text-center">
-              <div className="text-base font-semibold font-mono tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
+              <div className="text-[13px] font-medium tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
               <div className="text-[12px] text-[#8AA8C7]/70">项领先</div>
             </div>
           )}
@@ -194,18 +194,18 @@ export function PKBattle({
               className="rounded-xl border border-stone-200 bg-[rgba(255,255,255,0.76)] p-4"
             >
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-medium text-stone-800">{row.label}</span>
+                <span className="text-[13px] font-medium text-stone-900">{row.label}</span>
                 <WinBadge leftLeads={row.leftLeads} tied={row.tied} />
               </div>
               <GapBar leftRatio={row.leftRatio} rightRatio={row.rightRatio} leftLeads={row.leftLeads} />
-              <div className="mt-2 flex justify-between gap-2 text-xs text-stone-500">
+              <div className="mt-2 flex justify-between gap-2 text-[12px] text-stone-500">
                 <span className="min-w-0 truncate">
-                  <span className="font-medium text-stone-800">{playerA.name}</span>{" "}
-                  <span className="font-mono tabular-nums">{row.leftText}</span>
+                  <span className="font-medium text-stone-900">{playerA.name}</span>{" "}
+                  <span className="tabular-nums">{row.leftText}</span>
                 </span>
                 <span className="min-w-0 shrink-0 text-right">
-                  <span className="font-mono tabular-nums">{row.rightText}</span>{" "}
-                  <span className="font-medium text-stone-800">{playerB.name}</span>
+                  <span className="tabular-nums">{row.rightText}</span>{" "}
+                  <span className="font-medium text-stone-900">{playerB.name}</span>
                 </span>
               </div>
             </motion.div>
