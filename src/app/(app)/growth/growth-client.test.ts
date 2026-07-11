@@ -87,6 +87,7 @@ test("成长页低样本仍展示真实结论、可信度和实名对标", () =>
   assert.match(html, /5 秒完播率 28\.0%/);
   assert.match(html, /下一条开头 3 秒先抛结果/);
   assert.match(html, /真实对标同事/);
+  assert.match(html, /52\.0%/);
   assert.doesNotMatch(html, /虚拟数据|小林|阿周|AI V2/);
 });
 

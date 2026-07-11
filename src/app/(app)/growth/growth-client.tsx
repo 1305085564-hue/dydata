@@ -57,9 +57,9 @@ function formatMetricValue(dimension: string, value: number): string {
     return `${value}次`;
   }
   if (dimension === "增长转化" || dimension === "互动吸引") {
-    return `${value}%`;
+    return `${value.toFixed(1)}%`;
   }
-  return `${value}%`; // 留人率、完播率等均是百分比
+  return `${value.toFixed(1)}%`; // 留人率、完播率等均是百分比
 }
 
 interface GrowthClientProps {
@@ -265,7 +265,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                         ) : null}
                         {metric.trend! > 0 ? "+" : ""}
                         {metric.label.includes("率") || metric.label === "发布数" ? metric.trend!.toFixed(1) : `${metric.trend!.toFixed(0)}`}
-                        {metric.unit === "%" ? "%" : ""}
+                        {metric.label === "发布数" ? "" : "%"}
                       </span>
                     </div>
                   )}
@@ -455,7 +455,13 @@ export function GrowthClient({ contract }: GrowthClientProps) {
 
               {/* 折线图 */}
               <div className="h-[260px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                  minWidth={0}
+                  minHeight={260}
+                  initialDimension={{ width: 800, height: 260 }}
+                >
                   <LineChart
                     data={trend}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}

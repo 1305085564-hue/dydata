@@ -415,6 +415,41 @@ test("成长页只有一条真实报告时绝不补造虚拟报告", async () =>
   assert.equal("myReports" in contract, false);
 });
 
+test("成长页 30 天指标概览不能被近 7 天窗口清零", async () => {
+  const calls: QueryCall[] = [];
+  const now = new Date("2026-05-31T12:00:00.000Z");
+  const reports = [
+    createReport({ report_date: "2026-05-10", play_count: 12000 }),
+    createReport({ report_date: "2026-05-15", play_count: 18000 }),
+  ];
+  const supabase = createFakeSupabase((call) => {
+    if (call.table === "accounts") {
+      return {
+        data: [{ id: "acc-self", profile_id: "user-1", name: "我的账号", content_direction: "财经", presentation_format: "口播" }],
+        error: null,
+      };
+    }
+    if (call.table === "daily_reports") {
+      return { data: reports, error: null };
+    }
+    if (call.table === "profiles") {
+      return { data: [{ id: "user-1", name: "阿禅" }], error: null };
+    }
+    return { data: [], error: null };
+  }, calls);
+
+  const contract = await loadGrowthPageContract({
+    supabase: supabase as never,
+    userId: "user-1",
+    userEmail: "user@example.com",
+    now,
+  });
+
+  const publishMetric = contract.metricsOverview.find((item) => item.label === "发布数");
+  assert.equal(contract.identity.reportCount, 2);
+  assert.equal(publishMetric?.value, 2);
+});
+
 test("成长页 full 模式会恢复 PK、团队对比和结构化脚本数据", async () => {
   __internal.resetContentScriptSchemaCache();
   const calls: QueryCall[] = [];

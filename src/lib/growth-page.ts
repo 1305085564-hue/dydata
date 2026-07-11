@@ -485,7 +485,6 @@ export function buildGrowthDataContract({
   myProfileId,
   myReports,
   teamReports,
-  statusCards,
   scriptSegments,
   scriptSegmentsByAccountId,
 }: {
@@ -494,7 +493,6 @@ export function buildGrowthDataContract({
   myProfileId: string;
   myReports: GrowthAnalysisReport[];
   teamReports: GrowthAnalysisReport[];
-  statusCards?: StatusCardItem[];
   scriptSegments: ScriptSegmentItem[];
   scriptSegmentsByAccountId: Map<string, Array<{ content: string }>>;
 }): GrowthPageContract {
@@ -534,7 +532,7 @@ export function buildGrowthDataContract({
   const diagnosis = peerReports.length
     ? `你的${weakestRule.metricLabel}是 ${formatContractMetric(weakestValue.value, weakestRule.unit)}，团队均值是 ${formatContractMetric(weakestValue.baseline, weakestRule.unit)}，${weakestRule.diagnosisTail}`
     : `你的${weakestRule.metricLabel}是 ${formatContractMetric(weakestValue.value, weakestRule.unit)}，团队暂无可比样本，先按真实数据继续积累。`;
-  const overview = statusCards ?? buildStatusCards(myReports, []);
+  const overview = buildStatusCards(myReports, []);
 
   return {
     identity,

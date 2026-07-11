@@ -509,7 +509,6 @@ function buildGrowthPageResponse({
     myProfileId: userId,
     myReports: myAllReports,
     teamReports: teamReportsWithSubmitter,
-    statusCards,
     scriptSegments: linkedScriptSegments,
     scriptSegmentsByAccountId,
   });
