@@ -1,4 +1,4 @@
-export async function measureAsync<T>(label: string, task: () => Promise<T>): Promise<T> {
+export async function measureAsync<T>(label: string, task: () => PromiseLike<T>): Promise<T> {
   const start = performance.now();
 
   try {
