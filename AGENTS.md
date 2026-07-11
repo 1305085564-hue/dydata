@@ -116,6 +116,7 @@
 
 ### 编码规范
 
+- `docs/plans`、`docs/reference`、`docs/archive` 是本项目固定英文目录名；其他文件和目录仍优先中文。
 - 中文组件名内部用英文 PascalCase，导出时再用中文别名。
 - 表单切换用 `key` 重建组件，禁止用 `useEffect` 同步 props。
 

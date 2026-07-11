@@ -58,3 +58,8 @@ next-env.d.ts
 wrangler.jsonc
 wrangler.jsonc.*.bak
 备份/
+
+# local planning scratch files
+/task_plan.md
+/findings.md
+/progress.md
