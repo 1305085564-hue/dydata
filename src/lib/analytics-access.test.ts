@@ -49,7 +49,6 @@ test("组长能访问团队日常管理，不能访问系统设置", () => {
   assert.equal(canAccessAdminPath("/admin/fulfillment", "group_leader"), true);
   assert.equal(canAccessAdminPath("/admin/settings", "group_leader"), false);
   assert.equal(canAccessAdminPath("/admin/modules", "group_leader"), false);
-  assert.equal(canAccessAdminPath("/admin/ai-channels", "group_leader"), false);
 });
 
 test("发布履约页面允许负责人组长和有数据权限的成员访问", () => {
@@ -63,9 +62,7 @@ test("发布履约页面允许负责人组长和有数据权限的成员访问",
 test("负责人可访问系统设置里的成员权限和团队分组，AI 配置仍只给 owner", () => {
   assert.equal(canAccessAdminPath("/admin/modules", "team_admin"), true);
   assert.equal(canAccessAdminPath("/admin/settings", "team_admin"), true);
-  assert.equal(canAccessAdminPath("/admin/ai-channels", "team_admin"), false);
   assert.equal(canAccessAdminPath("/admin/settings", "owner"), true);
-  assert.equal(canAccessAdminPath("/admin/ai-channels", "owner"), true);
 });
 
 test("导航权限区分成员与管理员入口", () => {

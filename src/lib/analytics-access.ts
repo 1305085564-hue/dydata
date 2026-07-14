@@ -92,11 +92,7 @@ function canAccessDailyManagementPath(pathname: string, role: UserRole | Busines
   }
   if (
     pathname === "/admin/analytics" ||
-    pathname.startsWith("/admin/analytics/") ||
-    pathname === "/admin/advice" ||
-    pathname.startsWith("/admin/advice/") ||
-    pathname === "/admin/guidance" ||
-    pathname.startsWith("/admin/guidance/")
+    pathname.startsWith("/admin/analytics/")
   ) {
     return role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data");
   }
@@ -125,8 +121,6 @@ export function canAccessAdminPath(pathname: string, role: UserRole | BusinessRo
   if (
     pathname === "/admin/ai-config" ||
     pathname.startsWith("/admin/ai-config/") ||
-    pathname === "/admin/ai-channels" ||
-    pathname.startsWith("/admin/ai-channels/") ||
     pathname === "/admin/ai-rewrite" ||
     pathname.startsWith("/admin/ai-rewrite/")
   ) {
