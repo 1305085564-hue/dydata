@@ -10,6 +10,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 
@@ -177,6 +178,7 @@ export function SubmitForm({
           getApiErrorMessage(payload, isAmend ? "整改失败" : "提交失败"),
         );
       }
+      trackUsageEvent({ path: "/video-review/submit", eventType: "submit_review_draft" });
       feedbackToast.success(isAmend ? "已重新提交，等待审核" : "已提交，等待审核");
       router.push("/video-review");
       router.refresh();

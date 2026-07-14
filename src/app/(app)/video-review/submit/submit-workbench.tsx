@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { SubmissionHistory } from "../components/submission-history";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 
 interface WorkSubmission {
   id: string;
@@ -160,6 +161,7 @@ export function SubmitWorkbench({
         toast.success("提交成功", {
           description: "已登记您的今日产量作品凭证",
         });
+        trackUsageEvent({ path: "/video-review/submit", eventType: "submit_work_submission" });
         // Clear Form
         setContentText("");
         setNote("");

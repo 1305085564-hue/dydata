@@ -10,6 +10,7 @@ import { StepConversionData } from "./steps/step-conversion-data";
 import { StepReview } from "./steps/step-review";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getApiErrorMessage } from "@/lib/violations/errors";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 import { UPLOAD_LIMITS, formatSizeLimit } from "@/lib/upload-limits";
 import type { ViolationAccount, WizardFormData } from "./types";
 
@@ -296,6 +297,7 @@ export function SubmitForm({
           }
         }
 
+        trackUsageEvent({ path: "/violations/submit", eventType: "submit_violation_case" });
         feedbackToast.success("已提交，待审核通过后才会出现在团队话术库");
         router.push(caseId ? `/violations/${caseId}` : "/violations");
         return;
@@ -343,6 +345,7 @@ export function SubmitForm({
       if (!response.ok) throw new Error(getApiErrorMessage(payload, "提交失败"));
 
       const caseId = getCreatedCaseId(payload);
+      trackUsageEvent({ path: "/violations/submit", eventType: "submit_violation_case" });
       feedbackToast.success("已提交，待审核通过后才会出现在团队话术库");
 
       if (caseId) {

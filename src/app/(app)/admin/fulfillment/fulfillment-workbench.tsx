@@ -17,6 +17,7 @@ import { MemberDrawer } from "./components/member-drawer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 
 type Source = "queue" | "matrix";
 type MarkAction = Extract<FulfillmentStatus, "leave" | "waived" | "absent" | "confirmed_published">;
@@ -432,6 +433,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
           const err = await res.json().catch(() => ({ error: "标记失败" }));
           throw new Error(err.error || "标记失败");
         }
+        trackUsageEvent({ path: "/admin/fulfillment", eventType: "mark_fulfillment_status" });
         toast.success("标记成功");
         
         // 后台静默刷新以同步统计大盘
@@ -518,6 +520,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
           const err = await res.json().catch(() => ({ error: "批量标记失败" }));
           throw new Error(err.error || "批量标记失败");
         }
+        trackUsageEvent({ path: "/admin/fulfillment", eventType: "mark_fulfillment_status" });
         toast.success("批量标记成功");
 
         // 后台静默刷新以同步统计大盘

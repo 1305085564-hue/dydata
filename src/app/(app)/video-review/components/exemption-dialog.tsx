@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CalendarDays, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
   Dialog,
   DialogContent,
@@ -67,6 +68,7 @@ export function ExemptionDialog({
       const result = await res.json();
 
       if (res.ok) {
+        trackUsageEvent({ path: "/video-review/exemption", eventType: "apply_exemption" });
         toast.success("申请已提交", {
           description: "管理员审批后将通知您结果",
         });

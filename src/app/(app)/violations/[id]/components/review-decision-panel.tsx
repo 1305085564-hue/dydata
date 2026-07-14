@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 import { getApiErrorMessage } from "@/lib/violations/errors";
 import { cn } from "@/lib/utils";
 
@@ -267,6 +268,7 @@ export function ReviewDecisionPanel({
       const result: unknown = await response.json().catch(() => null);
       if (!response.ok) throw new Error(getApiErrorMessage(result, "审核失败"));
 
+      trackUsageEvent({ path: "/violations/[id]", eventType: "review_violation_case" });
       feedbackToast.success(decision === "verify" ? (isViolation ? "已采纳并落库" : "已入库，团队可复用") : "已驳回");
       router.refresh();
       onSuccess?.();

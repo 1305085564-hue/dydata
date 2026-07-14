@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { BootstrapPayload, Conversation, Message } from '../types';
+import { trackUsageEvent } from '@/lib/usage-events/client';
 
 export interface DocumentParagraph {
   paragraphId: string;
@@ -589,6 +590,7 @@ export function useRewriteV3Logic() {
               setGeneratingParagraphIds([]);
               setIsSending(false);
               activeGenerationAbortRef.current = null;
+              trackUsageEvent({ path: '/content-tools/rewrite', eventType: 'rewrite_generate' });
               await Promise.all([
                 fetchParagraphs(conversationId!),
                 fetchRevisions(conversationId!),

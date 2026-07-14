@@ -48,6 +48,7 @@ import {
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useNotifications } from "@/components/notifications/notification-store";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
   syncPublishedAtAndText,
   toManualFieldState,
@@ -1134,6 +1135,7 @@ export function VideoSubmitForm({
         className:
           "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
       });
+      trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });
       clearDraft();
     } catch (error) {
       feedbackToast.error((error as Error).message || "提交失败，请稍后重试");

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 
 type Source = "queue" | "matrix";
 
@@ -124,6 +125,7 @@ export function MemberDrawer({
         toast.error(err.error || "标记失败");
         return;
       }
+      trackUsageEvent({ path: "/admin/fulfillment", eventType: "mark_fulfillment_status" });
       toast.success("标记成功");
       setActiveAction(null);
       setReason("");

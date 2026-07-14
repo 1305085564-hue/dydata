@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { trackUsageEvent } from "@/lib/usage-events/client";
 
 interface ExemptionRequest {
   id: string;
@@ -138,6 +139,7 @@ export function ExemptionWorkbench({
       const result = await res.json();
 
       if (res.ok) {
+        trackUsageEvent({ path: "/video-review/exemption", eventType: "apply_exemption" });
         toast.success("申请提交成功", {
           description: "已提交豁免申请，等待管理员审批",
         });
