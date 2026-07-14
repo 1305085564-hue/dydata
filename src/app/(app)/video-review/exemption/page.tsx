@@ -19,14 +19,18 @@ export default async function ExemptionPage() {
   const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole);
 
   const today = getShanghaiDate();
-
-  // Fetch applicant's own exemption history
-  const { data: exemptionHistory } = await supabase
-    .from("exemption_request")
-    .select("id, exemption_type, start_date, end_date, reason, request_status, created_at, reviewed_at")
-    .eq("applicant_user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  let exemptionHistory: any[] = [];
+  try {
+    const { data } = await supabase
+      .from("exemption_request")
+      .select("id, exemption_type, start_date, end_date, reason, request_status, created_at, reviewed_at")
+      .eq("applicant_user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    exemptionHistory = data ?? [];
+  } catch (err) {
+    console.error("Failed to load exemption history:", err);
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">
