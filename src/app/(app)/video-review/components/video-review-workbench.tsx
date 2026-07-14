@@ -53,6 +53,7 @@ interface VideoReviewWorkbenchProps {
   searchQuery: string;
   selectedTeamId: string;
   selectedGroupId: string;
+  errorMsg?: string;
 }
 
 export function VideoReviewWorkbench({
@@ -69,6 +70,7 @@ export function VideoReviewWorkbench({
   searchQuery,
   selectedTeamId,
   selectedGroupId,
+  errorMsg,
 }: VideoReviewWorkbenchProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -129,6 +131,16 @@ export function VideoReviewWorkbench({
 
   return (
     <div className="space-y-6">
+      {errorMsg && (
+        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-[13px] text-red-800">
+          <AlertTriangle className="size-5 shrink-0 text-red-600" />
+          <div>
+            <span className="font-semibold">数据加载部分失败：</span>
+            <span>{errorMsg}</span>
+          </div>
+        </div>
+      )}
+
       {/* 顶部标题与全局操作面板 */}
       <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6 space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

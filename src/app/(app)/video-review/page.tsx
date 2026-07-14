@@ -23,7 +23,7 @@ export default async function VideoReviewDashboardPage({
   const { businessRole } = permInfo;
   const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole);
 
-  const resolved = await searchParams;
+  const resolved = (await searchParams) ?? {};
   const rawDate = resolved.date;
   const selectedDate = typeof rawDate === "string" ? rawDate.trim() : getShanghaiDate();
 
@@ -37,71 +37,102 @@ export default async function VideoReviewDashboardPage({
   const searchQuery = typeof queryRaw === "string" ? queryRaw.trim() : "";
 
   // 1. 获取已发案例列表（首页主卡片网格流）
-  const { data: approvedData } = await loadApprovedList({
-    limit: 100,
-    search: searchQuery || null,
-  });
-  const approvedItems = approvedData ?? [];
-
-  // 2. 获取今日对账指标（当前用户的今日计划指标数与已交凭证数）
-  const { data: quotaTarget } = await supabase.rpc("get_daily_quota", { p_date: selectedDate });
-  const target = typeof quotaTarget === "number" ? quotaTarget : 4;
-
-  const { data: submissionsRaw } = await supabase
-    .from("work_submissions")
-    .select("id, user_id, team_id, group_id, submit_date, content_text, screenshot_urls, note, created_at")
-    .eq("user_id", user.id)
-    .eq("submit_date", selectedDate)
-    .order("created_at", { ascending: false });
-
-  const adminSupabase = createAdminClient();
-  const initialSubmissions = await Promise.all(
-    (submissionsRaw ?? []).map(async (row) => {
-      const paths = (row.screenshot_urls ?? []) as string[];
-      if (paths.length === 0) return { ...row, screenshot_items: [] };
-
-      const { data: signedData } = await adminSupabase
-        .storage
-        .from("work-screenshots")
-        .createSignedUrls(paths, 60 * 10);
-
-      const byPath = new Map((signedData ?? []).map((item) => [item.path, item.signedUrl]));
-      return {
-        ...row,
-        screenshot_items: paths.map((path: string) => ({
-          path,
-          signed_url: byPath.get(path) ?? null,
-        })),
-      };
-    })
-  );
-  const submittedCount = initialSubmissions.length;
-
-  // 3. 获取产量看板数据（管理特权，提供对账看板大弹窗使用）
+  let approvedItems: any[] = [];
+  let target = 4;
+  let initialSubmissions: any[] = [];
+  let submittedCount = 0;
   let dashboardData: any[] = [];
   let teams: Array<{ id: string; name: string }> = [];
   let groups: Array<{ id: string; name: string }> = [];
+  let errorMsg = "";
 
-  if (isAdmin) {
-    const { data: dbData } = await supabase.rpc("get_production_dashboard", {
-      p_date: selectedDate,
-      p_team_id: selectedTeamId || null,
-      p_group_id: selectedGroupId || null,
+  try {
+    const { data: approvedData, errorMessage: approvedError } = await loadApprovedList({
+      limit: 100,
+      search: searchQuery || null,
     });
-    dashboardData = dbData ?? [];
+    if (approvedError) {
+      console.error("[video-review] loadApprovedList error:", approvedError);
+    }
+    approvedItems = approvedData ?? [];
 
-    const { data: teamsData } = await supabase
-      .from("teams")
-      .select("id, name")
-      .order("name", { ascending: true });
+    // 2. 获取今日对账指标（当前用户的今日计划指标数与已交凭证数）
+    const { data: quotaTarget, error: quotaError } = await supabase.rpc("get_daily_quota", { p_date: selectedDate });
+    if (quotaError) {
+      throw new Error(`获取每日产量目标失败: ${quotaError.message}`);
+    }
+    target = typeof quotaTarget === "number" ? quotaTarget : 4;
 
-    const { data: groupsData } = await supabase
-      .from("groups")
-      .select("id, name")
-      .order("name", { ascending: true });
+    const { data: submissionsRaw, error: submissionsError } = await supabase
+      .from("work_submissions")
+      .select("id, user_id, team_id, group_id, submit_date, content_text, screenshot_urls, note, created_at")
+      .eq("user_id", user.id)
+      .eq("submit_date", selectedDate)
+      .order("created_at", { ascending: false });
+    if (submissionsError) {
+      throw new Error(`获取作品提交记录失败: ${submissionsError.message}`);
+    }
 
-    teams = (teamsData ?? []) as Array<{ id: string; name: string }>;
-    groups = (groupsData ?? []) as Array<{ id: string; name: string }>;
+    const adminSupabase = createAdminClient();
+    initialSubmissions = await Promise.all(
+      (submissionsRaw ?? []).map(async (row) => {
+        const paths = (row.screenshot_urls ?? []) as string[];
+        if (paths.length === 0) return { ...row, screenshot_items: [] };
+
+        const { data: signedData, error: signedError } = await adminSupabase
+          .storage
+          .from("work-screenshots")
+          .createSignedUrls(paths, 60 * 10);
+        if (signedError) {
+          console.error("[video-review] createSignedUrls error:", signedError);
+        }
+
+        const byPath = new Map((signedData ?? []).map((item) => [item.path, item.signedUrl]));
+        return {
+          ...row,
+          screenshot_items: paths.map((path: string) => ({
+            path,
+            signed_url: byPath.get(path) ?? null,
+          })),
+        };
+      })
+    );
+    submittedCount = initialSubmissions.length;
+
+    // 3. 获取产量看板数据（管理特权，提供对账看板大弹窗使用）
+    if (isAdmin) {
+      const { data: dbData, error: dbError } = await supabase.rpc("get_production_dashboard", {
+        p_date: selectedDate,
+        p_team_id: selectedTeamId || null,
+        p_group_id: selectedGroupId || null,
+      });
+      if (dbError) {
+        throw new Error(`获取产量看板数据失败: ${dbError.message}`);
+      }
+      dashboardData = dbData ?? [];
+
+      const { data: teamsData, error: teamsError } = await supabase
+        .from("teams")
+        .select("id, name")
+        .order("name", { ascending: true });
+      if (teamsError) {
+        throw new Error(`获取团队列表失败: ${teamsError.message}`);
+      }
+
+      const { data: groupsData, error: groupsError } = await supabase
+        .from("groups")
+        .select("id, name")
+        .order("name", { ascending: true });
+      if (groupsError) {
+        throw new Error(`获取小组列表失败: ${groupsError.message}`);
+      }
+
+      teams = (teamsData ?? []) as Array<{ id: string; name: string }>;
+      groups = (groupsData ?? []) as Array<{ id: string; name: string }>;
+    }
+  } catch (err: any) {
+    console.error("[video-review] SSR data loading failed:", err);
+    errorMsg = err.message || String(err);
   }
 
   return (
@@ -127,6 +158,7 @@ export default async function VideoReviewDashboardPage({
         searchQuery={searchQuery}
         selectedTeamId={selectedTeamId || "all"}
         selectedGroupId={selectedGroupId || "all"}
+        errorMsg={errorMsg || undefined}
       />
     </div>
   );
