@@ -423,7 +423,7 @@ export function UnifiedCommandHub({
                         <div className="flex flex-col items-end gap-2">
                           <div className="flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5">
                             <Checkbox
-                              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                              checked={(allSelected ? true : someSelected ? "indeterminate" : false) as any}
                               onCheckedChange={(checked) => {
                                 const nextChecked = Boolean(checked);
                                 setSelectedApprovalIds(nextChecked ? new Set(allApprovalIds) : new Set());
@@ -578,6 +578,31 @@ export function UnifiedCommandHub({
               {/* TODOS TAB */}
               {activeTab === "todos" && (
                 <div className="space-y-4">
+                  {/* 日常发布履约入口 (管理员专有，高频日常运营，弱化顶部导航后的入口分流) */}
+                  {isAdmin && (
+                    <div className="rounded-xl border border-stone-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md hover:border-stone-300">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-[#D97757] dark:bg-amber-950/20">
+                            <CalendarDays className="size-4 text-[#D97757]" />
+                          </div>
+                          <div>
+                            <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-100 leading-tight">日常发布履约</h4>
+                            <p className="text-[11px] text-stone-500 mt-0.5">查看团队成员作品交档与申诉处理</p>
+                          </div>
+                        </div>
+                        <Link
+                          href="/admin/fulfillment"
+                          onClick={() => onOpenChange(false)}
+                          className="inline-flex h-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-3 text-[12px] font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-950 dark:hover:text-white transition-all active:scale-95 shrink-0"
+                        >
+                          <span>进入</span>
+                          <ArrowRight className="size-3 ml-1" />
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
                   {loading && activeTodos.length === 0 && (
                     <div className="py-12 text-center text-[12px] text-stone-500 animate-pulse">
                       正在加载待办事项...

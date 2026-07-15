@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeftRight, Bell, Wrench, Zap } from "lucide-react";
+import { Bell, Wrench, Zap } from "lucide-react";
 import { getNavItems } from "@/components/nav-bar-items";
-import { AdminCenterNav } from "@/components/admin-layout/admin-top-nav";
-import { isManagementPath, shouldShowAdminCenterNav } from "@/components/nav-mode";
 import { WorkspacePicker } from "@/components/workspace-picker";
 import { UnifiedCommandHub } from "@/components/unified-command-hub";
 import { PremiumSettingsModal } from "@/components/premium-settings-modal";
@@ -64,8 +62,36 @@ export function NavBarClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [wrenchOpen, setWrenchOpen] = useState(false);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [centerBadges, setCenterBadges] = useState<{
+    cockpit: number;
+    videos: number;
+    content: number;
+    conversion_hub: number;
+    ai_channels: number;
+  } | null>(null);
 
   const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole || "");
+
+  // Poll for admin center badges (video/content anomaly review queue counts)
+  useEffect(() => {
+    if (!showAdmin) return;
+    let active = true;
+    const load = async () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      try {
+        const res = await fetch("/api/admin/sidebar-badges", { credentials: "include" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (active) setCenterBadges(json);
+      } catch {}
+    };
+    void load();
+    const id = setInterval(load, 120_000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [showAdmin]);
 
   const loadPendingApprovalsCount = useCallback(async () => {
     if (!isAdmin) return 0;
@@ -126,9 +152,6 @@ export function NavBarClient({
   const approvalBadgeCount = isAdmin ? pendingApprovalsCount : 0;
   const bellBadgeCount = totalAlertsCount + approvalBadgeCount;
 
-  const showAdminCenter = showAdmin;
-  const isAdminPath = isManagementPath(pathname);
-  const showAdminCenterNav = shouldShowAdminCenterNav(pathname);
   const isOwner = role === "owner" || businessRole === "owner";
 
   const prefetchOnHover = useCallback(
@@ -173,7 +196,7 @@ export function NavBarClient({
 
    const primaryLinkClass = (active: boolean) =>
     cn(
-      "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-medium tracking-tight transition-all duration-200 ease-out",
+      "inline-flex h-9 shrink-0 items-center rounded-lg px-2 md:px-1.5 lg:px-2.5 text-[12px] lg:text-[13px] font-medium tracking-tight transition-all duration-200 ease-out",
       active ? "bg-white text-stone-900 border border-stone-200" : "text-stone-500 hover:text-stone-700",
     );
 
@@ -210,65 +233,51 @@ export function NavBarClient({
                   </div>
                 </div>
               </Link>
-
+  
               {/* Separator */}
               <div className="hidden h-5 w-px bg-stone-200 lg:block" />
-
-              {/* Primary Navigation links / Admin secondary links depending on page url */}
-              {showAdminCenterNav ? (
-                <div className="hidden min-w-0 items-center gap-1.5 md:flex">
-                  <AdminCenterNav
-                    userRole={role as UserRole}
-                    businessRole={businessRole}
-                    permissions={permissions}
-                  />
-                </div>
-              ) : (
-                <div
-                  className="hidden min-w-0 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex"
-                  aria-label="主导航"
-                >
-                  {navItems.map((item) => {
-                    const active = item.match(pathname);
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        prefetch={false}
-                        onMouseEnter={() => prefetchOnHover(item.href)}
-                        className={primaryLinkClass(active)}
-                      >
-                        {Icon && (
-                          <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors", active ? "text-[#D97757]" : "text-stone-500")} />
-                        )}
-                        <span className="whitespace-nowrap">{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+  
+              {/* Primary Navigation links */}
+              <div
+                className="hidden min-w-0 items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex"
+                aria-label="主导航"
+              >
+                {navItems.map((item) => {
+                  const active = item.match(pathname);
+                  const Icon = item.icon;
+                  const badgeValue = item.badgeKey ? centerBadges?.[item.badgeKey] ?? 0 : 0;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      prefetch={false}
+                      onMouseEnter={() => prefetchOnHover(item.href)}
+                      className={primaryLinkClass(active)}
+                    >
+                      {Icon && (
+                        <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors", active ? "text-[#D97757]" : "text-stone-500")} />
+                      )}
+                      <span className="whitespace-nowrap">{item.label}</span>
+                      {badgeValue > 0 && (
+                        <span
+                          className={cn(
+                            "ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[11px] font-medium tabular-nums transition-colors duration-150",
+                            active
+                              ? "bg-[#D97757] text-white"
+                              : "bg-stone-200/60 text-stone-500",
+                          )}
+                        >
+                          {badgeValue > 99 ? "99+" : badgeValue}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-
+  
             {/* RIGHT: Switchers / Alerts / Settings / Avatar */}
             <div className="flex items-center gap-3 shrink-0 ml-auto">
-              
-              {/* Perspective Switcher (Visible only if user has admin permission context) */}
-              {showAdminCenter && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    router.push(isAdminPath ? "/dashboard" : "/admin/content");
-                  }}
-                  className="group relative flex h-8 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 active:scale-[0.98]"
-                >
-                  <ArrowLeftRight className="size-3 text-stone-500 transition-colors duration-300 group-hover:text-stone-700 group-hover:rotate-180" />
-                  <span>{isAdminPath ? "组员视角" : "管理视角"}</span>
-                </button>
-              )}
-
-              {/* Separator */}
-              {showAdminCenter && <div className="hidden h-5 w-px bg-stone-200 md:block" />}
 
               {/* Workspace Selector (Visible only if accounts are loaded) */}
               {accounts.length > 0 && (
