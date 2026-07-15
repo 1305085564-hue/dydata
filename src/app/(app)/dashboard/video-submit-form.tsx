@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -483,23 +483,30 @@ export function VideoSubmitForm({
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
   const shouldAutoRedirectAfterSubmitRef = useRef(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const handleGoToGrowth = useCallback(() => {
+    setIsRedirecting(true);
+    setTimeout(() => {
+      router.push("/growth");
+    }, 800);
+  }, [router]);
 
   const [isMemoryExpanded, setIsMemoryExpanded] = useState(false);
   const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(false);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
-  // 提交成功后延迟 2.5 秒自动跳转大盘（仅在提交瞬间判定为今天首次创建，且用户未操作时）
+  // 提交成功后延迟 2.2 秒开始执行全屏动效渐隐，并自动跳转大盘（仅在提交瞬间判定为今天首次创建，且用户未操作时）
   useEffect(() => {
     if (!isSubmitted) return;
     if (!shouldAutoRedirectAfterSubmitRef.current) return;
     if (hasUserInteracted) return;
 
     const timer = setTimeout(() => {
-      router.push("/growth");
-    }, 2500);
+      handleGoToGrowth();
+    }, 2200);
 
     return () => clearTimeout(timer);
-  }, [isSubmitted, hasUserInteracted, router]);
+  }, [isSubmitted, hasUserInteracted, handleGoToGrowth]);
 
   // 当提交状态变为 false 时，重置用户操作状态
   useEffect(() => {
@@ -1344,9 +1351,32 @@ export function VideoSubmitForm({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-4 pb-2"
         >
-          <div className="rounded-2xl border border-stone-200 bg-white p-6 text-center">
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D]">
-              <CheckCircle className="size-8" />
+          <div className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
+            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/5 border border-[#6FAA7D]/10">
+              <svg
+                className="size-8 text-[#6FAA7D]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <motion.circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                />
+                <motion.path
+                  d="m9 12 2 2 4-4"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
+                />
+              </svg>
             </div>
             <h3 className="text-[18px] font-medium tracking-tight text-stone-700">
               数据提交成功
@@ -1391,9 +1421,9 @@ export function VideoSubmitForm({
                 type="button"
                 onClick={() => {
                   setHasUserInteracted(true);
-                  router.push("/growth");
+                  handleGoToGrowth();
                 }}
-                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[13px] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm"
+                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[13px] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
               >
                 去查看我的成长与大盘数据 🚀
               </Button>
@@ -1883,6 +1913,32 @@ export function VideoSubmitForm({
           </motion.form>
         </>
       )}
+
+      <AnimatePresence>
+        {isRedirecting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/85 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="flex flex-col items-center gap-4 text-center"
+            >
+              <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#D97757] to-[#C9503B] text-white shadow-md shadow-[#D97757]/20 animate-bounce">
+                <Zap className="size-6 stroke-[2] fill-current" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-[14px] font-semibold text-stone-900">数据同步中</h4>
+                <p className="text-[12px] text-stone-500">正在前往成长大盘...</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
