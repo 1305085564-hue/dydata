@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Wrench, Zap } from "lucide-react";
+import { Bell, Wrench, Zap, UsersRound, Settings, Sparkles } from "lucide-react";
 import { getNavItems } from "@/components/nav-bar-items";
 import { WorkspacePicker } from "@/components/workspace-picker";
 import { UnifiedCommandHub } from "@/components/unified-command-hub";
@@ -62,6 +62,24 @@ export function NavBarClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [wrenchOpen, setWrenchOpen] = useState(false);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const wrenchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleWrenchMouseEnter = useCallback(() => {
+    if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
+    setWrenchOpen(true);
+  }, []);
+
+  const handleWrenchMouseLeave = useCallback(() => {
+    wrenchTimeoutRef.current = setTimeout(() => {
+      setWrenchOpen(false);
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
+    };
+  }, []);
   const [centerBadges, setCenterBadges] = useState<{
     cockpit: number;
     videos: number;
@@ -293,8 +311,8 @@ export function NavBarClient({
               {showSystemSettings && (
                 <div
                   className="relative"
-                  onMouseEnter={() => setWrenchOpen(true)}
-                  onMouseLeave={() => setWrenchOpen(false)}
+                  onMouseEnter={handleWrenchMouseEnter}
+                  onMouseLeave={handleWrenchMouseLeave}
                 >
                   <button
                     type="button"
@@ -335,9 +353,20 @@ export function NavBarClient({
                             href="/admin/modules"
                             prefetch={false}
                             onClick={() => setWrenchOpen(false)}
-                            className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-colors hover:bg-stone-100"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
                           >
+                            <UsersRound className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
                             <span>团队与成员</span>
+                          </Link>
+
+                          <Link
+                            href="/admin/settings"
+                            prefetch={false}
+                            onClick={() => setWrenchOpen(false)}
+                            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
+                          >
+                            <Settings className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
+                            <span>系统维护与产量</span>
                           </Link>
 
                           {isOwner && (
@@ -345,8 +374,9 @@ export function NavBarClient({
                               href="/admin/ai-config"
                               prefetch={false}
                               onClick={() => setWrenchOpen(false)}
-                              className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-colors hover:bg-stone-100"
+                              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
                             >
+                              <Sparkles className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
                               <span>AI 配置</span>
                             </Link>
                           )}

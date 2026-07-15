@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, Search, Check } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { setDashboardAccount } from "@/lib/dashboard-store";
@@ -20,8 +20,19 @@ interface WorkspacePickerProps {
 
 export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 150);
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -35,21 +46,20 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
     }
   }, [isOpen]);
 
-  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) || accounts[0] || null;
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
-  const filteredAccounts = accounts.filter(
-    (acc) =>
-      acc.display_name.toLowerCase().includes(search.toLowerCase()) ||
-      acc.name.toLowerCase().includes(search.toLowerCase()) ||
-      (acc.content_direction || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) || accounts[0] || null;
 
   return (
     <div
       className="relative animate-in fade-in duration-300"
       ref={dropdownRef}
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -89,44 +99,28 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: [0, 0, 0.2, 1] }}
             className={cn(
-              "absolute left-0 mt-2 z-50 w-72 origin-top-left overflow-hidden rounded-2xl border bg-white p-2 shadow-xl",
+              "absolute left-0 mt-2 z-50 w-64 origin-top-left overflow-hidden rounded-2xl border bg-white p-2 shadow-xl",
               "border-stone-200/80 dark:border-stone-800/80 dark:bg-stone-950 backdrop-blur-xl bg-white/95 dark:bg-stone-950/95"
             )}
           >
             {/* Intro Header */}
-            <div className="px-2.5 py-2 border-b border-stone-100 dark:border-stone-900 mb-1.5">
+            <div className="px-2 py-1.5 border-b border-stone-100 dark:border-stone-900 mb-1">
               <div className="text-[12px] font-medium text-stone-900 dark:text-stone-100">
                 工作账号切换
               </div>
-              <div className="text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-1 leading-normal">
+              <div className="text-[11px] text-stone-500 dark:text-[#E7E5E4] mt-0.5 leading-normal">
                 切换账号并载入对应数据
               </div>
             </div>
 
-            {/* Search Header */}
-            <div className="relative flex items-center mb-1.5 px-1.5 pt-0.5">
-              <Search className="absolute left-3.5 size-3.5 text-stone-500" />
-              <input
-                type="text"
-                placeholder="搜索账号或领域方向..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={cn(
-                  "w-full rounded-lg border py-1.5 pl-8 pr-3 text-[12px] tracking-tight outline-none transition-all duration-200",
-                  "border-stone-300 bg-stone-100/50 focus:border-stone-400",
-                  "dark:border-stone-800 dark:bg-stone-900/50 dark:focus:border-stone-600 dark:focus:bg-stone-900"
-                )}
-              />
-            </div>
-
             {/* List */}
             <div className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
-              {filteredAccounts.length === 0 ? (
+              {accounts.length === 0 ? (
                 <div className="py-6 text-center text-[12px] text-stone-500 dark:text-[#E7E5E4]">
                   没有找到匹配的账号
                 </div>
               ) : (
-                filteredAccounts.map((account) => {
+                accounts.map((account) => {
                   const isSelected = account.id === selectedAccountId;
                   return (
                     <button
@@ -136,23 +130,21 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                         setIsOpen(false);
                       }}
                       className={cn(
-                        "flex w-full items-start justify-between gap-2.5 rounded-lg p-2.5 text-left transition-all duration-200",
+                        "flex w-full items-center justify-between gap-2.5 rounded-lg px-2 py-1.5 text-left transition-all duration-200",
                         isSelected
                           ? "bg-stone-100 dark:bg-stone-900/60"
                           : "hover:bg-stone-200/70 dark:hover:bg-stone-900/30"
                       )}
                     >
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        {/* Status Ring */}
-                        <div className="mt-1 relative shrink-0">
-                          <div className="size-2 rounded-full bg-emerald-500" />
-                        </div>
-                        <div className="min-w-0">
-                          <span className="truncate text-[12px] font-medium tracking-tight text-stone-900 dark:text-stone-50 block">
-                            {account.display_name}
-                          </span>
-                          <span className="block truncate text-[12px] text-stone-500 dark:text-[#E7E5E4] font-medium">
-                            方向: {account.content_direction || "未分类方向"}
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate text-[12px] font-medium tracking-tight text-stone-900 dark:text-stone-50">
+                          {account.display_name}
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-stone-500 dark:text-[#E7E5E4] font-medium min-w-0">
+                          <span className="truncate max-w-[80px]">@{account.name}</span>
+                          <span className="text-stone-300 dark:text-stone-800 shrink-0">·</span>
+                          <span className="truncate max-w-[120px]">
+                            方向: {account.content_direction || "未分类"}
                           </span>
                         </div>
                       </div>
@@ -165,13 +157,10 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                 })
               )}
             </div>
-            
-            <div className="mt-1 border-t border-stone-100 dark:border-stone-900 pt-1.5 px-1 pb-0.5 flex justify-between items-center text-[12px] text-stone-500 dark:text-[#E7E5E4]">
-              <span>状态码: 🟢 良好 | 🟡 预警 | 🔴 异常</span>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 }
+
