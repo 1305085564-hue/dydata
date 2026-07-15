@@ -36,7 +36,7 @@ import {
   type SubmitPanelRequestedMode,
   type TodaySubmissionReportLike,
 } from "./video-submit-panel-state";
-import { VideoTagReviewCard } from "./video-tag-review-card";
+
 import { cn } from "@/lib/utils";
 import { CheckpointTracker, type CheckpointStatus } from "./checkpoint-tracker";
 import type { ResultTrendDatum } from "@/components/charts/result-trend";
@@ -184,6 +184,8 @@ export function VideoSubmitPanel({
   const [isTrendViewOpen, setIsTrendViewOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isExempting, setIsExempting] = useState(false);
+  const [watchConclusion, setWatchConclusion] = useState<string | null>(null);
   const [editingReport, setEditingReport] = useState<MonthReport | null>(null);
   const [submittedViewActive, setSubmittedViewActive] = useState(false);
   const [lastSubmittedVideoId, setLastSubmittedVideoId] = useState<string | null>(null);
@@ -583,6 +585,52 @@ export function VideoSubmitPanel({
     setEditingReport(report);
   }
 
+  const handleApplyExemption = useCallback(async (date: string) => {
+    if (!selectedAccountId) {
+      toast.error("未选择有效账号");
+      return;
+    }
+    setIsExempting(true);
+    try {
+      const response = await fetch("/api/exemptions/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account_id: selectedAccountId,
+          exemption_type: "single",
+          start_date: date,
+          end_date: null,
+          reason: "当日未产出/漏交补报申请",
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "豁免申请失败，请稍后重试");
+      }
+
+      toast.success("豁免申请提交成功，请等待管理员审批");
+      setActiveDateReportModalOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "豁免申请发生异常");
+    } finally {
+      setIsExempting(false);
+    }
+  }, [selectedAccountId]);
+
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    setWatchConclusion(null);
+    fetch(`/api/dashboard/watch-overview?account_id=${selectedAccountId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.conclusion) {
+          setWatchConclusion(data.conclusion);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch watch overview", err));
+  }, [selectedAccountId]);
+
   if (!accounts.length) {
     return (
       <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
@@ -610,7 +658,14 @@ export function VideoSubmitPanel({
           {!embeddedChrome ? (
           <CardHeader className="space-y-0 border-b border-stone-200 bg-[var(--color-bg)] p-0">
             <div className="space-y-4 px-6 py-6 sm:px-8 sm:py-6">
-              <h2 className="text-[24px] font-medium tracking-tight text-stone-900">今日提交</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-[24px] font-medium tracking-tight text-stone-900">今日提交</h2>
+                {watchConclusion && (
+                  <div className="text-[13px] text-stone-500 max-w-sm text-right">
+                    {watchConclusion}
+                  </div>
+                )}
+              </div>
 
               <div className="rounded-2xl border border-stone-200 bg-[var(--color-bg)] px-4 py-4">
                 <div className={cn("mb-5 flex flex-col gap-3 border-b border-stone-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
@@ -782,18 +837,7 @@ export function VideoSubmitPanel({
               </motion.div>
             ) : null}
 
-            {lastSubmittedVideoId && lastAiTags.length ? (
-              <VideoTagReviewCard
-                videoId={lastSubmittedVideoId}
-                tags={lastAiTags}
-                onConfirmed={(tags) => setLastAiTags(tags)}
-                onConfirmFailed={(tags) => setLastAiTags(tags)}
-                onSkipped={() => {
-                  setLastSubmittedVideoId(null);
-                  setLastAiTags([]);
-                }}
-              />
-            ) : null}
+
 
             {selectedAccount && shouldShowBlockedStateCard ? (
               <div
@@ -836,7 +880,7 @@ export function VideoSubmitPanel({
                 today={today}
                 mode={primaryMode}
                 initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}
-                initialBizDate={primaryMode === "backfill" ? activeBizDate : null}
+                initialBizDate={activeBizDate}
                 submittedViewActive={submittedViewActive}
                 onSubmitted={handleSubmitted}
                 onCancel={() => {
@@ -1024,14 +1068,26 @@ export function VideoSubmitPanel({
                         {activeDateStatus.description} 点击按钮后，将关闭当前弹窗，并把主页主表单切换到 {activeBizDate} 的补交模式。
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      className="h-11"
-                      onClick={() => openBackfillForDate(activeBizDate)}
-                    >
-                      <PencilLine className="size-4 stroke-[1.5]" />
-                      去补交这一天
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 border-[#C9604D] text-[#C9604D] hover:bg-[#C9604D]/5"
+                        disabled={isExempting}
+                        onClick={() => handleApplyExemption(activeBizDate)}
+                      >
+                        <ShieldAlert className="size-4 stroke-[1.5]" />
+                        {isExempting ? "提交中..." : "申请豁免"}
+                      </Button>
+                      <Button
+                        type="button"
+                        className="h-11"
+                        onClick={() => openBackfillForDate(activeBizDate)}
+                      >
+                        <PencilLine className="size-4 stroke-[1.5]" />
+                        去补交这一天
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

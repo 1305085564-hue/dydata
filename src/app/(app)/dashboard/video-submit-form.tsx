@@ -155,6 +155,9 @@ type FormMetaState = {
   topicTag: string;
   videoForm: string;
   contentKeywords: string[];
+  punishType?: string;
+  platformNotice?: string;
+  appeal?: string;
 };
 
 type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
@@ -195,11 +198,13 @@ function createInitialMeta(today: string): FormMetaState {
     bizDate: defaultBizDate,
     publishedAt,
     publishedAtText: "",
-    anomalyStatus: "正常",
+    anomalyStatus: "normal",
     uploadedAt: "",
     topicTag: "复盘",
     videoForm: "出镜",
     contentKeywords: [],
+    platformNotice: "",
+    appeal: "",
   };
 }
 
@@ -597,8 +602,8 @@ export function VideoSubmitForm({
     blobUrlsRef.current.clear();
 
     const nextMeta = createInitialMeta(today);
-    if (isBackfillMode) {
-      nextMeta.bizDate = initialBizDate ?? "";
+    if (initialBizDate) {
+      nextMeta.bizDate = initialBizDate;
     }
 
     if (initialSummary) {
@@ -1085,6 +1090,9 @@ export function VideoSubmitForm({
           published_at: meta.publishedAt || getDefaultPublishedAtValue(),
           published_at_text: normalizeOptionalText(meta.publishedAtText),
           anomaly_status: meta.anomalyStatus,
+          punish_type: meta.anomalyStatus === "abnormal" ? (meta.punishType || "限流") : undefined,
+          platform_notice: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.platformNotice) : undefined,
+          appeal: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.appeal) : undefined,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
           content_keywords: meta.contentKeywords,
@@ -1149,7 +1157,7 @@ export function VideoSubmitForm({
   /*  双态面板状态及队列上传                                            */
   /* ---------------------------------------------------------------- */
   const [activePanelTab, setActivePanelTab] = useState<"upload" | "confirm">("upload");
-  const isAbnormalStatus = meta.anomalyStatus === "限流" || meta.anomalyStatus === "删稿";
+  const isAbnormalStatus = meta.anomalyStatus === "abnormal";
 
   // 统一的多图指派与上传
   const handleUnifiedUpload = useCallback(async (files: File[]) => {
@@ -1465,11 +1473,26 @@ export function VideoSubmitForm({
                 <div className="mb-4 flex items-center justify-between pb-3 border-b border-stone-100">
                   <div className="flex items-center gap-3">
                     <span className="text-[13px] font-medium text-stone-700">核心指标与截图</span>
-                    <VideoStatusSegmented
-                      value={meta.anomalyStatus}
-                      onChange={(value) => updateMeta("anomalyStatus", value)}
-                    />
+                    <div className="flex items-center gap-2">
+                      <VideoStatusSegmented
+                        value={meta.anomalyStatus}
+                        onChange={(value) => updateMeta("anomalyStatus", value)}
+                      />
+                      {meta.anomalyStatus === "abnormal" && (
+                        <select
+                          value={meta.punishType || "限流"}
+                          onChange={(e) => updateMeta("punishType", e.target.value)}
+                          className="h-9 rounded-full border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 shadow-sm outline-none focus:border-stone-300 focus:ring-1 focus:ring-stone-200"
+                        >
+                          <option value="限流">限流</option>
+                          <option value="删稿">删稿</option>
+                          <option value="投流">投流</option>
+                          <option value="活动干预">活动干预</option>
+                        </select>
+                      )}
+                    </div>
                   </div>
+
                   {/* 仅当有已上传图片时且处于正常状态下显示 Tab 切换 */}
                   {!isAbnormalStatus && Object.values(slots).some((slot) => slot.status !== "empty") && (
                     <div className="flex items-center gap-1 rounded-lg bg-stone-100 p-0.5">
@@ -1564,8 +1587,8 @@ export function VideoSubmitForm({
                 ref={metaSectionRef}
                 className="relative overflow-hidden rounded-xl border border-stone-200 bg-white p-6 space-y-6"
               >
-                <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-stone-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle")}>
-                  <Label htmlFor="video_title" className="text-[13px] font-medium text-stone-500">视频标题 <span className="text-[#C9604D]">*</span></Label>
+                <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-stone-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle")}>
+                  <Label htmlFor="video_title" className="text-[13px] font-medium text-stone-500">视频标题 {meta.anomalyStatus !== "abnormal" && <span className="text-[#C9604D]">*</span>}</Label>
                   <Input
                     id="video_title"
                     value={meta.videoTitle}
@@ -1573,7 +1596,7 @@ export function VideoSubmitForm({
                     placeholder="输入视频标题"
                     className="h-10 rounded-xl bg-stone-100/70 border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
                   />
-                  {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
+                  {hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
                     <p className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
                   ) : null}
                 </div>
@@ -1601,6 +1624,31 @@ export function VideoSubmitForm({
                     <p className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
                   ) : null}
                 </div>
+
+                {meta.anomalyStatus === "abnormal" && (
+                  <div className="flex flex-col gap-4 rounded-xl border border-transparent bg-stone-50 p-5">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="platform_notice" className="text-[13px] font-medium text-stone-600">平台通知 (选填)</Label>
+                      <Input
+                        id="platform_notice"
+                        value={meta.platformNotice || ""}
+                        onChange={(e) => updateMeta("platformNotice", e.target.value)}
+                        placeholder="若有平台处罚通知，请复制内容粘贴到此处"
+                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="appeal" className="text-[13px] font-medium text-stone-600">申诉进展 (选填)</Label>
+                      <Input
+                        id="appeal"
+                        value={meta.appeal || ""}
+                        onChange={(e) => updateMeta("appeal", e.target.value)}
+                        placeholder="如果已申诉，记录当前申诉状态或结果"
+                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Topic tag & Video form (Memory layer) */}
                 <div className="rounded-lg border-t border-stone-100 pt-4">
@@ -1800,9 +1848,8 @@ const VIDEO_STATUS_OPTIONS: Array<{
   dotClass: string;
   activeTextClass: string;
 }> = [
-  { value: "正常", label: "正常", dotClass: "bg-[#6FAA7D]", activeTextClass: "text-stone-700" },
-  { value: "限流", label: "限流", dotClass: "bg-[#D99E55]", activeTextClass: "text-[#D99E55]" },
-  { value: "删稿", label: "删稿", dotClass: "bg-[#C9604D]", activeTextClass: "text-[#C9604D]" },
+  { value: "normal", label: "正常", dotClass: "bg-[#6FAA7D]", activeTextClass: "text-stone-700" },
+  { value: "abnormal", label: "异常", dotClass: "bg-[#D99E55]", activeTextClass: "text-[#D99E55]" },
 ];
 
 function VideoStatusSegmented({

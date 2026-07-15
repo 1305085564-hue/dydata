@@ -53,7 +53,7 @@ const TAB_ORDER: EditableMetricKey[] = [
 ];
 
 export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlurField, anomalyStatus }: MetricGroupProps) {
-  const retentionOptional = anomalyStatus === "限流" || anomalyStatus === "删稿";
+  const retentionOptional = anomalyStatus === "abnormal";
   const [isRetentionExpanded, setIsRetentionExpanded] = useState(!retentionOptional);
   const [prevOptional, setPrevOptional] = useState(retentionOptional);
 
@@ -170,7 +170,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           )}
         </div>
 
-        {/* 3. 完播留存网格 (支持限流状态折叠，且完全移除标题及说明占行) */}
+        {/* 3. 完播留存网格 (支持异常状态折叠，且完全移除标题及说明占行) */}
         <div className="relative pl-3.5">
           <div
             className={cn(

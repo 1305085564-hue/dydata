@@ -156,7 +156,7 @@ export function summarizeSubmissionIssues(
   const topicTagMissing = meta.topicTag !== undefined ? !meta.topicTag.trim() : false;
   const missingRequiredMeta: RequiredMetaKey[] = [];
 
-  if (meta.videoTitle !== undefined && !meta.videoTitle.trim()) {
+  if (meta.anomalyStatus !== "abnormal" && meta.videoTitle !== undefined && !meta.videoTitle.trim()) {
     missingRequiredMeta.push("videoTitle");
   }
   if (meta.content !== undefined && !meta.content.trim()) {
