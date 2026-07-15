@@ -62,6 +62,7 @@ export function NavBarClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [wrenchOpen, setWrenchOpen] = useState(false);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const wrenchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleWrenchMouseEnter = useCallback(() => {
@@ -214,8 +215,8 @@ export function NavBarClient({
 
    const primaryLinkClass = (active: boolean) =>
     cn(
-      "inline-flex h-9 shrink-0 items-center rounded-lg px-2 md:px-1.5 lg:px-2.5 text-[12px] lg:text-[13px] font-medium tracking-tight transition-all duration-200 ease-out",
-      active ? "bg-white text-stone-900 border border-stone-200" : "text-stone-500 hover:text-stone-700",
+      "relative inline-flex h-9 shrink-0 items-center rounded-lg px-2 md:px-1.5 lg:px-2.5 text-[12px] lg:text-[13px] font-medium tracking-tight transition-colors duration-200 ease-out z-10",
+      active ? "text-stone-900" : "text-stone-500 hover:text-stone-700",
     );
 
   return (
@@ -224,8 +225,8 @@ export function NavBarClient({
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "border-stone-200 bg-white/95 py-2 backdrop-blur-xl"
-            : "border-transparent bg-stone-50 py-4"
+            ? "border-stone-200 bg-white/90 py-2 backdrop-blur-lg shadow-[0_2px_8px_-3px_rgba(0,0,0,0.02)]"
+            : "border-stone-200/40 bg-stone-50/80 py-4 backdrop-blur-md"
         )}
       >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -272,6 +273,13 @@ export function NavBarClient({
                       onMouseEnter={() => prefetchOnHover(item.href)}
                       className={primaryLinkClass(active)}
                     >
+                      {active && (
+                        <motion.div
+                          layoutId="activeNavIndicator"
+                          className="absolute inset-0 bg-white border border-stone-200 rounded-lg -z-10"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
                       {Icon && (
                         <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors", active ? "text-[#D97757]" : "text-stone-500")} />
                       )}
@@ -322,14 +330,14 @@ export function NavBarClient({
                   <button
                     type="button"
                     className={cn(
-                      "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200",
+                      "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group",
                       "text-stone-500 hover:text-[#D97757] active:scale-95",
                       (wrenchOpen || pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/modules") || pathname.startsWith("/admin/ai-config")) &&
                         "text-[#D97757] dark:text-[#D97757]"
                     )}
                     title="系统维护"
                   >
-                    <Wrench className="size-4 stroke-[1.8]" />
+                    <Wrench className="size-4 stroke-[1.8] transition-transform duration-300 ease-out group-hover:rotate-[30deg] group-active:scale-90" />
                   </button>
 
                   <AnimatePresence>
@@ -397,17 +405,40 @@ export function NavBarClient({
                 type="button"
                 onClick={() => void handleCommandHubOpen()}
                 className={cn(
-                  "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200",
+                  "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group",
                   "text-stone-500 hover:text-stone-700 active:scale-95"
                 )}
                 title="待办与通知中心"
               >
-                <Bell className="size-4 stroke-[1.8]" />
+                <Bell className="size-4 stroke-[1.8] transition-transform duration-300 ease-out group-hover:rotate-[15deg] group-active:scale-90" />
                 {bellBadgeCount > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[12px] font-medium text-white ring-2 ring-white tabular-nums">
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[12px] font-medium text-white ring-2 ring-white tabular-nums animate-pulse">
                     {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                   </span>
                 )}
+              </button>
+
+              {/* Mobile Hamburger Menu Button */}
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="flex size-8 items-center justify-center rounded-lg text-stone-500 hover:text-stone-700 active:scale-95 md:hidden group"
+                title="导航菜单"
+              >
+                <div className="relative size-4">
+                  <span className={cn(
+                    "absolute left-0 top-0.5 h-0.5 w-4 bg-current transition-all duration-300",
+                    isMobileMenuOpen && "top-1.5 rotate-45"
+                  )} />
+                  <span className={cn(
+                    "absolute left-0 top-1.5 h-0.5 w-4 bg-current transition-all duration-300",
+                    isMobileMenuOpen && "opacity-0"
+                  )} />
+                  <span className={cn(
+                    "absolute left-0 top-2.5 h-0.5 w-4 bg-current transition-all duration-300",
+                    isMobileMenuOpen && "top-1.5 -rotate-45"
+                  )} />
+                </div>
               </button>
 
               {/* User profile avatar info */}
@@ -415,16 +446,16 @@ export function NavBarClient({
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
-                className="flex items-center gap-2 text-left rounded-lg hover:opacity-85 focus:outline-none"
+                className="flex items-center gap-2 text-left rounded-lg focus:outline-none group"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#8AA8C7] group-hover:bg-[#8AA8C7]/10 group-hover:text-[#8AA8C7]">
                   {name.trim().slice(0, 1).toUpperCase() || "?"}
                 </div>
-                <div className="hidden lg:flex flex-col">
-                  <span className="text-[12px] font-medium text-stone-700 leading-tight">
+                <div className="hidden lg:flex flex-col transition-colors duration-200 group-hover:text-stone-900">
+                  <span className="text-[12px] font-medium text-stone-700 leading-tight group-hover:text-stone-900">
                     {name.split(" ")[0]}
                   </span>
-                  <span className="mt-0.5 text-[12px] font-normal text-stone-500 leading-none tracking-wider uppercase">
+                  <span className="mt-0.5 text-[12px] font-normal text-stone-500 leading-none tracking-wider uppercase group-hover:text-[#8AA8C7]">
                     {role === "owner" ? "创始人" : role === "admin" ? "管理员" : "成员"}
                   </span>
                 </div>
@@ -434,6 +465,62 @@ export function NavBarClient({
           </div>
         </div>
       </motion.nav>
+
+      {/* Mobile Menu Drawer */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className={cn(
+              "fixed inset-x-0 top-[var(--app-top-offset)] z-40 border-b bg-white/98 px-4 py-4 md:hidden shadow-lg flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset))] overflow-y-auto",
+              "border-stone-200 backdrop-blur-xl"
+            )}
+          >
+            {/* Mobile Workspace Selector */}
+            {accounts.length > 0 && (
+              <div className="border-b border-stone-100 pb-3 flex items-center justify-between">
+                <span className="text-[12px] font-medium text-stone-500">工作账号</span>
+                <WorkspacePicker accounts={accounts} selectedAccountId={selectedAccountId} />
+              </div>
+            )}
+            
+            {/* Mobile Nav Links */}
+            <div className="flex flex-col gap-1">
+              {navItems.map((item) => {
+                const active = item.match(pathname);
+                const Icon = item.icon;
+                const badgeValue = item.badgeKey ? centerBadges?.[item.badgeKey] ?? 0 : 0;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "flex h-10 items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-all duration-200",
+                      active 
+                        ? "bg-[#D97757]/10 text-[#D97757]" 
+                        : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {Icon && <Icon className={cn("size-4 stroke-[1.8]", active ? "text-[#D97757]" : "text-stone-400")} />}
+                      <span>{item.label}</span>
+                    </div>
+                    {badgeValue > 0 && (
+                      <span className="bg-[#D97757] text-white text-[11px] font-medium rounded-full px-2 py-0.5">
+                        {badgeValue}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Global Unified Hubs Drawer and Modals */}
       <UnifiedCommandHub
