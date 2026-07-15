@@ -490,6 +490,36 @@ export function VideoSubmitForm({
       router.push("/growth");
     }, 800);
   }, [router]);
+  const [countdown, setCountdown] = useState<number | null>(null);
+
+  // 提交成功瞬间，根据状态判定是否启动 3s 倒计时与 prefetch 预拉取
+  useEffect(() => {
+    if (!isSubmitted) {
+      setCountdown(null);
+      return;
+    }
+    if (!shouldAutoRedirectAfterSubmitRef.current) return;
+    if (hasUserInteracted) return;
+
+    setCountdown(3);
+    router.prefetch("/growth");
+  }, [isSubmitted, hasUserInteracted, router]);
+
+  // 倒计时递减，归零时触发跳转渐隐动效
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      handleGoToGrowth();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown, handleGoToGrowth]);
 
   const [isMemoryExpanded, setIsMemoryExpanded] = useState(false);
   const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(false);
@@ -1351,7 +1381,10 @@ export function VideoSubmitForm({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-4 pb-2"
         >
-          <div className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
+          <div 
+            onClick={() => setCountdown(null)}
+            className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] select-none"
+          >
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/5 border border-[#6FAA7D]/10">
               <svg
                 className="size-8 text-[#6FAA7D]"
@@ -1388,7 +1421,9 @@ export function VideoSubmitForm({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCountdown(null);
                   setHasUserInteracted(true);
                   setIsSubmitted(false);
                   setSubmittedVideo(null);
@@ -1403,7 +1438,12 @@ export function VideoSubmitForm({
                 variant="outline"
                 size="sm"
                 disabled={qualityCheck.loading}
-                onClick={handleQualityCheck}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCountdown(null);
+                  setHasUserInteracted(true);
+                  handleQualityCheck();
+                }}
                 className="h-9 rounded-xl border-stone-200 px-4 text-[12px] text-stone-700 hover:bg-stone-50"
               >
                 {qualityCheck.loading ? (
@@ -1419,13 +1459,15 @@ export function VideoSubmitForm({
             <div className="mt-4 pt-4 border-t border-stone-100 flex justify-center">
               <Button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCountdown(null);
                   setHasUserInteracted(true);
                   handleGoToGrowth();
                 }}
                 className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[13px] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
               >
-                去查看我的成长与大盘数据 🚀
+                去查看我的成长与大盘数据 🚀 {countdown !== null ? `(${countdown}s)` : ""}
               </Button>
             </div>
           </div>
