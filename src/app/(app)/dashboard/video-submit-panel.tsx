@@ -726,7 +726,7 @@ export function VideoSubmitPanel({
                       <div className="text-[14px] font-semibold text-stone-800">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
-                      <div className="text-[12px] leading-[1.7] text-stone-400">
+                      <div className="text-[12px] leading-[1.7] text-stone-400" suppressHydrationWarning>
                         提交时间：{formatDateTime(primarySummary.uploadedAt)}
                         <span className="mx-2 text-stone-300">·</span>
                         发布时间：{formatDateTime(primarySummary.publishedAt)}
