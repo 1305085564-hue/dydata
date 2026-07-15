@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Sparkles, Plus, Trash2, Edit2, Check, SlidersHorizontal, BookOpen } from 'lucide-react';
+import { X, Sparkles, Plus, Trash2, Edit2, SlidersHorizontal, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BootstrapPayload } from '../types';
 import type { Skill } from './SkillCabin';
@@ -21,8 +21,12 @@ export function SettingsDrawer({
   onClose,
   bootstrap,
   availableSkills,
+  contextLimit,
+  onUpdateContextLimit,
   onRefreshSkills,
 }: SettingsDrawerProps) {
+  const [activeTab, setActiveTab] = useState<'skills' | 'params'>('skills');
+
   // 技能创建/编辑临时状态
   const [editingSkill, setEditingSkill] = useState<Partial<Skill> | null>(null);
   const [skillName, setSkillName] = useState('');
@@ -129,9 +133,35 @@ export function SettingsDrawer({
         </button>
       </div>
 
+      {/* Tabs 切换 */}
+      <div className="shrink-0 flex border-b border-stone-200/40 px-2 pt-1.5 bg-stone-50/20">
+        <button
+          onClick={() => { setActiveTab('skills'); setEditingSkill(null); }}
+          className={cn(
+            'px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all',
+            activeTab === 'skills'
+              ? 'border-stone-900 text-stone-900'
+              : 'border-transparent text-stone-500 hover:text-stone-700'
+          )}
+        >
+          个人技能管理
+        </button>
+        <button
+          onClick={() => { setActiveTab('params'); setEditingSkill(null); }}
+          className={cn(
+            'px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all',
+            activeTab === 'params'
+              ? 'border-stone-900 text-stone-900'
+              : 'border-transparent text-stone-500 hover:text-stone-700'
+          )}
+        >
+          参数配置
+        </button>
+      </div>
+
       {/* 内容流式渲染区 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {
+        {activeTab === 'skills' ? (
           editingSkill ? (
             /* 1. 创建/编辑技能表单 */
             <div className="space-y-3 animate-in fade-in duration-200">
@@ -265,7 +295,48 @@ export function SettingsDrawer({
               )}
             </div>
           )
-        }
+        ) : (
+          /* 3. 参数配置（上下文剪枝限制） */
+          <div className="space-y-4 animate-in fade-in duration-200">
+            <div className="text-[12px] font-medium uppercase tracking-wider text-stone-500">上下文管理</div>
+
+            <div className="border border-stone-200/50 bg-white p-4 rounded-lg space-y-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-medium text-stone-900">携带历史对话轮数</span>
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[12px] font-medium text-stone-700">
+                  {contextLimit === 99 ? '携带全量' : `携带最近 ${contextLimit} 轮`}
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <input
+                  aria-label="历史对话携带轮数限制"
+                  type="range"
+                  min="2"
+                  max="12"
+                  step="2"
+                  value={contextLimit === 99 ? 12 : contextLimit}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    onUpdateContextLimit(val === 12 ? 99 : val);
+                  }}
+                  className="w-full accent-stone-800 h-1.5 bg-stone-200 rounded-lg cursor-pointer"
+                />
+                <div className="flex justify-between text-[12px] font-medium text-stone-500 tabular-nums">
+                  <span>2轮</span>
+                  <span>4轮</span>
+                  <span>6轮</span>
+                  <span>8轮</span>
+                  <span>10轮</span>
+                  <span>全量</span>
+                </div>
+              </div>
+              <p className="text-[12px] text-stone-500 leading-relaxed leading-normal mt-1">
+                限制携带轮数能极大降低长对话的 token 消耗成本，并能有效减少 AI 受到远期老指令的幻觉干扰。
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

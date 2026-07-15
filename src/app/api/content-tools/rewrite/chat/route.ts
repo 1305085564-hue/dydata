@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { archivedFeatureResponse, isArchivedWriteEnabled } from "@/app/api/_archive";
 import { handleRewriteChat, requireRewriteActor } from "@/lib/rewrite/shared";
 
 import {
@@ -29,10 +28,6 @@ type RewriteChatBody = {
 };
 
 export async function POST(request: NextRequest) {
-  if (isArchivedWriteEnabled()) {
-    return archivedFeatureResponse("旧版文案助手单步改写接口已归档，请使用 /api/rewrite/generate");
-  }
-
   const auth = await requireRewriteActor();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
