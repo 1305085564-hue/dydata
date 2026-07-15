@@ -216,7 +216,7 @@ export function NavBarClient({
    const primaryLinkClass = (active: boolean) =>
     cn(
       "relative inline-flex h-9 shrink-0 items-center rounded-lg px-2 md:px-1.5 lg:px-2.5 text-[12px] lg:text-[13px] font-medium tracking-tight transition-colors duration-200 ease-out z-10",
-      active ? "text-stone-900" : "text-stone-500 hover:text-stone-700",
+      active ? "text-[#D97757]" : "text-stone-500 hover:text-stone-700",
     );
 
   return (
