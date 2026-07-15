@@ -1127,13 +1127,7 @@ export function VideoSubmitForm({
       return;
     }
 
-    const shouldAutoRedirectAfterSubmit = shouldAutoRedirectToGrowthAfterSubmit({
-      mode,
-      bizDate: meta.bizDate,
-      today,
-      submittedViewActive,
-      hasInitialSummary: Boolean(initialSummary),
-    });
+    const shouldAutoRedirectAfterSubmit = true; // 无论今日还是历史数据，提交成功均启用 3s 倒计时跳转
 
     setIsSubmitting(true);
 
