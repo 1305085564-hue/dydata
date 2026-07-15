@@ -31,7 +31,7 @@ type CenterNavBadges = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin/content", label: "批改台", icon: FileEdit, badgeKey: "content" },
+  { href: "/admin/content", label: "视频复盘", icon: FileEdit, badgeKey: "content" },
   { href: "/admin/videos", label: "素材库", icon: Library, badgeKey: "videos" },
   { href: "/admin/analytics", label: "经营分析", icon: LineChart },
   { href: "/admin/fulfillment", label: "发布履约", icon: CalendarDays },

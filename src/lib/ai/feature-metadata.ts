@@ -109,7 +109,7 @@ export const AI_FEATURE_METADATA: Record<string, AiFeatureMetadata> = {
   next_day_review: {
     group: "其他已有 AI 能力",
     title: "次日复盘",
-    location: "后台批改台 / 次日复盘任务",
+    location: "后台视频复盘 / 次日复盘任务",
     purpose: "给内容团队产出次日复盘结果，方便继续跟进爆点和失误点。",
     inputSummary: "单条视频表现、切段结果、相关上下文。",
     outputSummary: "次日复盘洞察结果，写入后台任务链路。",

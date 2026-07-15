@@ -208,7 +208,7 @@ export function DataEnrichmentPanel({
                 value={originalVideoId}
                 onChange={(e) => setOriginalVideoId(e.target.value)}
                 className="h-9 w-full rounded-xl border border-stone-200 px-3 text-[12px] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
-                placeholder="若本话术来源于某条批改视频，可填入其 UUID"
+                placeholder="若本话术来源于某条复盘视频，可填入其 UUID"
               />
             </div>
 

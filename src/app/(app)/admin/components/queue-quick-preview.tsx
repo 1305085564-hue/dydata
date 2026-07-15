@@ -196,7 +196,7 @@ export function VideoPreviewDialog({
         </span>
       }
       fullViewHref={`/admin/content?view=all`}
-      fullViewLabel="前往批改台"
+      fullViewLabel="前往视频复盘"
     >
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">

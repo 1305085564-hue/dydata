@@ -119,7 +119,7 @@ export async function detectTaskAlerts({ supabase, scope, now = new Date() }: Al
       detail: `任务已等待 ${ageHours} 小时，仍未完成`,
       affectedEntities,
       suggestedActions: [
-        { label: "打开批改台", type: "navigate", href: "/admin/content?view=pending" },
+        { label: "打开视频复盘", type: "navigate", href: "/admin/content?view=pending" },
       ],
       createdAt: now.toISOString(),
     });
@@ -155,7 +155,7 @@ export async function detectTaskAlerts({ supabase, scope, now = new Date() }: Al
         },
       ],
       suggestedActions: [
-        { label: "打开批改台", type: "navigate", href: "/admin/content?view=pending" },
+        { label: "打开视频复盘", type: "navigate", href: "/admin/content?view=pending" },
       ],
       createdAt: now.toISOString(),
     });

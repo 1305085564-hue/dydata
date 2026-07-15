@@ -12,6 +12,7 @@ import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import type { ContentFeedbackCardView } from "@/types";
 
 type ContentView = "pending" | "all";
+type AdminContentVideo = AdminContentPageData["videos"][number];
 
 interface ContentPageClientProps {
   initialView: ContentView;
@@ -53,7 +54,7 @@ export function ContentPageClient({
   const requestSeq = useRef(0);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
-  function calculatePriorityScore(v: any) {
+  function calculatePriorityScore(v: AdminContentVideo) {
     let score = 0;
     if (v.anomaly_status === "删稿" || v.anomaly_status === "限流") score += 1000;
     if (v.anomaly_status === "投流" || v.anomaly_status === "活动干预") score += 200;
@@ -394,7 +395,7 @@ export function ContentPageClient({
               </span>
             </span>
           )}
-          <span className="pl-2 text-[13px] font-medium text-stone-500">批改台</span>
+          <span className="pl-2 text-[13px] font-medium text-stone-500">视频复盘</span>
         </div>
       </div>
 

@@ -41,7 +41,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   manage_members: "管理成员状态",
   manage_violations: "违规话术复核",
   view_conversion_hub: "查看转化中心",
-  view_content_review: "查看批改台",
+  view_content_review: "查看视频复盘",
   manage_video_assets: "管理素材库",
   use_ai_copywriting: "AI 文案助手",
   use_ai_management: "AI 管理助手",

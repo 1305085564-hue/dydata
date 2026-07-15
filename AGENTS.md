@@ -132,7 +132,7 @@
 ### 废弃机制
 
 - 不从旧设计文档里恢复功能，必须先用当前代码验证是否上线。
-- `sop_review_scores` 六维评分不参与当前批改台主流程；当前批改台以 `content_feedback_cards` 为主。
+- `sop_review_scores` 六维评分不参与当前视频复盘主流程；当前视频复盘以 `content_feedback_cards` 为主。
 - SOP 5 卡点状态追踪、审核中心、全域矩阵未作为当前 dashboard 入口上线。
 - 旧 AI 配置入口 `/admin/ai-channels`、`/admin/ai-features` 统一重定向到 `/admin/ai-config`。
 

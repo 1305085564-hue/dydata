@@ -660,7 +660,7 @@ export function ContentList({
                                 <span
                                   aria-hidden
                                   className="size-2 shrink-0 rounded-full bg-[#D97757]"
-                                  title="该先批"
+                                  title="该先复盘"
                                 />
                               ) : null}
                               <span>{index + 1}</span>
@@ -675,7 +675,7 @@ export function ContentList({
                             {(() => {
                               const hasSignal = Boolean(video.play_change_signal);
                               const sent = cardStatus === "sent" || cardStatus === "viewed";
-                              // 三档：异常未批改 → 暖橙实色推到眼前；已下发 → outline 灰；其他 → ghost 极淡
+                              // 三档：异常未复盘 → 暖橙实色推到眼前；已下发 → outline 灰；其他 → ghost 极淡
                               if (hasSignal && !sent) {
                                 return (
                                   <Button
@@ -683,7 +683,7 @@ export function ContentList({
                                     className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
-                                    批改
+                                    复盘
                                   </Button>
                                 );
                               }
@@ -706,7 +706,7 @@ export function ContentList({
                                   className="h-7 rounded-lg px-3 text-[12px] text-stone-500 hover:bg-stone-100 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                                   onClick={() => onSelectVideoId(video.id)}
                                 >
-                                  批改
+                                  复盘
                                 </Button>
                               );
                             })()}

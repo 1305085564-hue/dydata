@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { X, User, Shield, Sparkles, Check, Plus, Settings2, Trash2, LogOut } from "lucide-react";
+import { X, User, Shield, Check, Plus, Settings2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -275,7 +275,7 @@ export function PremiumSettingsModal({
                     个人资料设置
                   </h3>
                   <p className="text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-0.5">
-                    修改您在抖音日报平台中的显示名称。该改动将同步至批改台与团队日报底表。
+                    修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
                   </p>
                 </div>
 

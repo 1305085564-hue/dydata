@@ -597,7 +597,7 @@ function AnomalyTimeline({
             href="/admin/content?view=all"
             className="inline-flex items-center gap-0.5 text-[12px] text-stone-500 transition-colors hover:text-stone-700"
           >
-            去批改台
+            去视频复盘
             <ChevronRight className="size-3 stroke-[1.5]" />
           </a>
         </header>
