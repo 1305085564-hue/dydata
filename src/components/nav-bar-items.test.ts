@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { getNavItems } from "./nav-bar-items";
 
 test("管理员统一主导航合并包含日常管理入口", () => {
-  const items = getNavItems({ showAdmin: true, showSystemSettings: true });
+  const items = getNavItems({ showAdmin: true, showSystemSettings: true, businessRole: "owner" });
 
   assert.deepEqual(
     items.map((item) => ({ href: item.href, label: item.label })),
@@ -28,6 +28,28 @@ test("非管理员看不到管理端入口", () => {
   );
 });
 
+test("统一主导航按具体权限暴露管理入口", () => {
+  const contentOnly = getNavItems({
+    showAdmin: true,
+    businessRole: "member",
+    permissions: { view_content_review: true },
+  });
+  assert.deepEqual(
+    contentOnly.map((item) => item.href),
+    ["/dashboard", "/growth", "/content-tools/rewrite", "/admin/content"],
+  );
+
+  const videosOnly = getNavItems({
+    showAdmin: true,
+    businessRole: "member",
+    permissions: { manage_video_assets: true },
+  });
+  assert.deepEqual(
+    videosOnly.map((item) => item.href),
+    ["/dashboard", "/growth", "/content-tools/rewrite", "/admin/videos"],
+  );
+});
+
 test("未授予 AI 文案权限时隐藏文案助手入口", () => {
   const items = getNavItems({ showAdmin: false, showAiCopywriting: false });
 
@@ -38,8 +60,8 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
 });
 
 test("showSystemSettings 不影响主导航项列表", () => {
-  const withSettings = getNavItems({ showAdmin: true, showSystemSettings: true });
-  const withoutSettings = getNavItems({ showAdmin: true, showSystemSettings: false });
+  const withSettings = getNavItems({ showAdmin: true, showSystemSettings: true, businessRole: "owner" });
+  const withoutSettings = getNavItems({ showAdmin: true, showSystemSettings: false, businessRole: "owner" });
 
   assert.deepEqual(
     withSettings.map((item) => item.href),

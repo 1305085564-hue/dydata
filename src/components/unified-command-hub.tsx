@@ -199,10 +199,6 @@ export function UnifiedCommandHub({
 
   const allApprovalIds = collectApprovalRequestIds(pendingApprovals);
   const allSelected = allApprovalIds.length > 0 && allApprovalIds.every((id) => selectedApprovalIds.has(id));
-  const someSelected =
-    allApprovalIds.length > 0 &&
-    selectedApprovalIds.size > 0 &&
-    selectedApprovalIds.size < allApprovalIds.length;
   
   // Track recently completed todo IDs in the current session for smooth animations
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
@@ -423,7 +419,7 @@ export function UnifiedCommandHub({
                         <div className="flex flex-col items-end gap-2">
                           <div className="flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5">
                             <Checkbox
-                              checked={(allSelected ? true : someSelected ? "indeterminate" : false) as any}
+                              checked={allSelected}
                               onCheckedChange={(checked) => {
                                 const nextChecked = Boolean(checked);
                                 setSelectedApprovalIds(nextChecked ? new Set(allApprovalIds) : new Set());

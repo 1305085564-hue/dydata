@@ -10,7 +10,7 @@ import { UnifiedCommandHub } from "@/components/unified-command-hub";
 import { PremiumSettingsModal } from "@/components/premium-settings-modal";
 import { cn } from "@/lib/utils";
 import type { BusinessRole } from "@/lib/business-role";
-import type { Permissions, UserRole } from "@/types";
+import type { Permissions } from "@/types";
 import { AnimatePresence, motion } from "framer-motion";
 import { isLocalNotification, useNotifications } from "@/components/notifications/notification-store";
 import {
@@ -52,8 +52,8 @@ export function NavBarClient({
   const pathname = usePathname();
   const router = useRouter();
   const navItems = useMemo(
-    () => getNavItems({ showAdmin, showAiCopywriting, showSystemSettings }),
-    [showAdmin, showAiCopywriting, showSystemSettings],
+    () => getNavItems({ showAdmin, showAiCopywriting, showSystemSettings, businessRole, permissions }),
+    [businessRole, permissions, showAdmin, showAiCopywriting, showSystemSettings],
   );
 
   const [isScrolled, setIsScrolled] = useState(false);
