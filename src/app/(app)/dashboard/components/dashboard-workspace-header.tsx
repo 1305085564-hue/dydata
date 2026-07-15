@@ -7,8 +7,6 @@ import {
   ChevronDown,
   Eye,
   History,
-  TrendingUp,
-  Trophy,
 } from "lucide-react";
 import { QuickExemptionButton } from "./quick-exemption-button";
 
@@ -45,8 +43,6 @@ export function DashboardWorkspaceHeader({
 
   const utilityActions = [
     { key: "data-view", label: "数据查看", icon: Eye },
-    { key: "trend-view", label: "趋势查看", icon: TrendingUp },
-    { key: "leaderboard", label: "排行榜", icon: Trophy },
     { key: "history", label: "历史记录", icon: History },
   ];
 

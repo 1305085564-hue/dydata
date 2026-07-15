@@ -1,9 +1,11 @@
 "use client";
 
-import dynamic from "next/dynamic";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, FilePenLine, History, Lock, PencilLine, ShieldAlert, X } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { AccountLeaderboardRow, Video, VideoTagReviewDimension } from "@/types";
+import type { Video, VideoTagReviewDimension } from "@/types";
 import {
   getExemptionDatesForMonth,
   getExemptionStateForDate,
@@ -39,32 +41,10 @@ import {
 
 import { cn } from "@/lib/utils";
 import { CheckpointTracker, type CheckpointStatus } from "./checkpoint-tracker";
-import type { ResultTrendDatum } from "@/components/charts/result-trend";
-import type { InteractionTrendDatum } from "@/components/charts/interaction-trend";
-
-const ResultTrend = dynamic(
-  () => import("@/components/charts/result-trend").then((module) => module.ResultTrend),
-  { ssr: false, loading: () => <ChartDialogSkeleton /> },
-);
-
-const InteractionTrend = dynamic(
-  () => import("@/components/charts/interaction-trend").then((module) => module.InteractionTrend),
-  { ssr: false, loading: () => <ChartDialogSkeleton /> },
-);
-
-const Leaderboard = dynamic(
-  () => import("@/components/leaderboard/leaderboard").then((module) => module.Leaderboard),
-  { ssr: false, loading: () => <PanelDialogSkeleton /> },
-);
 
 type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;
   account_id: string;
-};
-
-type AsyncTrendData = {
-  结果趋势: ResultTrendDatum[];
-  互动趋势: InteractionTrendDatum[];
 };
 
 type AsyncActivityData = {
@@ -72,19 +52,6 @@ type AsyncActivityData = {
   monthReports: MonthReport[];
   history: MonthReport[];
 };
-
-function ChartDialogSkeleton() {
-  return <div className="h-[320px] w-full animate-pulse rounded-2xl bg-stone-100" />;
-}
-
-function PanelDialogSkeleton() {
-  return (
-    <div className="space-y-3">
-      <div className="h-10 w-56 animate-pulse rounded-xl bg-stone-100" />
-      <div className="h-[420px] w-full animate-pulse rounded-2xl bg-stone-100" />
-    </div>
-  );
-}
 
 interface VideoSubmitPanelProps {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
@@ -162,8 +129,6 @@ export function VideoSubmitPanel({
   todayReports,
   monthReports,
   history,
-  accountIds,
-  ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption = false,
   userExemptionProfile,
@@ -174,6 +139,7 @@ export function VideoSubmitPanel({
   activeBizDate: controlledActiveBizDate,
   onActiveBizDateChange,
 }: VideoSubmitPanelProps) {
+  const router = useRouter();
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
   const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
@@ -181,27 +147,14 @@ export function VideoSubmitPanel({
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
   const [activeCheckpointId, setActiveCheckpointId] = useState(1);
   const [isDataViewOpen, setIsDataViewOpen] = useState(false);
-  const [isTrendViewOpen, setIsTrendViewOpen] = useState(false);
-  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isExempting, setIsExempting] = useState(false);
   const [watchConclusion, setWatchConclusion] = useState<string | null>(null);
   const [editingReport, setEditingReport] = useState<MonthReport | null>(null);
   const [submittedViewActive, setSubmittedViewActive] = useState(false);
-  const [lastSubmittedVideoId, setLastSubmittedVideoId] = useState<string | null>(null);
-  const [lastAiTags, setLastAiTags] = useState<Array<{
-    tag_dimension: VideoTagReviewDimension;
-    tag_value: string;
-    confidence: number | null;
-    reason: string | null;
-  }>>([]);
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
   const [pendingBackfillDate, setPendingBackfillDate] = useState<string | null>(null);
   const [pendingFocusDate, setPendingFocusDate] = useState<string | null>(null);
-  const [trendData, setTrendData] = useState<AsyncTrendData | null>(null);
-  const [leaderboardData, setLeaderboardData] = useState<AccountLeaderboardRow[] | null>(null);
-  const [asyncAccountIds, setAsyncAccountIds] = useState<string[]>(accountIds);
-  const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>(ownContentDirections);
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
   const [dismissedPendingExemption, setDismissedPendingExemption] = useState(() => {
     try {
@@ -233,27 +186,6 @@ export function VideoSubmitPanel({
     [onActiveBizDateChange],
   );
 
-  useEffect(() => {
-    if (!isTrendViewOpen || trendData) return;
-    fetch("/api/dashboard/trend")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.trendData) setTrendData(data.trendData);
-      })
-      .catch(() => {});
-  }, [isTrendViewOpen, trendData]);
-
-  useEffect(() => {
-    if (!isLeaderboardOpen || leaderboardData) return;
-    fetch("/api/dashboard/leaderboard")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.leaderboardData) setLeaderboardData(data.leaderboardData);
-        if (data.accountIds) setAsyncAccountIds(data.accountIds);
-        if (data.ownContentDirections) setAsyncOwnContentDirections(data.ownContentDirections);
-      })
-      .catch(() => {});
-  }, [isLeaderboardOpen, leaderboardData]);
 
   useEffect(() => {
     if ((!isDataViewOpen && !isHistoryOpen) || activityData) return;
@@ -273,7 +205,6 @@ export function VideoSubmitPanel({
 
   useEffect(() => {
     if (!hasPendingExemption) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissedPendingExemption(false);
       try {
         window.localStorage.removeItem("dydata:dismissed-pending-exemption");
@@ -287,8 +218,6 @@ export function VideoSubmitPanel({
     function handleExternalAction(event: Event) {
       const action = (event as CustomEvent<{ key?: string }>).detail?.key;
       if (action === "data-view") setIsDataViewOpen(true);
-      if (action === "trend-view") setIsTrendViewOpen(true);
-      if (action === "leaderboard") setIsLeaderboardOpen(true);
       if (action === "history") setIsHistoryOpen(true);
     }
 
@@ -456,8 +385,8 @@ export function VideoSubmitPanel({
   }
 
   function handleSubmitted(
-    video: Video,
-    aiTags: Array<{
+    _video: Video,
+    _aiTags: Array<{
       tag_dimension: VideoTagReviewDimension;
       tag_value: string;
       confidence: number | null;
@@ -475,16 +404,7 @@ export function VideoSubmitPanel({
 
     setSubmittedViewActive(true);
     setRequestedMode(null);
-    setLastSubmittedVideoId(video.id);
-    setLastAiTags(aiTags);
     setIsDataViewOpen(false);
-
-    fetch("/api/dashboard/trend")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.trendData) setTrendData(data.trendData);
-      })
-      .catch(() => {});
   }
 
   function dismissPendingExemption() {
@@ -610,7 +530,7 @@ export function VideoSubmitPanel({
       }
 
       toast.success("豁免申请提交成功，请等待管理员审批");
-      setActiveDateReportModalOpen(false);
+      setIsDataViewOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "豁免申请发生异常");
     } finally {
@@ -813,7 +733,14 @@ export function VideoSubmitPanel({
                   </div>
 
                   <div className="flex shrink-0 flex-col gap-3 lg:w-[190px]">
-                    <a href={violationSubmitHref}>
+                    <Button
+                      type="button"
+                      className="h-10 w-full rounded-lg bg-[#D97757] hover:bg-[#C96442] text-white text-[13px] font-medium transition-colors duration-150 flex items-center justify-center gap-1.5 shadow-sm"
+                      onClick={() => router.push("/growth")}
+                    >
+                      去查看我的成长与大盘数据 🚀
+                    </Button>
+                    <a href={violationSubmitHref} className="w-full">
                       <Button
                         type="button"
                         variant="outline"
@@ -1098,55 +1025,6 @@ export function VideoSubmitPanel({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isTrendViewOpen} onOpenChange={setIsTrendViewOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
-          <DialogHeader>
-            <DialogTitle>趋势查看</DialogTitle>
-          </DialogHeader>
-          {!trendData ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-stone-500">
-              {"加载趋势数据..."}
-            </div>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <ResultTrend
-                data={trendData.结果趋势}
-                personalLabel="我的数据"
-                teamAverageLabel="团队 P70"
-                emptyText="提交满两天后，可查看结果趋势。"
-              />
-              <InteractionTrend
-                data={trendData.互动趋势}
-                personalLabel="我的质量分"
-                teamAverageLabel="团队 P70"
-                emptyText="提交满两天后，可查看互动质量趋势。"
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isLeaderboardOpen} onOpenChange={setIsLeaderboardOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
-          <DialogHeader>
-            <DialogTitle>排行榜</DialogTitle>
-          </DialogHeader>
-          {!leaderboardData ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-stone-500">
-              {"加载排行榜数据..."}
-            </div>
-          ) : (
-            <Leaderboard
-              data={leaderboardData}
-              ownAccountIds={asyncAccountIds}
-              ownContentDirections={asyncOwnContentDirections}
-              currentDate={today}
-              defaultRange="week"
-              defaultCompact
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">

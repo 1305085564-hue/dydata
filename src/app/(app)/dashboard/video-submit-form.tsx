@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,10 @@ import {
   syncPublishedAtAndText,
   toManualFieldState,
 } from "@/components/submission/填报表单状态";
-import { normalizeOptionalText } from "./video-submit-form-state";
+import {
+  normalizeOptionalText,
+  shouldAutoRedirectToGrowthAfterSubmit,
+} from "./video-submit-form-state";
 
 import type {
   SubmitPanelMode,
@@ -454,6 +458,7 @@ export function VideoSubmitForm({
   onCancel,
   onRequestEdit,
 }: VideoSubmitFormProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today));
   const [fields, setFields] = useState<SubmissionState["fields"]>(() => createEditableFields());
@@ -477,9 +482,32 @@ export function VideoSubmitForm({
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
   const blobUrlsRef = useRef<Set<string>>(new Set());
+  const shouldAutoRedirectAfterSubmitRef = useRef(false);
 
   const [isMemoryExpanded, setIsMemoryExpanded] = useState(false);
   const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+
+  // 提交成功后延迟 2.5 秒自动跳转大盘（仅在提交瞬间判定为今天首次创建，且用户未操作时）
+  useEffect(() => {
+    if (!isSubmitted) return;
+    if (!shouldAutoRedirectAfterSubmitRef.current) return;
+    if (hasUserInteracted) return;
+
+    const timer = setTimeout(() => {
+      router.push("/growth");
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [isSubmitted, hasUserInteracted, router]);
+
+  // 当提交状态变为 false 时，重置用户操作状态
+  useEffect(() => {
+    if (!isSubmitted) {
+      setHasUserInteracted(false);
+      shouldAutoRedirectAfterSubmitRef.current = false;
+    }
+  }, [isSubmitted]);
 
   // Set uploadedAt on client only to avoid hydration mismatch
   useEffect(() => {
@@ -720,6 +748,7 @@ export function VideoSubmitForm({
   }
 
   async function handleQualityCheck() {
+    setHasUserInteracted(true);
     if (!submittedVideo) return;
     setQualityCheck({ data: null, loading: true });
     try {
@@ -1067,6 +1096,14 @@ export function VideoSubmitForm({
       return;
     }
 
+    const shouldAutoRedirectAfterSubmit = shouldAutoRedirectToGrowthAfterSubmit({
+      mode,
+      bizDate: meta.bizDate,
+      today,
+      submittedViewActive,
+      hasInitialSummary: Boolean(initialSummary),
+    });
+
     setIsSubmitting(true);
 
     try {
@@ -1091,8 +1128,8 @@ export function VideoSubmitForm({
           published_at_text: normalizeOptionalText(meta.publishedAtText),
           anomaly_status: meta.anomalyStatus,
           punish_type: meta.anomalyStatus === "abnormal" ? (meta.punishType || "限流") : undefined,
-          platform_notice: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.platformNotice) : undefined,
-          appeal: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.appeal) : undefined,
+          platform_notice: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.platformNotice ?? "") : undefined,
+          appeal: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.appeal ?? "") : undefined,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
           content_keywords: meta.contentKeywords,
@@ -1135,6 +1172,7 @@ export function VideoSubmitForm({
 
       const aiTags = !isVideo(payload) && Array.isArray(payload.ai_tags) ? payload.ai_tags : [];
       const summaryOverride = createSummaryOverride(account.id, meta, fields);
+      shouldAutoRedirectAfterSubmitRef.current = shouldAutoRedirectAfterSubmit;
       setSubmittedVideo(submittedVideo);
       setIsSubmitted(true);
       onSubmitted(submittedVideo, aiTags, summaryOverride);
@@ -1321,6 +1359,7 @@ export function VideoSubmitForm({
                 variant="outline"
                 size="sm"
                 onClick={() => {
+                  setHasUserInteracted(true);
                   setIsSubmitted(false);
                   setSubmittedVideo(null);
                   setQualityCheck({ data: null, loading: false });
@@ -1345,6 +1384,18 @@ export function VideoSubmitForm({
                     AI 检查样本质量
                   </>
                 )}
+              </Button>
+            </div>
+            <div className="mt-4 pt-4 border-t border-stone-100 flex justify-center">
+              <Button
+                type="button"
+                onClick={() => {
+                  setHasUserInteracted(true);
+                  router.push("/growth");
+                }}
+                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[13px] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                去查看我的成长与大盘数据 🚀
               </Button>
             </div>
           </div>

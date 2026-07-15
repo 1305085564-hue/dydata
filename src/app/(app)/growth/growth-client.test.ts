@@ -99,6 +99,7 @@ test("成长页正常样本展示完整体检、脚本与真实趋势", () => {
   assert.match(html, /能力画像/);
   assert.match(html, /最新视频文案拆解/);
   assert.match(html, /这是真实脚本片段/);
-  assert.match(html, /近 30 天成长趋势/);
+  assert.match(html, /趋势分析 · 数据走势/);
+  assert.match(html, /排行榜 · 全局排行/);
   assert.doesNotMatch(html, /虚拟数据|小林|阿周|AI V2/);
 });

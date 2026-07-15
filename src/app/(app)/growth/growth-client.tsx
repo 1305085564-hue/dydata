@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Sparkles,
   Target,
@@ -15,20 +16,33 @@ import {
   ArrowRight,
   Users,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as ChartTooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { 六维雷达面板 } from "@/components/growth/六维雷达面板";
 import { AppShell } from "@/components/app-shell";
-import { CHART_COLORS, CHART_AXIS_TICK, CHART_GRID_PROPS } from "@/lib/chart-palette";
 import { cn } from "@/lib/utils";
 import type { GrowthPageContract } from "@/lib/growth-page";
+import type { ResultTrendDatum } from "@/components/charts/result-trend";
+import type { InteractionTrendDatum } from "@/components/charts/interaction-trend";
+import type { AccountLeaderboardRow } from "@/types";
+
+const ResultTrend = dynamic(
+  () => import("@/components/charts/result-trend").then((module) => module.ResultTrend),
+  { ssr: false, loading: () => <div className="h-[320px] w-full animate-pulse rounded-2xl bg-stone-100" /> }
+);
+
+const InteractionTrend = dynamic(
+  () => import("@/components/charts/interaction-trend").then((module) => module.InteractionTrend),
+  { ssr: false, loading: () => <div className="h-[320px] w-full animate-pulse rounded-2xl bg-stone-100" /> }
+);
+
+const Leaderboard = dynamic(
+  () => import("@/components/leaderboard/leaderboard").then((module) => module.Leaderboard),
+  { ssr: false, loading: () => (
+    <div className="space-y-3">
+      <div className="h-10 w-56 animate-pulse rounded-xl bg-stone-100" />
+      <div className="h-[420px] w-full animate-pulse rounded-2xl bg-stone-100" />
+    </div>
+  ) }
+);
 
 // ─── 白话指标口径解释 ───────────────────────────────────────────
 const METRIC_EXPLANATIONS: Record<string, string> = {
@@ -67,18 +81,51 @@ interface GrowthClientProps {
 }
 
 export function GrowthClient({ contract }: GrowthClientProps) {
+  const [trendData, setTrendData] = useState<{
+    结果趋势: ResultTrendDatum[];
+    互动趋势: InteractionTrendDatum[];
+  } | null>(null);
+  const [leaderboardData, setLeaderboardData] = useState<AccountLeaderboardRow[] | null>(null);
+  const [asyncAccountIds, setAsyncAccountIds] = useState<string[]>([]);
+  const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>([]);
+  const [loadingTrend, setLoadingTrend] = useState(true);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    const offset = d.getTimezoneOffset();
+    const localTime = new Date(d.getTime() - offset * 60 * 1000);
+    return localTime.toISOString().slice(0, 10);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/dashboard/trend")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.trendData) setTrendData(data.trendData);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingTrend(false));
+
+    fetch("/api/dashboard/leaderboard")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.leaderboardData) setLeaderboardData(data.leaderboardData);
+        if (data.accountIds) setAsyncAccountIds(data.accountIds);
+        if (data.ownContentDirections) setAsyncOwnContentDirections(data.ownContentDirections);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingLeaderboard(false));
+  }, []);
+
   // 展开折页控制
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     benchmark: true,
     script: true,
-    trend: true
   });
 
   // 指标口径解释
   const [hoveredMetric, setHoveredMetric] = useState<string | null>(null);
-
-  // 趋势图指标切换
-  const [trendMetric, setTrendMetric] = useState<"completionRate" | "completionRate5s" | "playCount" | "followerGain">("completionRate");
 
   const toggleSection = (key: string) => {
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -110,7 +157,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
     );
   }
 
-  const { identity, credibility, verdict, radar, metricsOverview, benchmark, scriptBreakdown, trend } = contract;
+  const { identity, credibility, verdict, radar, metricsOverview, benchmark, scriptBreakdown } = contract;
 
   return (
     <AppShell width="wide" className="pb-16 space-y-6">
@@ -200,159 +247,204 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         </section>
       )}
 
-      {/* P1: 能力雷达 + 核心指标概览 */}
+      {/* Analytics Dashboard 双栏主布局 */}
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-        {/* 六维雷达卡片 */}
-        <div className="rounded-2xl border border-stone-200 bg-white p-5">
-          <div className="mb-4">
-            <h3 className="text-[18px] font-medium text-stone-900 leading-tight">能力画像</h3>
-            <p className="mt-1 text-[12px] text-stone-500">看清六维能力相较于团队的相对表现。</p>
+        {/* 左侧一栏：雷达图能力画像 + 团队对标 */}
+        <div className="space-y-6">
+          {/* 六维雷达卡片 */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-5">
+            <div className="mb-4">
+              <h3 className="text-[18px] font-medium text-stone-900 leading-tight">能力画像</h3>
+              <p className="mt-1 text-[12px] text-stone-500">看清六维能力相较于团队的相对表现。</p>
+            </div>
+            <六维雷达面板 radar={radar} weakestDimension={verdict?.weakestDimension} />
           </div>
-          <六维雷达面板 radar={radar} weakestDimension={verdict?.weakestDimension} />
+
+          {/* 该学谁 - 同事对标 */}
+          {benchmark.state !== "none" && (
+            <div className="rounded-2xl border border-stone-200 bg-white p-5">
+              <div className="flex items-center gap-2.5 mb-4">
+                <Users className="h-5 w-5 text-[#8AA8C7]" />
+                <div>
+                  <h4 className="text-[18px] font-medium text-stone-900 leading-tight">该学谁 · 团队对标</h4>
+                  <p className="text-[12px] text-stone-500 mt-1">对比同题材高表现同事，吸收实操经验。</p>
+                </div>
+              </div>
+
+              <div className="border-t border-stone-100 pt-4 space-y-4">
+                {benchmark.state === "ok" && benchmark.peer ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1 text-[13px] text-stone-700">
+                      <div>对标同事：<span className="font-semibold text-stone-900">{benchmark.peer.name}</span></div>
+                      <div>指标数据：<span className="font-semibold text-[#D97757]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
+                    </div>
+
+                    {benchmark.peer.scriptSnippet ? (
+                      <div className="space-y-2">
+                        <span className="text-[12px] font-medium text-stone-500">高表现文案片段（拆解参考）：</span>
+                        <blockquote className="relative rounded-lg border border-stone-200 border-l-4 border-l-[#D97757] bg-stone-50/50 p-3.5 text-[12px] text-stone-700 italic leading-[1.6] whitespace-pre-wrap">
+                          “{benchmark.peer.scriptSnippet}”
+                        </blockquote>
+                      </div>
+                    ) : (
+                      <p className="text-[12px] text-stone-500 italic">暂无对标文案片段，先参考该同事近期内容。</p>
+                    )}
+                  </div>
+                ) : benchmark.state === "fallback_team_avg" ? (
+                  <div className="rounded-lg border border-stone-200 bg-stone-50/50 p-4 text-center">
+                    <p className="text-[13px] text-stone-700 font-medium">
+                      当前暂无可实名展示的同题材稳定对标人。
+                    </p>
+                    <p className="mt-1.5 text-[12px] text-stone-500">
+                      已为您兜底拉取团队在此维度上的均值基准：
+                      <span className="font-semibold text-stone-900">
+                        {verdict && benchmark.teamAvg !== undefined ? formatMetricValue(verdict.weakestDimension, benchmark.teamAvg) : benchmark.teamAvg}
+                      </span>，建议先围绕自己历史最好内容进行优化。
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 指标卡片网格 */}
-        <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
-          <div>
-            <h3 className="text-[18px] font-medium text-stone-900 leading-tight">核心指标概览</h3>
-            <p className="mt-1 text-[12px] text-stone-500">近30天的体征数据。鼠标悬停或键盘聚焦查看白话指标口径。</p>
+        {/* 右侧一栏：核心指标概览 + 趋势分析 + 排行榜 */}
+        <div className="space-y-6">
+          {/* 指标卡片网格 */}
+          <div className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
+            <div>
+              <h3 className="text-[18px] font-medium text-stone-900 leading-tight">核心指标概览</h3>
+              <p className="mt-1 text-[12px] text-stone-500">近30天的体征数据。悬停或聚焦查看指标口径。</p>
+            </div>
+
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+              {metricsOverview.map((metric: { label: string; value: number; trend: number | null; unit: string }, index: number) => {
+                const explanation = METRIC_EXPLANATIONS[metric.label] || "无相关解释";
+                const isHovered = hoveredMetric === metric.label;
+                const hasTrend = metric.trend !== null;
+
+                return (
+                  <div
+                    key={metric.label}
+                    tabIndex={0}
+                    aria-describedby={`metric-help-${index}`}
+                    className="relative flex flex-col justify-between rounded-xl border border-stone-200 bg-stone-50 p-4 transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/30"
+                    onMouseEnter={() => setHoveredMetric(metric.label)}
+                    onMouseLeave={() => setHoveredMetric(null)}
+                    onFocus={() => setHoveredMetric(metric.label)}
+                    onBlur={() => setHoveredMetric(null)}
+                  >
+                    <div className="flex items-center justify-between text-stone-500">
+                      <span className="text-[12px] font-medium">{metric.label}</span>
+                      <Info className="h-3.5 w-3.5 text-stone-500" aria-hidden />
+                    </div>
+
+                    <div className="mt-3 flex items-baseline gap-1.5">
+                      <span className="text-[24px] font-medium text-stone-900">
+                        {metric.label.includes("率") ? `${metric.value.toFixed(1)}` : metric.value.toLocaleString("zh-CN")}
+                      </span>
+                      <span className="text-[12px] text-stone-500 font-medium">{metric.unit}</span>
+                    </div>
+
+                    {/* 变化趋势 */}
+                    {hasTrend && (
+                      <div className="mt-2 flex items-center">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[12px] font-medium",
+                            metric.trend! > 0 && "bg-emerald-50 text-emerald-700",
+                            metric.trend! < 0 && "bg-rose-50 text-rose-700",
+                            metric.trend! === 0 && "bg-stone-100 text-stone-700"
+                          )}
+                        >
+                          {metric.trend! > 0 ? (
+                            <TrendingUp className="h-3 w-3" />
+                          ) : metric.trend! < 0 ? (
+                            <TrendingDown className="h-3 w-3" />
+                          ) : null}
+                          {metric.trend! > 0 ? "+" : ""}
+                          {metric.label.includes("率") || metric.label === "发布数" ? metric.trend!.toFixed(1) : `${metric.trend!.toFixed(0)}`}
+                          {metric.label === "发布数" ? "" : "%"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 白话口径浮窗 */}
+                    {isHovered && (
+                      <div id={`metric-help-${index}`} role="tooltip" className="absolute bottom-full left-0 right-0 z-10 mb-2 rounded-lg border border-stone-200 bg-stone-950 p-2.5 text-[12px] leading-[1.6] text-stone-100 shadow-lg">
+                        <p className="font-medium border-b border-stone-800 pb-1 mb-1">{metric.label} 是什么？</p>
+                        <p>{explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
-            {metricsOverview.map((metric: { label: string; value: number; trend: number | null; unit: string }, index: number) => {
-              const explanation = METRIC_EXPLANATIONS[metric.label] || "无相关解释";
-              const isHovered = hoveredMetric === metric.label;
-              const hasTrend = metric.trend !== null;
+          {/* 趋势分析 (ResultTrend & InteractionTrend) */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
+            <div>
+              <h3 className="text-[18px] font-medium text-stone-900 leading-tight">趋势分析 · 数据走势</h3>
+              <p className="mt-1 text-[12px] text-stone-500">检验改法是否生效，对比团队均值变化。</p>
+            </div>
+            {loadingTrend ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="h-[320px] w-full animate-pulse rounded-2xl bg-stone-50" />
+                <div className="h-[320px] w-full animate-pulse rounded-2xl bg-stone-50" />
+              </div>
+            ) : trendData ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                <ResultTrend
+                  data={trendData.结果趋势}
+                  personalLabel="我的数据"
+                  teamAverageLabel="团队 P70"
+                  emptyText="提交满两天后，可查看结果趋势。"
+                />
+                <InteractionTrend
+                  data={trendData.互动趋势}
+                  personalLabel="我的质量分"
+                  teamAverageLabel="团队 P70"
+                  emptyText="提交满两天后，可查看互动质量趋势。"
+                />
+              </div>
+            ) : (
+              <div className="h-40 flex items-center justify-center text-stone-500 text-[13px]">
+                暂无趋势数据
+              </div>
+            )}
+          </div>
 
-              return (
-                <div
-                  key={metric.label}
-                  tabIndex={0}
-                  aria-describedby={`metric-help-${index}`}
-                  className="relative flex flex-col justify-between rounded-xl border border-stone-200 bg-stone-50 p-4 transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/30"
-                  onMouseEnter={() => setHoveredMetric(metric.label)}
-                  onMouseLeave={() => setHoveredMetric(null)}
-                  onFocus={() => setHoveredMetric(metric.label)}
-                  onBlur={() => setHoveredMetric(null)}
-                >
-                  <div className="flex items-center justify-between text-stone-500">
-                    <span className="text-[12px] font-medium">{metric.label}</span>
-                    <Info className="h-3.5 w-3.5 text-stone-500" aria-hidden />
-                  </div>
-
-                  <div className="mt-3 flex items-baseline gap-1.5">
-                    <span className="text-[24px] font-medium text-stone-900">
-                      {metric.label.includes("率") ? `${metric.value.toFixed(1)}` : metric.value.toLocaleString("zh-CN")}
-                    </span>
-                    <span className="text-[12px] text-stone-500 font-medium">{metric.unit}</span>
-                  </div>
-
-                  {/* 变化趋势 */}
-                  {hasTrend && (
-                    <div className="mt-2 flex items-center">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[12px] font-medium",
-                          metric.trend! > 0 && "bg-emerald-50 text-emerald-700",
-                          metric.trend! < 0 && "bg-rose-50 text-rose-700",
-                          metric.trend! === 0 && "bg-stone-100 text-stone-700"
-                        )}
-                      >
-                        {metric.trend! > 0 ? (
-                          <TrendingUp className="h-3 w-3" />
-                        ) : metric.trend! < 0 ? (
-                          <TrendingDown className="h-3 w-3" />
-                        ) : null}
-                        {metric.trend! > 0 ? "+" : ""}
-                        {metric.label.includes("率") || metric.label === "发布数" ? metric.trend!.toFixed(1) : `${metric.trend!.toFixed(0)}`}
-                        {metric.label === "发布数" ? "" : "%"}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* 白话口径浮窗 */}
-                  {isHovered && (
-                    <div id={`metric-help-${index}`} role="tooltip" className="absolute bottom-full left-0 right-0 z-10 mb-2 rounded-lg border border-stone-200 bg-stone-950 p-2.5 text-[12px] leading-[1.6] text-stone-100 shadow-lg">
-                      <p className="font-medium border-b border-stone-800 pb-1 mb-1">{metric.label} 是什么？</p>
-                      <p>{explanation}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* 排行榜 (Leaderboard) */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
+            <div>
+              <h3 className="text-[18px] font-medium text-stone-900 leading-tight">排行榜 · 全局排行</h3>
+              <p className="mt-1 text-[12px] text-stone-500">对比团队高表现同事，检验相对位置。</p>
+            </div>
+            {loadingLeaderboard ? (
+              <div className="space-y-3">
+                <div className="h-10 w-56 animate-pulse rounded-xl bg-stone-50" />
+                <div className="h-[400px] w-full animate-pulse rounded-2xl bg-stone-50" />
+              </div>
+            ) : leaderboardData ? (
+              <Leaderboard
+                data={leaderboardData}
+                ownAccountIds={asyncAccountIds}
+                ownContentDirections={asyncOwnContentDirections}
+                currentDate={todayStr}
+                defaultRange="week"
+                defaultCompact
+              />
+            ) : (
+              <div className="h-40 flex items-center justify-center text-stone-500 text-[13px]">
+                暂无排行榜数据
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* P2: 折叠/展开层 */}
-
-      {/* 1. 该学谁 - 同事对标 */}
-      {benchmark.state !== "none" && (
-        <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-          <button
-            type="button"
-            aria-expanded={openSections.benchmark}
-            onClick={() => toggleSection("benchmark")}
-            className="flex w-full items-center justify-between p-5 transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/30"
-          >
-            <div className="flex items-center gap-2.5">
-              <Users className="h-5 w-5 text-[#8AA8C7]" />
-              <div className="text-left">
-                <h4 className="text-[18px] font-medium text-stone-900">该学谁 · 团队对标</h4>
-                <p className="text-[12px] text-stone-500">对比同题材高表现同事，吸收可直接复制的实操经验。</p>
-              </div>
-            </div>
-            {openSections.benchmark ? (
-              <ChevronUp className="h-5 w-5 text-stone-500" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-stone-500" />
-            )}
-          </button>
-
-          {openSections.benchmark && (
-            <div className="border-t border-stone-100 p-5 space-y-4">
-              {benchmark.state === "ok" && benchmark.peer ? (
-                <div className="space-y-4">
-                  <div className="flex items-baseline gap-2 text-[13px] text-stone-700">
-                    <span>对标同事：</span>
-                    <span className="font-medium text-stone-900">{benchmark.peer.name}</span>
-                    <span className="text-stone-300">|</span>
-                    <span>在该维度指标：</span>
-                    <span className="font-medium text-[#D97757]">
-                      {verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}
-                    </span>
-                  </div>
-
-                  {benchmark.peer.scriptSnippet ? (
-                    <div className="space-y-2">
-                      <span className="text-[12px] font-medium text-stone-500">高表现文案片段（拆解参考）：</span>
-                      <blockquote className="relative rounded-lg border border-stone-200 border-l-4 border-l-[#D97757] bg-stone-50/50 p-4 text-[13px] text-stone-700 italic leading-[1.7] whitespace-pre-wrap">
-                        “{benchmark.peer.scriptSnippet}”
-                      </blockquote>
-                    </div>
-                  ) : (
-                    <p className="text-[12px] text-stone-500 italic">暂无对标文案片段，先参考该同事近期内容。</p>
-                  )}
-                </div>
-              ) : benchmark.state === "fallback_team_avg" ? (
-                <div className="rounded-lg border border-stone-200 bg-stone-50/50 p-4 text-center">
-                  <p className="text-[13px] text-stone-700 font-medium">
-                    当前暂无可实名展示的同题材稳定对标人。
-                  </p>
-                  <p className="mt-1.5 text-[12px] text-stone-500">
-                    已为您兜底拉取团队在此维度上的均值基准：
-                    <span className="font-medium text-stone-900">
-                      {verdict && benchmark.teamAvg !== undefined ? formatMetricValue(verdict.weakestDimension, benchmark.teamAvg) : benchmark.teamAvg}
-                    </span>，建议先围绕自己历史最好内容进行优化。
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 2. 最近视频文案结构化拆解 */}
+      {/* 2. 最近视频文案结构化拆解 (横铺在底部) */}
       {scriptBreakdown.state === "ok" && (
         <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
           <button
@@ -397,123 +489,6 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                     </div>
                   );
                 })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 3. 成长趋势图 */}
-      {trend && trend.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-          <button
-            type="button"
-            aria-expanded={openSections.trend}
-            onClick={() => toggleSection("trend")}
-            className="flex w-full items-center justify-between p-5 transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/30"
-          >
-            <div className="flex items-center gap-2.5">
-              <TrendingUp className="h-5 w-5 text-[#D97757]" />
-              <div className="text-left">
-                <h4 className="text-[18px] font-medium text-stone-900">近 30 天成长趋势</h4>
-                <p className="text-[12px] text-stone-500">追踪日报历史关键指标变化，检验改法是否生效。</p>
-              </div>
-            </div>
-            {openSections.trend ? (
-              <ChevronUp className="h-5 w-5 text-stone-500" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-stone-500" />
-            )}
-          </button>
-
-          {openSections.trend && (
-            <div className="border-t border-stone-100 p-5 space-y-6">
-              {/* 指标切换 Tab */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { key: "completionRate", label: "平均完播率" },
-                  { key: "completionRate5s", label: "5秒完播率" },
-                  { key: "playCount", label: "播放量" },
-                  { key: "followerGain", label: "涨粉数" }
-                ].map((tab: { key: string; label: string }) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    aria-pressed={trendMetric === tab.key}
-                    onClick={() => setTrendMetric(tab.key as typeof trendMetric)}
-                    className={cn(
-                      "rounded-lg border px-3 py-1.5 text-[12px] font-medium transition-all",
-                      trendMetric === tab.key
-                        ? "bg-[#D97757] border-[#D97757] text-white"
-                        : "bg-white border-stone-200 text-stone-500 hover:border-stone-300"
-                    )}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* 折线图 */}
-              <div className="h-[260px] w-full">
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                  minWidth={0}
-                  minHeight={260}
-                  initialDimension={{ width: 800, height: 260 }}
-                >
-                  <LineChart
-                    data={trend}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <CartesianGrid {...CHART_GRID_PROPS} />
-                    <XAxis
-                      dataKey="date"
-                      tickLine={false}
-                      axisLine={false}
-                      tick={CHART_AXIS_TICK}
-                      dy={8}
-                    />
-                    <YAxis
-                      tickLine={false}
-                      axisLine={false}
-                      tick={CHART_AXIS_TICK}
-                      tickFormatter={(val) => {
-                        if (trendMetric === "completionRate" || trendMetric === "completionRate5s") {
-                          return `${val}%`;
-                        }
-                        if (val >= 10000) return `${(val / 10000).toFixed(0)}w`;
-                        return String(val);
-                      }}
-                    />
-                    <ChartTooltip
-                      content={({ active, payload }) => {
-                        if (!active || !payload || !payload.length) return null;
-                        const data = payload[0].payload;
-                        let valText = "";
-                        if (trendMetric === "completionRate") valText = `平均完播率：${data.completionRate.toFixed(1)}%`;
-                        else if (trendMetric === "completionRate5s") valText = `5秒完播率：${data.completionRate5s.toFixed(1)}%`;
-                        else if (trendMetric === "playCount") valText = `播放数：${data.playCount.toLocaleString("zh-CN")}次`;
-                        else if (trendMetric === "followerGain") valText = `涨粉数：${data.followerGain.toLocaleString("zh-CN")}人`;
-
-                        return (
-                          <div className="rounded-lg border border-stone-200 bg-white/95 p-2.5 text-[12px] shadow-md backdrop-blur-sm">
-                            <p className="font-medium text-stone-900 border-b border-stone-100 pb-1 mb-1">{data.date}</p>
-                            <p className="font-medium text-[#D97757]">{valText}</p>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey={trendMetric}
-                      stroke={CHART_COLORS.primary}
-                      strokeWidth={2.5}
-                      dot={{ r: 3, stroke: "white", strokeWidth: 1.5 }}
-                      activeDot={{ r: 5, stroke: "white", strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
               </div>
             </div>
           )}
