@@ -297,6 +297,11 @@ export function NavBarClient({
             {/* RIGHT: Switchers / Alerts / Settings / Avatar */}
             <div className="flex items-center gap-3 shrink-0 ml-auto">
 
+              {/* 主导航与右侧切换器的隔离竖线 */}
+              {accounts.length > 0 && (
+                <div className="hidden h-5 w-px bg-stone-200 md:block mr-0.5" />
+              )}
+
               {/* Workspace Selector (Visible only if accounts are loaded) */}
               {accounts.length > 0 && (
                 <div className="hidden md:block shrink-0">

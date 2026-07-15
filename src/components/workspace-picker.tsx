@@ -77,8 +77,15 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
             <span className="truncate text-[12px] font-medium leading-tight text-stone-900 dark:text-[#FAFAF9] max-w-[110px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
-            <span className="truncate text-[12px] font-medium leading-none text-stone-500 mt-0.5 max-w-[115px] tracking-tight">
-              @{selectedAccount?.name || "dydata"}
+            <span className="truncate text-[11px] font-medium leading-none text-stone-500 mt-0.5 max-w-[115px] tracking-tight">
+              {(() => {
+                if (!selectedAccount) return "dydata";
+                const cleanName = selectedAccount.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
+                const isDuplicate = cleanName.toLowerCase() === selectedAccount.name.trim().toLowerCase();
+                return isDuplicate 
+                  ? `${selectedAccount.content_direction || "未分类"}`
+                  : `@${selectedAccount.name}`;
+              })()}
             </span>
           </div>
         </div>
@@ -141,11 +148,26 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                           {account.display_name}
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-stone-500 dark:text-[#E7E5E4] font-medium min-w-0">
-                          <span className="truncate max-w-[80px]">@{account.name}</span>
-                          <span className="text-stone-300 dark:text-stone-800 shrink-0">·</span>
-                          <span className="truncate max-w-[120px]">
-                            方向: {account.content_direction || "未分类"}
-                          </span>
+                          {(() => {
+                            const cleanName = account.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
+                            const isDuplicate = cleanName.toLowerCase() === account.name.trim().toLowerCase();
+                            if (isDuplicate) {
+                              return (
+                                <span className="truncate max-w-[120px]">
+                                  方向: {account.content_direction || "未分类"}
+                                </span>
+                              );
+                            }
+                            return (
+                              <>
+                                <span className="truncate max-w-[80px]">@{account.name}</span>
+                                <span className="text-stone-300 dark:text-stone-800 shrink-0">·</span>
+                                <span className="truncate max-w-[120px]">
+                                  方向: {account.content_direction || "未分类"}
+                                </span>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                       
