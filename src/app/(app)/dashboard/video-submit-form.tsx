@@ -491,19 +491,14 @@ export function VideoSubmitForm({
     }, 800);
   }, [router]);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
-  // 提交成功瞬间，根据状态判定是否启动 3s 倒计时与 prefetch 预拉取
+  // 状态重置时，清空倒计时
   useEffect(() => {
     if (!isSubmitted) {
       setCountdown(null);
-      return;
     }
-    if (!shouldAutoRedirectAfterSubmitRef.current) return;
-    if (hasUserInteracted) return;
-
-    setCountdown(3);
-    router.prefetch("/growth");
-  }, [isSubmitted, hasUserInteracted, router]);
+  }, [isSubmitted]);
 
   // 倒计时递减，归零时触发跳转渐隐动效
   useEffect(() => {
@@ -523,7 +518,6 @@ export function VideoSubmitForm({
 
   const [isMemoryExpanded, setIsMemoryExpanded] = useState(false);
   const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(false);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // 提交成功后延迟 2.2 秒开始执行全屏动效渐隐，并自动跳转大盘（仅在提交瞬间判定为今天首次创建，且用户未操作时）
   useEffect(() => {
@@ -1212,6 +1206,10 @@ export function VideoSubmitForm({
       shouldAutoRedirectAfterSubmitRef.current = shouldAutoRedirectAfterSubmit;
       setSubmittedVideo(submittedVideo);
       setIsSubmitted(true);
+      if (shouldAutoRedirectAfterSubmit) {
+        setCountdown(3);
+        router.prefetch("/growth");
+      }
       onSubmitted(submittedVideo, aiTags, summaryOverride);
       feedbackToast.success("数据提交成功", {
         duration: 2000,

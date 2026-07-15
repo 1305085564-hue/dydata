@@ -700,7 +700,7 @@ export function VideoSubmitPanel({
               </div>
             )}
 
-            {primarySummary && isPrimarySummaryMode ? (
+            {primarySummary && isPrimarySummaryMode && !submittedViewActive ? (
               <motion.div 
                 initial={{ scale: 0.96, opacity: 0, backgroundColor: "#6FAA7D0A" }}
                 animate={{ scale: 1, opacity: 1, backgroundColor: "#FAFAF9" }}
