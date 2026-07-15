@@ -15,6 +15,7 @@ test("管理员统一主导航合并包含日常管理入口", () => {
       { href: "/admin/content", label: "视频复盘" },
       { href: "/admin/videos", label: "素材库" },
       { href: "/admin/analytics", label: "经营分析" },
+      { href: "/admin/fulfillment", label: "发布履约" },
     ]
   );
 });
@@ -47,6 +48,22 @@ test("统一主导航按具体权限暴露管理入口", () => {
   assert.deepEqual(
     videosOnly.map((item) => item.href),
     ["/dashboard", "/growth", "/content-tools/rewrite", "/admin/videos"],
+  );
+
+  const fulfillmentOnly = getNavItems({
+    showAdmin: true,
+    businessRole: "member",
+    permissions: { view_all_data: true },
+  });
+  assert.deepEqual(
+    fulfillmentOnly.map((item) => item.href),
+    [
+      "/dashboard",
+      "/growth",
+      "/content-tools/rewrite",
+      "/admin/analytics",
+      "/admin/fulfillment",
+    ],
   );
 });
 

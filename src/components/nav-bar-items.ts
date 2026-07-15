@@ -1,4 +1,4 @@
-import { LayoutDashboard, Compass, Sparkles, FileEdit, Library, LineChart } from "lucide-react";
+import { LayoutDashboard, Compass, Sparkles, FileEdit, Library, LineChart, CalendarDays } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessRole } from "@/lib/business-role";
 import { hasPermission } from "@/lib/permission-utils";
@@ -85,6 +85,21 @@ export function getNavItems(input: {
         label: "经营分析",
         icon: LineChart,
         match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
+      });
+    }
+
+    if (
+      role === "owner" ||
+      role === "team_admin" ||
+      role === "group_leader" ||
+      hasPermission(role, permissions, "view_analytics") ||
+      hasPermission(role, permissions, "view_all_data")
+    ) {
+      items.push({
+        href: "/admin/fulfillment",
+        label: "发布履约",
+        icon: CalendarDays,
+        match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
       });
     }
   }
