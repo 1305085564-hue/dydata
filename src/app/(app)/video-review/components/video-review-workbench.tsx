@@ -8,6 +8,7 @@ import {
   BarChart3,
   CheckCircle2,
   AlertTriangle,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { ApprovedList } from "./approved-list";
 import { SubmitDialog } from "./submit-dialog";
 import { ExemptionDialog } from "./exemption-dialog";
 import { DashboardDialog } from "./dashboard-dialog";
+import type { WorkSubmission } from "./submission-history";
 import { ImageLightbox } from "@/components/image-lightbox";
 import type { ApprovedDraftItem } from "./types";
 import { getVideoReviewAdminActions } from "./video-review-admin-actions";
@@ -45,7 +47,7 @@ interface VideoReviewWorkbenchProps {
   todayDate: string;
   initialTarget: number;
   initialSubmittedCount: number;
-  initialSubmissions: any[];
+  initialSubmissions: WorkSubmission[];
   initialDashboardData: DashboardRecord[];
   teams: TeamOrGroup[];
   groups: TeamOrGroup[];
@@ -81,7 +83,7 @@ export function VideoReviewWorkbench({
   const [dashboardOpen, setDashboardOpen] = useState(false);
 
   // Dynamic submissions state
-  const [submissions, setSubmissions] = useState<any[]>(initialSubmissions);
+  const [submissions, setSubmissions] = useState<WorkSubmission[]>(initialSubmissions);
   const adminActions = getVideoReviewAdminActions();
 
   // Refresh page data and update submissions state
@@ -141,6 +143,15 @@ export function VideoReviewWorkbench({
         </div>
       )}
 
+      {/* 归档提示 */}
+      <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
+        <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
+        <div className="leading-relaxed">
+          <span className="font-medium text-stone-800">功能已归档：</span>
+          视频审核与产量对账仅保留历史记录查看，不再接受新的作品提交与豁免申请。如需提交日报或申请豁免，请使用工作台相关入口。
+        </div>
+      </div>
+
       {/* 顶部标题与全局操作面板 */}
       <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6 space-y-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -152,30 +163,32 @@ export function VideoReviewWorkbench({
               视频审核与产量对账
             </h1>
             <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.6] text-stone-500">
-              这里是全队视频凭证的工作台。绿色表示达标，红色表示还未交齐。支持点击右上角快捷上传。
+              这里是全队视频凭证的历史记录。绿色表示达标，红色表示还未交齐。当前仅保留查看，不再接受新提交。
             </p>
           </div>
 
           {/* 全局操作按钮区 */}
           <div className="flex flex-wrap items-center gap-2">
 
-            {/* 辅助操作: 申请豁免 (请假) */}
+            {/* 辅助操作: 申请豁免 (请假) — 已归档，禁用 */}
             <Button
               type="button"
               variant="outline"
-              onClick={() => setExemptionOpen(true)}
-              className="h-9 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-100 font-medium gap-1.5"
+              disabled
+              title="功能已归档，不再接受新的豁免申请"
+              className="h-9 rounded-lg border-stone-200 text-stone-400 bg-stone-50 font-medium gap-1.5 cursor-not-allowed"
             >
-              <CalendarDays className="size-4 text-stone-500" />
+              <CalendarDays className="size-4 text-stone-400" />
               申请豁免
             </Button>
 
-            {/* 唯一主 CTA: 上传作品 */}
+            {/* 唯一主 CTA: 上传作品 — 已归档，禁用 */}
             <Button
               id="workbench-upload-btn"
               type="button"
-              onClick={() => setSubmitOpen(true)}
-              className="h-9 rounded-lg bg-[#D97757] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-transform gap-1.5"
+              disabled
+              title="功能已归档，不再接受新的作品提交"
+              className="h-9 rounded-lg bg-stone-300 font-medium text-white cursor-not-allowed gap-1.5"
             >
               <Upload className="size-4" />
               上传作品凭证

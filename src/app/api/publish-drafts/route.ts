@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { archivedFeatureResponse, isArchivedWriteEnabled } from "@/app/api/_archive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getAuthenticatedContext,
@@ -34,6 +35,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isArchivedWriteEnabled()) {
+    return archivedFeatureResponse("视频审核稿件提交已归档，不再接受新的待审稿");
+  }
+
   const { user } = await getAuthenticatedContext();
   if (!user) {
     return jsonUnauthorized();

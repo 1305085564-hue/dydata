@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Undo2, Redo2, Eye, EyeOff, Sparkles, Copy, FileText, ChevronRight, Download, History } from 'lucide-react';
+import { Plus, Undo2, Redo2, Copy, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { useRewriteV3Logic } from './useRewriteV3Logic';
-import { SkillCabin } from './SkillCabin';
-import { TimelineDiff } from './TimelineDiff';
 import { CalmStudioCanvas } from './CalmStudioCanvas';
 import { ChatInspector } from './ChatInspector';
 import { RewriteHistoryV3 } from './RewriteHistoryV3';
@@ -22,9 +20,7 @@ function getStoredSplitRatio() {
 
 export function RewriteWorkbenchV3() {
   const { state, actions } = useRewriteV3Logic();
-  const [presentationMode, setPresentationMode] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
-  const [showDiffInLatest, setShowDiffInLatest] = useState(false);
 
   // 左右侧宽度可拖动调节
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,52 +80,6 @@ export function RewriteWorkbenchV3() {
     setTimeout(() => setCopiedAll(false), 2000);
   };
 
-  // 导出 Markdown 文件
-  const handleExportMarkdown = () => {
-    if (!state.polishedText) return;
-    const blob = new Blob([state.polishedText], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dydata_polished_${Date.now()}.md`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // 一键免依赖高保真导出 Word (.doc) 方案 (完全对齐决策)
-  const handleExportWord = () => {
-    if (!state.polishedText) return;
-    const htmlContent = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8">
-        <title>DYData 导出文案</title>
-        <style>
-          body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.6; color: #333; padding: 40px; }
-          p { margin-bottom: 20px; font-size: 14pt; }
-        </style>
-      </head>
-      <body>
-        ${state.polishedText
-          .split('\n\n')
-          .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-          .join('')}
-      </body>
-      </html>
-    `;
-    const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dydata_polished_${Date.now()}.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   // Loading 状态
   if (state.loading || !state.bootstrap) {
     return (
@@ -162,67 +112,6 @@ export function RewriteWorkbenchV3() {
           >
             重试加载
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 定稿沉浸式阅览视图
-  if (presentationMode) {
-    return (
-      <div className="flex h-full w-full flex-col overflow-hidden bg-stone-50/50">
-        <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-5">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-stone-900">定稿阅览室</span>
-            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[12px] font-medium text-emerald-600 uppercase tracking-wide">
-              沉浸模式
-            </span>
-          </div>
-
-          {/* 双格式导出及复制操作 */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleExportMarkdown}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 hover:bg-stone-50 transition-all relative active:scale-[0.98]"
-              title="下载 Markdown 文件 (.md)"
-            >
-              <Download className="h-3.5 w-3.5 mr-1 text-stone-500" />
-              <span>导出 Markdown</span>
-            </button>
-            <button
-              onClick={handleExportWord}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 hover:bg-stone-50 transition-all relative active:scale-[0.98]"
-              title="下载 Word 兼容文件 (.doc)"
-            >
-              <FileText className="h-3.5 w-3.5 mr-1 text-stone-500" />
-              <span>导出 Word</span>
-            </button>
-            <button
-              onClick={handleCopyAll}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 hover:bg-stone-50 transition-all relative active:scale-[0.98]"
-            >
-              <Copy className="h-3.5 w-3.5 mr-1 text-stone-500" />
-              <span>{copiedAll ? '已复制' : '复制全文'}</span>
-            </button>
-            <button
-              onClick={() => setPresentationMode(false)}
-              className="inline-flex h-8 items-center justify-center rounded-lg bg-[#D97757] text-white px-4.5 text-[12px] font-medium hover:bg-[#C96442] transition-all active:scale-[0.98]"
-            >
-              退出阅览
-            </button>
-          </div>
-        </header>
-        <div className="flex-1 overflow-y-auto flex justify-center py-10 px-6">
-          <div className="w-full max-w-3xl border border-stone-200 bg-white rounded-lg p-10 select-text">
-            <div className="prose prose-stone max-w-none leading-relaxed text-[13px] space-y-6 text-stone-700">
-              {state.polishedText.split('\n\n').map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-              {!state.polishedText && (
-                <p className="py-12 text-center italic text-stone-500">暂无定稿内容</p>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -269,17 +158,6 @@ export function RewriteWorkbenchV3() {
               <span>新对话</span>
             </button>
           </div>
-
-          {/* 分隔线 */}
-          <div className="h-4 w-px bg-stone-200" />
-
-          {/* 技能模式 */}
-          <SkillCabin
-            availableSkills={state.availableSkills}
-            activeSkills={state.activeSkills}
-            onToggleSkill={actions.handleToggleSkill}
-            variant="header"
-          />
         </div>
 
         {/* 右侧：顶栏操作组 */}
@@ -304,25 +182,6 @@ export function RewriteWorkbenchV3() {
             </button>
           </div>
 
-          {/* 修订模式 (一键开关切换) */}
-          <button
-            onClick={() => setShowDiffInLatest(!showDiffInLatest)}
-            className={cn(
-              "inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
-              showDiffInLatest
-                ? "bg-amber-500/[0.08] border-amber-500/30 text-amber-800 hover:bg-amber-500/[0.12]"
-                : "bg-white border-stone-300 text-stone-700 hover:bg-stone-50 hover:text-stone-900"
-            )}
-            title={showDiffInLatest ? '关闭修订模式' : '开启修订模式'}
-          >
-            {showDiffInLatest ? (
-              <Eye className="h-3 w-3 text-amber-600" />
-            ) : (
-              <EyeOff className="h-3 w-3 text-stone-500" />
-            )}
-            <span>修订模式</span>
-          </button>
-
           {/* 复制全文 (次按钮) */}
           <button
             onClick={handleCopyAll}
@@ -331,16 +190,6 @@ export function RewriteWorkbenchV3() {
           >
             <Copy className="h-3 w-3 text-stone-500" />
             <span>{copiedAll ? '已复制' : '复制'}</span>
-          </button>
-
-          {/* 定稿导出 (唯一主 CTA) */}
-          <button
-            onClick={() => setPresentationMode(true)}
-            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#D97757] text-white hover:bg-[#C96442] px-3.5 py-0.5 text-[12px] font-medium active:scale-[0.98] transition-all"
-            title="进入纯净全屏阅览室并支持导出"
-          >
-            <FileText className="h-3 w-3 text-white/90" />
-            <span>定稿导出</span>
           </button>
         </div>
       </header>
@@ -420,16 +269,6 @@ export function RewriteWorkbenchV3() {
           style={{ width: `${100 - leftWidthPercent}%` }}
           className="flex-1 min-w-[450px] flex flex-col min-h-0 bg-white relative z-10"
         >
-          {/* 版本时间轴（双模对比） */}
-          <TimelineDiff
-            revisions={state.revisions}
-            selectedRevisionId={state.selectedRevisionId}
-            diffMode={state.diffMode}
-            onSelectRevision={actions.setSelectedRevisionId}
-            onSelectDiffMode={actions.setDiffMode}
-            onAdoptRevision={actions.handleAdoptHistoryRevision}
-          />
-
           {/* 画布预览区 */}
           <CalmStudioCanvas
             paragraphs={state.documentParagraphs}
@@ -440,7 +279,7 @@ export function RewriteWorkbenchV3() {
             selectedRevisionId={state.selectedRevisionId}
             revisions={state.revisions}
             diffMode={state.diffMode}
-            showDiffInLatest={showDiffInLatest}
+            showDiffInLatest={false}
             onParagraphEdit={actions.handleUserEdit}
             onReferSelection={actions.setReferredText}
             onInputChange={actions.setInputText}

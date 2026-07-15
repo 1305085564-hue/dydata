@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { archivedFeatureResponse, isArchivedWriteEnabled } from "@/app/api/_archive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { UUID_PATTERN, getShanghaiDate, requireSignedInUser } from "@/app/api/production/_shared";
 
@@ -7,6 +8,10 @@ export async function DELETE(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  if (isArchivedWriteEnabled()) {
+    return archivedFeatureResponse("视频审核作品提交已归档，历史提交不再支持删除");
+  }
+
   const auth = await requireSignedInUser();
   if ("response" in auth) return auth.response;
 

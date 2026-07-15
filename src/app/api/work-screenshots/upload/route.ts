@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { archivedFeatureResponse, isArchivedWriteEnabled } from "@/app/api/_archive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShanghaiDate, requireSignedInUser } from "@/app/api/production/_shared";
 
@@ -18,6 +19,10 @@ function getExtension(file: File) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isArchivedWriteEnabled()) {
+    return archivedFeatureResponse("作品凭证截图上传已归档，请改用今日工作台提交日报截图");
+  }
+
   const auth = await requireSignedInUser();
   if ("response" in auth) return auth.response;
 

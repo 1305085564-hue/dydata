@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, Trash2, Plus, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Upload, Trash2, Plus, Loader2, CheckCircle2, AlertTriangle, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -149,7 +149,6 @@ export function SubmitDialog({
               </p>
             </div>
           </div>
-
           {/* 今日进度条 */}
           <div className="mt-3 flex items-center gap-3">
             <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
@@ -175,7 +174,19 @@ export function SubmitDialog({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="px-7 py-5 space-y-5">
+        <div className="px-7 py-3 bg-amber-50 border-y border-amber-100">
+          <div className="flex items-start gap-2">
+            <Archive className="size-4 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-[12px] font-medium text-amber-800">本功能已归档</p>
+              <p className="text-[12px] text-amber-700/80 leading-[1.6]">
+                作品凭证上传已暂停，原有提交记录仍可在管理后台查看，数据不会丢失。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={(e) => e.preventDefault()} className="px-7 py-5 space-y-5">
           {/* 文案输入 */}
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-stone-700">
@@ -183,10 +194,10 @@ export function SubmitDialog({
             </label>
             <textarea
               value={contentText}
-              onChange={(e) => setContentText(e.target.value)}
+              disabled
               rows={5}
-              placeholder="粘贴今日发布视频的话术文案内容..."
-              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+              placeholder="本功能已归档，暂不支持上传新的作品凭证"
+              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-100 px-4 py-3 text-[13px] leading-[1.7] text-stone-500 placeholder:text-stone-400 cursor-not-allowed transition-all"
             />
           </div>
 
@@ -210,41 +221,17 @@ export function SubmitDialog({
                     alt={`截图 ${idx + 1}`}
                     className="size-full object-cover"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeScreenshot(idx)}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="size-4 text-white" />
-                  </button>
+
                 </div>
               ))}
 
-              {screenshotFiles.length < MAX_SCREENSHOTS && (
-                <label
-                  className={cn(
-                    "flex size-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stone-200 text-stone-500 transition-colors hover:border-[#D97757]/50 hover:bg-[#D97757]/5 hover:text-[#D97757]",
-                    uploading && "cursor-wait opacity-60"
-                  )}
-                >
-                  {uploading ? (
-                    <Loader2 className="size-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Plus className="size-5" />
-                      <span className="text-[12px] font-medium">添加</span>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileChange}
-                    disabled={uploading}
-                  />
-                </label>
-              )}
+              <div
+                className="flex size-20 cursor-not-allowed flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stone-200 bg-stone-50 text-stone-400"
+                title="本功能已归档，暂不支持上传截图"
+              >
+                <Plus className="size-5" />
+                <span className="text-[12px] font-medium">添加</span>
+              </div>
             </div>
           </div>
 
@@ -257,9 +244,9 @@ export function SubmitDialog({
             <input
               type="text"
               value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="附加说明，如多账号发布等..."
-              className="w-full rounded-lg border border-stone-200 bg-stone-50 px-4 py-2.5 text-[13px] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+              disabled
+              placeholder="本功能已归档"
+              className="w-full rounded-lg border border-stone-200 bg-stone-100 px-4 py-2.5 text-[13px] text-stone-500 placeholder:text-stone-400 cursor-not-allowed transition-all"
             />
           </div>
 
@@ -275,20 +262,12 @@ export function SubmitDialog({
             </button>
             <button
               type="submit"
-              disabled={submitting || uploading}
-              className="flex h-9 items-center gap-2 rounded-lg bg-[#D97757] px-5 text-[13px] font-medium text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
+              disabled
+              title="本功能已归档，暂不支持上传作品凭证"
+              className="flex h-9 items-center gap-2 rounded-lg bg-stone-300 px-5 text-[13px] font-medium text-white cursor-not-allowed transition-all"
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" />
-                  提交中...
-                </>
-              ) : (
-                <>
-                  <Upload className="size-3.5" />
-                  提交凭证
-                </>
-              )}
+              <Upload className="size-3.5" />
+              提交凭证
             </button>
           </div>
         </form>

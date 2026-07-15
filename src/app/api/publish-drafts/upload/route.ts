@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { archivedFeatureResponse, isArchivedWriteEnabled } from "@/app/api/_archive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ALLOWED_SCREENSHOT_TYPES,
@@ -13,6 +14,10 @@ import {
 } from "@/lib/publish-drafts/api";
 
 export async function POST(request: NextRequest) {
+  if (isArchivedWriteEnabled()) {
+    return archivedFeatureResponse("视频审核截图上传已归档，不再接受新的截图");
+  }
+
   const { user } = await getAuthenticatedContext();
   if (!user) {
     return jsonUnauthorized();

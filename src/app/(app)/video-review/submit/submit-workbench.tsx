@@ -9,7 +9,8 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   Loader2,
-  X
+  X,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -219,6 +220,15 @@ export function SubmitWorkbench({
     <div className="grid gap-6 lg:grid-cols-3">
       {/* 左侧：提交表单 + 状态卡片 */}
       <div className="lg:col-span-2 space-y-6">
+        {/* 归档提示 */}
+        <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
+          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
+          <div className="leading-relaxed">
+            <span className="font-medium text-stone-800">功能已归档：</span>
+            该页面仅保留历史提交记录查看，不再接受新的作品凭证上传与提交。如需登记产量，请使用工作台日报入口。
+          </div>
+        </div>
+
         {/* 今日统计大数 (A.3/C.3) */}
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[100px]">
@@ -298,7 +308,7 @@ export function SubmitWorkbench({
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
             {/* 文案内容 */}
             <div className="space-y-1.5">
               <label className="text-[12px] font-medium text-stone-500">
@@ -308,9 +318,10 @@ export function SubmitWorkbench({
                 id="submit-content-input"
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
-                placeholder="粘贴已发视频的标题、文案或话术原文..."
+                placeholder="功能已归档，不再接受新提交"
                 rows={4}
-                className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+                disabled
+                className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-700 placeholder:text-stone-400 focus:outline-none disabled:cursor-not-allowed transition-[background-color,box-shadow]"
               />
             </div>
 
@@ -330,36 +341,20 @@ export function SubmitWorkbench({
                       alt="预览" 
                       className="size-full object-cover" 
                     />
-                    <button
-                      type="button"
-                      onClick={() => removeScreenshot(index)}
-                      className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                    >
-                      <X className="size-3" />
-                    </button>
                   </div>
                 ))}
 
-                {screenshotFiles.length < 5 && (
-                  <label className="flex size-20 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-stone-200 bg-stone-50 text-stone-500 hover:bg-stone-100/60 active:scale-95 transition-all">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileChange}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                    {uploading ? (
-                      <Loader2 className="size-5 animate-spin text-stone-500" />
-                    ) : (
-                      <>
-                        <Plus className="size-5" />
-                        <span className="text-[12px] mt-1 font-medium">上传截图</span>
-                      </>
-                    )}
-                  </label>
-                )}
+                <label className="flex size-20 cursor-not-allowed flex-col items-center justify-center rounded-lg border border-dashed border-stone-200 bg-stone-50 text-stone-400 transition-all">
+                  <Plus className="size-5" />
+                  <span className="text-[12px] mt-1 font-medium">上传截图</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    disabled
+                  />
+                </label>
               </div>
             </div>
 
@@ -372,27 +367,20 @@ export function SubmitWorkbench({
                 type="text"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="例如：发在XXX号，今天第一条..."
-                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+                placeholder="功能已归档，不再接受新提交"
+                disabled
+                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-700 placeholder:text-stone-400 focus:outline-none disabled:cursor-not-allowed transition-[background-color,box-shadow]"
               />
             </div>
 
-            {/* 提交按钮 */}
+            {/* 提交按钮 — 已归档禁用 */}
             <button
               type="submit"
-              disabled={submitting || uploading}
-              className={cn(
-                "w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-medium transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              )}
+              disabled
+              title="功能已归档，不再接受新提交"
+              className="w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-stone-300 text-white text-[13px] font-medium cursor-not-allowed"
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  提交登记中...
-                </>
-              ) : (
-                "提交凭证"
-              )}
+              提交凭证
             </button>
           </form>
         </div>
@@ -405,6 +393,7 @@ export function SubmitWorkbench({
             submissions={submissions}
             onDelete={handleDeleteSubmission}
             onCtaClick={() => document.getElementById("submit-content-input")?.focus()}
+            readOnly
           />
         </div>
       </div>

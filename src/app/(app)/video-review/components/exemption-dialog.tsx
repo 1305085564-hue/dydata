@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Loader2 } from "lucide-react";
+import { CalendarDays, Loader2, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { trackUsageEvent } from "@/lib/usage-events/client";
@@ -110,7 +110,19 @@ export function ExemptionDialog({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="px-7 py-5 space-y-4">
+        <div className="px-7 py-3 bg-amber-50 border-y border-amber-100">
+          <div className="flex items-start gap-2">
+            <Archive className="size-4 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-[12px] font-medium text-amber-800">本功能已归档</p>
+              <p className="text-[12px] text-amber-700/80 leading-[1.6]">
+                产量豁免申请已暂停受理，原有记录仍可在管理后台查看，数据不会丢失。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={(e) => e.preventDefault()} className="px-7 py-5 space-y-4">
           {/* 豁免类型 */}
           <div className="space-y-2">
             <label className="text-[13px] font-medium text-stone-700">豁免类型</label>
@@ -119,12 +131,12 @@ export function ExemptionDialog({
                 <button
                   key={type.value}
                   type="button"
-                  onClick={() => setExemptionType(type.value)}
+                  disabled
                   className={cn(
-                    "h-8 rounded-lg border px-3 text-[12px] font-medium transition-all",
+                    "h-8 rounded-lg border px-3 text-[12px] font-medium transition-all opacity-60 cursor-not-allowed",
                     exemptionType === type.value
-                      ? "border-[#D97757] bg-[#D97757]/10 text-[#D97757]"
-                      : "border-stone-200 text-stone-500 hover:border-stone-300 hover:bg-stone-50"
+                      ? "border-stone-300 bg-stone-100 text-stone-500"
+                      : "border-stone-200 text-stone-400 bg-stone-50"
                   )}
                 >
                   {type.label}
@@ -140,8 +152,8 @@ export function ExemptionDialog({
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+                disabled
+                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-100 px-3 text-[13px] text-stone-500 cursor-not-allowed transition-all"
               />
             </div>
             <div className="space-y-1.5">
@@ -150,8 +162,8 @@ export function ExemptionDialog({
                 type="date"
                 value={endDate}
                 min={startDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-50 px-3 text-[13px] text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+                disabled
+                className="w-full h-9 rounded-lg border border-stone-200 bg-stone-100 px-3 text-[13px] text-stone-500 cursor-not-allowed transition-all"
               />
             </div>
           </div>
@@ -161,10 +173,10 @@ export function ExemptionDialog({
             <label className="text-[13px] font-medium text-stone-700">申请原因</label>
             <textarea
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              disabled
               rows={3}
-              placeholder="简要说明请假或豁免原因..."
-              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-all"
+              placeholder="本功能已归档，暂不受理新的豁免申请"
+              className="w-full resize-none rounded-lg border border-stone-200 bg-stone-100 px-4 py-3 text-[13px] leading-[1.7] text-stone-500 placeholder:text-stone-400 cursor-not-allowed transition-all"
             />
           </div>
 
@@ -180,17 +192,11 @@ export function ExemptionDialog({
             </button>
             <button
               type="submit"
-              disabled={submitting}
-              className="flex h-9 items-center gap-2 rounded-lg bg-[#D97757] px-5 text-[13px] font-medium text-white hover:bg-[#C96442] disabled:opacity-60 transition-all"
+              disabled
+              title="本功能已归档，暂不受理新的豁免申请"
+              className="flex h-9 items-center gap-2 rounded-lg bg-stone-300 px-5 text-[13px] font-medium text-white cursor-not-allowed transition-all"
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" />
-                  提交中...
-                </>
-              ) : (
-                "提交申请"
-              )}
+              提交申请
             </button>
           </div>
         </form>

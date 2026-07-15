@@ -9,6 +9,7 @@ export interface Skill {
   name: string;
   systemPrompt: string;
   description?: string | null;
+  defaultModelViewId?: string | null;
   scope: 'platform' | 'private' | 'public_user' | string;
 }
 

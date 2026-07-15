@@ -10,7 +10,7 @@ interface ScreenshotItem {
   signed_url: string | null;
 }
 
-interface WorkSubmission {
+export interface WorkSubmission {
   id: string;
   user_id: string;
   team_id: string | null;
@@ -27,12 +27,14 @@ interface SubmissionHistoryProps {
   submissions: WorkSubmission[];
   onDelete: (id: string) => Promise<void>;
   onCtaClick?: () => void;
+  readOnly?: boolean;
 }
 
 export function SubmissionHistory({
   submissions,
   onDelete,
   onCtaClick,
+  readOnly = false,
 }: SubmissionHistoryProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ paths: string[]; index: number } | null>(null);
@@ -67,7 +69,7 @@ export function SubmissionHistory({
         <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 flex flex-col items-center justify-center text-center">
           <Upload className="size-10 text-stone-500 mb-3" />
           <p className="text-[13px] text-stone-500 mb-4">今天还没有提交发片凭证</p>
-          {onCtaClick && (
+          {!readOnly && onCtaClick && (
             <button
               type="button"
               onClick={onCtaClick}
@@ -95,23 +97,25 @@ export function SubmissionHistory({
                 className="rounded-2xl border border-stone-200 bg-white p-4 space-y-3 relative group"
               >
                 {/* Click-to-confirm Delete Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleDeleteClick(e, sub.id)}
-                  className={cn(
-                    "absolute top-3 right-3 text-[12px] font-medium flex items-center gap-1 transition-all rounded px-2 py-0.5",
-                    confirmDeleteId === sub.id
-                      ? "text-[#C9604D] bg-[#C9604D]/10 border border-[#C9604D]/20 opacity-100"
-                      : "text-stone-500 hover:text-[#C9604D] opacity-0 group-hover:opacity-100"
-                  )}
-                  title={confirmDeleteId === sub.id ? "确认删除？" : "删除"}
-                >
-                  {confirmDeleteId === sub.id ? (
-                    <span>确认删除？</span>
-                  ) : (
-                    <Trash2 className="size-4" />
-                  )}
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteClick(e, sub.id)}
+                    className={cn(
+                      "absolute top-3 right-3 text-[12px] font-medium flex items-center gap-1 transition-all rounded px-2 py-0.5",
+                      confirmDeleteId === sub.id
+                        ? "text-[#C9604D] bg-[#C9604D]/10 border border-[#C9604D]/20 opacity-100"
+                        : "text-stone-500 hover:text-[#C9604D] opacity-0 group-hover:opacity-100"
+                    )}
+                    title={confirmDeleteId === sub.id ? "确认删除？" : "删除"}
+                  >
+                    {confirmDeleteId === sub.id ? (
+                      <span>确认删除？</span>
+                    ) : (
+                      <Trash2 className="size-4" />
+                    )}
+                  </button>
+                )}
 
                 {/* Content text */}
                 {sub.content_text && (

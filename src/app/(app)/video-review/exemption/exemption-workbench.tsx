@@ -10,7 +10,8 @@ import {
   XCircle, 
   AlertTriangle,
   Loader2,
-  CalendarDays
+  CalendarDays,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -162,13 +163,24 @@ export function ExemptionWorkbench({
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
+      {/* 全宽归档提示 */}
+      <div className="lg:col-span-3">
+        <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
+          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
+          <div className="leading-relaxed">
+            <span className="font-medium text-stone-800">功能已归档：</span>
+            该页面仅保留豁免申请历史查看，不再接受新的豁免申请。如需申请豁免，请使用工作台相关入口。
+          </div>
+        </div>
+      </div>
+
       {/* 左侧：申请表单 (U1) */}
       <div className="lg:col-span-1 rounded-2xl border border-stone-200 bg-white p-6 space-y-5 h-fit">
         <h2 className="text-[18px] font-medium text-stone-900">
           新建豁免申请
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
           {/* 豁免类型 */}
           <div className="space-y-1.5">
             <label className="text-[12px] font-medium text-stone-500">
@@ -177,7 +189,8 @@ export function ExemptionWorkbench({
             <select
               value={exemptionType}
               onChange={(e) => setExemptionType(e.target.value)}
-              className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+              disabled
+              className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-3 text-[13px] font-medium text-stone-700 focus:outline-none disabled:cursor-not-allowed transition-[background-color,box-shadow]"
             >
               {Object.entries(EXEMPTION_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -197,7 +210,8 @@ export function ExemptionWorkbench({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+                disabled
+                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-700 focus:outline-none disabled:cursor-not-allowed transition-[background-color,box-shadow]"
               />
             </div>
           )}
@@ -213,7 +227,8 @@ export function ExemptionWorkbench({
                 value={endDate}
                 min={startDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+                disabled
+                className="w-full h-10 rounded-lg bg-stone-50 border border-stone-200 px-4 text-[13px] text-stone-700 focus:outline-none disabled:cursor-not-allowed transition-[background-color,box-shadow]"
               />
             </div>
           )}
@@ -241,26 +256,21 @@ export function ExemptionWorkbench({
               id="exemption-reason-input"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="请输入具体的请假、故障或限流原因，便于管理员审批..."
+              placeholder="功能已归档，不再接受新申请"
               rows={4}
-              className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-700 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40 transition-[background-color,box-shadow]"
+              disabled
+              className="w-full rounded-lg bg-stone-50 border border-stone-200 p-4 text-[13px] text-stone-700 placeholder:text-stone-400 focus:outline-none disabled:cursor-not-allowed transition-[background-color,box-shadow]"
             />
           </div>
 
-          {/* 提交按钮 (唯一主 CTA `#D97757`) */}
+          {/* 提交按钮 (唯一主 CTA `#D97757`) — 已归档禁用 */}
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-medium transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50"
+            disabled
+            title="功能已归档，不再接受新申请"
+            className="w-full h-11 flex items-center justify-center gap-1.5 rounded-xl bg-stone-300 text-white text-[13px] font-medium cursor-not-allowed"
           >
-            {submitting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                正在提交申请...
-              </>
-            ) : (
-              "提交申请"
-            )}
+            提交申请
           </button>
         </form>
       </div>

@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Upload, X, ArrowRight, Check } from "lucide-react";
+import { Upload, X, ArrowRight, Check, Archive } from "lucide-react";
 
 import { StepWizard } from "@/app/(app)/violations/components/step-wizard";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -196,6 +196,18 @@ export function SubmitForm({
 
   return (
     <>
+      <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-2.5">
+          <Archive className="size-5 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-[13px] font-medium text-amber-800">本功能已归档</p>
+            <p className="text-[12px] text-amber-700/80 leading-[1.6] mt-0.5">
+              视频复盘提交与整改重提已暂停，历史记录仍可在管理后台查看，数据不会丢失。
+            </p>
+          </div>
+        </div>
+      </div>
+
       {isAmend && lastRejection ? (
         <FeedbackBanner
           rejection={lastRejection}
@@ -214,7 +226,7 @@ export function SubmitForm({
         showActions={currentStep > 0}
         onPrev={goPrev}
         onNext={goNext}
-        onSubmit={handleSubmit}
+        onSubmit={() => {}}
         canGoNext={canGoNext}
         isSubmitting={isSubmitting}
         isLastStep={isLastStep}
@@ -289,12 +301,12 @@ function StartStep({
           <button
             key={acc.id}
             type="button"
-            onClick={() => onPick(acc.id)}
+            disabled
             className={cn(
-              "flex items-center justify-between rounded-xl border bg-white px-4 py-3 text-left transition-all active:translate-y-0",
+              "flex items-center justify-between rounded-xl border bg-white px-4 py-3 text-left transition-all cursor-not-allowed opacity-70",
               accountId === acc.id
-                ? "border-[#D97757] ring-1 ring-[#D97757]/20"
-                : "border-stone-200 hover:border-stone-300",
+                ? "border-stone-300 ring-1 ring-stone-200"
+                : "border-stone-200",
             )}
           >
             <div className="min-w-0">
@@ -314,12 +326,12 @@ function StartStep({
         ))}
         <button
           type="button"
-          onClick={() => onPick(null)}
+          disabled
           className={cn(
-            "flex items-center justify-between rounded-xl border bg-white px-4 py-3 text-left transition-all active:translate-y-0",
+            "flex items-center justify-between rounded-xl border bg-white px-4 py-3 text-left transition-all cursor-not-allowed opacity-70",
             accountId === null
-              ? "border-[#D97757] ring-1 ring-[#D97757]/20"
-              : "border-stone-200 hover:border-stone-300",
+              ? "border-stone-300 ring-1 ring-stone-200"
+              : "border-stone-200",
           )}
         >
           <div>
@@ -367,10 +379,9 @@ function CoreStep({
         <Textarea
           id="script_text"
           value={scriptText}
-          onChange={(e) => onScriptChange(e.target.value)}
-          placeholder="原封不动粘贴这条短视频准备使用的话术内容"
-          autoFocus
-          className="min-h-[170px] resize-none rounded-lg bg-stone-50 border border-stone-200 text-[13px] leading-7 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#D97757]/20 focus:border-[#D97757]/40"
+          disabled
+          placeholder="本功能已归档，暂不支持提交新的视频复盘"
+          className="min-h-[170px] resize-none rounded-lg bg-stone-100 border border-stone-200 text-[13px] leading-7 text-stone-500 placeholder:text-stone-400 cursor-not-allowed"
         />
       </div>
 
@@ -409,44 +420,17 @@ function CoreStep({
                   className="object-cover"
                 />
               </button>
-              <button
-                type="button"
-                onClick={() => onRemove(s.path)}
-                className="absolute right-1 top-1 inline-flex size-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <X className="size-3" />
-              </button>
+
             </div>
           ))}
 
-          {screenshots.length < MAX_SCREENSHOTS ? (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className={cn(
-                "flex size-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed bg-white text-[12px] transition-colors",
-                isUploading
-                  ? "cursor-wait border-stone-200 text-stone-500/40"
-                  : "border-stone-300 text-stone-500 hover:border-[#D97757] hover:text-[#D97757]",
-              )}
-            >
-              <Upload className="size-4 stroke-[1.5]" />
-              {isUploading ? "上传中" : "添加"}
-            </button>
-          ) : null}
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            multiple
-            hidden
-            onChange={(e) => {
-              onUpload(e.target.files);
-              if (fileInputRef.current) fileInputRef.current.value = "";
-            }}
-          />
+          <div
+            className="flex size-24 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stone-200 bg-white text-[12px] text-stone-400 cursor-not-allowed"
+            title="本功能已归档，暂不支持上传截图"
+          >
+            <Upload className="size-4 stroke-[1.5]" />
+            添加
+          </div>
         </div>
       </div>
     </div>
