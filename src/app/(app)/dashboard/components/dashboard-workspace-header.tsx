@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import {
   Activity,
+  BookOpen,
   CalendarDays,
   ChevronDown,
   Eye,
@@ -87,6 +89,17 @@ export function DashboardWorkspaceHeader({
                   </button>
                 );
               })}
+              <Link
+                href="/violations"
+                className="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-stone-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-700 focus-visible:bg-stone-100 focus-visible:text-stone-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-900/5"
+                style={{ transitionDelay: "50ms" }}
+              >
+                <BookOpen
+                  size={14}
+                  className="stroke-[1.5] text-stone-500 transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:text-stone-700"
+                />
+                避坑案例
+              </Link>
               <QuickExemptionButton
                 hasPending={hasPendingExemption}
                 today={today}

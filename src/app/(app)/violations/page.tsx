@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowRight, FilePlus2, Settings2, TrendingUp } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
@@ -61,6 +62,13 @@ export default async function ViolationsPage({
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">
+      <Breadcrumb
+        items={[
+          { label: "今日工作台", href: "/dashboard" },
+          { label: "避坑案例" },
+        ]}
+      />
+
       {/* Hero / Header */}
       <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

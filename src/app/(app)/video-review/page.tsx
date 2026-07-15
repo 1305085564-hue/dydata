@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { getShanghaiDate } from "@/app/api/production/_shared";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Info } from "lucide-react";
 import type {
   ApprovedDraftItem,
 } from "@/lib/publish-drafts/types";
@@ -86,6 +87,14 @@ export default async function VideoReviewDashboardPage({
           { label: "产量对账" },
         ]}
       />
+
+      <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
+        <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-amber-500" />
+        <div className="leading-relaxed">
+          <span className="font-medium text-stone-800">短期过渡入口：</span>
+          本页仍可处理当前提交、豁免申请和历史记录。后续主流程会迁移至新的视频复盘入口，在此之前保留直接访问。
+        </div>
+      </div>
 
       <VideoReviewWorkbench
         isAdmin={isAdmin}

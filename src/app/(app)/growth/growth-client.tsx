@@ -165,17 +165,24 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-stone-200 pb-5">
         <div>
           <h1 className="text-[24px] font-medium tracking-tight text-stone-900 leading-none">
-            内容成长体检台
+            成长大盘
           </h1>
           <p className="mt-2 text-[13px] text-stone-500">
-            分析主体：<span className="font-medium text-stone-900">{identity.profileName}</span> ·
+            内容成长体检 · 分析主体：<span className="font-medium text-stone-900">{identity.profileName}</span> ·
             关联账号 {identity.accountCount} 个 ·
             近30天体检窗口内累计 {identity.reportCount} 份真实日报
           </p>
         </div>
 
-        {/* 全局可信度标签 */}
-        <div className="flex items-center">
+        {/* 全局可信度标签与避坑案例次级入口 */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/violations"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-[12px] font-medium text-stone-600 transition-all hover:bg-stone-50 hover:text-stone-900 active:scale-[0.98]"
+          >
+            <BookOpen className="size-3.5 stroke-[1.5] text-stone-500" />
+            <span>避坑案例</span>
+          </Link>
           <div
             className={cn(
               "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors",
