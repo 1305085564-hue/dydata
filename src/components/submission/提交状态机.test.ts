@@ -175,7 +175,9 @@ test("异常状态下截图改为可选", () => {
   });
 
   assert.equal(areSubmissionScreenshotsRequired("正常"), true);
+  assert.equal(areSubmissionScreenshotsRequired("normal"), true);
   assert.equal(areSubmissionScreenshotsRequired("限流"), false);
+  assert.equal(areSubmissionScreenshotsRequired("abnormal"), false);
   assert.deepEqual(summary.missingRequiredSlots, []);
   assert.equal(summary.canSubmit, true);
   assert.deepEqual(canSubmit(state, { anomalyStatus: "限流" }), {

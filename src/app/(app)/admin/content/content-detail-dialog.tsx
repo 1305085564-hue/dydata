@@ -122,6 +122,8 @@ type AllComparisonData = {
 };
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
+  normal: "border-stone-200 bg-white text-stone-700",
+  abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   正常: "border-stone-200 bg-white text-stone-700",
   删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",

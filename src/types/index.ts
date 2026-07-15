@@ -166,7 +166,7 @@ export interface AccountLeaderboardItem {
 
 // === 阶段 1.5 新增类型 ===
 
-export type AnomalyStatus = "正常" | "删稿" | "限流" | "投流" | "活动干预" | "未满24h";
+export type AnomalyStatus = "normal" | "abnormal" | "正常" | "删稿" | "限流" | "投流" | "活动干预" | "未满24h";
 export type SnapshotType = "24h" | "72h";
 export type SubmissionAssetRole = "screenshot_1" | "screenshot_2" | "screenshot_3";
 export type SubmissionFieldSource = "ocr" | "manual";
@@ -218,6 +218,9 @@ export interface Video {
   content: string | null;
   published_at: string | null;
   uploaded_at: string;
+  punish_type?: string | null;
+  platform_notice?: string | null;
+  appeal?: string | null;
   anomaly_status: AnomalyStatus;
   asset_level?: VideoAssetLevel | null;
   asset_note?: string | null;

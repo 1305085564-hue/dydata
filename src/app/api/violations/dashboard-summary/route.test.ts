@@ -9,6 +9,7 @@ type DashboardMockQuery = {
   table: string;
   selectQuery: string;
   filters: Array<{ kind: "eq" | "gte"; column: string; value: unknown }>;
+  inFilters: Array<{ column: string; values: string[] }>;
   orderings: Array<{ column: string; ascending: boolean }>;
   limitValue: number | null;
 };
@@ -20,6 +21,7 @@ function createDashboardSummarySupabase(rowsByTable: Record<string, DashboardQue
         table,
         selectQuery: "",
         filters: [],
+        inFilters: [],
         orderings: [],
         limitValue: null,
       };
@@ -34,6 +36,10 @@ function createDashboardSummarySupabase(rowsByTable: Record<string, DashboardQue
           if (filter.kind === "gte") {
             rows = rows.filter((row) => String(row[filter.column] ?? "") >= String(filter.value));
           }
+        }
+
+        for (const filter of state.inFilters) {
+          rows = rows.filter((row) => filter.values.includes(String(row[filter.column] ?? "")));
         }
 
         for (const ordering of [...state.orderings].reverse()) {
@@ -69,6 +75,10 @@ function createDashboardSummarySupabase(rowsByTable: Record<string, DashboardQue
           state.filters.push({ kind: "eq", column, value });
           return builder;
         },
+        in(column: string, values: string[]) {
+          state.inFilters.push({ column, values });
+          return builder;
+        },
         gte(column: string, value: unknown) {
           state.filters.push({ kind: "gte", column, value });
           return builder;
@@ -96,6 +106,16 @@ test("dashboard summary 返回 conversionTop3", async () => {
     getAuthenticatedContext: async () => ({ user: { id: "owner-1" } }),
     createAdminClient: () =>
       createDashboardSummarySupabase({
+        videos: [
+          {
+            id: "video-danger-1",
+            content: "视频异常 1",
+            anomaly_status: "abnormal",
+            punish_type: "limited",
+            created_at: "2026-05-26T09:00:00.000Z",
+            uploaded_at: "2026-05-26T10:00:00.000Z",
+          },
+        ],
         violation_cases: [
           {
             id: "danger-1",

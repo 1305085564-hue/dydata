@@ -1,6 +1,11 @@
 import type { SubmissionAssetMeta } from "@/types";
 import { SCRIPT_FORMATS, type ScriptFormat } from "@/lib/conversion-hub/types";
 import {
+  deriveVideoPunishType,
+  normalizeVideoAnomalyStatus,
+  type VideoPunishType,
+} from "@/lib/video-anomaly";
+import {
   normalizeDateOnly,
   normalizeInteger,
   normalizeNumber,
@@ -33,12 +38,15 @@ export interface VideoSubmitValidationResult {
     account_id: string;
     video_id: string | null;
     video_url: string | null;
-    video_title: string;
+    video_title: string | null;
     content: string;
     published_at: string | null;
     published_at_text: string | null;
     biz_date: string;
     anomaly_status: string;
+    punish_type: VideoPunishType | null;
+    platform_notice: string | null;
+    appeal: string | null;
     topic_tag: string | null;
     video_form: string | null;
     content_keywords: string[];
@@ -158,7 +166,13 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
     return { ok: false, error: assetUrlError };
   }
 
-  if (!title || !content) {
+  const anomalyStatus = normalizeVideoAnomalyStatus(payload.anomaly_status);
+
+  if (anomalyStatus === "abnormal") {
+    if (!content) {
+      return { ok: false, error: "异常提交时文案为必填项" };
+    }
+  } else if (!title || !content) {
     return { ok: false, error: "标题和文案为必填项" };
   }
 
@@ -174,7 +188,13 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       published_at: normalizeOptionalDate(payload.published_at),
       published_at_text: normalizeOptionalText(payload.published_at_text),
       biz_date: normalizeDateOnly(payload.biz_date),
-      anomaly_status: normalizeOptionalText(payload.anomaly_status) ?? "正常",
+      anomaly_status: anomalyStatus,
+      punish_type: deriveVideoPunishType({
+        punishType: payload.punish_type,
+        anomalyStatus: payload.anomaly_status,
+      }),
+      platform_notice: normalizeOptionalText(payload.platform_notice),
+      appeal: normalizeOptionalText(payload.appeal),
       topic_tag: normalizeOptionalText(payload.topic_tag),
       video_form: normalizeOptionalText(payload.video_form),
       content_keywords: keywords,

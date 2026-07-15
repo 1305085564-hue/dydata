@@ -83,12 +83,56 @@ test("提交校验会返回规范化后的写入数据", () => {
   assert.equal(result.normalized.video_title, "标题");
   assert.equal(result.normalized.content, "文案");
   assert.equal(result.normalized.published_at_text, "2025-04-08 12:00");
-  assert.equal(result.normalized.anomaly_status, "正常");
+  assert.equal(result.normalized.anomaly_status, "normal");
   assert.equal(result.normalized.topic_tag, "干货");
   assert.equal(result.normalized.video_form, "出镜");
   assert.equal(result.normalized.script_text, "关注公众号领取复盘表");
   assert.equal(result.normalized.script_format, "mixed");
   assert.equal(result.normalized.metrics.play_count, 10);
+});
+
+test("提交接口把新状态契约收敛为 normal / abnormal", () => {
+  const result = validateVideoSubmitPayload({
+    account_id: "acc-1",
+    video_title: "标题",
+    content: "文案",
+    anomaly_status: "异常",
+    punish_type: "限流",
+    platform_notice: "系统提示账号限流",
+    appeal: "已提交申诉",
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.normalized.anomaly_status, "abnormal");
+  assert.equal(result.normalized.punish_type, "limited");
+  assert.equal(result.normalized.platform_notice, "系统提示账号限流");
+  assert.equal(result.normalized.appeal, "已提交申诉");
+});
+
+test("异常提交仍要求文案，但不要求标题", () => {
+  const valid = validateVideoSubmitPayload({
+    account_id: "acc-1",
+    video_title: "",
+    content: "异常文案",
+    anomaly_status: "abnormal",
+    punish_type: "deleted",
+  });
+  assert.equal(valid.ok, true);
+
+  const invalid = validateVideoSubmitPayload({
+    account_id: "acc-1",
+    video_title: "删稿记录",
+    content: " ",
+    anomaly_status: "abnormal",
+    punish_type: "deleted",
+  });
+
+  assert.deepEqual(invalid, {
+    ok: false,
+    error: "异常提交时文案为必填项",
+  });
 });
 
 test("导粉话术为空时保持可选，不阻断旧填报链路", () => {

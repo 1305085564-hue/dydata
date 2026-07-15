@@ -20,7 +20,7 @@ export interface NormalizedVideoSubmitPayload {
   account_id: string;
   video_id: string | null;
   video_url: string | null;
-  video_title: string;
+  video_title: string | null;
   content: string;
   published_at: string | null;
   published_at_text: string | null;
@@ -135,7 +135,7 @@ export function buildSubmissionFingerprint(input: {
   account_id: string;
   video_id: string | null;
   video_url: string | null;
-  video_title: string;
+  video_title: string | null;
   content: string;
   published_at: string | null;
   published_at_text: string | null;
@@ -180,7 +180,7 @@ export function buildSubmissionRecordId(input: {
   account_id: string;
   video_id: string | null;
   video_url: string | null;
-  video_title: string;
+  video_title: string | null;
   content: string;
   published_at: string | null;
   published_at_text: string | null;

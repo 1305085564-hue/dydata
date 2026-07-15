@@ -1,3 +1,5 @@
+import { normalizeVideoAnomalyStatus } from "@/lib/video-anomaly";
+
 export type SubmissionSlotRole =
   | "screenshot_1"
   | "screenshot_2"
@@ -76,8 +78,7 @@ interface SubmissionIssueMeta {
 }
 
 export function areSubmissionScreenshotsRequired(anomalyStatus?: string) {
-  const normalized = anomalyStatus?.trim();
-  return !normalized || normalized === "正常";
+  return normalizeVideoAnomalyStatus(anomalyStatus) === "normal";
 }
 
 function createSlot(role: SubmissionSlotRole, required: boolean): SubmissionSlotState {

@@ -133,11 +133,14 @@ export async function POST(request: NextRequest) {
     published_at: normalized.published_at,
     uploaded_at: nowIso,
     anomaly_status: normalized.anomaly_status,
+    punish_type: normalized.punish_type,
+    platform_notice: normalized.platform_notice,
+    appeal: normalized.appeal,
   };
 
   const { data: existingVideo, error: existingVideoError } = await supabase
     .from("videos")
-    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at")
+    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, created_at")
     .eq("id", submissionVideoId)
     .maybeSingle();
 
@@ -422,6 +425,8 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    video_id: persistedVideo.id,
+    anomaly_status: normalized.anomaly_status,
     video: persistedVideo,
     ai_tags: aiTags,
     idempotent_video_id: submissionVideoId,

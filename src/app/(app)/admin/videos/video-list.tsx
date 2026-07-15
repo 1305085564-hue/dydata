@@ -41,6 +41,8 @@ interface VideoListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
+  normal: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
+  abnormal: "border-stone-200 bg-stone-50 text-[#C9604D]",
   正常: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
   删稿: "border-stone-200 bg-stone-50 text-[#C9604D]",
   限流: "border-stone-200 bg-stone-50 text-[#C9604D]",

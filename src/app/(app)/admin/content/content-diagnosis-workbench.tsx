@@ -176,6 +176,8 @@ function parseProblemTags(mainIssues: string): string[] {
 }
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
+  normal: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
+  abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   正常: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
   删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",

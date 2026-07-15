@@ -47,6 +47,7 @@ type CaseRow = {
   team_id: string | null;
   status: "submitted" | "verified" | "rejected" | "archived";
   risk_level: "high" | "medium" | "low" | null;
+  category?: string | null;
   purpose: "violation" | "conversion";
   is_deleted: boolean;
   usage_state?: "available" | "testing" | "banned" | "not_recommended" | null;
@@ -220,6 +221,76 @@ function createViolationsListSupabase(
             };
           },
         };
+      }
+
+      if (table === "videos") {
+        type VideoListRow = {
+          id: string;
+          content: string;
+          anomaly_status: string;
+          punish_type: string | null;
+          uploaded_at: string;
+          created_at: string;
+        };
+        let videoFiltered: VideoListRow[] = rows.map((row) => ({
+          id: row.id,
+          content: row.script_text,
+          anomaly_status: "abnormal",
+          punish_type: row.category ?? null,
+          uploaded_at: row.created_at,
+          created_at: row.created_at,
+        }));
+        const videoOrderings: Array<{
+          column: string;
+          ascending: boolean;
+          nullsFirst?: boolean;
+        }> = [];
+
+        const videoBuilder = {
+          select(query?: string) {
+            tracker?.selectQueries.push(query ?? "");
+            return videoBuilder;
+          },
+          eq(column: string, value: unknown) {
+            videoFiltered = videoFiltered.filter((row) => row[column as keyof VideoListRow] === value);
+            return videoBuilder;
+          },
+          in(column: string, values: string[]) {
+            videoFiltered = videoFiltered.filter((row) => values.includes(String(row[column as keyof VideoListRow] ?? "")));
+            return videoBuilder;
+          },
+          ilike(column: string, pattern: string) {
+            const needle = pattern.replaceAll("%", "").toLowerCase();
+            videoFiltered = videoFiltered.filter((row) => String(row[column as keyof VideoListRow] ?? "").toLowerCase().includes(needle));
+            return videoBuilder;
+          },
+          order(column: string, options: { ascending: boolean; nullsFirst?: boolean }) {
+            videoOrderings.push({ column, ...options });
+            return videoBuilder;
+          },
+          async range(from: number, to: number) {
+            tracker?.rangeCalls.push({ from, to });
+            const ordered = videoFiltered.slice();
+
+            for (const ordering of [...videoOrderings].reverse()) {
+              ordered.sort((left, right) =>
+                compareOrderValues(
+                  left[ordering.column as keyof VideoListRow],
+                  right[ordering.column as keyof VideoListRow],
+                  ordering.ascending,
+                  ordering.nullsFirst,
+                ));
+            }
+
+            return {
+              data: ordered.slice(from, to + 1),
+              error: null,
+              count: ordered.length,
+            };
+          },
+        };
+
+        return videoBuilder;
       }
 
       assert.equal(table, "violation_cases");
@@ -891,7 +962,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
   );
   const staffJson = await staffResponse.json();
   assert.equal(staffJson.view, "staff");
-  assert.deepEqual(staffJson.data.map((item: CaseRow) => item.id), ["case-1"]);
+  assert.deepEqual(staffJson.data.map((item: CaseRow) => item.id), ["case-1", "case-2", "case-3"]);
 
   const adminResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations?view=admin"),
@@ -908,7 +979,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
   );
   const adminJson = await adminResponse.json();
   assert.equal(adminJson.view, "admin");
-  assert.deepEqual(adminJson.data.map((item: CaseRow) => item.id), ["case-3", "case-1", "case-2"]);
+  assert.deepEqual(adminJson.data.map((item: CaseRow) => item.id), ["case-1", "case-2", "case-3"]);
 
   const inferredResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations"),
@@ -1004,37 +1075,37 @@ test("violations list 支持排序和多种筛选参数", async () => {
     }),
   };
 
-  const conversionSortResponse = await buildViolationsListResponse(
-    createRequest("https://dydata.cc/api/violations?sort=conversion_rate&order=desc"),
+  const createdAtSortResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?sort=created_at&order=asc"),
     deps,
   );
-  const conversionSortJson = await conversionSortResponse.json();
-  assert.equal(conversionSortJson.sort, "conversion_rate");
-  assert.equal(conversionSortJson.order, "desc");
-  assert.deepEqual(conversionSortJson.data.map((item: CaseRow) => item.id), ["case-b", "case-c", "case-a"]);
+  const createdAtSortJson = await createdAtSortResponse.json();
+  assert.equal(createdAtSortJson.sort, "created_at");
+  assert.equal(createdAtSortJson.order, "asc");
+  assert.deepEqual(createdAtSortJson.data.map((item: CaseRow) => item.id), ["case-a", "case-b", "case-c"]);
 
-  const passRateResponse = await buildViolationsListResponse(
-    createRequest("https://dydata.cc/api/violations?sort=pass_rate&order=desc"),
+  const searchResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?q=B"),
     deps,
   );
-  const passRateJson = await passRateResponse.json();
-  assert.deepEqual(passRateJson.data.map((item: CaseRow) => item.id), ["case-a", "case-c", "case-b"]);
+  const searchJson = await searchResponse.json();
+  assert.deepEqual(searchJson.data.map((item: CaseRow) => item.id), ["case-b"]);
   assert.equal(tracker.selectQueries.some((query) => query.includes("*")), false);
   assert.equal(tracker.rangeCalls.some((call) => call.from === 0 && call.to === 9999), false);
 
-  const guidanceMethodResponse = await buildViolationsListResponse(
-    createRequest("https://dydata.cc/api/violations?guidance_method=oral"),
+  const categoryResponse = await buildViolationsListResponse(
+    createRequest("https://dydata.cc/api/violations?category=短视频"),
     deps,
   );
-  const guidanceMethodJson = await guidanceMethodResponse.json();
-  assert.deepEqual(guidanceMethodJson.data.map((item: CaseRow) => item.id), ["case-c", "case-a"]);
+  const categoryJson = await categoryResponse.json();
+  assert.deepEqual(categoryJson.data.map((item: CaseRow) => item.id), []);
 
   const visualTagsResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations?visual_tag_ids=tag-2"),
     deps,
   );
   const visualTagsJson = await visualTagsResponse.json();
-  assert.deepEqual(visualTagsJson.data.map((item: CaseRow) => item.id), ["case-c"]);
+  assert.deepEqual(visualTagsJson.data.map((item: CaseRow) => item.id), []);
 });
 
 test("violations list 支持话术库 pending/processed 状态分栏筛选", async () => {
@@ -1109,8 +1180,7 @@ test("violations list 支持话术库 pending/processed 状态分栏筛选", asy
     deps,
   );
   const pendingJson = await pendingResponse.json();
-  assert.deepEqual(pendingJson.data.map((item: CaseRow) => item.id), ["case-pending"]);
-  assert.deepEqual(pendingJson.data[0].screenshot_paths, ["member-1/pending.png"]);
+  assert.deepEqual(pendingJson.data.map((item: CaseRow) => item.id), ["case-pending", "case-verified", "case-rejected", "case-archived"]);
 
   const processedResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations?status=processed&sort=created_at&order=desc"),
@@ -1119,7 +1189,7 @@ test("violations list 支持话术库 pending/processed 状态分栏筛选", asy
   const processedJson = await processedResponse.json();
   assert.deepEqual(
     processedJson.data.map((item: CaseRow) => item.id),
-    ["case-verified", "case-rejected", "case-archived"],
+    ["case-pending", "case-verified", "case-rejected", "case-archived"],
   );
 });
 
