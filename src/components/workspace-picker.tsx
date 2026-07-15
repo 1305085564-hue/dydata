@@ -64,14 +64,15 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center justify-between gap-3 rounded-lg px-1 py-1 text-left transition-all duration-200",
+          "flex items-center justify-between gap-3 rounded-lg px-1 py-1 text-left transition-all duration-200 group",
           "text-stone-500 hover:text-stone-900 dark:text-stone-500 dark:hover:text-[#E7E5E4] active:scale-[0.98]",
           isOpen && "text-stone-900 dark:text-[#FAFAF9]"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <div className="relative shrink-0">
-            <div className="size-2 rounded-full bg-[#6FAA7D]" />
+          <div className="relative shrink-0 flex items-center justify-center size-2.5">
+            <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-[#6FAA7D]/60 animate-ping" />
+            <div className="relative size-2 rounded-full bg-[#6FAA7D]" />
           </div>
           <div className="min-w-0 flex flex-col">
             <span className="truncate text-[12px] font-medium leading-tight text-stone-900 dark:text-[#FAFAF9] max-w-[110px]">
@@ -83,7 +84,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                 const cleanName = selectedAccount.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
                 const isDuplicate = cleanName.toLowerCase() === selectedAccount.name.trim().toLowerCase();
                 return isDuplicate 
-                  ? `${selectedAccount.content_direction || "未分类"}`
+                  ? `方向: ${selectedAccount.content_direction || "未分类"}`
                   : `@${selectedAccount.name}`;
               })()}
             </span>
@@ -92,7 +93,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         <ChevronDown
           size={14}
           className={cn(
-            "text-stone-500 transition-transform shrink-0 duration-200",
+            "text-stone-500 transition-all shrink-0 duration-200 group-hover:translate-y-0.5",
             isOpen && "rotate-180 text-stone-900 dark:text-[#FAFAF9]"
           )}
         />

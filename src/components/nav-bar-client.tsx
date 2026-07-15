@@ -238,16 +238,16 @@ export function NavBarClient({
                 href="/dashboard"
                 prefetch={false}
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
-                className="flex items-center gap-2.5 shrink-0"
+                className="flex items-center gap-2.5 shrink-0 group"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#D97757] to-[#C9503B] text-white shadow-md shadow-[#D97757]/20">
-                  <Zap className="size-[18px] stroke-[2] fill-current" />
+                <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#D97757] to-[#C9503B] text-white shadow-md shadow-[#D97757]/20 transition-all duration-300 ease-out group-hover:scale-105 group-hover:rotate-[3deg]">
+                  <Zap className="size-[18px] stroke-[2] fill-current transition-transform duration-300 group-hover:scale-110" />
                 </div>
                 <div className="hidden sm:block">
-                  <div className="text-[12px] font-medium tracking-tight text-stone-900 uppercase leading-none">
-                    DYData <span className="text-[#D97757] font-medium text-[12px]">PREMIUM</span>
+                  <div className="text-[12px] font-medium tracking-tight text-stone-900 uppercase leading-none transition-colors duration-300 group-hover:text-stone-950">
+                    DYData <span className="text-[#D97757] font-medium text-[12px] transition-colors duration-300 group-hover:text-[#C9503B]">PREMIUM</span>
                   </div>
-                  <div className="mt-1 text-[12px] font-normal tracking-[0.12em] text-stone-500 uppercase leading-none">
+                  <div className="mt-1 text-[12px] font-normal tracking-[0.12em] text-stone-500 uppercase leading-none transition-colors duration-300 group-hover:text-stone-600">
                     短视频管理控制台
                   </div>
                 </div>
@@ -271,17 +271,20 @@ export function NavBarClient({
                       href={item.href}
                       prefetch={false}
                       onMouseEnter={() => prefetchOnHover(item.href)}
-                      className={primaryLinkClass(active)}
+                      className={cn(primaryLinkClass(active), "group")}
                     >
                       {active && (
                         <motion.div
                           layoutId="activeNavIndicator"
-                          className="absolute inset-0 bg-white border border-stone-200 rounded-lg -z-10"
+                          className="absolute inset-0 bg-white border rounded-lg -z-10 shadow-[0_2px_12px_-3px_rgba(217,119,87,0.12)] border-[#D97757]/15"
                           transition={{ type: "spring", stiffness: 380, damping: 30 }}
                         />
                       )}
+                      {!active && (
+                        <span className="absolute inset-0 rounded-lg bg-stone-100/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10" />
+                      )}
                       {Icon && (
-                        <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors", active ? "text-[#D97757]" : "text-stone-500")} />
+                        <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-all duration-300 ease-out group-hover:-translate-y-0.5", active ? "text-[#D97757]" : "text-stone-500")} />
                       )}
                       <span className="whitespace-nowrap">{item.label}</span>
                       {badgeValue > 0 && (
@@ -406,7 +409,8 @@ export function NavBarClient({
                 onClick={() => void handleCommandHubOpen()}
                 className={cn(
                   "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group",
-                  "text-stone-500 hover:text-stone-700 active:scale-95"
+                  "text-stone-500 hover:text-stone-700 active:scale-95",
+                  commandHubOpen && "text-[#D97757] bg-white border border-[#D97757]/15 shadow-[0_2px_12px_-3px_rgba(217,119,87,0.15)]"
                 )}
                 title="待办与通知中心"
               >
