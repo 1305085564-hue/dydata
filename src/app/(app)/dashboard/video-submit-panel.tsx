@@ -48,8 +48,9 @@ type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
 };
 
 type AsyncActivityData = {
-  historyReports: MonthReport[];
-  isActivityLoading: boolean;
+  monthSubmittedDates: string[];
+  monthReports: MonthReport[];
+  history: MonthReport[];
 };
 
 const formatDateTime = (isoString: string | null | undefined) => {
@@ -191,7 +192,7 @@ export function VideoSubmitPanel({
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
   const violationSubmitHref = selectedAccountId
-    ? `/violations/submit?account_id=${encodeURIComponent(selectedAccountId)}&prefill=1`
+    ? `/violations/submit?account_id=${encodeURIComponent(selectedAccountId)}`
     : "/violations/submit";
   const setSelectedAccountId = useCallback(
     (accountId: string) => {
@@ -646,7 +647,7 @@ export function VideoSubmitPanel({
                         className="h-9 border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 hover:bg-stone-50"
                       >
                         <ShieldAlert className="size-4 stroke-[1.5] text-[#D99E55]" />
-                        收录违规
+                        上传话术
                       </Button>
                     </a>
                   </div>
@@ -782,7 +783,7 @@ export function VideoSubmitPanel({
                         className="h-10 w-full rounded-xl border-stone-200 bg-white text-[13px] font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors duration-150"
                       >
                         <ShieldAlert className="size-4 stroke-[1.5] text-[#D99E55]" />
-                        收录违规
+                        上传话术
                       </Button>
                     </a>
                     <Button

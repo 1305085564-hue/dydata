@@ -56,11 +56,11 @@ export function ConversionHubShell(props: HubShellProps) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow={props.eyebrow ?? "导粉中心"}
-      title={props.title ?? "管理工作台"}
+      eyebrow={props.eyebrow ?? "避坑案例"}
+      title={props.title ?? "审核工作台"}
       description={
         props.description ??
-        "审核员工提交，把有价值的话术沉淀进知识库；高风险先处理，再补缺数据，已处理记录可在右侧查看。"
+        "审核员工上传的话术，把有效案例沉淀进知识库；高风险先处理，再补缺数据，已处理记录可在右侧查看。"
       }
       indexItems={[]}
       actions={
@@ -77,7 +77,7 @@ export function ConversionHubShell(props: HubShellProps) {
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
           >
             <FilePlus2 className="size-3.5 stroke-[1.5]" />
-            替员工提交
+            代上传话术
           </Link>
         </div>
       }

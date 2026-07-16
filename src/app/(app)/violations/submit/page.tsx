@@ -24,14 +24,14 @@ export default async function SubmitViolationPage({
     <div className="space-y-4">
       <Breadcrumb
         items={[
-          { label: "导粉中心", href: "/violations" },
-          { label: "提交新案例" },
+          { label: "避坑案例", href: "/violations" },
+          { label: "上传话术" },
         ]}
       />
       <AdminWorkspaceLayout
-        eyebrow="Submit Case"
-        title="提交话术案例"
-        description="账号只能从你已有账号里选择，可留空。提交后先进入待验证，由管理员复核结论。"
+        eyebrow="避坑案例"
+        title="上传话术"
+        description="提交处罚案例或高转化话术，先进入待验证，由管理员复核后进入案例库。"
         indexItems={[]}
         width="wide"
       >

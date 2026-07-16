@@ -1,11 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-
-import { cn } from "@/lib/utils";
-
 import type { InboxBucketEntry, InboxCounts, InboxData } from "../data";
 import { TaskInbox } from "./task-inbox-v2";
 import { ProcessedList } from "./processed-list";
@@ -26,72 +21,56 @@ export function TaskInboxShell({
   processedPending = false,
   isOwner = false,
 }: TaskInboxShellProps) {
-  const pendingTotal =
-    counts.high_risk_pending + counts.pending_review + counts.missing_data;
   const processedCount = processedPending ? null : processed.length;
-
-  const [processedOpen, setProcessedOpen] = useState(false);
+  const [detailCaseId, setDetailCaseId] = useState<string | null>(null);
 
   return (
-    <div className="space-y-4">
-      {/* 待处理 — 默认展开，主舞台 */}
-      <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-        <div className="flex items-baseline justify-between gap-2 border-b border-stone-100 px-5 py-4">
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-[18px] font-medium text-stone-900">待处理</h2>
-            <span className="text-[13px] tabular-nums text-stone-500">
-              {pendingTotal}
-            </span>
-          </div>
-          <span className="text-[12px] text-stone-500">
-            高风险 / 待审核 / 缺数据
-          </span>
-        </div>
-        <div className="px-4 py-4 sm:px-5 sm:py-5">
-          <TaskInbox inbox={inbox} counts={counts} isOwner={isOwner} />
-        </div>
-      </section>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* 左侧主舞台：高风险待确认 + 日常待审核 (占 2/3) */}
+      <div className="space-y-6 lg:col-span-2">
+        <TaskInbox
+          inbox={inbox}
+          counts={counts}
+          isOwner={isOwner}
+          viewType="main"
+          detailCaseId={detailCaseId}
+          onOpenDetail={setDetailCaseId}
+        />
+      </div>
 
-      {/* 已处理 — 折叠面板，默认收起 */}
-      <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-        <button
-          type="button"
-          onClick={() => setProcessedOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-2 px-5 py-4 text-left transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
-        >
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-[18px] font-medium text-stone-900">已处理</h2>
-            {processedCount !== null ? (
-              <span className="text-[13px] tabular-nums text-stone-500">
-                {processedCount}
-              </span>
-            ) : null}
-            <span className="text-[12px] text-stone-500">近 30 天审批记录</span>
+      {/* 右侧辅助侧栏：缺数据催办 + 近期已处理记录 (占 1/3) */}
+      <div className="space-y-6">
+        <TaskInbox
+          inbox={inbox}
+          counts={counts}
+          isOwner={isOwner}
+          viewType="sidebar"
+          detailCaseId={detailCaseId}
+          onOpenDetail={setDetailCaseId}
+        />
+
+        {/* 已处理记录卡片 */}
+        <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+          <div className="border-b border-stone-100 px-5 py-4">
+            <h2 className="text-[15px] font-medium text-stone-900 flex items-center gap-2">
+              <span>已处理记录</span>
+              {processedCount !== null ? (
+                <span className="inline-flex h-5 items-center rounded-md bg-stone-100 px-1.5 text-[12px] tabular-nums font-medium text-stone-600">
+                  {processedCount}
+                </span>
+              ) : null}
+            </h2>
+            <p className="text-[12px] text-stone-500 mt-0.5">近 30 天审批记录</p>
           </div>
-          <ChevronDown
-            className={cn(
-              "size-4 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-300",
-              processedOpen ? "" : "-rotate-90",
-            )}
-          />
-        </button>
-        <AnimatePresence initial={false}>
-          {processedOpen ? (
-            <motion.div
-              key="processed-content"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-              className="overflow-hidden"
-            >
-              <div className="border-t border-stone-100 px-4 py-4 sm:px-5 sm:py-5">
-                <ProcessedList items={processed} pendingBackend={processedPending} />
-              </div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </section>
+          <div className="px-4 py-3 sm:px-5">
+            <ProcessedList
+              items={processed}
+              pendingBackend={processedPending}
+              onOpenDetail={setDetailCaseId}
+            />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

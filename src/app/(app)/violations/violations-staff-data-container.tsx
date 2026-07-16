@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import {
   loadViolationDashboardSummary,
   loadViolationsList,
+  type QueryClientLike,
   type SortDirection,
 } from "@/lib/violations/read-model";
 
@@ -49,7 +50,7 @@ type DashboardData = {
 } | null;
 
 async function loadCases(params: {
-  supabase: any;
+  supabase: QueryClientLike;
   sort: SortKey;
   order: SortDirection;
   guidanceMethods: string[];
@@ -68,7 +69,7 @@ async function loadCases(params: {
     guidanceMethod: params.guidanceMethods[0] ?? null,
   });
 
-  if (errorMessage || !payload) throw new Error(errorMessage ?? "加载导粉中心失败");
+  if (errorMessage || !payload) throw new Error(errorMessage ?? "加载避坑案例失败");
   return payload.data as ViolationCase[];
 }
 

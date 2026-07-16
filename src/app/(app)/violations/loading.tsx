@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * 导粉中心主页骨架屏 — 还原最终版面节奏，让首屏不再白闪。
+ * 避坑案例主页骨架屏 — 还原最终版面节奏，让首屏不再白闪。
  * 仅勾勒视觉框架，× 渐变 / × 多余装饰，符合纸质仪器规范。
  */
 export default function ViolationsLoading() {

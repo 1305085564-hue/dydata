@@ -10,6 +10,7 @@ interface ProcessedListProps {
   items: InboxBucketEntry[];
   /** 后端 RPC 未上线时显示「即将上线」状态 */
   pendingBackend?: boolean;
+  onOpenDetail?: (id: string) => void;
 }
 
 const STATUS_META: Record<string, { color: string; label: string }> = {
@@ -30,7 +31,7 @@ function formatTime(value: string | null | undefined) {
   }).format(date);
 }
 
-export function ProcessedList({ items, pendingBackend = false }: ProcessedListProps) {
+export function ProcessedList({ items, pendingBackend = false, onOpenDetail }: ProcessedListProps) {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? items : items.slice(0, 8);
   const hasMore = items.length > 8;
@@ -67,32 +68,53 @@ export function ProcessedList({ items, pendingBackend = false }: ProcessedListPr
     <div className="space-y-0.5">
       {visible.map((entry) => {
         const meta = STATUS_META[entry.status ?? "archived"] ?? STATUS_META.archived;
-        return (
-          <Link
-            key={entry.id}
-            href={`/violations/${entry.id}`}
-            className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-stone-100 active:translate-y-0"
-          >
+        const innerContent = (
+          <>
             <span
               className="size-1.5 shrink-0 rounded-full"
               style={{ backgroundColor: meta.color }}
               title={meta.label}
             />
             <div className="min-w-0 flex-1">
-              <p className="line-clamp-1 text-[13px] font-medium text-stone-900">
+              <p className="line-clamp-1 text-[13px] font-medium text-stone-900 leading-normal">
                 {entry.script_text}
               </p>
-              <div className="mt-0.5 flex items-center gap-x-2 text-[12px] text-stone-500">
-                <span className="text-[12px] font-medium" style={{ color: meta.color }}>
+              <div className="mt-0.5 flex items-center gap-x-2 text-[12px] text-stone-500 font-normal">
+                <span className="text-[11px] font-medium leading-none" style={{ color: meta.color }}>
                   {meta.label}
                 </span>
-                <span className="text-stone-500">·</span>
+                <span className="text-stone-300">·</span>
                 <span>{entry.submitted_by_name}</span>
-                <span className="text-stone-500">·</span>
+                <span className="text-stone-300">·</span>
                 <span>{formatTime(entry.created_at)}</span>
               </div>
             </div>
-            <ArrowUpRight className="size-3.5 shrink-0 stroke-[1.5] text-stone-500 opacity-0 transition-all group-hover:opacity-100" />
+            <ArrowUpRight className="size-3.5 shrink-0 stroke-[1.5] text-stone-500 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+          </>
+        );
+
+        const itemClassName = "group flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-all duration-200 hover:bg-stone-50/80 hover:shadow-[0_2px_8px_-2px_rgba(28,25,23,0.04)] text-left cursor-pointer active:scale-[0.99]";
+
+        if (onOpenDetail) {
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              onClick={() => onOpenDetail(entry.id)}
+              className={itemClassName}
+            >
+              {innerContent}
+            </button>
+          );
+        }
+
+        return (
+          <Link
+            key={entry.id}
+            href={`/violations/${entry.id}`}
+            className={itemClassName}
+          >
+            {innerContent}
           </Link>
         );
       })}

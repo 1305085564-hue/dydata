@@ -149,10 +149,10 @@ function TaskRow({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all",
+        "group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-200",
         selected
           ? "border-stone-300 bg-stone-50"
-          : "border-transparent hover:border-stone-200 hover:bg-stone-100"
+          : "border-transparent hover:border-stone-200 hover:bg-stone-50/80 hover:shadow-[0_4px_12px_-4px_rgba(28,25,23,0.06)]"
       )}
     >
       {/* Checkbox */}
@@ -177,7 +177,7 @@ function TaskRow({
         className={cn(
           "absolute left-0 top-2.5 bottom-2.5 w-[2px] rounded-full transition-all duration-200",
           style.bar,
-          selected ? "opacity-100" : "opacity-60 group-hover:opacity-100"
+          selected ? "opacity-100" : "opacity-40 group-hover:opacity-100"
         )}
       />
 
@@ -190,19 +190,19 @@ function TaskRow({
         }}
         className="min-w-0 flex-1 cursor-pointer pl-1 text-left focus-visible:outline-none"
       >
-        <p className="line-clamp-2 text-[13px] font-medium text-stone-900">
+        <p className="line-clamp-2 text-[13px] font-medium text-stone-900 leading-[1.6]">
           {entry.script_text}
         </p>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-stone-500">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-stone-500">
           <span>{entry.submitted_by_name}</span>
-          <span className="text-stone-500">·</span>
+          <span className="text-stone-300">·</span>
           <span>{formatTime(entry.created_at)}</span>
           {entry.risk_level && entry.risk_level !== "low" ? (
             <>
-              <span className="text-stone-500">·</span>
+              <span className="text-stone-300">·</span>
               <span
                 className={cn(
-                  "rounded-md border px-1.5 py-0.5 text-[12px] font-medium",
+                  "rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-none",
                   TONE.danger.badge
                 )}
               >
@@ -214,8 +214,11 @@ function TaskRow({
         </div>
       </button>
 
-      {/* Quick actions */}
-      <div className="hidden shrink-0 items-center gap-1 sm:flex">
+      {/* Quick actions — hover 时流畅淡入滑入 */}
+      <div className={cn(
+        "hidden shrink-0 items-center gap-1 sm:flex",
+        "opacity-0 translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-200"
+      )}>
         <button
           type="button"
           disabled={busyAction !== null}
@@ -224,7 +227,7 @@ function TaskRow({
             onAction(entry, "approve");
           }}
           className={cn(
-            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-colors",
+            "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-colors",
             "text-stone-500 hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
@@ -243,7 +246,7 @@ function TaskRow({
             onAction(entry, "reject");
           }}
           className={cn(
-            "inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-colors",
+            "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-colors",
             "text-stone-500 hover:bg-[#C9604D]/10 hover:text-[#C9604D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
@@ -286,6 +289,7 @@ function CollapsibleSection({
   onAction,
   onOpenDetail,
   busyMap,
+  collapsible = true,
 }: {
   section: InboxSection;
   selectedIds: Set<string>;
@@ -294,18 +298,56 @@ function CollapsibleSection({
   onAction: (entry: InboxBucketEntry, action: RowAction) => void;
   onOpenDetail: (id: string) => void;
   busyMap: Map<string, RowAction>;
+  collapsible?: boolean;
 }) {
-  const [open, setOpen] = useState(section.defaultOpen ?? true);
+  const [openState, setOpenState] = useState(section.defaultOpen ?? true);
+  const open = collapsible ? openState : true;
+
   const [expanded, setExpanded] = useState(false);
-  const style = TONE[section.tone];
-  const Icon = section.icon;
   const visibleEntries = useMemo(
     () => section.entries.filter((e) => !hiddenIds.has(e.id)),
     [section.entries, hiddenIds],
   );
-  const visible = expanded ? visibleEntries : visibleEntries.slice(0, 5);
-  const hasMore = visibleEntries.length > 5;
+
+  const visible = expanded ? visibleEntries : visibleEntries.slice(0, 8);
+  const hasMore = visibleEntries.length > 8;
   const visualCount = visibleEntries.length;
+
+  const isHighRiskEmpty = section.key === "high_risk" && visualCount === 0;
+  const toneToUse = isHighRiskEmpty ? "positive" : section.tone;
+  const style = TONE[toneToUse];
+  const Icon = section.icon;
+
+  const headerContent = (
+    <div className="flex items-center gap-3 min-w-0">
+      <span
+        className={cn(
+          "flex size-7 shrink-0 items-center justify-center rounded-lg border bg-white",
+          style.iconText,
+          style.badge
+        )}
+      >
+        <Icon className="size-3.5 stroke-[1.5]" />
+      </span>
+      <div className="min-w-0 leading-tight">
+        <p className="text-[13px] font-medium text-stone-900 flex items-center gap-1.5">
+          <span>{section.title}</span>
+          {visualCount > 0 && (
+            <span
+              className={cn(
+                "inline-flex h-5 items-center rounded-md border px-1.5 text-[11px] tabular-nums font-medium",
+                style.badge
+              )}
+            >
+              {visualCount}
+            </span>
+          )}
+          {section.headerTag}
+        </p>
+        <p className="text-[12px] text-stone-500 mt-0.5">{section.hint}</p>
+      </div>
+    </div>
+  );
 
   return (
     <motion.section
@@ -313,49 +355,33 @@ function CollapsibleSection({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-      className="overflow-hidden rounded-2xl border border-stone-200 bg-white"
+      className={cn(
+        "overflow-hidden rounded-2xl border bg-white transition-colors duration-300 shadow-[0_4px_20px_-4px_rgba(28,25,23,0.03)]",
+        (section.tone === "danger" && visualCount > 0)
+          ? "border-red-200/60 bg-gradient-to-b from-red-50/[0.03] to-white"
+          : "border-stone-200"
+      )}
     >
       {/* Header */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <span
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={() => setOpenState((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
+        >
+          {headerContent}
+          <ChevronDown
             className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-lg border bg-white",
-              style.iconText,
-              style.badge
+              "size-4 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-300",
+              open ? "" : "-rotate-90"
             )}
-          >
-            <Icon className="size-3.5 stroke-[1.5]" />
-          </span>
-          <div className="min-w-0 leading-tight">
-            <p className="text-[13px] font-medium text-stone-900">
-              {section.title}
-              {visualCount > 0 && (
-                <span
-                  className={cn(
-                    "ml-2 inline-flex h-5 items-center rounded-md border px-1.5 text-[12px] tabular-nums font-medium",
-                    style.badge
-                  )}
-                >
-                  {visualCount}
-                </span>
-              )}
-              {section.headerTag}
-            </p>
-            <p className="text-[12px] text-stone-500">{section.hint}</p>
-          </div>
+          />
+        </button>
+      ) : (
+        <div className="flex w-full items-center justify-between gap-3 px-5 py-4 border-b border-stone-100 bg-white">
+          {headerContent}
         </div>
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-300",
-            open ? "" : "-rotate-90"
-          )}
-        />
-      </button>
+      )}
 
       <AnimatePresence initial={false}>
         {open && (
@@ -367,12 +393,12 @@ function CollapsibleSection({
             transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const }}
             className="overflow-hidden"
           >
-            <div className="border-t border-stone-100 px-2 py-2">
+            <div className="px-3 py-3 bg-white">
               {visibleEntries.length === 0 ? (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="px-3 py-6 text-center text-[12px] text-stone-500"
+                  className="py-8 text-center text-[12px] text-stone-400"
                 >
                   {section.emptyHint}
                 </motion.p>
@@ -381,7 +407,7 @@ function CollapsibleSection({
                   variants={listVariants}
                   initial="hidden"
                   animate="visible"
-                  className="space-y-0.5"
+                  className="space-y-1.5"
                 >
                   <AnimatePresence initial={false}>
                     {visible.map((entry) => (
@@ -389,11 +415,11 @@ function CollapsibleSection({
                         key={entry.id}
                         variants={itemVariants}
                         layout
-                        exit={{ opacity: 0, height: 0, x: 12 }}
+                        exit={{ opacity: 0, height: 0, x: 20 }}
                         transition={{
                           type: "spring",
-                          stiffness: 320,
-                          damping: 28,
+                          stiffness: 300,
+                          damping: 30,
                         }}
                       >
                         <TaskRow
@@ -410,7 +436,7 @@ function CollapsibleSection({
                     ))}
                   </AnimatePresence>
                   {hasMore && (
-                    <motion.div variants={itemVariants} className="pt-1">
+                    <motion.div variants={itemVariants} className="pt-2 pl-1">
                       <button
                         type="button"
                         onClick={() => setExpanded((v) => !v)}
@@ -418,10 +444,10 @@ function CollapsibleSection({
                       >
                         {expanded
                           ? "收起"
-                          : `展开剩余 ${visibleEntries.length - 5} 条`}
+                          : `展开剩余 ${visibleEntries.length - 8} 条`}
                         <ChevronDown
                           className={cn(
-                            "size-3 stroke-[1.5] transition-transform duration-200",
+                            "size-3.5 stroke-[1.5] transition-transform duration-200",
                             expanded ? "rotate-180" : ""
                           )}
                         />
@@ -515,16 +541,30 @@ interface TaskInboxProps {
   counts: InboxCounts;
   /** 是否 Owner — 透传给详情 Dialog 内嵌的审批面板 */
   isOwner?: boolean;
+  /** 分栏布局视角 */
+  viewType?: "main" | "sidebar";
+  /** 外部提升的详情弹窗状态，用于双栏共享同一个弹窗 */
+  detailCaseId?: string | null;
+  onOpenDetail?: (id: string | null) => void;
 }
 
-export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
+export function TaskInbox({
+  inbox,
+  counts,
+  isOwner = false,
+  viewType = "main",
+  detailCaseId,
+  onOpenDetail,
+}: TaskInboxProps) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [busyMap, setBusyMap] = useState<Map<string, RowAction>>(new Map());
   const [bulkBusy, setBulkBusy] = useState<RowAction | null>(null);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   /** 中心 Dialog 的当前案例 id — 行点击触发 */
-  const [detailCaseId, setDetailCaseId] = useState<string | null>(null);
+  const [internalDetailCaseId, setInternalDetailCaseId] = useState<string | null>(null);
+  const activeDetailCaseId = detailCaseId ?? internalDetailCaseId;
+  const setActiveDetailCaseId = onOpenDetail ?? setInternalDetailCaseId;
   const [rejectState, setRejectState] = useState<
     | { mode: "single"; entry: InboxBucketEntry }
     | { mode: "bulk"; ids: string[] }
@@ -857,7 +897,7 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
     ],
   );
 
-  const sections: InboxSection[] = useMemo(
+  const allSections: InboxSection[] = useMemo(
     () => [
       {
         key: "high_risk",
@@ -867,13 +907,18 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
         tone: "danger",
         icon: AlertTriangle,
         entries: inbox.high_risk_pending,
-        emptyHint: "目前没有高风险案例待处理",
+        emptyHint: "✓ 目前安全 · 无高风险踩雷话术待确认",
         headerTag: counts.high_risk_pending > 0 ? (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[12px] text-[#C9604D]">
+          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#C9604D] leading-none">
             <span className="size-1 rounded-full bg-[#C9604D]" />
             优先处理
           </span>
-        ) : null,
+        ) : (
+          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#6FAA7D] leading-none">
+            <span className="size-1 rounded-full bg-[#6FAA7D]" />
+            目前安全
+          </span>
+        ),
       },
       {
         key: "pending",
@@ -894,7 +939,7 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
         icon: FileX2,
         entries: inbox.missing_data,
         emptyHint: "所有提交资料齐全",
-        defaultOpen: false,
+        defaultOpen: true,
         renderSuffix: (entry) =>
           entry.missing_fields && entry.missing_fields.length > 0 ? (
             <>
@@ -908,6 +953,13 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
     [inbox, counts]
   );
 
+  const sections = useMemo(() => {
+    if (viewType === "main") {
+      return allSections.filter((s) => s.key === "pending" || s.key === "high_risk");
+    }
+    return allSections.filter((s) => s.key === "missing");
+  }, [allSections, viewType]);
+
   // 三桶在乐观隐藏后的可见数 — 全 0 显示成就提示
   const visibleTotal = useMemo(() => {
     return sections.reduce(
@@ -915,12 +967,14 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
       0,
     );
   }, [sections, hiddenIds]);
-  const allBucketsTotal =
-    counts.high_risk_pending + counts.pending_review + counts.missing_data;
+
+  const allBucketsTotal = useMemo(() => {
+    return sections.reduce((sum, s) => sum + s.count, 0);
+  }, [sections]);
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {sections.map((section) => (
           <CollapsibleSection
             key={section.key}
@@ -929,8 +983,9 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
             hiddenIds={hiddenIds}
             onToggle={toggleId}
             onAction={handleSingleAction}
-            onOpenDetail={setDetailCaseId}
+            onOpenDetail={setActiveDetailCaseId}
             busyMap={busyMap}
+            collapsible={viewType === "sidebar"}
           />
         ))}
 
@@ -942,16 +997,21 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ type: "spring", stiffness: 320, damping: 28 }}
-              className="rounded-2xl border border-[#6FAA7D]/25 bg-[#6FAA7D]/[0.04] px-6 py-7 text-center"
+              className={cn(
+                "rounded-2xl border text-center",
+                viewType === "main"
+                  ? "border-[#6FAA7D]/25 bg-[#6FAA7D]/[0.04] px-6 py-8"
+                  : "border-stone-200 bg-stone-50 px-4 py-6"
+              )}
             >
-              <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-white shadow-sm">
+              <div className="mx-auto flex size-8 items-center justify-center rounded-full bg-white shadow-sm">
                 <Sparkles className="size-4 stroke-[1.75] text-[#6FAA7D]" />
               </div>
               <p className="mt-3 text-[13px] font-medium text-stone-900">
-                今天的审批已清空
+                {viewType === "main" ? "今天的审批已清空" : "无待补材料"}
               </p>
-              <p className="mt-1 text-[12px] text-stone-500">
-                辛苦了 · 5 秒内仍可在 toast 撤销
+              <p className="mt-1 text-[12px] text-stone-500 font-normal">
+                {viewType === "main" ? "辛苦了 · 5 秒内仍可在 toast 撤销" : "材料全部齐全"}
               </p>
             </motion.div>
           ) : null}
@@ -978,19 +1038,21 @@ export function TaskInbox({ inbox, counts, isOwner = false }: TaskInboxProps) {
         }}
         onConfirm={handleRejectConfirm}
       />
-      <CaseDetailDialog
-        caseId={detailCaseId}
-        open={detailCaseId !== null}
-        onOpenChange={(o) => {
-          if (!o) setDetailCaseId(null);
-        }}
-        showReviewPanel
-        isOwner={isOwner}
-        onReviewSuccess={() => {
-          // 审批后让 detail 关闭 + 列表刷新（router.refresh 已在 panel 内触发）
-          setDetailCaseId(null);
-        }}
-      />
+      {viewType === "main" ? (
+        <CaseDetailDialog
+          caseId={activeDetailCaseId}
+          open={activeDetailCaseId !== null}
+          onOpenChange={(o) => {
+            if (!o) setActiveDetailCaseId(null);
+          }}
+          showReviewPanel
+          isOwner={isOwner}
+          canManage={true}
+          onReviewSuccess={() => {
+            setActiveDetailCaseId(null);
+          }}
+        />
+      ) : null}
     </>
   );
 }

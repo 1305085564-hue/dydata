@@ -29,7 +29,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
     <div className="space-y-4">
       <Breadcrumb
         items={[
-          { label: "导粉中心", href: "/violations" },
+          { label: "避坑案例", href: "/violations" },
           { label: "案例详情" },
         ]}
       />

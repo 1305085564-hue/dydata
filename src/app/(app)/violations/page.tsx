@@ -74,14 +74,14 @@ export default async function ViolationsPage({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
-              导粉中心
+              避坑案例
             </p>
             <h1 className="mt-2 text-[24px] font-medium leading-[1.33] tracking-tight text-stone-900">
-              {isManageView ? "管理工作台" : "找话术 · 避坑"}
+              {isManageView ? "审核工作台" : "找话术 · 看避坑"}
             </h1>
             <div className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-stone-500">
               {isManageView ? (
-                "审核员工提交，把有价值的话术沉淀进知识库；高风险先处理，缺数据其次。"
+                "审核员工上传的话术，把有效案例沉淀进知识库；高风险先处理，缺数据其次。"
               ) : (
                 <Suspense fallback={<span>正在计算团队案例指标...</span>}>
                   <ViolationsHeaderStats />
@@ -107,7 +107,7 @@ export default async function ViolationsPage({
                   className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
                 >
                   <FilePlus2 className="size-3.5 stroke-[1.5]" />
-                  替员工提交
+                  代上传话术
                 </Link>
               </>
             ) : (
@@ -118,7 +118,7 @@ export default async function ViolationsPage({
                     className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[13px] font-medium text-stone-700 transition-colors hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
                   >
                     <Settings2 className="size-3.5 stroke-[1.5]" />
-                    管理工作台
+                    审核工作台
                   </Link>
                 ) : null}
                 <Link

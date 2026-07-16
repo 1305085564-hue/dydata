@@ -6,7 +6,7 @@
  * v9(2026-05-31)
  *  - 视频状态切换从 ProgressHeader 浮动 chip 撤回,改用 leadingActionSlot 渲染在 actions 行最左侧
  *    (对齐阿禅原话「三个都在外面直接切换」「左下角卡片外面」)
- *  - actions 按钮尺寸对齐导粉中心 StepWizard:h-11 + px-5/6 + text-[13px]
+ *  - actions 按钮尺寸对齐避坑案例 StepWizard:h-11 + px-5/6 + text-[13px]
  */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";

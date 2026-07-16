@@ -30,7 +30,7 @@ test("已带一次性标记时不再重复清站点数据", async () => {
   assert.equal(response.headers.get("Clear-Site-Data"), null);
 });
 
-test("未登录访问导粉中心会跳转登录并保留回跳路径", async () => {
+test("未登录访问避坑案例会跳转登录并保留回跳路径", async () => {
   const request = buildRequest(
     "https://dydata.cc/violations",
     "dydata-site-cleared=1",
@@ -41,7 +41,7 @@ test("未登录访问导粉中心会跳转登录并保留回跳路径", async ()
   assert.equal(response.headers.get("location"), "https://dydata.cc/login?next=%2Fviolations");
 });
 
-test("导粉中心路径被 middleware matcher 覆盖", async () => {
+test("避坑案例路径被 middleware matcher 覆盖", async () => {
   const { config } = await import("./middleware");
 
   assert.ok(config.matcher.includes("/violations/:path*"));

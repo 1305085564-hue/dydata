@@ -548,7 +548,7 @@ export function CaseDetailDialog({
               </div>
             </div>
 
-            {/* 审核决策 — 仅管理工作台，独立于详情内容 */}
+            {/* 审核决策 — 仅审核工作台，独立于详情内容 */}
             {showReviewPanel ? (
               <div className="-mx-6 mt-6 border-t border-stone-200 bg-stone-50/60 px-6 py-5">
                 {isConversion ? (
