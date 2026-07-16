@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     p_reason: payload.data.reason,
     p_marker_id: auth.actor.userId,
   });
-  const unwrapped = unwrapRpc<unknown>(result, "标记发布履约状态失败");
+  const unwrapped = unwrapRpc<unknown>(result, "标记发布管理状态失败");
   if ("response" in unwrapped) return unwrapped.response;
 
   return NextResponse.json(unwrapped.data ?? { ok: true });

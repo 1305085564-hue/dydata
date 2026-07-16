@@ -128,7 +128,7 @@ export function GlobalTopicCreate() {
       setInputText("");
       setIsOpen(false);
       
-      // 触发一个刷新事件，让今日工作台或选题池页面能监听到刷新
+      // 触发一个刷新事件，让数据台或选题池页面能监听到刷新
       window.dispatchEvent(new CustomEvent("refresh-topics"));
     } catch (err) {
       feedbackToast.error("录入失败", {

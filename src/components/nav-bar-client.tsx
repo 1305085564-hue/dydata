@@ -372,7 +372,7 @@ export function NavBarClient({
                             className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
                           >
                             <UsersRound className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
-                            <span>团队与成员</span>
+                            <span>成员管理</span>
                           </Link>
 
                           <Link
@@ -382,7 +382,7 @@ export function NavBarClient({
                             className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
                           >
                             <Settings className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
-                            <span>系统维护与产量</span>
+                            <span>系统维护</span>
                           </Link>
 
                           {isOwner && (

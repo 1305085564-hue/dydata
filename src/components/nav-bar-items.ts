@@ -25,13 +25,13 @@ export function getNavItems(input: {
   const items: NavItem[] = [
     {
       href: "/dashboard",
-      label: "今日工作台",
+      label: "数据台",
       icon: LayoutDashboard,
       match: (pathname) => pathname === "/dashboard",
     },
     {
       href: "/growth",
-      label: "成长大盘",
+      label: "数据分析",
       icon: Compass,
       match: (pathname) => pathname === "/growth",
     },
@@ -103,7 +103,7 @@ export function getNavItems(input: {
     ) {
       items.push({
         href: "/admin/fulfillment",
-        label: "发布履约",
+        label: "发布管理",
         icon: CalendarDays,
         match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
       });

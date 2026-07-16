@@ -75,8 +75,8 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
   {
     href: "/admin/fulfillment",
     panel: "fulfillment",
-    label: "发布履约",
-    description: "谁没发、什么原因、本月履约全局一目了然。",
+    label: "发布管理",
+    description: "谁没发、什么原因、本月发布全局一目了然。",
     icon: CalendarCheck,
     tone: "warning",
     group: "daily",

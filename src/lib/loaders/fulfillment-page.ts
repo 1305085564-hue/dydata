@@ -291,7 +291,7 @@ async function loadFulfillmentFilterOptions(
     .in("id", visibleUserIds);
 
   if (error) {
-    throw new Error(error.message || "加载发布履约筛选项失败");
+    throw new Error(error.message || "加载发布管理筛选项失败");
   }
 
   const teamIds = Array.from(new Set((profileRows ?? []).map((row) => row.team_id).filter(Boolean))) as string[];
@@ -395,7 +395,7 @@ export async function loadFulfillmentCalendar(
   });
 
   if (error) {
-    throw new Error(error.message || "加载发布履约日历失败");
+    throw new Error(error.message || "加载发布管理日历失败");
   }
 
   return buildFulfillmentCalendarData({

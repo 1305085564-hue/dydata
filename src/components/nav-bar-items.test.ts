@@ -9,14 +9,14 @@ test("管理员统一主导航合并包含日常管理入口", () => {
   assert.deepEqual(
     items.map((item) => ({ href: item.href, label: item.label })),
     [
-      { href: "/dashboard", label: "今日工作台" },
-      { href: "/growth", label: "成长大盘" },
+      { href: "/dashboard", label: "数据台" },
+      { href: "/growth", label: "数据分析" },
       { href: "/topics/today", label: "选题库" },
       { href: "/content-tools/rewrite", label: "文案助手" },
       { href: "/admin/content", label: "视频复盘" },
       { href: "/admin/videos", label: "素材库" },
       { href: "/admin/analytics", label: "经营分析" },
-      { href: "/admin/fulfillment", label: "发布履约" },
+      { href: "/admin/fulfillment", label: "发布管理" },
     ]
   );
 });

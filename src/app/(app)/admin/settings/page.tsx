@@ -81,7 +81,7 @@ export default async function AdminSettingsPage() {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <SettingCard
             href="/admin/modules"
-            title="团队与成员"
+            title="成员管理"
             description="系统团队架构、分组归属维护、一键入团审批及成员精细化授权。"
             icon={<UsersRound className="size-5 text-[#D97757]" />}
           />

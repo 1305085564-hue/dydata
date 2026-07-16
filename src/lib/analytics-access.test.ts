@@ -51,7 +51,7 @@ test("组长能访问团队日常管理，不能访问系统设置", () => {
   assert.equal(canAccessAdminPath("/admin/modules", "group_leader"), false);
 });
 
-test("发布履约页面允许负责人组长和有数据权限的成员访问", () => {
+test("发布管理页面允许负责人组长和有数据权限的成员访问", () => {
   assert.equal(canAccessAdminPath("/admin/fulfillment", "owner"), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment", "team_admin"), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment/detail", "group_leader"), true);

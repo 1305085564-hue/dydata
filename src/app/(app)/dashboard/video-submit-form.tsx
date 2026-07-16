@@ -2235,7 +2235,7 @@ export function VideoSubmitForm({
               </div>
               <div className="space-y-1">
                 <h4 className="text-[14px] font-semibold text-stone-900">数据同步中</h4>
-                <p className="text-[12px] text-stone-500">正在前往成长大盘...</p>
+                <p className="text-[12px] text-stone-500">正在前往数据分析...</p>
               </div>
             </motion.div>
           </motion.div>

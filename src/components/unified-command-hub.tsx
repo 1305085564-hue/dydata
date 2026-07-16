@@ -574,7 +574,7 @@ export function UnifiedCommandHub({
               {/* TODOS TAB */}
               {activeTab === "todos" && (
                 <div className="space-y-4">
-                  {/* 日常发布履约入口 (管理员专有，高频日常运营，弱化顶部导航后的入口分流) */}
+                  {/* 日常发布管理入口 (管理员专有，高频日常运营，弱化顶部导航后的入口分流) */}
                   {isAdmin && (
                     <div className="rounded-xl border border-stone-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md hover:border-stone-300">
                       <div className="flex items-center justify-between gap-4">
@@ -583,7 +583,7 @@ export function UnifiedCommandHub({
                             <CalendarDays className="size-4 text-[#D97757]" />
                           </div>
                           <div>
-                            <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-100 leading-tight">日常发布履约</h4>
+                            <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-100 leading-tight">日常发布管理</h4>
                             <p className="text-[11px] text-stone-500 mt-0.5">查看团队成员作品交档与申诉处理</p>
                           </div>
                         </div>

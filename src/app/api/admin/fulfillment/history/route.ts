@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     p_team_id: null,
     p_group_id: null,
   });
-  const unwrapped = unwrapRpc<FulfillmentCalendarRpcRow[]>(result, "加载成员发布履约历史失败");
+  const unwrapped = unwrapRpc<FulfillmentCalendarRpcRow[]>(result, "加载成员发布管理历史失败");
   if ("response" in unwrapped) return unwrapped.response;
 
   const data = buildFulfillmentCalendarData({

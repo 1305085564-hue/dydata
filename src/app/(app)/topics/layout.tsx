@@ -24,7 +24,7 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
   const tabs = [
     {
       href: "/topics/today",
-      label: "今日工作台",
+      label: "今日选题",
       icon: Compass,
       active: pathname === "/topics/today"
     },

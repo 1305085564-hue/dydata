@@ -61,7 +61,7 @@ export function DashboardWorkspaceHeader({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.25em] text-stone-500">
-            <Activity size={14} className="text-stone-700" /> 今日工作台
+            <Activity size={14} className="text-stone-700" /> 数据台
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <h2 className="text-[24px] font-medium tracking-tight text-stone-900">

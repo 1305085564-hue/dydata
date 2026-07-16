@@ -36,8 +36,8 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="团队与成员"
-      title="团队管理工作台"
+      eyebrow="成员管理"
+      title="成员管理工作台"
       description="系统团队架构、分组归属维护及成员权限审批"
       indexItems={[
         { id: "workspace", label: "全景工作台" }

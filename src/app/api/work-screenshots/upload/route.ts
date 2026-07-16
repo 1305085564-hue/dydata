@@ -20,7 +20,7 @@ function getExtension(file: File) {
 
 export async function POST(request: NextRequest) {
   if (isArchivedWriteEnabled()) {
-    return archivedFeatureResponse("作品凭证截图上传已归档，请改用今日工作台提交日报截图");
+    return archivedFeatureResponse("作品凭证截图上传已归档，请改用数据台提交日报截图");
   }
 
   const auth = await requireSignedInUser();

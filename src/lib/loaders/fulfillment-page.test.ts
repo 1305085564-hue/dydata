@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { buildFulfillmentCalendarData, resolveFulfillmentDateRange } from "@/lib/loaders/fulfillment-page";
 
-test("发布履约日历按成员聚合并计算今日异常与统计", () => {
+test("发布管理日历按成员聚合并计算今日异常与统计", () => {
   const data = buildFulfillmentCalendarData({
     year: 2026,
     month: 6,
@@ -113,7 +113,7 @@ test("发布履约日历按成员聚合并计算今日异常与统计", () => {
   assert.equal(data.members[1]?.waivedDays, 1);
 });
 
-test("发布履约日期范围支持高频预设与自定义范围", () => {
+test("发布管理日期范围支持高频预设与自定义范围", () => {
   assert.deepEqual(resolveFulfillmentDateRange({ preset: "today" }, "2026-06-03"), {
     preset: "today",
     startDate: "2026-06-03",

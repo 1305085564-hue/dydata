@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     p_record_date: payload.data.recordDate,
     p_marker_id: auth.actor.userId,
   });
-  const unwrapped = unwrapRpc<unknown>(result, "删除发布履约标记失败");
+  const unwrapped = unwrapRpc<unknown>(result, "删除发布管理标记失败");
   if ("response" in unwrapped) return unwrapped.response;
 
   return NextResponse.json(unwrapped.data ?? { ok: true });

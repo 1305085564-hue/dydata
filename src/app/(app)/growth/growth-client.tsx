@@ -165,7 +165,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-stone-200 pb-5">
         <div>
           <h1 className="text-[24px] font-medium tracking-tight text-stone-900 leading-none">
-            成长大盘
+            数据分析
           </h1>
           <p className="mt-2 text-[13px] text-stone-500">
             内容成长体检 · 分析主体：<span className="font-medium text-stone-900">{identity.profileName}</span> ·

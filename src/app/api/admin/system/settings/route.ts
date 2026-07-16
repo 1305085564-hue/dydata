@@ -111,7 +111,7 @@ export async function buildAdminSystemSettingsPostResponse(
     {
       key: FEISHU_FULFILLMENT_REMINDER_KEY,
       value: payload.data.feishuFulfillmentReminderEnabled,
-      description: "发布履约飞书自动催交总开关",
+      description: "发布管理飞书自动催交总开关",
       updated_by: auth.actor.userId,
       updated_at: new Date().toISOString(),
     },

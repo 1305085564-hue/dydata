@@ -7,7 +7,7 @@ import { AdminSecondaryNav, getAdminSecondaryNavItems } from "./admin-secondary-
 test("日常管理组对管理员输出核心入口", () => {
   assert.deepEqual(
     getAdminSecondaryNavItems({ canManageAdmin: true, canManageMembers: true, userRole: "admin", group: "daily" }).map((item) => item.label),
-    ["今日待办", "经营分析", "视频复盘", "素材库", "发布履约"],
+    ["今日待办", "经营分析", "视频复盘", "素材库", "发布管理"],
   );
 });
 

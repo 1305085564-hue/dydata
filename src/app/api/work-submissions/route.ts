@@ -87,7 +87,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   if (isArchivedWriteEnabled()) {
-    return archivedFeatureResponse("视频审核作品提交已归档，请改用今日工作台提交日报");
+    return archivedFeatureResponse("视频审核作品提交已归档，请改用数据台提交日报");
   }
 
   const body = await readJsonBody(request);
