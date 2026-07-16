@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Undo2, Redo2, Eye, EyeOff, Copy, FileText, Download, History } from 'lucide-react';
+import { Plus, Undo2, Redo2, Eye, EyeOff, Copy, FileText, Download, History, Cpu, ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { useRewriteV3Logic } from './useRewriteV3Logic';
-import { SkillCabin } from './SkillCabin';
 import { TimelineDiff } from './TimelineDiff';
 import { CalmStudioCanvas } from './CalmStudioCanvas';
 import { ChatInspector } from './ChatInspector';
@@ -25,6 +24,24 @@ export function RewriteWorkbenchV3() {
   const [presentationMode, setPresentationMode] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
   const [showDiffInLatest, setShowDiffInLatest] = useState(false);
+
+  // 紧凑模型组合下拉
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!modelDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target as Node)) {
+        setModelDropdownOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', handleClick);
+    return () => window.removeEventListener('mousedown', handleClick);
+  }, [modelDropdownOpen]);
+
+  const currentModelLabel = state.bootstrap?.modelViews.find((m) => m.id === state.selectedModelViewId)?.label
+    || (state.selectedModelViewId ? '已选模型' : '自动推荐模型');
 
   // 左右侧宽度可拖动调节
   const containerRef = useRef<HTMLDivElement>(null);
@@ -273,13 +290,59 @@ export function RewriteWorkbenchV3() {
           {/* 分隔线 */}
           <div className="h-4 w-px bg-stone-200" />
 
-          {/* 技能模式 */}
-          <SkillCabin
-            availableSkills={state.availableSkills}
-            activeSkills={state.activeSkills}
-            onToggleSkill={actions.handleToggleSkill}
-            variant="header"
-          />
+          {/* 紧凑模型组合选择器 */}
+          {state.bootstrap && (
+            <div className="relative" ref={modelDropdownRef}>
+              <button
+                onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                disabled={state.isSending}
+                className={cn(
+                  "inline-flex h-7 max-w-[180px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
+                  modelDropdownOpen
+                    ? "bg-stone-100 border-stone-400 text-stone-900"
+                    : "bg-white border-stone-300 text-stone-700 hover:bg-stone-50 hover:text-stone-900"
+                )}
+                title="选择模型组合"
+              >
+                <Cpu className="h-3 w-3 text-stone-500 shrink-0" />
+                <span className="truncate">{currentModelLabel}</span>
+                <ChevronDown className={cn("h-3 w-3 text-stone-500 shrink-0 transition-transform", modelDropdownOpen && "rotate-180")} />
+              </button>
+
+              {modelDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1.5 w-56 rounded-lg border border-stone-200/50 bg-white/95 backdrop-blur-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <button
+                    onClick={() => { actions.setSelectedModelViewId(''); setModelDropdownOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
+                      !state.selectedModelViewId
+                        ? "bg-[#8AA8C7]/10 text-[#4c6785]"
+                        : "text-stone-700 hover:bg-stone-50"
+                    )}
+                  >
+                    <span>自动推荐模型</span>
+                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#8AA8C7]" />}
+                  </button>
+                  {state.bootstrap.modelViews.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => { actions.setSelectedModelViewId(item.id); setModelDropdownOpen(false); }}
+                      className={cn(
+                        "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
+                        state.selectedModelViewId === item.id
+                          ? "bg-[#8AA8C7]/10 text-[#4c6785]"
+                          : "text-stone-700 hover:bg-stone-50"
+                      )}
+                      title={item.description || item.label}
+                    >
+                      <span className="truncate pr-2">{item.label}</span>
+                      {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#8AA8C7] shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 右侧：顶栏操作组 */}
@@ -369,21 +432,19 @@ export function RewriteWorkbenchV3() {
           {/* 核心对话控制台 */}
           <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
             <ChatInspector
-              bootstrap={state.bootstrap}
+              availableSkills={state.availableSkills}
               messages={state.messages}
               messagesLoading={state.messagesLoading}
               isSending={state.isSending}
               activeSkills={state.activeSkills}
               inputText={state.inputText}
               referredText={state.referredText}
-              selectedModelViewId={state.selectedModelViewId}
               messagesEndRef={state.messagesEndRef}
               onInputChange={actions.setInputText}
               onSend={actions.handleSend}
               onAbort={actions.handleAbort}
               onToggleSkill={actions.handleToggleSkill}
               onClearReferredText={() => actions.setReferredText(null)}
-              onModelChange={actions.setSelectedModelViewId}
               onToggleSettings={() => actions.setIsSettingsOpen(true)}
             />
 

@@ -17,35 +17,40 @@ interface SkillCabinProps {
   availableSkills: Skill[];
   activeSkills: Skill[];
   onToggleSkill: (skill: Skill) => void;
-  variant?: 'default' | 'header';
 }
 
-export function SkillCabin({ availableSkills, activeSkills, onToggleSkill, variant = 'default' }: SkillCabinProps) {
-  const isHeader = variant === 'header';
+export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: SkillCabinProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 高频精选技能：强框架固定最左，强语感靠前（避免贴最右），其余按原序补齐，最多 4 个
-  const featuredSkills = useMemo(() => {
-    const prioritized: Skill[] = [];
-    const remaining = [...availableSkills];
+  // 可见胶囊：已启用技能始终优先显示，再补精选技能，保持单行横向滚动
+  const visibleSkills = useMemo(() => {
+    const activeIds = new Set(activeSkills.map((s) => s.id));
+
+    // 1. 已启用技能全部前置
+    const visible: Skill[] = [...activeSkills];
+
+    // 2. 从非启用技能里按原精选规则补位，最多 4 个
+    const remaining = availableSkills.filter((s) => !activeIds.has(s.id));
 
     const qiangkuangjiaIndex = remaining.findIndex((s) => s.name === '强框架模式');
     if (qiangkuangjiaIndex >= 0) {
-      prioritized.push(remaining.splice(qiangkuangjiaIndex, 1)[0]);
+      visible.push(remaining.splice(qiangkuangjiaIndex, 1)[0]);
     }
 
     const qiangyuganIndex = remaining.findIndex((s) => s.name === '强语感模式');
     if (qiangyuganIndex >= 0) {
-      prioritized.push(remaining.splice(qiangyuganIndex, 1)[0]);
+      visible.push(remaining.splice(qiangyuganIndex, 1)[0]);
     }
 
-    while (prioritized.length < 4 && remaining.length > 0) {
-      prioritized.push(remaining.shift()!);
+    let added = activeSkills.length + (qiangkuangjiaIndex >= 0 ? 1 : 0) + (qiangyuganIndex >= 0 ? 1 : 0);
+    while (added < activeSkills.length + 4 && remaining.length > 0) {
+      visible.push(remaining.shift()!);
+      added++;
     }
 
-    return prioritized;
-  }, [availableSkills]);
+    return visible;
+  }, [availableSkills, activeSkills]);
 
   // 按分类对所有技能分组
   const groups = [
@@ -72,22 +77,10 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill, varia
   };
 
   return (
-    <div
-      className={cn(
-        'relative z-30 flex items-center justify-between',
-        isHeader
-          ? 'h-full px-0 py-0'
-          : 'shrink-0 h-[44px] border-b border-stone-200/50 bg-transparent px-4 py-2'
-      )}
-    >
+    <div className="relative z-30 flex items-center justify-between shrink-0">
       {/* 精选胶囊：左对齐 */}
-      <div
-        className={cn(
-          'flex items-center gap-1.5 overflow-x-auto scrollbar-none pr-4',
-          isHeader ? 'max-w-[220px] xl:max-w-[300px]' : 'max-w-[80%]'
-        )}
-      >
-        {featuredSkills.map((skill) => {
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pr-4 max-w-[80%]">
+        {visibleSkills.map((skill) => {
           const isActive = activeSkills.some((s) => s.id === skill.id);
           return (
             <button
@@ -121,7 +114,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill, varia
         )}
       >
         <Grid className="h-3 w-3" />
-        <span>{isHeader ? '全部' : '全部技能'}</span>
+        <span>全部技能</span>
       </button>
 
       {/* 展开态 Overlay Card Grid */}

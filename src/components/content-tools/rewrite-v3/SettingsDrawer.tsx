@@ -123,7 +123,7 @@ export function SettingsDrawer({
       <div className="shrink-0 h-[48px] px-4 border-b border-stone-200/50 flex items-center justify-between bg-stone-50/50">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-stone-500 tracking-wider">
           <SlidersHorizontal className="h-4 w-4" />
-          <span>创意配置台</span>
+          <span>参数 / 技能设置</span>
         </div>
         <button
           onClick={onClose}

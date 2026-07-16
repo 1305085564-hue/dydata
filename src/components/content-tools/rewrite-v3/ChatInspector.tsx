@@ -1,46 +1,43 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { ArrowUp, Square, X, Sparkles, Quote, Bot, User, Cpu, History, SlidersHorizontal } from 'lucide-react';
+import { ArrowUp, Square, X, Quote, Bot, User, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { BootstrapPayload, Message } from '../types';
+import type { Message } from '../types';
 import type { Skill } from './SkillCabin';
+import { SkillCabin } from './SkillCabin';
 
 interface ChatInspectorProps {
-  bootstrap: BootstrapPayload | null;
+  availableSkills: Skill[];
   messages: Message[];
   messagesLoading: boolean;
   isSending: boolean;
   activeSkills: Skill[];
   inputText: string;
   referredText: string | null;
-  selectedModelViewId: string;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onInputChange: (text: string) => void;
   onSend: (text: string, options?: { targetParagraphIds?: string[] }) => void;
   onAbort: () => void;
   onToggleSkill: (skill: Skill) => void;
   onClearReferredText: () => void;
-  onModelChange: (id: string) => void;
   onToggleSettings: () => void;
 }
 
 export function ChatInspector({
-  bootstrap,
+  availableSkills,
   messages,
   messagesLoading,
   isSending,
   activeSkills,
   inputText,
   referredText,
-  selectedModelViewId,
   messagesEndRef,
   onInputChange,
   onSend,
   onAbort,
   onToggleSkill,
   onClearReferredText,
-  onModelChange,
   onToggleSettings,
 }: ChatInspectorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -82,35 +79,19 @@ export function ChatInspector({
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-transparent relative">
       {/* 顶部控制栏 */}
-      <div className="shrink-0 h-[44px] px-4 border-b border-stone-200 bg-transparent flex items-center justify-start gap-3.5">
-        {/* 模型选择器 */}
-        {bootstrap && (
-          <div className="flex items-center gap-1.5">
-            <Cpu className="h-3.5 w-3.5 text-stone-500" />
-            <select
-              aria-label="选择模型"
-              value={selectedModelViewId}
-              onChange={(e) => onModelChange(e.target.value)}
-              disabled={isSending}
-              className="h-6.5 rounded-lg border border-stone-200 bg-white px-2 text-[12px] font-medium text-stone-700 outline-none hover:border-stone-300 disabled:opacity-50 transition-all shadow-sm"
-            >
-              <option value="">自动推荐模型</option>
-              {bootstrap.modelViews.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+      <div className="shrink-0 h-[44px] px-4 border-b border-stone-200 bg-transparent flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-[12px] font-medium text-stone-500 tracking-wider">
+          <span>对话</span>
+        </div>
 
-        {/* 创意配置抽屉呼出按钮 */}
+        {/* 参数 / 技能设置入口 */}
         <button
           onClick={onToggleSettings}
-          className="p-1 rounded-lg text-stone-500 hover:text-stone-900 hover:bg-stone-200/50 transition-colors"
-          title="技能管理与参数配置"
+          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 text-[12px] font-medium text-stone-700 transition-all hover:bg-stone-50 hover:text-stone-900 active:scale-[0.98]"
+          title="打开参数与技能设置"
         >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
+          <SlidersHorizontal className="h-3 w-3 text-stone-500" />
+          <span>参数 / 技能设置</span>
         </button>
       </div>
 
@@ -170,27 +151,12 @@ export function ChatInspector({
       <div className="shrink-0 bg-white/80 backdrop-blur-md border-t border-stone-200/50 p-4 relative z-20">
         <div className="max-w-xl mx-auto space-y-2">
 
-          {/* 已激活技能胶囊栏 */}
-          {activeSkills.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-1">
-              {activeSkills.map((skill) => (
-                <span
-                  key={skill.id}
-                  className="inline-flex items-center gap-1.5 bg-[#8AA8C7]/10 border border-[#8AA8C7]/20 px-2 py-0.5 rounded-full text-[12px] font-medium text-[#4c6785]"
-                >
-                  <Sparkles className="h-2.5 w-2.5 text-[#8AA8C7] animate-pulse" />
-                  <span>{skill.name}</span>
-                  <button
-                    onClick={() => onToggleSkill(skill)}
-                    className="hover:bg-[#8AA8C7]/20 rounded-full p-0.5 ml-0.5 text-[#8AA8C7]"
-                    title="移出此技能"
-                  >
-                    <X className="h-2.5 w-2.5" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          {/* 轻量技能条 */}
+          <SkillCabin
+            availableSkills={availableSkills}
+            activeSkills={activeSkills}
+            onToggleSkill={onToggleSkill}
+          />
 
           {/* 引用选中文本浮条 */}
           {referredText && (
