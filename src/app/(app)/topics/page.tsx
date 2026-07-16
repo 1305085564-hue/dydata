@@ -38,6 +38,13 @@ function countMyCandidates(items: Array<{ sub_topic_claims?: SubTopicClaim[] | n
   return items.filter((item) => getMyClaim(item, currentUserId)?.status === "candidate").length;
 }
 
+function handleKeyboardActivation(event: React.KeyboardEvent, action: () => void) {
+  if (event.target !== event.currentTarget) return;
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  action();
+}
+
 export default function TopicPoolPage() {
   const [items, setItems] = useState<SubTopicItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +82,15 @@ export default function TopicPoolPage() {
     void getUserId();
   }, []);
 
+  // 支持从其他页面带参跳转（如今日工作台"管理我的选题" → /topics?view=my_claims）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const urlView = new URLSearchParams(window.location.search).get("view");
+    if (urlView === "all" || urlView === "my_claims" || urlView === "my_created") {
+      setCurrentView(urlView);
+    }
+  }, []);
+
   // 加载母题分类（供顶部下拉筛选用）
   useEffect(() => {
     const fetchTopics = async () => {
@@ -97,7 +113,7 @@ export default function TopicPoolPage() {
   // 加载我的认领，用于判断认领总数和是否已认领
   const fetchMyClaims = async () => {
     try {
-      const res = await fetch("/api/topics/pool?view=my_claims&time_range=3m");
+      const res = await fetch("/api/topics/pool?view=my_claims");
       if (res.ok) {
         const json = await res.json();
         setMyClaims(json.items || []);
@@ -317,8 +333,11 @@ export default function TopicPoolPage() {
               >
                 {/* 分组头部：点击折叠 */}
                 <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => toggleCollapseGroup(group.topicId)}
-                  className="flex cursor-pointer items-center justify-between border-b border-stone-250 pb-2 hover:opacity-80 select-none"
+                  onKeyDown={(event) => handleKeyboardActivation(event, () => toggleCollapseGroup(group.topicId))}
+                  className="flex cursor-pointer items-center justify-between border-b border-stone-250 pb-2 hover:opacity-80 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-[13.5px] font-bold text-stone-900">

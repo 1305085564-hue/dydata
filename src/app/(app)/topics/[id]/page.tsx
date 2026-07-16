@@ -106,6 +106,13 @@ function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, current
   return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
 }
 
+function handleKeyboardActivation(event: React.KeyboardEvent, action: () => void) {
+  if (event.target !== event.currentTarget) return;
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  action();
+}
+
 export default function TopicDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
   const router = useRouter();
@@ -121,12 +128,14 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
   const [sortType, setSortType] = useState<"best" | "recent">("best");
   const [totalWorks, setTotalWorks] = useState(0);
   const [loadingWorks, setLoadingWorks] = useState(false);
+  const [worksPage, setWorksPage] = useState(1);
 
   // 认领状态
   const [myClaim, setMyClaim] = useState<ClaimInfo | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [allClaims, setAllClaims] = useState<AllClaimsRecord[]>([]); // 全局认领记录 (低频展开看)
   const [showAllClaims, setShowAllClaims] = useState(false);
+  const [claimsLoadFailed, setClaimsLoadFailed] = useState(false);
   
   const [actionLoading, setActionLoading] = useState(false);
   const [claimLimitReached, setClaimLimitReached] = useState(false);
@@ -148,7 +157,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
   const checkClaimLimit = useCallback(async () => {
     if (!currentUserId) return;
     try {
-      const res = await fetch("/api/topics/pool?view=my_claims&time_range=3m");
+      const res = await fetch("/api/topics/pool?view=my_claims");
       if (res.ok) {
         const json = await res.json();
         const activeItems: SubTopicItemWithClaims[] = json.items || [];
@@ -187,40 +196,48 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
   const fetchAllClaims = useCallback(async () => {
     try {
       const supabase = createClient();
-      // 普通用户若没有 RLS 权限只返回空，我们做优雅兜底
+      // 普通用户若没有 RLS 权限会返回报错，标记加载失败以展示兜底文案
       const { data, error } = await supabase
         .from("sub_topic_claims")
         .select("*, profiles:user_id(display_name, name, role)")
         .eq("sub_topic_id", id)
         .neq("status", "returned");
-      
-      if (!error && data) {
+
+      if (error) {
+        setClaimsLoadFailed(true);
+        return;
+      }
+      if (data) {
         setAllClaims(data);
+        setClaimsLoadFailed(false);
       }
     } catch (err) {
       console.log("无法获取其他人的认领详情:", err);
+      setClaimsLoadFailed(true);
     }
   }, [id]);
 
-  // 加载作品列表（支持排序与分页）
-  const fetchWorks = useCallback(async (page: number, sort: "best" | "recent") => {
+  // 加载作品列表（支持排序与分页，append=true 时追加到现有列表）
+  const fetchWorks = useCallback(async (page: number, sort: "best" | "recent", append = false) => {
     setLoadingWorks(true);
     try {
       const res = await fetch(`/api/topics/sub-topics/${id}/works?sort=${sort}&page=${page}&page_size=15`);
       if (!res.ok) throw new Error("加载作品列表失败");
       const json = await res.json();
-      setWorks(json.items || []);
+      setWorks((prev) => (append ? [...prev, ...(json.items || [])] : json.items || []));
       setSimilarWorks(json.similarReferences || []);
       setSummary(json.summary || null);
       setTotalWorks(json.pagination?.totalItems || 0);
+      setWorksPage(page);
     } catch (err) {
       console.error("加载作品列表失败:", err);
+      feedbackToast.error("加载作品列表失败");
     } finally {
       setLoadingWorks(false);
     }
   }, [id]);
 
-  // 初始化所有数据
+  // 初始化详情数据（作品列表由下方独立 effect 按 sortType 加载，避免整页重载）
   const loadDetail = useCallback(async () => {
     setLoading(true);
     try {
@@ -235,26 +252,21 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
       }
       const json = await res.json();
       setDetail(json.subTopic);
-      
-      // 预先填充 works 数据
-      if (json.works) {
-        setWorks(json.works.items || []);
-        setSimilarWorks(json.works.similarReferences || []);
-        setSummary(json.works.summary || null);
-        setTotalWorks(json.works.pagination?.totalItems || 0);
-      } else {
-        await fetchWorks(1, sortType);
-      }
     } catch {
       feedbackToast.error("加载选题详情出错");
     } finally {
       setLoading(false);
     }
-  }, [id, sortType, fetchWorks, router]);
+  }, [id, router]);
 
   useEffect(() => {
     void loadDetail();
   }, [loadDetail]);
+
+  // 进页及切换排序时，重新加载第一页作品
+  useEffect(() => {
+    void fetchWorks(1, sortType);
+  }, [fetchWorks, sortType]);
 
   useEffect(() => {
     if (currentUserId) {
@@ -264,10 +276,16 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
     }
   }, [currentUserId, fetchMyClaim, checkClaimLimit, fetchAllClaims]);
 
-  // 当切换排序时重新拉取作品
+  // 当切换排序时重新拉取作品（由上方 effect 监听 sortType 统一处理）
   const handleSortChange = (type: "best" | "recent") => {
+    if (type === sortType) return;
     setSortType(type);
-    void fetchWorks(1, type);
+  };
+
+  // 加载更多历史作品
+  const handleLoadMoreWorks = () => {
+    if (loadingWorks) return;
+    void fetchWorks(worksPage + 1, sortType, true);
   };
 
   // 处理认领操作
@@ -528,6 +546,20 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                 })}
               </div>
             )}
+
+            {/* 加载更多历史作品 */}
+            {!loadingWorks && works.length > 0 && works.length < totalWorks && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  disabled={loadingWorks}
+                  onClick={handleLoadMoreWorks}
+                  className="h-8.5 rounded-xl px-5 text-[12.5px] border-stone-200 hover:border-stone-300 font-medium text-stone-600 hover:text-stone-900"
+                >
+                  加载更多历史版本（已看 {works.length} / {totalWorks}）
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -607,8 +639,11 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
           {/* 认领动态区 (低频折叠) */}
           <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-3">
             <div
-              onClick={() => setShowAllClaims(!showAllClaims)}
-              className="flex items-center justify-between cursor-pointer select-none hover:opacity-85"
+              role="button"
+              tabIndex={0}
+              onClick={() => setShowAllClaims((prev) => !prev)}
+              onKeyDown={(event) => handleKeyboardActivation(event, () => setShowAllClaims((prev) => !prev))}
+              className="flex items-center justify-between cursor-pointer select-none hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             >
               <div className="flex items-center gap-1.5">
                 <User className="size-4 text-stone-400" />
@@ -623,7 +658,9 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
 
             {showAllClaims && (
               <div className="pt-2 border-t border-stone-100 space-y-2">
-                {allClaims.length === 0 ? (
+                {claimsLoadFailed ? (
+                  <span className="text-[11.5px] text-stone-400 block py-1">认领动态加载失败（可能没有查看权限）。</span>
+                ) : allClaims.length === 0 ? (
                   <span className="text-[11.5px] text-stone-400 block py-1">当前没有其他用户认领。</span>
                 ) : (
                   <div className="max-h-[150px] overflow-y-auto space-y-2 pr-1">

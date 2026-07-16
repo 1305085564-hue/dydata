@@ -501,9 +501,37 @@ export async function loadTopicPool(
   let query = supabase
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)", { count: "exact" })
-    .gte("created_at", since)
     .order("created_at", { ascending: false })
     .range(from, to);
+
+  if (options.view === "my_claims") {
+    // “我正在做的”看的是我的认领记录，不按子题创建时间过滤；
+    // 先查我的有效认领（candidate/scripting），再在数据库层过滤，保证分页总数正确
+    const { data: myClaims, error: myClaimsError } = await supabase
+      .from("sub_topic_claims")
+      .select("sub_topic_id")
+      .eq("user_id", userId)
+      .neq("status", "returned");
+    if (myClaimsError) return { ok: false, status: 500, message: myClaimsError.message };
+
+    const claimedIds = [
+      ...new Set(
+        ((myClaims ?? []) as Array<{ sub_topic_id?: string | null }>)
+          .map((claim) => claim.sub_topic_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    if (claimedIds.length === 0) {
+      return {
+        ok: true,
+        value: { items: [], pagination: { page: options.page, pageSize: options.pageSize, totalItems: 0 } },
+      };
+    }
+    query = query.in("id", claimedIds);
+  } else {
+    // 全部 / 我提交的：按子题创建时间做时间范围过滤
+    query = query.gte("created_at", since);
+  }
 
   if (options.topicId) query = query.eq("topic_id", options.topicId);
   if (options.view === "my_created") query = query.eq("created_by", userId);
@@ -511,13 +539,7 @@ export async function loadTopicPool(
   const { data, error, count } = await query;
   if (error) return { ok: false, status: 500, message: error.message };
 
-  let items = (data ?? []) as Array<Record<string, unknown>>;
-  if (options.view === "my_claims") {
-    items = items.filter((item) => {
-      const claims = Array.isArray(item.sub_topic_claims) ? item.sub_topic_claims as Array<{ user_id?: string; status?: string }> : [];
-      return claims.some((claim) => claim.user_id === userId && claim.status !== "returned");
-    });
-  }
+  const items = (data ?? []) as Array<Record<string, unknown>>;
 
   let summaries: Map<string, TopicWorkSummary>;
   try {

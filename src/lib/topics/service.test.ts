@@ -1,13 +1,82 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import type { DataAccessScope } from "../data-access-scope";
 
 import {
   buildPoolQueryOptions,
   calculateTopicWorkSummary,
+  loadTopicPool,
   matchTopicGroup,
   rankSuggestedSubTopics,
   validateCandidateClaimLimit,
 } from "./service";
+
+class FakeQuery {
+  calls: Array<{ method: string; args: unknown[] }> = [];
+
+  constructor(
+    readonly table: string,
+    private readonly result: { data?: unknown; error?: unknown; count?: number },
+  ) {}
+
+  select(...args: unknown[]) {
+    this.calls.push({ method: "select", args });
+    return this;
+  }
+
+  order(...args: unknown[]) {
+    this.calls.push({ method: "order", args });
+    return this;
+  }
+
+  range(...args: unknown[]) {
+    this.calls.push({ method: "range", args });
+    return this;
+  }
+
+  eq(...args: unknown[]) {
+    this.calls.push({ method: "eq", args });
+    return this;
+  }
+
+  neq(...args: unknown[]) {
+    this.calls.push({ method: "neq", args });
+    return this;
+  }
+
+  gte(...args: unknown[]) {
+    this.calls.push({ method: "gte", args });
+    return this;
+  }
+
+  in(...args: unknown[]) {
+    this.calls.push({ method: "in", args });
+    return this;
+  }
+
+  then<TResult1 = { data?: unknown; error?: unknown; count?: number }, TResult2 = never>(
+    onfulfilled?: ((value: { data?: unknown; error?: unknown; count?: number }) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ) {
+    return Promise.resolve(this.result).then(onfulfilled, onrejected);
+  }
+}
+
+function createFakeSupabase(results: Record<string, Array<{ data?: unknown; error?: unknown; count?: number }>>) {
+  const queries: FakeQuery[] = [];
+  return {
+    queries,
+    client: {
+      from(table: string) {
+        const result = results[table]?.shift();
+        if (!result) throw new Error(`Missing fake result for ${table}`);
+        const query = new FakeQuery(table, result);
+        queries.push(query);
+        return query;
+      },
+    },
+  };
+}
 
 test("候选上限最多允许 5 条，已有同一候选时保持幂等", () => {
   assert.deepEqual(validateCandidateClaimLimit({ currentCandidateCount: 4, alreadyCandidate: false }), {
@@ -73,6 +142,60 @@ test("选题池参数只接受约定视图和时间范围", () => {
     ok: false,
     status: 400,
     message: "topic_id 格式不正确",
+  });
+});
+
+test("我的认领视图按有效认领 id 在数据库层过滤，不按子题创建时间过滤", async () => {
+  const fake = createFakeSupabase({
+    sub_topics: [
+      {
+        data: [
+          {
+            id: "sub-old",
+            title: "很早创建但仍在认领的选题",
+            sub_topic_claims: [{ id: "claim-1", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }],
+          },
+        ],
+        count: 1,
+      },
+    ],
+    sub_topic_claims: [{ data: [{ sub_topic_id: "sub-old" }] }],
+    videos: [{ data: [] }],
+  });
+
+  const result = await loadTopicPool(
+    fake.client as never,
+    "user-1",
+    {
+      userId: "user-1",
+      role: "owner",
+      businessRole: "owner",
+      permissions: {},
+      accessLevel: 4,
+      teamId: null,
+      groupId: null,
+      kind: "all",
+      visibleUserIds: ["user-1"],
+    } as DataAccessScope,
+    { view: "my_claims", timeRange: "3d", page: 1, pageSize: 50, topicId: null },
+  );
+
+  assert.equal(result.ok, true);
+  const subTopicsQuery = fake.queries.find((query) => query.table === "sub_topics");
+  assert.ok(subTopicsQuery);
+  assert.deepEqual(subTopicsQuery.calls.find((call) => call.method === "in")?.args, ["id", ["sub-old"]]);
+  assert.equal(subTopicsQuery.calls.some((call) => call.method === "gte" && call.args[0] === "created_at"), false);
+  assert.deepEqual(result.value, {
+    items: [
+      {
+        id: "sub-old",
+        title: "很早创建但仍在认领的选题",
+        sub_topic_claims: [{ id: "claim-1", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }],
+        summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestCopy: null, latestCopy: null },
+        claimCount: 1,
+      },
+    ],
+    pagination: { page: 1, pageSize: 50, totalItems: 1 },
   });
 });
 

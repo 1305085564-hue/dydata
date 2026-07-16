@@ -97,7 +97,7 @@ export default function TodayWorkspacePage() {
   // /api/topics/pool?view=my_claims 返回的是子题列表，不是认领记录
   const fetchMyClaims = async () => {
     try {
-      const res = await fetch("/api/topics/pool?view=my_claims&time_range=3m");
+      const res = await fetch("/api/topics/pool?view=my_claims");
       if (res.ok) {
         const json = await res.json();
         setMyClaims(json.items || []);
@@ -169,7 +169,7 @@ export default function TodayWorkspacePage() {
       }
 
       feedbackToast.success("成功认领至您的候选选题库");
-      await fetchMyClaims(); // 重新加载我的认领状态
+      await Promise.all([fetchActiveData(), fetchMyClaims()]); // 刷新活跃列表与我的认领状态
     } catch (err) {
       feedbackToast.error("认领失败", {
         details: err instanceof Error ? err.message : String(err)

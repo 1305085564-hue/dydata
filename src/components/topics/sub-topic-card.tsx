@@ -77,6 +77,13 @@ interface WorkItem {
   }>;
 }
 
+function handleKeyboardActivation(event: React.KeyboardEvent, action: () => void) {
+  if (event.target !== event.currentTarget) return;
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  action();
+}
+
 export function SubTopicCard({
   item,
   isLimitReached,
@@ -96,10 +103,19 @@ export function SubTopicCard({
     if (!isExpanded && !hasLoadedWorks) {
       setLoadingWorks(true);
       try {
-        const res = await fetch(`/api/topics/sub-topics/${item.id}/works?page_size=30`);
-        if (!res.ok) throw new Error("获取文案数据失败");
-        const json = await res.json();
-        setWorks(json.items || []);
+        const [bestRes, recentRes] = await Promise.all([
+          fetch(`/api/topics/sub-topics/${item.id}/works?sort=best&page_size=1`),
+          fetch(`/api/topics/sub-topics/${item.id}/works?sort=recent&page_size=1`)
+        ]);
+        if (!bestRes.ok || !recentRes.ok) throw new Error("获取文案数据失败");
+        const [bestJson, recentJson] = await Promise.all([bestRes.json(), recentRes.json()]);
+        const bestWork = bestJson.items?.[0] as WorkItem | undefined;
+        const recentWork = recentJson.items?.[0] as WorkItem | undefined;
+        const extractedWorks = [bestWork, recentWork].filter((work, index, list): work is WorkItem => {
+          if (!work) return false;
+          return list.findIndex((candidate) => candidate?.id === work.id) === index;
+        });
+        setWorks(extractedWorks);
         setHasLoadedWorks(true);
       } catch (err) {
         console.error("加载关联作品失败:", err);
@@ -194,8 +210,11 @@ export function SubTopicCard({
     >
       {/* 第一级：折叠态基本信息 */}
       <div
+        role="button"
+        tabIndex={0}
         onClick={handleToggleExpand}
-        className="flex cursor-pointer items-start justify-between gap-4 p-4"
+        onKeyDown={(event) => handleKeyboardActivation(event, () => void handleToggleExpand())}
+        className="flex cursor-pointer items-start justify-between gap-4 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
       >
         <div className="space-y-1.5 min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

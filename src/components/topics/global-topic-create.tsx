@@ -8,18 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Lightbulb, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// 预定义母题以防数据库未加载完成时进行占位/降级渲染
-const DEFAULT_TOPICS = [
-  { id: "temp-1", name: "暴力战法类", sort_order: 10 },
-  { id: "temp-2", name: "热点/新闻解读类", sort_order: 20 },
-  { id: "temp-3", name: "情绪周期类", sort_order: 30 },
-  { id: "temp-4", name: "案例拆解/复盘类", sort_order: 40 },
-  { id: "temp-5", name: "避坑防雷类", sort_order: 50 },
-  { id: "temp-6", name: "降维认知类", sort_order: 60 },
-  { id: "temp-7", name: "顶级心法类", sort_order: 70 },
-  { id: "temp-8", name: "工具/神技类", sort_order: 80 }
-];
-
 interface TopicItem {
   id: string;
   name: string;
@@ -36,7 +24,7 @@ export const triggerGlobalTopicCreate = (detail?: { title?: string }) => {
 export function GlobalTopicCreate() {
   const [isOpen, setIsOpen] = useState(false);
   const [topics, setTopics] = useState<TopicItem[]>([]);
-  const [selectedTopicId, setSelectedTopicId] = useState<string>("temp-1");
+  const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [inputText, setInputText] = useState("");
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,7 +85,7 @@ export function GlobalTopicCreate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTopicId || selectedTopicId.startsWith("temp-")) {
+    if (!selectedTopicId) {
       feedbackToast.warning("请选择一个母题分类");
       return;
     }
@@ -164,15 +152,15 @@ export function GlobalTopicCreate() {
               <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-stone-200 bg-stone-50/50">
                 <Loader2 className="size-5 animate-spin text-stone-400" />
               </div>
-            ) : (
+            ) : topics.length > 0 ? (
               <div className="grid grid-cols-2 gap-2 max-h-[190px] overflow-y-auto pr-1">
-                {(topics.length > 0 ? topics : DEFAULT_TOPICS).map((topic) => {
+                {topics.map((topic) => {
                   const isSelected = selectedTopicId === topic.id;
                   return (
                     <button
-                      key={topic.name}
+                      key={topic.id}
                       type="button"
-                      onClick={() => setSelectedTopicId(topic.id || "")}
+                      onClick={() => setSelectedTopicId(topic.id)}
                       className={cn(
                         "flex h-9 items-center justify-center rounded-lg border text-[12.5px] font-medium transition-all duration-200",
                         "hover:-translate-y-[1px] active:scale-[0.98]",
@@ -186,7 +174,7 @@ export function GlobalTopicCreate() {
                   );
                 })}
               </div>
-            )}
+            ) : null}
             {!isLoadingTopics && topics.length === 0 && (
               <div className="rounded-lg border border-[#C9604D]/15 bg-[#C9604D]/5 px-3 py-2 text-[12px] text-[#C9604D]">
                 母题加载失败，请刷新后重试
@@ -228,7 +216,7 @@ export function GlobalTopicCreate() {
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting || !selectedTopicId || selectedTopicId.startsWith("temp-") || topics.length === 0 || !inputText.trim()}
+              disabled={isSubmitting || !selectedTopicId || topics.length === 0 || !inputText.trim()}
               className="h-8.5 rounded-lg px-5 font-medium"
             >
               {isSubmitting ? (

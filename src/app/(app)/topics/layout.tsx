@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GlobalTopicCreate, triggerGlobalTopicCreate } from "@/components/topics/global-topic-create";
+import { triggerGlobalTopicCreate } from "@/components/topics/global-topic-create";
 import { Lightbulb, Plus, BookOpen, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -91,8 +91,7 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
         {children}
       </div>
 
-      {/* 全局录入组件弹窗 */}
-      <GlobalTopicCreate />
+      {/* 全局录入弹窗已上移到 (app)/layout.tsx，任何页面均可触发 */}
 
       {/* 体验惊喜：右下角极简悬浮动作球 */}
       <motion.button
