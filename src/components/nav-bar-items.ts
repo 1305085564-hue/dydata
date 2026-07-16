@@ -1,4 +1,4 @@
-import { LayoutDashboard, Compass, Sparkles, FileEdit, Library, LineChart, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Compass, Sparkles, FileEdit, Library, LineChart, CalendarDays, Lightbulb } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessRole } from "@/lib/business-role";
 import { hasPermission } from "@/lib/permission-utils";
@@ -34,6 +34,12 @@ export function getNavItems(input: {
       label: "成长大盘",
       icon: Compass,
       match: (pathname) => pathname === "/growth",
+    },
+    {
+      href: "/topics/today",
+      label: "选题库",
+      icon: Lightbulb,
+      match: (pathname) => pathname === "/topics" || pathname.startsWith("/topics/"),
     },
   ];
 

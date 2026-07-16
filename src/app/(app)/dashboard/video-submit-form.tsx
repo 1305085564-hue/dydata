@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Lightbulb, Plus, Check, Lock } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -162,6 +162,7 @@ type FormMetaState = {
   punishType?: string;
   platformNotice?: string;
   appeal?: string;
+  topicId?: string | null;
 };
 
 type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
@@ -209,6 +210,7 @@ function createInitialMeta(today: string): FormMetaState {
     contentKeywords: [],
     platformNotice: "",
     appeal: "",
+    topicId: null,
   };
 }
 
@@ -478,6 +480,149 @@ export function VideoSubmitForm({
   const [scriptText, setScriptText] = useState("");
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // 关联选题相关状态
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [isManuallySet, setIsManuallySet] = useState(false);
+  const [urlLocked, setUrlLocked] = useState(false);
+  const [selectedTopicName, setSelectedTopicName] = useState<string>("");
+  const [selectedTopicCategory, setSelectedTopicCategory] = useState<string>("");
+
+  // 搜索相关状态（“换一个” Dialog）
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  // 1. URL 锁定逻辑
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlTopicId = searchParams.get("topicId") || searchParams.get("topic_id");
+      if (urlTopicId) {
+        updateMeta("topicId", urlTopicId);
+        setUrlLocked(true);
+        setIsManuallySet(true);
+      }
+    }
+  }, []);
+
+  // 2. 根据选中的 topicId 获取其详细名称
+  useEffect(() => {
+    const fetchTopicName = async () => {
+      if (!meta.topicId) {
+        setSelectedTopicName("");
+        setSelectedTopicCategory("");
+        return;
+      }
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("sub_topics")
+          .select("title, topics(name)")
+          .eq("id", meta.topicId)
+          .maybeSingle();
+        if (data) {
+          setSelectedTopicName(data.title);
+          setSelectedTopicCategory(data.topics?.name || "常规母题");
+        }
+      } catch (err) {
+        console.error("获取选题名称失败:", err);
+      }
+    };
+    void fetchTopicName();
+  }, [meta.topicId]);
+
+  // 3. 监听新建选题事件：自动绑定最新创建的选题
+  useEffect(() => {
+    const handleNewTopic = async () => {
+      if (!userId) return;
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("sub_topics")
+          .select("id, title, topics(name)")
+          .eq("created_by", userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          updateMeta("topicId", data.id);
+          setIsManuallySet(true);
+          feedbackToast.success(`已自动关联新创建的选题：“${data.title}”`);
+        }
+      } catch (err) {
+        console.error("绑定新选题失败:", err);
+      }
+    };
+    window.addEventListener("refresh-topics", handleNewTopic);
+    return () => window.removeEventListener("refresh-topics", handleNewTopic);
+  }, [userId]);
+
+  // 4. 防抖推荐逻辑
+  useEffect(() => {
+    if (urlLocked || isManuallySet) return;
+    if (!meta.videoTitle.trim() && !meta.content.trim()) {
+      setSuggestions([]);
+      updateMeta("topicId", null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLoadingSuggestions(true);
+      try {
+        const params = new URLSearchParams();
+        params.append("title", meta.videoTitle.trim());
+        params.append("content", meta.content.trim());
+        const res = await fetch(`/api/topics/sub-topics/suggest?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data || []);
+          if (data && data.length > 0 && !isManuallySet) {
+            updateMeta("topicId", data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("推荐获取失败:", err);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [meta.videoTitle, meta.content, urlLocked, isManuallySet]);
+
+  // 5. 换一个：子题搜索逻辑
+  useEffect(() => {
+    if (!searchDialogOpen) return;
+    const delayDebounce = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const supabase = createClient();
+        let query = supabase
+          .from("sub_topics")
+          .select("id, title, topics(name)")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        
+        if (searchQuery.trim()) {
+          query = query.ilike("title", `%${searchQuery.trim()}%`);
+        }
+        const { data, error } = await query;
+        if (data) {
+          setSearchResults(data);
+        }
+      } catch (err) {
+        console.error("搜索选题失败:", err);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, searchDialogOpen]);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
@@ -1746,6 +1891,102 @@ export function VideoSubmitForm({
                   ) : null}
                 </div>
 
+                {/* 关联选题字段 (任务 F) */}
+                <div className="rounded-xl border border-stone-200/70 bg-stone-50/40 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[13px] font-semibold text-stone-705 flex items-center gap-1.5 select-none">
+                      <Lightbulb className="size-4 text-[#D97757]" />
+                      <span>关联选题库</span>
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSearchDialogOpen(true)}
+                        className="text-[12px] font-medium text-[#8AA8C7] hover:underline focus:outline-none cursor-pointer"
+                      >
+                        换一个
+                      </button>
+                      <span className="text-stone-300 text-[10px]">|</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateMeta("topicId", null);
+                          setIsManuallySet(true);
+                        }}
+                        className="text-[12px] font-medium text-stone-400 hover:text-stone-600 focus:outline-none cursor-pointer"
+                      >
+                        暂无对应
+                      </button>
+                      <span className="text-stone-300 text-[10px]">|</span>
+                      <button
+                        type="button"
+                        onClick={() => triggerGlobalTopicCreate({ title: meta.videoTitle })}
+                        className="text-[12px] font-medium text-[#D97757] hover:underline inline-flex items-center gap-0.5 focus:outline-none cursor-pointer"
+                      >
+                        <Plus className="size-3 stroke-[2.5]" />
+                        <span>新建选题</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {meta.topicId ? (
+                    <div className="flex items-center justify-between rounded-lg border border-[#8AA8C7]/20 bg-white p-3 shadow-[0_2px_8px_-3px_rgba(138,168,199,0.1)]">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {selectedTopicCategory && (
+                          <span className="shrink-0 inline-flex items-center rounded-md bg-[#8AA8C7]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#8AA8C7]">
+                            {selectedTopicCategory}
+                          </span>
+                        )}
+                        <span className="text-[12.5px] font-semibold text-stone-800 truncate">
+                          {selectedTopicName || "获取选题信息中..."}
+                        </span>
+                      </div>
+                      
+                      {urlLocked ? (
+                        <span className="shrink-0 flex items-center gap-0.5 text-[10.5px] text-stone-400 bg-stone-100 rounded-md px-1.5 py-0.5 font-medium select-none">
+                          <Lock className="size-3 text-stone-400" />
+                          认领锁定
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-[10.5px] text-[#6FAA7D] bg-[#6FAA7D]/5 rounded-md px-1.5 py-0.5 font-medium select-none">
+                          已关联
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="text-[11.5px] text-stone-400 leading-normal">
+                        {loadingSuggestions ? (
+                          <div className="flex items-center gap-1.5 py-1">
+                            <Loader2 className="size-3 animate-spin text-stone-400" />
+                            <span>正在匹配关联的选题...</span>
+                          </div>
+                        ) : suggestions.length > 0 ? (
+                          <div className="space-y-1.5">
+                            <span className="block text-[11px] font-medium text-stone-400">系统根据标题/文案推荐选题：</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {suggestions.slice(0, 2).map((s) => (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  onClick={() => {
+                                    updateMeta("topicId", s.id);
+                                  }}
+                                  className="inline-flex items-center rounded-lg border border-stone-200 bg-white hover:border-stone-300 px-2 py-1 text-[11px] font-medium text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
+                                >
+                                  {s.title}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="italic block py-1">输入标题或文案，系统将自动匹配选题库。</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {meta.anomalyStatus === "abnormal" && (
                   <div className="flex flex-col gap-4 rounded-xl border border-transparent bg-stone-50 p-5">
                     <div className="flex flex-col gap-2">
@@ -1979,6 +2220,62 @@ export function VideoSubmitForm({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 模糊选择选题 Dialog */}
+      <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
+        <DialogContent className="sm:max-w-md w-full max-w-[calc(100%-2rem)] md:max-w-[460px] p-5 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>选择关联的子选题</DialogTitle>
+            <DialogDescription>
+              模糊搜索您在选题池里已录入的子题。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="输入关键词进行搜索..."
+              className="h-9.5 rounded-xl border border-stone-200"
+            />
+            {searching ? (
+              <div className="flex h-36 items-center justify-center">
+                <Loader2 className="size-5 animate-spin text-stone-400" />
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className="flex h-36 items-center justify-center text-[12.5px] text-stone-400">
+                未搜索到匹配的选题
+              </div>
+            ) : (
+              <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-1">
+                {searchResults.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      updateMeta("topicId", item.id);
+                      setIsManuallySet(true);
+                      setSearchDialogOpen(false);
+                      setSearchQuery("");
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl border border-stone-200/60 bg-stone-50/50 hover:bg-stone-50 hover:border-stone-300 p-3 text-left text-[12.5px] font-medium text-stone-700 transition-colors cursor-pointer"
+                  >
+                    <span className="truncate max-w-[240px] text-stone-800 font-semibold">{item.title}</span>
+                    <span className="text-[10px] bg-stone-200/85 px-1.5 py-0.5 rounded-md text-stone-500 font-semibold">
+                      {item.topics?.name || "常规"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button size="sm" variant="outline" onClick={() => setSearchDialogOpen(false)} className="rounded-lg">
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
